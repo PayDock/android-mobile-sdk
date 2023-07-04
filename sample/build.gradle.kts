@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.paydock.sample"
-    compileSdkVersion(33)
+    compileSdk = 33
 
     defaultConfig {
         applicationId = "com.paydock.sample"
@@ -16,17 +16,18 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
-            useSupportLibrary true
+            useSupportLibrary = true
         }
     }
 
     buildTypes {
         getByName("debug") {
-            debuggable = true
-            minifyEnabled = false
+            isDebuggable = true
+            isMinifyEnabled = false
         }
         getByName("release") {
-            minifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -44,7 +45,7 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.8"
     }
-    packagingOptions {
+    packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
