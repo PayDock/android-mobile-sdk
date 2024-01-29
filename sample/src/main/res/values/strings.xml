@@ -1,0 +1,54 @@
+<!--
+  ~ Created by Paydock on 1/26/24, 6:24 PM
+  ~ Copyright (c) 2024 Paydock Ltd.
+  ~
+  ~ Last modified 1/26/24, 2:24 PM
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<resources>
+    <string name="app_name">SampleApp</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_checkout">Checkout</string>
+    <string name="nav_widgets">Widgets</string>
+    <string name="nav_style">Style</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Labels -->
+    <string name="label_colours">Colours</string>
+    <string name="label_design">Design</string>
+    <string name="item_english">English</string>
+    <string name="label_environment">Environment</string>
+    <string name="label_language">Language</string>
+    <string name="label_secret_key">Secret Key</string>
+    <string name="label_button_update_styles">Update styles</string>
+    <string name="label_corner_radius">Corner Radius</string>
+    <string name="label_shadow">Shadow</string>
+    <string name="label_border_width">Border Width</string>
+    <string name="label_spacing">Spacing</string>
+    <string name="label_font">Font</string>
+    <string name="label_something_went_wrong">Something went wrong</string>
+    <string name="label_card">Card</string>
+    <string name="label_flypay">FlyPay</string>
+
+    <!-- Buttons -->
+    <string name="button_ok">OK</string>
+
+    <!-- Array/List Items -->
+    <string-array name="array_environments">
+        <item name="item_sandbox">Sandbox</item>
+        <item name="item_staging">Staging</item>
+        <item name="item_pre_production">Pre-Production</item>
+        <item name="item_production">Production</item>
+    </string-array>
+</resources>

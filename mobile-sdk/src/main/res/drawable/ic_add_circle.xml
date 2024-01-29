@@ -1,0 +1,26 @@
+<!--
+  ~ Created by Paydock on 1/26/24, 6:24 PM
+  ~ Copyright (c) 2024 Paydock Ltd.
+  ~
+  ~ Last modified 1/26/24, 2:24 PM
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+  <path
+      android:fillColor="#FFF"
+      android:pathData="M464,652h32v-156h156v-32L496,464v-156h-32v156L308,464v32h156v156ZM480.41,824q-70.95,0 -133.68,-26.84 -62.74,-26.84 -109.86,-73.92 -47.13,-47.08 -73.99,-109.72Q136,550.89 136,479.67q0,-71.21 26.84,-133.45 26.84,-62.24 73.92,-109.36 47.08,-47.13 109.72,-73.99Q409.11,136 480.33,136q71.21,0 133.45,26.84 62.24,26.84 109.36,73.92 47.13,47.08 73.99,109.48Q824,408.64 824,479.59q0,70.95 -26.84,133.68 -26.84,62.74 -73.92,109.86 -47.08,47.13 -109.48,73.99Q551.36,824 480.41,824ZM480,792q130,0 221,-91t91,-221q0,-130 -91,-221t-221,-91q-130,0 -221,91t-91,221q0,130 91,221t221,91ZM480,480Z"/>
+</vector>

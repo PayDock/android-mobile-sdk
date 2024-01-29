@@ -1,0 +1,6 @@
+{
+  "request_type": "CREATE_TRANSACTION",
+  "request_shipping": false,
+  "session_id": null,
+  "wallet_type": "paypal"
+}

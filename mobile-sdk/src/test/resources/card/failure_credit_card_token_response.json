@@ -1,0 +1,29 @@
+{
+  "status": 400,
+  "error": {
+    "message": "Invalid Transaction Details",
+    "code": "invalid_transaction_details",
+    "details": [
+      {
+        "gateway_specific_code": "INVALID_REQUEST:INVALID:sourceOfFunds.provided.card.securityCode",
+        "gateway_specific_description": "The request contained a field with a value that did not pass validation.",
+        "param_name": null,
+        "description": "Invalid Transaction Details"
+      }
+    ]
+  },
+  "resource": {
+    "type": "token"
+  },
+  "error_summary": {
+    "message": "Invalid Transaction Details",
+    "code": "invalid_transaction_details",
+    "details": {
+      "gateway_specific_code": "INVALID_REQUEST:INVALID:sourceOfFunds.provided.card.securityCode",
+      "gateway_specific_description": "The request contained a field with a value that did not pass validation.",
+      "messages": [
+        "Invalid Transaction Details"
+      ]
+    }
+  }
+}

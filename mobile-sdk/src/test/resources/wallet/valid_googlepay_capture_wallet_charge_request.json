@@ -1,0 +1,9 @@
+{
+  "payment_method_id": null,
+  "customer": {
+    "payment_source": {
+      "external_payer_id": null,
+      "ref_token": "{\"signature\":\"MEQCIDPyn7sbShwHJgfp7+odS4csaJKZwL9cWkvLNXfl8aIwAiAiQEJT3p+O0Ul8zeKxf5UkjCb/YNfiDCjT0kWAD7M3Xg\\u003d\\u003d\",\"intermediateSigningKey\":{\"signedKey\":\"{\\\"keyValue\\\":\\\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEwyp2Bhw5FzeKh/1p+XEBjdnbjhKFRXs46fM2SAI787SmNn45I3sKsw3hpkMalE/LVUN6nH/k2dW9L6rvuyueoQ\\\\u003d\\\\u003d\\\",\\\"keyExpiration\\\":\\\"1698720666540\\\"}\",\"signatures\":[\"MEYCIQCKbMoZ4ZkcmBVDr7rHsHQfOHOHTuQ2SjWggWfak0TSMAIhAIwfjJMfwcIl4aOmOzTfHk75VKlMuKTiVCSFn6PGeYgO\"]},\"protocolVersion\":\"ECv2\",\"signedMessage\":\"{\\\"encryptedMessage\\\":\\\"5xKfO44VN1wnvquWpYDPB0outuJrlXGV7E/AdK2/snKT0z/faInFxUL2urp9WF826qMl0UlAppmm2hUtQeTRxO8v6WJXx+XYAH128Uoc1lKDAsZfZRycq1czYkUnaYHT0OPdkqTUlI9/k3o5vClOyq3YoEVv1e4nUVKGjPTALEEC7Qe3fCReIWIH9RnIP0HQdfYcv6cKWaZHxt7ZJUf3nqSSDeU3H7lKdKJ8zajOC/9erXcm6a2KymtDpz9dIxn/WNBeJjDSYIrPg1RPWm0PRkvU///HuAJrBBJF/SgnQVnotYHkcZnZyFLoo5oByBMR/X5+NM5TyknpoLjVAophJQ/pBiUhsA+dZ0TF4mUBa3bRcMgjhnmR49zRBrf8C5MT+JbyV1ltifWi8t/Vil4ILpIy3CG5hcX50+xbZssUzkEtS6HdM2X7REVZwuZc5x2eHVTY+MXi2oBdyPljxb4Kfstbf94lZy9R2zY\\\\u003d\\\",\\\"ephemeralPublicKey\\\":\\\"BOZLC8D8kjf9q+qXHR2GumIkeAsIpoad9AbvQwLKp7NjJFSTQuww82Ukyw/YpYEKUtZ1swHrr9RbfJsrFsjjj9Q\\\\u003d\\\",\\\"tag\\\":\\\"f5lDx7XlR8mbHgV9ivXjiULNIekvd8pf6Z/UuOVKnoY\\\\u003d\\\"}\"}"
+    }
+  }
+}

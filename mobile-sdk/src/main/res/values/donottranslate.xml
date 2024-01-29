@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Created by Paydock on 1/26/24, 6:24 PM
+  ~ Copyright (c) 2024 Paydock Ltd.
+  ~
+  ~ Last modified 1/26/24, 2:24 PM
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- region Placeholder (Input) -->
+    <string name="placeholder_card_number" tools:ignore="Typos">XXXX XXXX XXXX XXXX</string>
+    <string name="placeholder_card_pin" tools:ignore="Typos">XXXX</string>
+    <string name="placeholder_expiry">MM/YY</string>
+    <!-- endregion -->
+    <!-- region Content Descriptions -->
+    <string name="content_desc_success_icon">Success Icon</string>
+    <string name="content_desc_error_icon">Error Icon</string>
+    <string name="content_desc_dropdown_arrow">Dropdown Arrow</string>
+    <string name="content_desc_button_icon">Button Icon</string>
+    <string name="content_desc_paypal_button_icon">PayPal Button</string>
+    <string name="content_desc_flypay_button_icon">FlyPay Button</string>
+    <!-- endregion -->
+</resources>

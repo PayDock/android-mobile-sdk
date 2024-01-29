@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "error": null,
+  "resource": {
+    "type": "charge",
+    "data": {
+      "id": "721hnve4yh6fdf",
+      "charge": {
+        "status": "wallet_initialized"
+      }
+    }
+  }
+}
