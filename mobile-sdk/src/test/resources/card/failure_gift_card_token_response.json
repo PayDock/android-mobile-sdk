@@ -1,0 +1,24 @@
+{
+  "status": 400,
+  "error": {
+    "message": "Validation Error",
+    "code": "ValidationError",
+    "path": "card_processing_network",
+    "details": [
+      "Card scheme is required"
+    ]
+  },
+  "resource": {
+    "type": "token"
+  },
+  "error_summary": {
+    "message": "Validation Error",
+    "code": "validation_error",
+    "details": {
+      "path": "card_processing_network",
+      "messages": [
+        "Card scheme is required"
+      ]
+    }
+  }
+}

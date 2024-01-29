@@ -1,0 +1,28 @@
+<!--
+  ~ Created by Paydock on 1/26/24, 6:24 PM
+  ~ Copyright (c) 2024 Paydock Ltd.
+  ~
+  ~ Last modified 1/26/24, 2:24 PM
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="20"
+    android:viewportHeight="20">
+  <path
+      android:strokeWidth="1"
+      android:pathData="M0.667,7.333H19.333M2.667,12.667H10.667M13.333,12.667H17.333M0.667,4.667L0.667,15.333C0.667,16.07 1.264,16.667 2,16.667L18,16.667C18.736,16.667 19.333,16.07 19.333,15.333V4.667C19.333,3.93 18.736,3.333 18,3.333L2,3.333C1.264,3.333 0.667,3.93 0.667,4.667Z"
+      android:fillColor="#00000000"
+      android:strokeColor="#1D1B20"/>
+</vector>

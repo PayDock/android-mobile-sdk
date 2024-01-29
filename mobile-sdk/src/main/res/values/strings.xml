@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Created by Paydock on 1/26/24, 6:24 PM
+  ~ Copyright (c) 2024 Paydock Ltd.
+  ~
+  ~ Last modified 1/26/24, 4:15 PM
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<resources>
+    <!-- region Labels -->
+    <string name="label_address_line_1">Address Line 1</string>
+    <string name="label_address_line_2">Address Line 2 (Optional)</string>
+    <string name="label_card_information">"Card information"</string>
+    <string name="label_card_number">Card number</string>
+    <string name="label_cardholder_name">Cardholder name</string>
+    <string name="label_country">Country</string>
+    <string name="label_city">City</string>
+    <string name="label_cvv">CVV</string>
+    <string name="label_csc">CSC</string>
+    <string name="label_cvc">CVC</string>
+    <string name="label_expiry">Expiry</string>
+    <string name="label_find_an_address">Find an address</string>
+    <string name="label_no_address_found">No address found</string>
+    <string name="label_no_results_found">No results found</string>
+    <string name="label_pin">PIN</string>
+    <string name="label_postal_code">Postal Code</string>
+    <string name="label_search_for_your_address">Search for your address</string>
+    <string name="label_searching">Searching…</string>
+    <string name="label_state">State</string>
+    <!-- endregion -->
+    <!-- region Errors -->
+    <string name="error_card_holder_name">Enter a valid cardholder name</string>
+    <string name="error_card_number">Enter a valid card number</string>
+    <string name="error_expiry_date">Invalid expiry date</string>
+    <string name="error_expiry_expired">Card expired</string>
+    <string name="error_security_code">Card failed</string>
+    <string name="error_web_client_error">Client Error: There was an issue with your request.</string>
+    <string name="error_web_server_error">Server Error: The server encountered an issue.</string>
+    <string name="error_web_unknown_error">An unexpected error occurred</string>
+    <string name="error_web_display_error">Sorry, there was an issue loading the page: %s</string>
+    <string name="error_googlepay_payment_methods">Unexpected non API exception when trying to retrieve [allowedPaymentMethods] parameter from paymentRequest!</string>
+    <string name="error_paypal_cancelled_error">PayPal transaction was cancelled!</string>
+    <string name="error_flypay_cancelled_error">FlyPay transaction was cancelled!</string>
+    <string name="error_3ds_cancelled_error">3DS transaction was cancelled!</string>
+    <!-- endregion -->
+    <!-- region Buttons -->
+    <string name="button_enter_address_manually">Or enter address manually</string>
+    <string name="button_save_address">Save address</string>
+    <string name="button_submit">Submit</string>
+    <string name="button_pay_with">Pay with</string>
+    <!-- endregion -->
+</resources>

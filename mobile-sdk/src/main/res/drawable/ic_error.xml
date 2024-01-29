@@ -1,0 +1,26 @@
+<!--
+  ~ Created by Paydock on 1/26/24, 6:24 PM
+  ~ Copyright (c) 2024 Paydock Ltd.
+  ~
+  ~ Last modified 1/26/24, 2:24 PM
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="20"
+    android:viewportHeight="20">
+  <path
+      android:pathData="M10.5,14V13.5H9.5V14H10.5ZM9.5,14.013V14.513H10.5V14.013H9.5ZM9.5,5.333V10.667H10.5V5.333H9.5ZM9.5,14V14.013H10.5V14H9.5ZM10,18.833C5.121,18.833 1.167,14.878 1.167,10H0.167C0.167,15.431 4.569,19.833 10,19.833V18.833ZM18.833,10C18.833,14.878 14.878,18.833 10,18.833V19.833C15.431,19.833 19.833,15.431 19.833,10H18.833ZM10,1.166C14.878,1.166 18.833,5.121 18.833,10H19.833C19.833,4.569 15.431,0.167 10,0.167V1.166ZM10,0.167C4.569,0.167 0.167,4.569 0.167,10H1.167C1.167,5.121 5.121,1.166 10,1.166V0.167Z"
+      android:fillColor="#B3261E"/>
+</vector>

@@ -1,0 +1,17 @@
+{
+  "status": 200,
+  "error": null,
+  "resource": {
+    "type": "charge",
+    "data": {
+      "id": "63124973UW6479408",
+      "status": "CREATED",
+      "callback_method": "GET",
+      "callback_rel": "approve",
+      "callback_url": "https://www.sandbox.paypal.com/checkoutnow?token=63124973UW6479408",
+      "charge": {
+        "status": "wallet_initialized"
+      }
+    }
+  }
+}

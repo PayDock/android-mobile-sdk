@@ -1,0 +1,26 @@
+{
+  "status": 400,
+  "error": {
+    "message": "body validation failed",
+    "code": "ValidationError",
+    "details": {
+      "path": "wallet_type",
+      "messages": [
+        "wallet_type must be a valid enum value"
+      ]
+    }
+  },
+  "resource": {
+    "type": "charge"
+  },
+  "error_summary": {
+    "message": "body validation failed",
+    "code": "validation_error",
+    "details": {
+      "path": "wallet_type",
+      "messages": [
+        "wallet_type must be a valid enum value"
+      ]
+    }
+  }
+}

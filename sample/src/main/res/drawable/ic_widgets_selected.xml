@@ -1,0 +1,35 @@
+<!--
+  ~ Created by Paydock on 1/26/24, 6:24 PM
+  ~ Copyright (c) 2024 Paydock Ltd.
+  ~
+  ~ Last modified 1/26/24, 5:58 PM
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<vector android:height="24dp"
+    android:viewportHeight="15"
+    android:viewportWidth="15"
+    android:width="24dp"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <path
+        android:fillColor="#191919"
+        android:pathData="M1.5,0C0.672,0 0,0.672 0,1.5V5.5C0,6.328 0.672,7 1.5,7H5.5C6.328,7 7,6.328 7,5.5V1.5C7,0.672 6.328,0 5.5,0H1.5Z" />
+    <path
+        android:fillColor="#191919"
+        android:pathData="M9.5,0C8.672,0 8,0.672 8,1.5V5.5C8,6.328 8.672,7 9.5,7H13.5C14.328,7 15,6.328 15,5.5V1.5C15,0.672 14.328,0 13.5,0H9.5Z" />
+    <path
+        android:fillColor="#191919"
+        android:pathData="M1.5,8C0.672,8 0,8.672 0,9.5V13.5C0,14.328 0.672,15 1.5,15H5.5C6.328,15 7,14.328 7,13.5V9.5C7,8.672 6.328,8 5.5,8H1.5Z" />
+    <path
+        android:fillColor="#191919"
+        android:pathData="M9.5,8C8.672,8 8,8.672 8,9.5V13.5C8,14.328 8.672,15 9.5,15H13.5C14.328,15 15,14.328 15,13.5V9.5C15,8.672 14.328,8 13.5,8H9.5Z" />
+</vector>

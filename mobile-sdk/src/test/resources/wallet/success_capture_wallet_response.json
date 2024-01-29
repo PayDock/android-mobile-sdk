@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "error": null,
+  "resource": {
+    "type": "charge",
+    "data": {
+      "id": "653784a37cb913091e1be3e5",
+      "amount": 1,
+      "currency": "AUD",
+      "status": "complete"
+    }
+  }
+}

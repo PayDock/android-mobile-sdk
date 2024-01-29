@@ -19,7 +19,7 @@ platform :android do
 
   desc "Builds the debug code"
   lane :buildDebug do
-    gradle(task: "assembleDebug")
+    gradle(task: "clean assembleDebug")
   end
 
   desc "Builds the release code"

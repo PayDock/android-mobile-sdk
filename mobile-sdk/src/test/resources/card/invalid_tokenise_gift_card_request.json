@@ -1,0 +1,13 @@
+{
+  "first_name": "Wanda",
+  "last_name": "Mertz",
+  "email": "wanda.mertz@example.com",
+  "phone": "+1234567890",
+  "card_name": "Wanda Mertz",
+  "card_number": "62734010001104878",
+  "card_pin": "1",
+  "type": "gift_card",
+  "store_pin": true,
+  "card_scheme": "",
+  "card_processing_network": "vii_giftcard"
+}

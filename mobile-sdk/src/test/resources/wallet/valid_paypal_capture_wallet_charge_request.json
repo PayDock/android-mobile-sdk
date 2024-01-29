@@ -1,0 +1,9 @@
+{
+  "payment_method_id": "06S13800C2876432A",
+  "customer": {
+    "payment_source": {
+      "external_payer_id": "H2G7GULMXJZU6",
+      "ref_token": null
+    }
+  }
+}
