@@ -1,8 +1,8 @@
 /*
- * Created by Paydock on 1/26/24, 6:24 PM
- * Copyright (c) 2024 Paydock Ltd.
+ * Created by Paydock on 11/16/23, 11:58 AM
+ * Copyright (c) 2023 Lasting. All rights reserved.
  *
- * Last modified 1/26/24, 5:58 PM
+ * Last modified 11/16/23, 11:58 AM
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,15 @@
  * limitations under the License.
  */
 
-package com.paydock.sample.feature.wallet.domain.repository
+package com.paydock.feature.threeDS.domain.domain
 
-import com.paydock.sample.feature.wallet.data.api.dto.InitiateWalletRequest
-import com.paydock.sample.feature.wallet.domain.model.WalletCharge
-
-interface WalletRepository {
-    suspend fun initiateWalletTransaction(manualCapture: Boolean, request: InitiateWalletRequest): WalletCharge
-    suspend fun captureWalletCharge(chargeId: String): WalletCharge
-}
+/**
+ * Data class representing the result of 3D Secure (3DS) processing.
+ *
+ * @param event The type of event that occurred during 3DS processing.
+ * @param charge3dsId The Charge ID associated with the 3DS transaction to return to the merchant.
+ */
+data class ThreeDSResult(
+    val event: EventType,
+    val charge3dsId: String
+)

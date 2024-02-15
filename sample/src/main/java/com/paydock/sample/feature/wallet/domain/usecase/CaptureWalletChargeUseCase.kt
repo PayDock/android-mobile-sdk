@@ -1,8 +1,8 @@
 /*
- * Created by Paydock on 1/26/24, 6:24 PM
- * Copyright (c) 2024 Paydock Ltd.
+ * Created by Paydock on 11/23/23, 11:56 AM
+ * Copyright (c) 2023 Lasting. All rights reserved.
  *
- * Last modified 1/26/24, 5:58 PM
+ * Last modified 11/23/23, 11:56 AM
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,16 @@
 package com.paydock.sample.feature.wallet.domain.usecase
 
 import com.paydock.sample.core.extensions.suspendRunCatching
-import com.paydock.sample.feature.wallet.data.api.dto.InitiateWalletRequest
+import com.paydock.sample.feature.card.data.api.dto.CaptureCardChargeRequest
+import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
+import com.paydock.sample.feature.card.domain.repository.CardRepository
 import com.paydock.sample.feature.wallet.domain.repository.WalletRepository
 import javax.inject.Inject
 
-class InitiateWalletTransactionUseCase @Inject constructor(private val repository: WalletRepository) {
+class CaptureWalletChargeUseCase @Inject constructor(private val repository: WalletRepository) {
 
-    suspend operator fun invoke(manualCapture: Boolean = false, request: InitiateWalletRequest) = suspendRunCatching {
-        repository.initiateWalletTransaction(manualCapture, request)
-    }
+    suspend operator fun invoke(chargeId: String) =
+        suspendRunCatching {
+            repository.captureWalletCharge(chargeId)
+        }
 }

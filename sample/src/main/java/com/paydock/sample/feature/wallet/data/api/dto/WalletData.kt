@@ -18,6 +18,6 @@
 package com.paydock.sample.feature.wallet.data.api.dto
 
 data class WalletData(
-    val token: String
-    // We do not need any other response properties (ie. charge)
+    val token: String,
+    val charge: WalletChargeData
 )

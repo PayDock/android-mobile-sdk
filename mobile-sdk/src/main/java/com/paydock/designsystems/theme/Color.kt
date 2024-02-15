@@ -36,6 +36,4 @@ internal val SdkBackgroundDark = Color(0xFF0B0C0C)
 internal val SdkOutlineLight = Color(0xFF79747E) // Border Colours
 internal val SdkOutlineDark = Color(0xFF707974) // Border Colours
 internal val PayPal = Color(0xFFFFC43A)
-internal val FlyPayLightBlue = Color(0xFF0180C7)
-internal val FlyPayDarkBlue = Color(0xFF005DB5)
-internal val FlyPayPink = Color(0xFFC81280)
+internal val FlyPayBlue = Color(0xFF007BBF)
