@@ -51,7 +51,7 @@ fun PaymentMethodContainer(
                 fontWeight = FontWeight(500)
             ),
             text = "Payment Method",
-            color = Theme.colors.onSurface
+            color = Theme.colors.onPrimary
         )
         HorizontalTabButtonCarousel(
             modifier = Modifier.fillMaxWidth(),

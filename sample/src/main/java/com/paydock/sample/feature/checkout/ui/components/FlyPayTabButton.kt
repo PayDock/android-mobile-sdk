@@ -17,44 +17,48 @@
 
 package com.paydock.sample.feature.checkout.ui.components
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paydock.sample.R
+import com.paydock.sample.designsystems.theme.FlyPayBlue
+import com.paydock.sample.designsystems.theme.PayPalYellow
 import com.paydock.sample.designsystems.theme.SampleTheme
 import com.paydock.sample.designsystems.theme.Theme
 import com.paydock.sample.designsystems.theme.typography.FontFamily
 
 @Composable
 fun FlyPayTabButton(isSelected: Boolean, onClick: () -> Unit) {
-    val selectedColor = Theme.colors.primary
     TabButton(
         isSelected = isSelected,
-        selectedBorderColor = selectedColor,
-        selectedBackgroundColor = Color.White,
+        selectedBorderColor = FlyPayBlue,
+        selectedBackgroundColor = FlyPayBlue,
         onClick = onClick
     ) {
-        Text(
-            text = stringResource(id = R.string.label_flypay),
-            color = if (isSelected) Theme.colors.primary else Theme.colors.onSurface,
-            style = TextStyle(
-                fontSize = 14.sp,
-                lineHeight = 16.8.sp,
-                fontFamily = FontFamily,
-                fontWeight = FontWeight(500)
-            )
+        Image(
+            painter = painterResource(id = R.drawable.ic_flypay),
+            colorFilter = ColorFilter.tint(if (isSelected) Color.White else Theme.colors.onSurface),
+            contentDescription = null
         )
     }
 }
 
 @Composable
 @Preview
-private fun PayPalTabButtonDefault() {
+private fun FlyPayTabButtonDefault() {
     SampleTheme {
         FlyPayTabButton(
             isSelected = false
@@ -64,7 +68,7 @@ private fun PayPalTabButtonDefault() {
 
 @Composable
 @Preview
-private fun PayPalTabButtonSelected() {
+private fun FlyPayTabButtonSelected() {
     SampleTheme {
         FlyPayTabButton(
             isSelected = true

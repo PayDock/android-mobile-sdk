@@ -43,12 +43,4 @@
 
     <!-- Buttons -->
     <string name="button_ok">OK</string>
-
-    <!-- Array/List Items -->
-    <string-array name="array_environments">
-        <item name="item_sandbox">Sandbox</item>
-        <item name="item_staging">Staging</item>
-        <item name="item_pre_production">Pre-Production</item>
-        <item name="item_production">Production</item>
-    </string-array>
 </resources>
