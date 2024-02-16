@@ -188,7 +188,6 @@ fun WidgetInfoScreen(
                         .fillMaxWidth()
                         .padding(16.dp),
                     token = walletViewModel.getWalletToken(
-                        manualCapture = true,
                         currencyCode = AU_CURRENCY_CODE,
                         walletType = "flypay",
                         gatewayId = BuildConfig.GATEWAY_ID_FLY_PAY

@@ -33,10 +33,9 @@ internal class Dimensions(
     val spacing: Dp = MobileSDK.getInstance().sdkTheme.dimensions.spacing,
     val shadow: Dp = MobileSDK.getInstance().sdkTheme.dimensions.shadow,
     // SDK Internal Dimensions
-    val buttonSpacing: Dp = 8.dp,
+    val buttonSpacing: Dp = 10.dp,
     val buttonIconSize: Dp = 20.dp,
-    val buttonLoaderSize: Dp = 22.dp,
-    val buttonLoaderWidth: Dp = 2.dp,
+    val buttonLoaderSize: Dp = 16.dp,
     val buttonHeight: Dp = 48.dp
 )
 

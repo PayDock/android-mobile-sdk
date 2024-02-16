@@ -19,11 +19,11 @@ package com.paydock.feature.flypay.presentation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
@@ -32,7 +32,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,26 +41,30 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paydock.R
 import com.paydock.core.FLY_PAY_REDIRECT_URL
 import com.paydock.core.data.network.error.exceptions.WebViewException
 import com.paydock.core.domain.error.displayableMessage
-import com.paydock.core.presentation.ui.extensions.alpha40
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
-import com.paydock.designsystems.components.loader.SdkButtonLoader
+import com.paydock.core.presentation.ui.utils.gradient.GradientAngle
+import com.paydock.core.presentation.ui.utils.gradient.GradientOffset
+import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.designsystems.components.sheet.SdkBottomSheet
 import com.paydock.designsystems.components.web.SdkWebView
-import com.paydock.designsystems.theme.FlyPayBlue
+import com.paydock.designsystems.theme.FlyPayDarkBlue
+import com.paydock.designsystems.theme.FlyPayLightBlue
+import com.paydock.designsystems.theme.FlyPayPink
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.designsystems.theme.typography.ArialFontFamily
 import com.paydock.feature.flypay.presentation.viewmodels.FlyPayViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -126,13 +129,6 @@ fun FlyPayWidget(
         }
     }
 
-    // Reset form state when the widget is dismissed
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.resetResultState()
-        }
-    }
-
     // Composable content rendering
     SdkTheme {
         Box(contentAlignment = Alignment.Center) {
@@ -142,6 +138,7 @@ fun FlyPayWidget(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Button to initiate FlyPay transaction
+                val gradientOffset = GradientOffset(GradientAngle.CW45)
                 Button(
                     onClick = {
                         // Use the callback to obtain the token asynchronously
@@ -157,23 +154,31 @@ fun FlyPayWidget(
                     modifier = Modifier
                         .testTag("flypayButton")
                         .fillMaxWidth()
-                        .height(Theme.dimensions.buttonHeight),
+                        .height(Theme.dimensions.buttonHeight)
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(FlyPayLightBlue, FlyPayDarkBlue, FlyPayPink),
+                                start = gradientOffset.start,
+                                end = gradientOffset.end
+                            ),
+                            shape = Theme.shapes.small
+                        ),
                     enabled = !uiState.isLoading,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = FlyPayBlue,
-                        disabledContainerColor = FlyPayBlue.alpha40
+                        containerColor = Color.Transparent
                     ),
                     shape = Theme.shapes.small
                 ) {
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(Theme.dimensions.buttonSpacing, Alignment.CenterHorizontally),
+                        horizontalArrangement = Arrangement.spacedBy(
+                            8.dp,
+                            Alignment.CenterHorizontally
+                        ),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            modifier = Modifier.fillMaxHeight(),
                             text = stringResource(R.string.button_pay_with),
                             style = Theme.typography.button.copy(
-                                fontFamily = ArialFontFamily,
                                 fontSize = 22.sp,
                                 lineHeight = 48.sp,
                                 color = Color.White,
@@ -184,12 +189,12 @@ fun FlyPayWidget(
                             painter = painterResource(id = R.drawable.ic_flypay_button),
                             contentDescription = stringResource(id = R.string.content_desc_flypay_button_icon)
                         )
-                        // Show a progress indicator if wallet is loading
-                        if (uiState.isLoading) {
-                            SdkButtonLoader()
-                        }
                     }
                 }
+            }
+            // Show a progress indicator if wallet is loading
+            if (uiState.isLoading) {
+                SdkLoader()
             }
         }
         // Sheet content
