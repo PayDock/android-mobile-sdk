@@ -45,4 +45,3 @@ val Error = Color(0xFFF93232)
 
 val Border = Color(0xFF79747E)
 val PayPalYellow = Color(0xFFFFC43A)
-val FlyPayBlue = Color(0xFF007BBF)

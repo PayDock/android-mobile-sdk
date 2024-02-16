@@ -29,7 +29,6 @@ import com.paydock.sample.feature.checkout.CheckoutViewModel
 fun FlyPayContent(viewModel: CheckoutViewModel) {
     FlyPayWidget(
         modifier = Modifier.fillMaxWidth(), token = viewModel.getWalletToken(
-            manualCapture = true,
             currencyCode = AU_CURRENCY_CODE,
             walletType = "flypay",
             gatewayId = BuildConfig.GATEWAY_ID_FLY_PAY

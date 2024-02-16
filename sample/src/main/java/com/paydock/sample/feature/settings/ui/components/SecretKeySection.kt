@@ -22,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import com.paydock.sample.BuildConfig
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
 import com.paydock.sample.designsystems.components.fields.CopyTextField
@@ -35,7 +34,7 @@ fun SecretKeySection() {
         CopyTextField(
             modifier = Modifier.fillMaxWidth(),
             readOnly = false,
-            value = BuildConfig.SECRET_KEY
+            value = "1e092408bsdsh4343232js"
         )
     }
 }

@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -38,6 +37,7 @@ import com.paydock.core.data.network.error.exceptions.ComponentException
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.components.SdkButton
+import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.presentation.components.CardExpiryInput
@@ -81,12 +81,6 @@ fun CardDetailsWidget(
     LaunchedEffect(uiState.value.token) {
         uiState.value.token?.let { token ->
             completion(Result.success(token))
-        }
-    }
-
-    // Reset form state when the widget is dismissed
-    DisposableEffect(Unit) {
-        onDispose {
             viewModel.resetResultState()
         }
     }
@@ -168,11 +162,13 @@ fun CardDetailsWidget(
                         .fillMaxWidth()
                         .testTag("saveCard"),
                     text = stringResource(R.string.button_submit),
-                    enabled = uiState.value.isDataValid && !uiState.value.isLoading,
-                    isLoading = uiState.value.isLoading
+                    enabled = uiState.value.isDataValid && !uiState.value.isLoading
                 ) {
                     viewModel.tokeniseCard()
                 }
+            }
+            if (uiState.value.isLoading) {
+                SdkLoader()
             }
         }
     }

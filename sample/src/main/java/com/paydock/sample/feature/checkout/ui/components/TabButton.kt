@@ -35,7 +35,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.designsystems.theme.Border
-import com.paydock.sample.designsystems.theme.Theme
 
 @Composable
 fun TabButton(
@@ -57,7 +56,7 @@ fun TabButton(
                 shape = RoundedCornerShape(size = 4.dp)
             )
             .background(
-                color = if (isSelected) selectedBackgroundColor else Theme.colors.tertiaryContainer,
+                color = if (isSelected) selectedBackgroundColor else Color.White,
                 shape = RoundedCornerShape(size = 4.dp)
             )
             .selectable(

@@ -17,12 +17,10 @@
 
 package com.paydock.feature.flypay.presentation.viewmodels
 
-import com.paydock.MobileSDK
 import com.paydock.core.FLY_PAY_REDIRECT_URL
 import com.paydock.core.TYPE_CREATE_SESSION
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.toError
-import com.paydock.core.domain.model.Environment
 import com.paydock.feature.flypay.presentation.state.FlyPayViewState
 import com.paydock.feature.wallet.data.api.dto.WalletCallbackRequest
 import com.paydock.feature.wallet.domain.model.WalletCallback
@@ -107,8 +105,6 @@ internal class FlyPayViewModel(
      * @param flyPayOrderId The FlyPay orderId.
      * @return The composed URL with FlyPay parameters.
      */
-    fun createFlyPayUrl(flyPayOrderId: String): String = when (MobileSDK.getInstance().environment) {
-        Environment.PRODUCTION -> "https://api.opapi.au/?orderId=$flyPayOrderId&redirectUrl=$FLY_PAY_REDIRECT_URL"
-        else -> "https://release.checkout.beem.com.au/?orderId=$flyPayOrderId&redirectUrl=$FLY_PAY_REDIRECT_URL" // default to sandbox
-    }
+    fun createFlyPayUrl(flyPayOrderId: String): String =
+        "https://checkout.release.cxbflypay.com.au/?orderId=$flyPayOrderId&redirectUrl=$FLY_PAY_REDIRECT_URL" // This is the sandbox URL
 }

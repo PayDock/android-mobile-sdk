@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -48,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.core.presentation.ui.extensions.alpha40
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
-import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 import com.paydock.designsystems.type.AppButtonType
@@ -71,14 +71,7 @@ internal fun SdkButton(
             onClick = onClick,
             enabled = enabled && !isLoading,
             shape = buttonShape,
-            content = {
-                ButtonContent(
-                    text = text,
-                    vector = iconVector,
-                    drawableRes = iconDrawable,
-                    isLoading = isLoading
-                )
-            }
+            content = { ButtonContent(text = text, vector = iconVector, drawableRes = iconDrawable, isLoading = isLoading) }
         )
 
         AppButtonType.Outlined -> OutlinedButton(
@@ -145,37 +138,42 @@ private fun RowScope.ButtonContent(
     Crossfade(targetState = isLoading, label = "buttonCrossFade") { loadingState ->
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Theme.dimensions.buttonSpacing, Alignment.CenterHorizontally),
+            horizontalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Display the icon (if any) and text in a consistent layout
-            if (vector != null) {
-                Icon(
-                    modifier = Modifier.size(Theme.dimensions.buttonIconSize),
-                    imageVector = vector,
-                    contentDescription = stringResource(id = R.string.content_desc_button_icon),
-                    tint = Theme.colors.onPrimary
-                )
-                Spacer(modifier = Modifier.width(Theme.dimensions.buttonSpacing))
-            } else if (drawableRes != null) {
-                Icon(
-                    modifier = Modifier.size(Theme.dimensions.buttonIconSize),
-                    painter = painterResource(drawableRes),
-                    contentDescription = stringResource(id = R.string.content_desc_button_icon),
-                    tint = Theme.colors.onPrimary
-                )
-                Spacer(modifier = Modifier.width(Theme.dimensions.buttonSpacing))
-            }
-            Text(
-                text = text,
-                modifier = Modifier.align(Alignment.CenterVertically),
-                textAlign = TextAlign.Center,
-                style = Theme.typography.button.copy(
-                    platformStyle = PlatformTextStyle(includeFontPadding = false)
-                )
-            )
             if (loadingState) {
-                SdkButtonLoader()
+                CircularProgressIndicator(
+                    color = Theme.colors.onPrimary,
+                    modifier = Modifier.size(Theme.dimensions.buttonLoaderSize),
+                    strokeWidth = 1.5.dp
+                )
+            } else {
+                // Display the icon (if any) and text in a consistent layout
+                if (vector != null) {
+                    Icon(
+                        modifier = Modifier.size(Theme.dimensions.buttonIconSize),
+                        imageVector = vector,
+                        contentDescription = stringResource(id = R.string.content_desc_button_icon),
+                        tint = Theme.colors.onPrimary
+                    )
+                    Spacer(modifier = Modifier.width(Theme.dimensions.buttonSpacing))
+                } else if (drawableRes != null) {
+                    Icon(
+                        modifier = Modifier.size(Theme.dimensions.buttonIconSize),
+                        painter = painterResource(drawableRes),
+                        contentDescription = stringResource(id = R.string.content_desc_button_icon),
+                        tint = Theme.colors.onPrimary
+                    )
+                    Spacer(modifier = Modifier.width(Theme.dimensions.buttonSpacing))
+                }
+                Text(
+                    text = text,
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    textAlign = TextAlign.Center,
+                    style = Theme.typography.button.copy(
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    )
+                )
             }
         }
     }

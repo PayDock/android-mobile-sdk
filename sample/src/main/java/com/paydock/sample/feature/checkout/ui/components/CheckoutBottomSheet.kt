@@ -30,7 +30,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,7 +40,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.paydock.designsystems.components.sheet.SdkBottomSheet
 import com.paydock.sample.designsystems.components.button.AppButton
-import com.paydock.sample.designsystems.theme.Theme
 import com.paydock.sample.feature.checkout.CheckoutUIState
 import com.paydock.sample.feature.checkout.CheckoutViewModel
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
@@ -64,7 +62,7 @@ fun CheckoutBottomSheet(
         )
     var selectedTab by remember { mutableStateOf(supportedPaymentMethods.first()) }
     SdkBottomSheet(
-        containerColor = Theme.colors.surface,
+        containerColor = Color.White,
         bottomSheetState = bottomSheetState,
         onDismissRequest = onDismissRequest
     ) {
