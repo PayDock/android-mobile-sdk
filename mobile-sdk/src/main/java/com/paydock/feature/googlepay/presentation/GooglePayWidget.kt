@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -163,6 +164,13 @@ fun GooglePayWidget(
     LaunchedEffect(uiState.chargeData) {
         uiState.chargeData?.let { response ->
             completion(Result.success(response))
+            viewModel.resetResultState()
+        }
+    }
+
+    // Reset form state when the widget is dismissed
+    DisposableEffect(Unit) {
+        onDispose {
             viewModel.resetResultState()
         }
     }

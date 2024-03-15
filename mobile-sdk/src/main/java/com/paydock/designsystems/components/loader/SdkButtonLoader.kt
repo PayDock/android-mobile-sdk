@@ -15,25 +15,27 @@
  * limitations under the License.
  */
 
-package com.paydock.sample.feature.checkout.ui.components
+package com.paydock.designsystems.components.loader
 
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.paydock.feature.flypay.presentation.FlyPayWidget
-import com.paydock.sample.BuildConfig
-import com.paydock.sample.core.AU_CURRENCY_CODE
-import com.paydock.sample.feature.checkout.CheckoutViewModel
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import com.paydock.core.presentation.ui.preview.LightDarkPreview
+import com.paydock.designsystems.theme.Theme
 
+@LightDarkPreview
 @Composable
-fun FlyPayContent(viewModel: CheckoutViewModel) {
-    FlyPayWidget(
-        modifier = Modifier.fillMaxWidth(), token = viewModel.getWalletToken(
-            manualCapture = true,
-            currencyCode = AU_CURRENCY_CODE,
-            walletType = "flypay",
-            gatewayId = BuildConfig.GATEWAY_ID_FLY_PAY
-        ),
-        completion = viewModel::handleFlyPayResult
+internal fun SdkButtonLoader(
+    loaderSize: Dp = Theme.dimensions.buttonLoaderSize,
+    color: Color = Theme.colors.onPrimary,
+    strokeWidth: Dp = Theme.dimensions.buttonLoaderWidth
+) {
+    CircularProgressIndicator(
+        modifier = Modifier.size(loaderSize),
+        color = color,
+        strokeWidth = strokeWidth
     )
 }

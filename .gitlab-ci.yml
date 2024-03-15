@@ -6,15 +6,21 @@ variables:
   ANDROID_SDK_TOOLS:   "9477386"
 
 stages:
+  - .pre
   - build
   - test
+  - .post
 
-before_script:
-  - gem install bundler -v 1.17.2
-  - bundle update
+include:
+  - project: 'paydock/platform/gitlab-templates'
+    ref: main
+    file: '/security/gitlab-defectdojo.yaml'
 
 buildExampleApp:
   stage: build
+  before_script:
+    - gem install bundler -v 1.17.2
+    - bundle update
   script: 
     - bundle --version
     - bundle exec fastlane buildDebug
@@ -24,6 +30,9 @@ buildExampleApp:
 
 test:
   stage: test
+  before_script:
+    - gem install bundler -v 1.17.2
+    - bundle update
   script:
     - bundle exec fastlane test
   artifacts:

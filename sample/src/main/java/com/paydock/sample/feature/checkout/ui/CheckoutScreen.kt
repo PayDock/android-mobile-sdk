@@ -52,7 +52,10 @@ fun CheckoutScreen(viewModel: CheckoutViewModel = hiltViewModel()) {
         open3DSBottomSheet = open3DSBottomSheet,
         bottom3DSSheetState = bottom3DSSheetState,
         uiState = uiState,
-        onCheckoutButtonClick = { openBottomSheet = true },
+        onCheckoutButtonClick = {
+            viewModel.resetResultState()
+            openBottomSheet = true
+        },
         onShow3DSBottomSheet = { open3DSBottomSheet = true },
         onDismissBottomSheet = { openBottomSheet = false },
         onDismiss3DSBottomSheet = { open3DSBottomSheet = false },
