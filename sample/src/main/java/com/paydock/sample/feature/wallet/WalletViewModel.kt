@@ -46,6 +46,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
     }
 
     private fun initiateWalletTransaction(
+        manualCapture: Boolean,
         currencyCode: String,
         walletType: String,
         gatewayId: String,
@@ -64,11 +65,14 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                     )
                 )
             )
-            val result = initiateWalletTransactionUseCase(request)
-            result.onSuccess { token ->
-                callback(token)
+            val result = initiateWalletTransactionUseCase(manualCapture = manualCapture, request = request)
+            result.onSuccess { charge ->
+                val walletToken = charge.walletToken
+                if (walletToken != null) {
+                    callback(walletToken)
+                }
                 _stateFlow.update { state ->
-                    state.copy(token = token, isLoading = false, error = null)
+                    state.copy(token = walletToken, isLoading = false, error = null)
                 }
             }
             result.onFailure {
@@ -84,12 +88,14 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
     }
 
     fun getWalletToken(
+        manualCapture: Boolean = false,
         currencyCode: String,
         walletType: String,
         gatewayId: String
     ): (onTokenReceived: (String) -> Unit) -> Unit = { onTokenReceived ->
         resetResultState()
         initiateWalletTransaction(
+            manualCapture = manualCapture,
             currencyCode = currencyCode,
             walletType = walletType,
             gatewayId = gatewayId,

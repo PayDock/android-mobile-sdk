@@ -34,3 +34,15 @@ internal val AcidGroteskFontFamily = FontFamily(
 )
 
 internal val AcidGroteskFontList = listOf(AcidGroteskNormal)
+
+internal val ArialNormal = Font(
+    resId = R.font.arial,
+    weight = FontWeight.Normal,
+    style = FontStyle.Normal
+)
+
+internal val ArialFontFamily = FontFamily(
+    ArialNormal
+)
+
+internal val ArialFontList = listOf(ArialNormal)

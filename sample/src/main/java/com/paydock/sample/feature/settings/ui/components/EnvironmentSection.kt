@@ -27,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.paydock.MobileSDK
+import com.paydock.core.domain.model.Environment
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
 import com.paydock.sample.designsystems.components.fields.DropdownListField
@@ -39,9 +41,8 @@ fun EnvironmentSection() {
         title = stringResource(R.string.label_environment),
         subTitle = "api-sandbox.paydock,com"
     ) {
-
-        val items = stringArrayResource(id = R.array.array_environments).toList()
-        var selectedItem by remember { mutableStateOf(items.first()) }
+        val items = Environment.entries.toTypedArray().map { it.name }
+        var selectedItem by remember { mutableStateOf(MobileSDK.getInstance().environment.name) }
         DropdownListField(
             modifier = Modifier.fillMaxWidth(),
             items = items,

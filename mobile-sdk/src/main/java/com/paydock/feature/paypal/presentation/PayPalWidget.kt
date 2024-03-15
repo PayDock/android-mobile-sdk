@@ -22,6 +22,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
@@ -29,6 +30,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -48,7 +50,7 @@ import com.paydock.core.data.network.error.exceptions.WebViewException
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.presentation.ui.extensions.alpha40
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
-import com.paydock.designsystems.components.loader.SdkLoader
+import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.components.sheet.SdkBottomSheet
 import com.paydock.designsystems.components.web.SdkWebView
 import com.paydock.designsystems.theme.PayPal
@@ -150,6 +152,13 @@ fun PayPalWidget(
         }
     }
 
+    // Reset form state when the widget is dismissed
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.resetResultState()
+        }
+    }
+
     SdkTheme {
         Box(contentAlignment = Alignment.Center) {
             Column(
@@ -182,10 +191,19 @@ fun PayPalWidget(
                     ),
                     shape = Theme.shapes.small
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_paypal_button),
-                        contentDescription = stringResource(id = R.string.content_desc_paypal_button_icon)
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(Theme.dimensions.buttonSpacing, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_paypal_button),
+                            contentDescription = stringResource(id = R.string.content_desc_paypal_button_icon)
+                        )
+                        // Show a progress indicator if wallet is loading
+                        if (uiState.isLoading) {
+                            SdkButtonLoader()
+                        }
+                    }
                 }
             }
 
@@ -236,15 +254,17 @@ fun PayPalWidget(
                                 }
                             }
                             // Invoke the onWebViewError callback with the PayPal exception
-                            completion(Result.failure(WebViewException.PayPalException(code = status, displayableMessage = message)))
+                            completion(
+                                Result.failure(
+                                    WebViewException.PayPalException(
+                                        code = status,
+                                        displayableMessage = message
+                                    )
+                                )
+                            )
                         }
                     }
                 }
-            }
-
-            // Show a progress indicator if wallet is loading
-            if (uiState.isLoading) {
-                SdkLoader()
             }
         }
     }

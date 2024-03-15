@@ -43,6 +43,7 @@ import com.paydock.designsystems.theme.SdkSuccessLight
 import com.paydock.designsystems.theme.SdkTextDark
 import com.paydock.designsystems.theme.SdkTextLight
 import com.paydock.designsystems.theme.typography.AcidGroteskFontList
+import com.paydock.designsystems.theme.typography.ArialFontList
 
 /**
  * MobileSDKTheme is a customizable theme for the SDK that provides color, dimension, and font values.
@@ -173,7 +174,7 @@ class MobileSDKTheme(
     }
 
     object FontName {
-        fun themeFont(fonts: List<Font> = AcidGroteskFontList): ThemeFont = ThemeFont(
+        fun themeFont(fonts: List<Font> = AcidGroteskFontList + ArialFontList): ThemeFont = ThemeFont(
             familyName = FontFamily(fonts)
         )
 

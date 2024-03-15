@@ -1,8 +1,8 @@
 /*
- * Created by Paydock on 1/26/24, 6:24 PM
- * Copyright (c) 2024 Paydock Ltd.
+ * Created by Paydock on 10/16/23, 11:30 AM
+ * Copyright (c) 2023 Lasting. All rights reserved.
  *
- * Last modified 1/26/24, 5:58 PM
+ * Last modified 10/16/23, 11:26 AM
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-package com.paydock.sample.feature.wallet.domain.repository
+package com.paydock.sample.feature.wallet.data.api.dto
 
-import com.paydock.sample.feature.wallet.data.api.dto.InitiateWalletRequest
-import com.paydock.sample.feature.wallet.domain.model.WalletCharge
+import com.google.gson.annotations.SerializedName
 
-interface WalletRepository {
-    suspend fun initiateWalletTransaction(manualCapture: Boolean, request: InitiateWalletRequest): WalletCharge
-    suspend fun captureWalletCharge(chargeId: String): WalletCharge
-}
+data class WalletChargeData(
+    @SerializedName("_id") val id: String,
+    val status: String
+    // We do not need any other response properties (ie. charge details)
+)

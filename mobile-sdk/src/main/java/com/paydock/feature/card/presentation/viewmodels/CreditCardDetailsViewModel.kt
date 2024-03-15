@@ -72,7 +72,14 @@ internal class CreditCardDetailsViewModel(
      */
     fun resetResultState() {
         updateState { state ->
-            state.copy(token = null, error = null)
+            state.copy(
+                token = null,
+                error = null,
+                cardholderName = "",
+                cardNumber = "",
+                expiry = "",
+                code = ""
+            )
         }
     }
 
@@ -117,7 +124,6 @@ internal class CreditCardDetailsViewModel(
      */
     fun tokeniseCard() {
         launchOnIO {
-            resetResultState()
             updateState { state ->
                 state.copy(isLoading = true)
             }
@@ -165,7 +171,9 @@ internal data class CreditCardDetailsViewState(
      */
     val isDataValid: Boolean
         get() = CardHolderNameValidator.checkHolderName(cardholderName) &&
-            CreditCardNumberValidator.checkNumber(cardNumber) && CreditCardInputValidator.isLuhnValid(cardNumber) &&
+            CreditCardNumberValidator.checkNumber(cardNumber) && CreditCardInputValidator.isLuhnValid(
+                cardNumber
+            ) &&
             CardExpiryValidator.isExpiryValid(expiry) &&
             CardSecurityCodeValidator.isSecurityCodeValid(code, securityCodeType)
 

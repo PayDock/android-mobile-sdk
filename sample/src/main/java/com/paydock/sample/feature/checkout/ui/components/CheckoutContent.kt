@@ -67,11 +67,13 @@ fun CheckoutContent(
         }
     }
 
-    LaunchedEffect(uiState.flyPayResult) {
-        uiState.flyPayResult?.let {
-            // TODO - Implement a success screen state
-            context.toast("Transaction Successful")
-            onDismissBottomSheet()
+    LaunchedEffect(uiState.walletChargeResult) {
+        uiState.walletChargeResult?.let { charge ->
+            if (charge.status == "complete") {
+                // TODO - Implement a success screen state
+                context.toast("Transaction Successful")
+                onDismissBottomSheet()
+            }
         }
     }
 
@@ -96,7 +98,6 @@ fun CheckoutContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Theme.colors.primaryContainer)
                 .wrapContentSize(Alignment.Center)
                 .padding(all = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
