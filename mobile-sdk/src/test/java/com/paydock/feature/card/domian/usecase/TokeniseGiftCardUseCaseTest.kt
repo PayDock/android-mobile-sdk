@@ -1,24 +1,10 @@
-/*
- * Created by Paydock on 1/26/24, 6:24 PM
- * Copyright (c) 2024 Paydock Ltd.
- *
- * Last modified 1/26/24, 2:24 PM
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.paydock.feature.card.domian.usecase
 
 import com.paydock.core.BaseKoinUnitTest
-import com.paydock.core.data.network.error.exceptions.ApiException
+import com.paydock.core.MobileSDKTestConstants
+import com.paydock.core.data.network.error.ApiErrorResponse
+import com.paydock.core.data.network.error.ErrorSummary
+import com.paydock.core.domain.error.exceptions.ApiException
 import com.paydock.core.extensions.convertToDataClass
 import com.paydock.feature.card.data.api.dto.TokeniseCardRequest
 import com.paydock.feature.card.domain.model.TokenisedCardDetails
@@ -51,7 +37,10 @@ class TokeniseGiftCardUseCaseTest : BaseKoinUnitTest() {
         val request =
             readResourceFile("card/valid_tokenise_gift_card_request.json").convertToDataClass<TokeniseCardRequest.GiftCard>()
         val expectedResult =
-            TokenisedCardDetails(type = "token", token = "f6301700-dcfe-4640-aabf-eff4ee3d96a6")
+            TokenisedCardDetails(
+                type = "token",
+                token = MobileSDKTestConstants.Card.MOCK_CARD_TOKEN
+            )
         coEvery { mockRepository.tokeniseCardDetails(request) } returns expectedResult
         // WHEN
         val actualResult = tokeniseCreditCardUseCase(request)
@@ -68,8 +57,13 @@ class TokeniseGiftCardUseCaseTest : BaseKoinUnitTest() {
             readResourceFile("card/invalid_tokenise_gift_card_request.json").convertToDataClass<TokeniseCardRequest.GiftCard>()
         val expectedResult =
             ApiException(
-                code = HttpStatusCode.BadRequest.value,
-                displayableMessage = "Card scheme is required"
+                error = ApiErrorResponse(
+                    status = HttpStatusCode.BadRequest.value,
+                    summary = ErrorSummary(
+                        code = "bad_request",
+                        message = MobileSDKTestConstants.Errors.MOCK_INVALID_GIFT_CARD_DETAILS_ERROR
+                    )
+                )
             )
         coEvery { mockRepository.tokeniseCardDetails(request) } throws expectedResult
         // WHEN

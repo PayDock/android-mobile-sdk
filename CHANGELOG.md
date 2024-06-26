@@ -1,18 +1,45 @@
 # Changelog
 
-## [1.0.1]
+## [1.1.0] - 2024-06-25
+
 ### Added
-- README file with SDK documentation repo references
+
+- Widget based error/exception handling
+- Afterpay SDK widget with Sample App integration
+- Mastercard SRC SDK widget with Sample App integration
+- Set fixed version for client-sdk (v1.108.0)
 
 ### Changed
+
+- Card Widget to include save card toggle with consent text
 - Minor improvements
 - Sample app updates for SDK
 
 ### Fixed
+
+- Updated FlyPay url's with other minor changes
+- PayPal redirect url's handling
+- SSL pinning hashes
+
+## [1.0.1] - 2024-03-15
+
+### Added
+
+- README file with SDK documentation repo references
+
+### Changed
+
+- Minor improvements
+- Sample app updates for SDK
+
+### Fixed
+
 - Updated FlyPay sandbox URL
 - Widget state issues
 
 ## [1.0.0] - 2024-01-29
+
 ### Added
+
 - Initial Paydock Android MobileSDK release
 - Widgets for checkout integration (Card Tokenisation, PayPal, Google Pay, 3DS, Address, FlyPay)

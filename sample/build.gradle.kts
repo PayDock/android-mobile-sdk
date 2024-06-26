@@ -1,38 +1,4 @@
-/*
- * Created by Paydock on 1/26/24, 6:24 PM
- * Copyright (c) 2024 Paydock Ltd.
- *
- * Last modified 1/26/24, 5:58 PM
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
-
-/*
- * Created by Paydock on 7/6/23, 5:02 PM
- * Copyright (c) 2023 Lasting. All rights reserved.
- *
- * Last modified 7/5/23, 11:59 AM
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 plugins {
     alias(libs.plugins.android.application)
@@ -90,6 +56,18 @@ android {
 
         buildConfigField(
             "String",
+            "GATEWAY_ID_AFTER_PAY",
+            getPropertyValue("GATEWAY_ID_AFTER_PAY")
+        )
+
+        buildConfigField(
+            "String",
+            "GATEWAY_ID_MASTERCARD_SRC",
+            getPropertyValue("GATEWAY_ID_MASTERCARD_SRC")
+        )
+
+        buildConfigField(
+            "String",
             "MERCHANT_IDENTIFIER",
             getPropertyValue("MERCHANT_IDENTIFIER")
         )
@@ -140,13 +118,13 @@ android {
     }
 }
 
-fun getPropertyValue(propertyName: String): String {
+fun getPropertyValue(propertyName: String, defaultValue: String = ""): String {
     val envValue = System.getenv(propertyName)
     if (envValue != null) {
         return envValue
     }
-    val localProperties = gradleLocalProperties(rootDir)
-    return localProperties.getProperty(propertyName) ?: ""
+    val localProperties = gradleLocalProperties(rootDir, providers)
+    return localProperties.getProperty(propertyName) ?: defaultValue
 }
 
 dependencies {

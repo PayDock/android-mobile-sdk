@@ -1,19 +1,4 @@
-/*
- * Created by Paydock on 1/26/24, 6:24 PM
- * Copyright (c) 2024 Paydock Ltd.
- *
- * Last modified 1/26/24, 4:15 PM
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 
 plugins {
     alias(libs.plugins.android.library)
@@ -37,7 +22,7 @@ android {
 
     buildTypes {
         getByName("debug") {
-            buildConfigField("boolean", "DEB_BUILD", "true")
+            buildConfigField("boolean", "DEV_BUILD", "true")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -45,7 +30,7 @@ android {
             )
         }
         getByName("release") {
-            buildConfigField("boolean", "DEB_BUILD", "false")
+            buildConfigField("boolean", "DEV_BUILD", "false")
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -69,13 +54,41 @@ android {
         kotlinCompilerExtensionVersion = "1.5.4"
     }
     testOptions.unitTests.all {
-        it.jvmArgs("--add-opens", "java.base/java.lang=ALL-UNNAMED", "--add-opens", "java.base/java.lang.reflect=ALL-UNNAMED")
+        it.jvmArgs(
+            "--add-opens",
+            "java.base/java.lang=ALL-UNNAMED",
+            "--add-opens",
+            "java.base/java.lang.reflect=ALL-UNNAMED"
+        )
     }
     packaging {
         resources {
             excludes += "/META-INF/{LICENSE.md,LICENSE-notice.md}"
         }
     }
+}
+
+publishingConfig {
+    groupId = "com.paydock"
+    version = "1.1.0"
+    artifactId = "mobile-sdk"
+    projectId = "52671182"
+    projectGithubUrl = "https://github.com/PayDock/android-mobile-sdk"
+    projectDescription = "The Paydock Mobile Android SDK provides an easy way to build and integrate with the Paydock " +
+        "orchestration platform for an Android app. We provide powerful and customizable UI elements that can be used " +
+        "out-of-the-box to collect your users' payment details. We also expose the low-level APIs that power those UIs so " +
+        "that you can build fully custom experiences."
+    packagingOption = "aar"
+    includeSources = false // This is included by default for Android libraries
+}
+
+fun getPropertyValue(propertyName: String): String {
+    val envValue = System.getenv(propertyName)
+    if (envValue != null) {
+        return envValue
+    }
+    val localProperties = gradleLocalProperties(rootDir, providers)
+    return localProperties.getProperty(propertyName) ?: ""
 }
 
 dependencies {
@@ -85,6 +98,7 @@ dependencies {
     // Compose
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose.sdk)
+    implementation(libs.compose.webview)
     debugImplementation(libs.bundles.compose.debug)
     // Kotlin
     implementation(platform(libs.kotlin.bom))
@@ -102,6 +116,8 @@ dependencies {
     testImplementation(libs.okhttp3.mockwebserver)
     // Google Services
     implementation(libs.bundles.google.pay.services)
+    // Afterpay SDK
+    implementation(libs.afterpay.android)
     // Unit Testing
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
