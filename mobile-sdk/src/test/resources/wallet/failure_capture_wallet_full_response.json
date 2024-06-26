@@ -40,7 +40,6 @@
         "address_city": "San Jose",
         "address_postcode": "95131",
         "contact": {
-
         }
       },
       "schedule": {
@@ -48,10 +47,8 @@
       },
       "archived": false,
       "_3ds": {
-
       },
       "fraud": {
-
       },
       "meta": {
         "store_id": "007",
@@ -87,16 +84,12 @@
           "processed_at": "2023-10-31T12:00:06.836Z",
           "_source_ip_address": "102.132.219.129",
           "_3ds": {
-
           },
           "card_acceptor": {
-
           },
           "service_logs": [
-
           ],
           "fraud": {
-
           }
         },
         {
@@ -114,17 +107,13 @@
           "processed_at": "2023-10-31T12:01:18.759Z",
           "_source_ip_address": "102.132.219.129",
           "_3ds": {
-
           },
           "transaction_id": null,
           "card_acceptor": {
-
           },
           "service_logs": [
-
           ],
           "fraud": {
-
           }
         }
       ]

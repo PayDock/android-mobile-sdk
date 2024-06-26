@@ -1,0 +1,8 @@
+{
+  "payment_method_id": null,
+  "customer": {
+    "payment_source": {
+      "ref_token": "001.odp34iemi3949pitf32aeiea1g3s74vdaqf2lu881ujk9rd0"
+    }
+  }
+}

@@ -1,31 +1,23 @@
-/*
- * Created by Paydock on 1/26/24, 6:24 PM
- * Copyright (c) 2024 Paydock Ltd.
- *
- * Last modified 1/26/24, 2:24 PM
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.paydock.core.data.network
 
-import com.paydock.core.BaseKoinUnitTest
+import android.content.Context
+import com.paydock.MobileSDK
+import com.paydock.core.BaseUnitTest
 import com.paydock.core.data.injection.modules.mockSuccessNetworkModule
 import com.paydock.core.data.injection.modules.sslFailNetworkTestModule
 import com.paydock.core.data.injection.modules.sslSuccessNetworkTestModule
+import com.paydock.core.domain.model.Environment
+import com.paydock.initializeMobileSDK
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import org.junit.After
+import org.junit.Before
 import org.koin.core.context.GlobalContext.loadKoinModules
 import org.koin.core.context.GlobalContext.unloadKoinModules
+import org.koin.core.context.stopKoin
 import org.koin.test.inject
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -34,13 +26,39 @@ import kotlin.test.assertFails
 /**
  * This class contains unit tests for testing SSL pinning.
  */
-class SslPinningTest : BaseKoinUnitTest() {
+class SslPinningTest : BaseUnitTest() {
+
+    private lateinit var context: Context
+
+    @Before
+    override fun setUpMocks() {
+        super.setUpMocks()
+        // Mock the Context object
+        context = mockk()
+        // Configure the getApplicationContext() method to return the mock Context
+        every { context.applicationContext } returns context
+    }
+
+    @After
+    fun resetMocks() {
+        MobileSDK.reset() // Reset MobileSDK before each test
+    }
+
+    @After
+    fun tearDownKoin() {
+        // As the SDK will startKoin, we need to ensure that after each test we stop koin to be able to restart it in each test
+        stopKoin()
+    }
 
     /**
      * Tests that the application fails if the certificate for `paydock.com` is not pinned.
      */
     @Test
     fun `should fail if incorrect certificate is pinned`() = runTest {
+        val publicKey = "sample_public_key"
+        val environment = Environment.STAGING
+
+        context.initializeMobileSDK(publicKey, environment)
         // Unload the mock network module and load the sslFailNetworkTestModule.
         unloadKoinModules(mockSuccessNetworkModule)
         loadKoinModules(sslFailNetworkTestModule)
@@ -55,6 +73,10 @@ class SslPinningTest : BaseKoinUnitTest() {
      */
     @Test
     fun `should fail if requesting invalid hostname`() = runTest {
+        val publicKey = "sample_public_key"
+        val environment = Environment.STAGING
+
+        context.initializeMobileSDK(publicKey, environment)
         // Unload the mock network module and load the sslSuccessNetworkTestModule.
         unloadKoinModules(mockSuccessNetworkModule)
         loadKoinModules(sslSuccessNetworkTestModule)
@@ -69,6 +91,10 @@ class SslPinningTest : BaseKoinUnitTest() {
      */
     @Test
     fun `should succeed if certificate is pinned`() = runTest {
+        val publicKey = "sample_public_key"
+        val environment = Environment.STAGING
+
+        context.initializeMobileSDK(publicKey, environment)
         // Unload the mock network module and load the sslSuccessNetworkTestModule.
         unloadKoinModules(mockSuccessNetworkModule)
         loadKoinModules(sslSuccessNetworkTestModule)

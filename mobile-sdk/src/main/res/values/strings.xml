@@ -1,19 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-  ~ Created by Paydock on 1/26/24, 6:24 PM
-  ~ Copyright (c) 2024 Paydock Ltd.
-  ~
-  ~ Last modified 1/26/24, 4:15 PM
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~ http://www.apache.org/licenses/LICENSE-2.0
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
+<?xml version="1.0" encoding="utf-8"?>
 
 <resources>
     <!-- region Labels -->
@@ -48,8 +33,16 @@
     <string name="error_web_unknown_error">An unexpected error occurred</string>
     <string name="error_web_display_error">Sorry, there was an issue loading the page: %s</string>
     <string name="error_googlepay_payment_methods">Unexpected non API exception when trying to retrieve [allowedPaymentMethods] parameter from paymentRequest!</string>
-    <string name="error_paypal_cancelled_error">PayPal transaction was cancelled!</string>
-    <string name="error_flypay_cancelled_error">FlyPay transaction was cancelled!</string>
+    <string name="error_googlepay_cancelled">Google Pay transaction was cancelled!</string>
+    <string name="error_googlepay_unexpected">An unexpected error has occurred trying to use Google Pay!</string>
+    <string name="error_paypal_cancelled">PayPal transaction was cancelled!</string>
+    <string name="error_flypay_cancelled">FlyPay transaction was cancelled!</string>
+    <string name="error_wallet_cancelled">A wallet token is always associated with a wallet transaction!</string>
+    <string name="error_afterpay_cancelled">Afterpay transaction was cancelled!</string>
+    <string name="error_afterpay_sdk_internal_data">Intent should always be populated by the SDK!</string>
+    <string name="error_afterpay_sdk_internal_token">A token is always associated with a successful Afterpay transaction!</string>
+    <string name="error_afterpay_sdk_internal_status">A cancelled Afterpay transaction always contains a status!</string>
+    <string name="error_mastercard_src_cancelled">Mastercard SRC transaction was cancelled!</string>
     <string name="error_3ds_cancelled_error">3DS transaction was cancelled!</string>
     <!-- endregion -->
     <!-- region Buttons -->
