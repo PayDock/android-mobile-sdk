@@ -1,0 +1,10 @@
+{
+  "status": 200,
+  "error": null,
+  "resource": {
+    "type": "charge",
+    "data": {
+      "status": "failed"
+    }
+  }
+}

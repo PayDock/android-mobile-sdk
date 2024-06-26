@@ -1,27 +1,12 @@
-/*
- * Created by Paydock on 1/26/24, 6:24 PM
- * Copyright (c) 2024 Paydock Ltd.
- *
- * Last modified 1/26/24, 2:24 PM
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.paydock.core.data.injection.modules
 
+import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.network.error.ApiErrorInterceptor
 import com.paydock.core.extensions.convertToDataClass
 import com.paydock.core.utils.MockResponseFileReader
 import com.paydock.feature.card.data.api.auth.CardAuthInterceptor
 import com.paydock.feature.wallet.data.api.dto.WalletCallbackRequest
+import com.paydock.feature.wallet.domain.model.WalletType
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
@@ -295,6 +280,7 @@ fun provideHttpMockClient(
 /**
  * This function is used to handle requests that are made to the mock HTTP engine
  **/
+@Suppress("LongMethod")
 private fun MockRequestHandleScope.handleRequest(request: HttpRequestData): HttpResponseData {
     return when {
         // Check for matching endpoint path
@@ -321,24 +307,48 @@ private fun MockRequestHandleScope.handleRequest(request: HttpRequestData): Http
                 // Need to determine which request are we using and respond correctly
                 val callbackRequest = (request.body as OutgoingContent.ByteArrayContent).bytes()
                     .decodeToString().convertToDataClass<WalletCallbackRequest>()
-                if (callbackRequest.walletType == "paypal") {
-                    // Check if the custom header indicating success is present
-                    respond(
-                        content = MockResponseFileReader("wallet/success_paypal_wallet_callback_response.json").content,
-                        status = HttpStatusCode.OK,
-                        headers = headersOf(HttpHeaders.ContentType, "application/json")
-                    )
-                } else {
-                    // Check if the custom header indicating success is present
-                    respond(
-                        content = MockResponseFileReader("wallet/success_flypay_wallet_callback_response.json").content,
-                        status = HttpStatusCode.OK,
-                        headers = headersOf(HttpHeaders.ContentType, "application/json")
-                    )
+                when (callbackRequest.walletType) {
+                    WalletType.PAY_PAL.type -> {
+                        // Check if the custom header indicating success is present
+                        respond(
+                            content = MockResponseFileReader("wallet/success_paypal_wallet_callback_response.json").content,
+                            status = HttpStatusCode.OK,
+                            headers = headersOf(HttpHeaders.ContentType, "application/json")
+                        )
+                    }
+
+                    WalletType.AFTER_PAY.type -> {
+                        // Check if the custom header indicating success is present
+                        respond(
+                            content = MockResponseFileReader("wallet/success_afterpay_wallet_callback_response.json").content,
+                            status = HttpStatusCode.OK,
+                            headers = headersOf(HttpHeaders.ContentType, "application/json")
+                        )
+                    }
+
+                    WalletType.FLY_PAY.type -> {
+                        // Check if the custom header indicating success is present
+                        respond(
+                            content = MockResponseFileReader("wallet/success_flypay_wallet_callback_response.json").content,
+                            status = HttpStatusCode.OK,
+                            headers = headersOf(HttpHeaders.ContentType, "application/json")
+                        )
+                    }
+
+                    else -> errorResponse()
                 }
             } else {
                 errorResponse()
             }
+        }
+
+        request.url.encodedPath.endsWith("/charges/wallet/${MobileSDKTestConstants.Charge.MOCK_CHARGE_ID}/decline") -> {
+            // Check if the custom header indicating success is present
+            respond(
+                content = MockResponseFileReader("wallet/success_afterpay_decline_wallet_charge_response.json").content,
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
         }
 
         request.url.encodedPath.endsWith("/") -> {
@@ -364,6 +374,7 @@ private fun MockRequestHandleScope.handleFailureRequest(request: HttpRequestData
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
         }
+
         request.url.encodedPath.endsWith("/charges/wallet/capture") -> {
             respondError(
                 content = MockResponseFileReader("wallet/failure_capture_wallet_response.json").content,
@@ -371,9 +382,18 @@ private fun MockRequestHandleScope.handleFailureRequest(request: HttpRequestData
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
         }
+
         request.url.encodedPath.endsWith("/charges/wallet/callback") -> {
             respondError(
                 content = MockResponseFileReader("wallet/failure_wallet_callback_response.json").content,
+                status = HttpStatusCode.BadRequest,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+        }
+
+        request.url.encodedPath.endsWith("/charges/wallet/${MobileSDKTestConstants.Charge.MOCK_INVALID_CHARGE_ID}/decline") -> {
+            respondError(
+                content = MockResponseFileReader("wallet/failure_decline_wallet_invalid_chargeid_response.json").content,
                 status = HttpStatusCode.BadRequest,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )

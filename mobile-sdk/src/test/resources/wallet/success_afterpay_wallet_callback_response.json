@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "error": null,
+  "resource": {
+    "type": "charge",
+    "data": {
+      "ref_token": "001.6i9ukio2hmngq2ddkrf0h5cdhr0ntjqoqc6h6lrc92gvdpn3",
+      "charge": {
+        "status": "wallet_initialized"
+      }
+    }
+  }
+}

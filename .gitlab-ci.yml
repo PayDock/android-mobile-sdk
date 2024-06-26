@@ -3,13 +3,14 @@ image: mingc/android-build-box:latest
 variables:
   ANDROID_COMPILE_SDK: "33"
   ANDROID_BUILD_TOOLS: "34.0.4"
-  ANDROID_SDK_TOOLS:   "9477386"
+  ANDROID_SDK_TOOLS: "9477386"
 
 stages:
   - .pre
   - build
   - test
-  - .post
+  - security
+  - security-post
 
 include:
   - project: 'paydock/platform/gitlab-templates'
@@ -21,7 +22,7 @@ buildExampleApp:
   before_script:
     - gem install bundler -v 1.17.2
     - bundle update
-  script: 
+  script:
     - bundle --version
     - bundle exec fastlane buildDebug
   artifacts:

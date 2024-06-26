@@ -1,23 +1,7 @@
-/*
- * Created by Paydock on 1/26/24, 6:24 PM
- * Copyright (c) 2024 Paydock Ltd.
- *
- * Last modified 1/26/24, 2:24 PM
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.paydock.feature.wallet.data.repository
 
 import com.paydock.core.BaseKoinUnitTest
+import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.injection.modules.mockFailureNetworkModule
 import com.paydock.core.data.injection.modules.mockSuccessNetworkModule
 import com.paydock.core.extensions.convertToDataClass
@@ -25,6 +9,7 @@ import com.paydock.feature.wallet.data.api.dto.WalletCallbackRequest
 import com.paydock.feature.wallet.data.api.dto.WalletCallbackResponse
 import com.paydock.feature.wallet.data.api.dto.WalletCaptureRequest
 import com.paydock.feature.wallet.data.api.dto.WalletCaptureResponse
+import com.paydock.feature.wallet.data.api.dto.WalletDeclineResponse
 import com.paydock.feature.wallet.data.mapper.asEntity
 import com.paydock.feature.wallet.domain.repository.WalletRepository
 import io.ktor.client.HttpClient
@@ -50,7 +35,7 @@ class WalletRepositoryTest : BaseKoinUnitTest() {
     fun `GIVEN valid GooglePay wallet request WHEN capturing charge THEN should succeed with wallet capture response resource`() =
         testScope.runTest {
             // GIVEN
-            val accessToken = "valid-token"
+            val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             repository = WalletRepositoryImpl(get(), httpMockClient)
 
             val request =
@@ -69,7 +54,7 @@ class WalletRepositoryTest : BaseKoinUnitTest() {
     fun `GIVEN valid PayPal wallet request WHEN capturing charge THEN should succeed with wallet capture response resource`() =
         testScope.runTest {
             // GIVEN
-            val accessToken = "valid-token"
+            val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             repository = WalletRepositoryImpl(get(), httpMockClient)
 
             val request =
@@ -84,10 +69,29 @@ class WalletRepositoryTest : BaseKoinUnitTest() {
             assertEquals(entity, result)
         }
 
-    @Test(expected = ClientRequestException::class)
-    fun `GIVEN invalid access token WHEN capturing wallet charge THEN should fail with error response resource`() =
+    @Test
+    fun `GIVEN valid Afterpay wallet request WHEN capturing charge THEN should succeed with wallet capture response resource`() =
         testScope.runTest {
-            val invalidAccessToken = "invalid-token"
+            // GIVEN
+            val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
+            repository = WalletRepositoryImpl(get(), httpMockClient)
+
+            val request =
+                readResourceFile("wallet/valid_afterpay_capture_wallet_charge_request.json").convertToDataClass<WalletCaptureRequest>()
+            val response =
+                readResourceFile("wallet/success_capture_wallet_response.json").convertToDataClass<WalletCaptureResponse>()
+            val entity = response.asEntity()
+            // WHEN - Call the method to be tested
+            val result = repository.captureWalletTransaction(accessToken, request)
+            // THEN - Verify the result
+            assertNotNull(response)
+            assertEquals(entity, result)
+        }
+
+    @Test(expected = ClientRequestException::class)
+    fun `GIVEN invalid access token WHEN capturing Google Pay charge THEN should fail with error response resource`() =
+        testScope.runTest {
+            val invalidAccessToken = MobileSDKTestConstants.Wallet.MOCK_INVALID_WALLET_TOKEN
 
             unloadKoinModules(mockSuccessNetworkModule)
             loadKoinModules(mockFailureNetworkModule)
@@ -106,7 +110,7 @@ class WalletRepositoryTest : BaseKoinUnitTest() {
     fun `GIVEN valid PayPal wallet callback request WHEN fetching wallet callback THEN should succeed with wallet callback response resource`() =
         testScope.runTest {
             // GIVEN
-            val accessToken = "valid-token"
+            val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             repository = WalletRepositoryImpl(get(), httpMockClient)
 
             val request =
@@ -123,10 +127,32 @@ class WalletRepositoryTest : BaseKoinUnitTest() {
 
     @Suppress("MaxLineLength")
     @Test
+    fun `GIVEN valid Afterpay wallet callback request WHEN fetching wallet callback THEN should succeed with wallet callback response resource`() =
+        testScope.runTest {
+            // GIVEN
+            val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
+            repository = WalletRepositoryImpl(get(), httpMockClient)
+
+            val request =
+                readResourceFile("wallet/valid_afterpay_wallet_callback_request.json").convertToDataClass<WalletCallbackRequest>()
+            val response =
+                readResourceFile("wallet/success_afterpay_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
+
+            val entity = response.asEntity()
+            // WHEN - Call the method to be tested
+            val result = repository.getWalletCallback(accessToken, request)
+            // THEN - Verify the result
+
+            assertNotNull(response)
+            assertEquals(entity, result)
+        }
+
+    @Suppress("MaxLineLength")
+    @Test
     fun `GIVEN valid FlyPay wallet callback request WHEN fetching wallet callback THEN should succeed with wallet callback response resource`() =
         testScope.runTest {
             // GIVEN
-            val accessToken = "valid-token"
+            val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             repository = WalletRepositoryImpl(get(), httpMockClient)
 
             val request =
@@ -144,7 +170,7 @@ class WalletRepositoryTest : BaseKoinUnitTest() {
     @Test(expected = ClientRequestException::class)
     fun `GIVEN wallet type WHEN fetching wallet callback THEN should fail with error response resource`() =
         testScope.runTest {
-            val accessToken = "valid-token"
+            val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
 
             unloadKoinModules(mockSuccessNetworkModule)
             loadKoinModules(mockFailureNetworkModule)
@@ -154,6 +180,43 @@ class WalletRepositoryTest : BaseKoinUnitTest() {
                 readResourceFile("wallet/invalid_wallet_callback_request.json").convertToDataClass<WalletCallbackRequest>()
             // WHEN - Call the method to be tested
             val result = repository.getWalletCallback(accessToken, request)
+            // THEN - It should throw an exception
+            assertNotNull(result)
+        }
+
+    @Suppress("MaxLineLength")
+    @Test
+    fun `GIVEN valid Afterpay wallet decline request WHEN declining wallet charge THEN should succeed with wallet decline response resource`() =
+        testScope.runTest {
+            // GIVEN
+            val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
+            val chargeId = MobileSDKTestConstants.Charge.MOCK_CHARGE_ID
+            repository = WalletRepositoryImpl(get(), httpMockClient)
+
+            val response =
+                readResourceFile("wallet/success_afterpay_decline_wallet_charge_response.json").convertToDataClass<WalletDeclineResponse>()
+
+            val entity = response.asEntity()
+            // WHEN - Call the method to be tested
+            val result = repository.declineWalletTransaction(accessToken, chargeId)
+            // THEN - Verify the result
+
+            assertNotNull(response)
+            assertEquals(entity, result)
+        }
+
+    @Test(expected = ClientRequestException::class)
+    fun `GIVEN wallet type WHEN declining wallet charge THEN should fail with error response resource`() =
+        testScope.runTest {
+            val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
+            val chargeId = MobileSDKTestConstants.Charge.MOCK_INVALID_CHARGE_ID
+
+            unloadKoinModules(mockSuccessNetworkModule)
+            loadKoinModules(mockFailureNetworkModule)
+            // GIVEN
+            repository = WalletRepositoryImpl(get(), httpMockClient)
+            // WHEN - Call the method to be tested
+            val result = repository.declineWalletTransaction(accessToken, chargeId)
             // THEN - It should throw an exception
             assertNotNull(result)
         }

@@ -1,13 +1,15 @@
 [versions]
-agp = "8.1.3"
+afterpayAndroid = "4.4.0"
+agp = "8.3.1"
 androidx-test-junit = "1.1.5"
 androidx-test-espresso = "3.5.1"
 androidx-fragment = "1.6.2"
 accompanist = "0.28.0"
-compose = "1.8.0"
+compose = "1.8.2"
+composeWebview = "0.33.6"
 core = "1.12.0"
 detekt = "1.23.0"
-hilt = "2.48"
+hilt = "2.49"
 junit = "4.13.2"
 kotlin = "1.9.20"
 kotlinxCoroutines = "1.7.3"
@@ -17,20 +19,18 @@ koinAndroid = "3.4.0"
 koinCompose = "3.4.5"
 kotlinxHtmlJvm = "0.8.1"
 ktor = "2.3.6"
-ktorClientResources = "2.3.2"
-lifecycle = "2.6.2"
-material3 = "1.1.1"
+lifecycle = "2.7.0"
 mockk = "1.13.8" # Instrumentation tests fail on (1.13.4 and 1.13.5 - https://github.com/mockk/mockk/issues/1035)
 mockito = "5.1.0"
 mockitoAndroid = "5.7.0"
 mockwebserver = "4.9.3"
-navigation = "2.7.5"
+navigation = "2.7.7"
 okhttp = "4.10.0"
 retrofit = "2.7.2"
 turbine = "1.0.0"
 
 [plugins]
-android-application = { id = "com.android.application", version.ref = "agp"  }
+android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 dagger-hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
@@ -41,14 +41,17 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core" }
 androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "androidx-fragment" }
 androidx-lifecycle-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
+# Afterpay
+afterpay-android = { module = "com.afterpay:afterpay-android", version.ref = "afterpayAndroid" }
 #Compose
-compose-bom = { module = "androidx.compose:compose-bom", version = "2023.10.01" }
+compose-bom = { module = "androidx.compose:compose-bom", version = "2024.04.00" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
 compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
-androidx-foundation-android = { group = "androidx.compose.foundation", name = "foundation", version = "1.5.4" }
+androidx-foundation-android = { group = "androidx.compose.foundation", name = "foundation", version = "1.6.5" }
 #Compose - AndroidX & Other
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "compose" }
+compose-webview = { module = "io.github.kevinnzou:compose-webview", version.ref = "composeWebview" }
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
 accompanist-system-ui = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "accompanist" }
 #Compose - Debug
@@ -74,7 +77,7 @@ okhttp3-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor"
 okhttp3-mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "mockwebserver" }
 ktor-client-mock = { group = "io.ktor", name = "ktor-client-mock", version.ref = "ktor" }
 #Koin
-koin = { group = "io.insert-koin", name = "koin-core", version.ref = "koin"}
+koin = { group = "io.insert-koin", name = "koin-core", version.ref = "koin" }
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koinAndroid" }
 koin-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koinCompose" }
 koin-test = { group = "io.insert-koin", name = "koin-test-junit4", version.ref = "koinTest" }
@@ -82,19 +85,18 @@ koin-test = { group = "io.insert-koin", name = "koin-test-junit4", version.ref =
 detekt-plugin = { group = "io.gitlab.arturbosch.detekt", name = "detekt-gradle-plugin", version.ref = "detekt" }
 detekt-formatting-plugin = { group = "io.gitlab.arturbosch.detekt", name = "detekt-formatting", version.ref = "detekt" }
 # Hilt (Android  Injection)
-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt"}
-hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt"}
-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version = "1.1.0"}
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
+hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
+hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version = "1.2.0" }
 # Google Services (Google Pay)
-google-pay-services = { group = "com.google.android.gms", name = "play-services-pay", version = "16.3.0"}
-google-wallet-services = { group = "com.google.android.gms", name = "play-services-wallet", version = "19.2.1"}
+google-pay-services = { group = "com.google.android.gms", name = "play-services-pay", version = "16.4.0" }
+google-wallet-services = { group = "com.google.android.gms", name = "play-services-wallet", version = "19.3.0" }
 google-compose-pay-button = { group = "com.google.pay.button", name = "compose-pay-button", version = "0.1.1" }
 # Retrofit
-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit"}
-retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit"}
-okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version = "4.12.0"}
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version = "4.12.0" }
 okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version = "4.10.0" }
-
 
 #General Testing
 androidx-test-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-junit" }
