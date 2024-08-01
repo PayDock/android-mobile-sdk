@@ -1,9 +1,9 @@
 package com.paydock.feature.card.presentation.viewmodels
 
 import com.paydock.core.data.util.DispatchersProvider
-import com.paydock.core.domain.error.exceptions.ApiException
 import com.paydock.core.domain.error.exceptions.GiftCardException
-import com.paydock.core.domain.error.exceptions.UnknownApiException
+import com.paydock.core.network.exceptions.ApiException
+import com.paydock.core.network.exceptions.UnknownApiException
 import com.paydock.core.presentation.ui.BaseViewModel
 import com.paydock.feature.card.data.api.dto.TokeniseCardRequest
 import com.paydock.feature.card.domain.model.TokenisedCardDetails
@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.update
  * @param useCase The tokenization use case for performing card tokenization.
  */
 internal class GiftCardViewModel(
+    private val accessToken: String,
     private val useCase: TokeniseGiftCardUseCase,
     dispatchers: DispatchersProvider
 ) : BaseViewModel(dispatchers) {
@@ -98,7 +99,7 @@ internal class GiftCardViewModel(
                 cardPin = state.pin,
                 storePin = state.storePin
             )
-            val result: Result<TokenisedCardDetails> = useCase(request)
+            val result: Result<TokenisedCardDetails> = useCase(accessToken, request)
             _stateFlow.update { currentState ->
                 val exception: Throwable? = result.exceptionOrNull()
                 val error: GiftCardException? = when (exception) {

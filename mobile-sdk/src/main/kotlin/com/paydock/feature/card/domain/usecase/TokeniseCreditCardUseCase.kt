@@ -17,11 +17,12 @@ internal class TokeniseCreditCardUseCase(private val repository: CardDetailsRepo
     /**
      * Invokes the use case to tokenize credit card details.
      *
+     * @param accessToken The access token used for authentication with the backend services.
      * @param request The [TokeniseCardRequest.CreditCard] containing credit card information to tokenize.
      * @return A [Result] representing the tokenization result.
      */
-    suspend operator fun invoke(request: TokeniseCardRequest.CreditCard): Result<TokenisedCardDetails> =
+    suspend operator fun invoke(accessToken: String, request: TokeniseCardRequest.CreditCard): Result<TokenisedCardDetails> =
         suspendRunCatching {
-            repository.tokeniseCardDetails(request)
+            repository.tokeniseCardDetails(accessToken, request)
         }
 }

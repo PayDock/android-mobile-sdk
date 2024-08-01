@@ -9,7 +9,7 @@ import org.koin.dsl.module
 /**
  * Koin module for Afterpay-related components including repositories, use cases, and view models as well as walletModule.
  */
-val afterpayModule = module {
+val afterPayModule = module {
     includes(dispatchersModule, walletModule)
     // Define a view model for Afterpay
     viewModelOf(::AfterpayViewModel)

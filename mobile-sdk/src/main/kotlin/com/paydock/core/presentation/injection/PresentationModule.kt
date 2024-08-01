@@ -3,12 +3,12 @@ package com.paydock.core.presentation.injection
 import android.content.Context
 import com.paydock.core.data.injection.MobileSDKKoinContext
 import com.paydock.feature.address.injection.addressDetailsModule
-import com.paydock.feature.afterpay.injection.afterpayModule
+import com.paydock.feature.afterpay.injection.afterPayModule
 import com.paydock.feature.card.injection.cardDetailsModule
 import com.paydock.feature.flypay.injection.flyPayModule
 import com.paydock.feature.googlepay.injection.googlePayModule
 import com.paydock.feature.paypal.injection.payPalModule
-import com.paydock.feature.src.injection.mastercardSRCModule
+import com.paydock.feature.src.injection.clickToPayModule
 import com.paydock.feature.threeDS.injection.threeDSModule
 import com.paydock.feature.wallet.injection.walletModule
 import org.koin.android.ext.koin.androidApplication
@@ -32,7 +32,7 @@ val presentationModule = module {
         googlePayModule,
         payPalModule,
         flyPayModule,
-        afterpayModule,
-        mastercardSRCModule
+        afterPayModule,
+        clickToPayModule
     )
 }

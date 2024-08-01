@@ -29,7 +29,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.paydock.R
-import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.PayPalException
 import com.paydock.core.presentation.ui.extensions.alpha40
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
@@ -230,7 +229,7 @@ fun PayPalWidget(
                                     viewModel.parsePayPalUrl(decodedUrl)
                                     true
                                 } else {
-                                    null
+                                    false
                                 }
                             }
                         ) { status, message ->
@@ -258,22 +257,26 @@ fun PayPalWidget(
 }
 
 /**
- * Checks if the provided redirect URL matches the expected PayPal redirect URL.
+ * Checks if the provided redirect URL indicates a successful PayPal payment.
  *
- * The function considers two cases:
- * 1. The `redirectUrl` exactly matches the PayPal redirect URL.
- * 2. The `redirectUrl` contains the PayPal redirect URL as a query parameter named "redirect_uri".
+ * This function verifies the presence of both "token"and "PayerID" parameters in the query string of the redirect URL.
+ * These parameters are typically present in a successful PayPal redirect.
  *
- * @param redirectUrl The URL to be checked for a successful redirect.
- * @return `true` if the redirect is successful; `false` otherwise.
+ * @param redirectUrl The URL received after the PayPal payment process.
+ * @return `true` if the redirect indicates a successful payment, `false` otherwise.
  */
 private fun isSuccessfulRedirect(redirectUrl: String): Boolean {
     val uri = Uri.parse(redirectUrl)
-    val url = "${uri.scheme}://${uri.host}${uri.path}"
-    val redirectUri = uri.getQueryParameter("redirect_uri")?.let { Uri.decode(it) }
+    val params = uri.query?.split("&")
+        ?.associate { query ->
+            val parts = query.split("=")
+            parts[0] to (parts.getOrNull(1) ?: "")
+        } ?: emptyMap()
 
-    return url == MobileSDKConstants.PayPalConfig.PAY_PAL_REDIRECT_URL ||
-        redirectUri == MobileSDKConstants.PayPalConfig.PAY_PAL_REDIRECT_URL
+    params["token"] ?: return false // Or throw an exception, log an error, etc.
+    params["PayerID"] ?: return false // Same as above
+
+    return true
 }
 
 /**

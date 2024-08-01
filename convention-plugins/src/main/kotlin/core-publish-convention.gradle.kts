@@ -1,28 +1,26 @@
 plugins {
-    id("org.gradle.maven-publish")
+    id("maven-publish")
 }
 
-// Apply the extension
-val publishingExtension: utils.PublishingExtension = extensions.create("publishingConfig", utils.PublishingExtension::class)
+// artifact (from module build.gradle)
+val groupName: String by project
+val versionName: String by project
+// artifact (from module build.gradle)
+val libraryName: String by project
+// project info (from module build.gradle)
+val projectGithubUrl: String by project
+val projectDescription: String by project
+// developers (from gradle.properties)
+val developerId: String by project
+val developerName: String by project
+val developerEmail: String by project
+val developerOrganisation: String by project
+val developerOrganisationUrl: String by project
+
+group = groupName
+version = versionName
 
 afterEvaluate {
-    // artifact (from module build.gradle)
-    val groupName = publishingExtension.groupId ?: project.property("groupName") as String
-    val versionName = publishingExtension.version ?: project.property("versionName") as String
-    val libraryName = publishingExtension.artifactId ?: project.property("libraryName") as String
-    // project info (from module build.gradle)
-    val projectGithubUrl = publishingExtension.projectGithubUrl ?: project.property("projectGithubUrl") as String
-    val projectDescription = publishingExtension.projectDescription ?: project.property("projectDescription") as String
-    // misc
-    val packingOption = publishingExtension.packagingOption
-    val includeSources = publishingExtension.includeSources
-    // developers (from gradle.properties)
-    val developerId: String by project
-    val developerName: String by project
-    val developerEmail: String by project
-    val developerOrganisation: String by project
-    val developerOrganisationUrl: String by project
-
     // This creates a task called `sourcesJar`. It subclasses `Jar`, which is a
     // task that knows how to copy files into a .jar file. The block after it is
     // called the configuration, which tells the task what it should do when run.
@@ -41,13 +39,6 @@ afterEvaluate {
         archiveClassifier.set("javadoc")
     }
 
-    // Determine the component to use dynamically
-    val component = if (components.findByName("release") != null) {
-        components["release"]
-    } else {
-        components["java"]
-    }
-
     publishing {
         publications {
             // This says: defer this block until all of the other stuff has run first.
@@ -63,12 +54,10 @@ afterEvaluate {
                     // Include all artifacts from the available component component. This is the
                     // .aar file itself.
                     // Include the selected component
-                    from(component)
+                    from(components["release"])
 
                     // Include the -sources.jar and -javadoc.jar files that we defined earlier.
-                    if (includeSources) {
-                        artifact(sourcesJar)
-                    }
+                    artifact(sourcesJar)
                     artifact(javadocJar)
 
                     // Here we configure some properties of the publication (these are
@@ -79,7 +68,7 @@ afterEvaluate {
 
                     // And here are some more properties that go into the pom file.
                     pom {
-                        packaging = packingOption
+                        packaging = "aar"
                         name.set(project.name)
                         description.set(projectDescription)
                         url.set(projectGithubUrl)
@@ -107,5 +96,12 @@ afterEvaluate {
                 }
             }
         }
+    }
+}
+
+// Task to print the version name used for pipeline
+tasks.register("printVersionName") {
+    doLast {
+        println(versionName)
     }
 }

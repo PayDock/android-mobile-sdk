@@ -18,14 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.paydock.core.data.network.error.displayableMessage
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.domain.error.toError
-import com.paydock.core.domain.model.meta.MastercardSRCMeta
+import com.paydock.core.domain.model.meta.ClickToPayMeta
+import com.paydock.core.network.dto.error.displayableMessage
 import com.paydock.core.presentation.ui.extensions.toast
 import com.paydock.feature.address.presentation.AddressDetailsWidget
-import com.paydock.feature.afterpay.presentation.AfterPayWidget
+import com.paydock.feature.afterpay.presentation.AfterpayWidget
 import com.paydock.feature.afterpay.presentation.model.AfterpaySDKConfig
 import com.paydock.feature.afterpay.presentation.model.AfterpayShippingOption
 import com.paydock.feature.afterpay.presentation.model.AfterpayShippingOptionUpdate
@@ -36,7 +36,7 @@ import com.paydock.feature.flypay.presentation.FlyPayWidget
 import com.paydock.feature.googlepay.presentation.GooglePayWidget
 import com.paydock.feature.googlepay.util.PaymentsUtil
 import com.paydock.feature.paypal.presentation.PayPalWidget
-import com.paydock.feature.src.presentation.MastercardSRCClickToPayWidget
+import com.paydock.feature.src.presentation.ClickToPayWidget
 import com.paydock.feature.threeDS.presentation.ThreeDSWidget
 import com.paydock.feature.wallet.domain.model.WalletType
 import com.paydock.sample.BuildConfig
@@ -48,8 +48,9 @@ import com.paydock.sample.core.MERCHANT_NAME
 import com.paydock.sample.core.THREE_DS_CARD_ERROR
 import com.paydock.sample.core.TOKENISE_CARD_ERROR
 import com.paydock.sample.feature.card.CardViewModel
-import com.paydock.sample.feature.threeDS.ThreeDSViewModel
-import com.paydock.sample.feature.wallet.WalletViewModel
+import com.paydock.sample.feature.settings.SettingsViewModel
+import com.paydock.sample.feature.threeDS.presentation.ThreeDSViewModel
+import com.paydock.sample.feature.wallet.presentation.WalletViewModel
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
 import org.json.JSONArray
 import org.json.JSONObject
@@ -59,16 +60,19 @@ import java.util.Currency
 @Composable
 fun WidgetInfoScreen(
     widgetType: WidgetType,
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
     walletViewModel: WalletViewModel = hiltViewModel(),
     cardViewModel: CardViewModel = hiltViewModel(),
     threeDSViewModel: ThreeDSViewModel = hiltViewModel()
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
+        val accessToken by settingsViewModel.accessToken.collectAsState()
         val context = LocalContext.current
         when (widgetType) {
             WidgetType.CREDIT_CARD_DETAILS -> {
                 CardDetailsWidget(
                     modifier = Modifier.padding(16.dp),
+                    accessToken = accessToken,
                     gatewayId = BuildConfig.GATEWAY_ID,
                     allowSaveCard = SaveCardConfig(
                         privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
@@ -127,6 +131,7 @@ fun WidgetInfoScreen(
 
             WidgetType.GIFT_CARD_DETAILS -> {
                 GiftCardWidget(
+                    accessToken = accessToken,
                     storePin = true, completion = { result ->
                         result.onSuccess {
                             Log.d("[GiftCardWidget]", "Success: $it")
@@ -193,27 +198,28 @@ fun WidgetInfoScreen(
                 }
             }
 
-            WidgetType.MASTERCARD_SRC -> {
+            WidgetType.CLICK_TO_PAY -> {
                 // This is to ensure we hide the WebView once completed
                 var hasCompletedFlow: Boolean by remember { mutableStateOf(false) }
                 if (!hasCompletedFlow) {
                     // Test Cards: https://developer.mastercard.com/unified-checkout-solutions/documentation/testing/test_cases/click_to_pay_case/#test-cards
-                    MastercardSRCClickToPayWidget(
+                    ClickToPayWidget(
                         modifier = Modifier
                             .fillMaxWidth(),
+                        accessToken = accessToken,
                         serviceId = BuildConfig.GATEWAY_ID_MASTERCARD_SRC,
-                        meta = MastercardSRCMeta(
+                        meta = ClickToPayMeta(
                             disableSummaryScreen = true
                         )
                     ) { result ->
                         result.onSuccess {
-                            Log.d("[MastercardSRCClickToPayWidget]", it)
-                            context.toast("Mastercard SRC Result returned [$it]")
+                            Log.d("[ClickToPayWidget]", it)
+                            context.toast("ClickToPay Result returned [$it]")
                             hasCompletedFlow = true
                         }.onFailure {
                             val error = it.toError()
-                            Log.d("[MastercardSRCClickToPayWidget]", error.displayableMessage)
-                            context.toast("Mastercard SRC Result failed! [${error.displayableMessage}]")
+                            Log.d("[ClickToPayWidget]", error.displayableMessage)
+                            context.toast("ClickToPay Result failed! [${error.displayableMessage}]")
                             hasCompletedFlow = true
                         }
                     }
@@ -290,7 +296,7 @@ fun WidgetInfoScreen(
                 val uiState by walletViewModel.stateFlow.collectAsState()
 
                 val configuration = AfterpaySDKConfig(
-                    config = AfterpaySDKConfig.AfterPayConfiguration(
+                    config = AfterpaySDKConfig.AfterpayConfiguration(
                         maximumAmount = "100",
                         currency = AU_CURRENCY_CODE,
                         language = "en",
@@ -301,7 +307,7 @@ fun WidgetInfoScreen(
                         enableSingleShippingOptionUpdate = true
                     )
                 )
-                AfterPayWidget(
+                AfterpayWidget(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
@@ -351,11 +357,11 @@ fun WidgetInfoScreen(
                     }
                 ) { result ->
                     result.onSuccess {
-                        Log.d("[AfterPayWidget]", "Success: $it")
+                        Log.d("[AfterpayWidget]", "Success: $it")
                         context.toast("Afterpay Result returned [$it]")
                     }.onFailure {
                         val error = it.toError()
-                        Log.d("[AfterPayWidget]", "Failure: ${error.displayableMessage}")
+                        Log.d("[AfterpayWidget]", "Failure: ${error.displayableMessage}")
                         context.toast("Afterpay Result failed! [${error.displayableMessage}]")
                     }
                 }

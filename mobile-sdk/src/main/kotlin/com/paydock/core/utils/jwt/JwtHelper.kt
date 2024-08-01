@@ -1,6 +1,6 @@
 package com.paydock.core.utils.jwt
 
-import com.paydock.core.extensions.convertToDataClass
+import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.utils.jwt.models.MetaTokenPayload
 import com.paydock.core.utils.jwt.models.WalletTokenPayload
 import java.util.Date

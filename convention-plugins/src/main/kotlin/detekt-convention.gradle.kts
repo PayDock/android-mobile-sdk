@@ -34,7 +34,7 @@ dependencies {
 }
 
 tasks.withType<Detekt>().configureEach {
-    jvmTarget = JavaVersion.VERSION_1_8.toString()
+    jvmTarget = JavaVersion.VERSION_17.toString()
     reports {
         // Enable/Disable XML report (default: true)
         xml.required.set(true)
@@ -55,7 +55,7 @@ tasks.withType<Detekt>().configureEach {
 }
 
 tasks.withType<DetektCreateBaselineTask>().configureEach {
-    jvmTarget = JavaVersion.VERSION_1_8.toString()
+    jvmTarget = JavaVersion.VERSION_17.toString()
 }
 
 val analysisDir = file(projectDir)

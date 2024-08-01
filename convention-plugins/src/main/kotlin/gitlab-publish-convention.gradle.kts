@@ -17,17 +17,16 @@ if (secretPropsFile.exists()) {
         ext[name.toString()] = value
     }
 } else {
+    ext["projectId"] = System.getenv("PROJECT_ID")
     ext["privateToken"] = System.getenv("PRIVATE_TOKEN")
     ext["deployToken"] = System.getenv("DEPLOY_TOKEN")
 }
-
-val projectId: String by project
 
 publishing {
     repositories {
         maven {
             name = "GitLab"
-            url = uri("https://gitlab.com/api/v4/projects/$projectId/packages/maven")
+            url = uri("https://gitlab.com/api/v4/projects/${getExtraString("gitlab.projectId")}/packages/maven")
             // Private Access Token - linked to a specific account (Paste token as-is, or define an environment variable to hold the token)
             credentials(HttpHeaderCredentials::class) {
                 name = "Private-Token"

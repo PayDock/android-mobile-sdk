@@ -31,10 +31,9 @@ abstract class BaseUITest : KoinTest {
         // Configure the getApplicationContext() method to return the mock Context
         every { context.applicationContext } returns context
 
-        val publicKey = "sample_public_key"
         val environment = Environment.SANDBOX
 
-        context.initializeMobileSDK(publicKey, environment)
+        context.initializeMobileSDK(environment)
     }
 
     @After

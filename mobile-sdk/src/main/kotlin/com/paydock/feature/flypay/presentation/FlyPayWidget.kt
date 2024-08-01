@@ -217,7 +217,7 @@ fun FlyPayWidget(
                                 viewModel.resetResultState()
                                 true
                             } else {
-                                null
+                                false
                             }
                         }
                     ) { status, message ->

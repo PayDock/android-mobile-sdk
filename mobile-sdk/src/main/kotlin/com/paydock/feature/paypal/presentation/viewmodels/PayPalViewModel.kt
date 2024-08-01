@@ -3,9 +3,9 @@ package com.paydock.feature.paypal.presentation.viewmodels
 import android.net.Uri
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
-import com.paydock.core.domain.error.exceptions.ApiException
 import com.paydock.core.domain.error.exceptions.PayPalException
-import com.paydock.core.domain.error.exceptions.UnknownApiException
+import com.paydock.core.network.exceptions.ApiException
+import com.paydock.core.network.exceptions.UnknownApiException
 import com.paydock.feature.charge.domain.model.ChargeResponse
 import com.paydock.feature.paypal.presentation.state.PayPalData
 import com.paydock.feature.paypal.presentation.state.PayPalViewState

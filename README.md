@@ -1,4 +1,5 @@
 ![GitHub Release](https://img.shields.io/github/v/release/PayDock/android-mobile-sdk)
+[![](https://www.jitpack.io/v/PayDock/android-mobile-sdk.svg)](https://www.jitpack.io/#PayDock/android-mobile-sdk)
 
 # Project Description
 
