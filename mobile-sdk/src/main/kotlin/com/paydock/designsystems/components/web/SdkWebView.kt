@@ -33,7 +33,7 @@ import com.kevinnzou.web.rememberWebViewState
 import com.kevinnzou.web.rememberWebViewStateWithHTMLData
 import com.paydock.BuildConfig
 import com.paydock.core.MobileSDKConstants
-import com.paydock.core.data.injection.modules.provideJson
+import com.paydock.core.network.NetworkClientBuilder
 import com.paydock.designsystems.components.web.utils.SdkJSBridge
 
 /**
@@ -54,7 +54,7 @@ internal fun <T : Any?> SdkWebView(
     data: String? = null,
     showLoader: Boolean = true,
     jsBridge: SdkJSBridge<T>? = null,
-    onShouldOverrideUrlLoading: ((request: WebResourceRequest?) -> Boolean?)? = null,
+    onShouldOverrideUrlLoading: ((request: WebResourceRequest?) -> Boolean)? = null,
     onWebViewError: (Int, String) -> Unit,
 ) {
     // Get the current context
@@ -104,19 +104,10 @@ internal fun <T : Any?> SdkWebView(
                     if (error != null) {
                         // TODO - Perhaps look if there is a way to better handle WebView errors.
                         // Determine what is a critical vs non-fatal error
-                        // ie. Some instances will throw errors (eg. Mastercard SRC) but it is not critical.
+                        // ie. Some instances will throw errors (eg. Click to Pay) but it is not critical.
                         val errorMessage = getWebViewErrorMessage(error.errorCode)
                         Log.d(MobileSDKConstants.MOBILE_SDK_TAG, errorMessage)
-                        // This is a fallback case in the event that cookies are causing the issue
-                        if (CookieManager.getInstance().hasCookies()) {
-                            CookieManager.getInstance().removeAllCookies { cleared ->
-                                if (cleared) {
-                                    view.reload()
-                                }
-                            }
-                        } else {
-                            onWebViewError(error.errorCode, errorMessage)
-                        }
+                        onWebViewError(error.errorCode, errorMessage)
                     }
                 }
             }
@@ -204,7 +195,7 @@ internal fun <T : Any?> SdkWebView(
         // Display a loading indicator if the WebView is still loading content
         if (showLoader && (loadingState is LoadingState.Loading || showWindowLoader)) {
             if (loadingState is LoadingState.Loading) {
-                CircularProgressIndicator(progress = { loadingState.progress })
+                CircularProgressIndicator(progress = loadingState.progress)
             } else {
                 CircularProgressIndicator()
             }
@@ -233,7 +224,7 @@ private fun formatMessage(message: String): String {
         // Try to parse the possible JSON string and format it
         val formattedJson = try {
             // Use kotlinx.serialization to parse the string as a JSON element
-            provideJson().parseToJsonElement(possibleJsonString).toString()
+            NetworkClientBuilder.getNetworkJson().parseToJsonElement(possibleJsonString).toString()
         } catch (e: Exception) {
             // If parsing fails, leave the string as is
             possibleJsonString

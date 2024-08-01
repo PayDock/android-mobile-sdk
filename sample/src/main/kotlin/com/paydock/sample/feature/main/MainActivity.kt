@@ -1,5 +1,6 @@
 package com.paydock.sample.feature.main
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -19,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.WindowCompat
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.paydock.sample.designsystems.components.CenterAppTopBar
 import com.paydock.sample.designsystems.components.navigation.BottomNavigation
@@ -46,39 +49,25 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreenView() {
     val context = LocalContext.current
-    val navController = rememberNavController()
-    var actionBarTitle by rememberSaveable { mutableStateOf("") }
-    var showBackButton by rememberSaveable { mutableStateOf(false) }
-    var showTitle by rememberSaveable { mutableStateOf(true) }
-
-    LaunchedEffect(navController) {
-        navController.currentBackStackEntryFlow.collect { backStackEntry ->
-            // You can map the title based on the route using:
-            actionBarTitle = backStackEntry.getRouteTitle(context)
-            showBackButton = backStackEntry.showBackButton()
-            showTitle = backStackEntry.showTitle()
-        }
-    }
+    val navController = rememberNavController()// Hoist these states outside the composable function
+    val actionBarDetails = rememberActionBarDetails(navController, context)
 
     Scaffold(
         topBar = {
             CenterAppTopBar(
-                title = actionBarTitle,
-                showTitle = showTitle,
-                onBackButtonClick = if (showBackButton) {
+                title = actionBarDetails.title,
+                showTitle = actionBarDetails.showTitle,
+                onBackButtonClick = if (actionBarDetails.showBackButton) {
                     { navController.popBackStack() }
                 } else null
             )
         },
         bottomBar = {
-            if (!showBackButton) {
+            if (!actionBarDetails.showBackButton) {
                 BottomNavigation(navController = navController)
             }
         },
         content = { innerPadding ->
-            // padding calculated by scaffold
-            // it doesn't have to be a column,
-            // can be another component that accepts a modifier with padding
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
@@ -86,11 +75,37 @@ fun MainScreenView() {
                     .imePadding()
                     .padding(paddingValues = innerPadding)
             ) {
-                // all content should be here
                 NavigationGraph(navController = navController)
             }
         }
     )
+}
+
+// Helper class to hold action bar details
+class ActionBarDetails(
+    val title: String,
+    val showBackButton: Boolean,
+    val showTitle: Boolean
+)
+
+// Function to calculate action bar details, remember the result
+@Composable
+fun rememberActionBarDetails(navController: NavHostController, context: Context): ActionBarDetails {
+    var actionBarTitle by rememberSaveable { mutableStateOf("") }
+    var showBackButton by rememberSaveable { mutableStateOf(false) }
+    var showTitle by rememberSaveable { mutableStateOf(true) }
+
+    LaunchedEffect(navController) {
+        navController.currentBackStackEntryFlow.collect { backStackEntry ->
+            actionBarTitle = backStackEntry.getRouteTitle(context)
+            showBackButton = backStackEntry.showBackButton()
+            showTitle = backStackEntry.showTitle()
+        }
+    }
+
+    return remember(actionBarTitle, showBackButton, showTitle) {
+        ActionBarDetails(actionBarTitle, showBackButton, showTitle)
+    }
 }
 
 @Preview

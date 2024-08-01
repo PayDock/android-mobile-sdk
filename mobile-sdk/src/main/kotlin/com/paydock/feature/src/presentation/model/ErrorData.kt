@@ -1,15 +1,15 @@
 package com.paydock.feature.src.presentation.model
 
 import com.paydock.core.domain.error.ErrorModel
-import com.paydock.core.domain.error.exceptions.MastercardSRCException
+import com.paydock.core.domain.error.exceptions.ClickToPayException
 import com.paydock.feature.src.presentation.model.enum.EventDataType
-import com.paydock.feature.src.presentation.utils.MastercardSRCErrorDataSerializer
+import com.paydock.feature.src.presentation.utils.ClickToPayErrorDataSerializer
 import kotlinx.serialization.Serializable
 
 /**
  * Represents various error data.
  */
-@Serializable(with = MastercardSRCErrorDataSerializer::class)
+@Serializable(with = ClickToPayErrorDataSerializer::class)
 internal sealed class ErrorData {
     /**
      * Represents user-specific error data.
@@ -41,12 +41,12 @@ internal sealed class ErrorData {
  *
  * @return The mapped [ErrorModel].
  */
-internal fun ErrorData.mapToException(): MastercardSRCException = when (this) {
-    is ErrorData.UserErrorData -> MastercardSRCException.CheckoutErrorException(
+internal fun ErrorData.mapToException(): ClickToPayException = when (this) {
+    is ErrorData.UserErrorData -> ClickToPayException.CheckoutErrorException(
         displayableMessage = data
     )
 
-    is ErrorData.CriticalErrorData -> MastercardSRCException.CheckoutErrorException(
+    is ErrorData.CriticalErrorData -> ClickToPayException.CheckoutErrorException(
         displayableMessage = data
     )
 }

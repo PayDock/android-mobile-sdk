@@ -11,6 +11,6 @@ import org.koin.dsl.module
  */
 val payPalModule = module {
     includes(dispatchersModule, walletModule)
-    // Define a view model for GooglePayViewModel
+    // Define a view model for PayPalViewModel
     viewModelOf(::PayPalViewModel)
 }

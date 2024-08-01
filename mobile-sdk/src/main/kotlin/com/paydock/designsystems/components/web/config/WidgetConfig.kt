@@ -4,12 +4,11 @@ import android.util.Log
 import com.paydock.MobileSDK
 import com.paydock.core.ClientSDKConstants
 import com.paydock.core.MobileSDKConstants
-import com.paydock.core.data.injection.modules.provideJson
 import com.paydock.core.domain.mapper.mapToClientSDKEnv
 import com.paydock.core.domain.mapper.mapToClientSDKLibrary
-import com.paydock.core.domain.model.meta.MastercardSRCMeta
+import com.paydock.core.domain.model.meta.ClickToPayMeta
+import com.paydock.core.network.extensions.convertToJsonString
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.encodeToString
 
 /**
  * Sealed class representing configurations for different widgets.
@@ -43,21 +42,21 @@ internal sealed class WidgetConfig {
     abstract fun createWidget(): String
 
     /**
-     * Configuration for Mastercard SRC widget.
+     * Configuration for Click to Pay widget.
      *
-     * @property title Title for the Mastercard SRC widget. Default is "Mastercard SRC".
-     * @property jsLibraryUrl URL of the JavaScript library for Mastercard SRC widget.
+     * @property title Title for the Click to Pay widget. Default is "Click to Pay".
+     * @property jsLibraryUrl URL of the JavaScript library for Click to Pay widget.
      *                        Default is [ClientSDKConstants.CLIENT_SDK_JS_LIBRARY].
-     * @property environment Environment for the Mastercard SRC widget. Default is the environment
+     * @property environment Environment for the Click to Pay widget. Default is the environment
      *                        mapped from [MobileSDK.getInstance().environment].
-     * @property events List of events supported by the Mastercard SRC widget.
+     * @property events List of events supported by the Click to Pay widget.
      *                  Default includes "iframeLoaded", "checkoutReady", "checkoutCompleted", "checkoutError".
-     * @property publicKey Public key for authentication.
-     * @property serviceId Service ID for Mastercard SRC.
-     * @property meta Meta data for configuring Mastercard SRC.
+     * @property accessToken Access Token for authentication.
+     * @property serviceId Service ID for Click to Pay.
+     * @property meta Meta data for configuring Click to Pay.
      */
-    data class MastercardSRCConfig(
-        override val title: String = "Mastercard SRC",
+    data class ClickToPayConfig(
+        override val title: String = "Click to Pay",
         override val jsLibraryUrl: String = MobileSDK.getInstance().environment.mapToClientSDKLibrary(),
         override val environment: String = MobileSDK.getInstance().environment.mapToClientSDKEnv(),
         override val events: List<String> = listOf(
@@ -68,9 +67,9 @@ internal sealed class WidgetConfig {
             "checkoutPopupClose",
             "checkoutError"
         ),
-        val publicKey: String = MobileSDK.getInstance().publicKey,
+        val accessToken: String,
         val serviceId: String,
-        val meta: MastercardSRCMeta?
+        val meta: ClickToPayMeta?
     ) : WidgetConfig() {
 
         /**
@@ -79,14 +78,14 @@ internal sealed class WidgetConfig {
          * @return JSON string representation of the meta data.
          */
         private fun getMetaJson(): String = try {
-            meta?.let { provideJson().encodeToString(it) } ?: "{}"
+            meta?.convertToJsonString() ?: "{}"
         } catch (exception: SerializationException) {
             Log.w(MobileSDKConstants.MOBILE_SDK_TAG, exception.message, exception)
             "{}"
         }
 
         /**
-         * Create the widget initialization script for Mastercard SRC.
+         * Create the widget initialization script for Click to Pay.
          *
          * @return Widget initialization script.
          */
@@ -95,7 +94,7 @@ internal sealed class WidgetConfig {
                 new paydock.ClickToPay(
                     "#${ClientSDKConstants.WIDGET_CONTAINER_ID}",
                     "$serviceId", // service_id
-                    "$publicKey", // paydock_public_key_or_access_token
+                    "$accessToken", // paydock_public_key_or_access_token
                     ${getMetaJson()}
                 );
             """.trimIndent()

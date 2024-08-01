@@ -42,12 +42,18 @@ android {
         buildConfig = true
         compose = true
     }
+    // Ensure to include the sourceSets
+    sourceSets {
+        getByName("main") {
+            kotlin.srcDir("src/main/kotlin")
+        }
+    }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
     composeOptions {
         // https://developer.android.com/jetpack/androidx/releases/compose-compiler
@@ -68,20 +74,6 @@ android {
     }
 }
 
-publishingConfig {
-    groupId = "com.paydock"
-    version = "1.1.0"
-    artifactId = "mobile-sdk"
-    projectId = "52671182"
-    projectGithubUrl = "https://github.com/PayDock/android-mobile-sdk"
-    projectDescription = "The Paydock Mobile Android SDK provides an easy way to build and integrate with the Paydock " +
-        "orchestration platform for an Android app. We provide powerful and customizable UI elements that can be used " +
-        "out-of-the-box to collect your users' payment details. We also expose the low-level APIs that power those UIs so " +
-        "that you can build fully custom experiences."
-    packagingOption = "aar"
-    includeSources = false // This is included by default for Android libraries
-}
-
 fun getPropertyValue(propertyName: String): String {
     val envValue = System.getenv(propertyName)
     if (envValue != null) {
@@ -92,6 +84,8 @@ fun getPropertyValue(propertyName: String): String {
 }
 
 dependencies {
+    // Paydock Modules (Libs)
+    api(libs.paydock.core.networking)
     // Android
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.fragment.ktx)
@@ -103,6 +97,7 @@ dependencies {
     // Kotlin
     implementation(platform(libs.kotlin.bom))
     implementation(libs.kotlinx.html.jvm)
+    implementation(libs.kotlinx.serialization.json)
     testImplementation(libs.kotlinx.coroutines.test)
     // Coroutines
     implementation(libs.kotlinx.coroutines)
@@ -110,8 +105,8 @@ dependencies {
     implementation(libs.bundles.koin)
     testImplementation(libs.koin.test)
     // Ktor - Networking
-    implementation(libs.bundles.ktor)
-    implementation(libs.okhttp3.logging)
+    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.client.okhttp)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.okhttp3.mockwebserver)
     // Google Services

@@ -13,7 +13,7 @@ import java.util.Locale
  */
 class AfterpaySDKConfig(
     val buttonTheme: ButtonTheme = ButtonTheme(),
-    val config: AfterPayConfiguration,
+    val config: AfterpayConfiguration,
     val options: CheckoutOptions? = null
 ) {
     /**
@@ -51,7 +51,7 @@ class AfterpaySDKConfig(
      * @property language The language for localization, default is device's language.
      * @property country The country for localization, default is device's country.
      */
-    data class AfterPayConfiguration(
+    data class AfterpayConfiguration(
         val minimumAmount: String? = null,
         val maximumAmount: String,
         val currency: String,

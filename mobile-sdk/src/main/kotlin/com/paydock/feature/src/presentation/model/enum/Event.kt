@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Represents different events related to Mastercard SRC.
+ * Represents different events related to Click to Pay.
  */
 @Serializable
 enum class Event {

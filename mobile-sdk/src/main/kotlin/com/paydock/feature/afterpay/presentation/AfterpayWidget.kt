@@ -25,7 +25,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.afterpay.android.Afterpay
 import com.afterpay.android.view.AfterpayPaymentButton
 import com.paydock.R
-import com.paydock.core.domain.error.exceptions.AfterPayException
+import com.paydock.core.domain.error.exceptions.AfterpayException
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.core.utils.jwt.JwtHelper
 import com.paydock.designsystems.components.loader.SdkLoader
@@ -34,7 +34,7 @@ import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.address.domain.model.BillingAddress
 import com.paydock.feature.afterpay.presentation.mapper.mapFromBillingAddress
 import com.paydock.feature.afterpay.presentation.mapper.mapFromShippingOption
-import com.paydock.feature.afterpay.presentation.mapper.mapToAfterPayV2Options
+import com.paydock.feature.afterpay.presentation.mapper.mapToAfterpayV2Options
 import com.paydock.feature.afterpay.presentation.model.AfterpaySDKConfig
 import com.paydock.feature.afterpay.presentation.model.AfterpayShippingOption
 import com.paydock.feature.afterpay.presentation.model.AfterpayShippingOptionUpdate
@@ -62,7 +62,7 @@ import org.koin.androidx.compose.koinViewModel
  * @param completion The callback to handle the result of the payment operation.
  */
 @Composable
-fun AfterPayWidget(
+fun AfterpayWidget(
     modifier: Modifier = Modifier,
     config: AfterpaySDKConfig,
     token: (onTokenReceived: (String) -> Unit) -> Unit,
@@ -92,7 +92,7 @@ fun AfterPayWidget(
 
     LaunchedEffect(Unit) {
         // Configure Afterpay SDK and set up checkout handler
-        viewModel.configureAfterPaySdk(config.config)
+        viewModel.configureAfterpaySdk(config.config)
         val checkoutHandler = setupCheckoutHandler(viewModel, selectAddress, selectShippingOption)
         Afterpay.setCheckoutV2Handler(checkoutHandler)
 
@@ -137,7 +137,7 @@ fun AfterPayWidget(
     // Display the Afterpay payment button
     SdkTheme {
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
-            AfterPayWidgetContent(
+            AfterpayWidgetContent(
                 scope = scope,
                 config = config,
                 tokenProvider = token,
@@ -161,10 +161,10 @@ fun AfterPayWidget(
  * @param config The configuration for the Afterpay SDK.
  * @param tokenProvider The callback to obtain the authentication token asynchronously.
  * @param resolvePaymentForResult The ActivityResultLauncher for resolving payment.
- * @param viewModel The AfterPayViewModel instance.
+ * @param viewModel The AfterpayViewModel instance.
  */
 @Composable
-private fun AfterPayWidgetContent(
+private fun AfterpayWidgetContent(
     scope: CoroutineScope,
     config: AfterpaySDKConfig,
     tokenProvider: (onTokenReceived: (String) -> Unit) -> Unit,
@@ -212,7 +212,7 @@ private fun AfterPayWidgetContent(
  *
  * @param context The context.
  * @param token The obtained token.
- * @param viewModel The AfterPayViewModel instance.
+ * @param viewModel The AfterpayViewModel instance.
  * @param checkoutOptions The checkout options.
  * @param resolvePaymentForResult The ActivityResultLauncher for resolving payment.
  */
@@ -227,7 +227,7 @@ private fun handleTokenObtained(
     val intent = checkoutOptions?.let {
         Afterpay.createCheckoutV2Intent(
             context,
-            it.mapToAfterPayV2Options()
+            it.mapToAfterpayV2Options()
         )
     }
         ?: Afterpay.createCheckoutV2Intent(context)
@@ -240,7 +240,7 @@ private fun handleTokenObtained(
  * @param context The context.
  * @param uiState The UI state.
  * @param result The activity result.
- * @param viewModel The AfterPayViewModel instance.
+ * @param viewModel The AfterpayViewModel instance.
  * @param completion The callback to handle the result of the payment operation.
  */
 private fun handleWalletResponse(
@@ -265,7 +265,7 @@ private fun handleWalletResponse(
             }
         }
     } catch (e: IllegalStateException) {
-        e.message?.let { completion(Result.failure(AfterPayException.InvalidResultException(it))) }
+        e.message?.let { completion(Result.failure(AfterpayException.InvalidResultException(it))) }
     }
 }
 
@@ -275,7 +275,7 @@ private fun handleWalletResponse(
  * @param context The context.
  * @param callbackData The wallet callback data.
  * @param walletToken The wallet token.
- * @param viewModel The AfterPayViewModel instance.
+ * @param viewModel The AfterpayViewModel instance.
  */
 private fun handleWalletSuccess(
     context: Context,
@@ -288,7 +288,7 @@ private fun handleWalletSuccess(
     }
 
     if (walletToken.isNotBlank() && checkoutToken.isNotBlank()) {
-        handleAfterPaySuccessResult(walletToken, checkoutToken, viewModel)
+        handleAfterpaySuccessResult(walletToken, checkoutToken, viewModel)
     }
 }
 
@@ -298,7 +298,7 @@ private fun handleWalletSuccess(
  * @param context The context.
  * @param result The activity result.
  * @param walletToken The wallet token.
- * @param viewModel The AfterPayViewModel instance.
+ * @param viewModel The AfterpayViewModel instance.
  */
 private fun handleWalletCancellation(
     context: Context,
@@ -318,14 +318,14 @@ private fun handleWalletCancellation(
 
     if (walletToken.isNotBlank()) {
         val chargeId = JwtHelper.getChargeIdToken(walletToken)
-        chargeId?.let { handleAfterPayFailureResult(walletToken, it, viewModel) }
+        chargeId?.let { handleAfterpayFailureResult(walletToken, it, viewModel) }
     }
 }
 
 /**
  * Sets up the checkout handler.
  *
- * @param viewModel The AfterPayViewModel instance.
+ * @param viewModel The AfterpayViewModel instance.
  * @param selectAddress The callback to handle selection of shipping address.
  * @param selectShippingOption The callback to handle selection of shipping option.
  * @return The configured CheckoutHandler.
@@ -360,7 +360,7 @@ private fun setupCheckoutHandler(
  * @param afterPayToken Afterpay checkout token
  * @param viewModel [AfterpayViewModel] responsible for capturing the wallet charge
  */
-private fun handleAfterPaySuccessResult(
+private fun handleAfterpaySuccessResult(
     walletToken: String,
     afterPayToken: String,
     viewModel: AfterpayViewModel
@@ -378,7 +378,7 @@ private fun handleAfterPaySuccessResult(
  * @param chargeId The chargeId required for the transaction.
  * @param viewModel [AfterpayViewModel] responsible for capturing the wallet charge
  */
-private fun handleAfterPayFailureResult(
+private fun handleAfterpayFailureResult(
     walletToken: String,
     chargeId: String,
     viewModel: AfterpayViewModel
@@ -391,7 +391,7 @@ private fun handleAfterPayFailureResult(
 
 @LightDarkPreview
 @Composable
-private fun PreviewAfterPayWidget() {
+private fun PreviewAfterpayWidget() {
     SdkTheme {
         AndroidView(factory = { context ->
             AfterpayPaymentButton(context).apply {

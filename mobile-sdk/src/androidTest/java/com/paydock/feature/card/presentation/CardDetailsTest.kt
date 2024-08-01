@@ -57,7 +57,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
     private val useCase: TokeniseCreditCardUseCase = mockk(relaxed = true)
 
     override fun initialiseViewModel(): CardDetailsViewModel =
-        CardDetailsViewModel(useCase = useCase, dispatchers = dispatchersProvider)
+        CardDetailsViewModel(accessToken = "testAccessToken", useCase = useCase, dispatchers = dispatchersProvider)
 
     @Test
     fun testCardDetailsInitialStateInput() {
@@ -71,6 +71,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             ) {
                 CardDetailsWidget(
                     gatewayId = "testGateway",
+                    accessToken = "testAccessToken",
                     completion = {}
                 )
             }
@@ -97,6 +98,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             ) {
                 CardDetailsWidget(
                     gatewayId = "testGateway",
+                    accessToken = "testAccessToken",
                     completion = {}
                 )
             }
@@ -159,6 +161,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             ) {
                 CardDetailsWidget(
                     gatewayId = "testGateway",
+                    accessToken = "testAccessToken",
                     completion = {}
                 )
             }
@@ -211,6 +214,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         composeTestRule.setContent {
             CardDetailsWidget(
                 gatewayId = "testGateway",
+                accessToken = "testAccessToken",
                 completion = onCardDetailsResult
             )
         }
@@ -260,7 +264,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         // For token case
         val mockToken = "mockToken"
         val mockResult = Result.success(TokenisedCardDetails(token = mockToken, type = "token"))
-        coEvery { useCase.invoke(any()) } returns mockResult
+        coEvery { useCase.invoke("testAccessToken", any()) } returns mockResult
         every { onCardDetailsResult(any()) } just Runs
 
         composeTestRule.onNodeWithTag("saveCard").assertIsEnabled().performClick()
@@ -289,6 +293,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             ) {
                 CardDetailsWidget(
                     gatewayId = "testGateway",
+                    accessToken = "testAccessToken",
                     completion = onCardDetailsResult
                 )
             }
@@ -339,7 +344,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         // For token case
         val mockError = Exception("Tokenization failed")
         val mockResult = Result.failure<TokenisedCardDetails>(mockError)
-        coEvery { useCase.invoke(any()) } returns mockResult
+        coEvery { useCase.invoke("testAccessToken", any()) } returns mockResult
         every { onCardDetailsResult(any()) } just Runs
 
         composeTestRule.onNodeWithTag("saveCard").assertIsEnabled().performClick()

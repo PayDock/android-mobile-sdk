@@ -1,13 +1,13 @@
 package com.paydock.feature.card.injection
 
+import com.paydock.BuildConfig
 import com.paydock.MobileSDK
+import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.injection.modules.dataModule
 import com.paydock.core.data.injection.modules.dispatchersModule
-import com.paydock.core.data.injection.modules.provideHttpClient
-import com.paydock.core.data.injection.modules.provideHttpEngine
 import com.paydock.core.domain.injection.domainModule
+import com.paydock.core.network.NetworkClientBuilder
 import com.paydock.core.utils.decoder.injection.stringDecoderKoinModule
-import com.paydock.feature.card.data.api.auth.CardAuthInterceptor
 import com.paydock.feature.card.data.repository.CardDetailsRepositoryImpl
 import com.paydock.feature.card.domain.repository.CardDetailsRepository
 import com.paydock.feature.card.domain.usecase.TokeniseCreditCardFlowUseCase
@@ -15,8 +15,7 @@ import com.paydock.feature.card.domain.usecase.TokeniseCreditCardUseCase
 import com.paydock.feature.card.domain.usecase.TokeniseGiftCardUseCase
 import com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel
 import com.paydock.feature.card.presentation.viewmodels.GiftCardViewModel
-import okhttp3.Interceptor
-import org.koin.androidx.viewmodel.dsl.viewModelOf
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -28,19 +27,13 @@ val cardDetailsModule = module {
     // Include other necessary modules
     includes(dispatchersModule, dataModule, domainModule, stringDecoderKoinModule)
 
-    // Provide a CardAuthInterceptor with the public key from the MobileSDK
-    single<Interceptor>(named("CardAuth")) {
-        CardAuthInterceptor(publicKey = MobileSDK.getInstance().publicKey)
-    }
-
-    // Provide an HTTP engine for card operations with custom interceptors
-    single(named("CardEngine")) {
-        provideHttpEngine(get(), get(named("CardAuth")), get(), get())
-    }
-
     // Provide an HTTP client for card operations using the provided engine
     single(named("CardClient")) {
-        provideHttpClient(get(), get(named("CardEngine")))
+        NetworkClientBuilder.create()
+            .setBaseUrl(MobileSDK.getInstance().baseUrl)
+            .setSslPins(listOf(MobileSDKConstants.Network.SSH_HASH))
+            .setDebug(BuildConfig.DEBUG)
+            .build()
     }
 
     // Provide the repository for managing card details
@@ -54,7 +47,11 @@ val cardDetailsModule = module {
     factoryOf(::TokeniseGiftCardUseCase)
     factoryOf(::TokeniseGiftCardUseCase)
 
-    // Factory methods for creating instances of ViewModels
-    viewModelOf(::CardDetailsViewModel)
-    viewModelOf(::GiftCardViewModel)
+    // Factory methods for creating instances of ViewModels with access tokens
+    viewModel { (accessToken: String) ->
+        CardDetailsViewModel(accessToken, get(), get())
+    }
+    viewModel { (accessToken: String) ->
+        GiftCardViewModel(accessToken, get(), get())
+    }
 }

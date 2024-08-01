@@ -36,15 +36,15 @@ val ErrorModel?.displayableMessage: String
                 exception.message
                     ?: MobileSDKConstants.Errors.FLY_PAY_ERROR
 
-            is ErrorModel.MastercardSRCError ->
+            is ErrorModel.ClickToPayError ->
                 exception.message
-                    ?: MobileSDKConstants.Errors.MASTERCARD_SRC_ERROR
+                    ?: MobileSDKConstants.Errors.CLICK_TO_PAY_ERROR
 
             is ErrorModel.GooglePayError ->
                 exception.message
                     ?: MobileSDKConstants.Errors.GOOGLE_PAY_ERROR
 
-            is ErrorModel.AfterPayError ->
+            is ErrorModel.AfterpayError ->
                 exception.message
                     ?: MobileSDKConstants.Errors.AFTER_PAY_ERROR
 

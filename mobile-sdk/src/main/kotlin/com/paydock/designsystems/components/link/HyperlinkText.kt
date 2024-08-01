@@ -2,8 +2,8 @@ package com.paydock.designsystems.components.link
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -24,7 +24,7 @@ import com.paydock.designsystems.theme.Theme
 @Composable
 internal fun HyperlinkText(text: String, url: String) {
     val context = LocalContext.current
-    val hyperlinkColor = Theme.colors.onSurface
+    val hyperlinkColor = Theme.colors.primary
     val hyperlinkStyle = SpanStyle(
         color = hyperlinkColor,
         textDecoration = TextDecoration.Underline
@@ -38,18 +38,15 @@ internal fun HyperlinkText(text: String, url: String) {
         pop()
     }
 
-    ClickableText(
-        modifier = Modifier.fillMaxWidth(),
+    Text(
         text = annotatedString,
-        style = Theme.typography.body1,
-        onClick = { offset ->
-            annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
-                .firstOrNull()?.let { annotation ->
-                    val uri = Uri.parse(annotation.item)
-                    val intent = Intent(Intent.ACTION_VIEW, uri)
-                    context.startActivity(intent)
-                }
-        }
+        modifier = Modifier
+            .clickable {
+                val uri = Uri.parse(url)
+                val intent = Intent(Intent.ACTION_VIEW, uri)
+                context.startActivity(intent)
+            },
+        style = Theme.typography.body1
     )
 }
 

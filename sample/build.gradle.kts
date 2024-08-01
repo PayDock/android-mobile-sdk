@@ -32,8 +32,8 @@ android {
 
         buildConfigField(
             "String",
-            "PUBLIC_KEY",
-            getPropertyValue("PUBLIC_KEY")
+            "ACCESS_TOKEN",
+            getPropertyValue("ACCESS_TOKEN")
         )
 
         buildConfigField(
@@ -76,6 +76,18 @@ android {
             "String",
             "STANDALONE_3DS_SERVICE_ID",
             getPropertyValue("STANDALONE_3DS_SERVICE_ID")
+        )
+
+        buildConfigField(
+            "String",
+            "CUSTOMISATION_TEMPLATE_ID",
+            getPropertyValue("CUSTOMISATION_TEMPLATE_ID")
+        )
+
+        buildConfigField(
+            "String",
+            "CONFIGURATION_TEMPLATE_ID",
+            getPropertyValue("CONFIGURATION_TEMPLATE_ID")
         )
     }
     buildTypes {

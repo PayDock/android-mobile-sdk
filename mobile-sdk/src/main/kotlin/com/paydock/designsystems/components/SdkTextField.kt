@@ -149,7 +149,7 @@ internal fun SdkTextField(
         AnimatedVisibility(visible = error != null) {
             Text(
                 modifier = Modifier
-                    .padding(start = 15.dp)
+                    .padding(start = 15.dp, top = 6.dp)
                     .testTag("errorLabel"),
                 text = error ?: "",
                 color = Theme.colors.error,

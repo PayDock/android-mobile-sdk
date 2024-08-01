@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.1] - 2024-07-30
+
+### Added
+- Initial stages for Payment Workflow
+- Access token functionality
+- Function to validate if SDK is initialised
+
+### Changed
+- Moved network logic into separate dependency module
+- Card widget input field error labels
+- Consent text (for accessibility)
+- Downgraded Compose BOM dependency (2023.10.01)
+- Removed `publicKey` functionality, in place of `accessToken`
+- Renamed "MastercardSRC" to "ClickToPay"
+
 ## [1.1.0] - 2024-06-25
 
 ### Added

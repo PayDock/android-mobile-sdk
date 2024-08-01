@@ -5,6 +5,10 @@ import com.paydock.sample.feature.threeDS.data.api.dto.CreateStandaloneThreeDSTo
 import com.paydock.sample.feature.threeDS.domain.model.ThreeDSToken
 
 interface ThreeDSRepository {
-    suspend fun createIntegrated3dsToken(request: CreateIntegratedThreeDSTokenRequest): ThreeDSToken
+    suspend fun createIntegrated3dsToken(
+        accessToken: String,
+        request: CreateIntegratedThreeDSTokenRequest
+    ): ThreeDSToken
+
     suspend fun createStandalone3dsToken(request: CreateStandaloneThreeDSTokenRequest): ThreeDSToken
 }

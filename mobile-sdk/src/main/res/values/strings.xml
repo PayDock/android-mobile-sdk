@@ -24,10 +24,11 @@
     <!-- endregion -->
     <!-- region Errors -->
     <string name="error_card_holder_name">Enter a valid cardholder name</string>
-    <string name="error_card_number">Enter a valid card number</string>
+    <string name="error_card_number">Invalid card number</string>
     <string name="error_expiry_date">Invalid expiry date</string>
     <string name="error_expiry_expired">Card expired</string>
-    <string name="error_security_code">Card failed</string>
+    <string name="error_security_code">Invalid security code</string>
+    <string name="error_pin">Invalid PIN number</string>
     <string name="error_web_client_error">Client Error: There was an issue with your request.</string>
     <string name="error_web_server_error">Server Error: The server encountered an issue.</string>
     <string name="error_web_unknown_error">An unexpected error occurred</string>
@@ -42,7 +43,7 @@
     <string name="error_afterpay_sdk_internal_data">Intent should always be populated by the SDK!</string>
     <string name="error_afterpay_sdk_internal_token">A token is always associated with a successful Afterpay transaction!</string>
     <string name="error_afterpay_sdk_internal_status">A cancelled Afterpay transaction always contains a status!</string>
-    <string name="error_mastercard_src_cancelled">Mastercard SRC transaction was cancelled!</string>
+    <string name="error_click_to_pay_cancelled">Click to Pay transaction was cancelled!</string>
     <string name="error_3ds_cancelled_error">3DS transaction was cancelled!</string>
     <!-- endregion -->
     <!-- region Buttons -->
