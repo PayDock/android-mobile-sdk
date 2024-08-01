@@ -3,10 +3,10 @@ package com.paydock.feature.flypay.presentation.viewmodels
 import com.paydock.MobileSDK
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
-import com.paydock.core.domain.error.exceptions.ApiException
 import com.paydock.core.domain.error.exceptions.FlyPayException
-import com.paydock.core.domain.error.exceptions.UnknownApiException
 import com.paydock.core.domain.model.Environment
+import com.paydock.core.network.exceptions.ApiException
+import com.paydock.core.network.exceptions.UnknownApiException
 import com.paydock.feature.flypay.presentation.state.FlyPayViewState
 import com.paydock.feature.wallet.data.api.dto.WalletCallbackRequest
 import com.paydock.feature.wallet.domain.model.WalletCallback

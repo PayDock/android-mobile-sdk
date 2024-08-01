@@ -21,8 +21,6 @@ if (secretPropsFile.exists()) {
     ext["token"] = System.getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
 }
 
-val projectId: String by project
-
 publishing {
     repositories {
         maven {

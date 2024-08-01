@@ -15,20 +15,14 @@ interface CardApi {
 
     @POST("/v1/payment_sources/tokens")
     suspend fun tokeniseCardDetails(
-        @Header("x-user-public-key") publicKey: String = BuildConfig.PUBLIC_KEY,
+        @Header("X-Access-Token") accessToken: String,
         @Body request: TokeniseCardRequest
     ): TokeniseCardResponse
 
     @POST("/v1/vault/payment_sources")
     suspend fun createVaultToken(
         @Header("x-user-secret-key") secretKey: String = BuildConfig.SECRET_KEY,
-        @Body request: VaultTokenRequest.CreateCardVaultTokenRequest
-    ): VaultTokenResponse
-
-    @POST("/v1/vault/payment_sources")
-    suspend fun createVaultToken(
-        @Header("x-user-secret-key") secretKey: String = BuildConfig.SECRET_KEY,
-        @Body request: VaultTokenRequest.CreateCardSessionVaultTokenRequest
+        @Body request: VaultTokenRequest
     ): VaultTokenResponse
 
     @POST("/v1/charges")

@@ -12,7 +12,7 @@ interface ThreeDSApi {
 
     @POST("/v1/charges/3ds")
     suspend fun createIntegrated3dsToken(
-        @Header("x-user-public-key") publicKey: String = BuildConfig.PUBLIC_KEY,
+        @Header("X-Access-Token") accessToken: String,
         @Body request: CreateIntegratedThreeDSTokenRequest
     ): ThreeDSTokenResponse
 

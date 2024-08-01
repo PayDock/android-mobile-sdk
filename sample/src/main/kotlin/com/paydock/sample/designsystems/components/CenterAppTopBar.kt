@@ -2,7 +2,7 @@ package com.paydock.sample.designsystems.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -48,7 +48,7 @@ fun CenterAppTopBar(
                 onBackButtonClick?.let { clickListener ->
                     IconButton(onClick = { clickListener.invoke() }) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
                             contentDescription = "back",
                             tint = Theme.colors.onPrimaryContainer
                         )
@@ -82,7 +82,7 @@ fun CenterAppTopBar(
                 onBackButtonClick?.let { clickListener ->
                     IconButton(onClick = { clickListener.invoke() }) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
                             contentDescription = "back",
                             tint = Theme.colors.onPrimaryContainer
                         )

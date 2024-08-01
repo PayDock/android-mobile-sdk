@@ -3,6 +3,7 @@ package com.paydock.sample.feature.card
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.paydock.sample.core.TOKENISE_CARD_ERROR
+import com.paydock.sample.core.presentation.utils.AccessTokenProvider
 import com.paydock.sample.feature.card.data.api.dto.TokeniseCardRequest
 import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
 import com.paydock.sample.feature.card.domain.usecase.CreateCardVaultTokenUseCase
@@ -16,6 +17,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CardViewModel @Inject constructor(
+    private val accessTokenProvider: AccessTokenProvider,
     private val tokeniseCardUseCase: TokeniseCardUseCase,
     private val createCardVaultTokenUseCase: CreateCardVaultTokenUseCase
 ) : ViewModel() {
@@ -26,10 +28,11 @@ class CardViewModel @Inject constructor(
 
     fun tokeniseCardDetails() {
         viewModelScope.launch {
+            val accessToken = accessTokenProvider.accessToken.value
             _stateFlow.update { state ->
                 state.copy(isLoading = true)
             }
-            val result = tokeniseCardUseCase(TokeniseCardRequest())
+            val result = tokeniseCardUseCase(accessToken, TokeniseCardRequest())
             result.onSuccess { token ->
                 _stateFlow.update { state ->
                     state.copy(token = token, isLoading = false, error = null)

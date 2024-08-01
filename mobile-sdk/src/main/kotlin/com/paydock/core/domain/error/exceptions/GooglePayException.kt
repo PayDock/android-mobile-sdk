@@ -1,8 +1,8 @@
 package com.paydock.core.domain.error.exceptions
 
 import com.paydock.core.MobileSDKConstants
-import com.paydock.core.data.network.error.ApiErrorResponse
-import com.paydock.core.data.network.error.displayableMessage
+import com.paydock.core.network.dto.error.ApiErrorResponse
+import com.paydock.core.network.dto.error.displayableMessage
 import java.io.IOException
 
 /**

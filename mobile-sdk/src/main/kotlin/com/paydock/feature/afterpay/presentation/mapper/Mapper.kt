@@ -16,7 +16,7 @@ import com.paydock.feature.afterpay.presentation.model.AfterpayShippingOptionUpd
 import java.util.Locale
 
 /**
- * Maps a list of AfterPayShippingOption to SDK ShippingOptions.
+ * Maps a list of AfterpayShippingOption to SDK ShippingOptions.
  *
  * @return List of SDK ShippingOption objects.
  */
@@ -24,7 +24,7 @@ fun List<AfterpayShippingOption>.mapToSDKShippingOptions(): List<ShippingOption>
     this.map { shipping -> shipping.mapToSDKShippingOption() }
 
 /**
- * Maps an AfterPayShippingOption to an SDK ShippingOption.
+ * Maps an AfterpayShippingOption to an SDK ShippingOption.
  *
  * @return SDK ShippingOption object.
  */
@@ -38,9 +38,9 @@ fun AfterpayShippingOption.mapToSDKShippingOption(): ShippingOption = ShippingOp
 )
 
 /**
- * Maps an SDK ShippingOption to an AfterPayShippingOption.
+ * Maps an SDK ShippingOption to an AfterpayShippingOption.
  *
- * @return AfterPayShippingOption object.
+ * @return AfterpayShippingOption object.
  */
 fun ShippingOption.mapFromShippingOption(): AfterpayShippingOption = AfterpayShippingOption(
     this.id,
@@ -53,7 +53,7 @@ fun ShippingOption.mapFromShippingOption(): AfterpayShippingOption = AfterpayShi
 )
 
 /**
- * Maps a list of AfterPayShippingOption to SDK ShippingOptionsSuccessResult.
+ * Maps a list of AfterpayShippingOption to SDK ShippingOptionsSuccessResult.
  *
  * @return ShippingOptionsSuccessResult object.
  */
@@ -61,7 +61,7 @@ fun List<AfterpayShippingOption>.mapToSDKShippingOptionResult(): ShippingOptions
     ShippingOptionsSuccessResult(this.mapToSDKShippingOptions())
 
 /**
- * Maps an AfterPayShippingOptionUpdate to SDK ShippingOptionUpdateSuccessResult.
+ * Maps an AfterpayShippingOptionUpdate to SDK ShippingOptionUpdateSuccessResult.
  *
  * @return ShippingOptionUpdateSuccessResult object.
  */
@@ -69,7 +69,7 @@ fun AfterpayShippingOptionUpdate.mapToSDKShippingOptionUpdateResult(): ShippingO
     ShippingOptionUpdateSuccessResult(this.mapToSDKShippingOptionUpdate())
 
 /**
- * Maps an AfterPayShippingOptionUpdate to SDK ShippingOptionUpdate.
+ * Maps an AfterpayShippingOptionUpdate to SDK ShippingOptionUpdate.
  *
  * @return ShippingOptionUpdate object.
  */
@@ -105,7 +105,7 @@ fun ShippingAddress.mapFromBillingAddress(): BillingAddress =
  *
  * @return Afterpay V2 options based on the checkout options.
  */
-fun AfterpaySDKConfig.CheckoutOptions.mapToAfterPayV2Options(): AfterpayCheckoutV2Options =
+fun AfterpaySDKConfig.CheckoutOptions.mapToAfterpayV2Options(): AfterpayCheckoutV2Options =
     AfterpayCheckoutV2Options(
         pickup = this.pickup,
         buyNow = this.buyNow,

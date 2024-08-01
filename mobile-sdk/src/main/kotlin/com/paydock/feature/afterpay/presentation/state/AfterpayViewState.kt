@@ -1,6 +1,6 @@
 package com.paydock.feature.afterpay.presentation.state
 
-import com.paydock.core.domain.error.exceptions.AfterPayException
+import com.paydock.core.domain.error.exceptions.AfterpayException
 import com.paydock.feature.charge.domain.model.ChargeResponse
 import com.paydock.feature.wallet.domain.model.WalletCallback
 
@@ -16,7 +16,7 @@ import com.paydock.feature.wallet.domain.model.WalletCallback
  */
 internal data class AfterpayViewState(
     val isLoading: Boolean = false,
-    val error: AfterPayException? = null,
+    val error: AfterpayException? = null,
     val validLocale: Boolean = false,
     val token: String? = null,
     val chargeData: ChargeResponse? = null,

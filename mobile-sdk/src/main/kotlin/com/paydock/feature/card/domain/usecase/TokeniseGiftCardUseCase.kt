@@ -17,11 +17,12 @@ internal class TokeniseGiftCardUseCase(private val repository: CardDetailsReposi
     /**
      * Invokes the use case to tokenize gift card details.
      *
+     * @param accessToken The access token used for authentication with the backend services.
      * @param request The [TokeniseCardRequest.GiftCard] containing credit card information to tokenize.
      * @return A [Result] representing the tokenization result.
      */
-    suspend operator fun invoke(request: TokeniseCardRequest.GiftCard): Result<TokenisedCardDetails> =
+    suspend operator fun invoke(accessToken: String, request: TokeniseCardRequest.GiftCard): Result<TokenisedCardDetails> =
         suspendRunCatching {
-            repository.tokeniseCardDetails(request)
+            repository.tokeniseCardDetails(accessToken, request)
         }
 }

@@ -11,6 +11,5 @@ import org.koin.dsl.module
  */
 val dataModule = module {
     includes(networkModule)
-
     singleOf(::ConnectivityManagerNetworkMonitor) { bind<NetworkMonitor>() }
 }

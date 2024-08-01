@@ -9,6 +9,10 @@ stages:
   - .pre
   - build
   - test
+  - tag
+  - gitlab_release
+  - github_release
+  - publish
   - security
   - security-post
 
@@ -17,11 +21,20 @@ include:
     ref: main
     file: '/security/gitlab-defectdojo.yaml'
 
-buildExampleApp:
-  stage: build
+# Improved: Use 'extends' for DRY principle
+.setup_bundler:
+  cache:
+    paths:
+      - vendor/bundle
   before_script:
     - gem install bundler -v 1.17.2
     - bundle update
+  script:
+    - bundle --version
+
+buildExampleApp:
+  stage: build
+  extends: .setup_bundler  # Apply the shared setup
   script:
     - bundle --version
     - bundle exec fastlane buildDebug
@@ -31,11 +44,52 @@ buildExampleApp:
 
 test:
   stage: test
-  before_script:
-    - gem install bundler -v 1.17.2
-    - bundle update
+  extends: .setup_bundler  # Apply the shared setup
   script:
     - bundle exec fastlane test
   artifacts:
-    paths:
-      - mobile-sdk/build/test-results/*
+    when: always
+    reports:
+      junit: mobile-sdk/build/test-results/testDebugUnitTest/TEST-*.xml
+
+tag_release:
+  stage: tag
+  extends: .setup_bundler  # Apply the shared setup
+  only:
+    - main
+  script:
+    - bundle exec fastlane tag_release
+
+create_gitlab_release:
+  stage: gitlab_release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  rules:
+    - if: '$CI_COMMIT_TAG && $CI_COMMIT_REF_NAME == "main"'
+  script:
+    - echo "running release_job for $TAG"
+  release:
+    name: 'Release: v${CI_COMMIT_TAG}'
+    description: '$CI_COMMIT_TAG'
+    tag_name: '$CI_COMMIT_TAG'
+    ref: '$CI_COMMIT_SHA'
+    assets:
+      links:
+        - name: 'MobileSDK Documentation'
+          url: 'https://github.com/PayDock/mobile-sdk-doc/tree/main'
+
+create_github_release:
+  stage: github_release
+  extends: .setup_bundler  # Apply the shared setup
+  only:
+    - main
+  script:
+    - bundle exec fastlane create_github_release
+
+publish_to_github:
+  stage: publish
+  extends: .setup_bundler  # Apply the shared setup
+  only:
+    - main
+  script:
+    - bundle exec fastlane publish_to_github
+

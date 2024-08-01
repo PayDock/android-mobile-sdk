@@ -17,38 +17,71 @@ default_platform(:android)
 
 platform :android do
 
-  desc "Builds the debug code"
-  lane :buildDebug do
-    gradle(task: "clean assembleDebug")
-  end
+    desc "Builds the debug code"
+    lane :buildDebug do
+        gradle(task: "clean assembleDebug")
+    end
 
-  desc "Builds the release code"
-  lane :buildRelease do
-    gradle(task: "assembleRelease")
-  end
+    desc "Builds the release code"
+    lane :buildRelease do
+        gradle(task: "assembleRelease")
+    end
 
-  desc "Runs all the tests"
-  lane :test do
-    gradle(task: "test")
-  end
+    desc "Runs all the tests"
+    lane :test do
+        gradle(task: "test")
+    end
 
-  desc "Submit a new Internal Build to Play Store"
-  lane :internal do
-    upload_to_play_store(track: 'internal', apk: 'app/build/outputs/apk/release/app-release.apk')
-  end
+    desc "Creates and pushes a tag on GitLab"
+    lane :tag_release do
+        result = gradle(task: "-q :mobile-sdk:printVersionName", print_command: false, print_command_output: true)
 
-  desc "Promote Internal to Alpha"
-  lane :promote_internal_to_alpha do
-    upload_to_play_store(track: 'internal', track_promote_to: 'alpha')
-  end
+        # Extract version number using a regular expression
+        version_match = result.match(/(\d+\.\d+\.\d+)/) # Match a pattern like "1.0.0"
+        version_name = version_match[1] if version_match
 
-  desc "Promote Alpha to Beta"
-  lane :promote_alpha_to_beta do
-    upload_to_play_store(track: 'alpha', track_promote_to: 'beta')
-  end
+        # Configure Git user (if needed)
+        sh("git config --global user.email \"ricardo.dasilva@paydock.com\"")
+        sh("git config --global user.name \"Ricardo\"")
 
-  desc "Promote Beta to Production"
-  lane :promote_beta_to_production do
-    upload_to_play_store(track: 'beta', track_promote_to: 'production')
-  end
+        # Create and push the tag
+        sh("git tag -a #{version_name} -m \"Release version #{version_name}\"")
+
+        # Use the GITLAB_TOKEN environment variable for authentication
+        git_url_with_token = "https://gitlab-ci-token:#{ENV['GITLAB_TOKEN']}@gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android.git"
+        sh("git remote set-url origin #{git_url_with_token}")
+
+        # Push the tag to the remote repository
+        sh("git push origin #{version_name}")
+    end
+
+    desc "Creates a release on GitHub"
+    lane :create_github_release do
+        # Extract version name from tag (assuming tags are in the format "v1.0.0")
+        version_name = sh("git describe --tags --abbrev=0").strip
+
+        require 'octokit'
+
+        # Authenticate with GitHub (assuming GITHUB_TOKEN is set in your CI/CD variables)
+        # Set up Octokit client
+        client = Octokit::Client.new(access_token: ENV['GITHUB_TOKEN'])
+
+        # Create a release on GitHub
+        repo = 'PayDock/android-mobile-sdk' # Replace with your GitHub repository
+        release_name = "v#{version_name}"
+        release_body = "**Full Changelog**: https://github.com/PayDock/android-mobile-sdk/commits/#{version_name}"
+
+        release = client.create_release(repo, "#{version_name}", {
+          tag_name: "#{version_name}",
+          name: release_name,
+          body: release_body,
+          is_generate_release_notes: true,
+          make_latest: 'true'
+        })
+    end
+
+    desc "Publishes the SDK to GitHub Packages"
+    lane :publish_to_github do
+        gradle(task: ":mobile-sdk:publishAllPublicationsToGitHubPackagesRepository")
+    end
 end

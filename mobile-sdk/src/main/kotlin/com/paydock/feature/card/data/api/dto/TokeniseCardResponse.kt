@@ -1,6 +1,6 @@
 package com.paydock.feature.card.data.api.dto
 
-import com.paydock.core.data.network.dto.Resource
+import com.paydock.core.network.dto.Resource
 import kotlinx.serialization.Serializable
 
 /**
