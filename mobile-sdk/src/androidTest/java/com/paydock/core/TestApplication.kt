@@ -8,7 +8,7 @@ class TestApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         MobileSDK
-            .Builder("testPublicKey")
+            .Builder()
             .environment(Environment.SANDBOX)
             .build(this)
     }

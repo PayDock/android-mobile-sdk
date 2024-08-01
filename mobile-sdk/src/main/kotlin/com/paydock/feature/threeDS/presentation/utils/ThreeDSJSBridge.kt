@@ -2,7 +2,7 @@ package com.paydock.feature.threeDS.presentation.utils
 
 import android.webkit.JavascriptInterface
 import com.paydock.core.MobileSDKConstants
-import com.paydock.core.extensions.convertToDataClass
+import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.designsystems.components.web.utils.SdkJSBridge
 import com.paydock.feature.threeDS.presentation.model.Charge3dsEvent
 import com.paydock.feature.threeDS.presentation.model.ChargeError

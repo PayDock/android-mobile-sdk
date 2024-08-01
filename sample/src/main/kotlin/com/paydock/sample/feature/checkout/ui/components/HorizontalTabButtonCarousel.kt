@@ -56,7 +56,7 @@ fun HorizontalTabButtonCarousel(
                         onTabSelected(tab)
                     }
 
-                    WidgetType.MASTERCARD_SRC -> MastercardSRCTabButton(isSelected = tab == selectedTab) {
+                    WidgetType.CLICK_TO_PAY -> ClickToPayTabButton(isSelected = tab == selectedTab) {
                         onTabSelected(tab)
                     }
 
@@ -72,7 +72,7 @@ fun HorizontalTabButtonCarousel(
                         onTabSelected(tab)
                     }
 
-                    WidgetType.AFTER_PAY -> AfterPayTabButton(isSelected = tab == selectedTab) {
+                    WidgetType.AFTER_PAY -> AfterpayTabButton(isSelected = tab == selectedTab) {
                         onTabSelected(tab)
                     }
 

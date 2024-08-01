@@ -1,8 +1,12 @@
 package com.paydock.sample.core.data.injection
 
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.paydock.MobileSDK
 import com.paydock.core.domain.model.Environment
 import com.paydock.sample.BuildConfig
+import com.paydock.sample.core.data.utils.CreateIntentRequestAdapterFactory
+import com.paydock.sample.core.data.utils.CreateVaultTokenRequestAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,12 +31,19 @@ class NetworkModule {
         }
     }
 
+    @Singleton
+    @Provides
+    fun provideGson(): Gson = GsonBuilder()
+        .registerTypeAdapterFactory(CreateIntentRequestAdapterFactory())
+        .registerTypeAdapterFactory(CreateVaultTokenRequestAdapterFactory())
+        .create()
+
 
     @Singleton
     @Provides
-    fun provideRetrofit(baseUrl: String, okHttp: OkHttpClient): Retrofit {
+    fun provideRetrofit(baseUrl: String, okHttp: OkHttpClient, gson: Gson): Retrofit {
         return Retrofit.Builder().apply {
-            addConverterFactory(GsonConverterFactory.create())
+            addConverterFactory(GsonConverterFactory.create(gson))
             client(okHttp)
             baseUrl(baseUrl)
         }.build()

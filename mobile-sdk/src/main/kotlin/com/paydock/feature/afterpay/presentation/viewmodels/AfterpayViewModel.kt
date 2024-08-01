@@ -8,10 +8,10 @@ import com.afterpay.android.model.ShippingOptionsSuccessResult
 import com.paydock.MobileSDK
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
-import com.paydock.core.domain.error.exceptions.AfterPayException
-import com.paydock.core.domain.error.exceptions.ApiException
-import com.paydock.core.domain.error.exceptions.UnknownApiException
+import com.paydock.core.domain.error.exceptions.AfterpayException
 import com.paydock.core.domain.model.Environment
+import com.paydock.core.network.exceptions.ApiException
+import com.paydock.core.network.exceptions.UnknownApiException
 import com.paydock.feature.afterpay.presentation.mapper.mapMessage
 import com.paydock.feature.afterpay.presentation.mapper.mapToSDKShippingOptionResult
 import com.paydock.feature.afterpay.presentation.mapper.mapToSDKShippingOptionUpdateResult
@@ -115,15 +115,15 @@ internal class AfterpayViewModel(
         if (result.isSuccess) {
             val tokenResult: Result<String> = result.mapCatching {
                 it.refToken
-                    ?: throw AfterPayException.TokenException("Error fetching checkout token")
+                    ?: throw AfterpayException.TokenException("Error fetching checkout token")
             }
             commandChannel.trySend(Command.ProvideCheckoutTokenResult(tokenResult))
         }
         updateState { currentState ->
             val exception: Throwable? = result.exceptionOrNull()
-            val error: AfterPayException? = when (exception) {
-                is ApiException -> AfterPayException.FetchingUrlException(error = exception.error)
-                is UnknownApiException -> AfterPayException.UnknownException(displayableMessage = exception.errorMessage)
+            val error: AfterpayException? = when (exception) {
+                is ApiException -> AfterpayException.FetchingUrlException(error = exception.error)
+                is UnknownApiException -> AfterpayException.UnknownException(displayableMessage = exception.errorMessage)
                 else -> currentState.error
             }
             currentState.copy(
@@ -142,9 +142,9 @@ internal class AfterpayViewModel(
     override fun updateChargeUIState(result: Result<ChargeResponse>) {
         updateState { currentState ->
             val exception: Throwable? = result.exceptionOrNull()
-            val error: AfterPayException? = when (exception) {
-                is ApiException -> AfterPayException.CapturingChargeException(error = exception.error)
-                is UnknownApiException -> AfterPayException.UnknownException(displayableMessage = exception.errorMessage)
+            val error: AfterpayException? = when (exception) {
+                is ApiException -> AfterpayException.CapturingChargeException(error = exception.error)
+                is UnknownApiException -> AfterpayException.UnknownException(displayableMessage = exception.errorMessage)
                 else -> currentState.error
             }
             currentState.copy(
@@ -170,7 +170,7 @@ internal class AfterpayViewModel(
     fun updateCancellationState(status: CancellationStatus) {
         updateState { currentState ->
             currentState.copy(
-                error = AfterPayException.CancellationException(status.mapMessage())
+                error = AfterpayException.CancellationException(status.mapMessage())
             )
         }
     }
@@ -213,7 +213,7 @@ internal class AfterpayViewModel(
      *
      * @param configuration The configuration for the Afterpay SDK.
      */
-    fun configureAfterPaySdk(configuration: AfterpaySDKConfig.AfterPayConfiguration) {
+    fun configureAfterpaySdk(configuration: AfterpaySDKConfig.AfterpayConfiguration) {
         launchOnIO {
             try {
                 Afterpay.setConfiguration(
@@ -230,7 +230,7 @@ internal class AfterpayViewModel(
             } catch (e: IllegalArgumentException) {
                 updateState { state ->
                     state.copy(
-                        error = AfterPayException.ConfigurationException(
+                        error = AfterpayException.ConfigurationException(
                             e.message
                                 ?: "Afterpay: unsupported country: ${Locale.getDefault().displayCountry}"
                         )

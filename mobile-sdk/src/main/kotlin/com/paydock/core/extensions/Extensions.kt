@@ -1,6 +1,5 @@
 package com.paydock.core.extensions
 
-import com.paydock.core.data.injection.modules.provideJson
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
@@ -60,14 +59,6 @@ internal fun <T> runCatchingFlow(flowBlock: () -> Flow<T>): Flow<Result<T>> = fl
         .catch { exception -> emit(Result.failure(exception)) }
         .collect { data -> emit(Result.success(data)) }
 }
-
-/**
- * Inline function to convert a JSON string to a data class of type [R].
- *
- * @return An instance of the data class [R] created from the JSON string.
- */
-internal inline fun <reified R : Any> String.convertToDataClass(): R =
-    provideJson().decodeFromString(this)
 
 /**
  * Extension function on Result class to get the value or throw a specific exception.

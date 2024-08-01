@@ -1,18 +1,33 @@
 package com.paydock.sample.feature.widgets.ui.models
 
-enum class WidgetType {
-    ADDRESS_DETAILS, AFTER_PAY, CREDIT_CARD_DETAILS, FLY_PAY, GOOGLE_PAY, GIFT_CARD_DETAILS, INTEGRATED_3DS, MASTERCARD_SRC, PAY_PAL, STANDALONE_3DS,
-}
+import com.paydock.sample.designsystems.components.list.DisplayableListItem
 
-fun WidgetType.displayName(): String = when (this) {
-    WidgetType.ADDRESS_DETAILS -> "Address"
-    WidgetType.AFTER_PAY -> "Afterpay"
-    WidgetType.CREDIT_CARD_DETAILS -> "Credit Card Details"
-    WidgetType.FLY_PAY -> "FlyPay"
-    WidgetType.GIFT_CARD_DETAILS -> "Gift Card Details"
-    WidgetType.GOOGLE_PAY -> "Google Pay"
-    WidgetType.INTEGRATED_3DS -> "Integrated 3DS"
-    WidgetType.MASTERCARD_SRC -> "Mastercard SRC"
-    WidgetType.PAY_PAL -> "PayPal"
-    WidgetType.STANDALONE_3DS -> "Standalone 3DS"
+enum class WidgetType : DisplayableListItem {
+    ADDRESS_DETAILS, AFTER_PAY, CREDIT_CARD_DETAILS, FLY_PAY, GOOGLE_PAY, GIFT_CARD_DETAILS, INTEGRATED_3DS, CLICK_TO_PAY, PAY_PAL, STANDALONE_3DS;
+
+    override fun displayName(): String = when (this) {
+        ADDRESS_DETAILS -> "Address"
+        AFTER_PAY -> "Afterpay"
+        CLICK_TO_PAY -> "Click to Pay"
+        CREDIT_CARD_DETAILS -> "Card Details"
+        FLY_PAY -> "FlyPay"
+        GIFT_CARD_DETAILS -> "Gift Card"
+        GOOGLE_PAY -> "Google Pay"
+        INTEGRATED_3DS -> "Integrated 3DS"
+        PAY_PAL -> "PayPal"
+        STANDALONE_3DS -> "Standalone 3DS"
+    }
+
+    override fun displayDescription(): String = when (this) {
+        ADDRESS_DETAILS -> "Capture customer address form"
+        AFTER_PAY -> "Standalone Afterpay button"
+        CLICK_TO_PAY -> "ClickToPay flow"
+        CREDIT_CARD_DETAILS -> "Tokensise card details"
+        FLY_PAY -> "Standalone FlyPay button"
+        GIFT_CARD_DETAILS -> "Tokensise card details"
+        GOOGLE_PAY -> "Standalone Google Pay button"
+        INTEGRATED_3DS -> "Integrated 3DS flow"
+        PAY_PAL -> "Standalone PayPal button"
+        STANDALONE_3DS -> "Standalone 3DS flow"
+    }
 }

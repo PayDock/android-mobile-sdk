@@ -11,10 +11,11 @@ internal interface CardDetailsRepository {
     /**
      * Tokenizes the provided card details using the given [request].
      *
+     * @param accessToken The access token used for authentication with the backend services.
      * @param request The [TokeniseCardRequest] representing the card details to be tokenized.
      * @return A [TokenisedCardDetails] object containing the token and type of the tokenized card.
      */
-    suspend fun tokeniseCardDetails(request: TokeniseCardRequest): TokenisedCardDetails
+    suspend fun tokeniseCardDetails(accessToken: String, request: TokeniseCardRequest): TokenisedCardDetails
 
     /**
      * Tokenizes card details using a flow-based approach.
@@ -22,8 +23,9 @@ internal interface CardDetailsRepository {
      * This function takes a [request] containing card details and returns a [Flow] of [TokenisedCardDetails].
      * The function uses Kotlin coroutines and Flow to perform the tokenization asynchronously.
      *
+     * @param accessToken The access token used for authentication with the backend services.
      * @param request The [TokeniseCardRequest] containing card details to be tokenized.
      * @return A [Flow] of [TokenisedCardDetails] representing the tokenized card details.
      */
-    fun tokeniseCardDetailsFlow(request: TokeniseCardRequest): Flow<TokenisedCardDetails>
+    fun tokeniseCardDetailsFlow(accessToken: String, request: TokeniseCardRequest): Flow<TokenisedCardDetails>
 }

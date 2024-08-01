@@ -38,7 +38,7 @@ internal fun CardPinInput(
 
     // Determine the error message to display
     val errorMessage =
-        if (cardPin == null) stringResource(id = R.string.error_security_code) else null
+        if (cardPin == null) stringResource(id = R.string.error_pin) else null
 
     // Create the visual representation of the security code input field
     SdkTextField(

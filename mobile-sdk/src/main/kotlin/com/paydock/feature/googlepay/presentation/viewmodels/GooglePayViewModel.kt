@@ -7,7 +7,7 @@ import com.google.android.gms.wallet.PaymentsClient
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.GooglePayException
-import com.paydock.core.domain.error.exceptions.UnknownApiException
+import com.paydock.core.network.exceptions.UnknownApiException
 import com.paydock.feature.charge.domain.model.ChargeResponse
 import com.paydock.feature.googlepay.presentation.state.GooglePayViewState
 import com.paydock.feature.wallet.data.api.dto.WalletCaptureRequest
@@ -85,7 +85,7 @@ internal class GooglePayViewModel(
         updateState { currentState ->
             val exception: Throwable? = result.exceptionOrNull()
             val error: GooglePayException? = when (exception) {
-                is com.paydock.core.domain.error.exceptions.ApiException ->
+                is com.paydock.core.network.exceptions.ApiException ->
                     GooglePayException.CapturingChargeException(error = exception.error)
 
                 is UnknownApiException -> GooglePayException.UnknownException(displayableMessage = exception.errorMessage)

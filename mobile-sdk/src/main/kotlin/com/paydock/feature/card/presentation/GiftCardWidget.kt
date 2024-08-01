@@ -24,11 +24,13 @@ import com.paydock.feature.card.presentation.components.CardPinInput
 import com.paydock.feature.card.presentation.components.GiftCardNumberInput
 import com.paydock.feature.card.presentation.viewmodels.GiftCardViewModel
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 /**
  * A composable for capturing and displaying card details.
  *
  * @param modifier The modifier to apply to this composable.
+ * @param accessToken The access token used for authentication with the backend services.
  * @param storePin A flag to be able to use a PIN value for the initial transaction.
  * @param completion A callback to receive the result of card details processing.
  */
@@ -36,10 +38,11 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun GiftCardWidget(
     modifier: Modifier = Modifier,
+    accessToken: String,
     storePin: Boolean = true,
     completion: (Result<String>) -> Unit
 ) {
-    val viewModel: GiftCardViewModel = koinViewModel()
+    val viewModel: GiftCardViewModel = koinViewModel(parameters = { parametersOf(accessToken) })
     viewModel.setStorePin(storePin)
     val uiState = viewModel.stateFlow.collectAsState()
 
@@ -127,7 +130,7 @@ fun GiftCardWidget(
 @Composable
 private fun PreviewGiftCardDetails() {
     SdkTheme {
-        GiftCardWidget {
+        GiftCardWidget(accessToken = "accessToken") {
 
         }
     }

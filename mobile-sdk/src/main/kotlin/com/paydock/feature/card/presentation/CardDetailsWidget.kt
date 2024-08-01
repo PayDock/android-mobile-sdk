@@ -31,11 +31,13 @@ import com.paydock.feature.card.presentation.model.SaveCardConfig
 import com.paydock.feature.card.presentation.utils.CardIssuerValidator
 import com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 /**
  * A composable for capturing and displaying card details.
  *
  * @param modifier The modifier to apply to this composable.
+ * @param accessToken The access token used for authentication with the backend services.
  * @param gatewayId The ID of the payment gateway (optional).
  * @param actionText The text to display on the action button (default is "Submit").
  * @param showCardTitle A flag indicating whether to show the card title (default is true).
@@ -46,13 +48,14 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun CardDetailsWidget(
     modifier: Modifier = Modifier,
+    accessToken: String,
     gatewayId: String? = null,
     actionText: String = stringResource(R.string.button_submit),
     showCardTitle: Boolean = true,
     allowSaveCard: SaveCardConfig? = null,
     completion: (Result<CardResult>) -> Unit
 ) {
-    val viewModel: CardDetailsViewModel = koinViewModel()
+    val viewModel: CardDetailsViewModel = koinViewModel(parameters = { parametersOf(accessToken) })
     gatewayId?.let { viewModel.setGatewayId(it) }
     val uiState = viewModel.stateFlow.collectAsState()
 
@@ -182,7 +185,7 @@ fun CardDetailsWidget(
 @Composable
 private fun PreviewCardDetails() {
     SdkTheme {
-        CardDetailsWidget(gatewayId = "") {
+        CardDetailsWidget(accessToken = "accessToken") {
 
         }
     }
