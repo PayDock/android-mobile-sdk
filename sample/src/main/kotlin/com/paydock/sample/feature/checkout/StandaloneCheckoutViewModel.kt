@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.paydock.feature.card.presentation.model.CardResult
 import com.paydock.feature.charge.domain.model.ChargeResponse
+import com.paydock.feature.threeDS.domain.model.ThreeDSResult
 import com.paydock.feature.wallet.domain.model.WalletType
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.AU_CURRENCY_CODE
@@ -293,7 +294,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
         }
     }
 
-    fun handleThreeDSResult(vaultToken: String, result: Result<String>) {
+    fun handleThreeDSResult(vaultToken: String, result: Result<ThreeDSResult>) {
         result.onSuccess {
             _stateFlow.update { state -> state.copy(threeDSToken = null) }
             captureCardCharge(vaultToken)

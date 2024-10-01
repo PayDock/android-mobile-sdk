@@ -1,17 +1,11 @@
 package com.paydock.feature.afterpay.presentation
 
 import android.content.Context
-import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -30,11 +24,10 @@ import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.core.utils.jwt.JwtHelper
 import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.address.domain.model.BillingAddress
+import com.paydock.feature.afterpay.presentation.components.AfterpayWidgetContent
 import com.paydock.feature.afterpay.presentation.mapper.mapFromBillingAddress
 import com.paydock.feature.afterpay.presentation.mapper.mapFromShippingOption
-import com.paydock.feature.afterpay.presentation.mapper.mapToAfterpayV2Options
 import com.paydock.feature.afterpay.presentation.model.AfterpaySDKConfig
 import com.paydock.feature.afterpay.presentation.model.AfterpayShippingOption
 import com.paydock.feature.afterpay.presentation.model.AfterpayShippingOptionUpdate
@@ -43,7 +36,6 @@ import com.paydock.feature.afterpay.presentation.utils.CheckoutHandler
 import com.paydock.feature.afterpay.presentation.viewmodels.AfterpayViewModel
 import com.paydock.feature.charge.domain.model.ChargeResponse
 import com.paydock.feature.wallet.domain.model.WalletCallback
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -150,88 +142,6 @@ fun AfterpayWidget(
             }
         }
     }
-}
-
-/**
- * Composable function representing the content of the Afterpay payment widget.
- *
- * This function displays the payment button and handles the token acquisition process.
- *
- * @param scope The coroutine scope.
- * @param config The configuration for the Afterpay SDK.
- * @param tokenProvider The callback to obtain the authentication token asynchronously.
- * @param resolvePaymentForResult The ActivityResultLauncher for resolving payment.
- * @param viewModel The AfterpayViewModel instance.
- */
-@Composable
-private fun AfterpayWidgetContent(
-    scope: CoroutineScope,
-    config: AfterpaySDKConfig,
-    tokenProvider: (onTokenReceived: (String) -> Unit) -> Unit,
-    resolvePaymentForResult: ActivityResultLauncher<Intent>,
-    viewModel: AfterpayViewModel,
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.Top),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (viewModel.stateFlow.collectAsState().value.validLocale) {
-            // Display Afterpay payment button
-            AndroidView(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(Theme.dimensions.buttonHeight),
-                factory = { context ->
-                    AfterpayPaymentButton(context).apply {
-                        this.buttonText = config.buttonTheme.buttonText
-                        this.colorScheme = config.buttonTheme.colorScheme
-                        setOnClickListener {
-                            // Obtain token asynchronously
-                            scope.launch {
-                                tokenProvider { obtainedToken ->
-                                    // Handle obtained token
-                                    handleTokenObtained(
-                                        context,
-                                        obtainedToken,
-                                        viewModel,
-                                        config.options,
-                                        resolvePaymentForResult
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            )
-        }
-    }
-}
-
-/**
- * Handles the obtained token and initiates the payment process.
- *
- * @param context The context.
- * @param token The obtained token.
- * @param viewModel The AfterpayViewModel instance.
- * @param checkoutOptions The checkout options.
- * @param resolvePaymentForResult The ActivityResultLauncher for resolving payment.
- */
-private fun handleTokenObtained(
-    context: Context,
-    token: String,
-    viewModel: AfterpayViewModel,
-    checkoutOptions: AfterpaySDKConfig.CheckoutOptions?,
-    resolvePaymentForResult: ActivityResultLauncher<Intent>
-) {
-    viewModel.setWalletToken(token)
-    val intent = checkoutOptions?.let {
-        Afterpay.createCheckoutV2Intent(
-            context,
-            it.mapToAfterpayV2Options()
-        )
-    }
-        ?: Afterpay.createCheckoutV2Intent(context)
-    resolvePaymentForResult.launch(intent)
 }
 
 /**

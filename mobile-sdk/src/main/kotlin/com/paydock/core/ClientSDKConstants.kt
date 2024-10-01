@@ -9,6 +9,7 @@ internal object ClientSDKConstants {
      * HTML Widget ID used to load Client SDK widgets into.
      */
     internal const val WIDGET_CONTAINER_ID = "widgetContainer"
+    internal const val WIDGET_ID = "paydock"
 
     /**
      * URL of the JavaScript library for the Client SDK.

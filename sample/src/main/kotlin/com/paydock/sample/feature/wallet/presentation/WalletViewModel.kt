@@ -2,6 +2,8 @@ package com.paydock.sample.feature.wallet.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.paydock.MobileSDK
+import com.paydock.core.domain.model.Environment
 import com.paydock.feature.wallet.domain.model.WalletType
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.AU_CURRENCY_CODE

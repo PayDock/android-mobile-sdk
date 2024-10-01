@@ -4,7 +4,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -29,6 +31,7 @@ import com.paydock.feature.card.presentation.utils.CreditCardInputValidator
  * @param cardIssuer The type of card issuer for which the security code is being entered.
  * @param onValueChange The callback triggered when the input value changes.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun CardSecurityCodeInput(
     modifier: Modifier = Modifier,
@@ -69,6 +72,7 @@ internal fun CardSecurityCodeInput(
         placeholder = buildString { repeat(securityCodeType.requiredDigits) { append("X") } },
         enabled = enabled,
         error = errorMessage,
+        autofillType = AutofillType.CreditCardSecurityCode,
         // Show a success icon when the security code is valid and not blank
         trailingIcon = {
             if (!securityCode.isNullOrBlank()) {

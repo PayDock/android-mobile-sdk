@@ -102,11 +102,13 @@ internal class GiftCardViewModel(
             val result: Result<TokenisedCardDetails> = useCase(accessToken, request)
             _stateFlow.update { currentState ->
                 val exception: Throwable? = result.exceptionOrNull()
-                val error: GiftCardException? = when (exception) {
-                    is ApiException -> GiftCardException.TokenisingCardException(error = exception.error)
-                    is UnknownApiException -> GiftCardException.UnknownException(displayableMessage = exception.errorMessage)
-                    else -> currentState.error
-                }
+                val error: GiftCardException? = exception?.let {
+                    when (exception) {
+                        is ApiException -> GiftCardException.TokenisingCardException(error = exception.error)
+                        is UnknownApiException -> GiftCardException.UnknownException(displayableMessage = exception.errorMessage)
+                        else -> GiftCardException.UnknownException(displayableMessage = exception.message ?: "An unknown error occurred")
+                    }
+                } ?: currentState.error
                 currentState.copy(
                     error = error,
                     isLoading = false,

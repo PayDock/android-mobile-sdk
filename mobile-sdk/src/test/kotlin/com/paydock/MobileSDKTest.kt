@@ -12,6 +12,7 @@ import org.junit.Test
 import org.koin.core.context.stopKoin
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -81,7 +82,7 @@ class MobileSDKTest : BaseUnitTest() {
         val environment = Environment.SANDBOX
         val theme = MobileSDKTheme()
 
-        MobileSDK.initialize(context, environment, theme)
+        MobileSDK.initialize(context, environment, false, theme)
 
         val sdk = MobileSDK.getInstance()
         assertNotNull(sdk)
@@ -160,11 +161,12 @@ class MobileSDKTest : BaseUnitTest() {
 
     @Test
     fun `MobileSDK checking if sdk is initialised should return true if sdk is initialised`() {
+        assertFalse(MobileSDK.isInitialised())
         val sdk = MobileSDK.Builder()
             .build(context)
 
         assertNotNull(sdk)
-        assertTrue(sdk.isInitialised())
+        assertTrue(MobileSDK.isInitialised())
     }
 
 }

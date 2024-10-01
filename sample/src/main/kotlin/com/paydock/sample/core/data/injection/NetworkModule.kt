@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder
 import com.paydock.MobileSDK
 import com.paydock.core.domain.model.Environment
 import com.paydock.sample.BuildConfig
-import com.paydock.sample.core.data.utils.CreateIntentRequestAdapterFactory
 import com.paydock.sample.core.data.utils.CreateVaultTokenRequestAdapterFactory
 import dagger.Module
 import dagger.Provides
@@ -34,7 +33,6 @@ class NetworkModule {
     @Singleton
     @Provides
     fun provideGson(): Gson = GsonBuilder()
-        .registerTypeAdapterFactory(CreateIntentRequestAdapterFactory())
         .registerTypeAdapterFactory(CreateVaultTokenRequestAdapterFactory())
         .create()
 

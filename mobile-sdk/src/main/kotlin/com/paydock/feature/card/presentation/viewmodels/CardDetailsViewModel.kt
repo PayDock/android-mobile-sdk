@@ -123,14 +123,15 @@ internal class CardDetailsViewModel(
             val result: Result<TokenisedCardDetails> = useCase(accessToken, request)
             _stateFlow.update { currentState ->
                 val exception: Throwable? = result.exceptionOrNull()
-                val error: CardDetailsException? = when (exception) {
-                    is ApiException -> CardDetailsException.TokenisingCardException(error = exception.error)
-                    is UnknownApiException -> CardDetailsException.UnknownException(
-                        displayableMessage = exception.errorMessage
-                    )
-
-                    else -> currentState.error
-                }
+                val error: CardDetailsException? = exception?.let {
+                    when (exception) {
+                        is ApiException -> CardDetailsException.TokenisingCardException(error = exception.error)
+                        is UnknownApiException -> CardDetailsException.UnknownException(
+                            displayableMessage = exception.errorMessage
+                        )
+                        else -> CardDetailsException.UnknownException(displayableMessage = exception.message ?: "An unknown error occurred")
+                    }
+                } ?: currentState.error
                 currentState.copy(
                     error = error,
                     isLoading = false,

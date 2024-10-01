@@ -28,9 +28,11 @@ mockitoAndroid = "5.7.0"
 mockwebserver = "4.9.3"
 navigation = "2.7.7"
 okhttp = "4.10.0"
-paydockCoreNetworking = "1.0.1"
+paydockCoreNetworking = "1.1.0"
 retrofit = "2.7.2"
 turbine = "1.0.0"
+uiToolingPreviewAndroid = "1.7.1"
+uiTestJunit4Android = "1.7.1"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -51,7 +53,6 @@ afterpay-android = { module = "com.afterpay:afterpay-android", version.ref = "af
 compose-bom = { module = "androidx.compose:compose-bom", version = "2023.10.01" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
 compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 androidx-foundation-android = { group = "androidx.compose.foundation", name = "foundation", version = "1.6.5" }
 #Compose - AndroidX & Other
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "compose" }
@@ -60,10 +61,9 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
 accompanist-system-ui = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "accompanist" }
 #Compose - Debug
-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
+androidx-ui-tooling-preview-android = { group = "androidx.compose.ui", name = "ui-tooling-preview-android", version.ref = "uiToolingPreviewAndroid" }
 #Compose - Test
-compose-ui-test-junit = { module = "androidx.compose.ui:ui-test-junit4" }
+androidx-ui-test-junit4-android = { group = "androidx.compose.ui", name = "ui-test-junit4-android", version.ref = "uiTestJunit4Android" }
 #Kotlin
 kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlin" }
 kotlinx-html-jvm = { module = "org.jetbrains.kotlinx:kotlinx-html-jvm", version.ref = "kotlinxHtmlJvm" }
@@ -112,9 +112,8 @@ turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 
 [bundles]
 androidx = ["androidx-core-ktx", "androidx-lifecycle-ktx"]
-compose-sample-app = ["compose-material3", "compose-material-icons-extended", "navigation-compose", "accompanist-system-ui", "compose-ui-tooling-preview"]
-compose-sdk = ["compose-material3", "androidx-activity-compose", "androidx-foundation-android", "navigation-compose", "accompanist-system-ui", "compose-ui-tooling-preview"]
-compose-debug = ["compose-ui-tooling", "compose-ui-test-manifest"]
+compose-sample-app = ["compose-material3", "compose-material-icons-extended", "navigation-compose", "accompanist-system-ui", "androidx-ui-tooling-preview-android"]
+compose-sdk = ["compose-material3", "androidx-activity-compose", "androidx-foundation-android", "navigation-compose", "accompanist-system-ui", "androidx-ui-tooling-preview-android"]
 koin = ["koin", "koin-android", "koin-compose"]
 hilt = ["hilt-android", "hilt-navigation-compose"]
 retrofit = ["retrofit", "retrofit-converter-gson", "okhttp", "okhttp3-logging"]

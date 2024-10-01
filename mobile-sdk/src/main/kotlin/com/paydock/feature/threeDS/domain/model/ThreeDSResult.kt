@@ -25,5 +25,5 @@ package com.paydock.feature.threeDS.domain.model
  */
 data class ThreeDSResult(
     val event: EventType,
-    val charge3dsId: String
+    val charge3dsId: String?
 )

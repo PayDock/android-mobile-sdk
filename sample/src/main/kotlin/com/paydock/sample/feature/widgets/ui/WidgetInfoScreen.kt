@@ -220,7 +220,7 @@ fun WidgetInfoScreen(
                             val error = it.toError()
                             Log.d("[ClickToPayWidget]", error.displayableMessage)
                             context.toast("ClickToPay Result failed! [${error.displayableMessage}]")
-                            hasCompletedFlow = true
+//                            hasCompletedFlow = true
                         }
                     }
                 }
@@ -265,6 +265,7 @@ fun WidgetInfoScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
+                    clientId = BuildConfig.FLY_PAY_CLIENT_ID,
                     token = walletViewModel.getWalletToken(WalletType.FLY_PAY)
                 ) { result ->
                     result.onSuccess {

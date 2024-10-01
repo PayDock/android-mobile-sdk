@@ -7,7 +7,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -37,6 +39,7 @@ import com.paydock.feature.card.presentation.utils.CreditCardInputValidator
  *                  move focus to the next input field.
  * @param onValueChange The callback to be invoked when the value of the input field changes.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun CreditCardNumberInput(
     modifier: Modifier = Modifier,
@@ -51,7 +54,7 @@ internal fun CreditCardNumberInput(
     // Parse the card number to determine its type and validity
     val cardNumber = CreditCardInputValidator.parseNumber(value)
 
-    // Cardholder Name Luhn check: if it passes, the customer has accidentally put their PAN in the wrong field
+    // Card Number Luhn check: if it passes, it is likely to be a valid card number
     val isLuhnValid = CreditCardInputValidator.isLuhnValid(value)
 
     // Define the error message to be shown if the card number is invalid
@@ -77,6 +80,7 @@ internal fun CreditCardNumberInput(
         placeholder = stringResource(id = R.string.placeholder_card_number),
         enabled = enabled,
         label = stringResource(id = R.string.label_card_number),
+        autofillType = AutofillType.CreditCardNumber,
         leadingIcon = {
             // Display the card issuer icon as a leading icon in the input field
             Icon(

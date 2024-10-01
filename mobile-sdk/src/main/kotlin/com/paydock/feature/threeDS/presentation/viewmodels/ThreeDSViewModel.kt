@@ -4,6 +4,8 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.ThreeDSException
 import com.paydock.core.presentation.ui.BaseViewModel
+import com.paydock.feature.threeDS.domain.model.EventType
+import com.paydock.feature.threeDS.domain.model.ThreeDSResult
 import com.paydock.feature.threeDS.presentation.ThreeDSViewState
 import com.paydock.feature.threeDS.presentation.model.ThreeDSEvent
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +33,7 @@ internal class ThreeDSViewModel(dispatchers: DispatchersProvider) : BaseViewMode
     fun resetResultState() {
         updateState { state ->
             state.copy(
-                charge3dsId = null,
+                result = null,
                 error = null
             )
         }
@@ -42,13 +44,17 @@ internal class ThreeDSViewModel(dispatchers: DispatchersProvider) : BaseViewMode
      *
      * @param event The 3DS event to be processed.
      */
+    @Suppress("LongMethod")
     fun updateThreeDSEvent(event: ThreeDSEvent) {
         when (event) {
             is ThreeDSEvent.ChargeAuthSuccessEvent -> {
                 updateState { state ->
                     state.copy(
                         isLoading = false,
-                        charge3dsId = event.data.charge3dsId,
+                        result = ThreeDSResult(
+                            charge3dsId = event.data.charge3dsId,
+                            event = EventType.CHARGE_AUTH_SUCCESS
+                        ),
                         status = event.data.status,
                         error = null
                     )
@@ -59,7 +65,10 @@ internal class ThreeDSViewModel(dispatchers: DispatchersProvider) : BaseViewMode
                 updateState { state ->
                     state.copy(
                         isLoading = false,
-                        charge3dsId = event.data.charge3dsId,
+                        result = ThreeDSResult(
+                            charge3dsId = event.data.charge3dsId,
+                            event = EventType.CHARGE_AUTH_REJECT
+                        ),
                         status = event.data.status,
                         error = ThreeDSException.ChargeErrorException(
                             displayableMessage = MobileSDKConstants.Errors.THREE_DS_REJECTED_ERROR
@@ -71,7 +80,10 @@ internal class ThreeDSViewModel(dispatchers: DispatchersProvider) : BaseViewMode
             is ThreeDSEvent.ChargeAuthDecoupledEvent -> {
                 updateState { state ->
                     state.copy(
-                        charge3dsId = event.data.charge3dsId,
+                        result = ThreeDSResult(
+                            charge3dsId = event.data.charge3dsId,
+                            event = EventType.CHARGE_AUTH_DECOUPLED
+                        ),
                         status = event.data.status,
                         error = null
                     )
@@ -80,13 +92,25 @@ internal class ThreeDSViewModel(dispatchers: DispatchersProvider) : BaseViewMode
 
             is ThreeDSEvent.ChargeAuthInfoEvent -> {
                 updateState { state ->
-                    state.copy(charge3dsId = event.data.charge3dsId, status = event.data.status)
+                    state.copy(
+                        result = ThreeDSResult(
+                            charge3dsId = event.data.charge3dsId,
+                            event = EventType.CHARGE_AUTH_INFO
+                        ),
+                        status = event.data.status
+                    )
                 }
             }
 
             is ThreeDSEvent.ChargeAuthChallengeEvent -> {
                 updateState { state ->
-                    state.copy(charge3dsId = event.data.charge3dsId, status = event.data.status)
+                    state.copy(
+                        result = ThreeDSResult(
+                            charge3dsId = event.data.charge3dsId,
+                            event = EventType.CHARGE_AUTH_CHALLENGE
+                        ),
+                        status = event.data.status
+                    )
                 }
             }
 
@@ -94,7 +118,10 @@ internal class ThreeDSViewModel(dispatchers: DispatchersProvider) : BaseViewMode
                 updateState { state ->
                     state.copy(
                         isLoading = false,
-                        charge3dsId = event.data.charge3dsId,
+                        result = ThreeDSResult(
+                            charge3dsId = event.data.charge3dsId,
+                            event = EventType.CHARGE_ERROR
+                        ),
                         error = ThreeDSException.ChargeErrorException(
                             displayableMessage = event.data.error.message
                                 ?: MobileSDKConstants.Errors.THREE_DS_ERROR

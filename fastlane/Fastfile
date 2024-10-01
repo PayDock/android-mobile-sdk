@@ -82,6 +82,6 @@ platform :android do
 
     desc "Publishes the SDK to GitHub Packages"
     lane :publish_to_github do
-        gradle(task: ":mobile-sdk:publishAllPublicationsToGitHubPackagesRepository")
+        gradle(task: ":publishAllPublicationsToGitHubPackagesRepository")
     end
 end

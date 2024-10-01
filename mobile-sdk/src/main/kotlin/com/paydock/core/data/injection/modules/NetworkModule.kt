@@ -18,7 +18,11 @@ val networkModule = module {
     single {
         NetworkClientBuilder.create()
             .setBaseUrl(MobileSDK.getInstance().baseUrl)
-            .setSslPins(listOf(MobileSDKConstants.Network.SSH_HASH))
+            .apply {
+                if (!MobileSDK.getInstance().enableTestMode) {
+                    setSslPins(listOf(MobileSDKConstants.Network.SSH_HASH))
+                }
+            }
             .setDebug(BuildConfig.DEBUG)
             .build()
     }

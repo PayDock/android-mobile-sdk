@@ -7,9 +7,12 @@ import com.paydock.core.data.injection.modules.mockSuccessNetworkModule
 import com.paydock.core.data.injection.modules.sslFailNetworkTestModule
 import com.paydock.core.data.injection.modules.sslSuccessNetworkTestModule
 import com.paydock.core.domain.model.Environment
+import com.paydock.core.network.exceptions.ApiException
 import com.paydock.initializeMobileSDK
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.http.path
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -19,9 +22,11 @@ import org.koin.core.context.GlobalContext.loadKoinModules
 import org.koin.core.context.GlobalContext.unloadKoinModules
 import org.koin.core.context.stopKoin
 import org.koin.test.inject
+import javax.net.ssl.SSLPeerUnverifiedException
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertFails
+import kotlin.test.assertIs
+import kotlin.test.fail
 
 /**
  * This class contains unit tests for testing SSL pinning.
@@ -85,10 +90,11 @@ class SslPinningTest : BaseUnitTest() {
     }
 
     /**
-     * Tests that the application succeeds if the certificate for `paydock.com` is pinned.
+     * Tests that the application succeeds (throw ApiException and not SSLPeerUnverifiedException)
+     * if the certificate for STAGING is pinned.
      */
     @Test
-    fun `should succeed if certificate is pinned`() = runTest {
+    fun `should not throw SSLPeerUnverifiedException if certificate is pinned correctly on STAGING`() = runTest {
         val environment = Environment.STAGING
 
         context.initializeMobileSDK(environment)
@@ -96,11 +102,80 @@ class SslPinningTest : BaseUnitTest() {
         unloadKoinModules(mockSuccessNetworkModule)
         loadKoinModules(sslSuccessNetworkTestModule)
 
-        // Create a client and try to make a request to `https://paydock.com`.
+        // Create a client and try to make a request to `https://www.commbank.com.au/`.
         val client: HttpClient by inject()
 
         // Assert that the request succeeds and the status code is 200.
-        val response = client.get("https://paydock.com")
-        assertEquals(200, response.status.value)
+
+        try {
+            client.post {
+                url { path("/v1/charges/66ab783fbf97c12c63bd312e") }
+            }
+        } catch (e: SSLPeerUnverifiedException) {
+            fail(e.message)
+        } catch (e: Exception) {
+            // It should fail here to invalid authentication: Access forbidden
+            assertIs<ApiException>(e)
+        }
+    }
+
+    /**
+     * Tests that the application succeeds (throw ApiException and not SSLPeerUnverifiedException)
+     * if the certificate for PRE_PRODUCTION is pinned.
+     */
+    @Test
+    fun `should not throw SSLPeerUnverifiedException if certificate is pinned correctly on PRE_PRODUCTION`() = runTest {
+        val environment = Environment.SANDBOX
+
+        context.initializeMobileSDK(environment)
+        // Unload the mock network module and load the sslSuccessNetworkTestModule.
+        unloadKoinModules(mockSuccessNetworkModule)
+        loadKoinModules(sslSuccessNetworkTestModule)
+
+        // Create a client and try to make a request to `https://www.commbank.com.au/`.
+        val client: HttpClient by inject()
+
+        // Assert that the request succeeds and the status code is 200.
+
+        try {
+            client.post {
+                url { path("/v1/charges/66ab783fbf97c12c63bd312e") }
+            }
+        } catch (e: SSLPeerUnverifiedException) {
+            fail(e.message)
+        } catch (e: Exception) {
+            // It should fail here to invalid authentication: Access forbidden
+            assertIs<ApiException>(e)
+        }
+    }
+
+    /**
+     * Tests that the application succeeds (throw ApiException and not SSLPeerUnverifiedException)
+     * if the certificate for PRODUCTION is pinned.
+     */
+    @Test
+    fun `should not throw SSLPeerUnverifiedException if certificate is pinned correctly on PRODUCTION`() = runTest {
+        val environment = Environment.PRODUCTION
+
+        context.initializeMobileSDK(environment)
+        // Unload the mock network module and load the sslSuccessNetworkTestModule.
+        unloadKoinModules(mockSuccessNetworkModule)
+        loadKoinModules(sslSuccessNetworkTestModule)
+
+        // Create a client and try to make a request to `https://www.commbank.com.au/`.
+        val client: HttpClient by inject()
+
+        // Assert that the request succeeds and the status code is 200.
+
+        try {
+            client.post {
+                url { path("/v1/charges/66ab783fbf97c12c63bd312e") }
+            }
+        } catch (e: SSLPeerUnverifiedException) {
+            fail(e.message)
+        } catch (e: Exception) {
+            // It should fail here to invalid authentication: Access forbidden
+            assertIs<ApiException>(e)
+        }
     }
 }

@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import com.paydock.R
 import com.paydock.designsystems.theme.Theme
 
@@ -75,7 +76,7 @@ fun SdkBottomSheet(
             IconButton(modifier = Modifier.align(Alignment.End), onClick = onDismissRequest) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_close_circle),
-                    contentDescription = null
+                    contentDescription = stringResource(id = R.string.content_desc_close_icon)
                 )
             }
             // Content provided by the caller

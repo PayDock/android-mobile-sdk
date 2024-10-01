@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,6 +25,7 @@ import com.paydock.sample.R
 import com.paydock.sample.core.presentation.ui.layout.ColumnWithSeparators
 import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.theme.SampleTheme
+import com.paydock.sample.designsystems.theme.Theme
 import com.paydock.sample.feature.style.ui.components.ColoursSection
 import com.paydock.sample.feature.style.ui.components.DesignSection
 import com.paydock.sample.feature.style.ui.components.FontSection
@@ -104,6 +106,7 @@ fun StyleScreen(isDarkMode: Boolean = isSystemInDarkTheme()) {
                 }
             })
     }
+    Divider(color = Theme.colors.outlineVariant)
 }
 
 @Preview
