@@ -1,6 +1,9 @@
 package com.paydock.core.data.injection.modules
 
+import com.paydock.MobileSDK
+import com.paydock.core.MobileSDKConstants
 import com.paydock.core.MobileSDKTestConstants
+import com.paydock.core.domain.mapper.mapToBaseUrl
 import com.paydock.core.network.NetworkClientBuilder
 import com.paydock.core.network.addInterceptor
 import com.paydock.core.network.extensions.convertToDataClass
@@ -82,14 +85,8 @@ val sslSuccessNetworkTestModule = module {
     single {
         // Create a `HttpClient` that uses the mock HTTP engine.
         NetworkClientBuilder.create()
-            .setBaseUrl("paydock.com")
-            .setSslPins(
-                listOf(
-                    "sha256/AyRNBtlytmyCei18RCeKurl/hbylDxqx33WDrIGMMJE=",
-                    "sha256/kIdp6NNEd8wsugYyyIYFsi1ylMCED3hZbSR8ZFsa/A4=",
-                    "sha256/mEflZT5enoR1FuXLgYYGqnVEoZvmf9c2bVBpiOjYQ0c="
-                )
-            )
+            .setBaseUrl(MobileSDK.getInstance().environment.mapToBaseUrl())
+            .setSslPins(listOf(MobileSDKConstants.Network.SSH_HASH))
             .build()
     }
 }

@@ -7,10 +7,11 @@
     <string name="placeholder_expiry">MM/YY</string>
     <!-- endregion -->
     <!-- region Content Descriptions -->
-    <string name="content_desc_success_icon">Success Icon</string>
-    <string name="content_desc_error_icon">Error Icon</string>
+    <string name="content_desc_success_icon">Success</string>
+    <string name="content_desc_error_icon">Error</string>
     <string name="content_desc_dropdown_arrow">Dropdown Arrow</string>
-    <string name="content_desc_button_icon">Button Icon</string>
+    <string name="content_desc_button_icon">Button</string>
+    <string name="content_desc_close_icon">Close</string>
     <string name="content_desc_paypal_button_icon">PayPal Button</string>
     <string name="content_desc_flypay_button_icon">FlyPay Button</string>
     <string name="content_desc_afterpay_button_icon">Afterpay Button</string>

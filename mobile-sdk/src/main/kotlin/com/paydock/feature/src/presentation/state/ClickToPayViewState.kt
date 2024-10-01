@@ -1,4 +1,4 @@
-package com.paydock.feature.src.presentation
+package com.paydock.feature.src.presentation.state
 
 import com.paydock.core.domain.error.exceptions.ClickToPayException
 

@@ -1,13 +1,37 @@
 # Changelog
 
+## [1.2.0] - 2024-10-01
+
+### Added
+
+- `enableTestMode` flag to `MobileSDK` initialisation
+- Autofill feature to `CardDetailsWidget` and `AddressWidget`
+- Web Activity for FlyPay and PayPal flows
+
+### Changed
+
+- Updated NetworkLib to `1.1.0`
+
+### Fixed
+
+- FlyPay Url and redirect Url
+- PayPal redirect Url
+
+### Removed
+
+- Payment Workflow placeholder
+- `SdkBottomSheet` embedded in widgets (3DS, PayPal and FlyPay)
+
 ## [1.1.1] - 2024-07-30
 
 ### Added
+
 - Initial stages for Payment Workflow
 - Access token functionality
 - Function to validate if SDK is initialised
 
 ### Changed
+
 - Moved network logic into separate dependency module
 - Card widget input field error labels
 - Consent text (for accessibility)

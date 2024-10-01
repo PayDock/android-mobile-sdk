@@ -93,7 +93,7 @@ dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose.sdk)
     implementation(libs.compose.webview)
-    debugImplementation(libs.bundles.compose.debug)
+    implementation(libs.androidx.ui.tooling.preview.android)
     // Kotlin
     implementation(platform(libs.kotlin.bom))
     implementation(libs.kotlinx.html.jvm)
@@ -122,9 +122,11 @@ dependencies {
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.ext)
     androidTestImplementation(libs.androidx.test.espresso.core)
-    androidTestImplementation(libs.compose.ui.test.junit)
+    androidTestImplementation(libs.androidx.ui.test.junit4.android)
     androidTestImplementation(libs.koin.test)
-    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.mockk.android) {
+        exclude(group = "io.mockk", module = "mockk-agent-android")
+    }
     androidTestImplementation(libs.mockito.android)
     androidTestImplementation(libs.kotlinx.coroutines.test)
 }

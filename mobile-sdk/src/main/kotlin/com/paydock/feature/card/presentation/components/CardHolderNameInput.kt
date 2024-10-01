@@ -4,7 +4,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -25,6 +27,7 @@ import com.paydock.feature.card.presentation.utils.CreditCardInputValidator
  * @param nextFocus The focus requester for the next input field (optional).
  * @param onValueChange The callback function to be invoked when the value of the cardholder name changes.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun CardHolderNameInput(
     modifier: Modifier = Modifier,
@@ -36,12 +39,17 @@ fun CardHolderNameInput(
     // Validate the cardholder name using CardInputValidator
     val cardHolder = CreditCardInputValidator.parseHolderName(value)
 
-    // Card Number Luhn check: if it passes, it is likely to be a valid card number
+    // Cardholder Name Luhn check: if it passes, the customer has accidentally put their PAN in the wrong field
     val isLuhnValid = CreditCardInputValidator.isLuhnValid(value)
 
     // Define the error message to be shown if the cardholder name is invalid
-    val errorMessage =
-        if (cardHolder == null || (value.isNotBlank() && isLuhnValid)) stringResource(id = R.string.error_card_holder_name) else null
+    val errorMessage = if (value.isNotBlank() && isLuhnValid) {
+        stringResource(id = R.string.error_luhn_card_holder_name)
+    } else if (cardHolder == null) {
+        stringResource(id = R.string.error_card_holder_name)
+    } else {
+        null
+    }
 
     // Use AppTextField from the AppCompat library with the specified properties
     SdkTextField(
@@ -56,6 +64,7 @@ fun CardHolderNameInput(
         label = stringResource(id = R.string.label_cardholder_name),
         enabled = enabled,
         error = errorMessage,
+        autofillType = AutofillType.PersonFullName,
         // Show a success icon when the cardholder name is valid and not blank
         trailingIcon = if (!cardHolder.isNullOrBlank()) {
             {

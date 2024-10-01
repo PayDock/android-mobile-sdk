@@ -28,7 +28,6 @@ import com.paydock.sample.designsystems.components.navigation.BottomNavigation
 import com.paydock.sample.designsystems.components.navigation.NavigationGraph
 import com.paydock.sample.designsystems.components.navigation.getRouteTitle
 import com.paydock.sample.designsystems.components.navigation.showBackButton
-import com.paydock.sample.designsystems.components.navigation.showTitle
 import com.paydock.sample.designsystems.theme.SampleTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -58,7 +57,7 @@ fun MainScreenView() {
                 title = actionBarDetails.title,
                 showTitle = actionBarDetails.showTitle,
                 onBackButtonClick = if (actionBarDetails.showBackButton) {
-                    { navController.popBackStack() }
+                    { navController.navigateUp() }
                 } else null
             )
         },
@@ -99,7 +98,7 @@ fun rememberActionBarDetails(navController: NavHostController, context: Context)
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
             actionBarTitle = backStackEntry.getRouteTitle(context)
             showBackButton = backStackEntry.showBackButton()
-            showTitle = backStackEntry.showTitle()
+            showTitle = true
         }
     }
 

@@ -87,11 +87,13 @@ internal class PayPalViewModel(
     override fun updateCallbackUIState(result: Result<WalletCallback>) {
         updateState { currentState ->
             val exception: Throwable? = result.exceptionOrNull()
-            val error: PayPalException? = when (exception) {
-                is ApiException -> PayPalException.FetchingUrlException(error = exception.error)
-                is UnknownApiException -> PayPalException.UnknownException(displayableMessage = exception.errorMessage)
-                else -> currentState.error
-            }
+            val error: PayPalException? = exception?.let {
+                when (exception) {
+                    is ApiException -> PayPalException.FetchingUrlException(error = exception.error)
+                    is UnknownApiException -> PayPalException.UnknownException(displayableMessage = exception.errorMessage)
+                    else -> PayPalException.UnknownException(displayableMessage = exception.message ?: "An unknown error occurred")
+                }
+            } ?: currentState.error
             currentState.copy(
                 error = error,
                 isLoading = false,
@@ -108,11 +110,13 @@ internal class PayPalViewModel(
     override fun updateChargeUIState(result: Result<ChargeResponse>) {
         updateState { currentState ->
             val exception: Throwable? = result.exceptionOrNull()
-            val error: PayPalException? = when (exception) {
-                is ApiException -> PayPalException.CapturingChargeException(error = exception.error)
-                is UnknownApiException -> PayPalException.UnknownException(displayableMessage = exception.errorMessage)
-                else -> currentState.error
-            }
+            val error: PayPalException? = exception?.let {
+                when (exception) {
+                    is ApiException -> PayPalException.CapturingChargeException(error = exception.error)
+                    is UnknownApiException -> PayPalException.UnknownException(displayableMessage = exception.errorMessage)
+                    else -> PayPalException.UnknownException(displayableMessage = exception.message ?: "An unknown error occurred")
+                }
+            } ?: currentState.error
             currentState.copy(
                 error = error,
                 isLoading = false,

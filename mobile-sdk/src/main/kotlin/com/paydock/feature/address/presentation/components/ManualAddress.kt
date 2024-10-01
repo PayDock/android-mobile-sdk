@@ -9,7 +9,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
@@ -33,6 +35,7 @@ import org.koin.androidx.compose.koinViewModel
  * @param savedAddress The previously saved billing address, if any or a pre-set address to be populated.
  * @param onAddressUpdated Callback to be invoked when the address details are updated.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Suppress("LongMethod")
 @Composable
 internal fun ManualAddress(
@@ -70,6 +73,7 @@ internal fun ManualAddress(
             value = uiState.addressLine1,
             label = stringResource(R.string.label_address_line_1),
             nextFocus = focusAddressLine2,
+            autofillType = AutofillType.AddressStreet,
             onValueUpdated = viewModel::updateAddressLine1
         )
         AddressInputField(
@@ -90,6 +94,7 @@ internal fun ManualAddress(
             value = uiState.city,
             label = stringResource(R.string.label_city),
             nextFocus = focusState,
+            autofillType = AutofillType.AddressLocality,
             onValueUpdated = viewModel::updateCity
         )
         AddressInputField(
@@ -100,6 +105,7 @@ internal fun ManualAddress(
             value = uiState.state,
             label = stringResource(R.string.label_state),
             nextFocus = focusPostalCode,
+            autofillType = AutofillType.AddressRegion,
             onValueUpdated = viewModel::updateState
         )
         AddressInputField(
@@ -109,6 +115,7 @@ internal fun ManualAddress(
                 .testTag("postalCodeInput"),
             value = uiState.postalCode,
             label = stringResource(R.string.label_postal_code),
+            autofillType = AutofillType.PostalCode,
             onValueUpdated = viewModel::updatePostalCode
         )
         // Country auto complete dropdown selection
@@ -117,6 +124,7 @@ internal fun ManualAddress(
                 .fillMaxWidth()
                 .testTag("countryInput"),
             selectedItem = uiState.country,
+            autofillType = AutofillType.AddressCountry,
             onCountrySelected = viewModel::updateCountry
         )
         // Use a LaunchedEffect to delay the callback invocation

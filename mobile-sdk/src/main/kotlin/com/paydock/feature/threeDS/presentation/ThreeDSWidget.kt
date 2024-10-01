@@ -1,12 +1,16 @@
 package com.paydock.feature.threeDS.presentation
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.paydock.R
 import com.paydock.core.domain.error.exceptions.ThreeDSException
@@ -14,8 +18,10 @@ import com.paydock.designsystems.components.web.SdkWebView
 import com.paydock.designsystems.components.web.config.WidgetConfig
 import com.paydock.designsystems.components.web.utils.HtmlWidgetBuilder
 import com.paydock.designsystems.theme.SdkTheme
+import com.paydock.feature.threeDS.domain.model.ThreeDSResult
 import com.paydock.feature.threeDS.presentation.utils.ThreeDSJSBridge
 import com.paydock.feature.threeDS.presentation.viewmodels.ThreeDSViewModel
+import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -28,7 +34,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun ThreeDSWidget(
     token: String,
-    completion: (Result<String>) -> Unit
+    completion: (Result<ThreeDSResult>) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -41,9 +47,14 @@ fun ThreeDSWidget(
     val scope = rememberCoroutineScope()
 
     // Handle back button press
-    BackHandler(true) {
+    val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    var backPressHandled by remember { mutableStateOf(false) }
+    BackHandler(enabled = !backPressHandled) {
+        backPressHandled = true
         scope.launch {
-            // Notify completion with failure and error message upon back press
+            awaitFrame()
+            onBackPressedDispatcher?.onBackPressed()
+            backPressHandled = false
             completion(
                 Result.failure(
                     ThreeDSException.CancellationException(
@@ -53,7 +64,6 @@ fun ThreeDSWidget(
                     )
                 )
             )
-            viewModel.resetResultState()
         }
     }
 
@@ -67,10 +77,10 @@ fun ThreeDSWidget(
         }
 
         // Handle OTT result and reset state
-        uiState.charge3dsId?.let { response ->
+        uiState.result?.let { result ->
             if (uiState.status == "success" || uiState.status == "authenticated") {
                 // Send success state to the completion callback
-                completion(Result.success(response))
+                completion(Result.success(result))
                 viewModel.resetResultState()
             }
         }

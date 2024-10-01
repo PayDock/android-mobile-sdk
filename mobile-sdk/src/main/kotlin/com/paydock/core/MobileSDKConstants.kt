@@ -93,7 +93,7 @@ internal object MobileSDKConstants {
      * Constants related to PayPal configuration.
      */
     object PayPalConfig {
-        internal const val PAY_PAL_REDIRECT_PARAM_VALUE = "https://paydock-mobile.sdk/paypal/success&native_xo=1"
+        internal const val PAY_PAL_REDIRECT_PARAM_VALUE = "https://paydock.com/paypal/success&native_xo=1"
         internal const val REDIRECT_PARAM_NAME = "redirect_uri"
     }
 
@@ -101,7 +101,7 @@ internal object MobileSDKConstants {
      * Constants related to FlyPay configuration.
      */
     object FlyPayConfig {
-        internal const val FLY_PAY_REDIRECT_URL = "https://paydock.sdk/"
+        internal const val FLY_PAY_REDIRECT_URL = "https://paydock.com/"
     }
 
     /**

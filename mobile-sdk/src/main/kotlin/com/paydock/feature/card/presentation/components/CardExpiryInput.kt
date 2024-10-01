@@ -4,7 +4,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -28,6 +30,7 @@ import com.paydock.feature.card.presentation.utils.ExpiryInputTransformation
  * @param nextFocus The focus requester for the next input field (optional).
  * @param onValueChange The callback function to be invoked when the value of the expiry changes.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun CardExpiryInput(
     modifier: Modifier = Modifier,
@@ -56,7 +59,8 @@ internal fun CardExpiryInput(
         modifier = modifier,
         value = value,
         onValueChange = {
-            CreditCardInputValidator.parseExpiry(it)?.let { expiry ->
+            val formattedExpiry = it.replace(Regex("[^0-9]"), "")
+            CreditCardInputValidator.parseExpiry(formattedExpiry)?.let { expiry ->
                 onValueChange(expiry)
             }
         },
@@ -64,6 +68,7 @@ internal fun CardExpiryInput(
         placeholder = stringResource(id = R.string.placeholder_expiry),
         enabled = enabled,
         error = errorMessage,
+        autofillType = AutofillType.CreditCardExpirationDate,
         visualTransformation = ExpiryInputTransformation(), // Apply visual transformation for MM/YY format
         trailingIcon = {
             // Show a success icon if the input is valid and not blank

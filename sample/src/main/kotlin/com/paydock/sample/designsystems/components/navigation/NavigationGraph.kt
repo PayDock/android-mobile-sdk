@@ -10,9 +10,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.list.ListScreen
-import com.paydock.sample.feature.checkout.models.CheckoutType
 import com.paydock.sample.feature.checkout.ui.CheckoutStandalone
-import com.paydock.sample.feature.checkout.ui.CheckoutWorkflow
 import com.paydock.sample.feature.settings.ui.SettingsScreen
 import com.paydock.sample.feature.style.ui.StyleScreen
 import com.paydock.sample.feature.widgets.ui.WidgetInfoScreen
@@ -22,13 +20,7 @@ import com.paydock.sample.feature.widgets.ui.models.WidgetType
 fun NavigationGraph(navController: NavHostController) {
     NavHost(navController, startDestination = BottomNavItem.Checkout.route) {
         composable(BottomNavItem.Checkout.route) {
-            ListScreen(items = CheckoutType.entries.sortedBy { it.displayName() }) { checkoutType ->
-                navController.currentBackStackEntry?.arguments?.putString(
-                    "widget_type",
-                    checkoutType.name
-                )
-                navController.navigate("checkout_info/${checkoutType.name}")
-            }
+            CheckoutStandalone()
         }
         composable(BottomNavItem.Widgets.route) {
             ListScreen(items = WidgetType.entries.sortedBy { it.displayName() }) { widgetType ->
@@ -44,20 +36,6 @@ fun NavigationGraph(navController: NavHostController) {
         }
         composable(BottomNavItem.Settings.route) {
             SettingsScreen()
-        }
-
-        composable(
-            "checkout_info/{checkout_type}",
-            arguments = listOf(navArgument("checkout_type") { type = NavType.StringType })
-        ) { navBackStackEntry ->
-            /* Extracting the id from the route */
-            navBackStackEntry.arguments?.getString("checkout_type")?.let { type ->
-                val checkoutType = CheckoutType.valueOf(type)
-                when (checkoutType) {
-                    CheckoutType.STANDALONE -> CheckoutStandalone()
-                    CheckoutType.PAYMENT_WORKFLOW -> CheckoutWorkflow()
-                }
-            }
         }
 
         composable(
@@ -86,13 +64,6 @@ fun NavBackStackEntry.getRouteTitle(context: Context): String {
             } ?: ""
         }
 
-        "checkout_info/{checkout_type}" -> {
-            arguments?.getString("checkout_type")?.let { type ->
-                val checkoutType = CheckoutType.valueOf(type)
-                checkoutType.displayName()
-            } ?: ""
-        }
-
         else -> ""
     }
 }
@@ -104,13 +75,6 @@ fun NavBackStackEntry.showBackButton(): Boolean {
         BottomNavItem.Style.route,
         BottomNavItem.Settings.route -> false
 
-        else -> true
-    }
-}
-
-fun NavBackStackEntry.showTitle(): Boolean {
-    return when (destination.route) {
-        "checkout_info/{checkout_type}" -> false
         else -> true
     }
 }

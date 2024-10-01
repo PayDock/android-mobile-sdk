@@ -91,7 +91,7 @@ internal sealed class WidgetConfig {
          */
         override fun createWidget(): String {
             return """
-                new paydock.ClickToPay(
+                new ${ClientSDKConstants.WIDGET_ID}.ClickToPay(
                     "#${ClientSDKConstants.WIDGET_CONTAINER_ID}",
                     "$serviceId", // service_id
                     "$accessToken", // paydock_public_key_or_access_token
@@ -137,7 +137,7 @@ internal sealed class WidgetConfig {
          */
         override fun createWidget(): String {
             return """
-                new paydock.Canvas3ds("#${ClientSDKConstants.WIDGET_CONTAINER_ID}", "$token")
+                new ${ClientSDKConstants.WIDGET_ID}.Canvas3ds("#${ClientSDKConstants.WIDGET_CONTAINER_ID}", "$token")
             """.trimIndent()
         }
     }

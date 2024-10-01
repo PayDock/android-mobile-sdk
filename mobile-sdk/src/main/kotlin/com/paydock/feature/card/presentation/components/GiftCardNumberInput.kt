@@ -7,6 +7,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -35,6 +36,7 @@ import com.paydock.feature.card.presentation.utils.GiftCardNumberValidator
  *                  move focus to the next input field.
  * @param onValueChange The callback to be invoked when the value of the input field changes.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun GiftCardNumberInput(
     modifier: Modifier = Modifier,

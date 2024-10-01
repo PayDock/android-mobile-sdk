@@ -4,6 +4,7 @@ import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.utils.MainDispatcherRule
+import com.paydock.feature.threeDS.domain.model.EventType
 import com.paydock.feature.threeDS.presentation.model.ChargeError
 import com.paydock.feature.threeDS.presentation.model.ChargeErrorEventData
 import com.paydock.feature.threeDS.presentation.model.ChargeEventData
@@ -51,7 +52,8 @@ class ThreeDSViewModelTest : BaseKoinUnitTest() {
         val state = viewModel.stateFlow.first()
         assertFalse(state.isLoading)
         assertNull(state.error)
-        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.charge3dsId)
+        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.result?.charge3dsId)
+        assertEquals(EventType.CHARGE_AUTH_SUCCESS, state.result?.event)
         assertEquals("authenticated", state.status)
     }
 
@@ -73,7 +75,8 @@ class ThreeDSViewModelTest : BaseKoinUnitTest() {
             MobileSDKConstants.Errors.THREE_DS_REJECTED_ERROR,
             state.error.message
         )
-        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.charge3dsId)
+        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.result?.charge3dsId)
+        assertEquals(EventType.CHARGE_AUTH_REJECT, state.result?.event)
         assertEquals("not_authenticated", state.status)
     }
 
@@ -91,13 +94,14 @@ class ThreeDSViewModelTest : BaseKoinUnitTest() {
         val state = viewModel.stateFlow.first()
         assertFalse(state.isLoading)
         assertNull(state.error)
-        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.charge3dsId)
+        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.result?.charge3dsId)
+        assertEquals(EventType.CHARGE_AUTH_CHALLENGE, state.result?.event)
         assertEquals("pending", state.status)
     }
 
     @Test
     fun `updateThreeDSEvent with chargeAuthDecoupled event should update event state`() = runTest {
-        val event = ThreeDSEvent.ChargeAuthChallengeEvent(
+        val event = ThreeDSEvent.ChargeAuthDecoupledEvent(
             data = ChargeEventData(
                 charge3dsId = "ba7d839a-a868-4bb0-9763-015451fea9fb",
                 status = "auth",
@@ -110,7 +114,8 @@ class ThreeDSViewModelTest : BaseKoinUnitTest() {
         val state = viewModel.stateFlow.first()
         assertFalse(state.isLoading)
         assertNull(state.error)
-        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.charge3dsId)
+        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.result?.charge3dsId)
+        assertEquals(EventType.CHARGE_AUTH_DECOUPLED, state.result?.event)
         assertEquals("auth", state.status)
     }
 
@@ -131,7 +136,8 @@ class ThreeDSViewModelTest : BaseKoinUnitTest() {
         val state = viewModel.stateFlow.first()
         assertFalse(state.isLoading)
         assertNull(state.error)
-        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.charge3dsId)
+        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.result?.charge3dsId)
+        assertEquals(EventType.CHARGE_AUTH_INFO, state.result?.event)
         assertEquals("decoupled", state.status)
     }
 
@@ -148,7 +154,8 @@ class ThreeDSViewModelTest : BaseKoinUnitTest() {
         // CHECK
         val state = viewModel.stateFlow.first()
         assertFalse(state.isLoading)
-        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.charge3dsId)
+        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.result?.charge3dsId)
+        assertEquals(EventType.CHARGE_ERROR, state.result?.event)
         assertNotNull(state.error)
         assertEquals(
             event.data.error.message,

@@ -80,14 +80,8 @@ android {
 
         buildConfigField(
             "String",
-            "CUSTOMISATION_TEMPLATE_ID",
-            getPropertyValue("CUSTOMISATION_TEMPLATE_ID")
-        )
-
-        buildConfigField(
-            "String",
-            "CONFIGURATION_TEMPLATE_ID",
-            getPropertyValue("CONFIGURATION_TEMPLATE_ID")
+            "FLY_PAY_CLIENT_ID",
+            getPropertyValue("FLY_PAY_CLIENT_ID")
         )
     }
     buildTypes {
@@ -148,7 +142,6 @@ dependencies {
     // Compose
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose.sample.app)
-    debugImplementation(libs.bundles.compose.debug)
     // Hilt
     implementation(libs.bundles.hilt)
     kapt(libs.hilt.android.compiler)
@@ -158,6 +151,4 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)
-    androidTestImplementation(platform(libs.compose.bom))
-    androidTestImplementation(libs.compose.ui.test.junit)
 }

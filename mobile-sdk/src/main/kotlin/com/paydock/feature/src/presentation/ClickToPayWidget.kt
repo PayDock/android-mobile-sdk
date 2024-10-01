@@ -1,6 +1,7 @@
 package com.paydock.feature.src.presentation
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,7 +11,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -24,6 +28,7 @@ import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.src.presentation.utils.ClickToPayJSBridge
 import com.paydock.feature.src.presentation.viewmodels.ClickToPayViewModel
+import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -56,8 +61,14 @@ fun ClickToPayWidget(
     val scope = rememberCoroutineScope()
 
     // Handle back button press
-    BackHandler(true) {
+    val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    var backPressHandled by remember { mutableStateOf(false) }
+    BackHandler(enabled = !backPressHandled) {
+        backPressHandled = true
         scope.launch {
+            awaitFrame()
+            onBackPressedDispatcher?.onBackPressed()
+            backPressHandled = false
             // Notify completion with failure and error message upon back press
             completion(
                 Result.failure(
@@ -68,7 +79,6 @@ fun ClickToPayWidget(
                     )
                 )
             )
-            viewModel.resetResultState()
         }
     }
 
@@ -119,7 +129,7 @@ fun ClickToPayWidget(
                     jsBridge = ClickToPayJSBridge {
                         viewModel.updateSRCEvent(it)
                     },
-                    showLoader = true,
+                    shouldShowCustomLoader = true,
                 ) { status, message ->
                     // Invoke the completion callback with the Click to Pay exception upon WebView error
                     completion(

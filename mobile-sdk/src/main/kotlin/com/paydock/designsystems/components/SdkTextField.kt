@@ -17,7 +17,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -25,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.paydock.R
+import com.paydock.core.extensions.autofill
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
@@ -45,10 +48,14 @@ import com.paydock.designsystems.theme.Theme
  * @param keyboardActions Keyboard actions for handling keyboard events.
  * @param singleLine Flag to determine whether the text input field supports single-line input.
  * @param maxLines Maximum number of lines allowed in the text input field.
+ * @param autofillType An optional [AutofillType] indicating the type of data that can be
+ * autofilled for this input field (e.g., address, postal code). If provided, it enables
+ * autofill support.
  * @param interactionSource Interaction source for tracking user interactions with the text input field.
  * @param trailingIcon Icon displayed at the end of the text input field.
  * @param leadingIcon Icon displayed at the start of the text input field.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Suppress("LongMethod")
 @Composable
 internal fun SdkTextField(
@@ -65,6 +72,7 @@ internal fun SdkTextField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     singleLine: Boolean = false,
     maxLines: Int = Int.MAX_VALUE,
+    autofillType: AutofillType? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     trailingIcon: @Composable (() -> Unit)? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
@@ -91,7 +99,17 @@ internal fun SdkTextField(
                 .onFocusChanged {
                     focusedState = it.isFocused
                 }
-                .testTag("sdkInput"),
+                .testTag("sdkInput")
+                .then(
+                    if (autofillType != null) {
+                        Modifier.autofill(
+                            autofillTypes = listOf(autofillType),
+                            onFill = onValueChange,
+                        )
+                    } else {
+                        Modifier
+                    }
+                ),
             enabled = enabled,
             readOnly = readOnly,
             visualTransformation = visualTransformation,
@@ -162,6 +180,7 @@ internal fun SdkTextField(
 /**
  * Composable function to preview an empty state of the SdkTextField.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @LightDarkPreview
 @Composable
 private fun PreviewSdkTextFieldEmptyState() {
@@ -184,6 +203,7 @@ private fun PreviewSdkTextFieldEmptyState() {
 /**
  * Composable function to preview the SdkTextField with input.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @LightDarkPreview
 @Composable
 private fun PreviewSdkTextFieldWithInput() {
@@ -205,6 +225,7 @@ private fun PreviewSdkTextFieldWithInput() {
 /**
  * Composable function to preview the SdkTextField with an error state.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @LightDarkPreview
 @Composable
 private fun PreviewSdkTextFieldError() {

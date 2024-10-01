@@ -4,7 +4,9 @@ import android.location.Address
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.paydock.R
@@ -21,6 +23,7 @@ import org.koin.androidx.compose.koinViewModel
  * @param viewModel The ViewModel responsible for managing address search.
  * @param onAddressSelected Callback function to handle the selected address.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun AddressSearchInput(
     modifier: Modifier = Modifier,
@@ -32,6 +35,7 @@ internal fun AddressSearchInput(
     SearchTextField(
         modifier = modifier.testTag("addressSearch"),
         label = stringResource(R.string.label_search_for_your_address),
+        autofillType = AutofillType.AddressStreet,
         noResultsFoundLabel = stringResource(R.string.label_no_address_found),
         viewModel = viewModel,
         onItemSelected = { item ->

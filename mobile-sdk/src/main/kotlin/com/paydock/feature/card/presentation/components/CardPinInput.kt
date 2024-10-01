@@ -4,6 +4,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
@@ -25,6 +26,7 @@ import com.paydock.feature.card.presentation.utils.GiftCardInputValidator
  * @param nextFocus The focus requester for the next input field (optional).
  * @param onValueChange The callback triggered when the input value changes.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun CardPinInput(
     modifier: Modifier = Modifier,

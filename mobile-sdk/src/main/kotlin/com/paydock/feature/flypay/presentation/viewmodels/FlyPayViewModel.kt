@@ -1,10 +1,8 @@
 package com.paydock.feature.flypay.presentation.viewmodels
 
-import com.paydock.MobileSDK
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.FlyPayException
-import com.paydock.core.domain.model.Environment
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.network.exceptions.UnknownApiException
 import com.paydock.feature.flypay.presentation.state.FlyPayViewState
@@ -71,11 +69,13 @@ internal class FlyPayViewModel(
     override fun updateCallbackUIState(result: Result<WalletCallback>) {
         updateState { currentState ->
             val exception: Throwable? = result.exceptionOrNull()
-            val error: FlyPayException? = when (exception) {
-                is ApiException -> FlyPayException.FetchingUrlException(error = exception.error)
-                is UnknownApiException -> FlyPayException.UnknownException(displayableMessage = exception.errorMessage)
-                else -> currentState.error
-            }
+            val error: FlyPayException? = exception?.let {
+                when (exception) {
+                    is ApiException -> FlyPayException.FetchingUrlException(error = exception.error)
+                    is UnknownApiException -> FlyPayException.UnknownException(displayableMessage = exception.errorMessage)
+                    else -> FlyPayException.UnknownException(displayableMessage = exception.message ?: "An unknown error occurred")
+                }
+            } ?: currentState.error
             currentState.copy(
                 error = error,
                 isLoading = false,
@@ -98,17 +98,4 @@ internal class FlyPayViewModel(
             )
         getWalletCallback(walletToken, request)
     }
-
-    /**
-     * Creates the FlyPay URL for the payment process based on the callback URL.
-     *
-     * @param flyPayOrderId The FlyPay orderId.
-     * @return The composed URL with FlyPay parameters.
-     */
-    @Suppress("MaxLineLength")
-    fun createFlyPayUrl(flyPayOrderId: String): String =
-        when (MobileSDK.getInstance().environment) {
-            Environment.PRODUCTION -> "https://checkout.cxbflypay.com.au/?orderId=$flyPayOrderId&redirectUrl=${MobileSDKConstants.FlyPayConfig.FLY_PAY_REDIRECT_URL}"
-            else -> "https://checkout.sandbox.cxbflypay.com.au/?orderId=$flyPayOrderId&redirectUrl=${MobileSDKConstants.FlyPayConfig.FLY_PAY_REDIRECT_URL}" // default to sandbox
-        }
 }

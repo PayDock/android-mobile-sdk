@@ -4,7 +4,6 @@ import android.content.Context
 import app.cash.turbine.test
 import com.paydock.MobileSDK
 import com.paydock.core.BaseUnitTest
-import com.paydock.core.MobileSDKConstants
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.FlyPayException
@@ -120,17 +119,6 @@ class FlyPayViewModelTest : BaseUnitTest() {
                 assertNull(state.error)
             }
         }
-    }
-
-    @Test
-    fun `createFlyPayUrl should return FlyPay URL based on environment`() = runTest {
-        val mockFlyPayOrderId = "testOrderId"
-        val resultUrl = viewModel.createFlyPayUrl(mockFlyPayOrderId)
-        // Validating Sandbox URL
-        assertEquals(
-            "https://checkout.sandbox.cxbflypay.com.au/?orderId=$mockFlyPayOrderId&redirectUrl=${MobileSDKConstants.FlyPayConfig.FLY_PAY_REDIRECT_URL}",
-            resultUrl
-        )
     }
 
     @Test

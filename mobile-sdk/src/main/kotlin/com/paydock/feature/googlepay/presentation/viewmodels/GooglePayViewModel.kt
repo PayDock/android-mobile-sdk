@@ -84,13 +84,15 @@ internal class GooglePayViewModel(
     override fun updateChargeUIState(result: Result<ChargeResponse>) {
         updateState { currentState ->
             val exception: Throwable? = result.exceptionOrNull()
-            val error: GooglePayException? = when (exception) {
-                is com.paydock.core.network.exceptions.ApiException ->
-                    GooglePayException.CapturingChargeException(error = exception.error)
+            val error: GooglePayException? = exception?.let {
+                when (exception) {
+                    is com.paydock.core.network.exceptions.ApiException ->
+                        GooglePayException.CapturingChargeException(error = exception.error)
 
-                is UnknownApiException -> GooglePayException.UnknownException(displayableMessage = exception.errorMessage)
-                else -> currentState.error
-            }
+                    is UnknownApiException -> GooglePayException.UnknownException(displayableMessage = exception.errorMessage)
+                    else -> GooglePayException.UnknownException(displayableMessage = exception.message ?: "An unknown error occurred")
+                }
+            } ?: currentState.error
             currentState.copy(
                 error = error,
                 isLoading = false,

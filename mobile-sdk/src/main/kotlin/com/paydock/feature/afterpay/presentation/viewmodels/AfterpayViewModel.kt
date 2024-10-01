@@ -121,11 +121,13 @@ internal class AfterpayViewModel(
         }
         updateState { currentState ->
             val exception: Throwable? = result.exceptionOrNull()
-            val error: AfterpayException? = when (exception) {
-                is ApiException -> AfterpayException.FetchingUrlException(error = exception.error)
-                is UnknownApiException -> AfterpayException.UnknownException(displayableMessage = exception.errorMessage)
-                else -> currentState.error
-            }
+            val error: AfterpayException? = exception?.let {
+                when (exception) {
+                    is ApiException -> AfterpayException.FetchingUrlException(error = exception.error)
+                    is UnknownApiException -> AfterpayException.UnknownException(displayableMessage = exception.errorMessage)
+                    else -> AfterpayException.UnknownException(displayableMessage = exception.message ?: "An unknown error occurred")
+                }
+            } ?: currentState.error
             currentState.copy(
                 error = error,
                 isLoading = false,
@@ -142,11 +144,13 @@ internal class AfterpayViewModel(
     override fun updateChargeUIState(result: Result<ChargeResponse>) {
         updateState { currentState ->
             val exception: Throwable? = result.exceptionOrNull()
-            val error: AfterpayException? = when (exception) {
-                is ApiException -> AfterpayException.CapturingChargeException(error = exception.error)
-                is UnknownApiException -> AfterpayException.UnknownException(displayableMessage = exception.errorMessage)
-                else -> currentState.error
-            }
+            val error: AfterpayException? = exception?.let {
+                when (exception) {
+                    is ApiException -> AfterpayException.CapturingChargeException(error = exception.error)
+                    is UnknownApiException -> AfterpayException.UnknownException(displayableMessage = exception.errorMessage)
+                    else -> AfterpayException.UnknownException(displayableMessage = exception.message ?: "An unknown error occurred")
+                }
+            } ?: currentState.error
             currentState.copy(
                 error = error,
                 isLoading = false,

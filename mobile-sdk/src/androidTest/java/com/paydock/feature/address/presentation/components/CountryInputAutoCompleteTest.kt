@@ -1,6 +1,7 @@
 package com.paydock.feature.address.presentation.components
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
@@ -31,7 +32,7 @@ import org.koin.mp.KoinPlatformTools
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
-@OptIn(KoinInternalApi::class)
+@OptIn(KoinInternalApi::class, ExperimentalComposeUiApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class CountryInputAutoCompleteTest :
     BaseViewModelKoinTest<CountryAutoCompleteViewModel>() {

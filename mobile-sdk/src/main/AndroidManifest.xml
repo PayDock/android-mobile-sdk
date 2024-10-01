@@ -5,5 +5,21 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <application />
+    <application>
+        <meta-data
+            android:name="android.webkit.WebView.MetricsOptOut"
+            android:value="true" />
+
+        <activity
+            android:name=".feature.paypal.presentation.PayPalWebActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:launchMode="singleInstance"
+            android:theme="@style/SdkDialog" />
+
+        <activity
+            android:name=".feature.flypay.presentation.FlyPayWebActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:launchMode="singleInstance"
+            android:theme="@style/SdkDialog" />
+    </application>
 </manifest>
