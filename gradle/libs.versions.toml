@@ -5,8 +5,8 @@ agp = "8.5.0"
 androidx-test-junit = "1.1.5"
 androidx-test-espresso = "3.5.1"
 androidx-fragment = "1.6.2"
+androidx-activity-compose = "1.8.2"
 accompanist = "0.28.0"
-compose = "1.8.2"
 composeWebview = "0.33.6"
 core = "1.12.0"
 detekt = "1.23.0"
@@ -31,8 +31,6 @@ okhttp = "4.10.0"
 paydockCoreNetworking = "1.1.0"
 retrofit = "2.7.2"
 turbine = "1.0.0"
-uiToolingPreviewAndroid = "1.7.1"
-uiTestJunit4Android = "1.7.1"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -50,20 +48,20 @@ androidx-lifecycle-ktx = { group = "androidx.lifecycle", name = "lifecycle-runti
 # Afterpay
 afterpay-android = { module = "com.afterpay:afterpay-android", version.ref = "afterpayAndroid" }
 #Compose
-compose-bom = { module = "androidx.compose:compose-bom", version = "2023.10.01" }
+compose-bom = { module = "androidx.compose:compose-bom", version = "2024.08.00" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
 compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
-androidx-foundation-android = { group = "androidx.compose.foundation", name = "foundation", version = "1.6.5" }
+androidx-foundation-android = { module = "androidx.compose.foundation:foundation" }
 #Compose - AndroidX & Other
-androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "compose" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidx-activity-compose" }
 compose-webview = { module = "io.github.kevinnzou:compose-webview", version.ref = "composeWebview" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
 accompanist-system-ui = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "accompanist" }
 #Compose - Debug
-androidx-ui-tooling-preview-android = { group = "androidx.compose.ui", name = "ui-tooling-preview-android", version.ref = "uiToolingPreviewAndroid" }
-#Compose - Test
-androidx-ui-test-junit4-android = { group = "androidx.compose.ui", name = "ui-test-junit4-android", version.ref = "uiTestJunit4Android" }
+androidx-ui-tooling-preview-android = { module = "androidx.compose.ui:ui-tooling-preview" }
+#Compose - UI Test
+androidx-ui-test-junit4-android = { module = "androidx.compose.ui:ui-test-junit4" }
 #Kotlin
 kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlin" }
 kotlinx-html-jvm = { module = "org.jetbrains.kotlinx:kotlinx-html-jvm", version.ref = "kotlinxHtmlJvm" }

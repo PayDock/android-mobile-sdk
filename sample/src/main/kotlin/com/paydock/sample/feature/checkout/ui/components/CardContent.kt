@@ -6,12 +6,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.paydock.feature.card.presentation.CardDetailsWidget
 import com.paydock.feature.card.presentation.model.CardResult
+import com.paydock.feature.card.presentation.model.SaveCardConfig
 
 @Composable
 fun CardContent(accessToken: String, resultHandler: (Result<CardResult>) -> Unit) {
     CardDetailsWidget(
         modifier = Modifier.padding(vertical = 16.dp),
         accessToken = accessToken,
+        actionText = "Pay",
+        showCardTitle = false,
+        collectCardholderName = false,
+        allowSaveCard = SaveCardConfig(
+            consentText = "Save payment details",
+            privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
+                privacyPolicyURL = "https://www.google.com"
+            )
+        ),
         completion = resultHandler
     )
 }

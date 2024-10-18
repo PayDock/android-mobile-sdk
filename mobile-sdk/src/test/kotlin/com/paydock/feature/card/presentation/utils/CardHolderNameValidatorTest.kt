@@ -26,5 +26,6 @@ class CardHolderNameValidatorTest {
     fun testCheckHolderName_BlankName() {
         assertFalse(CardHolderNameValidator.checkHolderName(""))
         assertFalse(CardHolderNameValidator.checkHolderName("  "))
+        assertFalse(CardHolderNameValidator.checkHolderName(null))
     }
 }

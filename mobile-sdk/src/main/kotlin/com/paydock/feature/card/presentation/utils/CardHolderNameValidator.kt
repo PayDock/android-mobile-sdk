@@ -14,7 +14,6 @@ internal object CardHolderNameValidator {
      * @param name The cardholder name to be validated.
      * @return `true` if the name is valid, `false` otherwise.
      */
-    fun checkHolderName(name: String): Boolean =
-        name.isNotBlank()
-
+    fun checkHolderName(name: String?): Boolean =
+        !name.isNullOrBlank()
 }

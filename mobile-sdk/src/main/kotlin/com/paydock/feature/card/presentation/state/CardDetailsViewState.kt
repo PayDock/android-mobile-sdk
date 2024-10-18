@@ -25,12 +25,13 @@ import com.paydock.feature.card.presentation.utils.CreditCardNumberValidator
  * @property error An error model representing any error that occurred during card details processing.
  */
 internal data class CardDetailsViewState(
-    val cardholderName: String = "",
+    val cardholderName: String? = null,
     val cardNumber: String = "",
     val expiry: String = "",
     val code: String = "",
     val gatewayId: String = "",
     val saveCard: Boolean = false,
+    val collectCardholderName: Boolean = true,
     val token: String? = null,
     val isLoading: Boolean = false,
     val error: CardDetailsException? = null,
@@ -53,7 +54,7 @@ internal data class CardDetailsViewState(
      * @return True if all input data is valid, false otherwise.
      */
     val isDataValid: Boolean
-        get() = CardHolderNameValidator.checkHolderName(cardholderName) &&
+        get() = (CardHolderNameValidator.checkHolderName(cardholderName) || !collectCardholderName) &&
             CreditCardNumberValidator.checkNumber(cardNumber) &&
             CreditCardInputValidator.isLuhnValid(cardNumber) &&
             CardExpiryValidator.isExpiryValid(expiry) &&

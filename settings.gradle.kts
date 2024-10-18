@@ -3,10 +3,9 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 includeBuild("convention-plugins")
 
 // Only include sample app if not on JitPack
-if (System.getenv("JITPACK") == "false") { // Only include sample app if not on JitPack
+if (!System.getenv().containsKey("JITPACK")) {
     include(":sample")
 }
-include(":sample")
 include(":mobile-sdk")
 
 pluginManagement {

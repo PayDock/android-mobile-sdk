@@ -44,6 +44,17 @@ internal class CardDetailsViewModel(
     }
 
     /**
+     * Sets whether collect cardholderName should be collected in UI.
+     *
+     * @param collectCardHolderName Boolean for whether to collect cardholder name.
+     */
+    fun setCollectCardholderName(collectCardHolderName: Boolean) {
+        _stateFlow.update { state ->
+            state.copy(collectCardholderName = collectCardHolderName)
+        }
+    }
+
+    /**
      * Reset the result state, clearing token and error.
      */
     fun resetResultState() {
@@ -51,7 +62,7 @@ internal class CardDetailsViewModel(
             state.copy(
                 token = null,
                 error = null,
-                cardholderName = "",
+                cardholderName = null,
                 cardNumber = "",
                 expiry = "",
                 code = ""
