@@ -229,7 +229,7 @@ class CardDetailsViewModelTest : BaseKoinUnitTest() {
             awaitItem()
             // Updated state
             assertNull(awaitItem().token)
-            assertTrue(awaitItem().cardholderName.isNotBlank())
+            assertFalse(awaitItem().cardholderName.isNullOrBlank())
             assertTrue(awaitItem().cardNumber.isNotBlank())
             assertTrue(awaitItem().expiry.isNotBlank())
             assertTrue(awaitItem().code.isNotBlank())
@@ -239,7 +239,7 @@ class CardDetailsViewModelTest : BaseKoinUnitTest() {
                 assertEquals(gatewayId, state.gatewayId)
                 assertFalse(state.isLoading)
                 assertNull(state.token)
-                assertTrue(state.cardholderName.isBlank())
+                assertNull(state.cardholderName)
                 assertTrue(state.cardNumber.isBlank())
                 assertTrue(state.expiry.isBlank())
                 assertTrue(state.code.isBlank())

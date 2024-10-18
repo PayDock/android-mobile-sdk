@@ -93,7 +93,6 @@ dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose.sdk)
     implementation(libs.compose.webview)
-    implementation(libs.androidx.ui.tooling.preview.android)
     // Kotlin
     implementation(platform(libs.kotlin.bom))
     implementation(libs.kotlinx.html.jvm)

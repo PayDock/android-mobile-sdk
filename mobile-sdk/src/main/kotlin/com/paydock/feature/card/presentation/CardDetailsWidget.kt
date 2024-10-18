@@ -52,11 +52,13 @@ fun CardDetailsWidget(
     gatewayId: String? = null,
     actionText: String = stringResource(R.string.button_submit),
     showCardTitle: Boolean = true,
+    collectCardholderName: Boolean = true,
     allowSaveCard: SaveCardConfig? = null,
     completion: (Result<CardResult>) -> Unit
 ) {
     val viewModel: CardDetailsViewModel = koinViewModel(parameters = { parametersOf(accessToken) })
     gatewayId?.let { viewModel.setGatewayId(it) }
+    viewModel.setCollectCardholderName(collectCardholderName)
     val uiState = viewModel.stateFlow.collectAsState()
 
     val focusCardNumber = FocusRequester()
@@ -102,16 +104,18 @@ fun CardDetailsWidget(
                     )
                 }
 
-                // Cardholder name input
-                CardHolderNameInput(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("cardHolderInput"),
-                    value = uiState.value.cardholderName,
-                    enabled = !uiState.value.isLoading,
-                    nextFocus = focusCardNumber,
-                    onValueChange = { viewModel.updateCardholderName(it) }
-                )
+                if (collectCardholderName) {
+                    // Cardholder name input
+                    CardHolderNameInput(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("cardHolderInput"),
+                        value = uiState.value.cardholderName ?: "",
+                        enabled = !uiState.value.isLoading,
+                        nextFocus = focusCardNumber,
+                        onValueChange = { viewModel.updateCardholderName(it) }
+                    )
+                }
 
                 // Card number input
                 CreditCardNumberInput(

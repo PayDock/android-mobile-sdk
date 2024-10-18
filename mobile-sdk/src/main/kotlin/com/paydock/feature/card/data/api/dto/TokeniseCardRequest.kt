@@ -20,8 +20,8 @@ internal sealed class TokeniseCardRequest {
      */
     @Serializable
     data class CreditCard(
+        @SerialName("card_name") val cardholderName: String? = null,
         @SerialName("card_ccv") val cvv: String,
-        @SerialName("card_name") val cardholderName: String,
         @SerialName("card_number") val cardNumber: String,
         @SerialName("expire_month") val expiryMonth: String,
         @SerialName("expire_year") val expiryYear: String,

@@ -86,14 +86,6 @@ fun CheckoutBottomSheet(
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 CardContent(accessToken, viewModel::handleCardResult)
-                                AppButton(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    text = "Pay £10.00",
-                                    enabled = !uiState.cardToken.isNullOrBlank() && !uiState.isLoading
-                                ) {
-                                    val token = uiState.cardToken
-                                    token?.let { viewModel.createSessionVaultToken(cardToken = it) }
-                                }
                             }
                         }
 

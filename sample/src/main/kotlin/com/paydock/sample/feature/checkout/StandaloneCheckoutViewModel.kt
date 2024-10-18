@@ -269,7 +269,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
 
     fun handleCardResult(result: Result<CardResult>) {
         result.onSuccess {
-            handleTokenResult(it.token)
+            createSessionVaultToken(it.token)
         }.onFailure {
             _stateFlow.update { state ->
                 state.copy(error = TOKENISE_CARD_ERROR)
@@ -278,7 +278,6 @@ class StandaloneCheckoutViewModel @Inject constructor(
     }
 
     fun handleClickToPayResult(result: Result<String>) {
-
         result.onSuccess {
             handleTokenResult(it)
             // If successful, we directly start charge flow

@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.0] - 2024-10-18
+
+### Added
+
+- `collectCardholderName` flag added to `CardDetailsWidget`
+
+### Changed
+
+- Targeting Compose BOM version `2024.08.00`
+
 ## [1.2.0] - 2024-10-01
 
 ### Added
