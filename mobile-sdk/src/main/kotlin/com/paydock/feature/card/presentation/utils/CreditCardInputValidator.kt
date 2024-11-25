@@ -1,6 +1,6 @@
 package com.paydock.feature.card.presentation.utils
 
-import com.paydock.feature.card.presentation.model.SecurityCodeType
+import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
 
 /**
  * A utility object for validating and parsing credit card input details.

@@ -22,9 +22,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.paydock.R
-import com.paydock.designsystems.components.DropdownListFieldStack
-import com.paydock.designsystems.components.SdkDropDownMenu
-import com.paydock.designsystems.components.SdkTextField
+import com.paydock.designsystems.components.dropdown.DropdownListFieldStack
+import com.paydock.designsystems.components.dropdown.SdkDropDownMenu
+import com.paydock.designsystems.components.input.SdkTextField
 
 /**
  * A search text field composable for filtering and selecting items using a SearchViewModel.

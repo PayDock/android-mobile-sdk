@@ -1,5 +1,6 @@
 package com.paydock.sample.feature.style.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -20,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import com.paydock.MobileSDK
 import com.paydock.MobileSDKTheme
 import com.paydock.ThemeColors
-import com.paydock.core.presentation.ui.extensions.toast
 import com.paydock.sample.R
 import com.paydock.sample.core.presentation.ui.layout.ColumnWithSeparators
 import com.paydock.sample.designsystems.components.button.AppButton
@@ -82,7 +82,7 @@ fun StyleScreen(isDarkMode: Boolean = isSystemInDarkTheme()) {
                     font = fontTheme
                 )
                 MobileSDK.getInstance().updateTheme(currentTheme)
-                context.toast("Sdk Theme has been updated!")
+                Toast.makeText(context, "Sdk Theme has been updated!", Toast.LENGTH_SHORT).show()
             }
         }
     ) { innerPadding ->

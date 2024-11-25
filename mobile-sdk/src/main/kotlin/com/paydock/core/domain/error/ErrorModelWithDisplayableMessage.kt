@@ -32,6 +32,14 @@ val ErrorModel?.displayableMessage: String
                 exception.message
                     ?: MobileSDKConstants.Errors.PAY_PAL_ERROR
 
+            is ErrorModel.PayPalVaultError ->
+                exception.message
+                    ?: MobileSDKConstants.Errors.PAY_PAL_VAULT_ERROR
+
+            is ErrorModel.PayPalDataCollectorError ->
+                exception.message
+                    ?: MobileSDKConstants.Errors.PAY_PAL_DATA_COLLECTOR_ERROR
+
             is ErrorModel.FlyPayError ->
                 exception.message
                     ?: MobileSDKConstants.Errors.FLY_PAY_ERROR

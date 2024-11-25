@@ -19,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.unit.sp
 import com.paydock.R
-import com.paydock.core.presentation.ui.extensions.alpha40
+import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.FlyPayBlue
@@ -57,7 +57,7 @@ internal fun FlyPayButton(
             containerColor = FlyPayBlue,
             disabledContainerColor = FlyPayBlue.alpha40
         ),
-        shape = Theme.shapes.small
+        shape = Theme.buttonShapes.small
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(

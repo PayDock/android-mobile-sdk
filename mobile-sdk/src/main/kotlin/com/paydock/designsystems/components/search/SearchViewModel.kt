@@ -3,7 +3,7 @@ package com.paydock.designsystems.components.search
 import androidx.lifecycle.viewModelScope
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
-import com.paydock.core.presentation.ui.BaseViewModel
+import com.paydock.core.presentation.viewmodels.BaseViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow

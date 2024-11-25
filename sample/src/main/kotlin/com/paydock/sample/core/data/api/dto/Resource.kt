@@ -4,5 +4,5 @@ import com.google.gson.annotations.SerializedName
 
 data class Resource<T>(
     @SerializedName("data") val resourceData: T,
-    val type: String
+    val type: String,
 )

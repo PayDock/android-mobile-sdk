@@ -1,11 +1,11 @@
 package com.paydock.feature.src.presentation.utils
 
 import com.paydock.core.network.extensions.convertToDataClass
-import com.paydock.feature.src.presentation.model.ClickToPayEvent
-import com.paydock.feature.src.presentation.model.ErrorData
-import com.paydock.feature.src.presentation.model.SuccessEventData
-import com.paydock.feature.src.presentation.model.enum.Event
-import com.paydock.feature.src.presentation.model.enum.EventDataType
+import com.paydock.feature.src.domain.model.ui.ClickToPayEvent
+import com.paydock.feature.src.domain.model.ui.ErrorData
+import com.paydock.feature.src.domain.model.ui.SuccessEventData
+import com.paydock.feature.src.domain.model.ui.enums.Event
+import com.paydock.feature.src.domain.model.ui.enums.EventDataType
 import kotlinx.serialization.SerializationException
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -13,7 +13,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 
-class ClickToPayEventSerializerTest {
+internal class ClickToPayEventSerializerTest {
 
     @Test
     fun `test click to pay data serializer with IframeLoadedEvent`() {

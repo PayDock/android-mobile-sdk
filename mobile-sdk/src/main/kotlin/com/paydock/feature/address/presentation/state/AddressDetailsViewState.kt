@@ -1,6 +1,6 @@
 package com.paydock.feature.address.presentation.state
 
-import com.paydock.feature.address.domain.model.BillingAddress
+import com.paydock.feature.address.domain.model.integration.BillingAddress
 
 /**
  * UI State that represents address details input and processing state.

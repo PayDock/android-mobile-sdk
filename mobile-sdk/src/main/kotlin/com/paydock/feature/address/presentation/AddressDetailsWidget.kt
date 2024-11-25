@@ -28,11 +28,11 @@ import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.utils.rememberImeState
-import com.paydock.designsystems.components.SdkButton
+import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.address.data.mapper.asEntity
-import com.paydock.feature.address.domain.model.BillingAddress
+import com.paydock.feature.address.domain.mapper.integration.asEntity
+import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.address.presentation.components.AddressSearchInput
 import com.paydock.feature.address.presentation.components.ManualAddress
 import com.paydock.feature.address.presentation.viewmodels.AddressDetailsViewModel

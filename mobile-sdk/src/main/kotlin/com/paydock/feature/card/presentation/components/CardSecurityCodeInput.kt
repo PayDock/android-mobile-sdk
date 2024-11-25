@@ -13,12 +13,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.paydock.R
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
-import com.paydock.designsystems.components.InputValidIcon
-import com.paydock.designsystems.components.SdkTextField
+import com.paydock.designsystems.components.input.InputValidIcon
+import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.card.presentation.model.CardIssuerType
-import com.paydock.feature.card.presentation.model.SecurityCodeType
+import com.paydock.feature.card.domain.model.integration.enums.CardIssuerType
+import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
 import com.paydock.feature.card.presentation.utils.CardSecurityCodeValidator
 import com.paydock.feature.card.presentation.utils.CreditCardInputValidator
 

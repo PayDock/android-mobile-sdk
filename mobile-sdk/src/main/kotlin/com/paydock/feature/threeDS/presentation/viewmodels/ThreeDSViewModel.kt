@@ -3,11 +3,11 @@ package com.paydock.feature.threeDS.presentation.viewmodels
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.ThreeDSException
-import com.paydock.core.presentation.ui.BaseViewModel
-import com.paydock.feature.threeDS.domain.model.EventType
-import com.paydock.feature.threeDS.domain.model.ThreeDSResult
+import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.feature.threeDS.domain.model.integration.ThreeDSResult
+import com.paydock.feature.threeDS.domain.model.integration.enums.EventType
+import com.paydock.feature.threeDS.domain.model.ui.ThreeDSEvent
 import com.paydock.feature.threeDS.presentation.ThreeDSViewState
-import com.paydock.feature.threeDS.presentation.model.ThreeDSEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -4,16 +4,16 @@ import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.wallet.IsReadyToPayRequest
 import com.google.android.gms.wallet.PaymentDataRequest
 import com.google.android.gms.wallet.PaymentsClient
+import com.paydock.api.charges.data.dto.CaptureWalletChargeRequest
+import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
+import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
+import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.GooglePayException
 import com.paydock.core.network.exceptions.UnknownApiException
-import com.paydock.feature.charge.domain.model.ChargeResponse
+import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import com.paydock.feature.googlepay.presentation.state.GooglePayViewState
-import com.paydock.feature.wallet.data.api.dto.WalletCaptureRequest
-import com.paydock.feature.wallet.domain.usecase.CaptureWalletTransactionUseCase
-import com.paydock.feature.wallet.domain.usecase.DeclineWalletTransactionUseCase
-import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
 import org.json.JSONObject
 
@@ -21,19 +21,19 @@ import org.json.JSONObject
  * ViewModel responsible for managing the Google Pay feature's UI state and interactions.
  *
  * @param paymentsClient An instance of PaymentsClient for handling Google Pay payments.
- * @param captureWalletTransactionUseCase The use case responsible for capturing wallet transactions.
+ * @param captureWalletChargeUseCase The use case responsible for capturing wallet transactions.
  * @param getWalletCallbackUseCase The use case getting wallet callback details.
  * @param dispatchers The provider for coroutine dispatchers.
  */
 internal class GooglePayViewModel(
     private val paymentsClient: PaymentsClient,
-    captureWalletTransactionUseCase: CaptureWalletTransactionUseCase,
-    declineWalletTransactionUseCase: DeclineWalletTransactionUseCase,
+    captureWalletChargeUseCase: CaptureWalletChargeUseCase,
+    declineWalletChargeUseCase: DeclineWalletChargeUseCase,
     getWalletCallbackUseCase: GetWalletCallbackUseCase,
     dispatchers: DispatchersProvider
 ) : WalletViewModel<GooglePayViewState>(
-    captureWalletTransactionUseCase,
-    declineWalletTransactionUseCase,
+    captureWalletChargeUseCase,
+    declineWalletChargeUseCase,
     getWalletCallbackUseCase,
     dispatchers
 ) {
@@ -188,7 +188,7 @@ internal class GooglePayViewModel(
         googleToken: String
     ) {
         // Create a request object for capturing wallet transaction
-        val request = WalletCaptureRequest(
+        val request = CaptureWalletChargeRequest(
             paymentMethodId = googleToken
         )
 

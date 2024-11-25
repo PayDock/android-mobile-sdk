@@ -6,8 +6,8 @@ import com.paydock.core.ClientSDKConstants
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.mapper.mapToClientSDKEnv
 import com.paydock.core.domain.mapper.mapToClientSDKLibrary
-import com.paydock.core.domain.model.meta.ClickToPayMeta
 import com.paydock.core.network.extensions.convertToJsonString
+import com.paydock.feature.src.domain.model.integration.meta.ClickToPayMeta
 import kotlinx.serialization.SerializationException
 
 /**

@@ -1,13 +1,13 @@
 package com.paydock.feature.card.presentation.viewmodels
 
+import com.paydock.api.tokens.data.dto.CreatePaymentTokenRequest
+import com.paydock.api.tokens.domain.model.TokenDetails
+import com.paydock.api.tokens.domain.usecase.CreateGiftCardPaymentTokenUseCase
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.GiftCardException
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.network.exceptions.UnknownApiException
-import com.paydock.core.presentation.ui.BaseViewModel
-import com.paydock.feature.card.data.api.dto.TokeniseCardRequest
-import com.paydock.feature.card.domain.model.TokenisedCardDetails
-import com.paydock.feature.card.domain.usecase.TokeniseGiftCardUseCase
+import com.paydock.core.presentation.viewmodels.BaseViewModel
 import com.paydock.feature.card.presentation.state.GiftCardViewState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.update
  */
 internal class GiftCardViewModel(
     private val accessToken: String,
-    private val useCase: TokeniseGiftCardUseCase,
+    private val useCase: CreateGiftCardPaymentTokenUseCase,
     dispatchers: DispatchersProvider
 ) : BaseViewModel(dispatchers) {
 
@@ -94,12 +94,12 @@ internal class GiftCardViewModel(
                 state.copy(isLoading = true)
             }
             val state = _stateFlow.value
-            val request = TokeniseCardRequest.GiftCard(
+            val request = CreatePaymentTokenRequest.TokeniseCardRequest.GiftCard(
                 cardNumber = state.cardNumber,
                 cardPin = state.pin,
                 storePin = state.storePin
             )
-            val result: Result<TokenisedCardDetails> = useCase(accessToken, request)
+            val result: Result<TokenDetails> = useCase(accessToken, request)
             _stateFlow.update { currentState ->
                 val exception: Throwable? = result.exceptionOrNull()
                 val error: GiftCardException? = exception?.let {

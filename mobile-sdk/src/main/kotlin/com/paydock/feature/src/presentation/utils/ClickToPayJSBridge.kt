@@ -4,9 +4,9 @@ import android.webkit.JavascriptInterface
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.designsystems.components.web.utils.SdkJSBridge
-import com.paydock.feature.src.presentation.model.ClickToPayEvent
-import com.paydock.feature.src.presentation.model.ErrorData
-import com.paydock.feature.src.presentation.model.enum.EventDataType
+import com.paydock.feature.src.domain.model.ui.ClickToPayEvent
+import com.paydock.feature.src.domain.model.ui.ErrorData
+import com.paydock.feature.src.domain.model.ui.enums.EventDataType
 import kotlinx.serialization.SerializationException
 
 /**

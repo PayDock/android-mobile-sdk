@@ -14,7 +14,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @RunWith(MockitoJUnitRunner::class)
-class CountryAutoCompleteViewModelTest : BaseKoinUnitTest() {
+internal class CountryAutoCompleteViewModelTest : BaseKoinUnitTest() {
 
     private lateinit var viewModel: CountryAutoCompleteViewModel
     private val dispatchersProvider: DispatchersProvider by inject()

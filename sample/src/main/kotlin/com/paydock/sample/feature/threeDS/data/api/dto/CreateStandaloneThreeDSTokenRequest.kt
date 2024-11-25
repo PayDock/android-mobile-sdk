@@ -10,12 +10,12 @@ data class CreateStandaloneThreeDSTokenRequest(
     val amount: String = "10",
     val currency: String = AU_CURRENCY_CODE,
     val customer: Customer,
-    @SerializedName("_3ds") val threeDSDetails: ThreeDSDetails = ThreeDSDetails()
+    @SerializedName("_3ds") val threeDSDetails: ThreeDSDetails = ThreeDSDetails(),
     // We do not need any other request properties (ie. customer, shipping)
 ) {
     data class ThreeDSDetails(
         @SerializedName("service_id") val serviceId: String = BuildConfig.STANDALONE_3DS_SERVICE_ID,
-        val authentication: Authentication = Authentication()
+        val authentication: Authentication = Authentication(),
     )
 
     data class Authentication(
@@ -30,6 +30,6 @@ data class CreateStandaloneThreeDSTokenRequest(
                 addAttempts = listOf("2023-11-11T20:06:05.521Z"),
                 cardType = "02"
             )
-        )
+        ),
     )
 }

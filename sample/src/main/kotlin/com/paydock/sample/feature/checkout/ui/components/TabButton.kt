@@ -26,7 +26,7 @@ fun TabButton(
     selectedBorderColor: Color,
     selectedBackgroundColor: Color,
     onClick: () -> Unit,
-    content: @Composable RowScope.() -> Unit
+    content: @Composable RowScope.() -> Unit,
 ) {
     Row(
         modifier = Modifier

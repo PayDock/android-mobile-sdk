@@ -1,0 +1,26 @@
+{
+  "status": 400,
+  "error": {
+    "message": "body validation failed",
+    "code": "ValidationError",
+    "details": {
+      "path": "customer.payment_source.gateway_id",
+      "messages": [
+        "gateway_id must be a mongodb id"
+      ]
+    }
+  },
+  "resource": {
+    "type": "oauth-token"
+  },
+  "error_summary": {
+    "message": "body validation failed",
+    "code": "validation_error",
+    "details": {
+      "path": "customer.payment_source.gateway_id",
+      "messages": [
+        "gateway_id must be a mongodb id"
+      ]
+    }
+  }
+}

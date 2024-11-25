@@ -1,10 +1,10 @@
 package com.paydock.feature.card.presentation.utils
 
-import com.paydock.feature.card.presentation.model.CardIssuerType
+import com.paydock.feature.card.domain.model.integration.enums.CardIssuerType
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class CardIssuerTypeValidatorTest {
+internal class CardIssuerTypeValidatorTest {
 
     @Suppress("LongMethod")
     @Test

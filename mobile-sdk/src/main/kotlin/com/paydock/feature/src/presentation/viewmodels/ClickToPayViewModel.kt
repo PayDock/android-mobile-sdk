@@ -1,9 +1,9 @@
 package com.paydock.feature.src.presentation.viewmodels
 
 import com.paydock.core.data.util.DispatchersProvider
-import com.paydock.core.presentation.ui.BaseViewModel
-import com.paydock.feature.src.presentation.model.ClickToPayEvent
-import com.paydock.feature.src.presentation.model.mapToException
+import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.feature.src.domain.model.ui.ClickToPayEvent
+import com.paydock.feature.src.domain.model.ui.mapToException
 import com.paydock.feature.src.presentation.state.ClickToPayViewState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

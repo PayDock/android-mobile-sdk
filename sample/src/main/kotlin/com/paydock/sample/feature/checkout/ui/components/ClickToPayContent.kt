@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.paydock.core.domain.model.meta.ClickToPayMeta
+import com.paydock.feature.src.domain.model.integration.meta.ClickToPayMeta
 import com.paydock.feature.src.presentation.ClickToPayWidget
 import com.paydock.sample.BuildConfig
 

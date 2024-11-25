@@ -8,7 +8,7 @@ import org.koin.core.component.KoinComponent
  * Interface for components that require access to the Koin instance associated with the Mobile SDK.
  * Implementing this interface allows classes to access Koin functionalities for dependency injection.
  */
-interface MobileSDKKoinComponent : KoinComponent {
+internal interface MobileSDKKoinComponent : KoinComponent {
 
     /**
      * Overrides the [getKoin] function from the [KoinComponent] interface to provide access to the Koin instance

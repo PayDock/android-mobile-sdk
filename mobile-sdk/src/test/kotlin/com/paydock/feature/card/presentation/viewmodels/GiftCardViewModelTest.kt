@@ -1,6 +1,8 @@
 package com.paydock.feature.card.presentation.viewmodels
 
 import app.cash.turbine.test
+import com.paydock.api.tokens.domain.model.TokenDetails
+import com.paydock.api.tokens.domain.usecase.CreateGiftCardPaymentTokenUseCase
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
@@ -9,8 +11,6 @@ import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.utils.MainDispatcherRule
-import com.paydock.feature.card.domain.model.TokenisedCardDetails
-import com.paydock.feature.card.domain.usecase.TokeniseGiftCardUseCase
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -33,7 +33,7 @@ import kotlin.test.assertIs
 
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
-class GiftCardViewModelTest : BaseKoinUnitTest() {
+internal class GiftCardViewModelTest : BaseKoinUnitTest() {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -41,7 +41,7 @@ class GiftCardViewModelTest : BaseKoinUnitTest() {
     private val dispatchersProvider: DispatchersProvider by inject()
 
     private lateinit var viewModel: GiftCardViewModel
-    private lateinit var useCase: TokeniseGiftCardUseCase
+    private lateinit var useCase: CreateGiftCardPaymentTokenUseCase
 
     @Before
     fun setup() {
@@ -104,7 +104,7 @@ class GiftCardViewModelTest : BaseKoinUnitTest() {
     fun `gift card tokeniseCard should update isLoading, call useCase, and update state on success`() =
         runTest {
             val mockToken = MobileSDKTestConstants.Card.MOCK_CARD_TOKEN
-            val mockResult = Result.success(TokenisedCardDetails(token = mockToken, type = "token"))
+            val mockResult = Result.success(TokenDetails(token = mockToken, type = "token"))
             coEvery { useCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any()) } returns mockResult
             // Allows for testing flow state
             viewModel.stateFlow.test {
@@ -138,7 +138,7 @@ class GiftCardViewModelTest : BaseKoinUnitTest() {
                     )
                 )
             )
-            val mockResult = Result.failure<TokenisedCardDetails>(mockError)
+            val mockResult = Result.failure<TokenDetails>(mockError)
             coEvery { useCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any()) } returns mockResult
             // Allows for testing flow state
             viewModel.stateFlow.test {

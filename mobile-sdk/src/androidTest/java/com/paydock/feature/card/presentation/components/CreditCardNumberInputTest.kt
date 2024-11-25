@@ -18,7 +18,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class CreditCardNumberInputTest : BaseUITest() {
+internal class CreditCardNumberInputTest : BaseUITest() {
 
     @get:Rule
     val composeTestRule =

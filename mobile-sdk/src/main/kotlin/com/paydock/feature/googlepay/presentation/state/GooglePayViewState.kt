@@ -3,7 +3,7 @@ package com.paydock.feature.googlepay.presentation.state
 import com.google.android.gms.wallet.PaymentData
 import com.paydock.core.domain.error.ErrorModel
 import com.paydock.core.domain.error.exceptions.GooglePayException
-import com.paydock.feature.charge.domain.model.ChargeResponse
+import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 
 /**
  * Represents the state of the Google Pay feature in the application.

@@ -37,7 +37,8 @@ class App : Application() {
                 ),
             ),
             dimensions = MobileSDKTheme.Dimensions.themeDimensions(
-                cornerRadius = 4,
+                textFieldCornerRadius = 4,
+                buttonCornerRadius = 4,
                 shadow = 0,
                 borderWidth = 1,
                 spacing = 10

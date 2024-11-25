@@ -7,7 +7,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -19,23 +18,23 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.afterpay.android.Afterpay
 import com.afterpay.android.view.AfterpayPaymentButton
 import com.paydock.R
+import com.paydock.api.charges.domain.model.WalletCallback
 import com.paydock.core.domain.error.exceptions.AfterpayException
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.core.utils.jwt.JwtHelper
 import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.feature.address.domain.model.BillingAddress
+import com.paydock.feature.address.domain.model.integration.BillingAddress
+import com.paydock.feature.afterpay.domain.mapper.integration.mapFromBillingAddress
+import com.paydock.feature.afterpay.domain.mapper.integration.mapFromShippingOption
+import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
+import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
+import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOptionUpdate
 import com.paydock.feature.afterpay.presentation.components.AfterpayWidgetContent
-import com.paydock.feature.afterpay.presentation.mapper.mapFromBillingAddress
-import com.paydock.feature.afterpay.presentation.mapper.mapFromShippingOption
-import com.paydock.feature.afterpay.presentation.model.AfterpaySDKConfig
-import com.paydock.feature.afterpay.presentation.model.AfterpayShippingOption
-import com.paydock.feature.afterpay.presentation.model.AfterpayShippingOptionUpdate
 import com.paydock.feature.afterpay.presentation.state.AfterpayViewState
 import com.paydock.feature.afterpay.presentation.utils.CheckoutHandler
 import com.paydock.feature.afterpay.presentation.viewmodels.AfterpayViewModel
-import com.paydock.feature.charge.domain.model.ChargeResponse
-import com.paydock.feature.wallet.domain.model.WalletCallback
+import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -119,13 +118,6 @@ fun AfterpayWidget(
         }
     }
 
-    // Reset form state when the widget is dismissed
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.resetResultState()
-        }
-    }
-
     // Display the Afterpay payment button
     SdkTheme {
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
@@ -161,7 +153,7 @@ private fun handleWalletResponse(
     completion: (Result<ChargeResponse>) -> Unit
 ) {
     val walletToken = requireNotNull(uiState.token) {
-        context.getString(R.string.error_wallet_cancelled)
+        context.getString(R.string.error_wallet_canceled)
     }
 
     try {
@@ -175,7 +167,10 @@ private fun handleWalletResponse(
             }
         }
     } catch (e: IllegalStateException) {
-        e.message?.let { completion(Result.failure(AfterpayException.InvalidResultException(it))) }
+        e.message?.let {
+            completion(Result.failure(AfterpayException.InvalidResultException(it)))
+            viewModel.resetResultState()
+        }
     }
 }
 

@@ -4,6 +4,14 @@ import android.content.Context
 import app.cash.turbine.test
 import com.afterpay.android.CancellationStatus
 import com.paydock.MobileSDK
+import com.paydock.api.charges.data.dto.CaptureChargeResponse
+import com.paydock.api.charges.data.dto.ChargeDeclineResponse
+import com.paydock.api.charges.data.dto.WalletCallbackResponse
+import com.paydock.api.charges.data.mapper.asEntity
+import com.paydock.api.charges.domain.model.WalletCallback
+import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
+import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
+import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.core.BaseUnitTest
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.MobileSDKTestConstants
@@ -15,18 +23,10 @@ import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.utils.MainDispatcherRule
-import com.paydock.feature.afterpay.presentation.model.AfterpaySDKConfig
-import com.paydock.feature.afterpay.presentation.model.AfterpayShippingOption
-import com.paydock.feature.afterpay.presentation.model.AfterpayShippingOptionUpdate
-import com.paydock.feature.charge.domain.model.ChargeResponse
-import com.paydock.feature.wallet.data.api.dto.WalletCallbackResponse
-import com.paydock.feature.wallet.data.api.dto.WalletCaptureResponse
-import com.paydock.feature.wallet.data.api.dto.WalletDeclineResponse
-import com.paydock.feature.wallet.data.mapper.asEntity
-import com.paydock.feature.wallet.domain.model.WalletCallback
-import com.paydock.feature.wallet.domain.usecase.CaptureWalletTransactionUseCase
-import com.paydock.feature.wallet.domain.usecase.DeclineWalletTransactionUseCase
-import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
+import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
+import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
+import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOptionUpdate
+import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import com.paydock.initializeMobileSDK
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
@@ -56,15 +56,15 @@ import kotlin.test.assertIs
 @Suppress("MaxLineLength")
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
-class AfterpayViewModelTest : BaseUnitTest() {
+internal class AfterpayViewModelTest : BaseUnitTest() {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
     private lateinit var dispatchersProvider: DispatchersProvider
     private lateinit var viewModel: AfterpayViewModel
-    private lateinit var captureWalletTransactionUseCase: CaptureWalletTransactionUseCase
-    private lateinit var declineWalletTransactionUseCase: DeclineWalletTransactionUseCase
+    private lateinit var captureWalletChargeUseCase: CaptureWalletChargeUseCase
+    private lateinit var declineWalletChargeUseCase: DeclineWalletChargeUseCase
     private lateinit var getWalletCallbackUseCase: GetWalletCallbackUseCase
 
     private lateinit var context: Context
@@ -81,12 +81,12 @@ class AfterpayViewModelTest : BaseUnitTest() {
         )
 
         dispatchersProvider = inject<DispatchersProvider>().value
-        captureWalletTransactionUseCase = mockk()
-        declineWalletTransactionUseCase = mockk()
+        captureWalletChargeUseCase = mockk()
+        declineWalletChargeUseCase = mockk()
         getWalletCallbackUseCase = mockk()
         viewModel = AfterpayViewModel(
-            captureWalletTransactionUseCase,
-            declineWalletTransactionUseCase,
+            captureWalletChargeUseCase,
+            declineWalletChargeUseCase,
             getWalletCallbackUseCase,
             dispatchersProvider
         )
@@ -200,7 +200,7 @@ class AfterpayViewModelTest : BaseUnitTest() {
             val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             val mockCheckoutToken = MobileSDKTestConstants.Afterpay.MOCK_CHECKOUT_TOKEN
             val response =
-                readResourceFile("wallet/success_afterpay_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
+                readResourceFile("charges/success_afterpay_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
             val mockResult = Result.success(response.asEntity())
             coEvery { getWalletCallbackUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
@@ -402,9 +402,9 @@ class AfterpayViewModelTest : BaseUnitTest() {
             val walletToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             val afterPayToken = MobileSDKTestConstants.Afterpay.MOCK_CHECKOUT_TOKEN
             val response =
-                readResourceFile("wallet/success_capture_wallet_response.json").convertToDataClass<WalletCaptureResponse>()
+                readResourceFile("charges/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
             val mockResult = Result.success(response.asEntity())
-            coEvery { captureWalletTransactionUseCase(any(), any()) } returns mockResult
+            coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
             viewModel.stateFlow.test {
                 // ACTION
@@ -415,7 +415,7 @@ class AfterpayViewModelTest : BaseUnitTest() {
                 assertFalse(awaitItem().isLoading)
                 // Loading state - before execution
                 assertTrue(awaitItem().isLoading)
-                coVerify { captureWalletTransactionUseCase(any(), any()) }
+                coVerify { captureWalletChargeUseCase(any(), any()) }
                 // Resul state - success
                 awaitItem().let { state ->
                     assertFalse(state.isLoading)
@@ -440,7 +440,7 @@ class AfterpayViewModelTest : BaseUnitTest() {
                 )
             )
             val mockResult = Result.failure<ChargeResponse>(mockError)
-            coEvery { captureWalletTransactionUseCase(any(), any()) } returns mockResult
+            coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
             viewModel.stateFlow.test {
                 // ACTION
@@ -451,7 +451,7 @@ class AfterpayViewModelTest : BaseUnitTest() {
                 assertFalse(awaitItem().isLoading)
                 // Loading state - before execution
                 assertTrue(awaitItem().isLoading)
-                coVerify { captureWalletTransactionUseCase(any(), any()) }
+                coVerify { captureWalletChargeUseCase(any(), any()) }
                 // Resul state - failure
                 awaitItem().let { state ->
                     assertFalse(state.isLoading)
@@ -472,9 +472,9 @@ class AfterpayViewModelTest : BaseUnitTest() {
             val walletToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             val chargeId = MobileSDKTestConstants.Charge.MOCK_CHARGE_ID
             val response =
-                readResourceFile("wallet/success_afterpay_decline_wallet_charge_response.json").convertToDataClass<WalletDeclineResponse>()
+                readResourceFile("charges/success_afterpay_decline_wallet_charge_response.json").convertToDataClass<ChargeDeclineResponse>()
             val mockResult = Result.success(response.asEntity())
-            coEvery { declineWalletTransactionUseCase(any(), any()) } returns mockResult
+            coEvery { declineWalletChargeUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
             viewModel.stateFlow.test {
                 // ACTION
@@ -485,7 +485,7 @@ class AfterpayViewModelTest : BaseUnitTest() {
                 assertFalse(awaitItem().isLoading)
                 // Loading state - before execution
                 assertTrue(awaitItem().isLoading)
-                coVerify { declineWalletTransactionUseCase(any(), any()) }
+                coVerify { declineWalletChargeUseCase(any(), any()) }
                 // Resul state - success
                 awaitItem().let { state ->
                     assertFalse(state.isLoading)

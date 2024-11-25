@@ -20,8 +20,7 @@ import com.paydock.sample.designsystems.components.fields.DropdownListField
 fun EnvironmentSection() {
     // TODO - This will need to be updated with SDK environment and base endpoint
     SectionContainer(
-        title = stringResource(R.string.label_environment),
-        subTitle = "api-sandbox.paydock,com"
+        title = stringResource(R.string.label_environment)
     ) {
         val items = Environment.entries.toTypedArray().map { it.name }
         var selectedItem by remember { mutableStateOf(MobileSDK.getInstance().environment.name) }

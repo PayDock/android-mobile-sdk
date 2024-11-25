@@ -8,5 +8,5 @@ import com.paydock.sample.core.PHONE_NUMBER
 data class Contact(
     @SerializedName("first_name") val firstName: String = FIRST_NAME,
     @SerializedName("last_name") val lastName: String = LAST_NAME,
-    val phone: String = PHONE_NUMBER
+    val phone: String = PHONE_NUMBER,
 )

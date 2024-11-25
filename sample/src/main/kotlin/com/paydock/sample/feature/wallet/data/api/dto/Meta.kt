@@ -8,6 +8,6 @@ data class Meta(
     @SerializedName("store_name") val storeName: String = MERCHANT_NAME,
     @SerializedName("merchant_name") val merchantName: String = MERCHANT_NAME,
     @SerializedName("success_url") val successUrl: String? = null,
-    @SerializedName("error_url") val errorUrl: String? = null
+    @SerializedName("error_url") val errorUrl: String? = null,
 
-)
+    )

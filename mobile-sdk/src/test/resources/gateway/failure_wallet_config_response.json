@@ -1,0 +1,21 @@
+{
+  "status": 400,
+  "error": {
+    "message": "Gateway does not support this method",
+    "code": "UnfulfilledCondition",
+    "details": {
+      "path": "",
+      "messages": []
+    }
+  },
+  "resource": {
+    "type": "gateway"
+  },
+  "error_summary": {
+    "message": "Gateway does not support this method",
+    "code": "unfulfilled_condition",
+    "details": {
+      "messages": []
+    }
+  }
+}

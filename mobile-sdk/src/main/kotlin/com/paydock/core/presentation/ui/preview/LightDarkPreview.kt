@@ -15,4 +15,4 @@ import androidx.compose.ui.tooling.preview.Preview
     showBackground = true,
     uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL
 )
-annotation class LightDarkPreview
+internal annotation class LightDarkPreview

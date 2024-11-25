@@ -1,8 +1,8 @@
 package com.paydock.core
 
 import com.paydock.core.data.injection.modules.mockSuccessNetworkModule
-import com.paydock.core.data.injection.modules.sdkModule
-import com.paydock.core.data.injection.modules.testModule
+import com.paydock.core.injection.sdkModule
+import com.paydock.core.injection.testSdkModule
 import org.junit.After
 import org.junit.Before
 import org.koin.core.context.startKoin
@@ -18,7 +18,7 @@ abstract class BaseKoinUnitTest : BaseUnitTest() {
                 // Includes basic architecture modules (data, domain and presentation)
                 sdkModule,
                 // Includes core testing module (context)
-                testModule,
+                testSdkModule,
                 // Includes core networking module (can be substituted)
                 mockSuccessNetworkModule
             )

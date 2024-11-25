@@ -10,5 +10,5 @@ data class Item(
     @SerializedName("item_uri") val itemUri: String = "https://johndoesupplies.com/1",
     val name: String = "itemname",
     val quantity: Int = 1,
-    val type: String = "itemtype"
+    val type: String = "itemtype",
 )

@@ -1,14 +1,14 @@
 package com.paydock.feature.wallet.presentation.viewmodels
 
+import com.paydock.api.charges.data.dto.CaptureWalletChargeRequest
+import com.paydock.api.charges.data.dto.WalletCallbackRequest
+import com.paydock.api.charges.domain.model.WalletCallback
+import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
+import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
+import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.core.data.util.DispatchersProvider
-import com.paydock.core.presentation.ui.BaseViewModel
-import com.paydock.feature.charge.domain.model.ChargeResponse
-import com.paydock.feature.wallet.data.api.dto.WalletCallbackRequest
-import com.paydock.feature.wallet.data.api.dto.WalletCaptureRequest
-import com.paydock.feature.wallet.domain.model.WalletCallback
-import com.paydock.feature.wallet.domain.usecase.CaptureWalletTransactionUseCase
-import com.paydock.feature.wallet.domain.usecase.DeclineWalletTransactionUseCase
-import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
+import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,20 +17,20 @@ import kotlinx.coroutines.flow.update
 /**
  * Base ViewModel for handling wallet-related operations, such as capturing wallet transactions.
  *
- * @param captureWalletTransactionUseCase The use case responsible for capturing wallet transactions.
+ * @param captureWalletChargeUseCase The use case responsible for capturing wallet transactions.
  * @param getWalletCallbackUseCase The use case getting wallet callback details.
  * @param dispatchers Provides the coroutine dispatchers for handling asynchronous tasks.
  * @param T The type representing the UI state of the ViewModel.
  */
 internal abstract class WalletViewModel<T>(
-    private val captureWalletTransactionUseCase: CaptureWalletTransactionUseCase,
-    private val declineWalletTransactionUseCase: DeclineWalletTransactionUseCase,
+    private val captureWalletChargeUseCase: CaptureWalletChargeUseCase,
+    private val declineWalletChargeUseCase: DeclineWalletChargeUseCase,
     private val getWalletCallbackUseCase: GetWalletCallbackUseCase,
     dispatchers: DispatchersProvider
 ) : BaseViewModel(dispatchers) {
 
     // Mutable state flow to hold the UI state
-    private val _stateFlow: MutableStateFlow<T> = MutableStateFlow(createInitialState())
+    private val _stateFlow: MutableStateFlow<T> = MutableStateFlow(this.createInitialState())
 
     // Expose a read-only state flow for observing the UI state changes
     val stateFlow: StateFlow<T> = _stateFlow.asStateFlow()
@@ -92,14 +92,14 @@ internal abstract class WalletViewModel<T>(
      */
     protected fun captureWalletTransaction(
         walletToken: String,
-        request: WalletCaptureRequest
+        request: CaptureWalletChargeRequest
     ) {
         launchOnIO {
             // Update the UI state to indicate loading
             setLoadingState()
             // Use the captureWalletTransactionUseCase to capture the wallet transaction
             val result: Result<ChargeResponse> =
-                captureWalletTransactionUseCase(token = walletToken, request = request)
+                captureWalletChargeUseCase(token = walletToken, request = request)
             // Update the UI state with the result
             updateChargeUIState(result)
         }
@@ -120,7 +120,7 @@ internal abstract class WalletViewModel<T>(
             setLoadingState()
             // Use the declineWalletTransactionUseCase to decline the wallet transaction
             val result: Result<ChargeResponse> =
-                declineWalletTransactionUseCase(token = walletToken, chargeId = chargeId)
+                declineWalletChargeUseCase(token = walletToken, chargeId = chargeId)
             // Update the UI state with the result
             updateChargeUIState(result)
         }

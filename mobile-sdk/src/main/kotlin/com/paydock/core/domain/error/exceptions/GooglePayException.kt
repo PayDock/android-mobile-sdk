@@ -3,7 +3,6 @@ package com.paydock.core.domain.error.exceptions
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.displayableMessage
-import java.io.IOException
 
 /**
  * Exception thrown when there's an error related to Google Pay integration.
@@ -11,7 +10,7 @@ import java.io.IOException
  * @constructor Creates a GooglePayException with the specified displayable message.
  */
 @Suppress("MaxLineLength")
-sealed class GooglePayException(displayableMessage: String) : IOException(displayableMessage) {
+sealed class GooglePayException(displayableMessage: String) : SdkException(displayableMessage) {
 
     /**
      * Exception thrown when there is an error capturing the charge for Google Pay.

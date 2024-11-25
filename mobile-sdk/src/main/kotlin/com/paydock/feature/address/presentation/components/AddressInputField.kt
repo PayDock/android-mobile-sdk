@@ -8,8 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.input.ImeAction
-import com.paydock.designsystems.components.InputValidIcon
-import com.paydock.designsystems.components.SdkTextField
+import com.paydock.designsystems.components.input.InputValidIcon
+import com.paydock.designsystems.components.input.SdkTextField
 
 /**
  * A composable function representing an input field for entering an address component.
@@ -34,7 +34,7 @@ import com.paydock.designsystems.components.SdkTextField
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun AddressInputField(
+internal fun AddressInputField(
     modifier: Modifier = Modifier,
     value: String,
     label: String,

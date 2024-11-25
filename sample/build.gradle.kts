@@ -62,6 +62,12 @@ android {
 
         buildConfigField(
             "String",
+            "GATEWAY_ID_GOOGLE_PAY",
+            getPropertyValue("GATEWAY_ID_GOOGLE_PAY")
+        )
+
+        buildConfigField(
+            "String",
             "GATEWAY_ID_MASTERCARD_SRC",
             getPropertyValue("GATEWAY_ID_MASTERCARD_SRC")
         )

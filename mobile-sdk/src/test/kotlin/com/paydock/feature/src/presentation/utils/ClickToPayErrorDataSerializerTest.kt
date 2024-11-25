@@ -1,8 +1,8 @@
 package com.paydock.feature.src.presentation.utils
 
 import com.paydock.core.network.extensions.convertToDataClass
-import com.paydock.feature.src.presentation.model.ErrorData
-import com.paydock.feature.src.presentation.model.enum.EventDataType
+import com.paydock.feature.src.domain.model.ui.ErrorData
+import com.paydock.feature.src.domain.model.ui.enums.EventDataType
 import kotlinx.serialization.SerializationException
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -10,7 +10,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
 @Suppress("MaxLineLength")
-class ClickToPayErrorDataSerializerTest {
+internal class ClickToPayErrorDataSerializerTest {
 
     @Test
     fun `test error data serializer with UserErrorData`() {

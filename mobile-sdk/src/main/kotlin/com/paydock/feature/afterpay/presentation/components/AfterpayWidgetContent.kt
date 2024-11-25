@@ -15,8 +15,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.afterpay.android.Afterpay
 import com.afterpay.android.view.AfterpayPaymentButton
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.afterpay.presentation.mapper.mapToAfterpayV2Options
-import com.paydock.feature.afterpay.presentation.model.AfterpaySDKConfig
+import com.paydock.feature.afterpay.domain.mapper.integration.mapToAfterpayV2Options
+import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
 import com.paydock.feature.afterpay.presentation.viewmodels.AfterpayViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

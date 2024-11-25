@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
+import androidx.compose.ui.tooling.preview.Preview
 import com.paydock.sample.core.extensions.color
 import com.paydock.sample.core.extensions.isValidHexCode
 import com.paydock.sample.core.extensions.toHexCode
@@ -35,7 +35,7 @@ fun ColorInputField(
     readOnly: Boolean,
     showCounter: Boolean = false,
     onResultColorChanged: (Color) -> Unit,
-    onTextColorChanged: (String) -> Unit
+    onTextColorChanged: (String) -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
     val isValid = remember {
@@ -108,7 +108,7 @@ fun ColorInputField(
     }
 }
 
-@LightDarkPreview
+@Preview
 @Composable
 private fun PreviewColorInputField() {
     val color = Color.Blue

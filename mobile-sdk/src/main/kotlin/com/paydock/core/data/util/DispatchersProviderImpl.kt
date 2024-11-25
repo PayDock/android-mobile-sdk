@@ -6,7 +6,7 @@ import kotlinx.coroutines.Dispatchers
 /**
  * Implementation of [DispatchersProvider] providing standard [CoroutineDispatcher] instances.
  */
-object DispatchersProviderImpl : DispatchersProvider {
+internal object DispatchersProviderImpl : DispatchersProvider {
 
     /**
      * Returns the main thread dispatcher.

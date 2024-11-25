@@ -5,13 +5,13 @@ import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.utils.MainDispatcherRule
-import com.paydock.feature.src.presentation.model.CardData
-import com.paydock.feature.src.presentation.model.CheckoutData
-import com.paydock.feature.src.presentation.model.ClickToPayEvent
-import com.paydock.feature.src.presentation.model.ErrorData
-import com.paydock.feature.src.presentation.model.EventData
-import com.paydock.feature.src.presentation.model.SuccessEventData
-import com.paydock.feature.src.presentation.model.mapToException
+import com.paydock.feature.src.domain.model.ui.CardData
+import com.paydock.feature.src.domain.model.ui.CheckoutData
+import com.paydock.feature.src.domain.model.ui.ClickToPayEvent
+import com.paydock.feature.src.domain.model.ui.ErrorData
+import com.paydock.feature.src.domain.model.ui.EventData
+import com.paydock.feature.src.domain.model.ui.SuccessEventData
+import com.paydock.feature.src.domain.model.ui.mapToException
 import junit.framework.TestCase.assertNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -26,7 +26,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @RunWith(MockitoJUnitRunner::class)
-class ClickToPayViewModelTest : BaseKoinUnitTest() {
+internal class ClickToPayViewModelTest : BaseKoinUnitTest() {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()

@@ -2,14 +2,13 @@ package com.paydock.core.domain.error.exceptions
 
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.displayableMessage
-import java.io.IOException
 
 /**
  * Represents an exception related to card details operations.
  *
  * @constructor Creates a CardDetailsException with the specified displayable message.
  */
-sealed class CardDetailsException(displayableMessage: String) : IOException(displayableMessage) {
+sealed class CardDetailsException(displayableMessage: String) : SdkException(displayableMessage) {
 
     /**
      * Exception thrown when there is an error tokenising a card.

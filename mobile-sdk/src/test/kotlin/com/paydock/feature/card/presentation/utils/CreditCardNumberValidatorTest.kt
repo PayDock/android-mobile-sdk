@@ -4,7 +4,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class CreditCardNumberValidatorTest {
+internal class CreditCardNumberValidatorTest {
 
     @Test
     fun testCheckNumber_ValidNumber() {

@@ -19,7 +19,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @RunWith(MockitoJUnitRunner::class)
-class AddressSearchViewModelTest : BaseKoinUnitTest() {
+internal class AddressSearchViewModelTest : BaseKoinUnitTest() {
 
     private lateinit var viewModel: AddressSearchViewModel
     private lateinit var geocoder: Geocoder

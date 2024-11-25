@@ -2,7 +2,7 @@ package com.paydock.core.data.injection
 
 import android.content.Context
 import com.paydock.BuildConfig
-import com.paydock.core.data.injection.modules.sdkModule
+import com.paydock.core.injection.sdkModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.Koin

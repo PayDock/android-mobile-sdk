@@ -13,13 +13,13 @@ interface ThreeDSApi {
     @POST("/v1/charges/3ds")
     suspend fun createIntegrated3dsToken(
         @Header("X-Access-Token") accessToken: String,
-        @Body request: CreateIntegratedThreeDSTokenRequest
+        @Body request: CreateIntegratedThreeDSTokenRequest,
     ): ThreeDSTokenResponse
 
     @POST("/v1/charges/standalone-3ds")
     suspend fun createStandalone3dsToken(
         @Header("x-user-secret-key") secretKey: String = BuildConfig.SECRET_KEY,
-        @Body request: CreateStandaloneThreeDSTokenRequest
+        @Body request: CreateStandaloneThreeDSTokenRequest,
     ): ThreeDSTokenResponse
 
 }

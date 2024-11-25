@@ -1,6 +1,6 @@
 package com.paydock.feature.src.presentation.utils
 
-import com.paydock.feature.src.presentation.model.ClickToPayEvent
+import com.paydock.feature.src.domain.model.ui.ClickToPayEvent
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonContentPolymorphicSerializer

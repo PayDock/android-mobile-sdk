@@ -1,0 +1,11 @@
+{
+  "status": 201,
+  "error": null,
+  "resource": {
+    "type": "setup_token",
+    "data": {
+      "setup_token": "85P4696293305893X",
+      "approve_link": "https://www.sandbox.paypal.com/agreements/approve?approval_session_id=85P4696293305893X"
+    }
+  }
+}

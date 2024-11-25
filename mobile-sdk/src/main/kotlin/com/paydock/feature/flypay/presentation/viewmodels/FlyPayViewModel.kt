@@ -1,34 +1,34 @@
 package com.paydock.feature.flypay.presentation.viewmodels
 
+import com.paydock.api.charges.data.dto.WalletCallbackRequest
+import com.paydock.api.charges.domain.model.WalletCallback
+import com.paydock.api.charges.domain.model.WalletType
+import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
+import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
+import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.FlyPayException
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.network.exceptions.UnknownApiException
 import com.paydock.feature.flypay.presentation.state.FlyPayViewState
-import com.paydock.feature.wallet.data.api.dto.WalletCallbackRequest
-import com.paydock.feature.wallet.domain.model.WalletCallback
-import com.paydock.feature.wallet.domain.model.WalletType
-import com.paydock.feature.wallet.domain.usecase.CaptureWalletTransactionUseCase
-import com.paydock.feature.wallet.domain.usecase.DeclineWalletTransactionUseCase
-import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
 
 /**
  * ViewModel responsible for managing the FlyPay feature's UI state and interactions.
  *
- * @param captureWalletTransactionUseCase The use case responsible for capturing wallet transactions.
+ * @param captureWalletChargeUseCase The use case responsible for capturing wallet transactions.
  * @param getWalletCallbackUseCase The use case getting wallet callback details.
  * @param dispatchers Provides the coroutine dispatchers for handling asynchronous tasks.
  */
 internal class FlyPayViewModel(
-    captureWalletTransactionUseCase: CaptureWalletTransactionUseCase,
-    declineWalletTransactionUseCase: DeclineWalletTransactionUseCase,
+    captureWalletChargeUseCase: CaptureWalletChargeUseCase,
+    declineWalletChargeUseCase: DeclineWalletChargeUseCase,
     getWalletCallbackUseCase: GetWalletCallbackUseCase,
     dispatchers: DispatchersProvider
 ) : WalletViewModel<FlyPayViewState>(
-    captureWalletTransactionUseCase,
-    declineWalletTransactionUseCase,
+    captureWalletChargeUseCase,
+    declineWalletChargeUseCase,
     getWalletCallbackUseCase,
     dispatchers
 ) {

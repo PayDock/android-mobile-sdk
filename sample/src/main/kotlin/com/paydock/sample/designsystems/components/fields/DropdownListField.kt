@@ -132,7 +132,7 @@ fun DropdownListField(
 @Composable
 private fun DropdownListFieldStack(
     textField: @Composable () -> Unit,
-    dropdownMenu: @Composable (boxWidth: Dp, itemHeight: Dp) -> Unit
+    dropdownMenu: @Composable (boxWidth: Dp, itemHeight: Dp) -> Unit,
 ) {
     SubcomposeLayout { constraints ->
         val textFieldPlaceable =

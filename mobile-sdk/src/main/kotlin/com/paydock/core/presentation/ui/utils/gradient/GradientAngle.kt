@@ -3,7 +3,7 @@ package com.paydock.core.presentation.ui.utils.gradient
 /**
  * Enum class representing different gradient angles in a clockwise direction.
  */
-enum class GradientAngle {
+internal enum class GradientAngle {
     CW0, // 0 degrees
     CW45, // 45 degrees
     CW90, // 90 degrees

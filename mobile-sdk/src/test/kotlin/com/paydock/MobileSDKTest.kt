@@ -17,7 +17,7 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-class MobileSDKTest : BaseUnitTest() {
+internal class MobileSDKTest : BaseUnitTest() {
 
     private lateinit var context: Context
 

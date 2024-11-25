@@ -13,7 +13,7 @@ import com.afterpay.android.model.ShippingOptionsResult
  * @param onShippingAddressDidChange Callback invoked when shipping address changes.
  * @param onShippingOptionDidChange Callback invoked when shipping option changes.
  */
-class CheckoutHandler(
+internal class CheckoutHandler(
     val onDidCommenceCheckout: () -> Unit,
     val onShippingAddressDidChange: (ShippingAddress) -> Unit,
     val onShippingOptionDidChange: (ShippingOption) -> Unit,

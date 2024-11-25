@@ -6,29 +6,29 @@ import com.afterpay.android.CancellationStatus
 import com.afterpay.android.model.ShippingOptionUpdateResult
 import com.afterpay.android.model.ShippingOptionsSuccessResult
 import com.paydock.MobileSDK
+import com.paydock.api.charges.data.dto.CaptureWalletChargeRequest
+import com.paydock.api.charges.data.dto.CustomerData
+import com.paydock.api.charges.data.dto.PaymentSourceData
+import com.paydock.api.charges.data.dto.WalletCallbackRequest
+import com.paydock.api.charges.domain.model.WalletCallback
+import com.paydock.api.charges.domain.model.WalletType
+import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
+import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
+import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.AfterpayException
 import com.paydock.core.domain.model.Environment
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.network.exceptions.UnknownApiException
-import com.paydock.feature.afterpay.presentation.mapper.mapMessage
-import com.paydock.feature.afterpay.presentation.mapper.mapToSDKShippingOptionResult
-import com.paydock.feature.afterpay.presentation.mapper.mapToSDKShippingOptionUpdateResult
-import com.paydock.feature.afterpay.presentation.model.AfterpaySDKConfig
-import com.paydock.feature.afterpay.presentation.model.AfterpayShippingOption
-import com.paydock.feature.afterpay.presentation.model.AfterpayShippingOptionUpdate
+import com.paydock.feature.afterpay.domain.mapper.integration.mapMessage
+import com.paydock.feature.afterpay.domain.mapper.integration.mapToSDKShippingOptionResult
+import com.paydock.feature.afterpay.domain.mapper.integration.mapToSDKShippingOptionUpdateResult
+import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
+import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
+import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOptionUpdate
 import com.paydock.feature.afterpay.presentation.state.AfterpayViewState
-import com.paydock.feature.charge.domain.model.ChargeResponse
-import com.paydock.feature.wallet.data.api.dto.Customer
-import com.paydock.feature.wallet.data.api.dto.PaymentSource
-import com.paydock.feature.wallet.data.api.dto.WalletCallbackRequest
-import com.paydock.feature.wallet.data.api.dto.WalletCaptureRequest
-import com.paydock.feature.wallet.domain.model.WalletCallback
-import com.paydock.feature.wallet.domain.model.WalletType
-import com.paydock.feature.wallet.domain.usecase.CaptureWalletTransactionUseCase
-import com.paydock.feature.wallet.domain.usecase.DeclineWalletTransactionUseCase
-import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
+import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -38,21 +38,21 @@ import java.util.Locale
 /**
  * ViewModel responsible for managing Afterpay payment-related data and state.
  *
- * @param captureWalletTransactionUseCase The use case responsible for capturing wallet transactions.
- * @param declineWalletTransactionUseCase The use case responsible for declining wallet transactions.
+ * @param captureWalletChargeUseCase The use case responsible for capturing wallet transactions.
+ * @param declineWalletChargeUseCase The use case responsible for declining wallet transactions.
  * @param getWalletCallbackUseCase The use case getting wallet callback details.
  * @param getWalletCallbackUseCase The use case getting wallet callback details.
  * @param dispatchers Provides the coroutine dispatchers for handling asynchronous tasks.
  */
 @Suppress("TooManyFunctions")
 internal class AfterpayViewModel(
-    captureWalletTransactionUseCase: CaptureWalletTransactionUseCase,
-    declineWalletTransactionUseCase: DeclineWalletTransactionUseCase,
+    captureWalletChargeUseCase: CaptureWalletChargeUseCase,
+    declineWalletChargeUseCase: DeclineWalletChargeUseCase,
     getWalletCallbackUseCase: GetWalletCallbackUseCase,
     dispatchers: DispatchersProvider
 ) : WalletViewModel<AfterpayViewState>(
-    captureWalletTransactionUseCase,
-    declineWalletTransactionUseCase,
+    captureWalletChargeUseCase,
+    declineWalletChargeUseCase,
     getWalletCallbackUseCase,
     dispatchers
 ) {
@@ -202,9 +202,9 @@ internal class AfterpayViewModel(
         walletToken: String,
         afterPayToken: String
     ) {
-        val request = WalletCaptureRequest(
-            customer = Customer(
-                paymentSource = PaymentSource(
+        val request = CaptureWalletChargeRequest(
+            customer = CustomerData(
+                paymentSource = PaymentSourceData(
                     refToken = afterPayToken
                 )
             )

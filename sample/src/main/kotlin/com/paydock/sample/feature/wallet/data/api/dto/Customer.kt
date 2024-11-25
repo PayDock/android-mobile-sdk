@@ -13,5 +13,5 @@ data class Customer(
     @SerializedName("credentials_updated_at") val credentialsUpdatedAt: String? = null,
     val suspicious: Boolean? = false,
     @SerializedName("payment_source") val paymentSource: PaymentSource,
-    val phone: String = PHONE_NUMBER
+    val phone: String = PHONE_NUMBER,
 )

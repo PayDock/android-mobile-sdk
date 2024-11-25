@@ -1,15 +1,15 @@
 package com.paydock.feature.threeDS.presentation.utils
 
 import com.paydock.core.network.extensions.convertToDataClass
-import com.paydock.feature.threeDS.presentation.model.ThreeDSEvent
-import com.paydock.feature.threeDS.presentation.model.enum.Event
+import com.paydock.feature.threeDS.domain.model.ui.ThreeDSEvent
+import com.paydock.feature.threeDS.domain.model.ui.enums.Event
 import kotlinx.serialization.SerializationException
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
 @Suppress("MaxLineLength")
-class ThreeDSEventSerializerTest {
+internal class ThreeDSEventSerializerTest {
 
     @Test
     fun `test 3ds data serializer with chargeAuthSuccess`() {

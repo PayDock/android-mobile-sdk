@@ -3,7 +3,6 @@ package com.paydock.feature.threeDS.presentation
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -18,7 +17,7 @@ import com.paydock.designsystems.components.web.SdkWebView
 import com.paydock.designsystems.components.web.config.WidgetConfig
 import com.paydock.designsystems.components.web.utils.HtmlWidgetBuilder
 import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.feature.threeDS.domain.model.ThreeDSResult
+import com.paydock.feature.threeDS.domain.model.integration.ThreeDSResult
 import com.paydock.feature.threeDS.presentation.utils.ThreeDSJSBridge
 import com.paydock.feature.threeDS.presentation.viewmodels.ThreeDSViewModel
 import kotlinx.coroutines.android.awaitFrame
@@ -83,13 +82,6 @@ fun ThreeDSWidget(
                 completion(Result.success(result))
                 viewModel.resetResultState()
             }
-        }
-    }
-
-    // Reset form state when the widget is dismissed
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.resetResultState()
         }
     }
 

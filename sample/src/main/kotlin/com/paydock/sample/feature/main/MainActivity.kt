@@ -28,6 +28,7 @@ import com.paydock.sample.designsystems.components.navigation.BottomNavigation
 import com.paydock.sample.designsystems.components.navigation.NavigationGraph
 import com.paydock.sample.designsystems.components.navigation.getRouteTitle
 import com.paydock.sample.designsystems.components.navigation.showBackButton
+import com.paydock.sample.designsystems.components.navigation.showTitle
 import com.paydock.sample.designsystems.theme.SampleTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -56,6 +57,10 @@ fun MainScreenView() {
             CenterAppTopBar(
                 title = actionBarDetails.title,
                 showTitle = actionBarDetails.showTitle,
+                onActionButtonClick = {
+                    // Navigate to my account screen
+                    navController.navigate("account")
+                },
                 onBackButtonClick = if (actionBarDetails.showBackButton) {
                     { navController.navigateUp() }
                 } else null
@@ -84,7 +89,7 @@ fun MainScreenView() {
 class ActionBarDetails(
     val title: String,
     val showBackButton: Boolean,
-    val showTitle: Boolean
+    val showTitle: Boolean,
 )
 
 // Function to calculate action bar details, remember the result
@@ -98,7 +103,7 @@ fun rememberActionBarDetails(navController: NavHostController, context: Context)
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
             actionBarTitle = backStackEntry.getRouteTitle(context)
             showBackButton = backStackEntry.showBackButton()
-            showTitle = true
+            showTitle = backStackEntry.showTitle()
         }
     }
 

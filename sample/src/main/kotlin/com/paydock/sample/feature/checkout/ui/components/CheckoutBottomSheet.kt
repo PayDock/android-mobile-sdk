@@ -21,8 +21,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.paydock.api.charges.domain.model.WalletType
 import com.paydock.designsystems.components.sheet.SdkBottomSheet
-import com.paydock.feature.wallet.domain.model.WalletType
 import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.theme.Theme
 import com.paydock.sample.feature.checkout.CheckoutUIState
@@ -40,7 +40,7 @@ fun CheckoutBottomSheet(
     val scrollState = rememberScrollState()
     val supportedPaymentMethods =
         listOf(
-            WidgetType.CREDIT_CARD_DETAILS,
+            WidgetType.CARD_DETAILS,
             WidgetType.CLICK_TO_PAY,
             WidgetType.GOOGLE_PAY,
             WidgetType.PAY_PAL,
@@ -80,7 +80,7 @@ fun CheckoutBottomSheet(
                     label = "content cross fade"
                 ) { targetTab ->
                     when (targetTab) {
-                        WidgetType.CREDIT_CARD_DETAILS -> {
+                        WidgetType.CARD_DETAILS -> {
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)

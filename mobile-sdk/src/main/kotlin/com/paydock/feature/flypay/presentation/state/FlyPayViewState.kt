@@ -1,7 +1,7 @@
 package com.paydock.feature.flypay.presentation.state
 
+import com.paydock.api.charges.domain.model.WalletCallback
 import com.paydock.core.domain.error.exceptions.FlyPayException
-import com.paydock.feature.wallet.domain.model.WalletCallback
 
 /**
  * Represents the state of the FlyPay view in the application.

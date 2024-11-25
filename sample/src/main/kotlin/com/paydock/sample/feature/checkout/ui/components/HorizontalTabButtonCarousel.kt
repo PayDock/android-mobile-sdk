@@ -25,7 +25,7 @@ fun HorizontalTabButtonCarousel(
     paymentMethods: List<WidgetType>,
     selectedTab: WidgetType,
     onTabSelected: (WidgetType) -> Unit,
-    lazyListState: LazyListState = rememberLazyListState()
+    lazyListState: LazyListState = rememberLazyListState(),
 ) {
     val scrollTabIndex by remember { mutableIntStateOf(-1) }
 
@@ -52,7 +52,7 @@ fun HorizontalTabButtonCarousel(
         ) {
             itemsIndexed(paymentMethods) { _, tab ->
                 when (tab) {
-                    WidgetType.CREDIT_CARD_DETAILS -> CardTabButton(isSelected = tab == selectedTab) {
+                    WidgetType.CARD_DETAILS -> CardTabButton(isSelected = tab == selectedTab) {
                         onTabSelected(tab)
                     }
 
@@ -88,7 +88,7 @@ fun HorizontalTabButtonCarousel(
 private fun HorizontalTabButtonCarouselPreview() {
     val supportedPaymentMethods =
         listOf(
-            WidgetType.CREDIT_CARD_DETAILS,
+            WidgetType.CARD_DETAILS,
             WidgetType.GOOGLE_PAY,
             WidgetType.PAY_PAL,
             WidgetType.FLY_PAY

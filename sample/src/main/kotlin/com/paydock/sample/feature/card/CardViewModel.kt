@@ -19,7 +19,7 @@ import javax.inject.Inject
 class CardViewModel @Inject constructor(
     private val accessTokenProvider: AccessTokenProvider,
     private val tokeniseCardUseCase: TokeniseCardUseCase,
-    private val createCardVaultTokenUseCase: CreateCardVaultTokenUseCase
+    private val createCardVaultTokenUseCase: CreateCardVaultTokenUseCase,
 ) : ViewModel() {
 
     private val _stateFlow: MutableStateFlow<CardUIState> =
@@ -84,5 +84,5 @@ class CardViewModel @Inject constructor(
 data class CardUIState(
     val isLoading: Boolean = true,
     val token: String? = null,
-    val error: String? = null
+    val error: String? = null,
 )

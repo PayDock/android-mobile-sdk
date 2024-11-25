@@ -18,7 +18,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class CardPinInputTest : BaseUITest() {
+internal class CardPinInputTest : BaseUITest() {
 
     @get:Rule
     val composeTestRule =

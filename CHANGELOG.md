@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.0.0] - 2024-11-22
+
+### Added
+
+- New Widget for PayPal Vault - `PayPalSavePaymentSourceWidget`
+- Added `PayPalDataCollectorUtil` utility for PayPal fraud integration
+
+# Changed
+
+- Repackaged project structure (**breaking changes!**)
+- Separated `Theme.cornerRadius` into 2 parts (`textFieldCornerRadius` & `buttonCornerRadius`)
+
+# Fixed
+
+- Removed `DisposableEffect` functionality from all widgets causing issues with rotation
+- Issue with state not resetting on flow completion (success or failure) - LaunchedEffect re-firing
+
 ## [1.3.0] - 2024-10-18
 
 ### Added

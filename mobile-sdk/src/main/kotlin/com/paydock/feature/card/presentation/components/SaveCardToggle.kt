@@ -13,7 +13,7 @@ import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.components.link.HyperlinkText
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.card.presentation.model.SaveCardConfig
+import com.paydock.feature.card.domain.model.integration.SaveCardConfig
 
 /**
  * A composable for displaying a toggle switch to save card details.

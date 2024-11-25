@@ -98,6 +98,16 @@ internal object MobileSDKConstants {
     }
 
     /**
+     * Constants related to PayPal Vault configuration.
+     */
+    object PayPalVaultConfig {
+        // This needs to match the scheme used in the manifest file
+        internal const val URL_SCHEME = "com.paydock.paypal.vault"
+        internal const val RETURN_URL = "$URL_SCHEME://vault/success"
+        internal const val CANCEL_URL = "$URL_SCHEME://vault/cancel"
+    }
+
+    /**
      * Constants related to FlyPay configuration.
      */
     object FlyPayConfig {
@@ -119,6 +129,7 @@ internal object MobileSDKConstants {
     /**
      * Error messages.
      */
+    @Suppress("MaxLineLength")
     object Errors {
         const val SOCKET_TIMEOUT_ERROR =
             "The connection timed out. Please check your internet connection and try again."
@@ -140,6 +151,12 @@ internal object MobileSDKConstants {
             "The 3DS authentication has been rejected. Please try again later or contact support for assistance."
         const val PAY_PAL_ERROR =
             "An unexpected error occurred while processing PayPal. Please try again later or contact support for assistance."
+        const val PAY_PAL_VAULT_ERROR =
+            "An unexpected error occurred while processing PayPal Vault. Please try again later or contact support for assistance."
+        const val PAY_PAL_DATA_COLLECTOR_ERROR =
+            "An unexpected error occurred while processing PayPal Data Collector. Please try again later or contact support for assistance."
+        const val PAY_PAL_DATA_COLLECTOR_UNKNOWN_ERROR =
+            "An unknown error occurred while trying to initialise the PayPalDataCollector. Please try again later or contact support for assistance."
         const val FLY_PAY_ERROR =
             "An unexpected error occurred while processing FlyPay. Please try again later or contact support for assistance."
         const val AFTER_PAY_ERROR =

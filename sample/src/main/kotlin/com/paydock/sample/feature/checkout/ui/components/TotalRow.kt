@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.Color
 fun TotalRowView(
     title: String,
     value: String,
-    color: Color
+    color: Color,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),

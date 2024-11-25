@@ -8,11 +8,11 @@ data class CreateIntegratedThreeDSTokenRequest(
     val amount: String = "10",
     val currency: String = "AUD",
     val customer: Customer? = null,
-    @SerializedName("_3ds") val threeDSDetails: ThreeDSDetails = ThreeDSDetails()
+    @SerializedName("_3ds") val threeDSDetails: ThreeDSDetails = ThreeDSDetails(),
     // We do not need any other request properties (ie. customer, shipping)
 ) {
     data class ThreeDSDetails(
-        @SerializedName("browser_details") val browserDetails: BrowserDetails = BrowserDetails()
+        @SerializedName("browser_details") val browserDetails: BrowserDetails = BrowserDetails(),
     )
 
     data class BrowserDetails(

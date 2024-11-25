@@ -5,6 +5,6 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Utility for reporting connectivity status
  */
-interface NetworkMonitor {
+internal interface NetworkMonitor {
     val isOnline: Flow<Boolean>
 }

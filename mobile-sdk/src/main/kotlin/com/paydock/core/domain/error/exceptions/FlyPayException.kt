@@ -2,14 +2,13 @@ package com.paydock.core.domain.error.exceptions
 
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.displayableMessage
-import java.io.IOException
 
 /**
  * Represents an exception related to FlyPay operations.
  *
  * @constructor Creates a FlyPayException with the specified displayable message.
  */
-sealed class FlyPayException(displayableMessage: String) : IOException(displayableMessage) {
+sealed class FlyPayException(displayableMessage: String) : SdkException(displayableMessage) {
 
     /**
      * Exception thrown when there is an error fetching the URL for FlyPay.

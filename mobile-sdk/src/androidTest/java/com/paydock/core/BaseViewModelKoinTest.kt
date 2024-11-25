@@ -14,7 +14,7 @@ import org.koin.test.inject
 import org.koin.test.mock.MockProviderRule
 import org.mockito.Mockito
 
-abstract class BaseViewModelKoinTest<T : ViewModel> : KoinTest {
+internal abstract class BaseViewModelKoinTest<T : ViewModel> : KoinTest {
 
     protected lateinit var viewModel: T
 

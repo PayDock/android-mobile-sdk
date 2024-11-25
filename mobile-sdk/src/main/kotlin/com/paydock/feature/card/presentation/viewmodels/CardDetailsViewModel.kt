@@ -1,154 +1,153 @@
 package com.paydock.feature.card.presentation.viewmodels
 
+import com.paydock.api.tokens.data.dto.CreatePaymentTokenRequest
+import com.paydock.api.tokens.domain.usecase.CreateCardPaymentTokenUseCase
 import com.paydock.core.data.util.DispatchersProvider
-import com.paydock.core.domain.error.exceptions.CardDetailsException
-import com.paydock.core.network.exceptions.ApiException
-import com.paydock.core.network.exceptions.UnknownApiException
-import com.paydock.core.presentation.ui.BaseViewModel
-import com.paydock.feature.card.data.api.dto.TokeniseCardRequest
-import com.paydock.feature.card.domain.model.TokenisedCardDetails
-import com.paydock.feature.card.domain.usecase.TokeniseCreditCardUseCase
-import com.paydock.feature.card.presentation.state.CardDetailsViewState
+import com.paydock.core.domain.error.exceptions.SdkException
+import com.paydock.core.extensions.safeCastAs
+import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.feature.card.presentation.state.CardDetailsInputState
+import com.paydock.feature.card.presentation.state.CardDetailsUIState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 /**
- * ViewModel for handling credit card details input and tokenization.
+ * ViewModel for managing the state and operations of card details input and tokenization.
  *
- * @param useCase The tokenization use case for performing card tokenization.
+ * @param accessToken The access token required for API requests.
+ * @param gatewayId Optional ID of the payment gateway for processing card payments.
+ * @param createCardPaymentTokenUseCase The use case responsible for creating card payment tokens.
+ * @param dispatchers The provider for coroutine dispatchers, used for handling asynchronous tasks.
  */
 internal class CardDetailsViewModel(
     private val accessToken: String,
-    private val useCase: TokeniseCreditCardUseCase,
-    dispatchers: DispatchersProvider
+    private val gatewayId: String?,
+    private val createCardPaymentTokenUseCase: CreateCardPaymentTokenUseCase,
+    dispatchers: DispatchersProvider,
 ) : BaseViewModel(dispatchers) {
 
-    // Mutable state flow to hold the UI state
-    private val _stateFlow: MutableStateFlow<CardDetailsViewState> =
-        MutableStateFlow(CardDetailsViewState())
+    // Holds the current input state of card details
+    private val _inputStateFlow: MutableStateFlow<CardDetailsInputState> =
+        MutableStateFlow(CardDetailsInputState())
+    val inputStateFlow: StateFlow<CardDetailsInputState> = _inputStateFlow.asStateFlow()
 
-    // Expose a read-only state flow for observing the UI state changes
-    val stateFlow: StateFlow<CardDetailsViewState> = _stateFlow.asStateFlow()
+    // Holds the current UI state for card details operations
+    private val _stateFlow: MutableStateFlow<CardDetailsUIState> =
+        MutableStateFlow(CardDetailsUIState.Idle)
+    val stateFlow: StateFlow<CardDetailsUIState> = _stateFlow.asStateFlow()
 
     /**
-     * Set the gateway ID for the card details.
-     *
-     * @param gatewayId The gateway ID to be set.
+     * Resets the UI state to idle.
      */
-    fun setGatewayId(gatewayId: String) {
-        _stateFlow.update { state ->
-            state.copy(gatewayId = gatewayId)
-        }
+    fun resetResultState() {
+        updateState(CardDetailsUIState.Idle)
     }
 
     /**
-     * Sets whether collect cardholderName should be collected in UI.
+     * Sets whether the cardholder's name should be collected in the UI.
      *
-     * @param collectCardHolderName Boolean for whether to collect cardholder name.
+     * @param collectCardHolderName Boolean indicating whether to collect the cardholder's name.
      */
     fun setCollectCardholderName(collectCardHolderName: Boolean) {
-        _stateFlow.update { state ->
+        _inputStateFlow.update { state ->
             state.copy(collectCardholderName = collectCardHolderName)
         }
     }
 
     /**
-     * Reset the result state, clearing token and error.
+     * Updates the cardholder's name in the input state.
+     *
+     * @param name The name of the cardholder to set.
      */
-    fun resetResultState() {
-        updateState { state ->
-            state.copy(
-                token = null,
-                error = null,
-                cardholderName = null,
-                cardNumber = "",
-                expiry = "",
-                code = ""
-            )
-        }
-    }
-
     fun updateCardholderName(name: String) {
-        updateState { state ->
-            state.copy(
-                cardholderName = name,
-                error = null
-            )
-        }
-    }
-
-    fun updateCardNumber(number: String) {
-        updateState { state ->
-            state.copy(
-                cardNumber = number,
-                error = null
-            )
-        }
-    }
-
-    fun updateExpiry(expiry: String) {
-        updateState { state ->
-            state.copy(expiry = expiry, error = null)
-        }
-    }
-
-    fun updateSecurityCode(code: String) {
-        updateState { state ->
-            state.copy(code = code, error = null)
-        }
-    }
-
-    fun updateSaveCard(saveCard: Boolean) {
-        updateState { state ->
-            state.copy(
-                saveCard = saveCard
-            )
-        }
-    }
-
-    private fun updateState(update: (CardDetailsViewState) -> CardDetailsViewState) {
-        _stateFlow.update { state ->
-            update(state)
+        _inputStateFlow.update { state ->
+            state.copy(cardholderName = name)
         }
     }
 
     /**
-     * Tokenize the card details using the provided use case.
+     * Updates the card number in the input state.
+     *
+     * @param number The card number to set.
+     */
+    fun updateCardNumber(number: String) {
+        _inputStateFlow.update { state ->
+            state.copy(cardNumber = number)
+        }
+    }
+
+    /**
+     * Updates the expiry date in the input state.
+     *
+     * @param expiry The card's expiry date in MMYY format.
+     */
+    fun updateExpiry(expiry: String) {
+        _inputStateFlow.update { state ->
+            state.copy(expiry = expiry)
+        }
+    }
+
+    /**
+     * Updates the security code (CVV/CVC) in the input state.
+     *
+     * @param code The card's security code.
+     */
+    fun updateSecurityCode(code: String) {
+        _inputStateFlow.update { state ->
+            state.copy(code = code)
+        }
+    }
+
+    /**
+     * Updates the "save card" flag in the input state.
+     *
+     * @param saveCard Boolean indicating whether the card should be saved for future use.
+     */
+    fun updateSaveCard(saveCard: Boolean) {
+        _inputStateFlow.update { state ->
+            state.copy(saveCard = saveCard)
+        }
+    }
+
+    /**
+     * Initiates the card tokenization process by making an API request.
+     *
+     * - Updates the UI state to `Loading` before starting the process.
+     * - Creates a tokenization request using the current input state.
+     * - On success, updates the UI state to `Success` with the generated token.
+     * - On failure, updates the UI state to `Error` with the relevant exception.
      */
     fun tokeniseCard() {
         launchOnIO {
-            updateState { state ->
-                state.copy(isLoading = true)
-            }
-            val state = _stateFlow.value
-            val request = TokeniseCardRequest.CreditCard(
+            updateState(CardDetailsUIState.Loading)
+            val state = _inputStateFlow.value
+            val request = CreatePaymentTokenRequest.TokeniseCardRequest.CreditCard(
                 cvv = state.code,
                 cardholderName = state.cardholderName,
                 cardNumber = state.cardNumber,
                 expiryMonth = state.expiryMonth,
                 expiryYear = state.expiryYear,
-                gatewayId = state.gatewayId
+                gatewayId = gatewayId
             )
-            val result: Result<TokenisedCardDetails> = useCase(accessToken, request)
-            _stateFlow.update { currentState ->
-                val exception: Throwable? = result.exceptionOrNull()
-                val error: CardDetailsException? = exception?.let {
-                    when (exception) {
-                        is ApiException -> CardDetailsException.TokenisingCardException(error = exception.error)
-                        is UnknownApiException -> CardDetailsException.UnknownException(
-                            displayableMessage = exception.errorMessage
-                        )
-                        else -> CardDetailsException.UnknownException(displayableMessage = exception.message ?: "An unknown error occurred")
-                    }
-                } ?: currentState.error
-                currentState.copy(
-                    error = error,
-                    isLoading = false,
-                    token = result.getOrNull()?.token
-                )
-            }
+            createCardPaymentTokenUseCase(accessToken, request)
+                .onSuccess { details ->
+                    updateState(CardDetailsUIState.Success(details.token!!))
+                }
+                .onFailure { error ->
+                    error.safeCastAs<SdkException>()
+                        ?.let { updateState(CardDetailsUIState.Error(it)) }
+                }
         }
+    }
+
+    /**
+     * Updates the UI state to a new value.
+     *
+     * @param newState The new state to set for the UI.
+     */
+    private fun updateState(newState: CardDetailsUIState) {
+        _stateFlow.value = newState
     }
 }

@@ -13,13 +13,13 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.paydock.api.tokens.domain.model.TokenDetails
+import com.paydock.api.tokens.domain.usecase.CreateCardPaymentTokenUseCase
 import com.paydock.core.BaseViewModelKoinTest
 import com.paydock.core.KoinTestRule
 import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.extensions.waitUntilTimeout
-import com.paydock.feature.card.domain.model.TokenisedCardDetails
-import com.paydock.feature.card.domain.usecase.TokeniseCreditCardUseCase
-import com.paydock.feature.card.presentation.model.CardResult
+import com.paydock.feature.card.domain.model.integration.CardResult
 import com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -54,10 +54,10 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         modules = listOf(instrumentedTestModule, testModule)
     )
 
-    private val useCase: TokeniseCreditCardUseCase = mockk(relaxed = true)
+    private val useCase: CreateCardPaymentTokenUseCase = mockk(relaxed = true)
 
     override fun initialiseViewModel(): CardDetailsViewModel =
-        CardDetailsViewModel(accessToken = "testAccessToken", useCase = useCase, dispatchers = dispatchersProvider)
+        CardDetailsViewModel(accessToken = "testAccessToken", createCardPaymentTokenUseCase = useCase, dispatchers = dispatchersProvider)
 
     @Test
     fun testCardDetailsInitialStateInput() {
@@ -263,7 +263,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
 
         // For token case
         val mockToken = "mockToken"
-        val mockResult = Result.success(TokenisedCardDetails(token = mockToken, type = "token"))
+        val mockResult = Result.success(TokenDetails(token = mockToken, type = "token"))
         coEvery { useCase.invoke("testAccessToken", any()) } returns mockResult
         every { onCardDetailsResult(any()) } just Runs
 
@@ -343,7 +343,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
 
         // For token case
         val mockError = Exception("Tokenization failed")
-        val mockResult = Result.failure<TokenisedCardDetails>(mockError)
+        val mockResult = Result.failure<TokenDetails>(mockError)
         coEvery { useCase.invoke("testAccessToken", any()) } returns mockResult
         every { onCardDetailsResult(any()) } just Runs
 

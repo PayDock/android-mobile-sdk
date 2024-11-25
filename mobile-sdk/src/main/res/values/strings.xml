@@ -37,10 +37,12 @@
     <string name="error_googlepay_payment_methods">Unexpected non API exception when trying to retrieve [allowedPaymentMethods] parameter from paymentRequest!</string>
     <string name="error_googlepay_cancelled">Google Pay transaction was cancelled!</string>
     <string name="error_googlepay_unexpected">An unexpected error has occurred trying to use Google Pay!</string>
-    <string name="error_paypal_cancelled">PayPal transaction was cancelled!</string>
-    <string name="error_flypay_cancelled">FlyPay transaction was cancelled!</string>
-    <string name="error_wallet_cancelled">A wallet token is always associated with a wallet transaction!</string>
-    <string name="error_afterpay_cancelled">Afterpay transaction was cancelled!</string>
+    <string name="error_paypal_canceled">PayPal transaction was cancelled!</string>
+    <string name="error_paypal_vault_canceled">PayPal Vault process was cancelled!</string>
+    <string name="error_paypal_vault_invalid">An unexpected error has occurred trying to use PayPal Vault!</string>
+    <string name="error_flypay_canceled">FlyPay transaction was cancelled!</string>
+    <string name="error_wallet_canceled">A wallet token is always associated with a wallet transaction!</string>
+    <string name="error_afterpay_canceled">Afterpay transaction was cancelled!</string>
     <string name="error_afterpay_sdk_internal_data">Intent should always be populated by the SDK!</string>
     <string name="error_afterpay_sdk_internal_token">A token is always associated with a successful Afterpay transaction!</string>
     <string name="error_afterpay_sdk_internal_status">A cancelled Afterpay transaction always contains a status!</string>
@@ -52,5 +54,6 @@
     <string name="button_save_address">Save address</string>
     <string name="button_submit">Submit</string>
     <string name="button_pay_with">Pay with</string>
+    <string name="button_link_paypal_account">Link PayPal account</string>
     <!-- endregion -->
 </resources>

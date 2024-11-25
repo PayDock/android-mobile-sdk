@@ -28,7 +28,7 @@ class CardModule {
     @Provides
     fun provideCardRepository(
         @Named("IO") dispatcher: CoroutineDispatcher,
-        cardApi: CardApi
+        cardApi: CardApi,
     ): CardRepository {
         return CardRepositoryImpl(dispatcher, cardApi)
     }
