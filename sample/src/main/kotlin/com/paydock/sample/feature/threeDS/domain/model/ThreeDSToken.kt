@@ -2,7 +2,7 @@ package com.paydock.sample.feature.threeDS.domain.model
 
 data class ThreeDSToken(
     val token: String?,
-    val status: ThreeDSStatus?
+    val status: ThreeDSStatus?,
 ) {
     enum class ThreeDSStatus(val type: String) {
         NOT_SUPPORTED("authentication_not_supported"), PRE_AUTH_PENDING("pre_authentication_pending");

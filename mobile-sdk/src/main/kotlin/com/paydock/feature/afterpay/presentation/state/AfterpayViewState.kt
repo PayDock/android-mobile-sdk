@@ -1,8 +1,8 @@
 package com.paydock.feature.afterpay.presentation.state
 
+import com.paydock.api.charges.domain.model.WalletCallback
 import com.paydock.core.domain.error.exceptions.AfterpayException
-import com.paydock.feature.charge.domain.model.ChargeResponse
-import com.paydock.feature.wallet.domain.model.WalletCallback
+import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 
 /**
  * Represents the state of the Afterpay payment view.

@@ -5,8 +5,8 @@ import com.afterpay.android.model.ShippingAddress
 import com.afterpay.android.model.ShippingOption
 import com.afterpay.android.model.ShippingOptionUpdateResult
 import com.afterpay.android.model.ShippingOptionsResult
-import com.paydock.feature.afterpay.presentation.mapper.mapToSDKShippingOptionResult
-import com.paydock.feature.afterpay.presentation.model.AfterpayShippingOption
+import com.paydock.feature.afterpay.domain.mapper.integration.mapToSDKShippingOptionResult
+import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
@@ -15,7 +15,7 @@ import org.mockito.junit.MockitoJUnitRunner
 import java.util.Currency
 
 @RunWith(MockitoJUnitRunner::class)
-class CheckoutHandlerTest {
+internal class CheckoutHandlerTest {
 
     @Mock
     lateinit var onDidCommenceCheckout: () -> Unit

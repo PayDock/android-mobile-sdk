@@ -11,7 +11,7 @@ import org.koin.dsl.module
  * Koin module for providing dispatchers used for coroutines.
  * Provides different implementations of [CoroutineDispatcher] for various use cases.
  */
-val dispatchersModule = module {
+internal val dispatchersModule = module {
     /**
      * Provides a singleton instance of [DispatchersProviderImpl].
      * This implementation of [DispatchersProvider] provides custom dispatchers

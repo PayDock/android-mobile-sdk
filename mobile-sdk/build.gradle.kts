@@ -112,6 +112,9 @@ dependencies {
     implementation(libs.bundles.google.pay.services)
     // Afterpay SDK
     implementation(libs.afterpay.android)
+    // PayPal SDK
+    implementation(libs.paypal.web.payments)
+    implementation(libs.paypal.fraud.protection)
     // Unit Testing
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

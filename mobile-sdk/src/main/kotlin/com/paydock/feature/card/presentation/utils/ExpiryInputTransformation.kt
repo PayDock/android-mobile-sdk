@@ -10,7 +10,7 @@ import com.paydock.core.MobileSDKConstants
  * A [VisualTransformation] that formats the input of an expiration field to "mm/yy" format.
  * The transformation is only applied visually; the actual value remains unchanged.
  */
-class ExpiryInputTransformation : VisualTransformation {
+internal class ExpiryInputTransformation : VisualTransformation {
 
     /**
      * Applies the expiration date formatting to the input [AnnotatedString].

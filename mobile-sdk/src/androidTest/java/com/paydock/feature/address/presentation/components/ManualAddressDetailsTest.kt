@@ -15,7 +15,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.paydock.core.BaseViewModelKoinTest
 import com.paydock.core.KoinTestRule
 import com.paydock.core.extensions.waitUntilTimeout
-import com.paydock.feature.address.domain.model.BillingAddress
+import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.address.presentation.state.AddressDetailsViewState
 import com.paydock.feature.address.presentation.viewmodels.CountryAutoCompleteViewModel
 import com.paydock.feature.address.presentation.viewmodels.ManualAddressViewModel

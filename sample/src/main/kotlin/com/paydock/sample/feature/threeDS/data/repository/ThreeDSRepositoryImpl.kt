@@ -12,12 +12,12 @@ import javax.inject.Inject
 
 class ThreeDSRepositoryImpl @Inject constructor(
     private val dispatcher: CoroutineDispatcher,
-    private val threeDSApi: ThreeDSApi
+    private val threeDSApi: ThreeDSApi,
 ) : ThreeDSRepository {
 
     override suspend fun createIntegrated3dsToken(
         accessToken: String,
-        request: CreateIntegratedThreeDSTokenRequest
+        request: CreateIntegratedThreeDSTokenRequest,
     ): ThreeDSToken =
         withContext(dispatcher) {
             val response =

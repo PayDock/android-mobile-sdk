@@ -4,7 +4,7 @@ import android.app.Application
 import com.paydock.MobileSDK
 import com.paydock.core.domain.model.Environment
 
-class TestApplication : Application() {
+internal class TestApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         MobileSDK

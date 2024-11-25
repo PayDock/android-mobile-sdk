@@ -6,7 +6,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 @OptIn(ExperimentalCoroutinesApi::class)
-object TestDispatchersProviderImpl : DispatchersProvider {
+internal object TestDispatchersProviderImpl : DispatchersProvider {
     override fun getMain(): CoroutineDispatcher = UnconfinedTestDispatcher()
     override fun getMainImmediate(): CoroutineDispatcher = UnconfinedTestDispatcher()
     override fun getIO(): CoroutineDispatcher = UnconfinedTestDispatcher()

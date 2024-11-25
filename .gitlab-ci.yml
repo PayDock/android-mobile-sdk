@@ -9,12 +9,12 @@ stages:
   - .pre
   - build
   - test
+  - security
+  - security-post
   - tag
   - gitlab_release
   - github_release
   - publish
-  - security
-  - security-post
 
 include:
   - project: 'paydock/platform/gitlab-templates'

@@ -23,7 +23,7 @@ fun BasketItemView(
     title: String,
     description: String,
     price: String,
-    @DrawableRes image: Int
+    @DrawableRes image: Int,
 ) {
     Row(
         modifier = Modifier

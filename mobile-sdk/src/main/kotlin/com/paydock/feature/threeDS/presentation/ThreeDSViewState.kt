@@ -1,7 +1,7 @@
 package com.paydock.feature.threeDS.presentation
 
 import com.paydock.core.domain.error.exceptions.ThreeDSException
-import com.paydock.feature.threeDS.domain.model.ThreeDSResult
+import com.paydock.feature.threeDS.domain.model.integration.ThreeDSResult
 
 /**
  * Represents the state of the 3D Secure (3DS) charge processing feature.

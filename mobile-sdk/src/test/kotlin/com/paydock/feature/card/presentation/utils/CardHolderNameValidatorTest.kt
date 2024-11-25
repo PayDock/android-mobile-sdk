@@ -4,7 +4,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class CardHolderNameValidatorTest {
+internal class CardHolderNameValidatorTest {
 
     @Test
     fun testCheckHolderName_ValidName() {

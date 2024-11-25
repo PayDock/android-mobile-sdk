@@ -1,6 +1,6 @@
 package com.paydock.feature.threeDS.presentation.utils
 
-import com.paydock.feature.threeDS.presentation.model.ThreeDSEvent
+import com.paydock.feature.threeDS.domain.model.ui.ThreeDSEvent
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonContentPolymorphicSerializer

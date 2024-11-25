@@ -15,7 +15,7 @@ fun Checkout3DSBottomSheet(
     onDismissRequest: () -> Unit,
     vaultToken: String?,
     threeDSToken: String?,
-    viewModel: StandaloneCheckoutViewModel
+    viewModel: StandaloneCheckoutViewModel,
 ) {
     if (!vaultToken.isNullOrBlank() && !threeDSToken.isNullOrBlank()) {
         SdkBottomSheet(

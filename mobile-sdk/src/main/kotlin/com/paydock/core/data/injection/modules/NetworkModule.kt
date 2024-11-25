@@ -13,7 +13,7 @@ import org.koin.dsl.module
  * - Singleton components are kept unique within the Koin container.
  * - Factory components provide a new instance each time they are requested.
  */
-val networkModule = module {
+internal val networkModule = module {
     includes(dispatchersModule)
     single {
         NetworkClientBuilder.create()

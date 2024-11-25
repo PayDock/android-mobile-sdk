@@ -31,9 +31,9 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toRect
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.sample.core.extensions.color
 import com.paydock.sample.designsystems.theme.SampleTheme
 import kotlinx.coroutines.launch
@@ -42,7 +42,7 @@ import android.graphics.Color as AndroidColor
 @Composable
 fun SatValPanel(
     defaultHSV: Triple<Float, Float, Float>,
-    setSatVal: (Float, Float) -> Unit
+    setSatVal: (Float, Float) -> Unit,
 ) {
     val interactionSource = remember {
         MutableInteractionSource()
@@ -170,7 +170,7 @@ fun SatValPanel(
 }
 
 private fun Modifier.emitDragGesture(
-    interactionSource: MutableInteractionSource
+    interactionSource: MutableInteractionSource,
 ): Modifier = composed {
     val scope = rememberCoroutineScope()
 
@@ -187,7 +187,7 @@ private fun Modifier.emitDragGesture(
 
 private fun DrawScope.drawBitmap(
     bitmap: Bitmap,
-    panel: RectF
+    panel: RectF,
 ) {
     drawIntoCanvas {
         it.nativeCanvas.drawBitmap(
@@ -199,7 +199,7 @@ private fun DrawScope.drawBitmap(
     }
 }
 
-@LightDarkPreview
+@Preview
 @Composable
 private fun PreviewSatValPanel() {
     val color = "#3e3e9d".color

@@ -4,7 +4,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class CardExpiryValidatorTest {
+internal class CardExpiryValidatorTest {
 
     @Test
     fun testCheckExpiry_ValidInput() {

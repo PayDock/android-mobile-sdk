@@ -4,7 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-class GiftCardInputValidatorTest {
+internal class GiftCardInputValidatorTest {
     @Test
     fun `test parseNumber - valid input`() {
         val validNumber = "1234567890123456"

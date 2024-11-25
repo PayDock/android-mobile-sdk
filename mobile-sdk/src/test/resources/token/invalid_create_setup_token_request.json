@@ -1,0 +1,6 @@
+{
+  "token": "invalid_auth_token",
+  "return_url": "https://paydock.com/returnUrl",
+  "cancel_url": "https://paydock.com/cancelUrl",
+  "gateway_id": "5cbede1f151b842653e987be"
+}

@@ -21,7 +21,7 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.address.domain.model.BillingAddress
+import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.address.presentation.state.AddressDetailsViewState
 import com.paydock.feature.address.presentation.viewmodels.ManualAddressViewModel
 import kotlinx.coroutines.delay

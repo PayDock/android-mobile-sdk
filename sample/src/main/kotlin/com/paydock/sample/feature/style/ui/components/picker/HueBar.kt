@@ -30,9 +30,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toRect
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.sample.core.extensions.toHSV
 import com.paydock.sample.designsystems.theme.SampleTheme
 import kotlinx.coroutines.CoroutineScope
@@ -42,7 +42,7 @@ import android.graphics.Color as AndroidColor
 @Composable
 fun HueBar(
     defaultHue: Float,
-    setColor: (Float) -> Unit
+    setColor: (Float) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val interactionSource = remember {
@@ -125,7 +125,7 @@ fun HueBar(
 
 fun CoroutineScope.collectForPress(
     interactionSource: InteractionSource,
-    setOffset: (Offset) -> Unit
+    setOffset: (Offset) -> Unit,
 ) {
     launch {
         interactionSource.interactions.collect { interaction ->
@@ -137,7 +137,7 @@ fun CoroutineScope.collectForPress(
 }
 
 private fun Modifier.emitDragGesture(
-    interactionSource: MutableInteractionSource
+    interactionSource: MutableInteractionSource,
 ): Modifier = composed {
     val scope = rememberCoroutineScope()
 
@@ -154,7 +154,7 @@ private fun Modifier.emitDragGesture(
 
 private fun DrawScope.drawBitmap(
     bitmap: Bitmap,
-    panel: RectF
+    panel: RectF,
 ) {
     drawIntoCanvas {
         it.nativeCanvas.drawBitmap(
@@ -166,7 +166,7 @@ private fun DrawScope.drawBitmap(
     }
 }
 
-@LightDarkPreview
+@Preview
 @Composable
 private fun PreviewHueBar() {
     val color = Color.Blue

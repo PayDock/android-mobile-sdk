@@ -1,0 +1,14 @@
+{
+  "status": 200,
+  "error": null,
+  "resource": {
+    "type": "gateway",
+    "data": {
+      "type": "Paypal",
+      "mode": "test",
+      "credentials": {
+        "client_auth": "AYPif3xz9KTNCM3Ux7hpEui0_sNy1dbEBRTqXj8qW_SiewqvrnB6fMPot058vPbxXMl2TxhjnUpiln6v"
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 package com.paydock.feature.card.presentation.utils
 
-import com.paydock.feature.card.presentation.model.CardIssuerType
+import com.paydock.feature.card.domain.model.integration.enums.CardIssuerType
 
 /**
  * A utility object for detecting card issuer based on card numbers

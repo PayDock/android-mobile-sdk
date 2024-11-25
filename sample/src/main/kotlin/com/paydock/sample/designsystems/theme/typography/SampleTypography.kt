@@ -2,6 +2,9 @@ package com.paydock.sample.designsystems.theme.typography
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight.Companion.Medium
+import androidx.compose.ui.text.font.FontWeight.Companion.SemiBold
+import androidx.compose.ui.unit.sp
 
 /**
  * Custom holder for the Text styles instead of the one used in Material Design
@@ -11,7 +14,9 @@ import androidx.compose.ui.text.TextStyle
  * to maintain some corelation with Material Specification
  */
 data class SampleTypography(
+    val sectionHeader: TextStyle,
     val cardTitle: TextStyle,
+    val cardDescription: TextStyle,
     val navTitle: TextStyle,
     val body: TextStyle,
     val input: TextStyle,
@@ -34,7 +39,19 @@ data class SampleTypography(
 ) {
 
     constructor(typography: Typography) : this(
+        sectionHeader = TextStyle(
+            fontWeight = SemiBold,
+            fontSize = 18.sp,
+            lineHeight = 25.sp,
+            fontFamily = FontFamily
+        ),
         cardTitle = typography.titleLarge,
+        cardDescription = TextStyle(
+            fontWeight = Medium,
+            fontSize = 16.sp,
+            lineHeight = 24.sp,
+            fontFamily = FontFamily
+        ),
         navTitle = typography.titleMedium,
         body = typography.bodyMedium,
         input = typography.bodySmall,

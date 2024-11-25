@@ -5,5 +5,5 @@ import com.paydock.sample.core.data.api.dto.Resource
 data class WalletCaptureResponse(
     val error: Any,
     val resource: Resource<WalletChargeData>,
-    val status: Int
+    val status: Int,
 )

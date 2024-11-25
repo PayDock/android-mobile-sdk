@@ -3,7 +3,7 @@ package com.paydock.feature.card.presentation.utils
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class LuhnAlgorithmTest {
+internal class LuhnAlgorithmTest {
 
     @Test
     fun testValidCardNumber() {

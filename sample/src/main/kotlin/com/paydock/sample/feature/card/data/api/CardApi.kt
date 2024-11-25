@@ -1,6 +1,6 @@
 package com.paydock.sample.feature.card.data.api
 
-import com.paydock.feature.charge.domain.model.ChargeResponse
+import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.feature.card.data.api.dto.CaptureCardChargeRequest
 import com.paydock.sample.feature.card.data.api.dto.TokeniseCardRequest
@@ -16,19 +16,19 @@ interface CardApi {
     @POST("/v1/payment_sources/tokens")
     suspend fun tokeniseCardDetails(
         @Header("X-Access-Token") accessToken: String,
-        @Body request: TokeniseCardRequest
+        @Body request: TokeniseCardRequest,
     ): TokeniseCardResponse
 
     @POST("/v1/vault/payment_sources")
     suspend fun createVaultToken(
         @Header("x-user-secret-key") secretKey: String = BuildConfig.SECRET_KEY,
-        @Body request: VaultTokenRequest
+        @Body request: VaultTokenRequest,
     ): VaultTokenResponse
 
     @POST("/v1/charges")
     suspend fun captureCharge(
         @Header("x-user-secret-key") secretKey: String = BuildConfig.SECRET_KEY,
-        @Body request: CaptureCardChargeRequest
+        @Body request: CaptureCardChargeRequest,
     ): ChargeResponse
 
 }

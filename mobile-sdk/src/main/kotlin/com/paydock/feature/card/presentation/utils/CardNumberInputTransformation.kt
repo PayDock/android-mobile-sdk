@@ -9,7 +9,7 @@ import com.paydock.core.MobileSDKConstants
 /**
  * A custom visual transformation for card numbers that formats the input into "xxxx xxxx xxxx xxxx" format.
  */
-class CardNumberInputTransformation(
+internal class CardNumberInputTransformation(
     private val maxNumber: Int,
     private val subSectionSize: Int = MobileSDKConstants.CardDetailsConfig.CARD_NUMBER_SECTION_SIZE
 ) : VisualTransformation {

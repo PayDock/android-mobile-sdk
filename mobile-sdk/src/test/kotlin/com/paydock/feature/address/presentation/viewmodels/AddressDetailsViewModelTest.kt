@@ -3,7 +3,7 @@ package com.paydock.feature.address.presentation.viewmodels
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.utils.MainDispatcherRule
-import com.paydock.feature.address.domain.model.BillingAddress
+import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.address.presentation.state.AddressDetailsViewState
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -18,7 +18,7 @@ import org.mockito.junit.MockitoJUnitRunner
 
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
-class AddressDetailsViewModelTest : BaseKoinUnitTest() {
+internal class AddressDetailsViewModelTest : BaseKoinUnitTest() {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()

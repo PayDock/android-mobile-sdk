@@ -2,17 +2,16 @@ package com.paydock.sample.feature.checkout
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.paydock.feature.card.presentation.model.CardResult
-import com.paydock.feature.charge.domain.model.ChargeResponse
-import com.paydock.feature.threeDS.domain.model.ThreeDSResult
-import com.paydock.feature.wallet.domain.model.WalletType
+import com.paydock.api.charges.domain.model.WalletType
+import com.paydock.feature.card.domain.model.integration.CardResult
+import com.paydock.feature.charge.domain.model.integration.ChargeResponse
+import com.paydock.feature.threeDS.domain.model.integration.ThreeDSResult
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
 import com.paydock.sample.core.THREE_DS_CARD_ERROR
 import com.paydock.sample.core.THREE_DS_STATUS_ERROR
 import com.paydock.sample.core.TOKENISE_CARD_ERROR
-import com.paydock.sample.core.US_CURRENCY_CODE
 import com.paydock.sample.core.presentation.utils.AccessTokenProvider
 import com.paydock.sample.feature.card.data.api.dto.CaptureCardChargeRequest
 import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
@@ -42,7 +41,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
     private val createCardSessionVaultTokenUseCase: CreateCardSessionVaultTokenUseCase,
     private val createIntegratedThreeDSTokenUseCase: CreateIntegratedThreeDSTokenUseCase,
     private val captureCardChargeTokenUseCase: CaptureCardChargeTokenUseCase,
-    private val captureWalletChargeUseCase: CaptureWalletChargeUseCase
+    private val captureWalletChargeUseCase: CaptureWalletChargeUseCase,
 ) : ViewModel() {
 
     private val _stateFlow: MutableStateFlow<CheckoutUIState> = MutableStateFlow(CheckoutUIState())
@@ -105,7 +104,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
 
     private fun createPayPalWalletRequest(): InitiateWalletRequest {
         return InitiateWalletRequest(
-            currency = US_CURRENCY_CODE,
+            currency = AU_CURRENCY_CODE,
             customer = Customer(
                 paymentSource = PaymentSource(
                     gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL,
@@ -132,7 +131,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
             currency = AU_CURRENCY_CODE,
             customer = Customer(
                 paymentSource = PaymentSource(
-                    gatewayId = BuildConfig.GATEWAY_ID,
+                    gatewayId = BuildConfig.GATEWAY_ID_GOOGLE_PAY,
                     walletType = WalletType.GOOGLE.type
                 )
             )
@@ -242,7 +241,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
     private fun initiateWalletTransaction(
         manualCapture: Boolean = false,
         request: InitiateWalletRequest,
-        callback: (String) -> Unit
+        callback: (String) -> Unit,
     ) {
         viewModelScope.launch {
             _stateFlow.update { state ->
@@ -422,5 +421,5 @@ data class CheckoutUIState(
     val chargeResult: ChargeResponse? = null,
     val flyPayResult: String? = null,
     val afterPayResult: String? = null,
-    val error: String? = null
+    val error: String? = null,
 )

@@ -26,6 +26,7 @@ fun CenterAppTopBar(
     title: String,
     showTitle: Boolean,
     modifier: Modifier = Modifier,
+    onActionButtonClick: (() -> Unit)? = null,
     onBackButtonClick: (() -> Unit)? = null,
 ) {
     if (showTitle) {
@@ -70,7 +71,7 @@ fun CenterAppTopBar(
                 titleContentColor = Theme.colors.onPrimaryContainer
             ),
             actions = {
-                IconButton(onClick = { /*No-Op*/ }) {
+                IconButton(onClick = { onActionButtonClick?.invoke() }) {
                     Icon(
                         imageVector = Icons.Default.Person,
                         contentDescription = "Profile",

@@ -1,7 +1,7 @@
 package com.paydock.feature.card.presentation.utils
 
-import com.paydock.feature.card.presentation.model.CardIssuerType
-import com.paydock.feature.card.presentation.model.SecurityCodeType
+import com.paydock.feature.card.domain.model.integration.enums.CardIssuerType
+import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
 
 /**
  * A utility object for detecting the type of security code (CVV, CSC, CVC) based on the card issuer type.

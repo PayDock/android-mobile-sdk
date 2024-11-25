@@ -1,13 +1,11 @@
 package com.paydock.core.domain.error.exceptions
 
-import java.io.IOException
-
 /**
  * Represents an exception related to 3D Secure operations.
  *
  * @constructor Creates a ThreeDSException with the specified displayable message.
  */
-sealed class ThreeDSException(displayableMessage: String) : IOException(displayableMessage) {
+sealed class ThreeDSException(displayableMessage: String) : SdkException(displayableMessage) {
 
     /**
      * Exception thrown when there is an error during the charge process for 3D Secure.

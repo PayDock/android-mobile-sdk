@@ -17,15 +17,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.sample.designsystems.theme.SampleTheme
 import com.paydock.sample.designsystems.theme.Theme
 
@@ -36,7 +36,7 @@ fun NumberCounter(
     value: Int,
     onValueChange: (Int) -> Unit,
 ) {
-    val currentValue = remember { mutableStateOf(value) }
+    val currentValue = remember { mutableIntStateOf(value) }
 
     Column(
         modifier = modifier,
@@ -105,7 +105,7 @@ fun NumberCounter(
     }
 }
 
-@LightDarkPreview
+@Preview
 @Composable
 private fun PreviewCopyTextField() {
     SampleTheme {

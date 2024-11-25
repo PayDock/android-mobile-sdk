@@ -4,10 +4,10 @@ import android.webkit.JavascriptInterface
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.designsystems.components.web.utils.SdkJSBridge
-import com.paydock.feature.threeDS.presentation.model.Charge3dsEvent
-import com.paydock.feature.threeDS.presentation.model.ChargeError
-import com.paydock.feature.threeDS.presentation.model.ChargeErrorEventData
-import com.paydock.feature.threeDS.presentation.model.ThreeDSEvent
+import com.paydock.feature.threeDS.domain.model.ui.Charge3dsEvent
+import com.paydock.feature.threeDS.domain.model.ui.ChargeError
+import com.paydock.feature.threeDS.domain.model.ui.ChargeErrorEventData
+import com.paydock.feature.threeDS.domain.model.ui.ThreeDSEvent
 import kotlinx.serialization.SerializationException
 
 /**

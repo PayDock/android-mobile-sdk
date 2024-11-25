@@ -14,14 +14,14 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.paydock.core.BaseUITest
-import com.paydock.feature.card.presentation.model.CardIssuerType
-import com.paydock.feature.card.presentation.model.SecurityCodeType
+import com.paydock.feature.card.domain.model.integration.enums.CardIssuerType
+import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class CardSecurityCodeInputTest : BaseUITest() {
+internal class CardSecurityCodeInputTest : BaseUITest() {
 
     @get:Rule
     val composeTestRule =

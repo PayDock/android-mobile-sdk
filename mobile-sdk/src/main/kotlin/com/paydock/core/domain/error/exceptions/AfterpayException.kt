@@ -2,7 +2,6 @@ package com.paydock.core.domain.error.exceptions
 
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.displayableMessage
-import java.io.IOException
 
 /**
  * Exception thrown when there's an error related to Afterpay integration.
@@ -10,7 +9,7 @@ import java.io.IOException
  * @property displayableMessage A human-readable message describing the error.
  * @constructor Creates an AfterpayException with the specified displayable message.
  */
-sealed class AfterpayException(displayableMessage: String) : IOException(displayableMessage) {
+sealed class AfterpayException(displayableMessage: String) : SdkException(displayableMessage) {
 
     /**
      * Exception thrown when there is an error fetching the URL for Afterpay.

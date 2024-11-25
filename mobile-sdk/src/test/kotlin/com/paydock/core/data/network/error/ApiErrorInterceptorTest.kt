@@ -23,7 +23,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 
 @Suppress("MaxLineLength")
-class ApiErrorInterceptorTest : BaskMockServerUnitTest() {
+internal class ApiErrorInterceptorTest : BaskMockServerUnitTest() {
 
     @Before
     fun setup() {
@@ -65,7 +65,7 @@ class ApiErrorInterceptorTest : BaskMockServerUnitTest() {
             // Sample request URL
             val requestUrl = "http://${mockServer.hostName}:${mockServer.port}"
             // Sample error body in JSON format.
-            val errorBodyJson = readResourceFile("card/failure_credit_card_token_response.json")
+            val errorBodyJson = readResourceFile("token/failure_credit_card_token_response.json")
             val mockResponse = MockResponse()
                 .setResponseCode(HttpStatusCode.BadRequest.value)
                 .setBody(errorBodyJson)
@@ -98,7 +98,7 @@ class ApiErrorInterceptorTest : BaskMockServerUnitTest() {
             // Sample request URL
             val requestUrl = "http://${mockServer.hostName}:${mockServer.port}"
             // Sample error body in JSON format.
-            val errorBodyJson = readResourceFile("wallet/failure_wallet_callback_response.json")
+            val errorBodyJson = readResourceFile("charges/failure_wallet_callback_response.json")
             val mockResponse = MockResponse()
                 .setResponseCode(HttpStatusCode.BadRequest.value)
                 .setBody(errorBodyJson)
@@ -132,7 +132,7 @@ class ApiErrorInterceptorTest : BaskMockServerUnitTest() {
             // Sample request URL
             val requestUrl = "http://${mockServer.hostName}:${mockServer.port}"
             // Sample error body in JSON format.
-            val errorBodyJson = readResourceFile("wallet/failure_capture_wallet_response.json")
+            val errorBodyJson = readResourceFile("charges/failure_capture_wallet_response.json")
             val mockResponse = MockResponse()
                 .setResponseCode(HttpStatusCode.BadRequest.value)
                 .setBody(errorBodyJson)
@@ -166,7 +166,7 @@ class ApiErrorInterceptorTest : BaskMockServerUnitTest() {
             // Sample request URL
             val requestUrl = "http://${mockServer.hostName}:${mockServer.port}"
             // Sample error body in JSON format.
-            val errorBodyJson = readResourceFile("wallet/failure_capture_wallet_full_response.json")
+            val errorBodyJson = readResourceFile("charges/failure_capture_wallet_full_response.json")
             val mockResponse = MockResponse()
                 .setResponseCode(HttpStatusCode.BadRequest.value)
                 .setBody(errorBodyJson)

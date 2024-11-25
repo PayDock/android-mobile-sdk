@@ -12,5 +12,5 @@ data class InitiateWalletRequest(
     val meta: Meta = Meta(),
     val reference: String = UUID.randomUUID().toString(),
     val shipping: Shipping? = null,
-    val items: List<Item>? = null
+    val items: List<Item>? = null,
 )

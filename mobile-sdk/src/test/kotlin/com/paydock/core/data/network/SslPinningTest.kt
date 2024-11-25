@@ -31,7 +31,7 @@ import kotlin.test.fail
 /**
  * This class contains unit tests for testing SSL pinning.
  */
-class SslPinningTest : BaseUnitTest() {
+internal class SslPinningTest : BaseUnitTest() {
 
     private lateinit var context: Context
 

@@ -1,0 +1,26 @@
+{
+  "status": 400,
+  "error": {
+    "message": "body validation failed",
+    "code": "ValidationError",
+    "details": {
+      "path": "return_url",
+      "messages": [
+        "return_url must be an URL address"
+      ]
+    }
+  },
+  "resource": {
+    "type": "setup_token"
+  },
+  "error_summary": {
+    "message": "body validation failed",
+    "code": "validation_error",
+    "details": {
+      "path": "return_url",
+      "messages": [
+        "return_url must be an URL address"
+      ]
+    }
+  }
+}

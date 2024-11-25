@@ -5,7 +5,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
+import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun ColumnWithSeparators(
@@ -45,7 +45,7 @@ internal fun ColumnWithSeparators(
 
 private data class ContentChild(val height: Int)
 
-@LightDarkPreview
+@Preview
 @Composable
 private fun PreviewColumnWithSeparators() {
     ColumnWithSeparators {

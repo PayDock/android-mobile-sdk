@@ -1,6 +1,6 @@
 package com.paydock.sample.feature.card.data.repository
 
-import com.paydock.feature.charge.domain.model.ChargeResponse
+import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import com.paydock.sample.feature.card.data.api.CardApi
 import com.paydock.sample.feature.card.data.api.dto.CaptureCardChargeRequest
 import com.paydock.sample.feature.card.data.api.dto.TokeniseCardRequest
@@ -12,12 +12,12 @@ import javax.inject.Inject
 
 class CardRepositoryImpl @Inject constructor(
     private val dispatcher: CoroutineDispatcher,
-    private val cardApi: CardApi
+    private val cardApi: CardApi,
 ) : CardRepository {
 
     override suspend fun tokeniseCardDetails(
         accessToken: String,
-        request: TokeniseCardRequest
+        request: TokeniseCardRequest,
     ): String =
         withContext(dispatcher) {
             cardApi.tokeniseCardDetails(

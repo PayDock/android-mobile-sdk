@@ -24,8 +24,8 @@ import com.paydock.MobileSDK
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.model.Environment
-import com.paydock.core.presentation.utils.putWebViewMessageExtra
-import com.paydock.core.presentation.utils.putWebViewStatusExtra
+import com.paydock.core.presentation.extensions.putMessageExtra
+import com.paydock.core.presentation.extensions.putStatusExtra
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.feature.flypay.presentation.components.FlyPayWebView
 import com.paydock.feature.flypay.presentation.utils.CancellationStatus
@@ -34,7 +34,7 @@ import com.paydock.feature.flypay.presentation.utils.getOrderIdExtra
 import com.paydock.feature.flypay.presentation.utils.putCancellationStatusExtra
 import com.paydock.feature.flypay.presentation.utils.putOrderIdExtra
 
-class FlyPayWebActivity : ComponentActivity() {
+internal class FlyPayWebActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,8 +82,8 @@ class FlyPayWebActivity : ComponentActivity() {
                             setResult(
                                 Activity.RESULT_CANCELED,
                                 Intent()
-                                    .putWebViewStatusExtra(status)
-                                    .putWebViewMessageExtra(message)
+                                    .putStatusExtra(status)
+                                    .putMessageExtra(message)
                             )
                             finish()
                         })

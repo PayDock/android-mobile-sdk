@@ -1,0 +1,11 @@
+{
+  "status": 201,
+  "error": null,
+  "resource": {
+    "type": "token",
+    "data": {
+      "token": "61841945-75fc-4037-9198-049d7657c610",
+      "email": "ricardo@test.com"
+    }
+  }
+}

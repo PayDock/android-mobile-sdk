@@ -9,7 +9,7 @@ import androidx.compose.ui.graphics.Brush
  * @param angle The gradient angle.
  * @return The corresponding [GradientOffset].
  */
-fun GradientOffset(angle: GradientAngle): GradientOffset {
+internal fun GradientOffset(angle: GradientAngle): GradientOffset {
     return when (angle) {
         GradientAngle.CW45 -> GradientOffset(
             start = Offset.Zero,

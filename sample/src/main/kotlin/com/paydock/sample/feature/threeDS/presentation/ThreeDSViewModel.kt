@@ -21,7 +21,7 @@ import javax.inject.Inject
 class ThreeDSViewModel @Inject constructor(
     private val accessTokenProvider: AccessTokenProvider,
     private val createIntegratedThreeDSTokenUseCase: CreateIntegratedThreeDSTokenUseCase,
-    private val createStandaloneThreeDSTokenUseCase: CreateStandaloneThreeDSTokenUseCase
+    private val createStandaloneThreeDSTokenUseCase: CreateStandaloneThreeDSTokenUseCase,
 ) : ViewModel() {
 
     private val _stateFlow: MutableStateFlow<ThreeDSUIState> =
@@ -96,5 +96,5 @@ class ThreeDSViewModel @Inject constructor(
 data class ThreeDSUIState(
     val isLoading: Boolean = true,
     val token: String? = null,
-    val error: String? = null
+    val error: String? = null,
 )

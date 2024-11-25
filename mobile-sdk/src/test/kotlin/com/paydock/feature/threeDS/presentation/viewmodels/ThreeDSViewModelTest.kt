@@ -4,12 +4,12 @@ import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.utils.MainDispatcherRule
-import com.paydock.feature.threeDS.domain.model.EventType
-import com.paydock.feature.threeDS.presentation.model.ChargeError
-import com.paydock.feature.threeDS.presentation.model.ChargeErrorEventData
-import com.paydock.feature.threeDS.presentation.model.ChargeEventData
-import com.paydock.feature.threeDS.presentation.model.ChargeResult
-import com.paydock.feature.threeDS.presentation.model.ThreeDSEvent
+import com.paydock.feature.threeDS.domain.model.integration.enums.EventType
+import com.paydock.feature.threeDS.domain.model.ui.ChargeError
+import com.paydock.feature.threeDS.domain.model.ui.ChargeErrorEventData
+import com.paydock.feature.threeDS.domain.model.ui.ChargeEventData
+import com.paydock.feature.threeDS.domain.model.ui.ChargeResult
+import com.paydock.feature.threeDS.domain.model.ui.ThreeDSEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -24,7 +24,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @RunWith(MockitoJUnitRunner::class)
-class ThreeDSViewModelTest : BaseKoinUnitTest() {
+internal class ThreeDSViewModelTest : BaseKoinUnitTest() {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()

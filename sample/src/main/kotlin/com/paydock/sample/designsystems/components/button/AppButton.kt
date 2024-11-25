@@ -13,8 +13,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.sample.designsystems.theme.SampleTheme
 import com.paydock.sample.designsystems.theme.Theme
 
@@ -75,7 +75,7 @@ private fun RowScope.ButtonContent(text: String, isLoading: Boolean) {
 }
 
 @Composable
-@LightDarkPreview
+@Preview
 private fun PreviewButtonPrimary() {
     SampleTheme {
         AppButton(
@@ -87,7 +87,7 @@ private fun PreviewButtonPrimary() {
 }
 
 @Composable
-@LightDarkPreview
+@Preview
 private fun PreviewButtonPrimaryWithLoading() {
     SampleTheme() {
         AppButton(

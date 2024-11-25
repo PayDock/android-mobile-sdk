@@ -2,6 +2,7 @@ package com.paydock.sample.feature.style.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,7 +17,7 @@ import com.paydock.sample.designsystems.components.fields.NumberCounter
 @Composable
 fun DesignSection(
     dimensionsTheme: ThemeDimensions,
-    onDimensionsUpdated: (ThemeDimensions) -> Unit
+    onDimensionsUpdated: (ThemeDimensions) -> Unit,
 ) {
     SectionContainer(title = stringResource(R.string.label_design)) {
         Row(
@@ -26,11 +27,25 @@ fun DesignSection(
         ) {
             NumberCounter(
                 modifier = Modifier.weight(0.5f),
-                title = stringResource(R.string.label_corner_radius),
-                value = dimensionsTheme.cornerRadius.value.toInt(),
+                title = stringResource(R.string.label_text_corner_radius),
+                value = dimensionsTheme.textFieldCornerRadius.value.toInt(),
                 onValueChange = {
-                    onDimensionsUpdated(dimensionsTheme.copy(cornerRadius = it.dp))
+                    onDimensionsUpdated(dimensionsTheme.copy(textFieldCornerRadius = it.dp))
                 })
+            NumberCounter(
+                modifier = Modifier.weight(0.5f),
+                title = stringResource(R.string.label_button_corner_radius),
+                value = dimensionsTheme.buttonCornerRadius.value.toInt(),
+                onValueChange = {
+                    onDimensionsUpdated(dimensionsTheme.copy(buttonCornerRadius = it.dp))
+                })
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             NumberCounter(
                 modifier = Modifier.weight(0.5f),
                 title = stringResource(R.string.label_shadow),
@@ -38,6 +53,7 @@ fun DesignSection(
                 onValueChange = {
                     onDimensionsUpdated(dimensionsTheme.copy(shadow = it.dp))
                 })
+            Spacer(modifier = Modifier.weight(0.5f))
         }
 
         Row(

@@ -9,7 +9,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 
-abstract class ComposeFragment : Fragment() {
+internal abstract class ComposeFragment : Fragment() {
 
     abstract val content: @Composable () -> Unit
 

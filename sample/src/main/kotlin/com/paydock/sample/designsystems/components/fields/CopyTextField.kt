@@ -1,5 +1,6 @@
 package com.paydock.sample.designsystems.components.fields
 
+import android.widget.Toast
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -17,8 +18,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
-import com.paydock.core.presentation.ui.extensions.toast
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
+import androidx.compose.ui.tooling.preview.Preview
 import com.paydock.sample.designsystems.theme.SampleTheme
 import com.paydock.sample.designsystems.theme.Theme
 
@@ -54,7 +54,7 @@ fun CopyTextField(
         trailingIcon = {
             IconButton(onClick = {
                 clipboardManager?.setText(AnnotatedString((value)))
-                context.toast("Copied!")
+                Toast.makeText(context, "Copied!", Toast.LENGTH_SHORT).show()
             }) {
                 Icon(
                     imageVector = Icons.Default.CopyAll,
@@ -68,7 +68,7 @@ fun CopyTextField(
     )
 }
 
-@LightDarkPreview
+@Preview
 @Composable
 private fun PreviewCopyTextField() {
     SampleTheme {

@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,7 +37,7 @@ import com.paydock.core.domain.error.exceptions.GooglePayException
 import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.charge.domain.model.ChargeResponse
+import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import com.paydock.feature.googlepay.presentation.viewmodels.GooglePayViewModel
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -150,13 +149,6 @@ fun GooglePayWidget(
         }
     }
 
-    // Reset form state when the widget is dismissed
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.resetResultState()
-        }
-    }
-
     // Composable content rendering
     SdkTheme {
         Box(contentAlignment = Alignment.Center) {
@@ -188,7 +180,7 @@ fun GooglePayWidget(
                                 }
                             }
                         },
-                        radius = Theme.dimensions.cornerRadius,
+                        radius = Theme.dimensions.buttonCornerRadius,
                         allowedPaymentMethods = allowedPaymentMethods.toString()
                     )
                 }
@@ -285,10 +277,12 @@ private fun handleGooglePayActivityResult(
                     )
                 )
             )
+            viewModel.resetResultState()
         }
 
         else -> {
             onGooglePayResult(Result.failure(GooglePayException.UnknownException(context.getString(R.string.error_googlepay_unexpected))))
+            viewModel.resetResultState()
         }
     }
 }
@@ -319,8 +313,10 @@ private fun handleGooglePayPaymentResult(
             viewModel.captureWalletTransaction(token, googleToken)
         } else {
             onGooglePayResult(Result.failure(GooglePayException.ResultException("Google Pay Token Error")))
+            viewModel.resetResultState()
         }
     }.onFailure {
         onGooglePayResult(Result.failure(it))
+        viewModel.resetResultState()
     }
 }

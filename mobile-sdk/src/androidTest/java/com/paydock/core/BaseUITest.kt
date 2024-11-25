@@ -15,7 +15,7 @@ import org.koin.test.KoinTest
 import org.koin.test.mock.MockProviderRule
 import org.mockito.Mockito
 
-abstract class BaseUITest : KoinTest {
+internal abstract class BaseUITest : KoinTest {
 
     @get:Rule
     val mockProvider = MockProviderRule.create { clazz ->

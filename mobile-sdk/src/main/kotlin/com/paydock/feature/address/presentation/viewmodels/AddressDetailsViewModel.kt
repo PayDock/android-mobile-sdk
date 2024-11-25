@@ -1,8 +1,8 @@
 package com.paydock.feature.address.presentation.viewmodels
 
 import com.paydock.core.data.util.DispatchersProvider
-import com.paydock.core.presentation.ui.BaseViewModel
-import com.paydock.feature.address.domain.model.BillingAddress
+import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.address.presentation.state.AddressDetailsViewState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

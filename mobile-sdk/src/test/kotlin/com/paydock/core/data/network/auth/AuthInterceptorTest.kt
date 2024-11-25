@@ -3,6 +3,7 @@ package com.paydock.core.data.network.auth
 import com.paydock.core.BaskMockServerUnitTest
 import com.paydock.core.data.injection.modules.mockAuthInterceptorOkHttpModule
 import com.paydock.core.data.injection.modules.mockSuccessNetworkModule
+import com.paydock.core.network.interceptor.AuthInterceptor
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
@@ -14,12 +15,12 @@ import org.junit.Test
 import org.koin.core.context.GlobalContext
 
 /**
- * Unit test for the [CardAuthInterceptor] using [MockWebServer].
+ * Unit test for the [AuthInterceptor] using [MockWebServer].
  */
-class AuthInterceptorTest : BaskMockServerUnitTest() {
+internal class AuthInterceptorTest : BaskMockServerUnitTest() {
 
     /**
-     * Test case to verify that [CardAuthInterceptor] correctly adds the public key as a header to requests.
+     * Test case to verify that [AuthInterceptor] correctly adds the public key as a header to requests.
      */
     @Test
     fun `should succeed using AuthInterceptor to add public key to requests`() = runTest {

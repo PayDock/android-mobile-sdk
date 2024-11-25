@@ -28,7 +28,7 @@ class WalletModule {
     @Provides
     fun provideWalletRepository(
         @Named("IO") dispatcher: CoroutineDispatcher,
-        walletApi: WalletApi
+        walletApi: WalletApi,
     ): WalletRepository {
         return WalletRepositoryImpl(dispatcher, walletApi)
     }

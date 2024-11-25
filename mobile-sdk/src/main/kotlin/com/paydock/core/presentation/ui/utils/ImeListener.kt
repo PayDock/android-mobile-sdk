@@ -16,7 +16,7 @@ import androidx.core.view.WindowInsetsCompat
  * @return A [State] containing the current IME state (true if the keyboard is open, false otherwise).
  */
 @Composable
-fun rememberImeState(): State<Boolean> {
+internal fun rememberImeState(): State<Boolean> {
     // Create a mutable state to store the current IME state
     val imeState = remember {
         mutableStateOf(false)

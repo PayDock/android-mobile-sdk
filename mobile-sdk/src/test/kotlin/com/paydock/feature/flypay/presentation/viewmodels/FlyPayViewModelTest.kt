@@ -3,6 +3,12 @@ package com.paydock.feature.flypay.presentation.viewmodels
 import android.content.Context
 import app.cash.turbine.test
 import com.paydock.MobileSDK
+import com.paydock.api.charges.data.dto.WalletCallbackResponse
+import com.paydock.api.charges.data.mapper.asEntity
+import com.paydock.api.charges.domain.model.WalletCallback
+import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
+import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
+import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.core.BaseUnitTest
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
@@ -13,12 +19,6 @@ import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.utils.MainDispatcherRule
-import com.paydock.feature.wallet.data.api.dto.WalletCallbackResponse
-import com.paydock.feature.wallet.data.mapper.asEntity
-import com.paydock.feature.wallet.domain.model.WalletCallback
-import com.paydock.feature.wallet.domain.usecase.CaptureWalletTransactionUseCase
-import com.paydock.feature.wallet.domain.usecase.DeclineWalletTransactionUseCase
-import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.initializeMobileSDK
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
@@ -46,15 +46,15 @@ import kotlin.test.assertIs
 @Suppress("MaxLineLength")
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
-class FlyPayViewModelTest : BaseUnitTest() {
+internal class FlyPayViewModelTest : BaseUnitTest() {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
     private lateinit var dispatchersProvider: DispatchersProvider
     private lateinit var viewModel: FlyPayViewModel
-    private lateinit var captureWalletTransactionUseCase: CaptureWalletTransactionUseCase
-    private lateinit var declineWalletTransactionUseCase: DeclineWalletTransactionUseCase
+    private lateinit var captureWalletChargeUseCase: CaptureWalletChargeUseCase
+    private lateinit var declineWalletChargeUseCase: DeclineWalletChargeUseCase
     private lateinit var getWalletCallbackUseCase: GetWalletCallbackUseCase
 
     private lateinit var context: Context
@@ -69,12 +69,12 @@ class FlyPayViewModelTest : BaseUnitTest() {
         context.initializeMobileSDK(Environment.SANDBOX)
 
         dispatchersProvider = inject<DispatchersProvider>().value
-        captureWalletTransactionUseCase = mockk()
-        declineWalletTransactionUseCase = mockk()
+        captureWalletChargeUseCase = mockk()
+        declineWalletChargeUseCase = mockk()
         getWalletCallbackUseCase = mockk()
         viewModel = FlyPayViewModel(
-            captureWalletTransactionUseCase,
-            declineWalletTransactionUseCase,
+            captureWalletChargeUseCase,
+            declineWalletChargeUseCase,
             getWalletCallbackUseCase,
             dispatchersProvider
         )
@@ -127,7 +127,7 @@ class FlyPayViewModelTest : BaseUnitTest() {
             val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             val mockFlyPayOrderId = MobileSDKTestConstants.FlyPay.MOCK_ORDER_ID
             val response =
-                readResourceFile("wallet/success_flypay_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
+                readResourceFile("charges/success_flypay_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
             val mockResult = Result.success(response.asEntity())
             coEvery { getWalletCallbackUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state

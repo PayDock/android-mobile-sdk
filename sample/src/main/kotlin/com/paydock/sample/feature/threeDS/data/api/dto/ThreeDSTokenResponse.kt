@@ -4,5 +4,5 @@ import com.paydock.sample.core.data.api.dto.Resource
 
 data class ThreeDSTokenResponse(
     val resource: Resource<ThreeDSResourceData>,
-    val status: Int
+    val status: Int,
 )

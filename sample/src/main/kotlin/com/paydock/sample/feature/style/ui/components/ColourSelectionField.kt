@@ -27,7 +27,7 @@ import com.paydock.sample.feature.style.models.ColourTheme
 fun ColourSelectionField(
     modifier: Modifier = Modifier,
     colourTheme: ColourTheme,
-    onItemClicked: (ColourTheme) -> Unit
+    onItemClicked: (ColourTheme) -> Unit,
 ) {
     Column(
         modifier = modifier,

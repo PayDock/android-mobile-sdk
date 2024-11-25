@@ -6,7 +6,7 @@ import kotlinx.coroutines.CoroutineDispatcher
  * Interface for providing different [CoroutineDispatcher] instances used for coroutines.
  * Defines functions to obtain dispatchers for IO, Main, MainImmediate, and Default threads.
  */
-interface DispatchersProvider {
+internal interface DispatchersProvider {
     /**
      * Returns the [CoroutineDispatcher] for IO-bound tasks.
      *

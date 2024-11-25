@@ -15,6 +15,6 @@ sealed class VaultTokenRequest {
 
     data class CreateCardSessionVaultTokenRequest(
         val token: String = "123",
-        @SerializedName("vault_type") val vaultType: String = "session"
+        @SerializedName("vault_type") val vaultType: String = "session",
     ) : VaultTokenRequest()
 }

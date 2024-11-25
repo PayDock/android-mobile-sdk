@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.conflate
  *
  * @param context The context used to access system services.
  */
-class ConnectivityManagerNetworkMonitor(
+internal class ConnectivityManagerNetworkMonitor(
     private val context: Context
 ) : NetworkMonitor {
     /**

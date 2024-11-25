@@ -18,7 +18,7 @@ import org.koin.core.module.Module
  *     modules = listOf(productionModule, instrumentedTestModule)
  * )
  */
-class KoinTestRule(
+internal class KoinTestRule(
     private val modules: List<Module>
 ) : TestWatcher() {
     override fun starting(description: Description) {

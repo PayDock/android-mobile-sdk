@@ -11,7 +11,7 @@
             android:value="true" />
 
         <activity
-            android:name=".feature.paypal.presentation.PayPalWebActivity"
+            android:name=".feature.paypal.checkout.presentation.PayPalWebActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:launchMode="singleInstance"
             android:theme="@style/SdkDialog" />
@@ -21,5 +21,19 @@
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:launchMode="singleInstance"
             android:theme="@style/SdkDialog" />
+
+        <activity
+            android:name=".feature.paypal.vault.presentation.PayPalVaultActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/SdkNoActionBarTheme" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <data android:scheme="com.paydock.paypal.vault"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

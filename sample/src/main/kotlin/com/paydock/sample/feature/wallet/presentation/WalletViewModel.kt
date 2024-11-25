@@ -2,14 +2,11 @@ package com.paydock.sample.feature.wallet.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.paydock.MobileSDK
-import com.paydock.core.domain.model.Environment
-import com.paydock.feature.wallet.domain.model.WalletType
+import com.paydock.api.charges.domain.model.WalletType
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
 import com.paydock.sample.core.MERCHANT_NAME
-import com.paydock.sample.core.US_CURRENCY_CODE
 import com.paydock.sample.feature.wallet.data.api.dto.Customer
 import com.paydock.sample.feature.wallet.data.api.dto.InitiateWalletRequest
 import com.paydock.sample.feature.wallet.data.api.dto.Item
@@ -109,7 +106,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
 
     private fun createPayPalWalletRequest(): InitiateWalletRequest {
         return InitiateWalletRequest(
-            currency = US_CURRENCY_CODE,
+            currency = AU_CURRENCY_CODE,
             customer = Customer(
                 email = "annaanna@yopmail.com",
                 paymentSource = PaymentSource(
@@ -137,7 +134,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
             currency = AU_CURRENCY_CODE,
             customer = Customer(
                 paymentSource = PaymentSource(
-                    gatewayId = BuildConfig.GATEWAY_ID,
+                    gatewayId = BuildConfig.GATEWAY_ID_GOOGLE_PAY,
                     walletType = WalletType.GOOGLE.type
                 )
             )

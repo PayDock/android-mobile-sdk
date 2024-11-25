@@ -52,7 +52,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ColoursSection(
     colorTheme: ThemeColors.ThemeColor,
-    onColorUpdated: (ThemeColors.ThemeColor) -> Unit
+    onColorUpdated: (ThemeColors.ThemeColor) -> Unit,
 ) {
     // Creates list of actual theming colours to show
     val colourThemeItems = remember {
@@ -168,12 +168,12 @@ sealed class Footer {
     sealed class ButtonSingle : Footer() {
         data class NegativeButton(
             val negativeBtnLabel: String,
-            val onClickNegative: (() -> Unit)?
+            val onClickNegative: (() -> Unit)?,
         ) : Footer()
 
         data class PositiveButton(
             val positiveBtnLabel: String,
-            val onClickPositive: (() -> Unit)?
+            val onClickPositive: (() -> Unit)?,
         ) : Footer()
     }
 
@@ -181,7 +181,7 @@ sealed class Footer {
         val negativeBtnLabel: String,
         val onClickNegative: (() -> Unit)?,
         val positiveBtnLabel: String,
-        val onClickPositive: (() -> Unit)?
+        val onClickPositive: (() -> Unit)?,
     ) : Footer()
 }
 
@@ -190,7 +190,7 @@ sealed class Footer {
 fun ModalBottomSheetTest(
     header: Header,
     content: Content,
-    footer: Footer
+    footer: Footer,
 ) {
     val coroutine = rememberCoroutineScope()
     val sheetState = rememberBottomSheetScaffoldState(
@@ -218,7 +218,7 @@ fun ModalBottomSheetTest(
 class BottomSheetState(
     header: Header,
     content: Content,
-    footer: Footer
+    footer: Footer,
 ) {
     var imageResourceId: Int? = null
         private set
@@ -297,7 +297,7 @@ class BottomSheetState(
 fun BottomSheetContent(
     state: BottomSheetState,
     coroutineScope: CoroutineScope,
-    sheetState: SheetState
+    sheetState: SheetState,
 ) {
     val configuration = LocalConfiguration.current
 
@@ -341,7 +341,7 @@ fun BottomSheetContent(
 
 @Composable
 fun header(
-    imageResourceId: Int
+    imageResourceId: Int,
 ) {
     Box(
         modifier = Modifier
@@ -353,7 +353,7 @@ fun header(
 @Composable
 fun content(
     titleText: String,
-    valueText: String
+    valueText: String,
 ) {
     Text(text = titleText)
     Spacer(modifier = Modifier.height(24.dp))
@@ -370,7 +370,7 @@ fun footer(
     onClickNegative: (() -> Unit)?,
     onClickPositive: (() -> Unit)?,
     coroutine: CoroutineScope,
-    sheetState: SheetState
+    sheetState: SheetState,
 ) {
     if (positiveButton) {
         Button(onClick = onClickPositive!!) {

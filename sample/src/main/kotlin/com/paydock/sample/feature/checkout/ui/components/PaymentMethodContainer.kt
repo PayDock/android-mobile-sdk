@@ -19,7 +19,7 @@ fun PaymentMethodContainer(
     modifier: Modifier = Modifier,
     paymentMethods: List<WidgetType>,
     selectedTab: WidgetType,
-    onTabSelected: (WidgetType) -> Unit
+    onTabSelected: (WidgetType) -> Unit,
 ) {
     Column(
         modifier = modifier,

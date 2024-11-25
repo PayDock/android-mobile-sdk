@@ -30,7 +30,7 @@ class CreateVaultTokenRequestAdapterFactory : TypeAdapterFactory {
 
     private class CreateVaultTokenRequestAdapter(
         private val cardVaultTokenAdapter: TypeAdapter<VaultTokenRequest.CreateCardVaultTokenRequest>,
-        private val cardSessionTokenAdapter: TypeAdapter<VaultTokenRequest.CreateCardSessionVaultTokenRequest>
+        private val cardSessionTokenAdapter: TypeAdapter<VaultTokenRequest.CreateCardSessionVaultTokenRequest>,
     ) : TypeAdapter<VaultTokenRequest>() {
 
         override fun write(out: JsonWriter, value: VaultTokenRequest) {

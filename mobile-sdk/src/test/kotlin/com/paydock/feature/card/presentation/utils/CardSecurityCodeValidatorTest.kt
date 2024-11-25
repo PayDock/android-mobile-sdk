@@ -1,13 +1,13 @@
 package com.paydock.feature.card.presentation.utils
 
-import com.paydock.feature.card.presentation.model.CardIssuerType
-import com.paydock.feature.card.presentation.model.SecurityCodeType
+import com.paydock.feature.card.domain.model.integration.enums.CardIssuerType
+import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class CardSecurityCodeValidatorTest {
+internal class CardSecurityCodeValidatorTest {
 
     @Test
     fun testIsSecurityCodeValid_ValidCVV() {

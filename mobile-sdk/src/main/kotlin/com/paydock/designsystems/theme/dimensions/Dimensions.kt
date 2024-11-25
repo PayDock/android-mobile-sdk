@@ -12,7 +12,8 @@ import com.paydock.MobileSDKTheme
 @Immutable
 internal class Dimensions(
     val borderWidth: Dp = MobileSDK.getInstance().sdkTheme.dimensions.borderWidth,
-    val cornerRadius: Dp = MobileSDK.getInstance().sdkTheme.dimensions.cornerRadius,
+    val textFieldCornerRadius: Dp = MobileSDK.getInstance().sdkTheme.dimensions.textFieldCornerRadius,
+    val buttonCornerRadius: Dp = MobileSDK.getInstance().sdkTheme.dimensions.buttonCornerRadius,
     val spacing: Dp = MobileSDK.getInstance().sdkTheme.dimensions.spacing,
     val shadow: Dp = MobileSDK.getInstance().sdkTheme.dimensions.shadow,
     // SDK Internal Dimensions
@@ -21,12 +22,22 @@ internal class Dimensions(
     val buttonIconSize: Dp = 20.dp,
     val buttonLoaderSize: Dp = 22.dp,
     val buttonLoaderWidth: Dp = 2.dp,
-    val buttonHeight: Dp = 48.dp
+    val buttonHeight: Dp = 48.dp,
 )
 
 internal fun dimensions(sdkTheme: MobileSDKTheme, isSmallDevice: Boolean = false) = Dimensions(
     borderWidth = if (isSmallDevice) sdkTheme.dimensions.borderWidth * 0.8f else sdkTheme.dimensions.borderWidth,
-    cornerRadius = if (isSmallDevice) sdkTheme.dimensions.cornerRadius * 0.8f else sdkTheme.dimensions.cornerRadius,
-    spacing = if (isSmallDevice) sdkTheme.dimensions.spacing * 0.8f else sdkTheme.dimensions.spacing,
+    textFieldCornerRadius = if (isSmallDevice) {
+        sdkTheme.dimensions.textFieldCornerRadius * 0.8f
+    } else
+        sdkTheme.dimensions.textFieldCornerRadius,
+    buttonCornerRadius = if (isSmallDevice) {
+        sdkTheme.dimensions.buttonCornerRadius * 0.8f
+    } else
+        sdkTheme.dimensions.buttonCornerRadius,
+    spacing = if (isSmallDevice) {
+        sdkTheme.dimensions.spacing * 0.8f
+    } else
+        sdkTheme.dimensions.spacing,
     shadow = sdkTheme.dimensions.shadow
 )

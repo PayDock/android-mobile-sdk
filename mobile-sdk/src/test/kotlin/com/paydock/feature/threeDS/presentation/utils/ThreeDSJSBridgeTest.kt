@@ -1,15 +1,15 @@
 package com.paydock.feature.threeDS.presentation.utils
 
 import com.paydock.core.network.extensions.convertToDataClass
-import com.paydock.feature.threeDS.presentation.model.ChargeError
-import com.paydock.feature.threeDS.presentation.model.ChargeErrorEventData
-import com.paydock.feature.threeDS.presentation.model.ThreeDSEvent
+import com.paydock.feature.threeDS.domain.model.ui.ChargeError
+import com.paydock.feature.threeDS.domain.model.ui.ChargeErrorEventData
+import com.paydock.feature.threeDS.domain.model.ui.ThreeDSEvent
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 
-class ThreeDSJSBridgeTest {
+internal class ThreeDSJSBridgeTest {
 
     private lateinit var mockCallback: (ThreeDSEvent) -> Unit
     private lateinit var jsBridge: ThreeDSJSBridge

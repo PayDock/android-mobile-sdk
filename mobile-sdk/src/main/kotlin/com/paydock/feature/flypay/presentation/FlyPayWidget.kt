@@ -9,7 +9,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,9 +19,9 @@ import androidx.compose.ui.platform.LocalContext
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.FlyPayException
+import com.paydock.core.presentation.extensions.getMessageExtra
+import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
-import com.paydock.core.presentation.utils.getWebViewMessageExtra
-import com.paydock.core.presentation.utils.getWebViewStatusExtra
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.feature.flypay.presentation.components.FlyPayButton
 import com.paydock.feature.flypay.presentation.state.FlyPayViewState
@@ -70,13 +69,6 @@ fun FlyPayWidget(
     // Handle wallet response result and reset state
     LaunchedEffect(uiState) {
         handleUiState(context, uiState, clientId, completion, resolvePaymentForResult, viewModel)
-    }
-
-    // Reset form state when the widget is dismissed
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.resetResultState()
-        }
     }
 
     // Composable content rendering
@@ -138,18 +130,19 @@ private fun handleFlyPayResult(
                             Result.failure(
                                 FlyPayException.CancellationException(
                                     displayableMessage = context.getString(
-                                        R.string.error_flypay_cancelled
+                                        R.string.error_flypay_canceled
                                     )
                                 )
                             )
                         )
+                        viewModel.resetResultState()
                     }
 
                     // If the cancellation was due to another reason, process the WebView error status and message.
                     else -> {
-                        val status = data.getWebViewStatusExtra()
+                        val status = data.getStatusExtra()
                         val message =
-                            data.getWebViewMessageExtra(MobileSDKConstants.Errors.FLY_PAY_ERROR)
+                            data.getMessageExtra(MobileSDKConstants.Errors.FLY_PAY_ERROR)
                         completion(
                             Result.failure(
                                 FlyPayException.WebViewException(
@@ -158,6 +151,7 @@ private fun handleFlyPayResult(
                                 )
                             )
                         )
+                        viewModel.resetResultState()
                     }
                 }
             }

@@ -11,12 +11,12 @@ import javax.inject.Inject
 
 class WalletRepositoryImpl @Inject constructor(
     private val dispatcher: CoroutineDispatcher,
-    private val walletApi: WalletApi
+    private val walletApi: WalletApi,
 ) :
     WalletRepository {
     override suspend fun initiateWalletTransaction(
         manualCapture: Boolean,
-        request: InitiateWalletRequest
+        request: InitiateWalletRequest,
     ): WalletCharge =
         withContext(dispatcher) {
             if (manualCapture) {

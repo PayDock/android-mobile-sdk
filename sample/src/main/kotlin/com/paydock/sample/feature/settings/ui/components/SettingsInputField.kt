@@ -22,7 +22,7 @@ fun SettingsInputField(
     modifier: Modifier = Modifier,
     label: String? = null,
     value: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
 

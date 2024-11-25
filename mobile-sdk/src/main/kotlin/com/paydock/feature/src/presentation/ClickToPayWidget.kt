@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,12 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.paydock.R
 import com.paydock.core.domain.error.exceptions.ClickToPayException
-import com.paydock.core.domain.model.meta.ClickToPayMeta
 import com.paydock.designsystems.components.web.SdkWebView
 import com.paydock.designsystems.components.web.config.WidgetConfig
 import com.paydock.designsystems.components.web.utils.HtmlWidgetBuilder
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
+import com.paydock.feature.src.domain.model.integration.meta.ClickToPayMeta
 import com.paydock.feature.src.presentation.utils.ClickToPayJSBridge
 import com.paydock.feature.src.presentation.viewmodels.ClickToPayViewModel
 import kotlinx.coroutines.android.awaitFrame
@@ -95,13 +94,6 @@ fun ClickToPayWidget(
         uiState.token?.let { response ->
             // Send success state to the completion callback
             completion(Result.success(response))
-            viewModel.resetResultState()
-        }
-    }
-
-    // Reset form state when the widget is dismissed
-    DisposableEffect(Unit) {
-        onDispose {
             viewModel.resetResultState()
         }
     }

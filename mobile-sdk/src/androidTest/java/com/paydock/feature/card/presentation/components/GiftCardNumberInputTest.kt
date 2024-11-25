@@ -20,7 +20,7 @@ import org.junit.runner.RunWith
 import kotlin.test.assertNotNull
 
 @RunWith(AndroidJUnit4::class)
-class GiftCardNumberInputTest : BaseUITest() {
+internal class GiftCardNumberInputTest : BaseUITest() {
 
     @get:Rule
     val composeTestRule =

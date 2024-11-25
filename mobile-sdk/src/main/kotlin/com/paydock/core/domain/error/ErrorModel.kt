@@ -4,15 +4,14 @@ import com.paydock.core.domain.error.exceptions.AfterpayException
 import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.domain.error.exceptions.ClickToPayException
 import com.paydock.core.domain.error.exceptions.FlyPayException
+import com.paydock.core.domain.error.exceptions.GenericException
 import com.paydock.core.domain.error.exceptions.GiftCardException
 import com.paydock.core.domain.error.exceptions.GooglePayException
+import com.paydock.core.domain.error.exceptions.PayPalDataCollectorException
 import com.paydock.core.domain.error.exceptions.PayPalException
+import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.domain.error.exceptions.ThreeDSException
 import com.paydock.core.network.exceptions.UnknownApiException
-import kotlinx.serialization.SerializationException
-import java.io.IOException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 
 /**
  * Represents various types of errors that can occur within the application.
@@ -61,6 +60,20 @@ sealed interface ErrorModel {
      * @property exception The [Exception] specific to PayPal.
      */
     data class PayPalError(val exception: PayPalException) : ErrorModel
+
+    /**
+     * PayPal Vault Error: Represents errors specific to PayPal Vault functionality.
+     *
+     * @property exception The [Exception] specific to PayPal Vault.
+     */
+    data class PayPalVaultError(val exception: PayPalVaultException) : ErrorModel
+
+    /**
+     * PayPal Data Collector Error: Represents errors specific to PayPal Data Collector functionality.
+     *
+     * @property exception The [Exception] specific to PayPal Data Collector.
+     */
+    data class PayPalDataCollectorError(val exception: PayPalDataCollectorException) : ErrorModel
 
     /**
      * FlyPay Error: Represents errors specific to FlyPay functionality.
@@ -118,15 +131,18 @@ fun Throwable.toError(): ErrorModel {
         is GiftCardException -> ErrorModel.GiftCardError(this)
         is ThreeDSException -> ErrorModel.ThreeDSError(this)
         is PayPalException -> ErrorModel.PayPalError(this)
+        is PayPalVaultException -> ErrorModel.PayPalVaultError(this)
+        is PayPalDataCollectorException -> ErrorModel.PayPalDataCollectorError(this)
         is FlyPayException -> ErrorModel.FlyPayError(this)
         is ClickToPayException -> ErrorModel.ClickToPayError(this)
         is GooglePayException -> ErrorModel.GooglePayError(this)
         is AfterpayException -> ErrorModel.AfterpayError(this)
         // Generic
-        is SocketTimeoutException -> ErrorModel.ConnectionError.Timeout
-        is UnknownHostException -> ErrorModel.ConnectionError.UnknownHost
-        is IOException -> ErrorModel.ConnectionError.IOError
-        is SerializationException -> ErrorModel.SerializationError(this)
+        is GenericException.TimeoutException -> ErrorModel.ConnectionError.Timeout
+        is GenericException.ConnectionException -> ErrorModel.ConnectionError.UnknownHost
+        is GenericException.DataParsingException -> ErrorModel.SerializationError(this)
+        is GenericException.GeneralException -> ErrorModel.ConnectionError.IOError
+        // Fallback
         else -> ErrorModel.UnknownError(this)
     }
 }

@@ -2,6 +2,9 @@ package com.paydock.feature.googlepay.presentation.viewmodels
 
 import app.cash.turbine.test
 import com.google.android.gms.wallet.PaymentsClient
+import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
+import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
+import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
@@ -10,10 +13,7 @@ import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.utils.MainDispatcherRule
-import com.paydock.feature.charge.domain.model.ChargeResponse
-import com.paydock.feature.wallet.domain.usecase.CaptureWalletTransactionUseCase
-import com.paydock.feature.wallet.domain.usecase.DeclineWalletTransactionUseCase
-import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
+import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -38,7 +38,7 @@ import kotlin.test.assertIs
 @Suppress("MaxLineLength")
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
-class GooglePayViewModelTest : BaseKoinUnitTest() {
+internal class GooglePayViewModelTest : BaseKoinUnitTest() {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -47,20 +47,20 @@ class GooglePayViewModelTest : BaseKoinUnitTest() {
 
     private lateinit var viewModel: GooglePayViewModel
     private lateinit var paymentsClient: PaymentsClient
-    private lateinit var captureWalletTransactionUseCase: CaptureWalletTransactionUseCase
-    private lateinit var declineWalletTransactionUseCase: DeclineWalletTransactionUseCase
+    private lateinit var captureWalletChargeUseCase: CaptureWalletChargeUseCase
+    private lateinit var declineWalletChargeUseCase: DeclineWalletChargeUseCase
     private lateinit var getWalletCallbackUseCase: GetWalletCallbackUseCase
 
     @Before
     fun setup() {
-        captureWalletTransactionUseCase = mockk()
-        declineWalletTransactionUseCase = mockk()
+        captureWalletChargeUseCase = mockk()
+        declineWalletChargeUseCase = mockk()
         getWalletCallbackUseCase = mockk()
         paymentsClient = mockk()
         viewModel = GooglePayViewModel(
             paymentsClient,
-            captureWalletTransactionUseCase,
-            declineWalletTransactionUseCase,
+            captureWalletChargeUseCase,
+            declineWalletChargeUseCase,
             getWalletCallbackUseCase,
             dispatchersProvider
         )
@@ -95,7 +95,7 @@ class GooglePayViewModelTest : BaseKoinUnitTest() {
                     )
                 )
             )
-            coEvery { captureWalletTransactionUseCase(any(), any()) } returns mockResult
+            coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
             viewModel.stateFlow.test {
                 // ACTION
@@ -106,7 +106,7 @@ class GooglePayViewModelTest : BaseKoinUnitTest() {
                 assertFalse(awaitItem().isLoading)
                 // Loading state - before execution
                 assertTrue(awaitItem().isLoading)
-                coVerify { captureWalletTransactionUseCase(any(), any()) }
+                coVerify { captureWalletChargeUseCase(any(), any()) }
                 // Resul state - success
                 awaitItem().let { state ->
                     assertFalse(state.isLoading)
@@ -131,7 +131,7 @@ class GooglePayViewModelTest : BaseKoinUnitTest() {
                 )
             )
             val mockResult = Result.failure<ChargeResponse>(mockError)
-            coEvery { captureWalletTransactionUseCase(any(), any()) } returns mockResult
+            coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
             viewModel.stateFlow.test {
                 // ACTION
@@ -142,7 +142,7 @@ class GooglePayViewModelTest : BaseKoinUnitTest() {
                 assertFalse(awaitItem().isLoading)
                 // Loading state - before execution
                 assertTrue(awaitItem().isLoading)
-                coVerify { captureWalletTransactionUseCase(any(), any()) }
+                coVerify { captureWalletChargeUseCase(any(), any()) }
                 // Resul state - failure
                 awaitItem().let { state ->
                     assertFalse(state.isLoading)

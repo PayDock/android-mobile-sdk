@@ -23,7 +23,7 @@ import com.paydock.sample.feature.checkout.models.CheckoutType
 fun ListRow(
     title: String,
     description: String,
-    onClicked: () -> Unit
+    onClicked: () -> Unit,
 ) {
     Row(
         modifier = Modifier

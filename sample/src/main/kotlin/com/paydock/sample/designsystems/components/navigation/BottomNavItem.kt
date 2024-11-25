@@ -8,7 +8,7 @@ sealed class BottomNavItem(
     @StringRes val label: Int,
     @DrawableRes val iconOutlined: Int,
     @DrawableRes val iconFilled: Int,
-    val route: String
+    val route: String,
 ) {
     data object Checkout : BottomNavItem(
         R.string.nav_checkout,

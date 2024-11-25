@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.paydock.R
-import com.paydock.designsystems.components.InputValidIcon
+import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.search.SearchTextField
 import com.paydock.feature.address.presentation.viewmodels.CountryAutoCompleteViewModel
 import org.koin.androidx.compose.koinViewModel

@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -17,7 +16,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.paydock.R
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
-import com.paydock.designsystems.components.SdkButton
+import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.presentation.components.CardPinInput
@@ -53,6 +52,7 @@ fun GiftCardWidget(
     LaunchedEffect(uiState.value.error) {
         uiState.value.error?.let {
             completion(Result.failure(it))
+            viewModel.resetResultState()
         }
     }
 
@@ -60,13 +60,6 @@ fun GiftCardWidget(
     LaunchedEffect(uiState.value.token) {
         uiState.value.token?.let { token ->
             completion(Result.success(token))
-            viewModel.resetResultState()
-        }
-    }
-
-    // Reset form state when the widget is dismissed
-    DisposableEffect(Unit) {
-        onDispose {
             viewModel.resetResultState()
         }
     }
