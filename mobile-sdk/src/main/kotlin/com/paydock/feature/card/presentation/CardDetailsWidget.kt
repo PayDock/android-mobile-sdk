@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.paydock.R
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
+import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
@@ -42,27 +43,34 @@ import org.koin.core.parameter.parametersOf
  * `CardDetailsViewModel`.
  *
  * @param modifier Modifier for styling and layout customization.
+ * @param enabled Controls the enabled state of this Widget. When false,
+ * this component will not respond to user input, and it will appear visually disabled.
  * @param accessToken The access token required for API requests.
  * @param gatewayId Optional ID of the payment gateway for card processing.
  * @param collectCardholderName Whether to show and collect the cardholder's name.
  * @param actionText Text displayed on the submit button (default: "Submit").
  * @param showCardTitle Whether to show a title above the card inputs (default: true).
  * @param allowSaveCard Configuration for saving card details (nullable).
+ * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
  * @param completion Callback invoked with the result of the tokenization (success or failure).
  */
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun CardDetailsWidget(
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     accessToken: String,
     gatewayId: String? = null,
     collectCardholderName: Boolean = true,
     actionText: String = stringResource(R.string.button_submit),
     showCardTitle: Boolean = true,
     allowSaveCard: SaveCardConfig? = null,
-    completion: (Result<CardResult>) -> Unit,
+    loadingDelegate: WidgetLoadingDelegate? = null,
+    completion: (Result<CardResult>) -> Unit
 ) {
-    val viewModel: CardDetailsViewModel = koinViewModel(parameters = { parametersOf(accessToken, gatewayId) })
+    val viewModel: CardDetailsViewModel = koinViewModel(parameters = {
+        parametersOf(accessToken, gatewayId)
+    })
     viewModel.setCollectCardholderName(collectCardholderName)
     val inputState by viewModel.inputStateFlow.collectAsState()
     val uiState by viewModel.stateFlow.collectAsState()
@@ -74,13 +82,17 @@ fun CardDetailsWidget(
     // Handles UI state changes (success or failure of tokenization)
     LaunchedEffect(uiState) {
         when (val state = uiState) {
-            is CardDetailsUIState.Idle,
-            is CardDetailsUIState.Loading -> Unit
+            is CardDetailsUIState.Idle -> Unit
+            is CardDetailsUIState.Loading -> {
+                loadingDelegate?.widgetLoadingDidStart()
+            }
             is CardDetailsUIState.Success -> {
+                loadingDelegate?.widgetLoadingDidFinish()
                 completion(Result.success(CardResult(token = state.token, saveCard = inputState.saveCard)))
                 viewModel.resetResultState()
             }
             is CardDetailsUIState.Error -> {
+                loadingDelegate?.widgetLoadingDidFinish()
                 completion(Result.failure(state.exception as Throwable))
                 viewModel.resetResultState()
             }
@@ -111,7 +123,7 @@ fun CardDetailsWidget(
                         .fillMaxWidth()
                         .testTag("cardHolderInput"),
                     value = inputState.cardholderName ?: "",
-                    enabled = uiState !is CardDetailsUIState.Loading,
+                    enabled = uiState !is CardDetailsUIState.Loading && enabled,
                     nextFocus = focusCardNumber,
                     onValueChange = { viewModel.updateCardholderName(it) }
                 )
@@ -124,7 +136,7 @@ fun CardDetailsWidget(
                     .focusRequester(focusCardNumber)
                     .testTag("cardNumberInput"),
                 value = inputState.cardNumber,
-                enabled = uiState !is CardDetailsUIState.Loading,
+                enabled = uiState !is CardDetailsUIState.Loading && enabled,
                 onValueChange = { viewModel.updateCardNumber(it) },
                 nextFocus = focusExpiration
             )
@@ -144,7 +156,7 @@ fun CardDetailsWidget(
                         .focusRequester(focusExpiration)
                         .testTag("cardExpiryInput"),
                     value = inputState.expiry,
-                    enabled = uiState !is CardDetailsUIState.Loading,
+                    enabled = uiState !is CardDetailsUIState.Loading && enabled,
                     onValueChange = { viewModel.updateExpiry(it) },
                     nextFocus = focusCVV
                 )
@@ -155,7 +167,7 @@ fun CardDetailsWidget(
                         .focusRequester(focusCVV)
                         .testTag("cardSecurityCodeInput"),
                     value = inputState.code,
-                    enabled = uiState !is CardDetailsUIState.Loading,
+                    enabled = uiState !is CardDetailsUIState.Loading && enabled,
                     cardIssuer = CardIssuerValidator.detectCardIssuer(inputState.cardNumber),
                     onValueChange = { viewModel.updateSecurityCode(it) }
                 )
@@ -164,6 +176,7 @@ fun CardDetailsWidget(
             // Save card toggle switch (if configured)
             if (allowSaveCard != null) {
                 SaveCardToggle(
+                    enabled = uiState !is CardDetailsUIState.Loading && enabled,
                     saveCard = inputState.saveCard,
                     config = allowSaveCard,
                     onToggle = viewModel::updateSaveCard
@@ -176,8 +189,8 @@ fun CardDetailsWidget(
                     .fillMaxWidth()
                     .testTag("saveCard"),
                 text = actionText,
-                enabled = inputState.isDataValid && uiState !is CardDetailsUIState.Loading,
-                isLoading = uiState is CardDetailsUIState.Loading
+                enabled = inputState.isDataValid && uiState !is CardDetailsUIState.Loading && enabled,
+                isLoading = loadingDelegate == null && uiState is CardDetailsUIState.Loading
             ) {
                 viewModel.tokeniseCard()
             }

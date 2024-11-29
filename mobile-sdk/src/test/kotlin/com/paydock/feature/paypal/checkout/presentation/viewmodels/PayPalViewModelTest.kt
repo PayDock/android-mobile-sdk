@@ -248,5 +248,4 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
                 }
             }
         }
-
 }

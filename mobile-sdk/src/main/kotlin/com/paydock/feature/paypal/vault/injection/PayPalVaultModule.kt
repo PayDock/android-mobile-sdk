@@ -13,7 +13,8 @@ import org.koin.dsl.module
 internal val payPalVaultModule = module {
     includes(dispatchersModule)
 
-    // Factory methods for creating instances of ViewModels with access tokens
+    // Factory methods for creating instances of ViewModels
+
     viewModel { (config: PayPalVaultConfig) ->
         PayPalVaultViewModel(config, get(), get(), get(), get(), get())
     }

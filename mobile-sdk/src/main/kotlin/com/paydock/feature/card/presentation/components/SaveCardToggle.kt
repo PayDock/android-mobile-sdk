@@ -18,12 +18,14 @@ import com.paydock.feature.card.domain.model.integration.SaveCardConfig
 /**
  * A composable for displaying a toggle switch to save card details.
  *
+ * @param enabled Controls the enabled state of this section.
  * @param saveCard The current state of the save card toggle switch.
  * @param config The configuration for the save card toggle, including consent text and privacy policy.
  * @param onToggle A callback invoked when the toggle switch is changed.
  */
 @Composable
 internal fun SaveCardToggle(
+    enabled: Boolean = true,
     saveCard: Boolean,
     config: SaveCardConfig,
     onToggle: (Boolean) -> Unit
@@ -47,6 +49,7 @@ internal fun SaveCardToggle(
             // Privacy Policy Label
             if (config.privacyPolicyConfig != null) {
                 HyperlinkText(
+                    enabled = enabled,
                     text = config.privacyPolicyConfig.privacyPolicyText,
                     url = config.privacyPolicyConfig.privacyPolicyURL
                 )
@@ -55,6 +58,7 @@ internal fun SaveCardToggle(
 
         Switch(
             modifier = Modifier.align(Alignment.CenterVertically),
+            enabled = enabled,
             checked = saveCard,
             onCheckedChange = onToggle
         )

@@ -85,7 +85,12 @@ fun CheckoutBottomSheet(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                CardContent(accessToken, viewModel::handleCardResult)
+                                CardContent(
+                                    enabled = !uiState.isLoading,
+                                    accessToken,
+                                    viewModel,
+                                    viewModel::handleCardResult
+                                )
                             }
                         }
 
@@ -102,7 +107,9 @@ fun CheckoutBottomSheet(
                         )
 
                         WidgetType.PAY_PAL -> PayPalContent(
+                            enabled = !uiState.isLoading,
                             viewModel.getWalletToken(WalletType.PAY_PAL),
+                            viewModel,
                             viewModel::handleChargeResult
                         )
 

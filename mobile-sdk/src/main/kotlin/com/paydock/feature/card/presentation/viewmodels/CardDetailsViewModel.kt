@@ -46,7 +46,7 @@ internal class CardDetailsViewModel(
     }
 
     /**
-     * Sets whether the cardholder's name should be collected in the UI.
+     * Sets whether to disable the whole widget.
      *
      * @param collectCardHolderName Boolean indicating whether to collect the cardholder's name.
      */
@@ -57,6 +57,7 @@ internal class CardDetailsViewModel(
     }
 
     /**
+     * Reset the result state, clearing token and error.
      * Updates the cardholder's name in the input state.
      *
      * @param name The name of the cardholder to set.
@@ -112,6 +113,15 @@ internal class CardDetailsViewModel(
     }
 
     /**
+     * Updates the UI state to a new value.
+     *
+     * @param newState The new state to set for the UI.
+     */
+    private fun updateState(newState: CardDetailsUIState) {
+        _stateFlow.value = newState
+    }
+
+    /**
      * Initiates the card tokenization process by making an API request.
      *
      * - Updates the UI state to `Loading` before starting the process.
@@ -122,6 +132,7 @@ internal class CardDetailsViewModel(
     fun tokeniseCard() {
         launchOnIO {
             updateState(CardDetailsUIState.Loading)
+
             val state = _inputStateFlow.value
             val request = CreatePaymentTokenRequest.TokeniseCardRequest.CreditCard(
                 cvv = state.code,
@@ -140,14 +151,5 @@ internal class CardDetailsViewModel(
                         ?.let { updateState(CardDetailsUIState.Error(it)) }
                 }
         }
-    }
-
-    /**
-     * Updates the UI state to a new value.
-     *
-     * @param newState The new state to set for the UI.
-     */
-    private fun updateState(newState: CardDetailsUIState) {
-        _stateFlow.value = newState
     }
 }

@@ -4,14 +4,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.card.domain.model.integration.CardResult
 import com.paydock.feature.card.domain.model.integration.SaveCardConfig
 import com.paydock.feature.card.presentation.CardDetailsWidget
 
 @Composable
-fun CardContent(accessToken: String, resultHandler: (Result<CardResult>) -> Unit) {
+fun CardContent(enabled: Boolean = true,
+                accessToken: String,
+                loadingDelegate: WidgetLoadingDelegate?,
+                resultHandler: (Result<CardResult>) -> Unit) {
     CardDetailsWidget(
         modifier = Modifier.padding(vertical = 16.dp),
+        enabled = enabled,
         accessToken = accessToken,
         actionText = "Pay",
         showCardTitle = false,
@@ -22,6 +27,7 @@ fun CardContent(accessToken: String, resultHandler: (Result<CardResult>) -> Unit
                 privacyPolicyURL = "https://www.google.com"
             )
         ),
+        loadingDelegate = loadingDelegate,
         completion = resultHandler
     )
 }
