@@ -24,6 +24,7 @@ import com.paydock.feature.card.presentation.utils.CreditCardInputValidator
  *
  * @param modifier The modifier to be applied to the composable.
  * @param value The current value of the cardholder name.
+ * @param enabled Controls the enabled state of this Widget
  * @param nextFocus The focus requester for the next input field (optional).
  * @param onValueChange The callback function to be invoked when the value of the cardholder name changes.
  */

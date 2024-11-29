@@ -9,9 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -21,6 +18,7 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
+import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.AppButtonType
 import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.theme.SdkTheme
@@ -44,15 +42,20 @@ import org.koin.core.parameter.parametersOf
  * with the corresponding result.
  *
  * @param modifier The [Modifier] to be applied to the widget.
+ * @param enabled Controls the enabled state of this Widget. When false,
+ * this component will not respond to user input, and it will appear visually disabled.
  * @param config The configuration for PayPal vault, including the access token and gateway ID.
+ * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
  * @param completion The callback invoked when the PayPal linking process completes, either with a success
  *                   containing a [PayPalVaultResult] or a failure containing a [PayPalVaultException].
  */
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun PayPalSavePaymentSourceWidget(
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     config: PayPalVaultConfig,
+    loadingDelegate: WidgetLoadingDelegate? = null,
     completion: (Result<PayPalVaultResult>) -> Unit,
 ) {
     // Obtain the current context
@@ -60,7 +63,6 @@ fun PayPalSavePaymentSourceWidget(
 
     // Get the PayPalVaultViewModel from Koin, passing the config as a parameter
     val viewModel: PayPalVaultViewModel = koinViewModel(parameters = { parametersOf(config) })
-    var isPayPalFlowLaunched by remember { mutableStateOf(false) }
 
     // Collect the current state from the ViewModel's state flow
     val uiState by viewModel.stateFlow.collectAsState()
@@ -130,26 +132,36 @@ fun PayPalSavePaymentSourceWidget(
 
     LaunchedEffect(uiState) {
         when (val state = uiState) {
-            is PayPalVaultUIState.Idle,
-            is PayPalVaultUIState.Loading -> Unit
+            is PayPalVaultUIState.Idle -> Unit
+            is PayPalVaultUIState.Loading -> {
+                loadingDelegate?.widgetLoadingDidStart()
+            }
+
             is PayPalVaultUIState.LaunchIntent -> {
-                if (!isPayPalFlowLaunched) {
-                    val (clientId, setupToken) = state // Assuming destructuring is supported
-                    val intent = Intent(context, PayPalVaultActivity::class.java)
-                        .putClientIdExtra(clientId)
-                        .putSetupTokenExtra(setupToken)
-                    resolvePaymentForResult.launch(intent)
-                    isPayPalFlowLaunched = true
-                }
+                loadingDelegate?.widgetLoadingDidFinish()
+                val (clientId, setupToken) = state // Assuming destructuring is supported
+                val intent = Intent(context, PayPalVaultActivity::class.java)
+                    .putClientIdExtra(clientId)
+                    .putSetupTokenExtra(setupToken)
+                resolvePaymentForResult.launch(intent)
             }
 
             is PayPalVaultUIState.Success -> {
-                completion(Result.success(PayPalVaultResult(token = state.details.token, email = state.details.email)))
+                loadingDelegate?.widgetLoadingDidFinish()
+                completion(
+                    Result.success(
+                        PayPalVaultResult(
+                            token = state.details.token,
+                            email = state.details.email
+                        )
+                    )
+                )
                 // This ensures that we clear the state so it's not reused
                 viewModel.resetResultState()
             }
 
             is PayPalVaultUIState.Error -> {
+                loadingDelegate?.widgetLoadingDidFinish()
                 completion(Result.failure(state.exception as Throwable))
                 // This ensures that we clear the state so it's not reused
                 viewModel.resetResultState()
@@ -166,11 +178,10 @@ fun PayPalSavePaymentSourceWidget(
             iconDrawable = R.drawable.ic_link,
             text = config.actionText ?: stringResource(id = R.string.button_link_paypal_account),
             type = AppButtonType.Outlined,
-            enabled = uiState !is PayPalVaultUIState.Loading,
-            isLoading = uiState is PayPalVaultUIState.Loading
+            enabled = uiState !is PayPalVaultUIState.Loading && enabled,
+            isLoading = loadingDelegate == null && uiState is PayPalVaultUIState.Loading
         ) {
             viewModel.createCustomerSessionAuthToken()
-            isPayPalFlowLaunched = false
         }
     }
 }

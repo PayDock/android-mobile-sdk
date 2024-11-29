@@ -18,7 +18,7 @@ if (secretPropsFile.exists()) {
     }
 } else {
     ext["username"] = System.getenv("GITHUB_USERNAME")
-    ext["token"] = System.getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
+    ext["token"] = System.getenv("GITHUB_TOKEN")
 }
 
 publishing {

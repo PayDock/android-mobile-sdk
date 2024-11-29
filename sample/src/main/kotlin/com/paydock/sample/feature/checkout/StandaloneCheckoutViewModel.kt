@@ -3,6 +3,7 @@ package com.paydock.sample.feature.checkout
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.paydock.api.charges.domain.model.WalletType
+import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.card.domain.model.integration.CardResult
 import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import com.paydock.feature.threeDS.domain.model.integration.ThreeDSResult
@@ -42,7 +43,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
     private val createIntegratedThreeDSTokenUseCase: CreateIntegratedThreeDSTokenUseCase,
     private val captureCardChargeTokenUseCase: CaptureCardChargeTokenUseCase,
     private val captureWalletChargeUseCase: CaptureWalletChargeUseCase,
-) : ViewModel() {
+) : ViewModel(), WidgetLoadingDelegate {
 
     private val _stateFlow: MutableStateFlow<CheckoutUIState> = MutableStateFlow(CheckoutUIState())
     val stateFlow: StateFlow<CheckoutUIState> = _stateFlow
@@ -244,21 +245,17 @@ class StandaloneCheckoutViewModel @Inject constructor(
         callback: (String) -> Unit,
     ) {
         viewModelScope.launch {
-            _stateFlow.update { state ->
-                state.copy(isLoading = true)
-            }
             val result =
                 initiateWalletTransactionUseCase(manualCapture = manualCapture, request = request)
             result.onSuccess { charge ->
                 charge.walletToken?.let { callback(it) }
                 _stateFlow.update { state ->
-                    state.copy(isLoading = false, error = null, walletChargeResult = charge)
+                    state.copy(error = null, walletChargeResult = charge)
                 }
             }
             result.onFailure {
                 _stateFlow.update { state ->
                     state.copy(
-                        isLoading = false,
                         error = it.message ?: CHARGE_TRANSACTION_ERROR
                     )
                 }
@@ -410,6 +407,17 @@ class StandaloneCheckoutViewModel @Inject constructor(
         }
     }
 
+    override fun widgetLoadingDidStart() {
+        _stateFlow.update { state ->
+            state.copy(isLoading = true)
+        }
+    }
+
+    override fun widgetLoadingDidFinish() {
+        _stateFlow.update { state ->
+            state.copy(isLoading = false)
+        }
+    }
 }
 
 data class CheckoutUIState(

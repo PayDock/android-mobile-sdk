@@ -170,19 +170,23 @@ private fun RowScope.ButtonContent(
             ),
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Display the icon (if any) and text in a consistent layout
-            if (vector != null) {
-                Icon(
-                    modifier = Modifier.size(Theme.dimensions.buttonIconSize),
-                    imageVector = vector,
-                    contentDescription = stringResource(id = R.string.content_desc_button_icon),
-                )
-            } else if (drawableRes != null) {
-                Icon(
-                    modifier = Modifier.size(Theme.dimensions.buttonIconSize),
-                    painter = painterResource(drawableRes),
-                    contentDescription = stringResource(id = R.string.content_desc_button_icon),
-                )
+            if (loadingState) {
+                SdkButtonLoader()
+            } else {
+                // Display the icon (if any) and text in a consistent layout
+                if (vector != null) {
+                    Icon(
+                        modifier = Modifier.size(Theme.dimensions.buttonIconSize),
+                        imageVector = vector,
+                        contentDescription = stringResource(id = R.string.content_desc_button_icon),
+                    )
+                } else if (drawableRes != null) {
+                    Icon(
+                        modifier = Modifier.size(Theme.dimensions.buttonIconSize),
+                        painter = painterResource(drawableRes),
+                        contentDescription = stringResource(id = R.string.content_desc_button_icon),
+                    )
+                }
             }
             Text(
                 text = text,
@@ -192,9 +196,6 @@ private fun RowScope.ButtonContent(
                     platformStyle = PlatformTextStyle(includeFontPadding = false)
                 )
             )
-            if (loadingState) {
-                SdkButtonLoader()
-            }
         }
     }
 }

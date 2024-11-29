@@ -36,20 +36,20 @@ fun CheckoutBaseScreen(onCheckoutButtonClick: () -> Unit) {
             BasketItemView(
                 title = "ThinkPad X1 Yoga Gen 7",
                 description = "ThinkPad X1 Yoga Gen 7\n14” Intel 2 in 1 Laptop",
-                price = "£3,299",
+                price = "$3,299",
                 image = R.drawable.demo_product_1
             )
             BasketItemView(
                 title = "Galaxy S23 Ultra",
                 description = "SM-S918BZGHSEK\n512 GB｜12 GB｜Green",
-                price = "£2,199",
+                price = "$2,199",
                 image = R.drawable.demo_product_2
             )
             Spacer(modifier = Modifier.weight(1.0f))
-            TotalRowView(title = "Subtotal", value = "£5,498", color = Theme.colors.outlineVariant)
+            TotalRowView(title = "Subtotal", value = "$5,498", color = Theme.colors.outlineVariant)
             TotalRowView(title = "Shipping", value = "Free", color = Theme.colors.outlineVariant)
             Divider(color = Theme.colors.outlineVariant)
-            TotalRowView(title = "Total", value = "£5,498", color = Theme.colors.onBackground)
+            TotalRowView(title = "Total", value = "$5,498", color = Theme.colors.onBackground)
             AppButton(
                 modifier = Modifier.fillMaxWidth(),
                 text = "Checkout",

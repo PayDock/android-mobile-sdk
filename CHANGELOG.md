@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0] - 2024-11-27
+
+### Added
+
+- New `loadingDelegate` field added to `CardDetailsWidget`, `PayPalWidget` and `PayPalSavePaymentSourceWidget`
+- New `enabled` flag added to `CardDetailsWidget`, `PayPalWidget` and `PayPalSavePaymentSourceWidget`
+
 ## [2.0.0] - 2024-11-22
 
 ### Added

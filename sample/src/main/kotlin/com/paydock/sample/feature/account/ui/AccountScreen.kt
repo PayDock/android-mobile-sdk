@@ -15,12 +15,14 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
+import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.presentation.PayPalSavePaymentSourceWidget
 import com.paydock.sample.BuildConfig
@@ -30,6 +32,7 @@ import com.paydock.sample.designsystems.theme.Theme
 @Composable
 fun AccountScreen() {
     val scrollState = rememberScrollState()
+    val delegate = remember { AccountLoadingDelegate() }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -65,7 +68,8 @@ fun AccountScreen() {
                     text = stringResource(R.string.label_link_paypal_desc)
                 )
                 PayPalSavePaymentSourceWidget(
-                    config = getPayPalVaultConfig()
+                    config = getPayPalVaultConfig(),
+                    loadingDelegate = delegate
                 ) { result ->
                     result.onSuccess {
                         Log.d("[PayPalSavePaymentSourceWidget]", "Success: $it")
@@ -87,4 +91,14 @@ private fun getPayPalVaultConfig(): PayPalVaultConfig {
         accessToken = BuildConfig.ACCESS_TOKEN,
         gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL
     )
+}
+
+class AccountLoadingDelegate(): WidgetLoadingDelegate {
+    override fun widgetLoadingDidStart() {
+        Log.d("[PayPalSavePaymentSourceWidget]", "Loading: true")
+    }
+
+    override fun widgetLoadingDidFinish() {
+        Log.d("[PayPalSavePaymentSourceWidget]", "Loading: false")
+    }
 }
