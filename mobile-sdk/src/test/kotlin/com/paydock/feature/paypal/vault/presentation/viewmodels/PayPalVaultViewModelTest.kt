@@ -3,9 +3,7 @@ package com.paydock.feature.paypal.vault.presentation.viewmodels
 import app.cash.turbine.test
 import com.paydock.api.gateways.domain.usecase.GetPayPalClientIdUseCase
 import com.paydock.api.tokens.domain.model.PayPalPaymentTokenDetails
-import com.paydock.api.tokens.domain.model.SessionAuthToken
 import com.paydock.api.tokens.domain.usecase.CreatePayPalVaultPaymentTokenUseCase
-import com.paydock.api.tokens.domain.usecase.CreateSessionAuthTokenUseCase
 import com.paydock.api.tokens.domain.usecase.CreateSetupTokenUseCase
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
@@ -41,7 +39,6 @@ internal class PayPalVaultViewModelTest : BaseKoinUnitTest() {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val dispatchersProvider: DispatchersProvider by inject()
-    private lateinit var createSessionAuthTokenUseCase: CreateSessionAuthTokenUseCase
     private lateinit var createSetupTokenUseCase: CreateSetupTokenUseCase
     private lateinit var getPayPalClientIdUseCase: GetPayPalClientIdUseCase
     private lateinit var createPayPalVaultPaymentTokenUseCase: CreatePayPalVaultPaymentTokenUseCase
@@ -62,13 +59,11 @@ internal class PayPalVaultViewModelTest : BaseKoinUnitTest() {
             accessToken = MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN,
             gatewayId = MobileSDKTestConstants.General.MOCK_GATEWAY_ID
         )
-        createSessionAuthTokenUseCase = mockk()
         createSetupTokenUseCase = mockk()
         getPayPalClientIdUseCase = mockk()
         createPayPalVaultPaymentTokenUseCase = mockk()
         viewModel = PayPalVaultViewModel(
             config,
-            createSessionAuthTokenUseCase,
             createSetupTokenUseCase,
             getPayPalClientIdUseCase,
             createPayPalVaultPaymentTokenUseCase,
@@ -77,44 +72,8 @@ internal class PayPalVaultViewModelTest : BaseKoinUnitTest() {
     }
 
     private fun preparePayPalCompleteSuccessFlow() {
-        prepareCreateSessionAuthSuccess()
         prepareCreateSetupTokenSuccess()
         prepareGetClientIdSuccess()
-    }
-
-    private fun prepareCreateSessionAuthSuccess() {
-        // Prepare Auth Token
-        val mockAuthTokenResult = Result.success(
-            SessionAuthToken(
-                accessToken = MOCK_ACCESS_TOKEN,
-                idToken = MOCK_ID_TOKEN
-            )
-        )
-        coEvery {
-            createSessionAuthTokenUseCase(
-                any(),
-                any()
-            )
-        } returns mockAuthTokenResult
-    }
-
-    private fun prepareCreateSessionAuthTokenFailure() {
-        val mockError = PayPalVaultException.CreateSessionAuthTokenException(
-            error = ApiErrorResponse(
-                status = HttpStatusCode.InternalServerError.value,
-                summary = ErrorSummary(
-                    code = "auth_token",
-                    message = MobileSDKTestConstants.Errors.MOCK_AUTH_TOKEN_ERROR
-                )
-            )
-        )
-        val mockResult = Result.failure<SessionAuthToken>(mockError)
-        coEvery {
-            createSessionAuthTokenUseCase(
-                any(),
-                any()
-            )
-        } returns mockResult
     }
 
     private fun prepareCreateSetupTokenFailure() {
@@ -189,13 +148,13 @@ internal class PayPalVaultViewModelTest : BaseKoinUnitTest() {
     }
 
     @Test
-    fun `paypal vault token and clientId end-to-end flow should update isLoading, call 3 useCases, and update states on success`() =
+    fun `paypal vault token and clientId end-to-end flow should update isLoading, call 2 useCases, and update states on success`() =
         runTest {
             preparePayPalCompleteSuccessFlow()
             // Allows for testing flow state
             viewModel.stateFlow.test {
                 // ACTION
-                viewModel.createCustomerSessionAuthToken()
+                viewModel.createPayPalSetupToken()
                 // CHECK
                 // Initial state
                 assertIs<PayPalVaultUIState.Idle>(awaitItem())
@@ -206,12 +165,6 @@ internal class PayPalVaultViewModelTest : BaseKoinUnitTest() {
                     assertIs<PayPalVaultUIState.LaunchIntent>(state)
                     assertEquals(MOCK_SETUP_TOKEN, state.setupToken)
                     assertEquals(MOCK_CLIENT_ID, state.clientId)
-                }
-                coVerify {
-                    createSessionAuthTokenUseCase(
-                        any(),
-                        any()
-                    )
                 }
                 coVerify {
                     createSetupTokenUseCase(
@@ -229,39 +182,12 @@ internal class PayPalVaultViewModelTest : BaseKoinUnitTest() {
         }
 
     @Test
-    fun `create session auth token failure flow should update isLoading, call useCase, and update state on failure`() =
-        runTest {
-            prepareCreateSessionAuthTokenFailure()
-            // Allows for testing flow state
-            viewModel.stateFlow.test {
-                viewModel.createCustomerSessionAuthToken()
-                // CHECK
-                // Initial state
-                assertIs<PayPalVaultUIState.Idle>(awaitItem())
-                // Loading state - before execution
-                assertIs<PayPalVaultUIState.Loading>(awaitItem())
-                runCurrent() // Execute pending coroutine dispatcher
-                coVerify { createSessionAuthTokenUseCase(any(), any()) }
-                // Result state - success
-                awaitItem().let { state ->
-                    assertIs<PayPalVaultUIState.Error>(state)
-                    assertIs<PayPalVaultException.CreateSessionAuthTokenException>(state.exception)
-                    assertEquals(
-                        MobileSDKTestConstants.Errors.MOCK_AUTH_TOKEN_ERROR,
-                        state.exception.message
-                    )
-                }
-            }
-        }
-
-    @Test
     fun `create setup token failure flow should update isLoading, call useCase, and update states on failure`() =
         runTest {
-            prepareCreateSessionAuthSuccess()
             prepareCreateSetupTokenFailure()
             // Allows for testing flow state
             viewModel.stateFlow.test {
-                viewModel.createCustomerSessionAuthToken()
+                viewModel.createPayPalSetupToken()
                 // CHECK
                 // Initial state
                 assertIs<PayPalVaultUIState.Idle>(awaitItem())
@@ -284,12 +210,11 @@ internal class PayPalVaultViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `get clientId failure flow should update isLoading, call useCase, and update states on failure`() =
         runTest {
-            prepareCreateSessionAuthSuccess()
             prepareCreateSetupTokenSuccess()
             prepareGetClientIdFailure()
             // Allows for testing flow state
             viewModel.stateFlow.test {
-                viewModel.createCustomerSessionAuthToken()
+                viewModel.createPayPalSetupToken()
                 // CHECK
                 // Initial state
                 assertIs<PayPalVaultUIState.Idle>(awaitItem())
@@ -313,7 +238,7 @@ internal class PayPalVaultViewModelTest : BaseKoinUnitTest() {
     fun `create payment source should update isLoading, call useCase, and update state on success`() =
         runTest {
             preparePayPalCompleteSuccessFlow()
-            viewModel.createCustomerSessionAuthToken()
+            viewModel.createPayPalSetupToken()
             runCurrent() // Execute pending coroutine dispatchers
 
             val mockToken = MobileSDKTestConstants.PayPalVault.MOCK_PAYMENT_TOKEN
@@ -349,7 +274,7 @@ internal class PayPalVaultViewModelTest : BaseKoinUnitTest() {
     fun `create payment source should update isLoading, call useCase, and update state on failure`() =
         runTest {
             preparePayPalCompleteSuccessFlow()
-            viewModel.createCustomerSessionAuthToken()
+            viewModel.createPayPalSetupToken()
             runCurrent() // Execute pending coroutine dispatchers
 
             val mockError = PayPalVaultException.CreatePaymentTokenException(

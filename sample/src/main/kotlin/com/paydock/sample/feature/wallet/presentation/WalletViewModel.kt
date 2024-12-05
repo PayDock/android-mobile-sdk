@@ -7,14 +7,10 @@ import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
 import com.paydock.sample.core.MERCHANT_NAME
-import com.paydock.sample.feature.wallet.data.api.dto.Customer
-import com.paydock.sample.feature.wallet.data.api.dto.InitiateWalletRequest
-import com.paydock.sample.feature.wallet.data.api.dto.Item
-import com.paydock.sample.feature.wallet.data.api.dto.Meta
-import com.paydock.sample.feature.wallet.data.api.dto.PaymentSource
-import com.paydock.sample.feature.wallet.data.api.dto.Shipping
-import com.paydock.sample.feature.wallet.domain.model.WalletCharge
-import com.paydock.sample.feature.wallet.domain.usecase.InitiateWalletTransactionUseCase
+import com.paydock.sample.feature.charges.data.api.dto.ChargesCustomerDTO
+import com.paydock.sample.feature.charges.data.api.dto.InitiateWalletRequest
+import com.paydock.sample.feature.charges.domain.model.WalletCharge
+import com.paydock.sample.feature.charges.domain.usecase.InitiateWalletTransactionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,7 +35,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
     private fun initiateWalletTransaction(
         manualCapture: Boolean = false,
         request: InitiateWalletRequest,
-        callback: (String) -> Unit
+        callback: (String) -> Unit,
     ) {
         viewModelScope.launch {
             _stateFlow.update { state ->
@@ -107,9 +103,9 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
     private fun createPayPalWalletRequest(): InitiateWalletRequest {
         return InitiateWalletRequest(
             currency = AU_CURRENCY_CODE,
-            customer = Customer(
+            customer = ChargesCustomerDTO(
                 email = "annaanna@yopmail.com",
-                paymentSource = PaymentSource(
+                paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
                     gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL,
                     walletType = WalletType.PAY_PAL.type
                 )
@@ -120,8 +116,8 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
     private fun createFlyPayWalletRequest(): InitiateWalletRequest {
         return InitiateWalletRequest(
             currency = AU_CURRENCY_CODE,
-            customer = Customer(
-                paymentSource = PaymentSource(
+            customer = ChargesCustomerDTO(
+                paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
                     gatewayId = BuildConfig.GATEWAY_ID_FLY_PAY,
                     walletType = WalletType.FLY_PAY.type
                 )
@@ -132,8 +128,8 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
     private fun createGoogleWalletRequest(): InitiateWalletRequest {
         return InitiateWalletRequest(
             currency = AU_CURRENCY_CODE,
-            customer = Customer(
-                paymentSource = PaymentSource(
+            customer = ChargesCustomerDTO(
+                paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
                     gatewayId = BuildConfig.GATEWAY_ID_GOOGLE_PAY,
                     walletType = WalletType.GOOGLE.type
                 )
@@ -145,11 +141,11 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
     private fun createAfterpayWalletRequest(): InitiateWalletRequest {
         return InitiateWalletRequest(
             currency = AU_CURRENCY_CODE,
-            customer = Customer(
+            customer = ChargesCustomerDTO(
                 email = "david.cameron@paydock.com",
                 firstName = "David",
                 lastName = "Cameron",
-                paymentSource = PaymentSource(
+                paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
                     gatewayId = BuildConfig.GATEWAY_ID_AFTER_PAY,
                     walletType = WalletType.AFTER_PAY.type,
                     addressLine1 = "asd1",
@@ -161,14 +157,14 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                     postalCode = "12345",
                 )
             ),
-            meta = Meta(
+            meta = InitiateWalletRequest.MetaDTO(
                 storeId = "1234",
                 storeName = MERCHANT_NAME,
                 successUrl = "https://paydock-integration.netlify.app/success",
                 errorUrl = "https://paydock-integration.netlify.app/error"
             ),
-            shipping = Shipping(),
-            items = listOf(Item())
+            shippingDTO = InitiateWalletRequest.ShippingDTO(),
+            itemDTOS = listOf(InitiateWalletRequest.ItemDTO())
         )
     }
 }
@@ -176,5 +172,5 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
 data class WalletTransactionUIState(
     val isLoading: Boolean = false,
     val walletChargeResult: WalletCharge? = null,
-    val error: String? = null
+    val error: String? = null,
 )

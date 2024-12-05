@@ -1,10 +1,8 @@
 package com.paydock.api.tokens.domain.repository
 
 import com.paydock.api.tokens.data.dto.CreatePaymentTokenRequest
-import com.paydock.api.tokens.data.dto.CreateSessionTokenAuthRequest
 import com.paydock.api.tokens.data.dto.CreateSetupTokenRequest
 import com.paydock.api.tokens.domain.model.PayPalPaymentTokenDetails
-import com.paydock.api.tokens.domain.model.SessionAuthToken
 import com.paydock.api.tokens.domain.model.TokenDetails
 import kotlinx.coroutines.flow.Flow
 
@@ -64,21 +62,6 @@ internal interface TokenRepository {
         accessToken: String,
         request: CreatePaymentTokenRequest
     ): Flow<TokenDetails>
-
-    /**
-     * Creates a session authentication token using the provided access token and request data.
-     *
-     * This method should be implemented to send a request to the PayPal API to generate
-     * an OAuth token for payment sources.
-     *
-     * @param accessToken The access token required for authorization.
-     * @param request The [CreateSessionTokenAuthRequest] containing the gateway ID.
-     * @return A [SessionAuthToken] object containing the access token and ID token for the session.
-     */
-    suspend fun createSessionAuthToken(
-        accessToken: String,
-        request: CreateSessionTokenAuthRequest
-    ): SessionAuthToken
 
     /**
      * Sends a request to the PayPal API to create a setup token for payment sources.

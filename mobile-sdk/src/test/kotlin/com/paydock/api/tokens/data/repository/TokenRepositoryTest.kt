@@ -1,10 +1,8 @@
 package com.paydock.api.tokens.data.repository
 
 import com.paydock.api.tokens.data.dto.CreatePaymentTokenRequest
-import com.paydock.api.tokens.data.dto.CreateSessionTokenAuthRequest
 import com.paydock.api.tokens.data.dto.CreateSetupTokenRequest
 import com.paydock.api.tokens.data.dto.PaymentTokenResponse
-import com.paydock.api.tokens.data.dto.SessionAuthTokenResponse
 import com.paydock.api.tokens.data.dto.SetupTokenResponse
 import com.paydock.api.tokens.data.mapper.asEntity
 import com.paydock.api.tokens.domain.repository.TokenRepository
@@ -207,42 +205,6 @@ class TokenRepositoryTest : BaseKoinUnitTest() {
                 MobileSDKTestConstants.PayPalVault.MOCK_SETUP_TOKEN,
                 request
             )
-            // THEN - It should throw an exception
-            assertNotNull(result)
-        }
-
-    @Test
-    fun `GIVEN valid session auth request WHEN creating paypal oauth token THEN should succeed with session auth response resource`() =
-        testScope.runTest {
-            // GIVEN
-            repository = TokenRepositoryImpl(get(), httpMockClient)
-
-            val request =
-                readResourceFile("token/valid_create_session_auth_request.json")
-                    .convertToDataClass<CreateSessionTokenAuthRequest>()
-            val response =
-                readResourceFile("token/success_session_auth_response.json")
-                    .convertToDataClass<SessionAuthTokenResponse>()
-            val entity = response.asEntity()
-            // WHEN - Call the method to be tested
-            val result = repository.createSessionAuthToken(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, request)
-            // THEN - Verify the result
-            assertNotNull(response)
-            assertEquals(entity, result)
-        }
-
-    @Test(expected = ClientRequestException::class)
-    fun `GIVEN invalid session auth request WHEN creating paypal oauth token THEN should fail with error response resource`() =
-        testScope.runTest {
-            unloadKoinModules(mockSuccessNetworkModule)
-            loadKoinModules(mockFailureNetworkModule)
-            // GIVEN
-            repository = TokenRepositoryImpl(get(), httpMockClient)
-            val request =
-                readResourceFile("token/invalid_create_session_auth_request.json")
-                    .convertToDataClass<CreateSessionTokenAuthRequest>()
-            // WHEN - Call the method to be tested
-            val result = repository.createSessionAuthToken(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, request)
             // THEN - It should throw an exception
             assertNotNull(result)
         }

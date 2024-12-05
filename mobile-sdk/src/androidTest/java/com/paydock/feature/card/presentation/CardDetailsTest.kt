@@ -38,6 +38,8 @@ import org.koin.core.annotation.KoinInternalApi
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import org.koin.mp.KoinPlatformTools
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @OptIn(KoinInternalApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -149,7 +151,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         composeTestRule.onNodeWithTag("saveCard").assertIsDisplayed().assertIsEnabled()
 
         // Assert ViewModel interactions
-//        assertTrue(viewModel.stateFlow.value.isDataValid)
+        assertTrue(viewModel.inputStateFlow.value.isDataValid)
     }
 
     @Test
@@ -206,7 +208,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         composeTestRule.waitForIdle()
 
         // Assert ViewModel interactions
-//        assertFalse(viewModel.stateFlow.value.isDataValid)
+        assertFalse(viewModel.inputStateFlow.value.isDataValid)
     }
 
     @Test

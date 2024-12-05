@@ -1,9 +1,7 @@
 package com.paydock.api.tokens.data.mapper
 
 import com.paydock.api.tokens.data.dto.PaymentTokenResponse
-import com.paydock.api.tokens.data.dto.SessionAuthTokenResponse
 import com.paydock.api.tokens.domain.model.PayPalPaymentTokenDetails
-import com.paydock.api.tokens.domain.model.SessionAuthToken
 import com.paydock.api.tokens.domain.model.TokenDetails
 
 /**
@@ -32,17 +30,4 @@ internal fun PaymentTokenResponse.CardTokenResponse.asEntity() = TokenDetails(
 internal fun PaymentTokenResponse.PayPalVaultTokenResponse.asEntity() = PayPalPaymentTokenDetails(
     token = resource.data?.token ?: "",
     email = resource.data?.email ?: ""
-)
-
-/**
- * Converts a [SessionAuthTokenResponse] into a [SessionAuthToken] entity.
- *
- * This function extracts the `accessToken` and `idToken` from the response's resource data
- * and maps them to the corresponding properties in the [SessionAuthToken] object.
- *
- * @return A [SessionAuthToken] instance with the access token and ID token.
- */
-internal fun SessionAuthTokenResponse.asEntity() = SessionAuthToken(
-    accessToken = resource.data?.accessToken ?: "",
-    idToken = resource.data?.idToken ?: ""
 )

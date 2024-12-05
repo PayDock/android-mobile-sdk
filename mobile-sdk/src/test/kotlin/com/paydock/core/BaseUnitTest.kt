@@ -5,6 +5,7 @@ import android.util.Log
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkStatic
+import io.mockk.slot
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -34,6 +35,14 @@ abstract class BaseUnitTest : KoinTest {
         every { Log.w(any(), any<String>()) } returns 0
 
         mockkStatic(Uri::class)
+
+        // Used for JWT Helper (Token parsing)
+        mockkStatic(android.util.Base64::class)
+        val b64Encoded = slot<String>()
+        val flags = slot<Int>()
+        every { android.util.Base64.decode(capture(b64Encoded), capture(flags)) } coAnswers {
+            java.util.Base64.getDecoder().decode(this.args[0] as String)
+        }
     }
 
     @After

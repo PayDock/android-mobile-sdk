@@ -16,7 +16,7 @@ internal val payPalVaultModule = module {
     // Factory methods for creating instances of ViewModels
 
     viewModel { (config: PayPalVaultConfig) ->
-        PayPalVaultViewModel(config, get(), get(), get(), get(), get())
+        PayPalVaultViewModel(config, get(), get(), get(), get())
     }
 
     viewModel {

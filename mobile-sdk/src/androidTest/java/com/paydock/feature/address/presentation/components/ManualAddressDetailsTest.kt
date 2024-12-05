@@ -16,7 +16,7 @@ import com.paydock.core.BaseViewModelKoinTest
 import com.paydock.core.KoinTestRule
 import com.paydock.core.extensions.waitUntilTimeout
 import com.paydock.feature.address.domain.model.integration.BillingAddress
-import com.paydock.feature.address.presentation.state.AddressDetailsViewState
+import com.paydock.feature.address.presentation.state.AddressDetailsInputState
 import com.paydock.feature.address.presentation.viewmodels.CountryAutoCompleteViewModel
 import com.paydock.feature.address.presentation.viewmodels.ManualAddressViewModel
 import io.mockk.Runs
@@ -127,7 +127,7 @@ internal class ManualAddressDetailsTest : BaseViewModelKoinTest<ManualAddressVie
     @Suppress("LongMethod")
     @Test
     fun testManualAddressValidInputCallsOnAddressUpdated() {
-        val onAddressUpdated: (AddressDetailsViewState) -> Unit = mockk()
+        val onAddressUpdated: (AddressDetailsInputState) -> Unit = mockk()
         composeTestRule.setContent {
             // This shouldn't be needed, but allows robolectric tests to run successfully
             // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557
@@ -212,7 +212,7 @@ internal class ManualAddressDetailsTest : BaseViewModelKoinTest<ManualAddressVie
     @Suppress("LongMethod")
     @Test
     fun testManualAddressValidInputUpdatesAddressViewState() {
-        var manualAddressState: AddressDetailsViewState? = null
+        var manualAddressState: AddressDetailsInputState? = null
         composeTestRule.setContent {
             // This shouldn't be needed, but allows robolectric tests to run successfully
             // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557

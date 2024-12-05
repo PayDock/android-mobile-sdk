@@ -111,7 +111,7 @@ internal abstract class WalletViewModel<T>(
      * @param walletToken The wallet authentication token.
      * @param chargeId The chargeId required for the transaction.
      */
-    fun declineWalletTransaction(
+    protected fun declineWalletTransaction(
         walletToken: String,
         chargeId: String
     ) {

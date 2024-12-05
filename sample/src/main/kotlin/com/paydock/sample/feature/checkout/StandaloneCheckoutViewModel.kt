@@ -14,20 +14,18 @@ import com.paydock.sample.core.THREE_DS_CARD_ERROR
 import com.paydock.sample.core.THREE_DS_STATUS_ERROR
 import com.paydock.sample.core.TOKENISE_CARD_ERROR
 import com.paydock.sample.core.presentation.utils.AccessTokenProvider
-import com.paydock.sample.feature.card.data.api.dto.CaptureCardChargeRequest
-import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
-import com.paydock.sample.feature.card.domain.usecase.CaptureCardChargeTokenUseCase
-import com.paydock.sample.feature.card.domain.usecase.CreateCardSessionVaultTokenUseCase
-import com.paydock.sample.feature.threeDS.data.api.dto.CreateIntegratedThreeDSTokenRequest
-import com.paydock.sample.feature.threeDS.domain.model.ThreeDSToken
-import com.paydock.sample.feature.threeDS.domain.usecase.CreateIntegratedThreeDSTokenUseCase
-import com.paydock.sample.feature.wallet.data.api.dto.Customer
-import com.paydock.sample.feature.wallet.data.api.dto.InitiateWalletRequest
-import com.paydock.sample.feature.wallet.data.api.dto.Meta
-import com.paydock.sample.feature.wallet.data.api.dto.PaymentSource
-import com.paydock.sample.feature.wallet.domain.model.WalletCharge
-import com.paydock.sample.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
-import com.paydock.sample.feature.wallet.domain.usecase.InitiateWalletTransactionUseCase
+import com.paydock.sample.feature.charges.data.api.dto.CaptureCardChargeRequest
+import com.paydock.sample.feature.charges.data.api.dto.ChargesCustomerDTO
+import com.paydock.sample.feature.charges.data.api.dto.CreateIntegratedThreeDSTokenRequest
+import com.paydock.sample.feature.charges.data.api.dto.InitiateWalletRequest
+import com.paydock.sample.feature.charges.domain.model.ThreeDSToken
+import com.paydock.sample.feature.charges.domain.model.WalletCharge
+import com.paydock.sample.feature.charges.domain.usecase.CaptureCardChargeTokenUseCase
+import com.paydock.sample.feature.charges.domain.usecase.CaptureWalletChargeUseCase
+import com.paydock.sample.feature.charges.domain.usecase.CreateIntegratedThreeDSTokenUseCase
+import com.paydock.sample.feature.charges.domain.usecase.InitiateWalletTransactionUseCase
+import com.paydock.sample.feature.vaults.data.api.dto.VaultTokenRequest
+import com.paydock.sample.feature.vaults.domain.usecase.CreateCardSessionVaultTokenUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,7 +35,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class StandaloneCheckoutViewModel @Inject constructor(
-    private val accessTokenProvider: AccessTokenProvider,
+    accessTokenProvider: AccessTokenProvider,
     private val initiateWalletTransactionUseCase: InitiateWalletTransactionUseCase,
     private val createCardSessionVaultTokenUseCase: CreateCardSessionVaultTokenUseCase,
     private val createIntegratedThreeDSTokenUseCase: CreateIntegratedThreeDSTokenUseCase,
@@ -106,8 +104,8 @@ class StandaloneCheckoutViewModel @Inject constructor(
     private fun createPayPalWalletRequest(): InitiateWalletRequest {
         return InitiateWalletRequest(
             currency = AU_CURRENCY_CODE,
-            customer = Customer(
-                paymentSource = PaymentSource(
+            customer = ChargesCustomerDTO(
+                paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
                     gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL,
                     walletType = WalletType.PAY_PAL.type
                 )
@@ -118,8 +116,8 @@ class StandaloneCheckoutViewModel @Inject constructor(
     private fun createFlyPayWalletRequest(): InitiateWalletRequest {
         return InitiateWalletRequest(
             currency = AU_CURRENCY_CODE,
-            customer = Customer(
-                paymentSource = PaymentSource(
+            customer = ChargesCustomerDTO(
+                paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
                     gatewayId = BuildConfig.GATEWAY_ID_FLY_PAY,
                     walletType = WalletType.FLY_PAY.type
                 )
@@ -130,8 +128,8 @@ class StandaloneCheckoutViewModel @Inject constructor(
     private fun createGoogleWalletRequest(): InitiateWalletRequest {
         return InitiateWalletRequest(
             currency = AU_CURRENCY_CODE,
-            customer = Customer(
-                paymentSource = PaymentSource(
+            customer = ChargesCustomerDTO(
+                paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
                     gatewayId = BuildConfig.GATEWAY_ID_GOOGLE_PAY,
                     walletType = WalletType.GOOGLE.type
                 )
@@ -143,11 +141,11 @@ class StandaloneCheckoutViewModel @Inject constructor(
     private fun createAfterpayWalletRequest(): InitiateWalletRequest {
         return InitiateWalletRequest(
             currency = AU_CURRENCY_CODE,
-            customer = Customer(
+            customer = ChargesCustomerDTO(
                 email = "david.cameron@paydock.com",
                 firstName = "David",
                 lastName = "Cameron",
-                paymentSource = PaymentSource(
+                paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
                     gatewayId = BuildConfig.GATEWAY_ID_AFTER_PAY,
                     walletType = WalletType.AFTER_PAY.type,
                     addressLine1 = "asd1",
@@ -159,7 +157,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
                     postalCode = "12345",
                 )
             ),
-            meta = Meta(
+            meta = InitiateWalletRequest.MetaDTO(
                 successUrl = "https://paydock-integration.netlify.app/success",
                 errorUrl = "https://paydock-integration.netlify.app/error"
             )
@@ -199,8 +197,8 @@ class StandaloneCheckoutViewModel @Inject constructor(
                 createIntegratedThreeDSTokenUseCase(
                     accessToken = accessToken.value,
                     request = CreateIntegratedThreeDSTokenRequest(
-                        customer = Customer(
-                            paymentSource = PaymentSource(
+                        customer = ChargesCustomerDTO(
+                            paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
                                 gatewayId = BuildConfig.GATEWAY_ID,
                                 vaultToken = vaultToken
                             )
@@ -396,8 +394,8 @@ class StandaloneCheckoutViewModel @Inject constructor(
                 state.copy(isLoading = true, threeDSToken = null)
             }
             val request = CaptureCardChargeRequest(
-                currency = AU_CURRENCY_CODE, customer = Customer(
-                    paymentSource = PaymentSource(
+                currency = AU_CURRENCY_CODE, customer = ChargesCustomerDTO(
+                    paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
                         gatewayId = BuildConfig.GATEWAY_ID,
                         vaultToken = vaultToken
                     )

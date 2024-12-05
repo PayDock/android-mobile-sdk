@@ -1,6 +1,8 @@
 package com.paydock.feature.paypal.vault.presentation
 
+import android.content.Context
 import android.content.Intent
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -49,7 +51,6 @@ import org.koin.core.parameter.parametersOf
  * @param completion The callback invoked when the PayPal linking process completes, either with a success
  *                   containing a [PayPalVaultResult] or a failure containing a [PayPalVaultException].
  */
-@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun PayPalSavePaymentSourceWidget(
     modifier: Modifier = Modifier,
@@ -71,102 +72,18 @@ fun PayPalSavePaymentSourceWidget(
     val resolvePaymentForResult = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result: ActivityResult ->
-        result.data?.let { data ->
-            when (result.resultCode) {
-                // Handles the success case when the result code is RESULT_OK, passing the order ID.
-                AppCompatActivity.RESULT_OK -> {
-                    viewModel.createPayPalPaymentSourceToken()
-                }
-
-                // Handles the cancellation case when the result code is RESULT_CANCELED.
-                AppCompatActivity.RESULT_CANCELED -> {
-                    when (data.getCancellationStatusExtra()) {
-                        // If the cancellation was caused by invalid clientId and/or setup token.
-                        CancellationStatus.INVALID_PARAMS -> {
-                            completion(
-                                Result.failure(
-                                    PayPalVaultException.CancellationException(
-                                        displayableMessage = context.getString(
-                                            R.string.error_paypal_vault_invalid
-                                        )
-                                    )
-                                )
-                            )
-                        }
-                        // If the cancellation was user-initiated, the completion is invoked with a failure result.
-                        CancellationStatus.USER_INITIATED -> {
-                            completion(
-                                Result.failure(
-                                    PayPalVaultException.CancellationException(
-                                        displayableMessage = context.getString(
-                                            R.string.error_paypal_vault_canceled
-                                        )
-                                    )
-                                )
-                            )
-                        }
-
-                        // If the cancellation was due to another reason, process the SDK error status and message.
-                        else -> {
-                            val status = data.getStatusExtra()
-                            val message =
-                                data.getMessageExtra(MobileSDKConstants.Errors.PAY_PAL_VAULT_ERROR)
-                            completion(
-                                Result.failure(
-                                    PayPalVaultException.PayPalSDKException(
-                                        status,
-                                        message
-                                    )
-                                )
-                            )
-                        }
-                    }
-                }
-
-                // If no specific result code is handled, do nothing.
-                else -> Unit
-            }
-        }
-
+        handlePayPalVaultResult(context, result, viewModel, completion)
     }
 
     LaunchedEffect(uiState) {
-        when (val state = uiState) {
-            is PayPalVaultUIState.Idle -> Unit
-            is PayPalVaultUIState.Loading -> {
-                loadingDelegate?.widgetLoadingDidStart()
-            }
-
-            is PayPalVaultUIState.LaunchIntent -> {
-                loadingDelegate?.widgetLoadingDidFinish()
-                val (clientId, setupToken) = state // Assuming destructuring is supported
-                val intent = Intent(context, PayPalVaultActivity::class.java)
-                    .putClientIdExtra(clientId)
-                    .putSetupTokenExtra(setupToken)
-                resolvePaymentForResult.launch(intent)
-            }
-
-            is PayPalVaultUIState.Success -> {
-                loadingDelegate?.widgetLoadingDidFinish()
-                completion(
-                    Result.success(
-                        PayPalVaultResult(
-                            token = state.details.token,
-                            email = state.details.email
-                        )
-                    )
-                )
-                // This ensures that we clear the state so it's not reused
-                viewModel.resetResultState()
-            }
-
-            is PayPalVaultUIState.Error -> {
-                loadingDelegate?.widgetLoadingDidFinish()
-                completion(Result.failure(state.exception as Throwable))
-                // This ensures that we clear the state so it's not reused
-                viewModel.resetResultState()
-            }
-        }
+        handleUIState(
+            context,
+            uiState,
+            viewModel,
+            loadingDelegate,
+            resolvePaymentForResult,
+            completion
+        )
     }
 
     // Apply the SDK's theme to the widget
@@ -181,7 +98,140 @@ fun PayPalSavePaymentSourceWidget(
             enabled = uiState !is PayPalVaultUIState.Loading && enabled,
             isLoading = loadingDelegate == null && uiState is PayPalVaultUIState.Loading
         ) {
-            viewModel.createCustomerSessionAuthToken()
+            viewModel.createPayPalSetupToken()
+        }
+    }
+}
+
+/**
+ * Processes the result of a PayPal Vault activity and performs the appropriate actions based on the result code.
+ *
+ * @param context The current application context.
+ * @param result The `ActivityResult` received from the PayPal Vault activity.
+ * @param viewModel The `PayPalVaultViewModel` managing the PayPal Vault flow.
+ * @param completion A callback to handle the final result of the PayPal Vault operation, either success or failure.
+ */
+private fun handlePayPalVaultResult(
+    context: Context,
+    result: ActivityResult,
+    viewModel: PayPalVaultViewModel,
+    completion: (Result<PayPalVaultResult>) -> Unit,
+) {
+    result.data?.let { data ->
+        when (result.resultCode) {
+            // Handles the success case, invoking the ViewModel to create a payment source token.
+            AppCompatActivity.RESULT_OK -> {
+                viewModel.createPayPalPaymentSourceToken()
+            }
+
+            // Handles the cancellation case, determining the reason for cancellation and acting accordingly.
+            AppCompatActivity.RESULT_CANCELED -> {
+                when (data.getCancellationStatusExtra()) {
+                    // If the cancellation was due to invalid parameters (e.g., clientId or setup token).
+                    CancellationStatus.INVALID_PARAMS -> {
+                        completion(
+                            Result.failure(
+                                PayPalVaultException.CancellationException(
+                                    displayableMessage = context.getString(
+                                        R.string.error_paypal_vault_invalid
+                                    )
+                                )
+                            )
+                        )
+                    }
+                    // If the cancellation was initiated by the user.
+                    CancellationStatus.USER_INITIATED -> {
+                        completion(
+                            Result.failure(
+                                PayPalVaultException.CancellationException(
+                                    displayableMessage = context.getString(
+                                        R.string.error_paypal_vault_canceled
+                                    )
+                                )
+                            )
+                        )
+                    }
+                    // For other cancellation reasons, handle as a PayPal SDK error.
+                    else -> {
+                        val status = data.getStatusExtra()
+                        val message = data.getMessageExtra(MobileSDKConstants.Errors.PAY_PAL_VAULT_ERROR)
+                        completion(
+                            Result.failure(
+                                PayPalVaultException.PayPalSDKException(
+                                    status,
+                                    message
+                                )
+                            )
+                        )
+                    }
+                }
+            }
+
+            // Handles any other unrecognized result codes.
+            else -> Unit
+        }
+    }
+}
+
+/**
+ * Processes the current UI state of the PayPal Vault widget and executes corresponding actions
+ * such as launching intents, handling success or error states, and managing loading transitions.
+ *
+ * @param context The current application context.
+ * @param uiState The current `PayPalVaultUIState` representing the state of the PayPal Vault process.
+ * @param viewModel The `PayPalVaultViewModel` managing the PayPal Vault flow and its state.
+ * @param loadingDelegate An optional delegate for managing the widget's loading state transitions.
+ * @param resolvePaymentForResult A `ManagedActivityResultLauncher` to handle activity results for payment resolution.
+ * @param completion A callback to handle the final result of the PayPal Vault process, either success or failure.
+ */
+private fun handleUIState(
+    context: Context,
+    uiState: PayPalVaultUIState,
+    viewModel: PayPalVaultViewModel,
+    loadingDelegate: WidgetLoadingDelegate?,
+    resolvePaymentForResult: ManagedActivityResultLauncher<Intent, ActivityResult>,
+    completion: (Result<PayPalVaultResult>) -> Unit,
+) {
+    when (uiState) {
+        // No action is needed for the Idle state.
+        is PayPalVaultUIState.Idle -> Unit
+
+        // Handle the loading state by notifying the loading delegate.
+        is PayPalVaultUIState.Loading -> {
+            loadingDelegate?.widgetLoadingDidStart()
+        }
+
+        // Launch the PayPal Vault activity with the client ID and setup token from the UI state.
+        is PayPalVaultUIState.LaunchIntent -> {
+            loadingDelegate?.widgetLoadingDidFinish()
+            val (clientId, setupToken) = uiState
+            val intent = Intent(context, PayPalVaultActivity::class.java)
+                .putClientIdExtra(clientId)
+                .putSetupTokenExtra(setupToken)
+            resolvePaymentForResult.launch(intent)
+        }
+
+        // Handle the success state, passing the token and email to the completion callback.
+        is PayPalVaultUIState.Success -> {
+            loadingDelegate?.widgetLoadingDidFinish()
+            completion(
+                Result.success(
+                    PayPalVaultResult(
+                        token = uiState.details.token,
+                        email = uiState.details.email
+                    )
+                )
+            )
+            // Reset the state to ensure it’s not reused.
+            viewModel.resetResultState()
+        }
+
+        // Handle the error state, passing the exception to the completion callback.
+        is PayPalVaultUIState.Error -> {
+            loadingDelegate?.widgetLoadingDidFinish()
+            completion(Result.failure(uiState.exception))
+            // Reset the state to ensure it’s not reused.
+            viewModel.resetResultState()
         }
     }
 }

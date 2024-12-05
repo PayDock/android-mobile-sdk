@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.paydock.sample.core.TOKENISE_CARD_ERROR
 import com.paydock.sample.core.presentation.utils.AccessTokenProvider
-import com.paydock.sample.feature.card.data.api.dto.TokeniseCardRequest
-import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
-import com.paydock.sample.feature.card.domain.usecase.CreateCardVaultTokenUseCase
-import com.paydock.sample.feature.card.domain.usecase.TokeniseCardUseCase
+import com.paydock.sample.feature.tokens.data.api.dto.TokeniseCardRequest
+import com.paydock.sample.feature.tokens.domain.usecase.TokeniseCardUseCase
+import com.paydock.sample.feature.vaults.data.api.dto.VaultTokenRequest
+import com.paydock.sample.feature.vaults.domain.usecase.CreateCardVaultTokenUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

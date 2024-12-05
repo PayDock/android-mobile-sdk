@@ -16,15 +16,6 @@ import java.io.IOException
 sealed class PayPalVaultException(displayableMessage: String) : SdkException(displayableMessage) {
 
     /**
-     * Exception thrown when there is an error creating a session authorization token.
-     *
-     * @param error An [ApiErrorResponse] containing details about the error.
-     */
-    data class CreateSessionAuthTokenException(
-        val error: ApiErrorResponse
-    ) : PayPalVaultException(error.displayableMessage)
-
-    /**
      * Exception thrown when there is an error creating a setup token.
      *
      * @param error An [ApiErrorResponse] containing details about the error.

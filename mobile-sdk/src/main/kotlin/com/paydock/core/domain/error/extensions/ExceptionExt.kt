@@ -1,6 +1,7 @@
 package com.paydock.core.domain.error.extensions
 
 import com.paydock.core.MobileSDKConstants
+import com.paydock.core.domain.error.exceptions.AfterpayException
 import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.domain.error.exceptions.GenericException
 import com.paydock.core.domain.error.exceptions.PayPalException
@@ -29,6 +30,9 @@ import java.net.UnknownHostException
  * - **[UnknownHostException]**: Mapped to [GenericException.ConnectionException].
  * - **[SerializationException]**: Mapped to [GenericException.DataParsingException].
  * - **[IOException]**: Mapped to [GenericException.GeneralException].
+ * - **[AfterpayException]**: Delegates mapping to `mapAfterpayApiException`.
+ * - **[CardDetailsException]**: Delegates mapping to `mapCardDetailsApiException`.
+ * - **[PayPalException]**: Delegates mapping to `mapPayPalApiException`.
  * - **[PayPalVaultException]**: Delegates mapping to `mapPayPalVaultException`.
  * - **Fallback**: Maps to [GenericException.UnknownException] if no match is found.
  *
@@ -50,6 +54,8 @@ internal inline fun <reified E : Exception> Throwable.mapApiException(): SdkExce
     }
     return when {
         // TODO - Add all other widget type exceptions here!
+        AfterpayException::class.java.isAssignableFrom(E::class.java) ->
+            this.mapAfterpayApiException<E>()
         CardDetailsException::class.java.isAssignableFrom(E::class.java) ->
             this.mapCardDetailsApiException<E>()
         PayPalException::class.java.isAssignableFrom(E::class.java) ->
@@ -140,9 +146,6 @@ internal inline fun <reified E : Throwable> Throwable.mapPayPalVaultApiException
     when (this) {
         is ApiException -> {
             when (E::class) {
-                PayPalVaultException.CreateSessionAuthTokenException::class ->
-                    PayPalVaultException.CreateSessionAuthTokenException(error = this.error)
-
                 PayPalVaultException.CreateSetupTokenException::class ->
                     PayPalVaultException.CreateSetupTokenException(error = this.error)
 
@@ -153,7 +156,7 @@ internal inline fun <reified E : Throwable> Throwable.mapPayPalVaultApiException
                     PayPalVaultException.CreatePaymentTokenException(error = this.error)
 
                 else -> PayPalVaultException.UnknownException(
-                    displayableMessage = this.message ?: "An unknown error occurred"
+                    displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
                 )
             }
         }
@@ -161,7 +164,7 @@ internal inline fun <reified E : Throwable> Throwable.mapPayPalVaultApiException
         is UnknownApiException -> PayPalVaultException.UnknownException(displayableMessage = this.errorMessage)
 
         else -> PayPalVaultException.UnknownException(
-            displayableMessage = this.message ?: "An unknown error occurred"
+            displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
         )
     }
 
@@ -208,7 +211,7 @@ internal inline fun <reified E : Throwable> Throwable.mapPayPalApiException(): P
                     PayPalException.FetchingUrlException(error = this.error)
 
                 else -> PayPalException.UnknownException(
-                    displayableMessage = this.message ?: "An unknown error occurred"
+                    displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
                 )
             }
         }
@@ -216,7 +219,7 @@ internal inline fun <reified E : Throwable> Throwable.mapPayPalApiException(): P
         is UnknownApiException -> PayPalException.UnknownException(displayableMessage = this.errorMessage)
 
         else -> PayPalException.UnknownException(
-            displayableMessage = this.message ?: "An unknown error occurred"
+            displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
         )
     }
 
@@ -264,7 +267,7 @@ internal inline fun <reified E : Throwable> Throwable.mapCardDetailsApiException
                     CardDetailsException.TokenisingCardException(error = this.error)
 
                 else -> CardDetailsException.UnknownException(
-                    displayableMessage = this.message ?: "An unknown error occurred"
+                    displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
                 )
             }
         }
@@ -272,6 +275,48 @@ internal inline fun <reified E : Throwable> Throwable.mapCardDetailsApiException
         is UnknownApiException -> CardDetailsException.UnknownException(displayableMessage = this.errorMessage)
 
         else -> CardDetailsException.UnknownException(
+            displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+        )
+    }
+
+/**
+ * Maps a `Throwable` to a specific type of `AfterpayException` based on its type and the provided generic parameter.
+ *
+ * This function is designed to handle exceptions that occur during API interactions with Afterpay,
+ * converting them into specific, developer-defined exceptions (`AfterpayException`) for better error handling.
+ *
+ * It supports differentiating between different subtypes of `ApiException` and maps them
+ * to corresponding subclasses of `AfterpayException`. If no specific mapping is found,
+ * it defaults to an `UnknownException`.
+ *
+ * @param E The expected type of the `AfterpayException` to map to. This is inferred at compile time.
+ * @receiver The original exception (`Throwable`) to be mapped.
+ * @return An `AfterpayException` that represents the mapped exception.
+ */
+internal inline fun <reified E : Throwable> Throwable.mapAfterpayApiException(): AfterpayException =
+    when (this) {
+        // Handle cases where the exception is of type ApiException
+        is ApiException -> {
+            when (E::class) {
+                AfterpayException.CapturingChargeException::class ->
+                    AfterpayException.CapturingChargeException(error = this.error)
+
+                AfterpayException.FetchingUrlException::class ->
+                    AfterpayException.FetchingUrlException(error = this.error)
+
+                else -> AfterpayException.UnknownException(
+                    displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+                )
+            }
+        }
+
+        // Handle cases where the exception is of type UnknownApiException
+        is UnknownApiException -> AfterpayException.UnknownException(
+            displayableMessage = this.errorMessage
+        )
+
+        // Default case for any other types of exceptions
+        else -> AfterpayException.UnknownException(
             displayableMessage = this.message ?: "An unknown error occurred"
         )
     }

@@ -1,9 +1,5 @@
 package com.paydock.feature.address.presentation
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,15 +23,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.paydock.R
-import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.utils.rememberImeState
 import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.address.domain.mapper.integration.asEntity
 import com.paydock.feature.address.domain.model.integration.BillingAddress
-import com.paydock.feature.address.presentation.components.AddressSearchInput
-import com.paydock.feature.address.presentation.components.ManualAddress
+import com.paydock.feature.address.presentation.components.AddressSearchSection
+import com.paydock.feature.address.presentation.components.ManualAddressEntry
 import com.paydock.feature.address.presentation.viewmodels.AddressDetailsViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -45,29 +41,29 @@ import org.koin.androidx.compose.koinViewModel
  * @param address The preset address to pre-fill the input fields.
  * @param completion Callback function to execute when the address is saved.
  */
-@Suppress("LongMethod")
 @Composable
 fun AddressDetailsWidget(
     modifier: Modifier = Modifier,
     address: BillingAddress? = null,
-    completion: (BillingAddress) -> Unit
+    completion: (BillingAddress) -> Unit,
 ) {
     val imeState = rememberImeState()
     val scrollState = rememberScrollState()
     // Get the ViewModel using Koin dependency injection
     val viewModel: AddressDetailsViewModel = koinViewModel()
 
-    // Remember the preset address value to avoid recomposition on every change
-    remember(address) {
-        address?.let { viewModel.updateDefaultAddress(it) }
-        address
-    }
-
     // Collect the UI state from the ViewModel
     val uiState by viewModel.stateFlow.collectAsState()
 
     // Control whether the manual address section is shown
-    var showManualAddress by remember { mutableStateOf(address != null) }
+    var isManualAddressVisible by remember { mutableStateOf(address != null) }
+    // Control whether the manual address input is valid (improve recompositions)
+    val isDataValid by remember(uiState) { derivedStateOf { uiState.isDataValid } }
+
+    // Remember the preset address value to avoid recomposition on every change
+    LaunchedEffect(address) {
+        address?.let(viewModel::updateDefaultAddress)
+    }
 
     LaunchedEffect(imeState) {
         if (imeState.value) {
@@ -77,33 +73,23 @@ fun AddressDetailsWidget(
 
     SdkTheme {
         Column(
-            modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+            modifier = modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.Top),
             horizontalAlignment = Alignment.Start
         ) {
-            // Header text
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                style = Theme.typography.body1,
-                text = stringResource(R.string.label_find_an_address),
-                color = Theme.colors.onSurfaceVariant
-            )
-
-            // Address search input
-            AddressSearchInput(
-                modifier = Modifier.testTag("addressSearch"),
-                onAddressSelected = { result ->
-                    showManualAddress = true
-                    viewModel.updateDefaultAddress(result.asEntity())
-                }
-            )
+            AddressSearchSection { address ->
+                isManualAddressVisible = true
+                viewModel.updateDefaultAddress(address.asEntity())
+            }
 
             // Show the "Enter Address Manually" text
-            if (!showManualAddress) {
+            if (!isManualAddressVisible) {
                 Text(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { showManualAddress = !showManualAddress }
+                        .clickable { isManualAddressVisible = !isManualAddressVisible }
                         .testTag("showManualAddressButton"),
                     style = Theme.typography.body2.copy(textDecoration = TextDecoration.Underline),
                     text = stringResource(R.string.button_enter_address_manually),
@@ -111,24 +97,11 @@ fun AddressDetailsWidget(
                 )
             }
 
-            // Slide-down animation for the ManualAddress component
-            AnimatedVisibility(
-                visible = showManualAddress,
-                enter = expandVertically(
-                    expandFrom = Alignment.Top,
-                    animationSpec = tween(MobileSDKConstants.General.EXPANSION_TRANSITION_DURATION)
-                ) + fadeIn(
-                    initialAlpha = 0.3f,
-                    animationSpec = tween(MobileSDKConstants.General.EXPANSION_TRANSITION_DURATION)
-                )
-            ) {
-                ManualAddress(
-                    modifier = Modifier.testTag("manualAddress"),
-                    savedAddress = uiState.billingAddress,
-                    onAddressUpdated = { addressState ->
-                        viewModel.updateManualAddress(addressState)
-                    }
-                )
+            ManualAddressEntry(
+                isManualAddressVisible = isManualAddressVisible,
+                address = uiState.billingAddress,
+            ) { addressState ->
+                viewModel.updateManualAddress(addressState)
             }
 
             // Save Address button
@@ -138,7 +111,7 @@ fun AddressDetailsWidget(
                     .padding(top = 4.dp)
                     .testTag("saveAddress"),
                 text = stringResource(R.string.button_save_address),
-                enabled = uiState.isDataValid
+                enabled = isDataValid
             ) {
                 completion(uiState.billingAddress)
             }

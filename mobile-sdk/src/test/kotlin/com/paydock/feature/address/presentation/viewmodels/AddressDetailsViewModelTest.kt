@@ -4,7 +4,7 @@ import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.utils.MainDispatcherRule
 import com.paydock.feature.address.domain.model.integration.BillingAddress
-import com.paydock.feature.address.presentation.state.AddressDetailsViewState
+import com.paydock.feature.address.presentation.state.AddressDetailsInputState
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -55,7 +55,7 @@ internal class AddressDetailsViewModelTest : BaseKoinUnitTest() {
 
     @Test
     fun `updateManualAddress should update address details view state`() = runTest {
-        val addressDetailsViewState = AddressDetailsViewState(
+        val addressDetailsInputState = AddressDetailsInputState(
             addressLine1 = "1 Park Avenue",
             city = "Manchester",
             state = "Greater Manchester",
@@ -63,14 +63,14 @@ internal class AddressDetailsViewModelTest : BaseKoinUnitTest() {
             country = "United Kingdom"
         )
         // ACTION
-        viewModel.updateManualAddress(addressDetailsViewState)
+        viewModel.updateManualAddress(addressDetailsInputState)
         // CHECK
         val state = viewModel.stateFlow.first()
-        assertEquals(addressDetailsViewState.addressLine1, state.addressLine1)
-        assertEquals(addressDetailsViewState.addressLine2, state.addressLine2)
-        assertEquals(addressDetailsViewState.city, state.city)
-        assertEquals(addressDetailsViewState.state, state.state)
-        assertEquals(addressDetailsViewState.postalCode, state.postalCode)
-        assertEquals(addressDetailsViewState.country, state.country)
+        assertEquals(addressDetailsInputState.addressLine1, state.addressLine1)
+        assertEquals(addressDetailsInputState.addressLine2, state.addressLine2)
+        assertEquals(addressDetailsInputState.city, state.city)
+        assertEquals(addressDetailsInputState.state, state.state)
+        assertEquals(addressDetailsInputState.postalCode, state.postalCode)
+        assertEquals(addressDetailsInputState.country, state.country)
     }
 }
