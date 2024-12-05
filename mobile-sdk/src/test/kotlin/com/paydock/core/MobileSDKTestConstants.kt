@@ -87,6 +87,9 @@ internal object MobileSDKTestConstants {
         const val MOCK_CHECKOUT_TOKEN = "6627a531c6eca636271113f7"
     }
 
+    object ThreeDS {
+        const val MOCK_CHARGE_ID = "ba7d839a-a868-4bb0-9763-015451fea9fb"
+    }
     object Jwt {
         const val MOCK_WALLET_TOKEN_PAYLOAD =
             "{\"id\":\"6627a531c89622362d486e59\",\"meta\":\"eyJtZXRhIjp7ImNoYXJnZSI6eyJpZCI6IjY2MjdhNTMxYzZlY2E2MzYyNzExMTN" +

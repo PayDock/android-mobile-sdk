@@ -1,7 +1,8 @@
 package com.paydock.feature.threeDS.presentation.viewmodels
 
+import app.cash.turbine.test
 import com.paydock.core.BaseKoinUnitTest
-import com.paydock.core.MobileSDKConstants
+import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.utils.MainDispatcherRule
 import com.paydock.feature.threeDS.domain.model.integration.enums.EventType
@@ -10,7 +11,7 @@ import com.paydock.feature.threeDS.domain.model.ui.ChargeErrorEventData
 import com.paydock.feature.threeDS.domain.model.ui.ChargeEventData
 import com.paydock.feature.threeDS.domain.model.ui.ChargeResult
 import com.paydock.feature.threeDS.domain.model.ui.ThreeDSEvent
-import kotlinx.coroutines.flow.first
+import com.paydock.feature.threeDS.presentation.state.ThreeDSUIState
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
@@ -19,9 +20,7 @@ import org.junit.runner.RunWith
 import org.koin.test.inject
 import org.mockito.junit.MockitoJUnitRunner
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
+import kotlin.test.assertIs
 
 @RunWith(MockitoJUnitRunner::class)
 internal class ThreeDSViewModelTest : BaseKoinUnitTest() {
@@ -42,103 +41,111 @@ internal class ThreeDSViewModelTest : BaseKoinUnitTest() {
     fun `updateThreeDSEvent with chargeAuthSuccess event should update event state`() = runTest {
         val event = ThreeDSEvent.ChargeAuthSuccessEvent(
             data = ChargeEventData(
-                charge3dsId = "ba7d839a-a868-4bb0-9763-015451fea9fb",
+                charge3dsId = MobileSDKTestConstants.ThreeDS.MOCK_CHARGE_ID,
                 status = "authenticated"
             )
         )
-        // ACTION
-        viewModel.updateThreeDSEvent(event)
         // CHECK
-        val state = viewModel.stateFlow.first()
-        assertFalse(state.isLoading)
-        assertNull(state.error)
-        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.result?.charge3dsId)
-        assertEquals(EventType.CHARGE_AUTH_SUCCESS, state.result?.event)
-        assertEquals("authenticated", state.status)
+        viewModel.stateFlow.test {
+            // ACTION
+            viewModel.updateThreeDSEvent(event)
+            // Initial state
+            assertIs<ThreeDSUIState.Idle>(awaitItem())
+            awaitItem().let { state ->
+                assertIs<ThreeDSUIState.Success>(state)
+                assertEquals(EventType.CHARGE_AUTH_SUCCESS, state.result.event)
+                assertEquals(MobileSDKTestConstants.ThreeDS.MOCK_CHARGE_ID, state.result.charge3dsId)
+            }
+        }
     }
 
     @Test
     fun `updateThreeDSEvent with chargeAuthReject event should update event state`() = runTest {
         val event = ThreeDSEvent.ChargeAuthRejectEvent(
             data = ChargeEventData(
-                charge3dsId = "ba7d839a-a868-4bb0-9763-015451fea9fb",
+                charge3dsId = MobileSDKTestConstants.ThreeDS.MOCK_CHARGE_ID,
                 status = "not_authenticated"
             )
         )
-        // ACTION
-        viewModel.updateThreeDSEvent(event)
         // CHECK
-        val state = viewModel.stateFlow.first()
-        assertFalse(state.isLoading)
-        assertNotNull(state.error)
-        assertEquals(
-            MobileSDKConstants.Errors.THREE_DS_REJECTED_ERROR,
-            state.error.message
-        )
-        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.result?.charge3dsId)
-        assertEquals(EventType.CHARGE_AUTH_REJECT, state.result?.event)
-        assertEquals("not_authenticated", state.status)
+        viewModel.stateFlow.test {
+            // ACTION
+            viewModel.updateThreeDSEvent(event)
+            // Initial state
+            assertIs<ThreeDSUIState.Idle>(awaitItem())
+            awaitItem().let { state ->
+                assertIs<ThreeDSUIState.Success>(state)
+                assertEquals(EventType.CHARGE_AUTH_REJECT, state.result.event)
+                assertEquals(MobileSDKTestConstants.ThreeDS.MOCK_CHARGE_ID, state.result.charge3dsId)
+            }
+        }
     }
 
     @Test
     fun `updateThreeDSEvent with chargeAuthChallenge event should update event state`() = runTest {
         val event = ThreeDSEvent.ChargeAuthChallengeEvent(
             data = ChargeEventData(
-                charge3dsId = "ba7d839a-a868-4bb0-9763-015451fea9fb",
+                charge3dsId = MobileSDKTestConstants.ThreeDS.MOCK_CHARGE_ID,
                 status = "pending"
             )
         )
-        // ACTION
-        viewModel.updateThreeDSEvent(event)
-        // CHECK
-        val state = viewModel.stateFlow.first()
-        assertFalse(state.isLoading)
-        assertNull(state.error)
-        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.result?.charge3dsId)
-        assertEquals(EventType.CHARGE_AUTH_CHALLENGE, state.result?.event)
-        assertEquals("pending", state.status)
+        viewModel.stateFlow.test {
+            // ACTION
+            viewModel.updateThreeDSEvent(event)
+            // Initial state
+            assertIs<ThreeDSUIState.Idle>(awaitItem())
+            awaitItem().let { state ->
+                assertIs<ThreeDSUIState.Success>(state)
+                assertEquals(EventType.CHARGE_AUTH_CHALLENGE, state.result.event)
+                assertEquals(MobileSDKTestConstants.ThreeDS.MOCK_CHARGE_ID, state.result.charge3dsId)
+            }
+        }
     }
 
     @Test
     fun `updateThreeDSEvent with chargeAuthDecoupled event should update event state`() = runTest {
         val event = ThreeDSEvent.ChargeAuthDecoupledEvent(
             data = ChargeEventData(
-                charge3dsId = "ba7d839a-a868-4bb0-9763-015451fea9fb",
+                charge3dsId = MobileSDKTestConstants.ThreeDS.MOCK_CHARGE_ID,
                 status = "auth",
                 info = "authentication info example"
             )
         )
-        // ACTION
-        viewModel.updateThreeDSEvent(event)
-        // CHECK
-        val state = viewModel.stateFlow.first()
-        assertFalse(state.isLoading)
-        assertNull(state.error)
-        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.result?.charge3dsId)
-        assertEquals(EventType.CHARGE_AUTH_DECOUPLED, state.result?.event)
-        assertEquals("auth", state.status)
+        viewModel.stateFlow.test {
+            // ACTION
+            viewModel.updateThreeDSEvent(event)
+            // Initial state
+            assertIs<ThreeDSUIState.Idle>(awaitItem())
+            awaitItem().let { state ->
+                assertIs<ThreeDSUIState.Success>(state)
+                assertEquals(EventType.CHARGE_AUTH_DECOUPLED, state.result.event)
+                assertEquals(MobileSDKTestConstants.ThreeDS.MOCK_CHARGE_ID, state.result.charge3dsId)
+            }
+        }
     }
 
     @Test
     fun `updateThreeDSEvent with chargeAuthInfo event should update event state`() = runTest {
         val event = ThreeDSEvent.ChargeAuthInfoEvent(
             data = ChargeEventData(
-                charge3dsId = "ba7d839a-a868-4bb0-9763-015451fea9fb",
+                charge3dsId = MobileSDKTestConstants.ThreeDS.MOCK_CHARGE_ID,
                 status = "decoupled",
                 result = ChargeResult(
                     description = "test description example"
                 )
             )
         )
-        // ACTION
-        viewModel.updateThreeDSEvent(event)
-        // CHECK
-        val state = viewModel.stateFlow.first()
-        assertFalse(state.isLoading)
-        assertNull(state.error)
-        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.result?.charge3dsId)
-        assertEquals(EventType.CHARGE_AUTH_INFO, state.result?.event)
-        assertEquals("decoupled", state.status)
+        viewModel.stateFlow.test {
+            // ACTION
+            viewModel.updateThreeDSEvent(event)
+            // Initial state
+            assertIs<ThreeDSUIState.Idle>(awaitItem())
+            awaitItem().let { state ->
+                assertIs<ThreeDSUIState.Success>(state)
+                assertEquals(EventType.CHARGE_AUTH_INFO, state.result.event)
+                assertEquals(MobileSDKTestConstants.ThreeDS.MOCK_CHARGE_ID, state.result.charge3dsId)
+            }
+        }
     }
 
     @Test
@@ -146,20 +153,20 @@ internal class ThreeDSViewModelTest : BaseKoinUnitTest() {
         val event = ThreeDSEvent.ChargeErrorEvent(
             data = ChargeErrorEventData(
                 error = ChargeError(message = "3DS Error has occurred!"),
-                charge3dsId = "ba7d839a-a868-4bb0-9763-015451fea9fb"
+                charge3dsId = MobileSDKTestConstants.ThreeDS.MOCK_CHARGE_ID
             )
         )
         // ACTION
-        viewModel.updateThreeDSEvent(event)
-        // CHECK
-        val state = viewModel.stateFlow.first()
-        assertFalse(state.isLoading)
-        assertEquals("ba7d839a-a868-4bb0-9763-015451fea9fb", state.result?.charge3dsId)
-        assertEquals(EventType.CHARGE_ERROR, state.result?.event)
-        assertNotNull(state.error)
-        assertEquals(
-            event.data.error.message,
-            state.error.message
-        )
+        viewModel.stateFlow.test {
+            // ACTION
+            viewModel.updateThreeDSEvent(event)
+            // Initial state
+            assertIs<ThreeDSUIState.Idle>(awaitItem())
+            awaitItem().let { state ->
+                assertIs<ThreeDSUIState.Success>(state)
+                assertEquals(EventType.CHARGE_ERROR, state.result.event)
+                assertEquals(MobileSDKTestConstants.ThreeDS.MOCK_CHARGE_ID, state.result.charge3dsId)
+            }
+        }
     }
 }

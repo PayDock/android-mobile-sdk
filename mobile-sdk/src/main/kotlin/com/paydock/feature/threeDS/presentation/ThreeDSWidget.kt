@@ -18,6 +18,7 @@ import com.paydock.designsystems.components.web.config.WidgetConfig
 import com.paydock.designsystems.components.web.utils.HtmlWidgetBuilder
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.feature.threeDS.domain.model.integration.ThreeDSResult
+import com.paydock.feature.threeDS.presentation.state.ThreeDSUIState
 import com.paydock.feature.threeDS.presentation.utils.ThreeDSJSBridge
 import com.paydock.feature.threeDS.presentation.viewmodels.ThreeDSViewModel
 import kotlinx.coroutines.android.awaitFrame
@@ -25,15 +26,18 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * Composable function to initiate 3D Secure (3DS) processing.
+ * A Composable widget for handling the 3D Secure (3DS) flow.
  *
- * @param token The 3DS token used for 3DS widget initialization.
- * @param completion Callback function to handle the result of 3DS processing.
+ * This widget displays a WebView for the 3DS authentication process and manages UI state changes
+ * using a `ThreeDSViewModel`. It supports theming, back button handling, and error reporting.
+ *
+ * @param token The 3DS token required for authentication.
+ * @param completion A callback invoked with the result of the 3DS process, either success or failure.
  */
 @Composable
 fun ThreeDSWidget(
     token: String,
-    completion: (Result<ThreeDSResult>) -> Unit
+    completion: (Result<ThreeDSResult>) -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -68,21 +72,7 @@ fun ThreeDSWidget(
 
     // Handle result and reset state
     LaunchedEffect(uiState) {
-        // Handle error flow and display
-        uiState.error?.let {
-            // Send error state to the completion callback
-            completion(Result.failure(it))
-            viewModel.resetResultState()
-        }
-
-        // Handle OTT result and reset state
-        uiState.result?.let { result ->
-            if (uiState.status == "success" || uiState.status == "authenticated") {
-                // Send success state to the completion callback
-                completion(Result.success(result))
-                viewModel.resetResultState()
-            }
-        }
+        handleUIState(uiState, viewModel, completion)
     }
 
     // Apply the SdkTheme for consistent styling
@@ -102,6 +92,39 @@ fun ThreeDSWidget(
         ) { status, message ->
             // Invoke the onWebViewError callback with the WebView ThreeDSException exception
             completion(Result.failure(ThreeDSException.WebViewException(status, message)))
+        }
+    }
+}
+
+/**
+ * Handles the UI state for the 3DS process.
+ *
+ * Depending on the state, this function either invokes the completion callback
+ * with the result or clears the state to prevent reuse.
+ *
+ * @param uiState The current UI state of the 3DS process.
+ * @param viewModel The ViewModel managing the 3DS state.
+ * @param completion A callback invoked with the result of the 3DS process.
+ */
+private fun handleUIState(
+    uiState: ThreeDSUIState,
+    viewModel: ThreeDSViewModel,
+    completion: (Result<ThreeDSResult>) -> Unit,
+) {
+    when (uiState) {
+        ThreeDSUIState.Idle,
+        ThreeDSUIState.Loading, -> Unit
+
+        is ThreeDSUIState.Error -> {
+            completion(Result.failure(uiState.exception))
+            // This ensures that we clear the state so it's not reused
+            viewModel.resetResultState()
+        }
+
+        is ThreeDSUIState.Success -> {
+            completion(Result.success(uiState.result))
+            // This ensures that we clear the state so it's not reused
+            viewModel.resetResultState()
         }
     }
 }
