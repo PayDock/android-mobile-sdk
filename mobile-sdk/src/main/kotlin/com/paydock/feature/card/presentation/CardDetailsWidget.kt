@@ -57,7 +57,7 @@ import org.koin.core.parameter.parametersOf
  * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
  * @param completion Callback invoked with the result of the tokenization (success or failure).
  */
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun CardDetailsWidget(
     modifier: Modifier = Modifier,
@@ -178,8 +178,8 @@ fun CardDetailsWidget(
                     .fillMaxWidth()
                     .testTag("saveCard"),
                 text = actionText,
-                enabled = isDataValid && uiState !is CardDetailsUIState.Loading,
-                isLoading = uiState is CardDetailsUIState.Loading
+                enabled = isDataValid && uiState !is CardDetailsUIState.Loading && enabled,
+                isLoading = loadingDelegate == null && uiState is CardDetailsUIState.Loading
             ) {
                 viewModel.tokeniseCard()
             }

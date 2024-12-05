@@ -4,6 +4,7 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.AfterpayException
 import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.domain.error.exceptions.GenericException
+import com.paydock.core.domain.error.exceptions.GiftCardException
 import com.paydock.core.domain.error.exceptions.PayPalException
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.domain.error.exceptions.SdkException
@@ -58,6 +59,8 @@ internal inline fun <reified E : Exception> Throwable.mapApiException(): SdkExce
             this.mapAfterpayApiException<E>()
         CardDetailsException::class.java.isAssignableFrom(E::class.java) ->
             this.mapCardDetailsApiException<E>()
+        GiftCardException::class.java.isAssignableFrom(E::class.java) ->
+            this.mapGiftCardDetailsApiException<E>()
         PayPalException::class.java.isAssignableFrom(E::class.java) ->
             this.mapPayPalApiException<E>()
         PayPalVaultException::class.java.isAssignableFrom(E::class.java) ->
@@ -318,5 +321,40 @@ internal inline fun <reified E : Throwable> Throwable.mapAfterpayApiException():
         // Default case for any other types of exceptions
         else -> AfterpayException.UnknownException(
             displayableMessage = this.message ?: "An unknown error occurred"
+        )
+    }
+
+/**
+ * Maps a throwable to a specific type of `GiftCardException` based on the provided exception type `E`.
+ *
+ * This function is designed to handle API exceptions and map them to the corresponding
+ * `GiftCardException`, ensuring meaningful error information is propagated to the application.
+ * If the throwable does not match any specific exception type, it defaults to an `UnknownException`.
+ *
+ * @param E The type of `GiftCardException` to map to.
+ * @return A `GiftCardException` instance that corresponds to the throwable.
+ *
+ * @throws GiftCardException.TokenisingCardException If the exception is related to card tokenization errors.
+ * @throws GiftCardException.UnknownException For all other types of exceptions, including unknown API errors.
+ */
+internal inline fun <reified E : Throwable> Throwable.mapGiftCardDetailsApiException(): GiftCardException =
+    when (this) {
+        is ApiException -> {
+            when (E::class) {
+                GiftCardException.TokenisingCardException::class ->
+                    GiftCardException.TokenisingCardException(error = this.error)
+
+                else -> GiftCardException.UnknownException(
+                    displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+                )
+            }
+        }
+
+        is UnknownApiException -> GiftCardException.UnknownException(
+            displayableMessage = this.errorMessage
+        )
+
+        else -> GiftCardException.UnknownException(
+            displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
         )
     }

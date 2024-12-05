@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -16,55 +17,61 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.paydock.R
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
+import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.presentation.components.CardPinInput
 import com.paydock.feature.card.presentation.components.GiftCardNumberInput
+import com.paydock.feature.card.presentation.state.GiftCardUIState
 import com.paydock.feature.card.presentation.viewmodels.GiftCardViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 /**
- * A composable for capturing and displaying card details.
+ * A composable for capturing and processing gift card details.
  *
- * @param modifier The modifier to apply to this composable.
- * @param accessToken The access token used for authentication with the backend services.
- * @param storePin A flag to be able to use a PIN value for the initial transaction.
- * @param completion A callback to receive the result of card details processing.
+ * This widget provides inputs for entering the card number and PIN, as well as a button to submit
+ * the details for tokenization. The component handles state changes and communicates the result
+ * via a callback.
+ *
+ * @param modifier The modifier to be applied to the widget.
+ * @param enabled Controls whether the widget is enabled or disabled. When `false`, the widget
+ *                will appear disabled and not respond to user interactions.
+ * @param accessToken The access token used for authenticating API calls.
+ * @param storePin A flag to determine if the PIN should be stored for the initial transaction.
+ * @param loadingDelegate An optional delegate to manage the visibility of loading indicators externally.
+ * @param completion A callback invoked with the result of the tokenization process, providing either
+ *                   a success with the token or a failure with an exception.
  */
-@Suppress("LongMethod", "MagicNumber")
+@Suppress("MagicNumber")
 @Composable
 fun GiftCardWidget(
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     accessToken: String,
     storePin: Boolean = true,
-    completion: (Result<String>) -> Unit
+    loadingDelegate: WidgetLoadingDelegate? = null,
+    completion: (Result<String>) -> Unit,
 ) {
+    // ViewModel instance scoped to the Koin dependency injection framework
     val viewModel: GiftCardViewModel = koinViewModel(parameters = { parametersOf(accessToken) })
     viewModel.setStorePin(storePin)
-    val uiState = viewModel.stateFlow.collectAsState()
 
+    // Observing state flows for input and UI state
+    val inputState by viewModel.inputStateFlow.collectAsState()
+    val uiState by viewModel.stateFlow.collectAsState()
+
+    // Focus handlers for input fields
     val focusCardNumber = FocusRequester()
     val focusCardPin = FocusRequester()
 
-    // Handle error display
-    LaunchedEffect(uiState.value.error) {
-        uiState.value.error?.let {
-            completion(Result.failure(it))
-            viewModel.resetResultState()
-        }
+    // React to changes in the UI state
+    LaunchedEffect(uiState) {
+        handleUIState(uiState, viewModel, loadingDelegate, completion)
     }
 
-    // Handle token result and reset state
-    LaunchedEffect(uiState.value.token) {
-        uiState.value.token?.let { token ->
-            completion(Result.success(token))
-            viewModel.resetResultState()
-        }
-    }
-
-    // UI composition starts here
+    // Composing the UI
     SdkTheme {
         Column(
             modifier = modifier
@@ -81,40 +88,79 @@ fun GiftCardWidget(
                 ),
                 verticalAlignment = Alignment.Top
             ) {
-                // Card number input
+                // Card number input field
                 GiftCardNumberInput(
                     modifier = Modifier
                         .weight(0.7f)
                         .focusRequester(focusCardNumber)
                         .testTag("cardNumberInput"),
-                    value = uiState.value.cardNumber,
-                    enabled = !uiState.value.isLoading,
+                    value = inputState.cardNumber,
+                    enabled = uiState !is GiftCardUIState.Loading && enabled,
                     onValueChange = { viewModel.updateCardNumber(it) },
                     nextFocus = focusCardPin
                 )
 
+                // PIN input field
                 CardPinInput(
                     modifier = Modifier
                         .weight(0.3f)
                         .focusRequester(focusCardPin)
                         .testTag("cardPinInput"),
-                    value = uiState.value.pin,
-                    enabled = !uiState.value.isLoading,
+                    value = inputState.pin,
+                    enabled = uiState !is GiftCardUIState.Loading && enabled,
                     onValueChange = { viewModel.updateCardPin(it) }
                 )
             }
 
-            // Add Card button
+            // Submit button
             SdkButton(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("addCard"),
                 text = stringResource(R.string.button_submit),
-                enabled = uiState.value.isDataValid && !uiState.value.isLoading,
-                isLoading = uiState.value.isLoading
+                enabled = inputState.isDataValid && uiState !is GiftCardUIState.Loading && enabled,
+                isLoading = loadingDelegate == null && uiState is GiftCardUIState.Loading
             ) {
                 viewModel.tokeniseCard()
             }
+        }
+    }
+}
+
+/**
+ * Handles changes in the UI state and performs the corresponding actions.
+ *
+ * - Starts and stops the loading indicator via the loading delegate.
+ * - Invokes the completion callback with the result of the operation.
+ * - Resets the UI state to idle after handling the current state.
+ *
+ * @param uiState The current state of the UI.
+ * @param viewModel The `GiftCardViewModel` responsible for managing the state.
+ * @param loadingDelegate An optional delegate for controlling loading state externally.
+ * @param completion The callback to notify of the tokenization result.
+ */
+private fun handleUIState(
+    uiState: GiftCardUIState,
+    viewModel: GiftCardViewModel,
+    loadingDelegate: WidgetLoadingDelegate?,
+    completion: (Result<String>) -> Unit,
+) {
+    when (uiState) {
+        is GiftCardUIState.Idle -> Unit
+        is GiftCardUIState.Loading -> {
+            loadingDelegate?.widgetLoadingDidStart()
+        }
+
+        is GiftCardUIState.Success -> {
+            loadingDelegate?.widgetLoadingDidFinish()
+            completion(Result.success(uiState.token))
+            viewModel.resetResultState()
+        }
+
+        is GiftCardUIState.Error -> {
+            loadingDelegate?.widgetLoadingDidFinish()
+            completion(Result.failure(uiState.exception))
+            viewModel.resetResultState()
         }
     }
 }

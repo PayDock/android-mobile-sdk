@@ -3,7 +3,8 @@ package com.paydock.api.tokens.domain.usecase
 import com.paydock.api.tokens.data.dto.CreatePaymentTokenRequest
 import com.paydock.api.tokens.domain.model.TokenDetails
 import com.paydock.api.tokens.domain.repository.TokenRepository
-import com.paydock.core.extensions.suspendRunCatching
+import com.paydock.core.domain.error.exceptions.GiftCardException
+import com.paydock.core.extensions.suspendRunCatchingMapper
 
 /**
  * Use case responsible for tokenizing gift card details.
@@ -24,9 +25,9 @@ internal class CreateGiftCardPaymentTokenUseCase(private val repository: TokenRe
      */
     suspend operator fun invoke(
         accessToken: String,
-        request: CreatePaymentTokenRequest.TokeniseCardRequest.GiftCard
+        request: CreatePaymentTokenRequest.TokeniseCardRequest.GiftCard,
     ): Result<TokenDetails> =
-        suspendRunCatching {
+        suspendRunCatchingMapper<TokenDetails, GiftCardException.TokenisingCardException> {
             repository.createPaymentToken(accessToken, request)
         }
 }
