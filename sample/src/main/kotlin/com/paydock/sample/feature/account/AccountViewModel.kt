@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
+import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.sample.feature.customer.data.api.dto.CreateCustomerOTTRequest
 import com.paydock.sample.feature.customer.domain.model.Customer
 import com.paydock.sample.feature.customer.domain.usecase.CreateCustomerOTTUseCase
@@ -17,7 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AccountViewModel @Inject constructor(
     private val createCustomerOTTUseCase: CreateCustomerOTTUseCase,
-) : ViewModel() {
+) : ViewModel(), WidgetLoadingDelegate {
 
     private val _stateFlow: MutableStateFlow<AccountUIState> = MutableStateFlow(AccountUIState())
     val stateFlow: StateFlow<AccountUIState> = _stateFlow
@@ -46,6 +47,18 @@ class AccountViewModel @Inject constructor(
                     state.copy(isLoading = false, error = error.toError().displayableMessage)
                 }
             }
+        }
+    }
+
+    override fun widgetLoadingDidStart() {
+        _stateFlow.update { state ->
+            state.copy(isLoading = true)
+        }
+    }
+
+    override fun widgetLoadingDidFinish() {
+        _stateFlow.update { state ->
+            state.copy(isLoading = false)
         }
     }
 }
