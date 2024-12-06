@@ -8,7 +8,6 @@ import com.paydock.api.tokens.domain.usecase.CreateCardPaymentTokenFlowUseCase
 import com.paydock.api.tokens.domain.usecase.CreateCardPaymentTokenUseCase
 import com.paydock.api.tokens.domain.usecase.CreateGiftCardPaymentTokenUseCase
 import com.paydock.api.tokens.domain.usecase.CreatePayPalVaultPaymentTokenUseCase
-import com.paydock.api.tokens.domain.usecase.CreateSessionAuthTokenUseCase
 import com.paydock.api.tokens.domain.usecase.CreateSetupTokenUseCase
 import com.paydock.core.data.injection.modules.dataModule
 import org.koin.core.module.dsl.factoryOf
@@ -29,8 +28,6 @@ internal val domainModule = module {
     factoryOf(::CreateCardPaymentTokenUseCase)
     factoryOf(::CreateCardPaymentTokenFlowUseCase)
     factoryOf(::CreateGiftCardPaymentTokenUseCase)
-
-    factoryOf(::CreateSessionAuthTokenUseCase)
     factoryOf(::CreateSetupTokenUseCase)
     factoryOf(::CreatePayPalVaultPaymentTokenUseCase)
 

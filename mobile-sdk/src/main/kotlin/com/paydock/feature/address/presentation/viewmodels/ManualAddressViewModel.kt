@@ -3,7 +3,7 @@ package com.paydock.feature.address.presentation.viewmodels
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.presentation.viewmodels.BaseViewModel
 import com.paydock.feature.address.domain.model.integration.BillingAddress
-import com.paydock.feature.address.presentation.state.AddressDetailsViewState
+import com.paydock.feature.address.presentation.state.AddressDetailsInputState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,11 +18,11 @@ internal class ManualAddressViewModel(dispatchers: DispatchersProvider) :
     BaseViewModel(dispatchers) {
 
     // Mutable state flow to hold the UI state
-    private val _stateFlow: MutableStateFlow<AddressDetailsViewState> =
-        MutableStateFlow(AddressDetailsViewState())
+    private val _stateFlow: MutableStateFlow<AddressDetailsInputState> =
+        MutableStateFlow(AddressDetailsInputState())
 
     // Expose a read-only state flow for observing the UI state changes
-    val stateFlow: StateFlow<AddressDetailsViewState> = _stateFlow.asStateFlow()
+    val stateFlow: StateFlow<AddressDetailsInputState> = _stateFlow.asStateFlow()
 
     fun setSavedAddress(address: BillingAddress? = null) {
         if (address != null) {
@@ -87,7 +87,7 @@ internal class ManualAddressViewModel(dispatchers: DispatchersProvider) :
         }
     }
 
-    private fun updateState(update: (AddressDetailsViewState) -> AddressDetailsViewState) {
+    private fun updateState(update: (AddressDetailsInputState) -> AddressDetailsInputState) {
         _stateFlow.update { state ->
             update(state)
         }

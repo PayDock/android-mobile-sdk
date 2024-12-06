@@ -2,10 +2,8 @@ package com.paydock.feature.paypal.vault.presentation.viewmodel
 
 import com.paydock.api.gateways.domain.usecase.GetPayPalClientIdUseCase
 import com.paydock.api.tokens.data.dto.CreatePaymentTokenRequest
-import com.paydock.api.tokens.data.dto.CreateSessionTokenAuthRequest
 import com.paydock.api.tokens.data.dto.CreateSetupTokenRequest
 import com.paydock.api.tokens.domain.usecase.CreatePayPalVaultPaymentTokenUseCase
-import com.paydock.api.tokens.domain.usecase.CreateSessionAuthTokenUseCase
 import com.paydock.api.tokens.domain.usecase.CreateSetupTokenUseCase
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.SdkException
@@ -21,7 +19,6 @@ import kotlinx.coroutines.flow.asStateFlow
  * ViewModel responsible for handling the PayPal Vaulting process.
  *
  * @param config Configuration data for PayPal vaulting.
- * @param createSessionAuthTokenUseCase Use case to create a session authentication token.
  * @param createSetupTokenUseCase Use case to create a PayPal setup token.
  * @param getPayPalClientIdUseCase Use case to retrieve the PayPal client ID.
  * @param createPayPalVaultPaymentTokenUseCase Use case to create a payment token for the PayPal vault.
@@ -30,7 +27,6 @@ import kotlinx.coroutines.flow.asStateFlow
 @Suppress("LongParameterList")
 internal class PayPalVaultViewModel(
     private val config: PayPalVaultConfig,
-    private val createSessionAuthTokenUseCase: CreateSessionAuthTokenUseCase,
     private val createSetupTokenUseCase: CreateSetupTokenUseCase,
     private val getPayPalClientIdUseCase: GetPayPalClientIdUseCase,
     private val createPayPalVaultPaymentTokenUseCase: CreatePayPalVaultPaymentTokenUseCase,
@@ -65,36 +61,16 @@ internal class PayPalVaultViewModel(
     }
 
     /**
-     * Initiates the creation of a customer session authentication token by invoking [CreateSessionAuthTokenUseCase].
-     * - On success, it proceeds to create the PayPal setup token.
-     * - On failure, it updates the state with [PayPalVaultUIState.Error].
-     */
-    fun createCustomerSessionAuthToken() {
-        resetResultState()
-        updateState(PayPalVaultUIState.Loading)
-        launchOnIO {
-            val request = CreateSessionTokenAuthRequest(gatewayId = config.gatewayId)
-            createSessionAuthTokenUseCase(config.accessToken, request)
-                .onSuccess { authToken ->
-                    createPayPalSetupToken(authToken.accessToken)
-                }
-                .onFailure { error ->
-                    error.safeCastAs<SdkException>()
-                        ?.let { updateState(PayPalVaultUIState.Error(it)) }
-                }
-        }
-    }
-
-    /**
      * Creates a PayPal setup token by invoking [CreateSetupTokenUseCase].
      * - On success, updates the state and proceeds to retrieve the PayPal client ID.
      * - On failure, updates the error state with [PayPalVaultUIState.Error].
      */
-    private fun createPayPalSetupToken(authToken: String) {
+    fun createPayPalSetupToken() {
+        resetResultState()
+        updateState(PayPalVaultUIState.Loading)
         launchOnIO {
             val request = CreateSetupTokenRequest(
-                gatewayId = config.gatewayId,
-                accessToken = authToken
+                gatewayId = config.gatewayId
             )
             createSetupTokenUseCase(config.accessToken, request)
                 .onSuccess { retrievedSetupToken ->

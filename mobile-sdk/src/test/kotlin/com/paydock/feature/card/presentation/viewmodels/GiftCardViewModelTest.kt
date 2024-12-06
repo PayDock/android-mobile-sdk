@@ -9,16 +9,14 @@ import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.GiftCardException
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
-import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.utils.MainDispatcherRule
+import com.paydock.feature.card.presentation.state.GiftCardUIState
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
-import junit.framework.TestCase.assertNotNull
-import junit.framework.TestCase.assertNull
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -55,7 +53,7 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
         // ACTION
         viewModel.setStorePin(storePin)
         // CHECK
-        val state = viewModel.stateFlow.first()
+        val state = viewModel.inputStateFlow.first()
         assertEquals(storePin, state.storePin)
     }
 
@@ -65,9 +63,10 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
         // ACTION
         viewModel.updateCardNumber(newNumber)
         val state = viewModel.stateFlow.first()
+        val inputState = viewModel.inputStateFlow.first()
         // CHECK
-        assertEquals(newNumber, state.cardNumber)
-        assertNull(state.error)
+        assertEquals(GiftCardUIState.Idle, state)
+        assertEquals(newNumber, inputState.cardNumber)
     }
 
     @Test
@@ -75,9 +74,10 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
         val newSecurityCode = "1234"
         viewModel.updateCardPin(newSecurityCode)
         val state = viewModel.stateFlow.first()
+        val inputState = viewModel.inputStateFlow.first()
         // CHECK
-        assertEquals(newSecurityCode, state.pin)
-        assertNull(state.error)
+        assertEquals(GiftCardUIState.Idle, state)
+        assertEquals(newSecurityCode, inputState.pin)
     }
 
     @Test
@@ -85,9 +85,11 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
         // ACTION - Valid card details data
         viewModel.updateCardNumber("62734010001104878")
         viewModel.updateCardPin("1234")
-        // CHECK
         val state = viewModel.stateFlow.first()
-        assertTrue(state.isDataValid)
+        val inputState = viewModel.inputStateFlow.first()
+        // CHECK
+        assertEquals(GiftCardUIState.Idle, state)
+        assertTrue(inputState.isDataValid)
     }
 
     @Test
@@ -95,9 +97,11 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
         // ACTION - Invalid card details data
         viewModel.updateCardNumber("4111abc") // invalid characters
         viewModel.updateCardPin("1234")
-        // CHECK
         val state = viewModel.stateFlow.first()
-        assertFalse(state.isDataValid)
+        val inputState = viewModel.inputStateFlow.first()
+        // CHECK
+        assertEquals(GiftCardUIState.Idle, state)
+        assertFalse(inputState.isDataValid)
     }
 
     @Test
@@ -111,17 +115,15 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
                 // ACTION
                 viewModel.tokeniseCard()
                 // CHECK
-                // 4.
                 // Initial state
-                assertFalse(awaitItem().isLoading)
+                assertIs<GiftCardUIState.Idle>(awaitItem())
                 // Loading state - before execution
-                assertTrue(awaitItem().isLoading)
+                assertIs<GiftCardUIState.Loading>(awaitItem())
                 coVerify { useCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any()) }
                 // Resul state - success
                 awaitItem().let { state ->
-                    assertFalse(state.isLoading)
+                    assertIs<GiftCardUIState.Success>(state)
                     assertEquals(mockToken, state.token)
-                    assertNull(state.error)
                 }
             }
         }
@@ -129,7 +131,7 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `gift card tokeniseCard should update isLoading, call useCase, and update state on failure`() =
         runTest {
-            val mockError = ApiException(
+            val mockError = GiftCardException.TokenisingCardException(
                 error = ApiErrorResponse(
                     status = HttpStatusCode.InternalServerError.value,
                     summary = ErrorSummary(
@@ -145,23 +147,47 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
                 // ACTION
                 viewModel.tokeniseCard()
                 // CHECK
-                // 4.
                 // Initial state
-                assertFalse(awaitItem().isLoading)
+                assertIs<GiftCardUIState.Idle>(awaitItem())
                 // Loading state - before execution
-                assertTrue(awaitItem().isLoading)
+                assertIs<GiftCardUIState.Loading>(awaitItem())
                 coVerify { useCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any()) }
-                // Resul state - failure
+                // Result state - failure
                 awaitItem().let { state ->
-                    assertFalse(state.isLoading)
-                    assertNull(state.token)
-                    assertNotNull(state.error)
-                    assertIs<GiftCardException.TokenisingCardException>(state.error)
+                    assertIs<GiftCardUIState.Error>(state)
+                    assertIs<GiftCardException.TokenisingCardException>(state.exception)
                     assertEquals(
                         MobileSDKTestConstants.Errors.MOCK_INVALID_CARD_DETAILS_ERROR,
-                        state.error.message
+                        state.exception.message
                     )
                 }
             }
         }
+
+    @Test
+    fun `resetResultState should reset data state`() = runTest {
+        val mockToken = MobileSDKTestConstants.Card.MOCK_CARD_TOKEN
+        val mockResult = Result.success(TokenDetails(token = mockToken, type = "token"))
+        coEvery {
+            useCase(
+                MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN,
+                any()
+            )
+        } returns mockResult
+
+        viewModel.stateFlow.test {
+            // ACTION
+            viewModel.tokeniseCard()
+            // CHECK
+            // Initial state
+            assertIs<GiftCardUIState.Idle>(awaitItem())
+            // Loading state - before execution
+            assertIs<GiftCardUIState.Loading>(awaitItem())
+            // Success state - after execution
+            assertIs<GiftCardUIState.Success>(awaitItem())
+            viewModel.resetResultState()
+            // Reset State
+            assertIs<GiftCardUIState.Idle>(awaitItem())
+        }
+    }
 }

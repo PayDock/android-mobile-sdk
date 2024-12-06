@@ -10,7 +10,6 @@ import com.paydock.api.tokens.data.dto.PaymentTokenResponse
  *
  * @property token The payment token as a string.
  * @property email The email address associated with the token.
- * @property type The type of payment source associated with the token (e.g., "credit_card", "paypal").
  */
 internal data class PayPalPaymentTokenDetails(
     val token: String,

@@ -22,18 +22,43 @@ import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.address.domain.model.integration.BillingAddress
-import com.paydock.feature.address.presentation.state.AddressDetailsViewState
+import com.paydock.feature.address.presentation.state.AddressDetailsInputState
 import com.paydock.feature.address.presentation.viewmodels.ManualAddressViewModel
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * Composable for capturing manual address details.
+ * Displays a manual address entry form with input fields for the user to update their address.
  *
- * @param modifier The modifier to apply to the composable.
- * @param viewModel The view model responsible for managing address input state and logic.
- * @param savedAddress The previously saved billing address, if any or a pre-set address to be populated.
- * @param onAddressUpdated Callback to be invoked when the address details are updated.
+ * @param modifier [Modifier] to apply customizations to the layout of this component.
+ * @param viewModel The [ManualAddressViewModel] responsible for managing the address input state.
+ * Defaults to a Koin-injected instance via [koinViewModel()].
+ * @param savedAddress The optional [BillingAddress] to populate the input fields initially.
+ * If provided, it is used to prefill the address fields.
+ * @param onAddressUpdated A callback invoked whenever the address input state is updated.
+ * The updated state is passed as an [AddressDetailsInputState] after a debounce delay.
+ *
+ * This function provides:
+ * - Input fields for address components such as Address Line 1, Address Line 2, City, State, Postal Code, and Country.
+ * - Autofill support for each field to enhance user experience.
+ * - Keyboard navigation between fields using [FocusRequester].
+ * - A debounce mechanism to reduce frequent updates to the `onAddressUpdated` callback.
+ *
+ * Example:
+ * ```
+ * ManualAddress(
+ *     savedAddress = existingBillingAddress,
+ *     onAddressUpdated = { updatedState ->
+ *         println("Updated Address Details: $updatedState")
+ *     }
+ * )
+ * ```
+ *
+ * Notes:
+ * - The `uiState` is collected from the [ManualAddressViewModel]'s `stateFlow` to reflect user inputs.
+ * - Autofill types are configured for each input field to match their specific purpose (e.g., street, locality).
+ * - A [CountryInputAutoComplete] is used for country selection with a dropdown.
+ * - The callback invocation is delayed using [LaunchedEffect] to avoid excessive calls during rapid user input.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Suppress("LongMethod")
@@ -42,7 +67,7 @@ internal fun ManualAddress(
     modifier: Modifier = Modifier,
     viewModel: ManualAddressViewModel = koinViewModel(),
     savedAddress: BillingAddress? = null,
-    onAddressUpdated: (AddressDetailsViewState) -> Unit
+    onAddressUpdated: (AddressDetailsInputState) -> Unit
 ) {
     // Remember the selected item value to avoid recomposition on every change
     remember(savedAddress) {
@@ -118,7 +143,7 @@ internal fun ManualAddress(
             autofillType = AutofillType.PostalCode,
             onValueUpdated = viewModel::updatePostalCode
         )
-        // Country auto complete dropdown selection
+        // Country auto-complete dropdown selection
         CountryInputAutoComplete(
             modifier = Modifier
                 .fillMaxWidth()

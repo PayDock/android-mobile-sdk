@@ -1,14 +1,11 @@
 package com.paydock.api.tokens.data.repository
 
 import com.paydock.api.tokens.data.dto.CreatePaymentTokenRequest
-import com.paydock.api.tokens.data.dto.CreateSessionTokenAuthRequest
 import com.paydock.api.tokens.data.dto.CreateSetupTokenRequest
 import com.paydock.api.tokens.data.dto.PaymentTokenResponse
-import com.paydock.api.tokens.data.dto.SessionAuthTokenResponse
 import com.paydock.api.tokens.data.dto.SetupTokenResponse
 import com.paydock.api.tokens.data.mapper.asEntity
 import com.paydock.api.tokens.domain.model.PayPalPaymentTokenDetails
-import com.paydock.api.tokens.domain.model.SessionAuthToken
 import com.paydock.api.tokens.domain.model.TokenDetails
 import com.paydock.api.tokens.domain.repository.TokenRepository
 import io.ktor.client.HttpClient
@@ -108,28 +105,6 @@ internal class TokenRepositoryImpl(
             }.body<PaymentTokenResponse.CardTokenResponse>().asEntity()
         )
     }.flowOn(dispatcher)
-
-    /**
-     * Creates a session authentication token using the provided access token and request data.
-     *
-     * This function performs a POST request to the PayPal API to create an OAuth token for payment sources.
-     * The resulting session authentication token can be used for further payment processing.
-     *
-     * @param accessToken The access token required for authorization.
-     * @param request The [CreateSessionTokenAuthRequest] containing the necessary parameters for token creation.
-     * @return A [SessionAuthToken] object containing the access token and ID token for the session.
-     */
-    override suspend fun createSessionAuthToken(
-        accessToken: String,
-        request: CreateSessionTokenAuthRequest
-    ): SessionAuthToken = withContext(dispatcher) {
-        val httpResponse: HttpResponse = client.post {
-            headers { append("x-access-token", accessToken) }
-            url { path("/v1/payment_sources/oauth-tokens") }
-            setBody(request)
-        }
-        httpResponse.body<SessionAuthTokenResponse>().asEntity()
-    }
 
     /**
      * Creates a setup token for PayPal payment sources.

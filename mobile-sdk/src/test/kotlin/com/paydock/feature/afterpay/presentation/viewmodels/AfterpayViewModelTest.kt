@@ -26,6 +26,7 @@ import com.paydock.core.utils.MainDispatcherRule
 import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOptionUpdate
+import com.paydock.feature.afterpay.presentation.state.AfterpayUIState
 import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import com.paydock.initializeMobileSDK
 import io.ktor.http.HttpStatusCode
@@ -34,12 +35,8 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
-import junit.framework.TestCase.assertNull
-import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -90,6 +87,8 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             getWalletCallbackUseCase,
             dispatchersProvider
         )
+        val mockToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
+        viewModel.setWalletToken(mockToken)
     }
 
     @After
@@ -104,46 +103,31 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     }
 
     @Test
-    fun `setWalletToken should update token`() = runTest {
-        val walletToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
-        // ACTION
-        viewModel.setWalletToken(walletToken)
-        // CHECK
-        val state = viewModel.stateFlow.first()
-        assertEquals(walletToken, state.token)
+    fun `resetResultState should reset UI state`() = runTest {
+        viewModel.stateFlow.test {
+            // ACTION
+            viewModel.resetResultState()
+            assertIs<AfterpayUIState.Idle>(awaitItem())
+        }
     }
 
     @Test
     fun `updateCancellationState should update error state`() = runTest {
         val status = CancellationStatus.USER_INITIATED
-        // ACTION
-        viewModel.updateCancellationState(status)
         // CHECK
-        val state = viewModel.stateFlow.first()
-        assertNotNull(state.error)
-        assertEquals(
-            MobileSDKConstants.Afterpay.USER_INITIATED_ERROR_MESSAGE,
-            state.error?.message
-        )
-    }
-
-    @Test
-    fun `resetResultState should reset UI state`() = runTest {
-        val walletToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
         viewModel.stateFlow.test {
             // ACTION
-            viewModel.setWalletToken(walletToken)
-            viewModel.resetResultState()
+            viewModel.updateCancellationState(status)
+            // CHECK
             // Initial state
-            assertNull(awaitItem().token)
-            assertEquals(walletToken, awaitItem().token)
-            // Result state - success
+            assertIs<AfterpayUIState.Idle>(awaitItem())
+            // Result state - failure
             awaitItem().let { state ->
-                assertFalse(state.isLoading)
-                assertNull(state.token)
-                assertNull(state.callbackData)
-                assertFalse(state.validLocale)
-                assertNull(state.error)
+                assertIs<AfterpayUIState.Error>(state)
+                assertEquals(
+                    MobileSDKConstants.Afterpay.USER_INITIATED_ERROR_MESSAGE,
+                    state.exception.message
+                )
             }
         }
     }
@@ -163,9 +147,8 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             viewModel.configureAfterpaySdk(configuration.config)
             // CHECK
             // Initial state
-            assertFalse(awaitItem().validLocale)
-            // Result state - success
-            assertTrue(awaitItem().validLocale)
+            assertIs<AfterpayUIState.Idle>(awaitItem())
+            // No additional state changes or errors thrown
         }
     }
 
@@ -185,19 +168,18 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             viewModel.configureAfterpaySdk(configuration.config)
             // CHECK
             // Initial state
-            assertFalse(awaitItem().validLocale)
+            assertIs<AfterpayUIState.Idle>(awaitItem())
             // Result state - failure
             awaitItem().let { state ->
-                assertNotNull(state.error)
-                assertEquals(mockError, state.error?.message)
+                assertIs<AfterpayUIState.Error>(state)
+                assertEquals(mockError, state.exception.message)
             }
         }
     }
 
     @Test
-    fun `get Afterpay wallet callback should update isLoading, call useCase, and update state on success`() =
+    fun `get Afterpay wallet callback should update isLoading, call useCase, and update initiate ProvideCheckoutTokenResult`() =
         runTest {
-            val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             val mockCheckoutToken = MobileSDKTestConstants.Afterpay.MOCK_CHECKOUT_TOKEN
             val response =
                 readResourceFile("charges/success_afterpay_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
@@ -206,55 +188,18 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             // Allows for testing flow state
             viewModel.stateFlow.test {
                 // ACTION
-                viewModel.setWalletToken(accessToken)
                 viewModel.loadCheckoutToken()
                 // CHECK
-                // 4.
                 // Initial state
-                assertFalse(awaitItem().isLoading)
-                // wallet token is added to state
-                assertNotNull(awaitItem().token)
+                assertIs<AfterpayUIState.Idle>(awaitItem())
                 // Loading state - before execution
-                assertTrue(awaitItem().isLoading)
+                assertIs<AfterpayUIState.Loading>(awaitItem())
                 coVerify { getWalletCallbackUseCase(any(), any()) }
-                // Resul state - success
+                // Result state - success
                 awaitItem().let { state ->
-                    assertFalse(state.isLoading)
-                    assertNotNull(state.callbackData)
-                    assertNotNull(state.callbackData?.refToken)
-                    assertEquals(mockCheckoutToken, state.callbackData?.refToken)
-                    assertNull(state.error)
-                }
-            }
-        }
-
-    @Test
-    fun `get Afterpay wallet callback should initiate ProvideCheckoutTokenResult command with success result`() =
-        runTest {
-            val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
-            val mockCheckoutToken = MobileSDKTestConstants.Afterpay.MOCK_INVALID_CHECKOUT_TOKEN
-            val mockResult = Result.success(
-                WalletCallback(
-                    callbackId = null,
-                    status = "wallet_initialized",
-                    callbackUrl = null,
-                    refToken = mockCheckoutToken
-                )
-            )
-            coEvery { getWalletCallbackUseCase(any(), any()) } returns mockResult
-            // Allows for testing flow state
-            viewModel.commands().test {
-                // ACTION
-                viewModel.setWalletToken(accessToken)
-                viewModel.getWalletCallback(walletToken = accessToken)
-                // CHECK
-                // 4.
-                // Initial state
-                awaitItem().let { item ->
-                    assertIs<AfterpayViewModel.Command.ProvideCheckoutTokenResult>(item)
-                    assertTrue(item.tokenResult.isSuccess)
-                    assertNotNull(item.tokenResult.getOrNull())
-                    assertEquals(mockCheckoutToken, item.tokenResult.getOrNull())
+                    assertIs<AfterpayUIState.ProvideCheckoutTokenResult>(state)
+                    assertNotNull(state.tokenResult.getOrNull())
+                    assertEquals(mockCheckoutToken, state.tokenResult.getOrNull())
                 }
             }
         }
@@ -262,9 +207,8 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     @Test
     fun `get Afterpay wallet callback should initiate ProvideCheckoutTokenResult command with failure result`() =
         runTest {
-            val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             val mockCheckoutToken = null
-            val mockExceptionMessage = MobileSDKTestConstants.Errors.MOCK_AFTER_PAY_TOKEN_ERROR
+            val mockExceptionMessage = MobileSDKConstants.Errors.AFTER_PAY_CALLBACK_ERROR
             val mockResult = Result.success(
                 WalletCallback(
                     callbackId = null,
@@ -275,19 +219,19 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             )
             coEvery { getWalletCallbackUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
-            viewModel.commands().test {
+            viewModel.stateFlow.test {
                 // ACTION
-                viewModel.setWalletToken(accessToken)
                 viewModel.loadCheckoutToken()
                 // CHECK
-                // 4.
                 // Initial state
-                awaitItem().let { item ->
-                    assertIs<AfterpayViewModel.Command.ProvideCheckoutTokenResult>(item)
-                    assertFalse(item.tokenResult.isSuccess)
-                    assertNull(item.tokenResult.getOrNull())
-                    assertEquals(mockCheckoutToken, item.tokenResult.getOrNull())
-                    assertEquals(mockExceptionMessage, item.tokenResult.exceptionOrNull()?.message)
+                assertIs<AfterpayUIState.Idle>(awaitItem())
+                // Loading state - before execution
+                assertIs<AfterpayUIState.Loading>(awaitItem())
+                coVerify { getWalletCallbackUseCase(any(), any()) }
+                // Result state - failure
+                awaitItem().let { state ->
+                    assertIs<AfterpayUIState.Error>(state)
+                    assertEquals(mockExceptionMessage, state.exception.message)
                 }
             }
         }
@@ -313,24 +257,15 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
                 viewModel.setWalletToken(accessToken)
                 viewModel.loadCheckoutToken()
                 // CHECK
-                // 4.
                 // Initial state
-                assertFalse(awaitItem().isLoading)
-                // wallet token is added to state
-                assertNotNull(awaitItem().token)
+                assertIs<AfterpayUIState.Idle>(awaitItem())
                 // Loading state - before execution
-                assertTrue(awaitItem().isLoading)
+                assertIs<AfterpayUIState.Loading>(awaitItem())
                 coVerify { getWalletCallbackUseCase(any(), any()) }
                 // Result state - failure
                 awaitItem().let { state ->
-                    assertFalse(state.isLoading)
-                    assertNull(state.callbackData)
-                    assertNotNull(state.error)
-                    assertIs<AfterpayException.FetchingUrlException>(state.error)
-                    assertEquals(
-                        MobileSDKTestConstants.Errors.MOCK_GENERAL_ERROR,
-                        state.error.message
-                    )
+                    assertIs<AfterpayUIState.Error>(state)
+                    assertEquals(MobileSDKTestConstants.Errors.MOCK_GENERAL_ERROR, state.exception.message)
                 }
             }
         }
@@ -359,14 +294,15 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
                 )
             )
             // Allows for testing flow state
-            viewModel.commands().test {
+            viewModel.stateFlow.test {
                 // ACTION
                 viewModel.provideShippingOptions(shippingOptions)
                 // CHECK
-                // 4.
                 // Initial state
+                assertIs<AfterpayUIState.Idle>(awaitItem())
+                // Result state
                 awaitItem().let { item ->
-                    assertIs<AfterpayViewModel.Command.ProvideShippingOptionsResult>(item)
+                    assertIs<AfterpayUIState.ProvideShippingOptionsResult>(item)
                     assertNotNull(item.shippingOptionsResult)
                 }
             }
@@ -383,14 +319,14 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
                 "2.00".toBigDecimal(),
             )
             // Allows for testing flow state
-            viewModel.commands().test {
+            viewModel.stateFlow.test {
                 // ACTION
                 viewModel.provideShippingOptionUpdate(shippingUpdate)
                 // CHECK
-                // 4.
                 // Initial state
+                assertIs<AfterpayUIState.Idle>(awaitItem())
                 awaitItem().let { item ->
-                    assertIs<AfterpayViewModel.Command.ProvideShippingOptionUpdateResult>(item)
+                    assertIs<AfterpayUIState.ProvideShippingOptionUpdateResult>(item)
                     assertNotNull(item.shippingOptionUpdateResult)
                 }
             }
@@ -399,8 +335,6 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     @Test
     fun `capture Afterpay wallet charge should update isLoading, call useCase, and update state on success`() =
         runTest {
-            val walletToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
-            val afterPayToken = MobileSDKTestConstants.Afterpay.MOCK_CHECKOUT_TOKEN
             val response =
                 readResourceFile("charges/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
             val mockResult = Result.success(response.asEntity())
@@ -408,19 +342,18 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             // Allows for testing flow state
             viewModel.stateFlow.test {
                 // ACTION
-                viewModel.captureWalletTransaction(walletToken, afterPayToken)
+                viewModel.captureWalletTransaction()
                 // CHECK
-                // 4.
                 // Initial state
-                assertFalse(awaitItem().isLoading)
+                assertIs<AfterpayUIState.Idle>(awaitItem())
                 // Loading state - before execution
-                assertTrue(awaitItem().isLoading)
+                assertIs<AfterpayUIState.Loading>(awaitItem())
                 coVerify { captureWalletChargeUseCase(any(), any()) }
                 // Resul state - success
                 awaitItem().let { state ->
-                    assertFalse(state.isLoading)
+                    assertIs<AfterpayUIState.Success>(state)
                     assertEquals(mockResult.getOrNull(), state.chargeData)
-                    assertNull(state.error)
+                    assertEquals("complete", state.chargeData.resource.data?.status)
                 }
             }
         }
@@ -428,8 +361,6 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     @Test
     fun `capture Afterpay wallet charge should update isLoading, call useCase, and update state on failure`() =
         runTest {
-            val invalidWalletToken = MobileSDKTestConstants.Wallet.MOCK_INVALID_WALLET_TOKEN
-            val afterPayToken = MobileSDKTestConstants.Afterpay.MOCK_CHECKOUT_TOKEN
             val mockError = ApiException(
                 error = ApiErrorResponse(
                     status = HttpStatusCode.InternalServerError.value,
@@ -444,24 +375,18 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             // Allows for testing flow state
             viewModel.stateFlow.test {
                 // ACTION
-                viewModel.captureWalletTransaction(invalidWalletToken, afterPayToken)
+                viewModel.captureWalletTransaction()
                 // CHECK
-                // 4.
                 // Initial state
-                assertFalse(awaitItem().isLoading)
+                assertIs<AfterpayUIState.Idle>(awaitItem())
                 // Loading state - before execution
-                assertTrue(awaitItem().isLoading)
+                assertIs<AfterpayUIState.Loading>(awaitItem())
                 coVerify { captureWalletChargeUseCase(any(), any()) }
                 // Resul state - failure
                 awaitItem().let { state ->
-                    assertFalse(state.isLoading)
-                    assertNull(state.chargeData)
-                    assertNotNull(state.error)
-                    assertIs<AfterpayException.CapturingChargeException>(state.error)
-                    assertEquals(
-                        MobileSDKTestConstants.Errors.MOCK_GENERAL_ERROR,
-                        state.error.message
-                    )
+                    assertIs<AfterpayUIState.Error>(state)
+                    assertIs<AfterpayException.CapturingChargeException>(state.exception)
+                    assertEquals(MobileSDKTestConstants.Errors.MOCK_GENERAL_ERROR, state.exception.message)
                 }
             }
         }
@@ -469,8 +394,6 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     @Test
     fun `decline Afterpay wallet charge should update isLoading, call useCase, and update state on failure`() =
         runTest {
-            val walletToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
-            val chargeId = MobileSDKTestConstants.Charge.MOCK_CHARGE_ID
             val response =
                 readResourceFile("charges/success_afterpay_decline_wallet_charge_response.json").convertToDataClass<ChargeDeclineResponse>()
             val mockResult = Result.success(response.asEntity())
@@ -478,21 +401,19 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             // Allows for testing flow state
             viewModel.stateFlow.test {
                 // ACTION
-                viewModel.declineWalletTransaction(walletToken, chargeId)
+                viewModel.declineWalletTransaction()
                 // CHECK
-                // 4.
                 // Initial state
-                assertFalse(awaitItem().isLoading)
+                assertIs<AfterpayUIState.Idle>(awaitItem())
                 // Loading state - before execution
-                assertTrue(awaitItem().isLoading)
+                assertIs<AfterpayUIState.Loading>(awaitItem())
                 coVerify { declineWalletChargeUseCase(any(), any()) }
-                // Resul state - success
+                // Result state - success
                 awaitItem().let { state ->
-                    assertFalse(state.isLoading)
+                    assertIs<AfterpayUIState.Success>(state)
                     assertEquals(mockResult.getOrNull(), state.chargeData)
-                    assertNull(state.error)
+                    assertEquals("failed", state.chargeData.resource.data?.status)
                 }
             }
         }
-
 }

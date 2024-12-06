@@ -32,6 +32,9 @@
     <string name="label_saved_payment_method">Saved payment method</string>
     <string name="label_link_paypal_desc">Link your PayPal account to use method next time you shop</string>
 
+    <!-- Descriptions -->
+    <string name="desc_pay_pal_customer_created">Customer account created with linked PayPal account as a payment source</string>
+
     <!-- Buttons -->
     <string name="button_ok">OK</string>
 </resources>

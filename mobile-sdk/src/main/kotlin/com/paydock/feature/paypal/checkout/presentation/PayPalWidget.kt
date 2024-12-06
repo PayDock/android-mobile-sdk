@@ -2,6 +2,7 @@ package com.paydock.feature.paypal.checkout.presentation
 
 import android.content.Context
 import android.content.Intent
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -79,46 +80,18 @@ fun PayPalWidget(
     val resolvePaymentForResult = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result: ActivityResult ->
-        handlePayPalResult(context, result, completion, viewModel)
+        handlePayPalResult(context, result, viewModel, completion)
     }
 
     LaunchedEffect(uiState) {
-        when (val state = uiState) {
-            is PayPalCheckoutUIState.Idle -> Unit
-            is PayPalCheckoutUIState.Loading -> {
-                loadingDelegate?.widgetLoadingDidStart()
-            }
-            is PayPalCheckoutUIState.LaunchIntent -> {
-                loadingDelegate?.widgetLoadingDidFinish()
-                val (callbackData) = state
-                callbackData.callbackUrl?.let { callbackUrl ->
-                    if (callbackUrl.isNotBlank()) {
-                        val intent = Intent(context, PayPalWebActivity::class.java)
-                            .putCallbackUrlExtra(callbackUrl)
-                        resolvePaymentForResult.launch(intent)
-                    }
-                }
-            }
-
-            is PayPalCheckoutUIState.Capture -> {
-                val (paymentMethodId, payerId) = state
-                viewModel.captureWalletTransaction(paymentMethodId, payerId)
-            }
-
-            is PayPalCheckoutUIState.Success -> {
-                loadingDelegate?.widgetLoadingDidFinish()
-                completion(Result.success(state.chargeData))
-                // This ensures that we clear the state so it's not reused
-                viewModel.resetResultState()
-            }
-
-            is PayPalCheckoutUIState.Error -> {
-                loadingDelegate?.widgetLoadingDidFinish()
-                completion(Result.failure(state.exception as Throwable))
-                // This ensures that we clear the state so it's not reused
-                viewModel.resetResultState()
-            }
-        }
+        handleUIState(
+            context,
+            uiState,
+            viewModel,
+            loadingDelegate,
+            resolvePaymentForResult,
+            completion
+        )
     }
 
     SdkTheme {
@@ -177,15 +150,15 @@ fun PayPalWidget(
  * @param context The context used for accessing resources and displaying error messages.
  * @param result The `ActivityResult` returned from the PayPal web activity.
  * This contains the result code and data such as the decoded URL or cancellation status.
+ * @param viewModel The PayPalViewModel that processes PayPal-related data, including the parsed PayPal URL.
  * @param completion A callback function to handle the result of the PayPal transaction.
  * It is invoked with a `Result` object containing either success or failure information.
- * @param viewModel The PayPalViewModel that processes PayPal-related data, including the parsed PayPal URL.
  */
 private fun handlePayPalResult(
     context: Context,
     result: ActivityResult,
-    completion: (Result<ChargeResponse>) -> Unit,
     viewModel: PayPalViewModel,
+    completion: (Result<ChargeResponse>) -> Unit,
 ) {
     result.data?.let { data ->
         when (result.resultCode) {
@@ -233,6 +206,71 @@ private fun handlePayPalResult(
 
             // If no specific result code is handled, do nothing.
             else -> Unit
+        }
+    }
+}
+
+/**
+ * Processes the current UI state of the PayPal checkout widget and executes the corresponding actions
+ * such as launching intents, capturing transactions, or handling success and error states.
+ *
+ * @param context The current application context.
+ * @param uiState The current `PayPalCheckoutUIState` representing the state of the PayPal checkout process.
+ * @param viewModel The `PayPalViewModel` managing the PayPal checkout flow and its state.
+ * @param loadingDelegate An optional delegate for managing the widget's loading state transitions.
+ * @param resolvePaymentForResult A `ManagedActivityResultLauncher` to handle activity results for payment resolution.
+ * @param completion A callback to handle the final result of the PayPal checkout process, either success or failure.
+ */
+private fun handleUIState(
+    context: Context,
+    uiState: PayPalCheckoutUIState,
+    viewModel: PayPalViewModel,
+    loadingDelegate: WidgetLoadingDelegate?,
+    resolvePaymentForResult: ManagedActivityResultLauncher<Intent, ActivityResult>,
+    completion: (Result<ChargeResponse>) -> Unit,
+) {
+    when (uiState) {
+        // No action needed for the Idle state
+        is PayPalCheckoutUIState.Idle -> Unit
+
+        // Handle the loading state by notifying the loading delegate
+        is PayPalCheckoutUIState.Loading -> {
+            loadingDelegate?.widgetLoadingDidStart()
+        }
+
+        // Launch an intent to PayPal's Web Activity if the callback URL is available
+        is PayPalCheckoutUIState.LaunchIntent -> {
+            loadingDelegate?.widgetLoadingDidFinish()
+            val (callbackData) = uiState
+            callbackData.callbackUrl?.let { callbackUrl ->
+                if (callbackUrl.isNotBlank()) {
+                    val intent = Intent(context, PayPalWebActivity::class.java)
+                        .putCallbackUrlExtra(callbackUrl)
+                    resolvePaymentForResult.launch(intent)
+                }
+            }
+        }
+
+        // Capture the transaction by passing the payment method ID and payer ID to the ViewModel
+        is PayPalCheckoutUIState.Capture -> {
+            val (paymentMethodId, payerId) = uiState
+            viewModel.captureWalletTransaction(paymentMethodId, payerId)
+        }
+
+        // Handle success state, notify the loading delegate, and complete the transaction with success
+        is PayPalCheckoutUIState.Success -> {
+            loadingDelegate?.widgetLoadingDidFinish()
+            completion(Result.success(uiState.chargeData))
+            // Reset the state to ensure it’s not reused
+            viewModel.resetResultState()
+        }
+
+        // Handle error state, notify the loading delegate, and complete the transaction with failure
+        is PayPalCheckoutUIState.Error -> {
+            loadingDelegate?.widgetLoadingDidFinish()
+            completion(Result.failure(uiState.exception))
+            // Reset the state to ensure it’s not reused
+            viewModel.resetResultState()
         }
     }
 }

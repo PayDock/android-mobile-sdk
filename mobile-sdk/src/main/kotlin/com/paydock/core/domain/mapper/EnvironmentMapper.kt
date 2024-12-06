@@ -1,5 +1,6 @@
 package com.paydock.core.domain.mapper
 
+import com.afterpay.android.AfterpayEnvironment
 import com.paydock.core.ClientSDKConstants
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.model.Environment
@@ -55,4 +56,23 @@ internal fun Environment.mapToClientSDKEnv(): String = when (this) {
 internal fun Environment.mapToPayPalEnv(): com.paypal.android.corepayments.Environment = when (this) {
     Environment.PRODUCTION -> com.paypal.android.corepayments.Environment.LIVE
     Environment.SANDBOX, Environment.STAGING -> com.paypal.android.corepayments.Environment.SANDBOX
+}
+
+/**
+ * Maps the application's custom `Environment` enum to the corresponding `AfterpayEnvironment`.
+ *
+ * This function is used to convert the application's internal representation of environments
+ * (e.g., `Environment.SANDBOX`, `Environment.STAGING`, `Environment.PRODUCTION`) to the
+ * `AfterpayEnvironment` used by the Afterpay SDK.
+ *
+ * The mapping ensures that:
+ * - Both `Environment.SANDBOX` and `Environment.STAGING` are treated as `AfterpayEnvironment.SANDBOX`.
+ * - `Environment.PRODUCTION` is directly mapped to `AfterpayEnvironment.PRODUCTION`.
+ *
+ * @receiver The application's internal `Environment` enum instance.
+ * @return The corresponding `AfterpayEnvironment` used by the Afterpay SDK.
+ */
+internal fun Environment.mapToAfterpayEnv(): AfterpayEnvironment = when (this) {
+    Environment.SANDBOX, Environment.STAGING -> AfterpayEnvironment.SANDBOX
+    Environment.PRODUCTION -> AfterpayEnvironment.PRODUCTION
 }

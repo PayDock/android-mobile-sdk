@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.2.0] - 2024-12-06
+
+### Added
+
+- Added `AccountScreen` as an example for collection of PayPal Vault token and creating of Customer
+
+### Changed
+
+- Updated `ThreeDSEvent`s so that `chargeAuthReject` is returned as a succcesful response
+
+### Fixed
+
+- PayPal Vault endpoints updated to work with latest changes
+
 ## [2.1.0] - 2024-11-27
 
 ### Added
@@ -14,12 +28,12 @@
 - New Widget for PayPal Vault - `PayPalSavePaymentSourceWidget`
 - Added `PayPalDataCollectorUtil` utility for PayPal fraud integration
 
-# Changed
+### Changed
 
 - Repackaged project structure (**breaking changes!**)
 - Separated `Theme.cornerRadius` into 2 parts (`textFieldCornerRadius` & `buttonCornerRadius`)
 
-# Fixed
+### Fixed
 
 - Removed `DisposableEffect` functionality from all widgets causing issues with rotation
 - Issue with state not resetting on flow completion (success or failure) - LaunchedEffect re-firing

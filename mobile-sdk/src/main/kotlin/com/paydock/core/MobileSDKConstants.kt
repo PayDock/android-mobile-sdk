@@ -161,6 +161,8 @@ internal object MobileSDKConstants {
             "An unexpected error occurred while processing FlyPay. Please try again later or contact support for assistance."
         const val AFTER_PAY_ERROR =
             "An unexpected error occurred while processing Afterpay. Please try again later or contact support for assistance."
+        const val AFTER_PAY_CALLBACK_ERROR =
+            "An unexpected error occurred while retrieving checkout token. Please try again later or contact support for assistance."
         const val CLICK_TO_PAY_ERROR =
             "An unexpected error occurred while processing ClickToPay. Please try again later or contact support for assistance."
         const val UNKNOWN_WEB_ERROR =

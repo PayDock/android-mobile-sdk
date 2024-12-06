@@ -5,6 +5,7 @@ import com.paydock.api.tokens.domain.model.TokenDetails
 import com.paydock.api.tokens.domain.repository.TokenRepository
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
+import com.paydock.core.domain.error.exceptions.GiftCardException
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.exceptions.ApiException
@@ -17,6 +18,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 internal class CreateGiftCardPaymentTokenUseCaseTest : BaseKoinUnitTest() {
@@ -75,7 +77,7 @@ internal class CreateGiftCardPaymentTokenUseCaseTest : BaseKoinUnitTest() {
         val actualResult = tokeniseCreditCardUseCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, request)
         // THEN
         assertTrue(actualResult.isFailure)
-        assertEquals(expectedResult, actualResult.exceptionOrNull())
+        assertIs<GiftCardException.TokenisingCardException>(actualResult.exceptionOrNull())
         coVerify(exactly = 1) { mockRepository.createPaymentToken(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, request) }
     }
 

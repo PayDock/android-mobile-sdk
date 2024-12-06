@@ -11,14 +11,12 @@ import kotlinx.serialization.Serializable
  * via the PayPal API.
  *
  * @param gatewayId The gateway identifier for the payment provider.
- * @param accessToken The OAuth token used for authentication with the PayPal API.
  * @param returnUrl The deeplink scheme url to redirect the user to after completing the setup process.
  * @param cancelUrl The deeplink scheme url to redirect the user to after cancelling the setup process.
  */
 @Serializable
 internal data class CreateSetupTokenRequest(
     @SerialName("gateway_id") val gatewayId: String,
-    @SerialName("token") val accessToken: String,
     @SerialName("return_url") val returnUrl: String = MobileSDKConstants.PayPalVaultConfig.RETURN_URL,
     @SerialName("cancel_url") val cancelUrl: String = MobileSDKConstants.PayPalVaultConfig.CANCEL_URL
 )
