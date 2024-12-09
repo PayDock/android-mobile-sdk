@@ -48,7 +48,6 @@ internal class PayPalVaultViewModelTest : BaseKoinUnitTest() {
 
     companion object {
         const val MOCK_ACCESS_TOKEN = MobileSDKTestConstants.PayPalVault.MOCK_ACCESS_TOKEN
-        const val MOCK_ID_TOKEN = MobileSDKTestConstants.PayPalVault.MOCK_ID_TOKEN
         const val MOCK_SETUP_TOKEN = MobileSDKTestConstants.PayPalVault.MOCK_SETUP_TOKEN
         const val MOCK_CLIENT_ID = MobileSDKTestConstants.PayPalVault.MOCK_CLIENT_ID
     }
@@ -134,17 +133,6 @@ internal class PayPalVaultViewModelTest : BaseKoinUnitTest() {
                 any()
             )
         } returns mockResult
-    }
-
-    @Test
-    fun `resetResultState should reset UI state`() = runTest {
-        viewModel.stateFlow.test {
-            // ACTION
-            viewModel.resetResultState()
-            // Initial state
-            // Result state - success
-            assertIs<PayPalVaultUIState.Idle>(awaitItem())
-        }
     }
 
     @Test
@@ -315,4 +303,30 @@ internal class PayPalVaultViewModelTest : BaseKoinUnitTest() {
                 }
             }
         }
+
+    @Test
+    fun `resetResultState should reset UI state`() = runTest {
+        preparePayPalCompleteSuccessFlow()
+        viewModel.createPayPalSetupToken()
+        runCurrent() // Execute pending coroutine dispatchers
+        val mockToken = MobileSDKTestConstants.PayPalVault.MOCK_PAYMENT_TOKEN
+        val mockEmail = MobileSDKTestConstants.PayPalVault.MOCK_EMAIL
+        val mockResult = Result.success(PayPalPaymentTokenDetails(token = mockToken, email = mockEmail))
+        coEvery {
+            createPayPalVaultPaymentTokenUseCase(
+                any(),
+                any(),
+                any()
+            )
+        } returns mockResult
+        viewModel.createPayPalPaymentSourceToken()
+        runCurrent()
+        viewModel.stateFlow.test {
+            assertIs<PayPalVaultUIState.Success>(awaitItem())
+            // ACTION
+            viewModel.resetResultState()
+            // Result state - reset
+            assertIs<PayPalVaultUIState.Idle>(awaitItem())
+        }
+    }
 }

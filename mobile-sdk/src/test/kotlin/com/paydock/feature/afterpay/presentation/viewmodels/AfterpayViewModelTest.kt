@@ -37,6 +37,7 @@ import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -54,6 +55,7 @@ import kotlin.test.assertIs
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
 internal class AfterpayViewModelTest : BaseUnitTest() {
+    // This requires using the MobileSDK for the environment mapping
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -100,15 +102,6 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     fun tearDownKoin() {
         // As the SDK will startKoin, we need to ensure that after each test we stop koin to be able to restart it in each test
         stopKoin()
-    }
-
-    @Test
-    fun `resetResultState should reset UI state`() = runTest {
-        viewModel.stateFlow.test {
-            // ACTION
-            viewModel.resetResultState()
-            assertIs<AfterpayUIState.Idle>(awaitItem())
-        }
     }
 
     @Test
@@ -416,4 +409,23 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
                 }
             }
         }
+
+    @Test
+    fun `resetResultState should reset UI state`() = runTest {
+        val response =
+            readResourceFile("charges/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
+        val mockResult = Result.success(response.asEntity())
+        coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
+        viewModel.captureWalletTransaction()
+        runCurrent()
+        viewModel.stateFlow.test {
+            // Loading state - before execution
+            assertIs<AfterpayUIState.Loading>(awaitItem())
+            assertIs<AfterpayUIState.Success>(awaitItem())
+            // ACTION
+            viewModel.resetResultState()
+            // Result state - reset
+            assertIs<AfterpayUIState.Idle>(awaitItem())
+        }
+    }
 }

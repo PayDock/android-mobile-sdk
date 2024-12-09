@@ -3,6 +3,7 @@ package com.paydock.core.domain.error.extensions
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.AfterpayException
 import com.paydock.core.domain.error.exceptions.CardDetailsException
+import com.paydock.core.domain.error.exceptions.FlyPayException
 import com.paydock.core.domain.error.exceptions.GenericException
 import com.paydock.core.domain.error.exceptions.GiftCardException
 import com.paydock.core.domain.error.exceptions.PayPalException
@@ -33,6 +34,7 @@ import java.net.UnknownHostException
  * - **[IOException]**: Mapped to [GenericException.GeneralException].
  * - **[AfterpayException]**: Delegates mapping to `mapAfterpayApiException`.
  * - **[CardDetailsException]**: Delegates mapping to `mapCardDetailsApiException`.
+ * - **[FlyPayException]**: Delegates mapping to `mapFlyPayApiException`.
  * - **[PayPalException]**: Delegates mapping to `mapPayPalApiException`.
  * - **[PayPalVaultException]**: Delegates mapping to `mapPayPalVaultException`.
  * - **Fallback**: Maps to [GenericException.UnknownException] if no match is found.
@@ -61,6 +63,8 @@ internal inline fun <reified E : Exception> Throwable.mapApiException(): SdkExce
             this.mapCardDetailsApiException<E>()
         GiftCardException::class.java.isAssignableFrom(E::class.java) ->
             this.mapGiftCardDetailsApiException<E>()
+        FlyPayException::class.java.isAssignableFrom(E::class.java) ->
+            this.mapFlyPayApiException<E>()
         PayPalException::class.java.isAssignableFrom(E::class.java) ->
             this.mapPayPalApiException<E>()
         PayPalVaultException::class.java.isAssignableFrom(E::class.java) ->
@@ -167,6 +171,57 @@ internal inline fun <reified E : Throwable> Throwable.mapPayPalVaultApiException
         is UnknownApiException -> PayPalVaultException.UnknownException(displayableMessage = this.errorMessage)
 
         else -> PayPalVaultException.UnknownException(
+            displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+        )
+    }
+
+/**
+ * Maps a generic `Throwable` to a specific type of `FlyPayException` based on the provided reified exception type.
+ *
+ * This function handles known `ApiException` and `UnknownApiException` types, converting them into
+ * corresponding `FlyPayException` subclasses. For other exceptions, a default `FlyPayException.UnknownException`
+ * is returned.
+ *
+ * @param E The target type of `FlyPayException` to map the throwable to. This is a reified type parameter, allowing the function
+ *          to infer the target exception type at runtime.
+ * @receiver The throwable to map.
+ * @return A `FlyPayException` instance that represents the mapped exception.
+ *
+ * ## Behavior:
+ * - **`ApiException` Handling**:
+ *   - Maps to `FlyPayException.FetchingUrlException` if `E` is `FlyPayException.FetchingUrlException`.
+ *   - Defaults to `FlyPayException.UnknownException` for other `ApiException` cases.
+ * - **`UnknownApiException` Handling**:
+ *   - Maps to `FlyPayException.UnknownException` with the error message from the `UnknownApiException`.
+ * - **Fallback Handling**:
+ *   - Maps other exception types to `FlyPayException.UnknownException` with a generic error message.
+ *
+ * ## Example Usage:
+ * ```kotlin
+ * val apiException = ApiException(error = "Invalid token")
+ * val mappedException: FlyPayException = apiException.mapFlyPayApiException<FlyPayException.FetchingUrlException>()
+ * println(mappedException) // Output: FlyPayException.CapturingChargeException(error="Invalid token")
+ * ```
+ *
+ * ## Notes:
+ * - Ensure that the type parameter `E` is a subclass of `Throwable`.
+ */
+internal inline fun <reified E : Throwable> Throwable.mapFlyPayApiException(): FlyPayException =
+    when (this) {
+        is ApiException -> {
+            when (E::class) {
+                FlyPayException.FetchingUrlException::class ->
+                    FlyPayException.FetchingUrlException(error = this.error)
+
+                else -> FlyPayException.UnknownException(
+                    displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+                )
+            }
+        }
+
+        is UnknownApiException -> FlyPayException.UnknownException(displayableMessage = this.errorMessage)
+
+        else -> FlyPayException.UnknownException(
             displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
         )
     }

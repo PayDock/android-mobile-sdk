@@ -68,15 +68,6 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
     }
 
     @Test
-    fun `resetResultState should reset UI state`() = runTest {
-        viewModel.stateFlow.test {
-            // ACTION
-            viewModel.resetResultState()
-            assertIs<PayPalCheckoutUIState.Idle>(awaitItem())
-        }
-    }
-
-    @Test
     fun `createPayPalUrl should return PayPal callback url with redirect url`() = runTest {
         val callbackUrl = MobileSDKTestConstants.PayPal.MOCK_CALLBACK_URL
         val resultUrl = viewModel.createPayPalUrl(callbackUrl)
@@ -182,7 +173,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
         }
 
     @Test
-    fun `get PayPal wallet callback should update isLoading, call useCase, and update state on success`() =
+    fun `get PayPal wallet callback should update isLoading, call useCase, and update state to launch intent`() =
         runTest {
             val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             val mockCallbackUrl = MobileSDKTestConstants.PayPal.MOCK_CALLBACK_URL
@@ -194,7 +185,6 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
             // Allows for testing flow state
             viewModel.stateFlow.test {
                 // ACTION
-                viewModel.setWalletToken(accessToken)
                 viewModel.getWalletCallback(walletToken = accessToken, requestShipping = true)
                 // CHECK
                 // Initial state
@@ -202,7 +192,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
                 // Loading state - before execution
                 assertIs<PayPalCheckoutUIState.Loading>(awaitItem())
                 coVerify { getWalletCallbackUseCase(any(), any()) }
-                // Resul state - success
+                // Result state - success
                 awaitItem().let { state ->
                     assertIs<PayPalCheckoutUIState.LaunchIntent>(state)
                     assertNotNull(state.callbackData.callbackUrl)
@@ -237,7 +227,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
                 // Loading state - before execution
                 assertIs<PayPalCheckoutUIState.Loading>(awaitItem())
                 coVerify { getWalletCallbackUseCase(any(), any()) }
-                // Resul state - failure
+                // Result state - failure
                 awaitItem().let { state ->
                     assertIs<PayPalCheckoutUIState.Error>(state)
                     assertIs<PayPalException.FetchingUrlException>(state.exception)
@@ -248,4 +238,21 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
                 }
             }
         }
+
+    @Test
+    fun `resetResultState should reset UI state`() = runTest {
+        val paymentMethodId = MobileSDKTestConstants.PayPal.MOCK_PAYMENT_METHOD_ID
+        val payerId = MobileSDKTestConstants.PayPal.MOCK_PAYER_ID
+        val response =
+            readResourceFile("charges/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
+        val mockResult = Result.success(response.asEntity())
+        coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
+        viewModel.captureWalletTransaction(paymentMethodId, payerId)
+        // Allows for testing flow state
+        viewModel.stateFlow.test {
+            // ACTION
+            viewModel.resetResultState()
+            assertIs<PayPalCheckoutUIState.Idle>(awaitItem())
+        }
+    }
 }

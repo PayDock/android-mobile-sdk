@@ -1,156 +1,92 @@
 package com.paydock.feature.flypay.presentation.viewmodels
 
-import android.content.Context
 import app.cash.turbine.test
-import com.paydock.MobileSDK
 import com.paydock.api.charges.data.dto.WalletCallbackResponse
 import com.paydock.api.charges.data.mapper.asEntity
 import com.paydock.api.charges.domain.model.WalletCallback
 import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
 import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
-import com.paydock.core.BaseUnitTest
+import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.FlyPayException
-import com.paydock.core.domain.model.Environment
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.utils.MainDispatcherRule
-import com.paydock.initializeMobileSDK
+import com.paydock.feature.flypay.presentation.state.FlyPayUIState
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
-import junit.framework.TestCase.assertNull
-import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.koin.core.context.stopKoin
 import org.koin.test.inject
 import org.mockito.junit.MockitoJUnitRunner
 import kotlin.test.assertIs
 
-@Suppress("MaxLineLength")
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
-internal class FlyPayViewModelTest : BaseUnitTest() {
+internal class FlyPayViewModelTest : BaseKoinUnitTest() {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private lateinit var dispatchersProvider: DispatchersProvider
+    private val dispatchersProvider: DispatchersProvider by inject()
     private lateinit var viewModel: FlyPayViewModel
     private lateinit var captureWalletChargeUseCase: CaptureWalletChargeUseCase
     private lateinit var declineWalletChargeUseCase: DeclineWalletChargeUseCase
     private lateinit var getWalletCallbackUseCase: GetWalletCallbackUseCase
 
-    private lateinit var context: Context
-
     @Before
     fun setup() {
-        // Mock the Context object
-        context = mockk()
-        // Configure the getApplicationContext() method to return the mock Context
-        every { context.applicationContext } returns context
-        // We need to initialise the SDK to start Koin
-        context.initializeMobileSDK(Environment.SANDBOX)
-
-        dispatchersProvider = inject<DispatchersProvider>().value
         captureWalletChargeUseCase = mockk()
         declineWalletChargeUseCase = mockk()
         getWalletCallbackUseCase = mockk()
         viewModel = FlyPayViewModel(
+            MobileSDKTestConstants.FlyPay.MOCK_CLIENT_ID,
             captureWalletChargeUseCase,
             declineWalletChargeUseCase,
             getWalletCallbackUseCase,
             dispatchersProvider
         )
-    }
-
-    @After
-    fun resetMocks() {
-        MobileSDK.reset() // Reset MobileSDK before each test
-    }
-
-    @After
-    fun tearDownKoin() {
-        // As the SDK will startKoin, we need to ensure that after each test we stop koin to be able to restart it in each test
-        stopKoin()
+        val mockToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
+        viewModel.setWalletToken(mockToken)
     }
 
     @Test
-    fun `setWalletToken should update token`() = runTest {
-        val walletToken = "testToken"
-        // ACTION
-        viewModel.setWalletToken(walletToken)
-        // CHECK
-        val state = viewModel.stateFlow.first()
-        assertEquals(walletToken, state.token)
-    }
-
-    @Test
-    fun `resetResultState should reset UI state`() = runTest {
-        val walletToken = "testToken"
-        viewModel.stateFlow.test {
-            // ACTION
-            viewModel.setWalletToken(walletToken)
-            viewModel.resetResultState()
-            // Initial state
-            assertNull(awaitItem().token)
-            assertEquals(walletToken, awaitItem().token)
-            // Result state - success
-            awaitItem().let { state ->
-                assertFalse(state.isLoading)
-                assertNull(state.token)
-                assertNull(state.callbackData)
-                assertNull(state.error)
-            }
-        }
-    }
-
-    @Test
-    fun `get FlyPay wallet callback should update isLoading, call useCase, and update state on success`() =
+    fun `get FlyPay wallet callback should update isLoading, call useCase, and update state to launch intent`() =
         runTest {
             val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             val mockFlyPayOrderId = MobileSDKTestConstants.FlyPay.MOCK_ORDER_ID
             val response =
-                readResourceFile("charges/success_flypay_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
+                readResourceFile("charges/success_flypay_wallet_callback_response.json")
+                    .convertToDataClass<WalletCallbackResponse>()
             val mockResult = Result.success(response.asEntity())
             coEvery { getWalletCallbackUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
             viewModel.stateFlow.test {
                 // ACTION
-                viewModel.setWalletToken(accessToken)
                 viewModel.getWalletCallback(walletToken = accessToken)
                 // CHECK
-                // 4.
                 // Initial state
-                assertFalse(awaitItem().isLoading)
-                // wallet token is added to state
-                assertNotNull(awaitItem().token)
+                assertIs<FlyPayUIState.Idle>(awaitItem())
                 // Loading state - before execution
-                assertTrue(awaitItem().isLoading)
+                assertIs<FlyPayUIState.Loading>(awaitItem())
                 coVerify { getWalletCallbackUseCase(any(), any()) }
-                // Resul state - success
+                // Result state - success
                 awaitItem().let { state ->
-                    assertFalse(state.isLoading)
-                    assertNotNull(state.callbackData)
-                    assertNotNull(state.callbackData?.callbackId)
-                    assertEquals(mockFlyPayOrderId, state.callbackData?.callbackId)
-                    assertNull(state.error)
+                    assertIs<FlyPayUIState.LaunchIntent>(state)
+                    assertNotNull(state.callbackData.callbackId)
+                    assertEquals(mockFlyPayOrderId, state.callbackData.callbackId)
                 }
             }
         }
@@ -173,29 +109,50 @@ internal class FlyPayViewModelTest : BaseUnitTest() {
             // Allows for testing flow state
             viewModel.stateFlow.test {
                 // ACTION
-                viewModel.setWalletToken(accessToken)
                 viewModel.getWalletCallback(walletToken = accessToken)
                 // CHECK
-                // 4.
                 // Initial state
-                assertFalse(awaitItem().isLoading)
-                // wallet token is added to state
-                assertNotNull(awaitItem().token)
+                assertIs<FlyPayUIState.Idle>(awaitItem())
                 // Loading state - before execution
-                assertTrue(awaitItem().isLoading)
+                assertIs<FlyPayUIState.Loading>(awaitItem())
                 coVerify { getWalletCallbackUseCase(any(), any()) }
-                // Resul state - failure
+                // Result state - failure
                 awaitItem().let { state ->
-                    assertFalse(state.isLoading)
-                    assertNull(state.callbackData)
-                    assertNotNull(state.error)
-                    assertIs<FlyPayException.FetchingUrlException>(state.error)
+                    assertIs<FlyPayUIState.Error>(state)
+                    assertIs<FlyPayException.FetchingUrlException>(state.exception)
                     assertEquals(
                         MobileSDKTestConstants.Errors.MOCK_INVALID_GATEWAY_ID_ERROR,
-                        state.error.message
+                        state.exception.message
                     )
                 }
             }
         }
+
+    @Test
+    fun `completeResult should update UI state to success`() = runTest {
+        val mockOrderId = MobileSDKTestConstants.FlyPay.MOCK_ORDER_ID
+        viewModel.stateFlow.test {
+            // Initial state
+            assertIs<FlyPayUIState.Idle>(awaitItem())
+            // ACTION
+            viewModel.completeResult(mockOrderId)
+            // Result state - success
+            awaitItem().let { state ->
+                assertIs<FlyPayUIState.Success>(state)
+                assertEquals(mockOrderId, state.orderId)
+            }
+        }
+    }
+
+    @Test
+    fun `resetResultState should reset UI state`() = runTest {
+        viewModel.completeResult(MobileSDKTestConstants.FlyPay.MOCK_ORDER_ID)
+        viewModel.stateFlow.test {
+            assertIs<FlyPayUIState.Success>(awaitItem())
+            viewModel.resetResultState()
+            // Result state - reset
+            assertIs<FlyPayUIState.Idle>(awaitItem())
+        }
+    }
 
 }

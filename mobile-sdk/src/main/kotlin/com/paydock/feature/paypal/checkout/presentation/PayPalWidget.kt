@@ -55,6 +55,7 @@ import org.koin.androidx.compose.koinViewModel
  * this component will not respond to user input, and it will appear visually disabled.
  * @param token A callback to obtain the wallet token asynchronously.
  * @param requestShipping Flag passed to determine if PayPal will ask the user for their shipping address.
+ * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
  * @param completion A callback to handle the Wallet Charge result.
  */
 @Suppress("LongMethod")
@@ -124,7 +125,7 @@ fun PayPalWidget(
                 // Button to initiate PayPal transaction
                 PayPalButton(
                     isEnabled = uiState !is PayPalCheckoutUIState.Loading && enabled,
-                    isLoading = false
+                    isLoading = loadingDelegate == null && uiState is PayPalCheckoutUIState.Loading
                 ) {
                     // Use the callback to obtain the token asynchronously
                     viewModel.setLoadingState()

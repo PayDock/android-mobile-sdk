@@ -22,37 +22,47 @@ import com.paydock.core.domain.error.exceptions.FlyPayException
 import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
+import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.feature.flypay.presentation.components.FlyPayButton
-import com.paydock.feature.flypay.presentation.state.FlyPayViewState
+import com.paydock.feature.flypay.presentation.state.FlyPayUIState
 import com.paydock.feature.flypay.presentation.utils.CancellationStatus
 import com.paydock.feature.flypay.presentation.utils.getCancellationStatusExtra
 import com.paydock.feature.flypay.presentation.utils.getOrderIdExtra
 import com.paydock.feature.flypay.presentation.utils.putClientIdExtra
 import com.paydock.feature.flypay.presentation.utils.putOrderIdExtra
 import com.paydock.feature.flypay.presentation.viewmodels.FlyPayViewModel
+import io.ktor.http.parameters
+import io.ktor.http.parametersOf
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 /**
- * Composable function for rendering the FlyPay widget.
+ * A Composable for handling FlyPay payments and related interactions.
  *
  * @param modifier Modifier for customizing the appearance and behavior of the Composable.
- * @param clientId Merchant clientId.
+ * @param enabled Controls the enabled state of this Widget. When false,
+ * this component will not respond to user input, and it will appear visually disabled.
+ * @param clientId FlyPay Merchant clientId.
  * @param token A callback to obtain the wallet token asynchronously.
+ * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
  * @param completion A callback to handle the result of the FlyPay operation.
  */
-@Suppress("LongMethod")
 @Composable
 fun FlyPayWidget(
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     clientId: String,
     token: (onTokenReceived: (String) -> Unit) -> Unit,
+    loadingDelegate: WidgetLoadingDelegate? = null,
     completion: (Result<String>) -> Unit
 ) {
     val context = LocalContext.current
     // Obtain instances of view models
-    val viewModel: FlyPayViewModel = koinViewModel()
+    val viewModel: FlyPayViewModel = koinViewModel(parameters = {
+        parametersOf(clientId)
+    })
 
     // Collect states for FlyPay and Wallet view models
     val uiState by viewModel.stateFlow.collectAsState()
@@ -68,7 +78,14 @@ fun FlyPayWidget(
 
     // Handle wallet response result and reset state
     LaunchedEffect(uiState) {
-        handleUiState(context, uiState, clientId, completion, resolvePaymentForResult, viewModel)
+        handleUiState(
+            context,
+            uiState,
+            viewModel,
+            loadingDelegate,
+            completion,
+            resolvePaymentForResult
+        )
     }
 
     // Composable content rendering
@@ -87,8 +104,8 @@ fun FlyPayWidget(
                         }
                     }
                 },
-                isEnabled = !uiState.isLoading,
-                isLoading = uiState.isLoading
+                isEnabled = uiState !is FlyPayUIState.Loading && enabled,
+                isLoading = loadingDelegate == null && uiState is FlyPayUIState.Loading
             )
         }
     }
@@ -115,10 +132,8 @@ private fun handleFlyPayResult(
         when (result.resultCode) {
             // Handles the success case when the result code is RESULT_OK, passing the order ID.
             AppCompatActivity.RESULT_OK -> {
-                data.getOrderIdExtra()?.let { orderId ->
-                    completion(Result.success(orderId))
-                    viewModel.resetResultState()
-                }
+                val orderId = data.getOrderIdExtra()
+                orderId?.let { viewModel.completeResult(orderId) }
             }
 
             // Handles the cancellation case when the result code is RESULT_CANCELED.
@@ -168,35 +183,55 @@ private fun handleFlyPayResult(
  *
  * @param context The context used for accessing resources and launching activities.
  * @param uiState The current state of the FlyPay payment process, which may contain an error or callback data.
- * @param clientId The client ID used for authenticating or identifying the FlyPay transaction.
  * @param completion A callback function to handle the result of the FlyPay transaction.
  * It is invoked with a `Result` object containing either success (with a string) or failure information.
+ * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
  * @param resolvePaymentForResult An `ActivityResultLauncher` used to launch the FlyPay web activity and handle the result.
  * @param viewModel The FlyPayViewModel that manages FlyPay-related data and result state.
  */
 private fun handleUiState(
     context: Context,
-    uiState: FlyPayViewState,
-    clientId: String,
+    uiState: FlyPayUIState,
+    viewModel: FlyPayViewModel,
+    loadingDelegate: WidgetLoadingDelegate?,
     completion: (Result<String>) -> Unit,
     resolvePaymentForResult: ActivityResultLauncher<Intent>,
-    viewModel: FlyPayViewModel
 ) {
-    when {
-        // Handles the error state, invoking the completion handler with a failure result.
-        uiState.error != null -> {
-            completion(Result.failure(uiState.error))
+    when (uiState) {
+        // No action needed for the Idle state
+        is FlyPayUIState.Idle -> Unit
+
+        // Handle the loading state by notifying the loading delegate
+        is FlyPayUIState.Loading -> {
+            loadingDelegate?.widgetLoadingDidStart()
+        }
+
+        // Launch an intent to FlyPay's Web Activity if the callback URL is available
+        is FlyPayUIState.LaunchIntent -> {
+            loadingDelegate?.widgetLoadingDidFinish()
+            val (callbackData) = uiState
+            callbackData.callbackId?.let { flyPayOrderId ->
+                val intent = Intent(context, FlyPayWebActivity::class.java)
+                    .putOrderIdExtra(flyPayOrderId) // Adds the FlyPay order ID to the intent.
+                    .putClientIdExtra(viewModel.clientId) // Adds the client ID to the intent.
+                resolvePaymentForResult.launch(intent) // Launches the FlyPay web activity.
+            }
+        }
+
+        // Handle success state, notify the loading delegate, and return orderId with success
+        is FlyPayUIState.Success -> {
+            loadingDelegate?.widgetLoadingDidFinish()
+            completion(Result.success(uiState.orderId))
+            // Reset the state to ensure it’s not reused
             viewModel.resetResultState()
         }
 
-        // Handles the callback data, extracting the FlyPay order ID and launching the FlyPay web activity.
-        uiState.callbackData != null -> {
-            uiState.callbackData.callbackId?.let { flyPayOrderId ->
-                val intent = Intent(context, FlyPayWebActivity::class.java)
-                    .putOrderIdExtra(flyPayOrderId) // Adds the FlyPay order ID to the intent.
-                    .putClientIdExtra(clientId) // Adds the client ID to the intent.
-                resolvePaymentForResult.launch(intent) // Launches the FlyPay web activity.
-            }
+        // Handle error state, notify the loading delegate, and complete the transaction with failure
+        is FlyPayUIState.Error -> {
+            loadingDelegate?.widgetLoadingDidFinish()
+            completion(Result.failure(uiState.exception))
+            // Reset the state to ensure it’s not reused
+            viewModel.resetResultState()
         }
     }
 }
