@@ -1,6 +1,5 @@
 package com.paydock.designsystems.components.button
 
-import androidx.annotation.DrawableRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
@@ -32,15 +30,15 @@ import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
+import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 
 /**
  * Composable function to display a customizable SDK button with various button types.
  *
  * @param modifier Modifier for the button layout.
- * @param text Text displayed on the button.
- * @param iconVector Image vector icon displayed alongside the button text.
- * @param iconDrawable Drawable resource ID for the icon displayed alongside the button text.
- * @param enabled Flag to determine if the button is enabled.
+ * @param text Text displayed on the button.* @param enabled Flag to determine if the button is enabled.
+ * @param buttonIcon Icon to display on the button, defined as a `ButtonIcon`. This allows for custom vector
+ * or drawable resources.
  * @param isLoading Flag to determine if the button is in a loading state.
  * @param buttonShape Shape of the button.
  * @param type Type of the button (filled, outlined, or text).
@@ -50,8 +48,7 @@ import com.paydock.designsystems.theme.Theme
 internal fun SdkButton(
     modifier: Modifier = Modifier,
     text: String,
-    iconVector: ImageVector? = null,
-    @DrawableRes iconDrawable: Int? = null,
+    buttonIcon: ButtonIcon? = null,
     enabled: Boolean = true,
     isLoading: Boolean = false,
     buttonShape: Shape = Theme.buttonShapes.small,
@@ -68,8 +65,7 @@ internal fun SdkButton(
             content = {
                 ButtonContent(
                     text = text,
-                    vector = iconVector,
-                    drawableRes = iconDrawable,
+                    buttonIcon = buttonIcon,
                     isLoading = isLoading
                 )
             }
@@ -82,8 +78,7 @@ internal fun SdkButton(
             content = {
                 ButtonContent(
                     text = text,
-                    vector = iconVector,
-                    drawableRes = iconDrawable,
+                    buttonIcon = buttonIcon,
                     isLoading = isLoading
                 )
             },
@@ -150,15 +145,12 @@ private fun PrimaryButton(
  * Composable function to display the content of the button.
  *
  * @param text Text displayed on the button.
- * @param vector Image vector icon displayed alongside the button text.
- * @param drawableRes Drawable resource ID for the icon displayed alongside the button text.
  * @param isLoading Flag to determine if the button is in a loading state.
  */
 @Composable
 private fun RowScope.ButtonContent(
     text: String,
-    vector: ImageVector? = null,
-    @DrawableRes drawableRes: Int? = null,
+    buttonIcon: ButtonIcon? = null,
     isLoading: Boolean
 ) {
     Crossfade(targetState = isLoading, label = "buttonCrossFade") { loadingState ->
@@ -174,18 +166,19 @@ private fun RowScope.ButtonContent(
                 SdkButtonLoader()
             } else {
                 // Display the icon (if any) and text in a consistent layout
-                if (vector != null) {
-                    Icon(
+                when (buttonIcon) {
+                    is ButtonIcon.Vector -> Icon(
                         modifier = Modifier.size(Theme.dimensions.buttonIconSize),
-                        imageVector = vector,
+                        imageVector = buttonIcon.icon,
                         contentDescription = stringResource(id = R.string.content_desc_button_icon),
                     )
-                } else if (drawableRes != null) {
-                    Icon(
+                    is ButtonIcon.DrawableRes -> Icon(
                         modifier = Modifier.size(Theme.dimensions.buttonIconSize),
-                        painter = painterResource(drawableRes),
+                        painter = painterResource(buttonIcon.drawable),
                         contentDescription = stringResource(id = R.string.content_desc_button_icon),
                     )
+
+                    else -> Unit
                 }
             }
             Text(

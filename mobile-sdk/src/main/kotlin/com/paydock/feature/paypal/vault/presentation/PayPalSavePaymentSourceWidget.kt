@@ -94,7 +94,7 @@ fun PayPalSavePaymentSourceWidget(
             SdkButton(
                 modifier = Modifier
                     .testTag("linkPayPalAccount"),
-                iconDrawable = R.drawable.ic_link,
+                buttonIcon = config.icon,
                 text = config.actionText
                     ?: stringResource(id = R.string.button_link_paypal_account),
                 type = AppButtonType.Outlined,
