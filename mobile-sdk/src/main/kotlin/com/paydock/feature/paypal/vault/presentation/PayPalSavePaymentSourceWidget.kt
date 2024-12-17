@@ -24,6 +24,7 @@ import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.AppButtonType
 import com.paydock.designsystems.components.button.SdkButton
+import com.paydock.designsystems.theme.PayPalVault
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultResult
@@ -94,6 +95,7 @@ fun PayPalSavePaymentSourceWidget(
             SdkButton(
                 modifier = Modifier
                     .testTag("linkPayPalAccount"),
+                buttonColor = PayPalVault,
                 buttonIcon = config.icon,
                 text = config.actionText
                     ?: stringResource(id = R.string.button_link_paypal_account),
