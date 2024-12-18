@@ -37,7 +37,6 @@ import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -232,7 +231,6 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     @Test
     fun `get Afterpay wallet callback should update isLoading, call useCase, and update state on failure`() =
         runTest {
-            val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             val mockError = ApiException(
                 error = ApiErrorResponse(
                     status = HttpStatusCode.InternalServerError.value,
@@ -247,7 +245,6 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             // Allows for testing flow state
             viewModel.stateFlow.test {
                 // ACTION
-                viewModel.setWalletToken(accessToken)
                 viewModel.loadCheckoutToken()
                 // CHECK
                 // Initial state
@@ -416,15 +413,18 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             readResourceFile("charges/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
         val mockResult = Result.success(response.asEntity())
         coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
-        viewModel.captureWalletTransaction()
-        runCurrent()
+        // Allows for testing flow state
         viewModel.stateFlow.test {
+            // ACTION
+            viewModel.captureWalletTransaction()
+            // CHECK
+            // Initial state
+            assertIs<AfterpayUIState.Idle>(awaitItem())
             // Loading state - before execution
             assertIs<AfterpayUIState.Loading>(awaitItem())
             assertIs<AfterpayUIState.Success>(awaitItem())
             // ACTION
             viewModel.resetResultState()
-            // Result state - reset
             assertIs<AfterpayUIState.Idle>(awaitItem())
         }
     }

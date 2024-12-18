@@ -1,5 +1,6 @@
 package com.paydock.feature.card.presentation.utils
 
+import com.paydock.feature.card.presentation.utils.validators.CreditCardInputValidator
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

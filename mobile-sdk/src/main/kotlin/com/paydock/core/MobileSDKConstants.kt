@@ -13,11 +13,29 @@ internal object MobileSDKConstants {
     object General {
         // UI Constants
         internal const val SMALL_SCREEN_SIZE = 360
+        internal const val INPUT_DELAY = 300L
         internal const val DEBOUNCE_DELAY = 500L
 
         // Animation Constants
         internal const val DEFAULT_ANIMATION_DURATION = 300
         internal const val EXPANSION_TRANSITION_DURATION = 400
+    }
+
+    /**
+     * A utility object containing reusable regular expressions for input validation.
+     */
+    object Regex {
+        /**
+         * A regular expression that matches numeric strings containing only digits (0-9).
+         *
+         * This regex ensures that the input consists entirely of numeric characters,
+         * with no spaces, letters, or special characters.
+         *
+         * Example:
+         * - Valid: "12345", "007"
+         * - Invalid: "123a", "12 34", "!123"
+         */
+        internal val NUMERIC_DIGITS = Regex("^[0-9]+$")
     }
 
     /**
@@ -93,7 +111,8 @@ internal object MobileSDKConstants {
      * Constants related to PayPal configuration.
      */
     object PayPalConfig {
-        internal const val PAY_PAL_REDIRECT_PARAM_VALUE = "https://paydock.com/paypal/success&native_xo=1"
+        internal const val PAY_PAL_REDIRECT_PARAM_VALUE =
+            "https://paydock.com/paypal/success&native_xo=1"
         internal const val REDIRECT_PARAM_NAME = "redirect_uri"
     }
 

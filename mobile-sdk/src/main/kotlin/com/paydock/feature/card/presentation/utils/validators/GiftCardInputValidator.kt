@@ -1,4 +1,4 @@
-package com.paydock.feature.card.presentation.utils
+package com.paydock.feature.card.presentation.utils.validators
 
 /**
  * A utility object for validating and parsing gift card input details.
@@ -14,7 +14,7 @@ internal object GiftCardInputValidator {
      * @return The valid gift card number, an empty string if the input is empty, or `null` if the number is invalid.
      */
     fun parseNumber(number: String): String? = when {
-        GiftCardNumberValidator.checkNumber(number) -> number
+        GiftCardNumberValidator.isValidNumberFormat(number) -> number
         number.isEmpty() -> ""
         else -> null
     }
@@ -26,7 +26,7 @@ internal object GiftCardInputValidator {
      * @return The parsed and validated card pin if valid, an empty string if input is empty, or null if invalid.
      */
     fun parseCardPin(pin: String): String? = when {
-        CardPinValidator.checkPin(pin) -> pin
+        CardPinValidator.isValidPinFormat(pin) -> pin
         pin.isEmpty() -> ""
         else -> null
     }

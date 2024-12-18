@@ -23,9 +23,9 @@ import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.card.presentation.utils.CardNumberInputTransformation
-import com.paydock.feature.card.presentation.utils.GiftCardInputValidator
-import com.paydock.feature.card.presentation.utils.GiftCardNumberValidator
+import com.paydock.feature.card.presentation.utils.transformations.CardNumberInputTransformation
+import com.paydock.feature.card.presentation.utils.validators.GiftCardInputValidator
+import com.paydock.feature.card.presentation.utils.validators.GiftCardNumberValidator
 
 /**
  * A composable that displays an input field for entering a gift card number.

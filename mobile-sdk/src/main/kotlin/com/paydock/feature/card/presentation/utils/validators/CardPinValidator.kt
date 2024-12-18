@@ -1,4 +1,6 @@
-package com.paydock.feature.card.presentation.utils
+package com.paydock.feature.card.presentation.utils.validators
+
+import com.paydock.core.MobileSDKConstants
 
 /**
  * A utility object for validating and parsing card pin details.
@@ -15,7 +17,7 @@ internal object CardPinValidator {
      * @param pin The card pin to be validated.
      * @return `true` if the name is valid, `false` otherwise.
      */
-    fun checkPin(pin: String): Boolean =
-        pin.isNotBlank() && pin.matches(Regex("^[0-9]+$"))
+    fun isValidPinFormat(pin: String): Boolean =
+        pin.isNotBlank() && pin.matches(MobileSDKConstants.Regex.NUMERIC_DIGITS)
 
 }

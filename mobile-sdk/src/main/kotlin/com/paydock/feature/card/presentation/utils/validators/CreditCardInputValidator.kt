@@ -1,4 +1,4 @@
-package com.paydock.feature.card.presentation.utils
+package com.paydock.feature.card.presentation.utils.validators
 
 import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
 
@@ -6,6 +6,7 @@ import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
  * A utility object for validating and parsing credit card input details.
  */
 internal object CreditCardInputValidator {
+
     /**
      * Parses the cardholder name and returns it if it is a valid name.
      *
@@ -31,7 +32,7 @@ internal object CreditCardInputValidator {
      * @return The valid credit card number, an empty string if the input is empty, or `null` if the number is invalid.
      */
     fun parseNumber(number: String): String? = when {
-        CreditCardNumberValidator.checkNumber(number) -> number
+        CreditCardNumberValidator.isValidNumberFormat(number) -> number
         number.isEmpty() -> ""
         else -> null
     }
@@ -43,7 +44,7 @@ internal object CreditCardInputValidator {
      * @return The parsed and validated expiry string in the format MM/YY, or null if invalid.
      */
     fun parseExpiry(expiry: String): String? = when {
-        CardExpiryValidator.checkExpiry(expiry) -> expiry
+        CardExpiryValidator.isValidExpiryFormat(expiry) -> expiry
         expiry.isEmpty() -> ""
         else -> null
     }
@@ -56,7 +57,7 @@ internal object CreditCardInputValidator {
      * @return The parsed and validated security code if valid, an empty string if input is empty, or null if invalid.
      */
     fun parseSecurityCode(code: String, securityCodeType: SecurityCodeType): String? = when {
-        CardSecurityCodeValidator.checkSecurityCode(code, securityCodeType) -> code
+        CardSecurityCodeValidator.isSecurityCodeValid(code, securityCodeType) -> code
         code.isEmpty() -> ""
         else -> null
     }

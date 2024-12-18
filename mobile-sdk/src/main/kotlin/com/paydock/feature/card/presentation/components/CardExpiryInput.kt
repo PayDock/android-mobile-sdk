@@ -4,6 +4,11 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.AutofillType
@@ -18,17 +23,24 @@ import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.card.presentation.utils.CardExpiryValidator
-import com.paydock.feature.card.presentation.utils.CreditCardInputValidator
-import com.paydock.feature.card.presentation.utils.ExpiryInputTransformation
+import com.paydock.feature.card.presentation.utils.errors.CardExpiryError
+import com.paydock.feature.card.presentation.utils.transformations.ExpiryInputTransformation
+import com.paydock.feature.card.presentation.utils.validators.CardExpiryValidator
+import com.paydock.feature.card.presentation.utils.validators.CreditCardInputValidator
+import kotlinx.coroutines.delay
 
 /**
- * Composable that displays an input field for the card expiry date (MM/YY).
+ * A composable function for inputting and validating a credit card expiry date.
  *
- * @param modifier The modifier to be applied to the composable.
- * @param value The current value of the expiry.
- * @param nextFocus The focus requester for the next input field (optional).
- * @param onValueChange The callback function to be invoked when the value of the expiry changes.
+ * This input field allows users to enter the expiry date in MM/YY format, performs validation checks,
+ * and provides feedback based on the input's correctness. It handles user interactions, debounced
+ * input updates, and error messages dynamically.
+ *
+ * @param modifier [Modifier] to be applied to the text field.
+ * @param value The current value of the expiry input as a [String].
+ * @param enabled Boolean indicating whether the input field is enabled.
+ * @param nextFocus Optional [FocusRequester] to handle focus movement when the "Next" action is triggered.
+ * @param onValueChange Callback function to handle changes in the input value.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -39,50 +51,60 @@ internal fun CardExpiryInput(
     nextFocus: FocusRequester? = null,
     onValueChange: (String) -> Unit
 ) {
-    // Parse the expiry value for display purposes
-    val expiry = CreditCardInputValidator.parseExpiry(value)
+    // Tracks if the user has interacted with the field
+    var hasUserInteracted by remember { mutableStateOf(false) }
 
-    // Check if the expiry is valid and if the card is expired
-    val isValid = CardExpiryValidator.isExpiryValid(value)
-    val isExpired = CardExpiryValidator.isCardExpired(value)
-
-    // Determine the appropriate error message based on the conditions
-    val errorMessage = when {
-        value.isNotBlank() && isExpired && value.length == MobileSDKConstants.CardDetailsConfig.MAX_EXPIRY_LENGTH ->
-            stringResource(id = R.string.error_expiry_expired)
-
-        value.isNotBlank() && !isValid -> stringResource(id = R.string.error_expiry_date)
-        else -> null
+    // Debounced value to prevent rapid updates
+    var debouncedValue by remember { mutableStateOf("") }
+    LaunchedEffect(value) {
+        delay(MobileSDKConstants.General.INPUT_DELAY)
+        debouncedValue = value
     }
 
+    // Parse the expiry value for display purposes and validate it
+    val expiry = CreditCardInputValidator.parseExpiry(debouncedValue)
+    // Validate possible expiry errors
+    val expiryError = CardExpiryValidator.validateExpiryInput(debouncedValue, hasUserInteracted)
+
+    // Map the validation result to an error message
+    val errorMessage = when (expiryError) {
+        CardExpiryError.Empty,
+        CardExpiryError.InvalidFormat -> stringResource(id = R.string.error_expiry_date)
+        CardExpiryError.Expired -> stringResource(id = R.string.error_expiry_expired)
+        CardExpiryError.None -> null
+    }
+
+    // Input field configuration
     SdkTextField(
         modifier = modifier,
         value = value,
         onValueChange = {
-            val formattedExpiry = it.replace(Regex("[^0-9]"), "")
+            hasUserInteracted = true
+            // Format and validate expiry date
+            val formattedExpiry = CardExpiryValidator.formatExpiry(it)
             CreditCardInputValidator.parseExpiry(formattedExpiry)?.let { expiry ->
                 onValueChange(expiry)
             }
         },
-        label = stringResource(id = R.string.label_expiry),
-        placeholder = stringResource(id = R.string.placeholder_expiry),
+        label = stringResource(id = R.string.label_expiry), // Label for the input field
+        placeholder = stringResource(id = R.string.placeholder_expiry), // Placeholder text
         enabled = enabled,
-        error = errorMessage,
+        error = errorMessage, // Dynamically show error messages if validation fails
         autofillType = AutofillType.CreditCardExpirationDate,
-        visualTransformation = ExpiryInputTransformation(), // Apply visual transformation for MM/YY format
+        visualTransformation = ExpiryInputTransformation(), // Format input as MM/YY
         trailingIcon = {
-            // Show a success icon if the input is valid and not blank
+            // Display a success icon when the expiry input is valid and non-blank
             if (!expiry.isNullOrBlank()) {
                 InputValidIcon()
             }
         },
         keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Number,
+            keyboardType = KeyboardType.Number, // Input limited to numbers
             imeAction = if (nextFocus != null) ImeAction.Next else ImeAction.Done
         ),
         keyboardActions = KeyboardActions(
             onNext = {
-                nextFocus?.requestFocus()
+                nextFocus?.requestFocus() // Move focus to the next input field
             }
         )
     )

@@ -17,7 +17,7 @@ import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.card.presentation.utils.CreditCardInputValidator
+import com.paydock.feature.card.presentation.utils.validators.CreditCardInputValidator
 
 /**
  * Composable that displays an input field for the cardholder name.

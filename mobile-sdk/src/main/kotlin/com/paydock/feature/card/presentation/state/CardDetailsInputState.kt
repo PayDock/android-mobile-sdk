@@ -3,12 +3,12 @@ package com.paydock.feature.card.presentation.state
 import com.paydock.core.MobileSDKConstants
 import com.paydock.feature.card.domain.model.integration.enums.CardIssuerType
 import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
-import com.paydock.feature.card.presentation.utils.CardExpiryValidator
-import com.paydock.feature.card.presentation.utils.CardHolderNameValidator
-import com.paydock.feature.card.presentation.utils.CardIssuerValidator
-import com.paydock.feature.card.presentation.utils.CardSecurityCodeValidator
-import com.paydock.feature.card.presentation.utils.CreditCardInputValidator
-import com.paydock.feature.card.presentation.utils.CreditCardNumberValidator
+import com.paydock.feature.card.presentation.utils.validators.CardExpiryValidator
+import com.paydock.feature.card.presentation.utils.validators.CardHolderNameValidator
+import com.paydock.feature.card.presentation.utils.validators.CardIssuerValidator
+import com.paydock.feature.card.presentation.utils.validators.CardSecurityCodeValidator
+import com.paydock.feature.card.presentation.utils.validators.CreditCardInputValidator
+import com.paydock.feature.card.presentation.utils.validators.CreditCardNumberValidator
 
 /**
  * Represents the input state for card details, including validation and metadata extraction.
@@ -59,7 +59,7 @@ internal data class CardDetailsInputState(
      */
     val isDataValid: Boolean
         get() = (CardHolderNameValidator.checkHolderName(cardholderName) || !collectCardholderName) &&
-            CreditCardNumberValidator.checkNumber(cardNumber) &&
+            CreditCardNumberValidator.isValidNumberFormat(cardNumber) &&
             CreditCardInputValidator.isLuhnValid(cardNumber) &&
             CardExpiryValidator.isExpiryValid(expiry) &&
             CardSecurityCodeValidator.isSecurityCodeValid(code, securityCodeType)

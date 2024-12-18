@@ -1,4 +1,4 @@
-package com.paydock.feature.card.presentation.utils
+package com.paydock.feature.card.presentation.utils.validators
 
 /**
  * A utility object for validating and parsing card holder name details.

@@ -16,7 +16,7 @@ import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.card.presentation.utils.GiftCardInputValidator
+import com.paydock.feature.card.presentation.utils.validators.GiftCardInputValidator
 
 /**
  * A composable function that creates a card pin input field.

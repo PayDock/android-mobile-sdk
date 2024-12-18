@@ -32,7 +32,7 @@ import com.paydock.feature.card.presentation.components.CreditCardNumberInput
 import com.paydock.feature.card.presentation.components.SaveCardToggle
 import com.paydock.feature.card.presentation.state.CardDetailsInputState
 import com.paydock.feature.card.presentation.state.CardDetailsUIState
-import com.paydock.feature.card.presentation.utils.CardIssuerValidator
+import com.paydock.feature.card.presentation.utils.validators.CardIssuerValidator
 import com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -57,7 +57,7 @@ import org.koin.core.parameter.parametersOf
  * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
  * @param completion Callback invoked with the result of the tokenization (success or failure).
  */
-@Suppress("LongMethod", "CyclomaticComplexMethod")
+@Suppress("LongMethod")
 @Composable
 fun CardDetailsWidget(
     modifier: Modifier = Modifier,

@@ -1,5 +1,6 @@
 package com.paydock.feature.card.presentation.utils
 
+import com.paydock.feature.card.presentation.utils.validators.GiftCardInputValidator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

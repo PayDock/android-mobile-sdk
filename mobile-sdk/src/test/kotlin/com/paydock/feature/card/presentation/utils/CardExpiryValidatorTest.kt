@@ -1,5 +1,6 @@
 package com.paydock.feature.card.presentation.utils
 
+import com.paydock.feature.card.presentation.utils.validators.CardExpiryValidator
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -7,17 +8,17 @@ import org.junit.Test
 internal class CardExpiryValidatorTest {
 
     @Test
-    fun testCheckExpiry_ValidInput() {
-        assertTrue(CardExpiryValidator.checkExpiry("0123"))
-        assertTrue(CardExpiryValidator.checkExpiry("1123"))
-        assertTrue(CardExpiryValidator.checkExpiry("0525"))
+    fun testIsValidExpiryFormat_ValidInput() {
+        assertTrue(CardExpiryValidator.isValidExpiryFormat("0123"))
+        assertTrue(CardExpiryValidator.isValidExpiryFormat("1123"))
+        assertTrue(CardExpiryValidator.isValidExpiryFormat("0525"))
     }
 
     @Test
     fun testCheckExpiry_InvalidInput() {
-        assertFalse(CardExpiryValidator.checkExpiry(""))
-        assertFalse(CardExpiryValidator.checkExpiry("12345"))
-        assertFalse(CardExpiryValidator.checkExpiry("abc"))
+        assertFalse(CardExpiryValidator.isValidExpiryFormat(""))
+        assertFalse(CardExpiryValidator.isValidExpiryFormat("12345"))
+        assertFalse(CardExpiryValidator.isValidExpiryFormat("abc"))
     }
 
     @Test
