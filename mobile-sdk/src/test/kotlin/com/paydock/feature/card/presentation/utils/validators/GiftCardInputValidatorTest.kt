@@ -1,4 +1,4 @@
-package com.paydock.feature.card.presentation.utils
+package com.paydock.feature.card.presentation.utils.validators
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

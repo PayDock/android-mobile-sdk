@@ -4,6 +4,11 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.AutofillType
@@ -12,12 +17,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import com.paydock.R
+import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.card.presentation.utils.CreditCardInputValidator
+import com.paydock.feature.card.presentation.utils.errors.CardHolderNameError
+import com.paydock.feature.card.presentation.utils.validators.CardHolderNameValidator
+import com.paydock.feature.card.presentation.utils.validators.CreditCardInputValidator
+import kotlinx.coroutines.delay
 
 /**
  * Composable that displays an input field for the cardholder name.
@@ -37,19 +46,24 @@ internal fun CardHolderNameInput(
     nextFocus: FocusRequester? = null,
     onValueChange: (String) -> Unit
 ) {
-    // Validate the cardholder name using CardInputValidator
-    val cardHolder = CreditCardInputValidator.parseHolderName(value)
+    var hasUserInteracted by remember { mutableStateOf(false) }
 
-    // Cardholder Name Luhn check: if it passes, the customer has accidentally put their PAN in the wrong field
-    val isLuhnValid = CreditCardInputValidator.isLuhnValid(value)
+    var debouncedValue by remember { mutableStateOf("") }
+    LaunchedEffect(value) {
+        delay(MobileSDKConstants.General.INPUT_DELAY)
+        debouncedValue = value
+    }
+
+    // Validate the cardholder name using CardInputValidator
+    val cardHolder = CreditCardInputValidator.parseHolderName(debouncedValue)
+    // Validate possible cardholder errors
+    val cardHolderError = CardHolderNameValidator.validateHolderNameInput(debouncedValue, hasUserInteracted)
 
     // Define the error message to be shown if the cardholder name is invalid
-    val errorMessage = if (value.isNotBlank() && isLuhnValid) {
-        stringResource(id = R.string.error_luhn_card_holder_name)
-    } else if (cardHolder == null) {
-        stringResource(id = R.string.error_card_holder_name)
-    } else {
-        null
+    val errorMessage = when (cardHolderError) {
+        CardHolderNameError.Empty -> stringResource(id = R.string.error_card_holder_name)
+        CardHolderNameError.InvalidLuhn -> stringResource(id = R.string.error_luhn_card_holder_name)
+        CardHolderNameError.None -> null
     }
 
     // Use AppTextField from the AppCompat library with the specified properties
@@ -57,6 +71,7 @@ internal fun CardHolderNameInput(
         modifier = modifier,
         value = value,
         onValueChange = { newValue ->
+            hasUserInteracted = true
             // Validate and parse the input when the value changes
             CreditCardInputValidator.parseHolderName(newValue)?.let { parsedName ->
                 onValueChange(parsedName)

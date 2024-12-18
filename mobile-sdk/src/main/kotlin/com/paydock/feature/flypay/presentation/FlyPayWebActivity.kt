@@ -22,8 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.paydock.MobileSDK
 import com.paydock.R
-import com.paydock.core.MobileSDKConstants
-import com.paydock.core.domain.model.Environment
+import com.paydock.core.domain.mapper.mapToFlyPayEnv
 import com.paydock.core.presentation.extensions.putMessageExtra
 import com.paydock.core.presentation.extensions.putStatusExtra
 import com.paydock.designsystems.theme.SdkTheme
@@ -103,10 +102,7 @@ internal class FlyPayWebActivity : ComponentActivity() {
      */
     @Suppress("MaxLineLength")
     private fun createFlyPayUrl(flyPayOrderId: String, clientId: String): String =
-        when (MobileSDK.getInstance().environment) {
-            Environment.PRODUCTION -> "https://checkout.flypay.com.au/?orderId=$flyPayOrderId&redirectUrl=${MobileSDKConstants.FlyPayConfig.FLY_PAY_REDIRECT_URL}&mode=default&clientId=$clientId"
-            else -> "https://checkout.sandbox.cxbflypay.com.au/?orderId=$flyPayOrderId&redirectUrl=${MobileSDKConstants.FlyPayConfig.FLY_PAY_REDIRECT_URL}&mode=default&clientId=$clientId" // default to sandbox
-        }
+        MobileSDK.getInstance().environment.mapToFlyPayEnv(flyPayOrderId, clientId)
 
     private fun finish(status: CancellationStatus) {
         setResult(Activity.RESULT_CANCELED, Intent().putCancellationStatusExtra(status))

@@ -53,10 +53,11 @@ internal fun Environment.mapToClientSDKEnv(): String = when (this) {
  *
  * @return The corresponding [com.paypal.android.corepayments.Environment].
  */
-internal fun Environment.mapToPayPalEnv(): com.paypal.android.corepayments.Environment = when (this) {
-    Environment.PRODUCTION -> com.paypal.android.corepayments.Environment.LIVE
-    Environment.SANDBOX, Environment.STAGING -> com.paypal.android.corepayments.Environment.SANDBOX
-}
+internal fun Environment.mapToPayPalEnv(): com.paypal.android.corepayments.Environment =
+    when (this) {
+        Environment.PRODUCTION -> com.paypal.android.corepayments.Environment.LIVE
+        Environment.SANDBOX, Environment.STAGING -> com.paypal.android.corepayments.Environment.SANDBOX
+    }
 
 /**
  * Maps the application's custom `Environment` enum to the corresponding `AfterpayEnvironment`.
@@ -76,3 +77,31 @@ internal fun Environment.mapToAfterpayEnv(): AfterpayEnvironment = when (this) {
     Environment.SANDBOX, Environment.STAGING -> AfterpayEnvironment.SANDBOX
     Environment.PRODUCTION -> AfterpayEnvironment.PRODUCTION
 }
+
+/**
+ * Maps the current environment to the corresponding FlyPay URL.
+ *
+ * This function generates a FlyPay checkout URL based on the provided environment, FlyPay order ID, and client ID.
+ * It is used to navigate to the appropriate FlyPay payment page during the transaction process.
+ *
+ * @receiver The current environment (`Environment.SANDBOX`, `Environment.STAGING`, or `Environment.PRODUCTION`).
+ * @param flyPayOrderId The unique identifier for the FlyPay order.
+ * @param clientId The client ID used for authentication with FlyPay.
+ * @return The FlyPay checkout URL specific to the environment and provided parameters.
+ */
+internal fun Environment.mapToFlyPayEnv(flyPayOrderId: String, clientId: String): String =
+    when (this) {
+        Environment.SANDBOX, Environment.STAGING ->
+            "https://checkout.sandbox.cxbflypay.com.au/?" +
+                "orderId=$flyPayOrderId&" +
+                "redirectUrl=${MobileSDKConstants.FlyPayConfig.FLY_PAY_REDIRECT_URL}&" +
+                "mode=default&" +
+                "clientId=$clientId"
+
+        Environment.PRODUCTION ->
+            "https://checkout.flypay.com.au/?" +
+                "orderId=$flyPayOrderId&" +
+                "redirectUrl=${MobileSDKConstants.FlyPayConfig.FLY_PAY_REDIRECT_URL}&" +
+                "mode=default&" +
+                "clientId=$clientId"
+    }

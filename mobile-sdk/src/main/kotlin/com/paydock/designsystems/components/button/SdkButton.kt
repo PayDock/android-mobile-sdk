@@ -1,6 +1,5 @@
 package com.paydock.designsystems.components.button
 
-import androidx.annotation.DrawableRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
@@ -32,30 +30,36 @@ import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
+import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 
 /**
  * Composable function to display a customizable SDK button with various button types.
  *
- * @param modifier Modifier for the button layout.
- * @param text Text displayed on the button.
- * @param iconVector Image vector icon displayed alongside the button text.
- * @param iconDrawable Drawable resource ID for the icon displayed alongside the button text.
- * @param enabled Flag to determine if the button is enabled.
- * @param isLoading Flag to determine if the button is in a loading state.
- * @param buttonShape Shape of the button.
- * @param type Type of the button (filled, outlined, or text).
- * @param onClick Callback function for button click events.
+ * This function provides flexibility in creating buttons with different styles, shapes, icons, and loading states.
+ * It is designed to adapt to various UI needs while maintaining a consistent design system.
+ *
+ * @param modifier Modifier to be applied to the button's layout for customization.
+ * @param text The text displayed on the button, describing its action or purpose.
+ * @param enabled Determines whether the button is interactive. When false, the button is visually and functionally disabled.
+ * @param type Specifies the visual style of the button. Defaults to `AppButtonType.Filled`,
+ * but can also be `Outlined` or `Text` for alternate styles.
+ * @param isLoading Indicates if the button should display a loading state, disabling user interaction while showing a loader.
+ * @param buttonIcon An optional icon to display on the button, defined as a `ButtonIcon`. Supports vector (`ImageVector`)
+ * or drawable (`@DrawableRes`) resources for flexibility in icon customization.
+ * @param buttonColor The background color of the button. Defaults to the primary theme color.
+ * @param buttonShape Defines the shape of the button (e.g., rounded corners). Defaults to the small shape defined in the theme.
+ * @param onClick A callback function invoked when the button is clicked. This will be disabled if `isLoading` is true.
  */
 @Composable
 internal fun SdkButton(
     modifier: Modifier = Modifier,
     text: String,
-    iconVector: ImageVector? = null,
-    @DrawableRes iconDrawable: Int? = null,
     enabled: Boolean = true,
-    isLoading: Boolean = false,
-    buttonShape: Shape = Theme.buttonShapes.small,
     type: AppButtonType = AppButtonType.Filled,
+    isLoading: Boolean = false,
+    buttonIcon: ButtonIcon? = null,
+    buttonColor: Color = Theme.colors.primary,
+    buttonShape: Shape = Theme.buttonShapes.small,
     onClick: () -> Unit,
 ) {
     // Decide button appearance based on type
@@ -68,8 +72,7 @@ internal fun SdkButton(
             content = {
                 ButtonContent(
                     text = text,
-                    vector = iconVector,
-                    drawableRes = iconDrawable,
+                    buttonIcon = buttonIcon,
                     isLoading = isLoading
                 )
             }
@@ -82,19 +85,18 @@ internal fun SdkButton(
             content = {
                 ButtonContent(
                     text = text,
-                    vector = iconVector,
-                    drawableRes = iconDrawable,
+                    buttonIcon = buttonIcon,
                     isLoading = isLoading
                 )
             },
             colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = Theme.colors.primary,
+                contentColor = buttonColor,
                 containerColor = Color.Transparent,
-                disabledContainerColor = Theme.colors.primary.alpha40,
+                disabledContainerColor = buttonColor.alpha40,
                 disabledContentColor = Theme.colors.onPrimary
             ),
             shape = buttonShape,
-            border = BorderStroke(1.dp, Theme.colors.primary)
+            border = BorderStroke(1.dp, buttonColor)
         )
 
         AppButtonType.Text -> {
@@ -104,8 +106,8 @@ internal fun SdkButton(
                 enabled = enabled && !isLoading,
                 shape = buttonShape,
                 colors = ButtonDefaults.textButtonColors(
-                    disabledContainerColor = Theme.colors.primary.alpha40,
-                    disabledContentColor = Theme.colors.primary.alpha40,
+                    disabledContainerColor = buttonColor.alpha40,
+                    disabledContentColor = buttonColor.alpha40,
                 ),
                 content = {
                     ButtonContent(text = text, isLoading = isLoading)
@@ -130,6 +132,7 @@ private fun PrimaryButton(
     onClick: () -> Unit = {},
     enabled: Boolean = false,
     shape: Shape,
+    buttonColor: Color = Theme.colors.primary,
     content: @Composable RowScope.() -> Unit,
 ) {
     Button(
@@ -139,7 +142,7 @@ private fun PrimaryButton(
         content = content,
         colors = ButtonDefaults.buttonColors(
             contentColor = Theme.colors.onPrimary,
-            disabledContainerColor = Theme.colors.primary.alpha40,
+            disabledContainerColor = buttonColor.alpha40,
             disabledContentColor = Theme.colors.onPrimary,
         ),
         shape = shape
@@ -150,15 +153,14 @@ private fun PrimaryButton(
  * Composable function to display the content of the button.
  *
  * @param text Text displayed on the button.
- * @param vector Image vector icon displayed alongside the button text.
- * @param drawableRes Drawable resource ID for the icon displayed alongside the button text.
+ * @param buttonIcon Icon to display on the button, defined as a `ButtonIcon`. This allows for custom vector
+ * or drawable resources.
  * @param isLoading Flag to determine if the button is in a loading state.
  */
 @Composable
 private fun RowScope.ButtonContent(
     text: String,
-    vector: ImageVector? = null,
-    @DrawableRes drawableRes: Int? = null,
+    buttonIcon: ButtonIcon? = null,
     isLoading: Boolean
 ) {
     Crossfade(targetState = isLoading, label = "buttonCrossFade") { loadingState ->
@@ -174,18 +176,19 @@ private fun RowScope.ButtonContent(
                 SdkButtonLoader()
             } else {
                 // Display the icon (if any) and text in a consistent layout
-                if (vector != null) {
-                    Icon(
+                when (buttonIcon) {
+                    is ButtonIcon.Vector -> Icon(
                         modifier = Modifier.size(Theme.dimensions.buttonIconSize),
-                        imageVector = vector,
+                        imageVector = buttonIcon.icon,
                         contentDescription = stringResource(id = R.string.content_desc_button_icon),
                     )
-                } else if (drawableRes != null) {
-                    Icon(
+                    is ButtonIcon.DrawableRes -> Icon(
                         modifier = Modifier.size(Theme.dimensions.buttonIconSize),
-                        painter = painterResource(drawableRes),
+                        painter = painterResource(buttonIcon.drawable),
                         contentDescription = stringResource(id = R.string.content_desc_button_icon),
                     )
+
+                    else -> Unit
                 }
             }
             Text(

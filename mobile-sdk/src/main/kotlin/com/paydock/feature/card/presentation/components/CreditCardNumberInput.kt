@@ -2,19 +2,18 @@ package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -25,21 +24,30 @@ import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.card.domain.model.integration.enums.CardIssuerType
-import com.paydock.feature.card.presentation.utils.CardIssuerValidator
-import com.paydock.feature.card.presentation.utils.CardNumberInputTransformation
-import com.paydock.feature.card.presentation.utils.CreditCardInputValidator
+import com.paydock.feature.card.presentation.utils.errors.CardNumberError
+import com.paydock.feature.card.presentation.utils.transformations.CardNumberInputTransformation
+import com.paydock.feature.card.presentation.utils.validators.CardIssuerValidator
+import com.paydock.feature.card.presentation.utils.validators.CreditCardInputValidator
+import com.paydock.feature.card.presentation.utils.validators.CreditCardNumberValidator
+import kotlinx.coroutines.delay
 
 /**
- * A composable that displays an input field for entering a credit card number.
+ * A composable function for entering and validating a credit card number.
  *
- * @param modifier The modifier to be applied to the composable.
- * @param value The current value of the input field.
- * @param nextFocus The focus requester for the next input field. If provided, pressing 'Next' on the keyboard will
- *                  move focus to the next input field.
- * @param onValueChange The callback to be invoked when the value of the input field changes.
+ * This function provides an input field for credit card numbers with validation, error handling,
+ * card issuer detection, and UI feedback. It supports user-friendly interactions such as autofill,
+ * focus handling, and dynamic input validation.
+ *
+ * @param modifier Modifier to customize the layout or styling of the input field.
+ * @param value The current value of the input field, representing the credit card number.
+ * @param enabled Flag to enable or disable user interaction with the input field.
+ * @param nextFocus An optional `FocusRequester` for moving focus to the next input field when the
+ * 'Next' keyboard action is triggered.
+ * @param onValueChange Callback function invoked when the input value changes. The callback receives
+ * a parsed credit card number if the input is valid.
  */
 @OptIn(ExperimentalComposeUiApi::class)
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 internal fun CreditCardNumberInput(
     modifier: Modifier = Modifier,
@@ -49,27 +57,36 @@ internal fun CreditCardNumberInput(
     onValueChange: (String) -> Unit
 ) {
     // State to track the focus state of the input field
-    val focusedState = remember { mutableStateOf(false) }
+    var focusedState by remember { mutableStateOf(false) }
+    var hasUserInteracted by remember { mutableStateOf(false) }
+
+    var debouncedValue by remember { mutableStateOf("") }
+    LaunchedEffect(value) {
+        delay(MobileSDKConstants.General.INPUT_DELAY)
+        debouncedValue = value
+    }
 
     // Parse the card number to determine its type and validity
-    val cardNumber = CreditCardInputValidator.parseNumber(value)
+    val cardNumber = CreditCardInputValidator.parseNumber(debouncedValue)
+    // Validate possible card number errors
+    val cardNumberError = CreditCardNumberValidator.validateCardNumberInput(debouncedValue, hasUserInteracted)
 
-    // Card Number Luhn check: if it passes, it is likely to be a valid card number
-    val isLuhnValid = CreditCardInputValidator.isLuhnValid(value)
-
-    // Define the error message to be shown if the card number is invalid
-    val errorMessage =
-        if (cardNumber == null || (value.isNotBlank() && !isLuhnValid)) stringResource(id = R.string.error_card_number) else null
+    val errorMessage = when (cardNumberError) {
+        CardNumberError.Empty,
+        CardNumberError.InvalidLuhn -> stringResource(id = R.string.error_card_number)
+        CardNumberError.None -> null
+    }
 
     // Detect the card issuer type to show the appropriate icon
     val cardIssuer = CardIssuerValidator.detectCardIssuer(value)
 
     SdkTextField(
         modifier = modifier.onFocusChanged {
-            focusedState.value = it.isFocused
+            focusedState = it.isFocused
         },
         value = value,
         onValueChange = {
+            hasUserInteracted = true
             if (it.length <= MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH) {
                 // Parse the input text to ensure it is a valid card number before invoking the callback
                 CreditCardInputValidator.parseNumber(it)?.let { number ->
@@ -81,20 +98,7 @@ internal fun CreditCardNumberInput(
         enabled = enabled,
         label = stringResource(id = R.string.label_card_number),
         autofillType = AutofillType.CreditCardNumber,
-        leadingIcon = {
-            // Display the card issuer icon as a leading icon in the input field
-            Icon(
-                modifier = Modifier.testTag("cardIcon"),
-                painter = painterResource(id = cardIssuer.imageResId),
-                contentDescription = null,
-                // Tint the icon based on whether it's a recognized card issuer or not
-                tint = if (cardIssuer == CardIssuerType.OTHER) {
-                    if (focusedState.value) {
-                        Theme.colors.onSurface // Use primary color when focused
-                    } else Theme.colors.onSurfaceVariant // Use secondary color when not focused
-                } else Color.Unspecified // Use the default icon color for recognized issuers
-            )
-        },
+        leadingIcon = { CardIssuerIcon(cardIssuer, focusedState) },
         error = errorMessage,
         visualTransformation = CardNumberInputTransformation(MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH),
         // Show a success icon when the card number is valid and not blank
@@ -106,7 +110,10 @@ internal fun CreditCardNumberInput(
         // Use keyboard options and actions for a more user-friendly input experience
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number,
-            imeAction = if (nextFocus != null) ImeAction.Next else ImeAction.Done
+            imeAction = when (nextFocus) {
+                null -> ImeAction.Done
+                else -> ImeAction.Next
+            }
         ),
         keyboardActions = KeyboardActions(
             onNext = {

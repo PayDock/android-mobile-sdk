@@ -139,8 +139,7 @@ internal fun SdkTextField(
                     modifier = Modifier.testTag("sdkLabel"),
                     maxLines = maxLines,
                     style = labelTextStyle,
-                    text = label,
-                    color = Theme.colors.onBackground
+                    text = label
                 )
             },
             placeholder = {
@@ -149,17 +148,14 @@ internal fun SdkTextField(
                     modifier = Modifier.testTag("sdkPlaceholder"),
                     maxLines = maxLines,
                     style = Theme.typography.body1,
-                    text = placeholder,
-                    color = Theme.colors.onBackground
+                    text = placeholder
                 )
             },
             isError = error != null,
             shape = Theme.textFieldShapes.small,
             colors = OutlinedTextFieldDefaults.colors(
-                // Error Colors
-                errorLabelColor = Theme.colors.onSurfaceVariant,
-                errorBorderColor = Theme.colors.outline,
-                errorCursorColor = Theme.colors.primary,
+                focusedLabelColor = Theme.colors.primary,
+                unfocusedLabelColor = Theme.colors.onBackground
             ),
         )
 

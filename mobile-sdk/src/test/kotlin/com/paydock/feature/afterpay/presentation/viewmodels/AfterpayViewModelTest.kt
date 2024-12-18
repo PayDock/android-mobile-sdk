@@ -54,6 +54,7 @@ import kotlin.test.assertIs
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
 internal class AfterpayViewModelTest : BaseUnitTest() {
+    // This requires using the MobileSDK for the environment mapping
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -100,15 +101,6 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     fun tearDownKoin() {
         // As the SDK will startKoin, we need to ensure that after each test we stop koin to be able to restart it in each test
         stopKoin()
-    }
-
-    @Test
-    fun `resetResultState should reset UI state`() = runTest {
-        viewModel.stateFlow.test {
-            // ACTION
-            viewModel.resetResultState()
-            assertIs<AfterpayUIState.Idle>(awaitItem())
-        }
     }
 
     @Test
@@ -239,7 +231,6 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     @Test
     fun `get Afterpay wallet callback should update isLoading, call useCase, and update state on failure`() =
         runTest {
-            val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             val mockError = ApiException(
                 error = ApiErrorResponse(
                     status = HttpStatusCode.InternalServerError.value,
@@ -254,7 +245,6 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             // Allows for testing flow state
             viewModel.stateFlow.test {
                 // ACTION
-                viewModel.setWalletToken(accessToken)
                 viewModel.loadCheckoutToken()
                 // CHECK
                 // Initial state
@@ -416,4 +406,26 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
                 }
             }
         }
+
+    @Test
+    fun `resetResultState should reset UI state`() = runTest {
+        val response =
+            readResourceFile("charges/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
+        val mockResult = Result.success(response.asEntity())
+        coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
+        // Allows for testing flow state
+        viewModel.stateFlow.test {
+            // ACTION
+            viewModel.captureWalletTransaction()
+            // CHECK
+            // Initial state
+            assertIs<AfterpayUIState.Idle>(awaitItem())
+            // Loading state - before execution
+            assertIs<AfterpayUIState.Loading>(awaitItem())
+            assertIs<AfterpayUIState.Success>(awaitItem())
+            // ACTION
+            viewModel.resetResultState()
+            assertIs<AfterpayUIState.Idle>(awaitItem())
+        }
+    }
 }

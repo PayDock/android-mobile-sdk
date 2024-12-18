@@ -1,7 +1,7 @@
 package com.paydock.feature.card.presentation.state
 
-import com.paydock.feature.card.presentation.utils.CardPinValidator
-import com.paydock.feature.card.presentation.utils.GiftCardNumberValidator
+import com.paydock.feature.card.presentation.utils.validators.CardPinValidator
+import com.paydock.feature.card.presentation.utils.validators.GiftCardNumberValidator
 
 /**
  * Represents the input state for a gift card, including the card number, PIN, and whether the PIN should be stored.
@@ -26,5 +26,5 @@ internal data class GiftCardInputState(
      */
     val isDataValid: Boolean
         get() = GiftCardNumberValidator.isCardNumberValid(cardNumber) &&
-            CardPinValidator.checkPin(pin)
+            CardPinValidator.isValidPinFormat(pin)
 }

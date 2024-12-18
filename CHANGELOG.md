@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.3.0] - 2024-12-18
+
+### Added
+
+- Icon to `PayPalVaultConfig` to apply custom icon or none
+- Logic to validate card input on empty state
+
+### Changed
+
+- `PayPalPaymentSourceWidget` internal API flow requirements
+- `PayPalPaymentSourceWidget` modifier to use default button height
+- `PayPalPaymentSourceWidget` button will always have black border and text.
+- Internal UI state (state = action) for CardDetails, Gift Card, 3DS, PayPal, FlyPay and Afterpay widgets
+
+### Removed
+
+- Create session auth token flow from PayPalVault flow as well as associated logic, exception etc
+
 ## [2.2.0] - 2024-12-06
 
 ### Added
