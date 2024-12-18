@@ -7,8 +7,8 @@ import com.paydock.feature.card.presentation.utils.validators.CardExpiryValidato
 import com.paydock.feature.card.presentation.utils.validators.CardHolderNameValidator
 import com.paydock.feature.card.presentation.utils.validators.CardIssuerValidator
 import com.paydock.feature.card.presentation.utils.validators.CardSecurityCodeValidator
-import com.paydock.feature.card.presentation.utils.validators.CreditCardInputValidator
 import com.paydock.feature.card.presentation.utils.validators.CreditCardNumberValidator
+import com.paydock.feature.card.presentation.utils.validators.LuhnValidator
 
 /**
  * Represents the input state for card details, including validation and metadata extraction.
@@ -58,9 +58,9 @@ internal data class CardDetailsInputState(
      * - Validates the security code based on the detected card issuer.
      */
     val isDataValid: Boolean
-        get() = (CardHolderNameValidator.checkHolderName(cardholderName) || !collectCardholderName) &&
+        get() = (CardHolderNameValidator.isValidHolderNameFormat(cardholderName) || !collectCardholderName) &&
             CreditCardNumberValidator.isValidNumberFormat(cardNumber) &&
-            CreditCardInputValidator.isLuhnValid(cardNumber) &&
+            LuhnValidator.isLuhnValid(cardNumber) &&
             CardExpiryValidator.isExpiryValid(expiry) &&
             CardSecurityCodeValidator.isSecurityCodeValid(code, securityCodeType)
 

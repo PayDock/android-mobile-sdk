@@ -41,7 +41,7 @@ internal object CreditCardNumberValidator {
      *         - [CardNumberError.None]: The input is valid.
      */
     fun validateCardNumberInput(cardNumber: String, hasUserInteracted: Boolean): CardNumberError {
-        val isLuhnValid = CreditCardInputValidator.isLuhnValid(cardNumber)
+        val isLuhnValid = LuhnValidator.isLuhnValid(cardNumber)
         return when {
             cardNumber.isBlank() && hasUserInteracted -> CardNumberError.Empty
             cardNumber.isNotBlank() && !isLuhnValid -> CardNumberError.InvalidLuhn
