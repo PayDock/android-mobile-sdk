@@ -48,6 +48,8 @@ internal object CardExpiryValidator {
      */
     fun isExpiryValid(expiry: String): Boolean {
         val (month, year) = extractMonthAndYear(expiry)
+        println(">>> month: $month -> [${isMonthValid(month)}]")
+        println(">>> year: $year -> [${isYearValid(year)}]")
         return expiry.isNotBlank() && expiry.length <= (MobileSDKConstants.CardDetailsConfig.MAX_EXPIRY_LENGTH + 1) &&
             expiry.matches(MobileSDKConstants.Regex.NUMERIC_DIGITS) && isMonthValid(month) && isYearValid(
                 year
@@ -72,7 +74,7 @@ internal object CardExpiryValidator {
      */
     @Suppress("MagicNumber")
     private fun isYearValid(inputYear: Int?): Boolean {
-        return inputYear != null && inputYear in 0..99
+        return inputYear != null && inputYear in 0..99 && inputYear.toString().length == 2
     }
 
     /**
@@ -138,9 +140,7 @@ internal object CardExpiryValidator {
         return when {
             expiry.isBlank() && hasUserInteracted -> CardExpiryError.Empty
             expiry.isNotBlank() && !isValid -> CardExpiryError.InvalidFormat
-            expiry.isNotBlank() && isExpired &&
-                expiry.length == MobileSDKConstants.CardDetailsConfig.MAX_EXPIRY_LENGTH -> CardExpiryError.Expired
-
+            expiry.isNotBlank() && isExpired -> CardExpiryError.Expired
             else -> CardExpiryError.None
         }
     }

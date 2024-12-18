@@ -1,4 +1,4 @@
-package com.paydock.feature.card.presentation.utils
+package com.paydock.feature.card.presentation.utils.validators
 
 import com.paydock.feature.card.presentation.utils.validators.GiftCardInputValidator
 import org.junit.Assert.assertEquals
