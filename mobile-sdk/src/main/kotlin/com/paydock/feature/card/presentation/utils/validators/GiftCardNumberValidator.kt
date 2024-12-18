@@ -1,6 +1,7 @@
 package com.paydock.feature.card.presentation.utils.validators
 
 import com.paydock.core.MobileSDKConstants
+import com.paydock.feature.card.presentation.utils.errors.GiftCardNumberError
 
 /**
  * A utility object for validating gift card number details.
@@ -46,4 +47,24 @@ internal object GiftCardNumberValidator {
             number.length in
             MobileSDKConstants.CardDetailsConfig.MIN_GIFT_CARD_LENGTH..MobileSDKConstants.CardDetailsConfig.MAX_GIFT_CARD_LENGTH
 
+    /**
+     * Validates the gift card number input and determines the type of validation error.
+     *
+     * This function checks if the gift card number is empty, validate the card number's checksum,
+     * and determines the appropriate error state.
+     *
+     * @param cardNumber The gift card number to validate.
+     * @param hasUserInteracted Flag indicating if the user has interacted with the input field.
+     * @return A [GiftCardNumberError] representing the validation result:
+     *         - [GiftCardNumberError.Empty]: The input is blank and the user has interacted.
+     *         - [GiftCardNumberError.Invalid]: The input fails validation.
+     *         - [GiftCardNumberError.None]: The input is valid.
+     */
+    fun validateCardNumberInput(cardNumber: String, hasUserInteracted: Boolean): GiftCardNumberError {
+        return when {
+            cardNumber.isBlank() && hasUserInteracted -> GiftCardNumberError.Empty
+            cardNumber.isNotBlank() && !isCardNumberValid(cardNumber) -> GiftCardNumberError.Invalid
+            else -> GiftCardNumberError.None
+        }
+    }
 }

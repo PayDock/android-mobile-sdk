@@ -1,8 +1,10 @@
 package com.paydock.feature.card.presentation.utils.validators
 
+import com.paydock.feature.card.presentation.utils.errors.GiftCardNumberError
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.test.assertEquals
 
 internal class GiftCardNumberValidatorTest {
 
@@ -38,5 +40,41 @@ internal class GiftCardNumberValidatorTest {
     @Test
     fun testIsValidNumberFormatValid_ExceedsMaxLength() {
         assertFalse(GiftCardNumberValidator.isCardNumberValid("41111222233334444555566667777"))
+    }
+
+    @Test
+    fun validateGiftCardNumberInput_emptyInput_userInteracted_returnsEmptyError() {
+        val cardNumber = ""
+        val hasUserInteracted = true
+        val expected = GiftCardNumberError.Empty
+        val actual = GiftCardNumberValidator.validateCardNumberInput(cardNumber, hasUserInteracted)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateGiftCardNumberInput_emptyInput_userNotInteracted_returnsNoneError() {
+        val cardNumber = ""
+        val hasUserInteracted = false
+        val expected = GiftCardNumberError.None
+        val actual = GiftCardNumberValidator.validateCardNumberInput(cardNumber, hasUserInteracted)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateGiftCardNumberInput_invalid_returnsInvalidError() {
+        val cardNumber = "411112222" // fails min-length
+        val hasUserInteracted = true
+        val expected = GiftCardNumberError.Invalid
+        val actual = GiftCardNumberValidator.validateCardNumberInput(cardNumber, hasUserInteracted)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateGiftCardNumberInput_valid_returnsNoneError() {
+        val cardNumber = "62734010001104878"
+        val hasUserInteracted = true
+        val expected = GiftCardNumberError.None
+        val actual = GiftCardNumberValidator.validateCardNumberInput(cardNumber, hasUserInteracted)
+        assertEquals(expected, actual)
     }
 }

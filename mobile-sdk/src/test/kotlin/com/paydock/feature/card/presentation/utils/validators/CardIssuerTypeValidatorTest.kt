@@ -1,7 +1,6 @@
 package com.paydock.feature.card.presentation.utils.validators
 
 import com.paydock.feature.card.domain.model.integration.enums.CardIssuerType
-import com.paydock.feature.card.presentation.utils.validators.CardIssuerValidator
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

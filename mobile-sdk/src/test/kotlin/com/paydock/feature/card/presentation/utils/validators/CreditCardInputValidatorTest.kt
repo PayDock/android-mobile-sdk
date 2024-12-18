@@ -1,7 +1,6 @@
 package com.paydock.feature.card.presentation.utils.validators
 
 import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
-import com.paydock.feature.card.presentation.utils.validators.CreditCardInputValidator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
