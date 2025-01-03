@@ -124,7 +124,6 @@ internal class ManualAddressDetailsTest : BaseViewModelKoinTest<ManualAddressVie
         )
     }
 
-    @Suppress("LongMethod")
     @Test
     fun testManualAddressValidInputCallsOnAddressUpdated() {
         val onAddressUpdated: (AddressDetailsInputState) -> Unit = mockk()
@@ -209,7 +208,6 @@ internal class ManualAddressDetailsTest : BaseViewModelKoinTest<ManualAddressVie
         verify { onAddressUpdated(viewModel.stateFlow.value) }
     }
 
-    @Suppress("LongMethod")
     @Test
     fun testManualAddressValidInputUpdatesAddressViewState() {
         var manualAddressState: AddressDetailsInputState? = null

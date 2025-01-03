@@ -34,7 +34,6 @@
     <string name="error_web_server_error">Server Error: The server encountered an issue.</string>
     <string name="error_web_unknown_error">An unexpected error occurred</string>
     <string name="error_web_display_error">Sorry, there was an issue loading the page: %s</string>
-    <string name="error_googlepay_payment_methods">Unexpected non API exception when trying to retrieve [allowedPaymentMethods] parameter from paymentRequest!</string>
     <string name="error_googlepay_cancelled">Google Pay transaction was cancelled!</string>
     <string name="error_googlepay_unexpected">An unexpected error has occurred trying to use Google Pay!</string>
     <string name="error_paypal_canceled">PayPal transaction was cancelled!</string>

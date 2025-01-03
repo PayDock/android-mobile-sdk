@@ -44,7 +44,6 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 import org.koin.mp.KoinPlatformTools
 
-@Suppress("LongMethod")
 @OptIn(KoinInternalApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class AddressDetailsTest : BaseViewModelKoinTest<AddressDetailsViewModel>() {

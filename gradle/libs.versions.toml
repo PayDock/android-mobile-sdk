@@ -11,6 +11,7 @@ composeWebview = "0.33.6"
 core = "1.12.0"
 detekt = "1.23.0"
 hilt = "2.49"
+json = "20210307"
 junit = "4.13.2"
 kotlin = "1.9.20"
 kotlinxCoroutines = "1.7.3"
@@ -18,6 +19,7 @@ koin = "3.4.2"
 koinTest = "3.4.1"
 koinAndroid = "3.4.0"
 koinCompose = "3.4.5"
+kotlinxCoroutinesPlayServices = "1.6.0"
 kotlinxHtmlJvm = "0.8.1"
 kotlinxSerializationJson = "1.6.3"
 ktor = "2.3.6"
@@ -56,6 +58,8 @@ androidx-foundation-android = { module = "androidx.compose.foundation:foundation
 #Compose - AndroidX & Other
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidx-activity-compose" }
 compose-webview = { module = "io.github.kevinnzou:compose-webview", version.ref = "composeWebview" }
+json = { module = "org.json:json", version.ref = "json" }
+kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesPlayServices" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
 accompanist-system-ui = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "accompanist" }

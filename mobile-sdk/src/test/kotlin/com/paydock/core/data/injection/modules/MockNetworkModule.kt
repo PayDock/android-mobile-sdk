@@ -242,7 +242,6 @@ private fun MockRequestHandleScope.handleSuccessRequest(request: HttpRequestData
     }
 }
 
-@Suppress("LongMethod")
 private fun MockRequestHandleScope.handleFailureRequest(request: HttpRequestData): HttpResponseData {
     return when {
         // Check for matching endpoint path

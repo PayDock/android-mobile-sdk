@@ -1,7 +1,7 @@
 package com.paydock.feature.googlepay.presentation
 
-import android.content.Context
-import androidx.activity.ComponentActivity
+import android.app.Activity.RESULT_CANCELED
+import android.app.Activity.RESULT_OK
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
@@ -23,133 +23,84 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
-import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.common.api.CommonStatusCodes
+import com.google.android.gms.wallet.AutoResolveHelper
 import com.google.android.gms.wallet.PaymentData
+import com.google.android.gms.wallet.WalletConstants
+import com.google.android.gms.wallet.contract.ApiTaskResult
+import com.google.android.gms.wallet.contract.TaskResultContracts
 import com.google.pay.button.ButtonTheme
 import com.google.pay.button.ButtonType
 import com.google.pay.button.PayButton
-import com.paydock.R
 import com.paydock.core.MobileSDKConstants
-import com.paydock.core.domain.error.exceptions.GooglePayException
+import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.charge.domain.model.integration.ChargeResponse
+import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.presentation.viewmodels.GooglePayViewModel
 import kotlinx.coroutines.launch
-import org.json.JSONArray
 import org.json.JSONObject
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 /**
  * A Composable for handling Google Pay payments and related interactions.
  *
+ * This Composable integrates with Google Pay, providing a button to initiate payment requests,
+ * handles user interactions, and manages the payment lifecycle through state management.
+ *
  * @param modifier Modifier for customizing the appearance and behavior of the Composable.
- * @param token A callback to obtain the wallet token asynchronously.
- * @param isReadyToPayRequest The request to check if the user is ready to pay.
- * @param paymentRequest The payment request details.
- * @param completion A callback to handle the Google Pay result.
+ * @param token A callback to asynchronously retrieve the wallet token.
+ * @param isReadyToPayRequest The JSON object defining the request to check if the user is ready to pay.
+ * @param paymentRequest The JSON object containing the payment request details.
+ * @param loadingDelegate An optional delegate to manage loading indicators externally.
+ * @param completion A callback to handle the result of the Google Pay operation, either success or failure.
  */
-@Suppress("LongMethod")
 @Composable
 fun GooglePayWidget(
     modifier: Modifier = Modifier,
     token: (onTokenReceived: (String) -> Unit) -> Unit,
     isReadyToPayRequest: JSONObject,
     paymentRequest: JSONObject,
+    loadingDelegate: WidgetLoadingDelegate? = null,
     completion: (Result<ChargeResponse>) -> Unit
 ) {
     // Retrieve the GooglePayViewModel using Koin
-    val viewModel: GooglePayViewModel = koinViewModel()
+    val viewModel: GooglePayViewModel =
+        koinViewModel(parameters = { parametersOf(isReadyToPayRequest) })
 
-    // Get the current context and coroutine scope
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
-    // Ensure this is only done once
-    LaunchedEffect(Unit) {
-        // Fetch information about Google Pay availability
-        viewModel.fetchCanUseGooglePay(isReadyToPayRequest)
-    }
 
     // Collect the UI state from the ViewModel
     val uiState by viewModel.stateFlow.collectAsState()
+    val googlePayAvailable by viewModel.googlePayAvailable.collectAsState()
+    val allowedPaymentMethods = viewModel.extractAllowedPaymentMethods(paymentRequest)
 
-    // Extract allowed payment methods from the payment request
-    val allowedPaymentMethods: JSONArray? = runCatching {
-        paymentRequest.getJSONArray("allowedPaymentMethods")
-    }.onFailure {
-        completion(
-            Result.failure(
-                GooglePayException.InitialisationException(stringResource(id = R.string.error_googlepay_payment_methods))
-            )
-        )
-        viewModel.resetResultState()
-    }.getOrNull()
-
-    // Set up a launcher for handling Google Pay resolution
-    val resolvePaymentForResult = rememberLauncherForActivityResult(
+    val resolvablePaymentForResult = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result: ActivityResult ->
-        val walletToken = uiState.token
-        if (!walletToken.isNullOrBlank()) {
-            handleGooglePayActivityResult(context, result, walletToken, viewModel, completion)
-        } else {
-            completion(
-                Result.failure(
-                    GooglePayException.UnknownException(
-                        displayableMessage = context.getString(
-                            R.string.error_googlepay_unexpected
-                        )
-                    )
-                )
-            )
-            viewModel.resetResultState()
-        }
+        handleResolvableResult(result, viewModel)
     }
 
-    // Handle error flow and display
-    LaunchedEffect(uiState.error) {
-        handleGooglePayUiStateErrors(
-            uiState.error,
-            resolvePaymentForResult,
+    // Set up a launcher for handling Google Pay resolution
+    val paymentDataTaskResult = rememberLauncherForActivityResult(
+        contract = TaskResultContracts.GetPaymentDataResult()
+    ) { result ->
+        handleGooglePayResult(result, viewModel, resolvablePaymentForResult)
+    }
+
+    LaunchedEffect(uiState) {
+        handleUIState(
+            uiState,
+            viewModel,
+            loadingDelegate,
             completion
         )
     }
 
-    // Handle token result and reset the payment state
-    LaunchedEffect(uiState.paymentData) {
-        uiState.paymentData?.let { paymentData ->
-            val walletToken = uiState.token
-            if (!walletToken.isNullOrBlank()) {
-                handleGooglePayPaymentResult(paymentData, walletToken, viewModel, completion)
-            } else {
-                completion(
-                    Result.failure(
-                        GooglePayException.UnknownException(
-                            displayableMessage = context.getString(
-                                R.string.error_googlepay_unexpected
-                            )
-                        )
-                    )
-                )
-                viewModel.resetResultState()
-            }
-        }
-    }
-
-    // Handle wallet response result and reset state
-    LaunchedEffect(uiState.chargeData) {
-        uiState.chargeData?.let { response ->
-            completion(Result.success(response))
-            viewModel.resetResultState()
-        }
-    }
-
-    // Composable content rendering
     SdkTheme {
         Box(contentAlignment = Alignment.Center) {
             Column(
@@ -157,35 +108,37 @@ fun GooglePayWidget(
                 verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.Top),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Show the Google Pay button when it's available
-                AnimatedVisibility(
-                    visible = uiState.googlePayAvailable,
-                    enter = fadeIn(animationSpec = tween(MobileSDKConstants.General.DEFAULT_ANIMATION_DURATION)),
-                    exit = fadeOut(animationSpec = tween(MobileSDKConstants.General.DEFAULT_ANIMATION_DURATION))
-                ) {
-                    // Google Pay Button - https://developers.google.com/pay/api/android/reference/request-objects#ButtonOptions
-                    PayButton(
-                        modifier = Modifier
-                            .testTag("payButton")
-                            .fillMaxWidth(),
-                        theme = if (isSystemInDarkTheme()) ButtonTheme.Dark else ButtonTheme.Light,
-                        type = ButtonType.Pay,
-                        onClick = {
-                            // Use the callback to obtain the token asynchronously
-                            token { obtainedToken ->
-                                scope.launch {
-                                    viewModel.setWalletToken(obtainedToken)
-                                    // Initiate the Google Pay payment process
-                                    viewModel.requestPayment(paymentRequest)
+                if (!allowedPaymentMethods.isNullOrBlank()) {
+                    // Show the Google Pay button when it's available
+                    AnimatedVisibility(
+                        visible = googlePayAvailable,
+                        enter = fadeIn(animationSpec = tween(MobileSDKConstants.General.DEFAULT_ANIMATION_DURATION)),
+                        exit = fadeOut(animationSpec = tween(MobileSDKConstants.General.DEFAULT_ANIMATION_DURATION))
+                    ) {
+                        // Google Pay Button - https://developers.google.com/pay/api/android/reference/request-objects#ButtonOptions
+                        PayButton(
+                            modifier = Modifier
+                                .testTag("payButton")
+                                .fillMaxWidth(),
+                            theme = if (isSystemInDarkTheme()) ButtonTheme.Dark else ButtonTheme.Light,
+                            type = ButtonType.Pay,
+                            onClick = {
+                                // Use the callback to obtain the token asynchronously
+                                token { obtainedToken ->
+                                    scope.launch {
+                                        viewModel.setWalletToken(obtainedToken)
+                                        val task = viewModel.getLoadPaymentDataTask(paymentRequest)
+                                        task.addOnCompleteListener(paymentDataTaskResult::launch)
+                                    }
                                 }
-                            }
-                        },
-                        radius = Theme.dimensions.buttonCornerRadius,
-                        allowedPaymentMethods = allowedPaymentMethods.toString()
-                    )
+                            },
+                            radius = Theme.dimensions.buttonCornerRadius,
+                            allowedPaymentMethods = allowedPaymentMethods
+                        )
+                    }
                 }
             }
-            if (uiState.isLoading) {
+            if (loadingDelegate == null && uiState is GooglePayUIState.Loading) {
                 SdkLoader()
             }
         }
@@ -193,130 +146,107 @@ fun GooglePayWidget(
 }
 
 /**
- * Handle Google Pay UI state errors.
+ * Handles the result of a resolvable Google Pay payment issue.
  *
- * @param error ErrorModel indicating the error type.
- * @param resolvePaymentForResult Launcher for resolving payment issues.
- * @param onGooglePayResult Callback to handle Google Pay result.
- */
-private fun handleGooglePayUiStateErrors(
-    error: GooglePayException?,
-    resolvePaymentForResult: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
-    onGooglePayResult: (Result<ChargeResponse>) -> Unit
-) {
-    if (error != null) {
-        when (error) {
-            is GooglePayException.PaymentRequestException -> {
-                when (error.exception) {
-                    is ResolvableApiException -> {
-                        // Resolve Google Pay payment issues using a launcher
-                        resolvePaymentForResult.launch(
-                            IntentSenderRequest.Builder(error.exception.resolution).build()
-                        )
-                    }
-                }
-            }
-
-            else -> {
-                handleUiStateErrors(error, onGooglePayResult)
-            }
-        }
-    }
-}
-
-/**
- * Handle UI state errors and invoke the callback for error handling.
+ * This function processes the result of a payment attempt that required user resolution, such as updating payment details.
  *
- * @param error ErrorModel indicating the error type.
- * @param onGooglePayResult Callback to handle Google Pay result.
+ * @param result The result of the activity launched to resolve the payment issue.
+ * @param viewModel The ViewModel managing Google Pay state and operations.
  */
-private fun handleUiStateErrors(
-    error: GooglePayException?,
-    onGooglePayResult: (Result<ChargeResponse>) -> Unit
-) {
-    error?.let {
-        onGooglePayResult(Result.failure(it))
-    }
-}
-
-/**
- * Handle the result of a Google Pay payment attempt.
- *
- * @param result The [ActivityResult] indicating the result of the Google Pay payment attempt.
- * @param token The authentication token for initiating the payment.
- * @param viewModel The [GooglePayViewModel] responsible for capturing the wallet charge.
- * @param onGooglePayResult The callback to handle the Google Pay result.
- */
-private fun handleGooglePayActivityResult(
-    context: Context,
+private fun handleResolvableResult(
     result: ActivityResult,
-    token: String,
-    viewModel: GooglePayViewModel,
-    onGooglePayResult: (Result<ChargeResponse>) -> Unit
+    viewModel: GooglePayViewModel
 ) {
     when (result.resultCode) {
-        ComponentActivity.RESULT_OK -> {
+        RESULT_OK -> {
             result.data?.let { intent ->
                 PaymentData.getFromIntent(intent)?.let { paymentData ->
-                    handleGooglePayPaymentResult(
-                        paymentData,
-                        token,
-                        viewModel,
-                        onGooglePayResult
-                    )
+                    viewModel.processGooglePayPaymentResult(paymentData)
                 }
             }
         }
 
-        ComponentActivity.RESULT_CANCELED -> {
+        WalletConstants.RESULT_ERROR -> {
+            val status = AutoResolveHelper.getStatusFromIntent(result.data)
+            viewModel.handleWalletResultErrors(status)
+        }
+
+        RESULT_CANCELED -> {
             // The user cancelled the payment attempt
-            onGooglePayResult(
-                Result.failure(
-                    GooglePayException.CancellationException(
-                        context.getString(R.string.error_googlepay_cancelled)
-                    )
-                )
-            )
-            viewModel.resetResultState()
+            viewModel.handleCancellationResult()
+        }
+    }
+}
+
+/**
+ * Processes the result of a Google Pay payment task.
+ *
+ * This function handles the success or failure of the payment task, resolving any issues if possible,
+ * and delegates processing to the ViewModel.
+ *
+ * @param taskResult The result of the Google Pay payment task.
+ * @param viewModel The ViewModel managing Google Pay state and operations.
+ * @param resolvePaymentForResult The launcher to handle resolvable payment issues.
+ */
+private fun handleGooglePayResult(
+    taskResult: ApiTaskResult<PaymentData>,
+    viewModel: GooglePayViewModel,
+    resolvePaymentForResult: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
+) {
+    when (taskResult.status.statusCode) {
+        CommonStatusCodes.SUCCESS -> {
+            taskResult.result?.let { paymentData ->
+                viewModel.processGooglePayPaymentResult(paymentData)
+            }
         }
 
         else -> {
-            onGooglePayResult(Result.failure(GooglePayException.UnknownException(context.getString(R.string.error_googlepay_unexpected))))
-            viewModel.resetResultState()
+            if (taskResult.status.hasResolution()) {
+                // Resolve Google Pay payment issues using a launcher
+                taskResult.status.startResolutionForResult(resolvePaymentForResult)
+            } else {
+                viewModel.handleGooglePayResultErrors(taskResult.status.statusCode)
+            }
         }
     }
 }
 
 /**
- * Handle a successful Google Pay payment and extract the payment token.
- * PaymentData response object contains the payment information, as well as any additional
- * requested information, such as billing and shipping address.
+ * Handles the UI state for Google Pay.
  *
- * @param paymentData A response object returned by Google after a payer approves payment.
- * @param token The wallet token provided for initiating the wallet charge
- * @param viewModel [GooglePayViewModel] responsible for capturing the wallet charge
- * @param onGooglePayResult result callback
- * @see [Payment
- * Data](https://developers.google.com/pay/api/android/reference/request-objects#PaymentData)
+ * This function processes the current UI state of Google Pay, invoking loading delegates, and
+ * completing the payment transaction with success or error results as appropriate.
+ *
+ * @param uiState The current UI state of the Google Pay operation.
+ * @param viewModel The ViewModel managing Google Pay state and operations.
+ * @param loadingDelegate An optional delegate to manage loading indicators externally.
+ * @param completion A callback to complete the Google Pay transaction with success or error.
  */
-private fun handleGooglePayPaymentResult(
-    paymentData: PaymentData,
-    token: String,
+private fun handleUIState(
+    uiState: GooglePayUIState,
     viewModel: GooglePayViewModel,
-    onGooglePayResult: (Result<ChargeResponse>) -> Unit
+    loadingDelegate: WidgetLoadingDelegate?,
+    completion: (Result<ChargeResponse>) -> Unit,
 ) {
-    val paymentInformation = paymentData.toJson()
-    runCatching {
-        val paymentMethodData = JSONObject(paymentInformation).getJSONObject("paymentMethodData")
-        val googleToken = paymentMethodData.getJSONObject("tokenizationData").getString("token")
-        if (!googleToken.isNullOrBlank()) {
-            viewModel.captureWalletTransaction(token, googleToken)
-        } else {
-            onGooglePayResult(Result.failure(GooglePayException.ResultException("Google Pay Token Error")))
+    when (uiState) {
+        is GooglePayUIState.Idle -> Unit
+        is GooglePayUIState.Loading -> {
+            loadingDelegate?.widgetLoadingDidStart()
+        }
+        // Handle success state, notify the loading delegate, and complete the transaction with success
+        is GooglePayUIState.Success -> {
+            loadingDelegate?.widgetLoadingDidFinish()
+            completion(Result.success(uiState.chargeData))
+            // Reset the state to ensure it’s not reused
             viewModel.resetResultState()
         }
-    }.onFailure {
-        onGooglePayResult(Result.failure(it))
-        viewModel.resetResultState()
+        // Handle error state, notify the loading delegate, and complete the transaction with failure
+        is GooglePayUIState.Error -> {
+            loadingDelegate?.widgetLoadingDidFinish()
+            completion(Result.failure(uiState.exception))
+            // Reset the state to ensure it’s not reused
+            viewModel.resetResultState()
+        }
+
     }
 }

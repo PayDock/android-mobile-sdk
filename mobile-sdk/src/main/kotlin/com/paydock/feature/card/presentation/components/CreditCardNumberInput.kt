@@ -47,7 +47,7 @@ import kotlinx.coroutines.delay
  * a parsed credit card number if the input is valid.
  */
 @OptIn(ExperimentalComposeUiApi::class)
-@Suppress("LongMethod", "CyclomaticComplexMethod")
+@Suppress("CyclomaticComplexMethod")
 @Composable
 internal fun CreditCardNumberInput(
     modifier: Modifier = Modifier,

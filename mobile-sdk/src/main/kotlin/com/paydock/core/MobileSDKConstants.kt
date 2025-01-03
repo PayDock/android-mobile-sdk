@@ -99,6 +99,10 @@ internal object MobileSDKConstants {
         internal const val TRANSACTION_PRICE_STATUS = "FINAL"
         internal const val TOKENIZATION_TYPE = "PAYMENT_GATEWAY"
 
+        internal const val ALLOWED_PAYMENT_METHODS_KEY = "allowedPaymentMethods"
+        internal const val TOKENIZATION_DATA_KEY = "tokenizationData"
+        internal const val TOKEN_KEY = "token"
+
         /**
          * MIN: Name, country code, and postal code (default).
          * FULL: Name, street address, locality, region, country code, and postal code.
@@ -162,8 +166,14 @@ internal object MobileSDKConstants {
             "Troubles with data serialization. Please try again later or contact support for assistance."
         const val CARD_ERROR =
             "An unexpected error occurred while tokenising card details. Please try again later or contact support for assistance."
+        const val GOOGLE_PAY_TOKEN_ERROR =
+            "There is a problem retrieving the Google Pay token. Please try again later or contact support for assistance."
+        const val GOOGLE_PAY_DEV_ERROR =
+            "A developer error occurred. Please try again later or contact support for assistance."
         const val GOOGLE_PAY_ERROR =
             "An unexpected error occurred while processing Google Pay. Please try again later or contact support for assistance."
+        const val GOOGLE_PAY_INITIALISATION_ERROR = "Unexpected non API exception when trying to retrieve [allowedPaymentMethods] parameter from PaymentRequest!"
+        const val GOOGLE_PAY_CANCELLATION_ERROR = "Google Pay charge was cancelled!"
         const val THREE_DS_ERROR =
             "An unexpected error occurred while processing 3DS verification. Please try again later or contact support for assistance."
         const val THREE_DS_REJECTED_ERROR =
