@@ -11,6 +11,7 @@ import com.paydock.sample.feature.charges.data.mapper.toDomain
 import com.paydock.sample.feature.charges.domain.model.ThreeDSToken
 import com.paydock.sample.feature.charges.domain.model.WalletCharge
 import com.paydock.sample.feature.charges.domain.repository.ChargesRepository
+import com.paydock.sample.feature.tokens.data.api.dto.Capture3DSChargeRequest
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -56,5 +57,10 @@ class ChargesRepositoryImpl @Inject constructor(
     override suspend fun createStandalone3dsToken(request: CreateStandaloneThreeDSTokenRequest): ThreeDSToken =
         withContext(dispatcher) {
             chargesApi.createStandalone3dsToken(request = request).mapToDomain()
+        }
+
+    override suspend fun capture3DSCharge(request: Capture3DSChargeRequest): ChargeResponse =
+        withContext(dispatcher) {
+            chargesApi.capture3DSCharge(request = request).toDomain()
         }
 }

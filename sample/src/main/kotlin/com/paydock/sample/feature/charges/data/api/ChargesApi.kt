@@ -9,6 +9,7 @@ import com.paydock.sample.feature.charges.data.api.dto.InitiateWalletRequest
 import com.paydock.sample.feature.charges.data.api.dto.ThreeDSTokenResponse
 import com.paydock.sample.feature.charges.data.api.dto.WalletCaptureResponse
 import com.paydock.sample.feature.charges.data.api.dto.WalletInitiateResponse
+import com.paydock.sample.feature.tokens.data.api.dto.Capture3DSChargeRequest
 import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
@@ -51,5 +52,11 @@ interface ChargesApi {
         @Header("x-user-secret-key") secretKey: String = BuildConfig.SECRET_KEY,
         @Body request: CreateStandaloneThreeDSTokenRequest,
     ): ThreeDSTokenResponse
+
+    @POST("/v1/charges")
+    suspend fun capture3DSCharge(
+        @Header("x-user-secret-key") secretKey: String = BuildConfig.SECRET_KEY,
+        @Body request: Capture3DSChargeRequest,
+    ): CaptureChargeResponse
 
 }

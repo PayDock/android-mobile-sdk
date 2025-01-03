@@ -86,9 +86,9 @@ fun CheckoutBottomSheet(
                             ) {
                                 CardContent(
                                     enabled = !uiState.isLoading,
-                                    accessToken,
-                                    viewModel,
-                                    viewModel::handleCardResult
+                                    accessToken = accessToken,
+                                    loadingDelegate = viewModel,
+                                    resultHandler = viewModel::handleCardResult
                                 )
                             }
                         }
@@ -100,26 +100,27 @@ fun CheckoutBottomSheet(
                         )
 
                         WidgetType.GOOGLE_PAY -> GooglePayContent(
-                            viewModel.getWalletToken(
+                            tokenHandler = viewModel.getWalletToken(
                                 WalletType.GOOGLE
-                            ), viewModel::handleChargeResult
+                            ),
+                            resultHandler = viewModel::handleChargeResult
                         )
 
                         WidgetType.PAY_PAL -> PayPalContent(
                             enabled = !uiState.isLoading,
-                            viewModel.getWalletToken(WalletType.PAY_PAL),
-                            viewModel,
-                            viewModel::handleChargeResult
+                            tokenHandler = viewModel.getWalletToken(WalletType.PAY_PAL),
+                            loadingDelegate = viewModel,
+                            resultHandler = viewModel::handleChargeResult
                         )
 
                         WidgetType.FLY_PAY -> FlyPayContent(
-                            viewModel.getWalletToken(WalletType.FLY_PAY),
-                            viewModel::handleFlyPayResult
+                            tokenHandler = viewModel.getWalletToken(WalletType.FLY_PAY),
+                            resultHandler = viewModel::handleFlyPayResult
                         )
 
                         WidgetType.AFTER_PAY -> AfterpayContent(
-                            viewModel.getWalletToken(WalletType.AFTER_PAY),
-                            viewModel::handleChargeResult
+                            tokenHandler = viewModel.getWalletToken(WalletType.AFTER_PAY),
+                            resultHandler = viewModel::handleChargeResult
                         )
 
                         else -> Unit

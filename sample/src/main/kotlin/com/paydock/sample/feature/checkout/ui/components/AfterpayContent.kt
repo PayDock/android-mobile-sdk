@@ -23,7 +23,7 @@ fun AfterpayContent(
 ) {
     val configuration = AfterpaySDKConfig(
         config = AfterpaySDKConfig.AfterpayConfiguration(
-            maximumAmount = "100",
+            maximumAmount = "0.50",
             currency = AU_CURRENCY_CODE,
             language = "en",
             country = AU_COUNTRY_CODE

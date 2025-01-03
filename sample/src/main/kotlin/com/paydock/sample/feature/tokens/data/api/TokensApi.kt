@@ -13,5 +13,4 @@ interface TokensApi {
         @Header("X-Access-Token") accessToken: String,
         @Body request: TokeniseCardRequest,
     ): PaymentOTTResponse
-
 }

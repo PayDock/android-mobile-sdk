@@ -110,7 +110,8 @@ fun AccountScreen(viewModel: AccountViewModel = hiltViewModel()) {
                             viewModel.createCustomer(vaultResult.token)
                         }.onFailure {
                             val error = it.toError()
-                            Toast.makeText(context, error.displayableMessage, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, error.displayableMessage, Toast.LENGTH_SHORT)
+                                .show()
                         }
                     }
                 }

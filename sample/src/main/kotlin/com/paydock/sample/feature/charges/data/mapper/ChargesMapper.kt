@@ -33,5 +33,6 @@ fun WalletCaptureResponse.toDomain(): WalletCharge = WalletCharge(
 
 fun ThreeDSTokenResponse.mapToDomain(): ThreeDSToken = ThreeDSToken(
     token = this.resource.resourceData.threeDS.token,
-    status = ThreeDSToken.ThreeDSStatus.byNameIgnoreCaseOrNull(this.resource.resourceData.status)
+    status = ThreeDSToken.ThreeDSStatus.byNameIgnoreCaseOrNull(this.resource.resourceData.status),
+    id = this.resource.resourceData.threeDS.id
 )

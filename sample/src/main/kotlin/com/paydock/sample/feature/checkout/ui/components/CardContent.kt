@@ -10,10 +10,12 @@ import com.paydock.feature.card.domain.model.integration.SaveCardConfig
 import com.paydock.feature.card.presentation.CardDetailsWidget
 
 @Composable
-fun CardContent(enabled: Boolean = true,
-                accessToken: String,
-                loadingDelegate: WidgetLoadingDelegate?,
-                resultHandler: (Result<CardResult>) -> Unit) {
+fun CardContent(
+    enabled: Boolean = true,
+    accessToken: String,
+    loadingDelegate: WidgetLoadingDelegate?,
+    resultHandler: (Result<CardResult>) -> Unit
+) {
     CardDetailsWidget(
         modifier = Modifier.padding(vertical = 16.dp),
         enabled = enabled,

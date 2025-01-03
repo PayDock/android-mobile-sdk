@@ -7,6 +7,7 @@ import com.paydock.sample.feature.charges.data.api.dto.CreateStandaloneThreeDSTo
 import com.paydock.sample.feature.charges.data.api.dto.InitiateWalletRequest
 import com.paydock.sample.feature.charges.domain.model.ThreeDSToken
 import com.paydock.sample.feature.charges.domain.model.WalletCharge
+import com.paydock.sample.feature.tokens.data.api.dto.Capture3DSChargeRequest
 
 interface ChargesRepository {
     suspend fun captureCardCharge(request: CaptureCardChargeRequest): ChargeResponse
@@ -24,4 +25,6 @@ interface ChargesRepository {
     ): ThreeDSToken
 
     suspend fun createStandalone3dsToken(request: CreateStandaloneThreeDSTokenRequest): ThreeDSToken
+
+    suspend fun capture3DSCharge(request: Capture3DSChargeRequest): ChargeResponse
 }
