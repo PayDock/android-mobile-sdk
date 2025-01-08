@@ -69,6 +69,9 @@ internal object MobileSDKConstants {
         internal const val CSC_LENGTH = 4
         internal const val EXPIRY_BASE_YEAR = 2000
         internal const val MAX_MONTH_COUNT = 12
+        internal const val DEFAULT_ACTION_TEXT = "Submit"
+        internal const val DEFAULT_CONSENT_TEXT = "Remember this card for next time."
+        internal const val DEFAULT_POLICY_TEXT = "Read our privacy policy"
     }
 
     /**

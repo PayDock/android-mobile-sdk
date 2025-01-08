@@ -1,5 +1,6 @@
 package com.paydock.feature.card.presentation.utils.validators
 
+import com.paydock.feature.card.domain.model.integration.enums.CardScheme
 import com.paydock.feature.card.presentation.utils.errors.CardNumberError
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -37,7 +38,10 @@ internal class CreditCardNumberValidatorTest {
         val cardNumber = ""
         val hasUserInteracted = true
         val expected = CardNumberError.Empty
-        val actual = CreditCardNumberValidator.validateCardNumberInput(cardNumber, hasUserInteracted)
+        val actual = CreditCardNumberValidator.validateCardNumberInput(
+            cardNumber,
+            hasUserInteracted
+        )
         assertEquals(expected, actual)
     }
 
@@ -46,7 +50,10 @@ internal class CreditCardNumberValidatorTest {
         val cardNumber = ""
         val hasUserInteracted = false
         val expected = CardNumberError.None
-        val actual = CreditCardNumberValidator.validateCardNumberInput(cardNumber, hasUserInteracted)
+        val actual = CreditCardNumberValidator.validateCardNumberInput(
+            cardNumber,
+            hasUserInteracted
+        )
         assertEquals(expected, actual)
     }
 
@@ -55,16 +62,42 @@ internal class CreditCardNumberValidatorTest {
         val cardNumber = "49927398717"
         val hasUserInteracted = true
         val expected = CardNumberError.InvalidLuhn
-        val actual = CreditCardNumberValidator.validateCardNumberInput(cardNumber, hasUserInteracted)
+        val actual = CreditCardNumberValidator.validateCardNumberInput(
+            cardNumber,
+            hasUserInteracted
+        )
         assertEquals(expected, actual)
     }
 
     @Test
-    fun validateCardNumberInput_validLuhn_returnsNoneError() {
-        val cardNumber = "49927398716"
+    fun validateCardNumberInput_unsupportedCardScheme_returnsUnsupportedCardSchemeError() {
+        val cardNumber = "49927398716" // Valid Luhn but unsupported scheme
         val hasUserInteracted = true
+        val cardScheme = CardScheme.VISA // Assume detected as Visa
+        val supportedCardSchemes = listOf(CardScheme.MASTERCARD) // Only Mastercard supported
+        val expected = CardNumberError.UnsupportedCardScheme
+        val actual = CreditCardNumberValidator.validateCardNumberInput(
+            cardNumber,
+            hasUserInteracted,
+            cardScheme,
+            supportedCardSchemes
+        )
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateCardNumberInput_validInput_returnsNoError() {
+        val cardNumber = "49927398716" // Valid Luhn and supported scheme
+        val hasUserInteracted = true
+        val cardScheme = CardScheme.VISA // Assume detected as Visa
+        val supportedCardSchemes = listOf(CardScheme.VISA) // Visa supported
         val expected = CardNumberError.None
-        val actual = CreditCardNumberValidator.validateCardNumberInput(cardNumber, hasUserInteracted)
+        val actual = CreditCardNumberValidator.validateCardNumberInput(
+            cardNumber,
+            hasUserInteracted,
+            cardScheme,
+            supportedCardSchemes
+        )
         assertEquals(expected, actual)
     }
 }

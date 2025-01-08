@@ -26,6 +26,7 @@
     <string name="error_luhn_card_holder_name">Card number is in the wrong field!</string>
     <string name="error_card_holder_name">Invalid name</string>
     <string name="error_card_number">Invalid card number</string>
+    <string name="error_unsupported_card_scheme">Card type not accepted</string>
     <string name="error_expiry_date">Invalid expiry date</string>
     <string name="error_expiry_expired">Card expired</string>
     <string name="error_security_code">Invalid security code</string>

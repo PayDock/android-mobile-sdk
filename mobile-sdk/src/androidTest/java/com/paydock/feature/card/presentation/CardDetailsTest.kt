@@ -19,6 +19,7 @@ import com.paydock.core.BaseViewModelKoinTest
 import com.paydock.core.KoinTestRule
 import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.extensions.waitUntilTimeout
+import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.CardResult
 import com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel
 import io.mockk.Runs
@@ -75,8 +76,10 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
                 LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
             ) {
                 CardDetailsWidget(
-                    gatewayId = "testGateway",
-                    accessToken = "testAccessToken",
+                    config = CardDetailsWidgetConfig(
+                        gatewayId = "testGateway",
+                        accessToken = "testAccessToken"
+                    ),
                     completion = {}
                 )
             }
@@ -102,8 +105,10 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
                 LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
             ) {
                 CardDetailsWidget(
-                    gatewayId = "testGateway",
-                    accessToken = "testAccessToken",
+                    config = CardDetailsWidgetConfig(
+                        gatewayId = "testGateway",
+                        accessToken = "testAccessToken"
+                    ),
                     completion = {}
                 )
             }
@@ -165,8 +170,10 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
                 LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
             ) {
                 CardDetailsWidget(
-                    gatewayId = "testGateway",
-                    accessToken = "testAccessToken",
+                    config = CardDetailsWidgetConfig(
+                        gatewayId = "testGateway",
+                        accessToken = "testAccessToken"
+                    ),
                     completion = {}
                 )
             }
@@ -218,8 +225,10 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         // Set up your ViewModel and other dependencies
         composeTestRule.setContent {
             CardDetailsWidget(
-                gatewayId = "testGateway",
-                accessToken = "testAccessToken",
+                config = CardDetailsWidgetConfig(
+                    gatewayId = "testGateway",
+                    accessToken = "testAccessToken"
+                ),
                 completion = onCardDetailsResult
             )
         }
@@ -297,8 +306,10 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
                 LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
             ) {
                 CardDetailsWidget(
-                    gatewayId = "testGateway",
-                    accessToken = "testAccessToken",
+                    config = CardDetailsWidgetConfig(
+                        gatewayId = "testGateway",
+                        accessToken = "testAccessToken"
+                    ),
                     completion = onCardDetailsResult
                 )
             }

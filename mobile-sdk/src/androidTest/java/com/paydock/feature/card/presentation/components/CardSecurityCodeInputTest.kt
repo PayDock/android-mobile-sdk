@@ -14,7 +14,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.paydock.core.BaseUITest
-import com.paydock.feature.card.domain.model.integration.enums.CardIssuerType
 import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
 import org.junit.Rule
 import org.junit.Test
@@ -35,7 +34,7 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
         composeTestRule.setContent {
             CardSecurityCodeInput(
                 value = securityCode,
-                cardIssuer = CardIssuerType.VISA, // CVV
+                cardScheme = CardIssuerType.VISA, // CVV
                 onValueChange = {
                     securityCode = it
                 }
@@ -64,7 +63,7 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
         composeTestRule.setContent {
             CardSecurityCodeInput(
                 value = securityCode,
-                cardIssuer = CardIssuerType.MASTERCARD, // CVC
+                cardScheme = CardIssuerType.MASTERCARD, // CVC
                 onValueChange = {
                     securityCode = it
                 }
@@ -93,7 +92,7 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
         composeTestRule.setContent {
             CardSecurityCodeInput(
                 value = securityCode,
-                cardIssuer = CardIssuerType.AMERICAN_EXPRESS, // CSC
+                cardScheme = CardIssuerType.AMERICAN_EXPRESS, // CSC
                 onValueChange = {
                     securityCode = it
                 }
@@ -155,7 +154,7 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
         composeTestRule.setContent {
             CardSecurityCodeInput(
                 value = securityCode,
-                cardIssuer = CardIssuerType.AMERICAN_EXPRESS,
+                cardScheme = CardIssuerType.AMERICAN_EXPRESS,
                 onValueChange = {
                     securityCode = it
                 }

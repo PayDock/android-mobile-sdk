@@ -1,12 +1,12 @@
 package com.paydock.feature.card.presentation.utils.validators
 
 import com.paydock.core.MobileSDKConstants
-import com.paydock.feature.card.domain.model.integration.enums.CardIssuerType
+import com.paydock.feature.card.domain.model.integration.enums.CardScheme
 import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
 import com.paydock.feature.card.presentation.utils.errors.SecurityCodeError
 
 /**
- * A utility object for validating and detecting credit card security codes (CVV, CVC, CSC) based on card issuer and security code type.
+ * A utility object for validating and detecting credit card security codes (CVV, CVC, CSC) based on card scheme and security code type.
  */
 internal object CardSecurityCodeValidator {
 
@@ -42,18 +42,18 @@ internal object CardSecurityCodeValidator {
     }
 
     /**
-     * Detects the type of security code (CVV, CVC, CSC) based on the given card issuer type.
+     * Detects the type of security code (CVV, CVC, CSC) based on the given card scheme type.
      *
      * - For AMERICAN_EXPRESS and DINERS_CLUB, it returns [SecurityCodeType.CSC].
      * - For MASTERCARD, it returns [SecurityCodeType.CVC].
-     * - For all other issuers (e.g., VISA, DISCOVER, UNION_PAY), it defaults to [SecurityCodeType.CVV].
+     * - For all other schemes (e.g., VISA, DISCOVER, UNION_PAY), it defaults to [SecurityCodeType.CVV].
      *
-     * @param cardIssuer The issuer type of the card.
-     * @return The corresponding [SecurityCodeType] for the card issuer.
+     * @param cardScheme The scheme type of the card.
+     * @return The corresponding [SecurityCodeType] for the card scheme.
      */
-    fun detectSecurityCodeType(cardIssuer: CardIssuerType): SecurityCodeType = when (cardIssuer) {
-        CardIssuerType.AMERICAN_EXPRESS, CardIssuerType.DINERS_CLUB -> SecurityCodeType.CSC
-        CardIssuerType.MASTERCARD -> SecurityCodeType.CVC
+    fun detectSecurityCodeType(cardScheme: CardScheme?): SecurityCodeType = when (cardScheme) {
+        CardScheme.AMEX, CardScheme.DINERS -> SecurityCodeType.CSC
+        CardScheme.MASTERCARD -> SecurityCodeType.CVC
         else -> SecurityCodeType.CVV // Default to CVV for VISA, DISCOVER, UNION_PAY, and others
     }
 

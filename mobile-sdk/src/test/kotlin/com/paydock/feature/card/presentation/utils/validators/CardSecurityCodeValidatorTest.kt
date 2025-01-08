@@ -1,6 +1,6 @@
 package com.paydock.feature.card.presentation.utils.validators
 
-import com.paydock.feature.card.domain.model.integration.enums.CardIssuerType
+import com.paydock.feature.card.domain.model.integration.enums.CardScheme
 import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
 import com.paydock.feature.card.presentation.utils.errors.SecurityCodeError
 import org.junit.Assert.assertEquals
@@ -74,7 +74,7 @@ internal class CardSecurityCodeValidatorTest {
     fun testDetectSecurityCodeType_Visa() {
         assertEquals(
             SecurityCodeType.CVV,
-            CardSecurityCodeValidator.detectSecurityCodeType(CardIssuerType.VISA)
+            CardSecurityCodeValidator.detectSecurityCodeType(CardScheme.VISA)
         )
     }
 
@@ -82,7 +82,7 @@ internal class CardSecurityCodeValidatorTest {
     fun testDetectSecurityCodeType_MasterCard() {
         assertEquals(
             SecurityCodeType.CVC,
-            CardSecurityCodeValidator.detectSecurityCodeType(CardIssuerType.MASTERCARD)
+            CardSecurityCodeValidator.detectSecurityCodeType(CardScheme.MASTERCARD)
         )
     }
 
@@ -90,7 +90,7 @@ internal class CardSecurityCodeValidatorTest {
     fun testDetectSecurityCodeType_AmericanExpress() {
         assertEquals(
             SecurityCodeType.CSC,
-            CardSecurityCodeValidator.detectSecurityCodeType(CardIssuerType.AMERICAN_EXPRESS)
+            CardSecurityCodeValidator.detectSecurityCodeType(CardScheme.AMEX)
         )
     }
 
