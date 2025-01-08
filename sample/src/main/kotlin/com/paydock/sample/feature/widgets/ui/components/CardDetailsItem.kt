@@ -30,7 +30,7 @@ fun CardDetailsItem(context: Context, accessToken: String) {
                     privacyPolicyURL = "https://www.google.com"
                 )
             ),
-            supportedSchemes = CardScheme.entries
+            supportedSchemes = CardScheme.entries.toSet()
         ),
         completion = { result ->
             // This breaks down 3 ways to retrieve and handle the result

@@ -37,7 +37,7 @@ import com.paydock.feature.card.presentation.utils.validators.CardSchemeValidato
 @Composable
 internal fun CardInputFields(
     shouldCollectCardholderName: Boolean,
-    supportedCardSchemes: List<CardScheme>?,
+    supportedCardSchemes: Set<CardScheme>?,
     focusCardNumber: FocusRequester,
     focusExpiry: FocusRequester,
     focusCode: FocusRequester,
@@ -70,7 +70,7 @@ internal fun CardInputFields(
             .fillMaxWidth()
             .focusRequester(focusCardNumber)
             .testTag("cardNumberInput"),
-        supportedCardSchemes,
+        supportedCardSchemes = supportedCardSchemes,
         value = cardNumber,
         enabled = enabled,
         onValueChange = onCardNumberChange,

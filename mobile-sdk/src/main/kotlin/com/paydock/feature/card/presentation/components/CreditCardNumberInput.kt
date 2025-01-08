@@ -52,7 +52,7 @@ import kotlinx.coroutines.delay
 @Composable
 internal fun CreditCardNumberInput(
     modifier: Modifier = Modifier,
-    supportedCardSchemes: List<CardScheme>? = null,
+    supportedCardSchemes: Set<CardScheme>? = null,
     value: String = "",
     enabled: Boolean = true,
     nextFocus: FocusRequester? = null,

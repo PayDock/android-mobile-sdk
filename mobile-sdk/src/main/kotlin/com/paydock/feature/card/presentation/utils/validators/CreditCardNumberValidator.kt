@@ -49,7 +49,7 @@ internal object CreditCardNumberValidator {
         cardNumber: String,
         hasUserInteracted: Boolean,
         cardScheme: CardScheme? = null,
-        supportedCardSchemes: List<CardScheme>? = null
+        supportedCardSchemes: Set<CardScheme>? = null
     ): CardNumberError {
         val isLuhnValid = LuhnValidator.isLuhnValid(cardNumber)
         return when {

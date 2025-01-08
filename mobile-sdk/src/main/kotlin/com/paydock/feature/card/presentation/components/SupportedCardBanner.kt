@@ -21,7 +21,7 @@ import com.paydock.feature.card.domain.model.integration.enums.CardScheme
  * @param supportedSchemes A list of [CardScheme] enums representing the supported card schemes.
  */
 @Composable
-internal fun SupportedCardBanner(supportedSchemes: List<CardScheme>) {
+internal fun SupportedCardBanner(supportedSchemes: Set<CardScheme>) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top,

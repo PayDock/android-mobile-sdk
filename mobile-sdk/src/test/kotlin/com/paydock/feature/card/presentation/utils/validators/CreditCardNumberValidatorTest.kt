@@ -74,7 +74,7 @@ internal class CreditCardNumberValidatorTest {
         val cardNumber = "49927398716" // Valid Luhn but unsupported scheme
         val hasUserInteracted = true
         val cardScheme = CardScheme.VISA // Assume detected as Visa
-        val supportedCardSchemes = listOf(CardScheme.MASTERCARD) // Only Mastercard supported
+        val supportedCardSchemes = setOf(CardScheme.MASTERCARD) // Only Mastercard supported
         val expected = CardNumberError.UnsupportedCardScheme
         val actual = CreditCardNumberValidator.validateCardNumberInput(
             cardNumber,
@@ -90,7 +90,7 @@ internal class CreditCardNumberValidatorTest {
         val cardNumber = "49927398716" // Valid Luhn and supported scheme
         val hasUserInteracted = true
         val cardScheme = CardScheme.VISA // Assume detected as Visa
-        val supportedCardSchemes = listOf(CardScheme.VISA) // Visa supported
+        val supportedCardSchemes = setOf(CardScheme.VISA) // Visa supported
         val expected = CardNumberError.None
         val actual = CreditCardNumberValidator.validateCardNumberInput(
             cardNumber,

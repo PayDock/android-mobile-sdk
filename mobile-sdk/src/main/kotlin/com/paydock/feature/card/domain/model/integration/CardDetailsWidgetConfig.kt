@@ -27,5 +27,5 @@ data class CardDetailsWidgetConfig(
     val actionText: String = MobileSDKConstants.CardDetailsConfig.DEFAULT_ACTION_TEXT,
     val showCardTitle: Boolean = true,
     val allowSaveCard: SaveCardConfig? = null,
-    val supportedSchemes: List<CardScheme>? = null
+    val supportedSchemes: Set<CardScheme>? = null
 )
