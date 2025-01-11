@@ -92,12 +92,12 @@ fun CardDetailsWidget(
                     color = Theme.colors.onSurfaceVariant
                 )
             }
-            if (!config.supportedSchemes.isNullOrEmpty()) {
-                SupportedCardBanner(config.supportedSchemes)
+            if (!config.schemeSupport.supportedSchemes.isNullOrEmpty()) {
+                SupportedCardBanner(config.schemeSupport.supportedSchemes)
             }
             CardInputFields(
                 shouldCollectCardholderName = config.collectCardholderName,
-                supportedCardSchemes = config.supportedSchemes,
+                schemeConfig = config.schemeSupport,
                 focusCardNumber = focusCardNumber,
                 focusExpiry = focusExpiration,
                 focusCode = focusCVV,

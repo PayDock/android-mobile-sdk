@@ -10,7 +10,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.card.domain.model.integration.enums.CardScheme
+import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.presentation.utils.validators.CardSchemeValidator
 
 /**
@@ -20,6 +20,7 @@ import com.paydock.feature.card.presentation.utils.validators.CardSchemeValidato
  * and security code. It supports customization for enabling/disabling inputs and handling focus transitions.
  *
  * @param shouldCollectCardholderName Whether the cardholder's name should be collected. If `true`, displays a name input field.
+ * @param schemeConfig The configuration defining the supported card schemes and validation settings.
  * @param focusCardNumber The [FocusRequester] for the card number input field to handle focus changes.
  * @param focusExpiry The [FocusRequester] for the expiry date input field to handle focus changes.
  * @param focusCode The [FocusRequester] for the security code input field to handle focus changes.
@@ -37,7 +38,7 @@ import com.paydock.feature.card.presentation.utils.validators.CardSchemeValidato
 @Composable
 internal fun CardInputFields(
     shouldCollectCardholderName: Boolean,
-    supportedCardSchemes: Set<CardScheme>?,
+    schemeConfig: SupportedSchemeConfig,
     focusCardNumber: FocusRequester,
     focusExpiry: FocusRequester,
     focusCode: FocusRequester,
@@ -70,7 +71,7 @@ internal fun CardInputFields(
             .fillMaxWidth()
             .focusRequester(focusCardNumber)
             .testTag("cardNumberInput"),
-        supportedCardSchemes = supportedCardSchemes,
+        schemeConfig = schemeConfig,
         value = cardNumber,
         enabled = enabled,
         onValueChange = onCardNumberChange,

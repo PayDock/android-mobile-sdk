@@ -1,6 +1,7 @@
 package com.paydock.feature.card.presentation.utils.validators
 
 import com.paydock.core.MobileSDKConstants
+import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.integration.enums.CardScheme
 import com.paydock.feature.card.presentation.utils.errors.CardNumberError
 
@@ -31,34 +32,51 @@ internal object CreditCardNumberValidator {
     /**
      * Validates the credit card number input and determines the type of validation error.
      *
-     * This function checks if the credit card number is empty, applies the Luhn algorithm
-     * to validate the card number's checksum, and determines the appropriate error state.
-     * It also validates if the card schemes matches any of the supported card schemes.
+     * This function applies the following validations in order:
+     * 1. Checks if the input is blank and the user has interacted, returning [CardNumberError.Empty].
+     * 2. Validates the input using the Luhn algorithm, returning [CardNumberError.InvalidLuhn] if invalid.
+     * 3. Checks if the card scheme is among the supported schemes (if validation is enabled),
+     *    returning [CardNumberError.UnsupportedCardScheme] if unsupported.
+     * 4. If all validations pass, it returns [CardNumberError.None].
      *
      * @param cardNumber The credit card number to validate.
      * @param hasUserInteracted Flag indicating if the user has interacted with the input field.
-     * @param cardScheme The detected card scheme type.
-     * @param supportedCardSchemes The list of supported card schemes.
-     * @return A [CardNumberError] representing the validation result:
-     *         - [CardNumberError.Empty]: The input is blank and the user has interacted.
-     *         - [CardNumberError.InvalidLuhn]: The input fails the Luhn algorithm validation.
-     *         - [CardNumberError.UnsupportedCardScheme]: The card scheme is not supported.
-     *         - [CardNumberError.None]: The input is valid.
+     * @param cardScheme The detected card scheme type. Defaults to `null`.
+     * @param schemeConfig The configuration defining the supported card schemes and validation settings.
+     * @return A [CardNumberError] representing the validation result.
      */
     fun validateCardNumberInput(
         cardNumber: String,
         hasUserInteracted: Boolean,
         cardScheme: CardScheme? = null,
-        supportedCardSchemes: Set<CardScheme>? = null
+        schemeConfig: SupportedSchemeConfig,
     ): CardNumberError {
         val isLuhnValid = LuhnValidator.isLuhnValid(cardNumber)
+        val supportedCardSchemes = getSupportedCardSchemes(schemeConfig)
+        // Determine if the card scheme is supported (only if validation is enabled)
+        val isCardSchemeSupported = supportedCardSchemes?.let {
+            it.isNotEmpty() && cardScheme != null && it.contains(cardScheme)
+        } ?: true // Default to true if validation is disabled or schemes are not provided
         return when {
             cardNumber.isBlank() && hasUserInteracted -> CardNumberError.Empty
             cardNumber.isNotBlank() && !isLuhnValid -> CardNumberError.InvalidLuhn
-            cardNumber.isNotBlank() && supportedCardSchemes?.isNotEmpty() == true &&
-                !supportedCardSchemes.any { it == cardScheme } -> CardNumberError.UnsupportedCardScheme
-
+            cardNumber.isNotBlank() && !isCardSchemeSupported -> CardNumberError.UnsupportedCardScheme
             else -> CardNumberError.None
         }
     }
+
+    /**
+     * Retrieves the set of supported card schemes based on the provided configuration.
+     *
+     * This function checks if validation for card schemes is enabled in the configuration.
+     * If validation is enabled, it returns the set of supported card schemes. Otherwise, it returns `null`,
+     * indicating that all card schemes are accepted without validation.
+     *
+     * @param schemeConfig The configuration specifying whether validation is enabled and the supported card schemes.
+     * @return A set of supported [CardScheme]s if validation is enabled, or `null` if validation is disabled.
+     */
+    private fun getSupportedCardSchemes(schemeConfig: SupportedSchemeConfig): Set<CardScheme>? {
+        return if (schemeConfig.enableValidation) schemeConfig.supportedSchemes else null
+    }
+
 }

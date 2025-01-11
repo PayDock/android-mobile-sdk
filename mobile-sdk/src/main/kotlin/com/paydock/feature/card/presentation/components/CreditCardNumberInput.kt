@@ -24,7 +24,7 @@ import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.card.domain.model.integration.enums.CardScheme
+import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.presentation.utils.errors.CardNumberError
 import com.paydock.feature.card.presentation.utils.transformations.CardNumberInputTransformation
 import com.paydock.feature.card.presentation.utils.validators.CardSchemeValidator
@@ -40,6 +40,7 @@ import kotlinx.coroutines.delay
  * focus handling, and dynamic input validation.
  *
  * @param modifier Modifier to customize the layout or styling of the input field.
+ * @param schemeConfig The configuration defining the supported card schemes and validation settings.
  * @param value The current value of the input field, representing the credit card number.
  * @param enabled Flag to enable or disable user interaction with the input field.
  * @param nextFocus An optional `FocusRequester` for moving focus to the next input field when the
@@ -52,11 +53,11 @@ import kotlinx.coroutines.delay
 @Composable
 internal fun CreditCardNumberInput(
     modifier: Modifier = Modifier,
-    supportedCardSchemes: Set<CardScheme>? = null,
+    schemeConfig: SupportedSchemeConfig,
     value: String = "",
     enabled: Boolean = true,
     nextFocus: FocusRequester? = null,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
 ) {
     // State to track the focus state of the input field
     var focusedState by remember { mutableStateOf(false) }
@@ -77,7 +78,7 @@ internal fun CreditCardNumberInput(
         debouncedValue,
         hasUserInteracted,
         cardScheme,
-        supportedCardSchemes
+        schemeConfig
     )
 
     val errorMessage = when (cardNumberError) {
@@ -135,9 +136,9 @@ internal fun CreditCardNumberInput(
 private fun PreviewCardNumberInput() {
     SdkTheme {
         Surface(color = Theme.colors.surface) {
-            CreditCardNumberInput(value = "4242424242424242") {
+            CreditCardNumberInput(value = "4242424242424242", onValueChange = {
 
-            }
+            }, schemeConfig = SupportedSchemeConfig())
         }
     }
 }

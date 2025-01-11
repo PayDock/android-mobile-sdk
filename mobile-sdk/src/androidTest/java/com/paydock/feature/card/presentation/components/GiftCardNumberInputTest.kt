@@ -72,7 +72,8 @@ internal class GiftCardNumberInputTest : BaseUITest() {
                 value = cardNumber,
                 onValueChange = {
                     cardNumber = it
-                }
+                },
+                schemeConfig = cardSchemeConfig.supportedSchemes
             )
         }
 
