@@ -1,6 +1,7 @@
 package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
@@ -8,7 +9,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
+import com.paydock.core.MobileSDKConstants
 import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.presentation.utils.validators.CardSchemeValidator
@@ -36,7 +39,7 @@ import com.paydock.feature.card.presentation.utils.validators.CardSchemeValidato
  */
 @Suppress("LongParameterList")
 @Composable
-internal fun CardInputFields(
+fun CardInputFields(
     shouldCollectCardholderName: Boolean,
     schemeConfig: SupportedSchemeConfig,
     focusCardNumber: FocusRequester,
@@ -50,41 +53,144 @@ internal fun CardInputFields(
     onCardHolderNameChange: (String) -> Unit,
     onCardNumberChange: (String) -> Unit,
     onExpiryChange: (String) -> Unit,
-    onSecurityCodeChange: (String) -> Unit,
+    onSecurityCodeChange: (String) -> Unit
 ) {
-    // Input field for cardholder name
-    if (shouldCollectCardholderName) {
-        CardHolderNameInput(
+    val configuration = LocalConfiguration.current
+    val fontScale = configuration.fontScale
+    // Define threshold for large font scale
+    val largeFontScaleThreshold = MobileSDKConstants.CardDetailsConfig.FONT_SCALE_THRESHOLD
+
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing)) {
+        // Cardholder Name Input
+        if (shouldCollectCardholderName) {
+            CardHolderNameInput(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("cardHolderInput"),
+                value = cardHolderName,
+                enabled = enabled,
+                nextFocus = focusCardNumber,
+                onValueChange = onCardHolderNameChange
+            )
+        }
+
+        // Card Number Input
+        CreditCardNumberInput(
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("cardHolderInput"),
-            value = cardHolderName,
+                .focusRequester(focusCardNumber)
+                .testTag("cardNumberInput"),
+            schemeConfig = schemeConfig,
+            value = cardNumber,
             enabled = enabled,
-            nextFocus = focusCardNumber,
-            onValueChange = onCardHolderNameChange
+            onValueChange = onCardNumberChange,
+            nextFocus = focusExpiry
+        )
+
+        // Expiry and Security Code Inputs
+        if (fontScale >= largeFontScaleThreshold) {
+            ExpiryAndCodeColumn(
+                expiry = expiry,
+                code = code,
+                focusExpiry = focusExpiry,
+                focusCode = focusCode,
+                enabled = enabled,
+                cardNumber = cardNumber,
+                onExpiryChange = onExpiryChange,
+                onSecurityCodeChange = onSecurityCodeChange
+            )
+        } else {
+            ExpiryAndCodeRow(
+                expiry = expiry,
+                code = code,
+                focusExpiry = focusExpiry,
+                focusCode = focusCode,
+                enabled = enabled,
+                cardNumber = cardNumber,
+                onExpiryChange = onExpiryChange,
+                onSecurityCodeChange = onSecurityCodeChange
+            )
+        }
+    }
+}
+
+/**
+ * Composable function to display the expiry and security code input fields in a column layout.
+ *
+ * @param expiry The expiry date value to be displayed in the input field.
+ * @param code The security code value to be displayed in the input field.
+ * @param focusExpiry The [FocusRequester] used to manage focus for the expiry date input.
+ * @param focusCode The [FocusRequester] used to manage focus for the security code input.
+ * @param enabled A flag indicating whether the input fields should be enabled or disabled.
+ * @param cardNumber The card number used to detect the card scheme.
+ * @param onExpiryChange Callback function to handle changes to the expiry date input value.
+ * @param onSecurityCodeChange Callback function to handle changes to the security code input value.
+ */
+@Suppress("LongParameterList")
+@Composable
+private fun ExpiryAndCodeColumn(
+    expiry: String,
+    code: String,
+    focusExpiry: FocusRequester,
+    focusCode: FocusRequester,
+    enabled: Boolean,
+    cardNumber: String,
+    onExpiryChange: (String) -> Unit,
+    onSecurityCodeChange: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing),
+        horizontalAlignment = Alignment.Start
+    ) {
+        CardExpiryInput(
+            modifier = Modifier
+                .focusRequester(focusExpiry)
+                .testTag("cardExpiryInput"),
+            value = expiry,
+            enabled = enabled,
+            onValueChange = onExpiryChange,
+            nextFocus = focusCode
+        )
+        CardSecurityCodeInput(
+            modifier = Modifier
+                .focusRequester(focusCode)
+                .testTag("cardSecurityCodeInput"),
+            value = code,
+            enabled = enabled,
+            cardScheme = CardSchemeValidator.detectCardScheme(cardNumber),
+            onValueChange = onSecurityCodeChange
         )
     }
+}
 
-    // Input field for card number
-    CreditCardNumberInput(
-        modifier = Modifier
-            .fillMaxWidth()
-            .focusRequester(focusCardNumber)
-            .testTag("cardNumberInput"),
-        schemeConfig = schemeConfig,
-        value = cardNumber,
-        enabled = enabled,
-        onValueChange = onCardNumberChange,
-        nextFocus = focusExpiry
-    )
-
-    // Row for expiry and security code input fields
+/**
+ * Composable function to display the expiry and security code input fields in a row layout.
+ *
+ * @param expiry The expiry date value to be displayed in the input field.
+ * @param code The security code value to be displayed in the input field.
+ * @param focusExpiry The [FocusRequester] used to manage focus for the expiry date input.
+ * @param focusCode The [FocusRequester] used to manage focus for the security code input.
+ * @param enabled A flag indicating whether the input fields should be enabled or disabled.
+ * @param cardNumber The card number used to detect the card scheme.
+ * @param onExpiryChange Callback function to handle changes to the expiry date input value.
+ * @param onSecurityCodeChange Callback function to handle changes to the security code input value.
+ */
+@Suppress("LongParameterList")
+@Composable
+private fun ExpiryAndCodeRow(
+    expiry: String,
+    code: String,
+    focusExpiry: FocusRequester,
+    focusCode: FocusRequester,
+    enabled: Boolean,
+    cardNumber: String,
+    onExpiryChange: (String) -> Unit,
+    onSecurityCodeChange: (String) -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(
-            Theme.dimensions.spacing,
-            Alignment.CenterHorizontally
-        ),
+        horizontalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.Top
     ) {
         CardExpiryInput(
@@ -97,7 +203,6 @@ internal fun CardInputFields(
             onValueChange = onExpiryChange,
             nextFocus = focusCode
         )
-
         CardSecurityCodeInput(
             modifier = Modifier
                 .weight(0.5f)

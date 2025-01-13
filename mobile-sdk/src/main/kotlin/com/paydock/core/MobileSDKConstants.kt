@@ -73,6 +73,7 @@ internal object MobileSDKConstants {
         internal const val DEFAULT_ACTION_TEXT = "Submit"
         internal const val DEFAULT_CONSENT_TEXT = "Remember this card for next time."
         internal const val DEFAULT_POLICY_TEXT = "Read our privacy policy"
+        internal const val FONT_SCALE_THRESHOLD = 2.0f
     }
 
     /**
