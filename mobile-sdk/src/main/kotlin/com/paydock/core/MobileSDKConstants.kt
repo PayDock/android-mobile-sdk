@@ -66,7 +66,8 @@ internal object MobileSDKConstants {
         internal const val MAX_EXPIRY_LENGTH = 4
         internal const val EXPIRY_CHUNK_SIZE = 2
         internal const val CVV_CVC_LENGTH = 3
-        internal const val CSC_LENGTH = 4
+        internal const val CID3_LENGTH = 3
+        internal const val CID_LENGTH = 4
         internal const val EXPIRY_BASE_YEAR = 2000
         internal const val MAX_MONTH_COUNT = 12
         internal const val DEFAULT_ACTION_TEXT = "Submit"

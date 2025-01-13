@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.paydock.core.BaseUITest
+import com.paydock.feature.card.domain.model.integration.enums.CardScheme
 import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
 import org.junit.Rule
 import org.junit.Test
@@ -34,7 +35,7 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
         composeTestRule.setContent {
             CardSecurityCodeInput(
                 value = securityCode,
-                cardScheme = CardIssuerType.VISA, // CVV
+                cardScheme = CardScheme.VISA, // CVV
                 onValueChange = {
                     securityCode = it
                 }
@@ -63,7 +64,7 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
         composeTestRule.setContent {
             CardSecurityCodeInput(
                 value = securityCode,
-                cardScheme = CardIssuerType.MASTERCARD, // CVC
+                cardScheme = CardScheme.MASTERCARD, // CVC
                 onValueChange = {
                     securityCode = it
                 }
@@ -85,14 +86,14 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
     }
 
     @Test
-    fun testValidCSCSecurityCodeState() {
+    fun testValidCIDSecurityCodeState() {
         var securityCode by mutableStateOf("")
 
         // Start composable with valid card security code
         composeTestRule.setContent {
             CardSecurityCodeInput(
                 value = securityCode,
-                cardScheme = CardIssuerType.AMERICAN_EXPRESS, // CSC
+                cardScheme = CardScheme.AMEX, // CID
                 onValueChange = {
                     securityCode = it
                 }
@@ -101,14 +102,14 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
 
         // Asset default empty state
         composeTestRule.onNodeWithTag("successIcon", true).assertDoesNotExist()
-        composeTestRule.onNodeWithText(SecurityCodeType.CSC.name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(SecurityCodeType.CID.name).assertIsDisplayed()
         composeTestRule.onNodeWithTag("sdkInput").assert(hasText(""))
 
         composeTestRule.onNodeWithTag("sdkInput").performClick() // Focus the input field
 
         composeTestRule.onNodeWithText(
             buildString {
-                repeat(SecurityCodeType.CSC.requiredDigits) { append("X") }
+                repeat(SecurityCodeType.CID.requiredDigits) { append("X") }
             }
         ).assertIsDisplayed()
     }
@@ -154,7 +155,7 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
         composeTestRule.setContent {
             CardSecurityCodeInput(
                 value = securityCode,
-                cardScheme = CardIssuerType.AMERICAN_EXPRESS,
+                cardScheme = CardScheme.AMEX,
                 onValueChange = {
                     securityCode = it
                 }

@@ -1,5 +1,6 @@
 package com.paydock.feature.card.presentation.utils.validators
 
+import com.paydock.feature.card.domain.model.integration.enums.CardScheme
 import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -92,7 +93,8 @@ internal class CreditCardInputValidatorTest {
     fun `test parseSecurityCode with valid code`() {
         val code = "123"
         val securityCodeType = SecurityCodeType.CVV
-        val result = CreditCardInputValidator.parseSecurityCode(code, securityCodeType)
+        val cardScheme = CardScheme.VISA
+        val result = CreditCardInputValidator.parseSecurityCode(code, securityCodeType, cardScheme)
         assertEquals(code, result)
     }
 
@@ -100,7 +102,8 @@ internal class CreditCardInputValidatorTest {
     fun `test parseSecurityCode with empty code`() {
         val code = ""
         val securityCodeType = SecurityCodeType.CVV
-        val result = CreditCardInputValidator.parseSecurityCode(code, securityCodeType)
+        val cardScheme = CardScheme.MASTERCARD
+        val result = CreditCardInputValidator.parseSecurityCode(code, securityCodeType, cardScheme)
         assertEquals("", result)
     }
 
@@ -108,7 +111,8 @@ internal class CreditCardInputValidatorTest {
     fun `test parseSecurityCode with invalid code`() {
         val code = "abc"
         val securityCodeType = SecurityCodeType.CVV
-        val result = CreditCardInputValidator.parseSecurityCode(code, securityCodeType)
+        val cardScheme = CardScheme.MASTERCARD
+        val result = CreditCardInputValidator.parseSecurityCode(code, securityCodeType, cardScheme)
         assertEquals(null, result)
     }
 }

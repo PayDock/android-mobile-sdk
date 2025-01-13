@@ -62,7 +62,7 @@ internal data class CardDetailsInputState(
             CreditCardNumberValidator.isValidNumberFormat(cardNumber) &&
             LuhnValidator.isLuhnValid(cardNumber) &&
             CardExpiryValidator.isExpiryValid(expiry) &&
-            CardSecurityCodeValidator.isSecurityCodeValid(code, securityCodeType)
+            CardSecurityCodeValidator.isSecurityCodeValid(code, securityCodeType, cardScheme)
 
     /**
      * Extracts the expiry month from the entered expiry string.

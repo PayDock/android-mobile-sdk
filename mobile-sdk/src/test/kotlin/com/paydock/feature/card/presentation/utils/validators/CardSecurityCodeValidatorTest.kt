@@ -12,62 +12,62 @@ internal class CardSecurityCodeValidatorTest {
 
     @Test
     fun testIsSecurityCodeValid_ValidCVV() {
-        assertTrue(CardSecurityCodeValidator.isSecurityCodeValid("123", SecurityCodeType.CVV))
+        assertTrue(CardSecurityCodeValidator.isSecurityCodeValid("123", SecurityCodeType.CVV, CardScheme.VISA))
     }
 
     @Test
     fun testIsSecurityCodeValid_ValidCVC() {
-        assertTrue(CardSecurityCodeValidator.isSecurityCodeValid("123", SecurityCodeType.CVC))
+        assertTrue(CardSecurityCodeValidator.isSecurityCodeValid("123", SecurityCodeType.CVC, CardScheme.MASTERCARD))
     }
 
     @Test
-    fun testIsSecurityCodeValid_ValidCSC() {
-        assertTrue(CardSecurityCodeValidator.isSecurityCodeValid("1234", SecurityCodeType.CSC))
+    fun testIsSecurityCodeValid_ValidCID() {
+        assertTrue(CardSecurityCodeValidator.isSecurityCodeValid("1234", SecurityCodeType.CID, CardScheme.AMEX))
     }
 
     @Test
     fun testIsSecurityCodeValid_BlankCode() {
-        assertFalse(CardSecurityCodeValidator.isSecurityCodeValid("", SecurityCodeType.CVV))
+        assertFalse(CardSecurityCodeValidator.isSecurityCodeValid("", SecurityCodeType.CVV, CardScheme.VISA))
     }
 
     @Test
     fun testIsSecurityCodeValid_NonDigitCode() {
-        assertFalse(CardSecurityCodeValidator.isSecurityCodeValid("12a", SecurityCodeType.CSC))
+        assertFalse(CardSecurityCodeValidator.isSecurityCodeValid("12a", SecurityCodeType.CID, CardScheme.AMEX))
     }
 
     @Test
     fun testIsSecurityCodeValid_ExceedsMaxLength() {
-        assertFalse(CardSecurityCodeValidator.isSecurityCodeValid("12345", SecurityCodeType.CVV))
+        assertFalse(CardSecurityCodeValidator.isSecurityCodeValid("12345", SecurityCodeType.CVV, CardScheme.VISA))
     }
 
     @Test
     fun testCheckSecurityCode_ValidCVV() {
-        assertTrue(CardSecurityCodeValidator.isSecurityCodeComplete("123", SecurityCodeType.CVV))
+        assertTrue(CardSecurityCodeValidator.isSecurityCodeComplete("123", SecurityCodeType.CVV, CardScheme.VISA))
     }
 
     @Test
     fun testCheckSecurityCode_ValidCVC() {
-        assertTrue(CardSecurityCodeValidator.isSecurityCodeComplete("124", SecurityCodeType.CVC))
+        assertTrue(CardSecurityCodeValidator.isSecurityCodeComplete("124", SecurityCodeType.CVC, CardScheme.MASTERCARD))
     }
 
     @Test
-    fun testCheckSecurityCode_ValidCSC() {
-        assertTrue(CardSecurityCodeValidator.isSecurityCodeComplete("1234", SecurityCodeType.CSC))
+    fun testCheckSecurityCode_ValidCID() {
+        assertTrue(CardSecurityCodeValidator.isSecurityCodeComplete("1234", SecurityCodeType.CID, CardScheme.AMEX))
     }
 
     @Test
     fun testCheckSecurityCode_BlankCode() {
-        assertFalse(CardSecurityCodeValidator.isSecurityCodeComplete("", SecurityCodeType.CVV))
+        assertFalse(CardSecurityCodeValidator.isSecurityCodeComplete("", SecurityCodeType.CVV, CardScheme.VISA))
     }
 
     @Test
     fun testCheckSecurityCode_NonDigitCode() {
-        assertFalse(CardSecurityCodeValidator.isSecurityCodeComplete("12a", SecurityCodeType.CSC))
+        assertFalse(CardSecurityCodeValidator.isSecurityCodeComplete("12a", SecurityCodeType.CID, CardScheme.AMEX))
     }
 
     @Test
     fun testCheckSecurityCode_ExceedsMaxLength() {
-        assertFalse(CardSecurityCodeValidator.isSecurityCodeComplete("12345", SecurityCodeType.CVV))
+        assertFalse(CardSecurityCodeValidator.isSecurityCodeComplete("12345", SecurityCodeType.CVV, CardScheme.VISA))
     }
 
     @Test
@@ -89,7 +89,7 @@ internal class CardSecurityCodeValidatorTest {
     @Test
     fun testDetectSecurityCodeType_AmericanExpress() {
         assertEquals(
-            SecurityCodeType.CSC,
+            SecurityCodeType.CID,
             CardSecurityCodeValidator.detectSecurityCodeType(CardScheme.AMEX)
         )
     }
@@ -98,9 +98,15 @@ internal class CardSecurityCodeValidatorTest {
     fun validateSecurityCodeInput_emptyInput_userInteracted_returnsEmptyError() {
         val securityCode = ""
         val securityCodeType = SecurityCodeType.CVV
+        val cardScheme = CardScheme.VISA
         val hasUserInteracted = true
         val expected = SecurityCodeError.Empty
-        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(securityCode, securityCodeType, hasUserInteracted)
+        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(
+            securityCode,
+            securityCodeType,
+            cardScheme,
+            hasUserInteracted
+        )
         assertEquals(expected, actual)
     }
 
@@ -108,9 +114,15 @@ internal class CardSecurityCodeValidatorTest {
     fun validateSecurityCodeInput_emptyInput_userNotInteracted_returnsNoneError() {
         val securityCode = ""
         val securityCodeType = SecurityCodeType.CVV
+        val cardScheme = CardScheme.VISA
         val hasUserInteracted = false
         val expected = SecurityCodeError.None
-        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(securityCode, securityCodeType, hasUserInteracted)
+        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(
+            securityCode,
+            securityCodeType,
+            cardScheme,
+            hasUserInteracted
+        )
         assertEquals(expected, actual)
     }
 
@@ -118,9 +130,15 @@ internal class CardSecurityCodeValidatorTest {
     fun validateSecurityCodeInput_invalidCVVInput_returnsInvalidError() {
         val securityCode = "12" // Invalid for CVV (requires 3 digits)
         val securityCodeType = SecurityCodeType.CVV
+        val cardScheme = CardScheme.VISA
         val hasUserInteracted = true
         val expected = SecurityCodeError.Invalid
-        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(securityCode, securityCodeType, hasUserInteracted)
+        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(
+            securityCode,
+            securityCodeType,
+            cardScheme,
+            hasUserInteracted
+        )
         assertEquals(expected, actual)
     }
 
@@ -128,19 +146,47 @@ internal class CardSecurityCodeValidatorTest {
     fun validateSecurityCodeInput_invalidCVCInput_returnsInvalidError() {
         val securityCode = "12" // Invalid for CVC (requires 3 digits)
         val securityCodeType = SecurityCodeType.CVC
+        val cardScheme = CardScheme.MASTERCARD
         val hasUserInteracted = true
         val expected = SecurityCodeError.Invalid
-        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(securityCode, securityCodeType, hasUserInteracted)
+        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(
+            securityCode,
+            securityCodeType,
+            cardScheme,
+            hasUserInteracted
+        )
         assertEquals(expected, actual)
     }
 
     @Test
-    fun validateSecurityCodeInput_invalidCSCInput_returnsInvalidError() {
-        val securityCode = "123" // Invalid for CSC (requires 4 digits)
-        val securityCodeType = SecurityCodeType.CSC
+    fun validateAmexSecurityCodeInput_invalidCIDInput_returnsInvalidError() {
+        val securityCode = "123" // Invalid for CID (requires 4 digits)
+        val securityCodeType = SecurityCodeType.CID
+        val cardScheme = CardScheme.AMEX
         val hasUserInteracted = true
         val expected = SecurityCodeError.Invalid
-        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(securityCode, securityCodeType, hasUserInteracted)
+        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(
+            securityCode,
+            securityCodeType,
+            cardScheme,
+            hasUserInteracted
+        )
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateDiscoverSecurityCodeInput_invalidCIDInput_returnsInvalidError() {
+        val securityCode = "12" // Invalid for CID (requires 4 digits)
+        val securityCodeType = SecurityCodeType.CID
+        val cardScheme = CardScheme.DISCOVER
+        val hasUserInteracted = true
+        val expected = SecurityCodeError.Invalid
+        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(
+            securityCode,
+            securityCodeType,
+            cardScheme,
+            hasUserInteracted
+        )
         assertEquals(expected, actual)
     }
 
@@ -148,9 +194,15 @@ internal class CardSecurityCodeValidatorTest {
     fun validateSecurityCodeInput_validCVVInput_returnsNoneError() {
         val securityCode = "123" // Valid for CVV
         val securityCodeType = SecurityCodeType.CVV
+        val cardScheme = CardScheme.VISA
         val hasUserInteracted = true
         val expected = SecurityCodeError.None
-        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(securityCode, securityCodeType, hasUserInteracted)
+        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(
+            securityCode,
+            securityCodeType,
+            cardScheme,
+            hasUserInteracted
+        )
         assertEquals(expected, actual)
     }
 
@@ -158,19 +210,47 @@ internal class CardSecurityCodeValidatorTest {
     fun validateSecurityCodeInput_validCVCInput_returnsNoneError() {
         val securityCode = "123" // Valid for CVC
         val securityCodeType = SecurityCodeType.CVC
+        val cardScheme = CardScheme.MASTERCARD
         val hasUserInteracted = true
         val expected = SecurityCodeError.None
-        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(securityCode, securityCodeType, hasUserInteracted)
+        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(
+            securityCode,
+            securityCodeType,
+            cardScheme,
+            hasUserInteracted
+        )
         assertEquals(expected, actual)
     }
 
     @Test
-    fun validateSecurityCodeInput_validCSCInput_returnsNoneError() {
-        val securityCode = "1234" // Valid for CSC
-        val securityCodeType = SecurityCodeType.CSC
+    fun validateAmexSecurityCodeInput_validCIDInput_returnsNoneError() {
+        val securityCode = "1234" // Valid for Amex CID
+        val securityCodeType = SecurityCodeType.CID
+        val cardScheme = CardScheme.AMEX
         val hasUserInteracted = true
         val expected = SecurityCodeError.None
-        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(securityCode, securityCodeType, hasUserInteracted)
+        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(
+            securityCode,
+            securityCodeType,
+            cardScheme,
+            hasUserInteracted
+        )
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateDiscoverSecurityCodeInput_validCIDInput_returnsNoneError() {
+        val securityCode = "123" // Valid for Discover CID
+        val securityCodeType = SecurityCodeType.CID
+        val cardScheme = CardScheme.DISCOVER
+        val hasUserInteracted = true
+        val expected = SecurityCodeError.None
+        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(
+            securityCode,
+            securityCodeType,
+            cardScheme,
+            hasUserInteracted
+        )
         assertEquals(expected, actual)
     }
 

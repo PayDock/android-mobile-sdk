@@ -10,7 +10,7 @@
     <string name="label_country">Country</string>
     <string name="label_city">City</string>
     <string name="label_cvv">CVV</string>
-    <string name="label_csc">CSC</string>
+    <string name="label_cid">CID</string>
     <string name="label_cvc">CVC</string>
     <string name="label_expiry">Expiry</string>
     <string name="label_find_an_address">Find an address</string>

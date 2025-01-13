@@ -31,7 +31,7 @@ import com.paydock.feature.card.presentation.utils.validators.CreditCardInputVal
 import kotlinx.coroutines.delay
 
 /**
- * A composable input field for entering a credit card security code (CVV, CVC, or CSC),
+ * A composable input field for entering a credit card security code (CVV, CVC, or CID),
  * with automatic detection of the security code type based on the card scheme.
  *
  * This input handles user interactions, validation, formatting, and provides error messages if the input is invalid.
@@ -65,16 +65,17 @@ internal fun CardSecurityCodeInput(
         debouncedValue = value
     }
 
-    // Determine the security code type based on the card scheme (e.g., CVV, CVC, CSC)
+    // Determine the security code type based on the card scheme (e.g., CVV, CVC, CID)
     val securityCodeType = CardSecurityCodeValidator.detectSecurityCodeType(cardScheme)
 
     // Parse the security code based on its type
-    val securityCode = CreditCardInputValidator.parseSecurityCode(debouncedValue, securityCodeType)
+    val securityCode = CreditCardInputValidator.parseSecurityCode(debouncedValue, securityCodeType, cardScheme)
 
     // Validate the input and check for possible errors
     val securityCodeError = CardSecurityCodeValidator.validateSecurityCodeInput(
         debouncedValue,
         securityCodeType,
+        cardScheme,
         hasUserInteracted
     )
 
@@ -85,6 +86,17 @@ internal fun CardSecurityCodeInput(
         SecurityCodeError.None -> null
     }
 
+    val placeholder = remember(cardScheme, securityCodeType) {
+        buildString {
+            val requiredDigits = when {
+                cardScheme == CardScheme.DISCOVER && securityCodeType == SecurityCodeType.CID ->
+                    MobileSDKConstants.CardDetailsConfig.CID3_LENGTH
+                else -> securityCodeType.requiredDigits
+            }
+            repeat(requiredDigits) { append("X") }
+        }
+    }
+
     // Render the security code input field with appropriate properties
     SdkTextField(
         modifier = modifier,
@@ -92,7 +104,7 @@ internal fun CardSecurityCodeInput(
         onValueChange = {
             hasUserInteracted = true
             // Format and parse the security code input before invoking the callback
-            CreditCardInputValidator.parseSecurityCode(it, securityCodeType)?.let { code ->
+            CreditCardInputValidator.parseSecurityCode(it, securityCodeType, cardScheme)?.let { code ->
                 onValueChange(code)
             }
         },
@@ -100,10 +112,10 @@ internal fun CardSecurityCodeInput(
         label = when (securityCodeType) {
             SecurityCodeType.CVV -> stringResource(id = R.string.label_cvv)
             SecurityCodeType.CVC -> stringResource(id = R.string.label_cvc)
-            SecurityCodeType.CSC -> stringResource(id = R.string.label_csc)
+            SecurityCodeType.CID -> stringResource(id = R.string.label_cid)
         },
         // Show a placeholder with 'X' placeholders based on the required digits
-        placeholder = buildString { repeat(securityCodeType.requiredDigits) { append("X") } },
+        placeholder = placeholder,
         enabled = enabled,
         error = errorMessage,
         autofillType = AutofillType.CreditCardSecurityCode,
@@ -152,7 +164,7 @@ private fun PreviewCardSecurityCodeCVCInput() {
 
 @LightDarkPreview
 @Composable
-private fun PreviewCardSecurityCodeCSCInput() {
+private fun PreviewCardSecurityCodeCIDInput() {
     SdkTheme {
         Surface(color = Theme.colors.surface) {
             CardSecurityCodeInput(value = "1234", cardScheme = CardScheme.AMEX) {
