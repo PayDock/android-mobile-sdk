@@ -42,6 +42,7 @@ import kotlinx.coroutines.delay
  * @param onValueChange The callback to be invoked when the value of the input field changes.
  */
 @OptIn(ExperimentalComposeUiApi::class)
+@Suppress("LongMethod")
 @Composable
 internal fun GiftCardNumberInput(
     modifier: Modifier = Modifier,

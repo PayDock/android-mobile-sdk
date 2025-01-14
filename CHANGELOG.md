@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.0.0] - 2025-01-14
+
+### Added
+
+- New `CardDetailsWidgetConfig` to manage card details
+- Supported card scheme functionality (optional)
+
+### Changed
+
+- `CardDetailsWidget` contract with config
+- Card scheme list matching supported schemes
+- Card security code to match web (CSC > CID)
+- Updated font scaling (input fields and buttons) 
+- Internal UI state (state = action) for Google Pay widgets
+
 ## [2.3.0] - 2024-12-18
 
 ### Added
