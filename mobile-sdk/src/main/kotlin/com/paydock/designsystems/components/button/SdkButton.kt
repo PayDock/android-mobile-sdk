@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
@@ -62,10 +63,15 @@ internal fun SdkButton(
     buttonShape: Shape = Theme.buttonShapes.small,
     onClick: () -> Unit,
 ) {
+    val configuration = LocalConfiguration.current
+    val fontScale = configuration.fontScale
+    // Calculate adjusted height with a scaling factor
+    val adjustedButtonHeight = Theme.dimensions.buttonHeight * (1 + (fontScale - 1) * 0.5f)
+
     // Decide button appearance based on type
     when (type) {
         AppButtonType.Filled -> PrimaryButton(
-            modifier = modifier.height(Theme.dimensions.buttonHeight),
+            modifier = modifier.height(adjustedButtonHeight),
             onClick = onClick,
             enabled = enabled && !isLoading,
             shape = buttonShape,
@@ -80,7 +86,7 @@ internal fun SdkButton(
 
         AppButtonType.Outlined -> OutlinedButton(
             onClick = onClick,
-            modifier = modifier.height(Theme.dimensions.buttonHeight),
+            modifier = modifier.height(adjustedButtonHeight),
             enabled = enabled && !isLoading,
             content = {
                 ButtonContent(

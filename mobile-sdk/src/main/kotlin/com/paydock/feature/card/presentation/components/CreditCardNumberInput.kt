@@ -24,9 +24,10 @@ import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
+import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.presentation.utils.errors.CardNumberError
 import com.paydock.feature.card.presentation.utils.transformations.CardNumberInputTransformation
-import com.paydock.feature.card.presentation.utils.validators.CardIssuerValidator
+import com.paydock.feature.card.presentation.utils.validators.CardSchemeValidator
 import com.paydock.feature.card.presentation.utils.validators.CreditCardInputValidator
 import com.paydock.feature.card.presentation.utils.validators.CreditCardNumberValidator
 import kotlinx.coroutines.delay
@@ -35,10 +36,11 @@ import kotlinx.coroutines.delay
  * A composable function for entering and validating a credit card number.
  *
  * This function provides an input field for credit card numbers with validation, error handling,
- * card issuer detection, and UI feedback. It supports user-friendly interactions such as autofill,
+ * card scheme detection, and UI feedback. It supports user-friendly interactions such as autofill,
  * focus handling, and dynamic input validation.
  *
  * @param modifier Modifier to customize the layout or styling of the input field.
+ * @param schemeConfig The configuration defining the supported card schemes and validation settings.
  * @param value The current value of the input field, representing the credit card number.
  * @param enabled Flag to enable or disable user interaction with the input field.
  * @param nextFocus An optional `FocusRequester` for moving focus to the next input field when the
@@ -47,14 +49,15 @@ import kotlinx.coroutines.delay
  * a parsed credit card number if the input is valid.
  */
 @OptIn(ExperimentalComposeUiApi::class)
-@Suppress("LongMethod", "CyclomaticComplexMethod")
+@Suppress("CyclomaticComplexMethod")
 @Composable
 internal fun CreditCardNumberInput(
     modifier: Modifier = Modifier,
+    schemeConfig: SupportedSchemeConfig,
     value: String = "",
     enabled: Boolean = true,
     nextFocus: FocusRequester? = null,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
 ) {
     // State to track the focus state of the input field
     var focusedState by remember { mutableStateOf(false) }
@@ -68,17 +71,22 @@ internal fun CreditCardNumberInput(
 
     // Parse the card number to determine its type and validity
     val cardNumber = CreditCardInputValidator.parseNumber(debouncedValue)
+    // Detect the card scheme type to show the appropriate icon
+    val cardScheme = CardSchemeValidator.detectCardScheme(value)
     // Validate possible card number errors
-    val cardNumberError = CreditCardNumberValidator.validateCardNumberInput(debouncedValue, hasUserInteracted)
+    val cardNumberError = CreditCardNumberValidator.validateCardNumberInput(
+        debouncedValue,
+        hasUserInteracted,
+        cardScheme,
+        schemeConfig
+    )
 
     val errorMessage = when (cardNumberError) {
         CardNumberError.Empty,
         CardNumberError.InvalidLuhn -> stringResource(id = R.string.error_card_number)
+        CardNumberError.UnsupportedCardScheme -> stringResource(id = R.string.error_unsupported_card_scheme)
         CardNumberError.None -> null
     }
-
-    // Detect the card issuer type to show the appropriate icon
-    val cardIssuer = CardIssuerValidator.detectCardIssuer(value)
 
     SdkTextField(
         modifier = modifier.onFocusChanged {
@@ -98,7 +106,7 @@ internal fun CreditCardNumberInput(
         enabled = enabled,
         label = stringResource(id = R.string.label_card_number),
         autofillType = AutofillType.CreditCardNumber,
-        leadingIcon = { CardIssuerIcon(cardIssuer, focusedState) },
+        leadingIcon = { CardSchemeIcon(cardScheme, focusedState) },
         error = errorMessage,
         visualTransformation = CardNumberInputTransformation(MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH),
         // Show a success icon when the card number is valid and not blank
@@ -128,9 +136,9 @@ internal fun CreditCardNumberInput(
 private fun PreviewCardNumberInput() {
     SdkTheme {
         Surface(color = Theme.colors.surface) {
-            CreditCardNumberInput(value = "4242424242424242") {
+            CreditCardNumberInput(value = "4242424242424242", onValueChange = {
 
-            }
+            }, schemeConfig = SupportedSchemeConfig())
         }
     }
 }

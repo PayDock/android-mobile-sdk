@@ -22,8 +22,8 @@ internal enum class SecurityCodeType(val requiredDigits: Int) {
     CVC(MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH),
 
     /**
-     * Card Security Code (CSC) security code type.
+     * Card Identification Number (CID) security code type.
      * Required digits: 4
      */
-    CSC(MobileSDKConstants.CardDetailsConfig.CSC_LENGTH)
+    CID(MobileSDKConstants.CardDetailsConfig.CID_LENGTH)
 }

@@ -92,7 +92,7 @@ internal fun GiftCardNumberInput(
         enabled = enabled,
         label = stringResource(id = R.string.label_card_number),
         leadingIcon = {
-            // Display the card issuer icon as a leading icon in the input field
+            // Display the card scheme icon as a leading icon in the input field
             Icon(
                 modifier = Modifier.testTag("cardIcon"),
                 painter = painterResource(id = R.drawable.ic_credit_card),

@@ -1,11 +1,11 @@
 package com.paydock.feature.card.presentation.state
 
 import com.paydock.core.MobileSDKConstants
-import com.paydock.feature.card.domain.model.integration.enums.CardIssuerType
+import com.paydock.feature.card.domain.model.integration.enums.CardScheme
 import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
 import com.paydock.feature.card.presentation.utils.validators.CardExpiryValidator
 import com.paydock.feature.card.presentation.utils.validators.CardHolderNameValidator
-import com.paydock.feature.card.presentation.utils.validators.CardIssuerValidator
+import com.paydock.feature.card.presentation.utils.validators.CardSchemeValidator
 import com.paydock.feature.card.presentation.utils.validators.CardSecurityCodeValidator
 import com.paydock.feature.card.presentation.utils.validators.CreditCardNumberValidator
 import com.paydock.feature.card.presentation.utils.validators.LuhnValidator
@@ -14,7 +14,7 @@ import com.paydock.feature.card.presentation.utils.validators.LuhnValidator
  * Represents the input state for card details, including validation and metadata extraction.
  *
  * This class encapsulates the data and logic required to validate and process user-entered card details.
- * It provides utility functions to detect card issuer type, validate inputs, and extract card expiry information.
+ * It provides utility functions to detect card scheme type, validate inputs, and extract card expiry information.
  *
  * @property cardholderName The name of the cardholder. Can be `null` if cardholder name is not collected.
  * @property cardNumber The entered card number. Defaults to an empty string.
@@ -33,20 +33,20 @@ internal data class CardDetailsInputState(
 ) {
 
     /**
-     * Detects the card issuer type based on the entered card number.
+     * Detects the card scheme type based on the entered card number.
      *
-     * Uses the `CardIssuerValidator` utility to identify the type of card (e.g., Visa, Mastercard, etc.).
+     * Uses the `CardSchemeValidator` utility to identify the type of card (e.g., Visa, Mastercard, etc.).
      */
-    private val cardIssuer: CardIssuerType
-        get() = CardIssuerValidator.detectCardIssuer(cardNumber)
+    private val cardScheme: CardScheme?
+        get() = CardSchemeValidator.detectCardScheme(cardNumber)
 
     /**
-     * Determines the security code type (CVV/CVC) based on the detected card issuer.
+     * Determines the security code type (CVV/CVC) based on the detected card scheme.
      *
      * Uses the `CardSecurityCodeValidator` utility to identify the expected security code format for the card type.
      */
     private val securityCodeType: SecurityCodeType
-        get() = CardSecurityCodeValidator.detectSecurityCodeType(cardIssuer)
+        get() = CardSecurityCodeValidator.detectSecurityCodeType(cardScheme)
 
     /**
      * Validates the entire input state.
@@ -55,14 +55,14 @@ internal data class CardDetailsInputState(
      * - Validates the cardholder name (if required).
      * - Checks the card number using the Luhn algorithm.
      * - Validates the card expiry date format and logic.
-     * - Validates the security code based on the detected card issuer.
+     * - Validates the security code based on the detected card scheme.
      */
     val isDataValid: Boolean
         get() = (CardHolderNameValidator.isValidHolderNameFormat(cardholderName) || !collectCardholderName) &&
             CreditCardNumberValidator.isValidNumberFormat(cardNumber) &&
             LuhnValidator.isLuhnValid(cardNumber) &&
             CardExpiryValidator.isExpiryValid(expiry) &&
-            CardSecurityCodeValidator.isSecurityCodeValid(code, securityCodeType)
+            CardSecurityCodeValidator.isSecurityCodeValid(code, securityCodeType, cardScheme)
 
     /**
      * Extracts the expiry month from the entered expiry string.

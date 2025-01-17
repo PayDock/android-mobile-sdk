@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.address.presentation.AddressDetailsWidget
 
 @Composable

@@ -40,7 +40,6 @@ import org.koin.androidx.compose.koinViewModel
  * @param meta Data that configures the Click to Pay checkout.
  * @param completion Callback function invoked upon completion of the checkout process.
  */
-@Suppress("LongMethod")
 @Composable
 fun ClickToPayWidget(
     modifier: Modifier = Modifier,

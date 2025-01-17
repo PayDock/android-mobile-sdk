@@ -26,7 +26,6 @@ fun Checkout3DSBottomSheet(
             ThreeDSWidget(token = threeDSToken) { result ->
                 onDismissRequest()
                 viewModel.handleThreeDSResult(
-                    vaultToken,
                     result
                 )
             }

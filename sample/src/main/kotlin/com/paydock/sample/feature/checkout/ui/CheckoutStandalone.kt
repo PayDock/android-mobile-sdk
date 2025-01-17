@@ -63,6 +63,7 @@ fun CheckoutStandalone(viewModel: StandaloneCheckoutViewModel = hiltViewModel())
         ErrorDialog(
             onDismissRequest = { viewModel.resetResultState() },
             onConfirmation = {
+                openBottomSheet = false
                 viewModel.resetResultState()
             },
             dialogText = uiState.error!!,

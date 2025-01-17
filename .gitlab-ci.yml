@@ -6,11 +6,9 @@ variables:
   ANDROID_SDK_TOOLS: "9477386"
 
 stages:
-  - .pre
+  - quality
   - build
   - test
-  - security
-  - security-post
   - tag
   - gitlab_release
   - github_release

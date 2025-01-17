@@ -43,7 +43,9 @@ sealed class GooglePayException(displayableMessage: String) : SdkException(displ
      * @param displayableMessage A human-readable message describing the error.
      * @constructor Creates an InitialisationException with the specified displayable message.
      */
-    class InitialisationException(displayableMessage: String) :
+    class InitialisationException(
+        displayableMessage: String = MobileSDKConstants.Errors.GOOGLE_PAY_INITIALISATION_ERROR
+    ) :
         GooglePayException(displayableMessage)
 
     /**
@@ -60,7 +62,7 @@ sealed class GooglePayException(displayableMessage: String) : SdkException(displ
      * @param displayableMessage A human-readable message describing the error.
      * @constructor Creates a CancellationException with the specified displayable message.
      */
-    class CancellationException(displayableMessage: String) : GooglePayException(displayableMessage)
+    class CancellationException(displayableMessage: String = MobileSDKConstants.Errors.GOOGLE_PAY_CANCELLATION_ERROR) : GooglePayException(displayableMessage)
 
     /**
      * Exception thrown when there is an unknown error related to Google Pay.

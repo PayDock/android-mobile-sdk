@@ -34,7 +34,8 @@ internal class CreditCardNumberInputTest : BaseUITest() {
                 value = cardNumber,
                 onValueChange = {
                     cardNumber = it
-                }
+                },
+                schemeConfig = cardSchemeConfig.supportedSchemes
             )
         }
 
@@ -67,7 +68,8 @@ internal class CreditCardNumberInputTest : BaseUITest() {
                 value = cardNumber,
                 onValueChange = {
                     cardNumber = it
-                }
+                },
+                schemeConfig = cardSchemeConfig.supportedSchemes
             )
         }
 

@@ -58,7 +58,6 @@ import org.koin.androidx.compose.koinViewModel
  * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
  * @param completion A callback to handle the Wallet Charge result.
  */
-@Suppress("LongMethod")
 @Composable
 fun PayPalWidget(
     modifier: Modifier = Modifier,

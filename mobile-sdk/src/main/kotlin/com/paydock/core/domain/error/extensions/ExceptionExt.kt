@@ -6,6 +6,7 @@ import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.domain.error.exceptions.FlyPayException
 import com.paydock.core.domain.error.exceptions.GenericException
 import com.paydock.core.domain.error.exceptions.GiftCardException
+import com.paydock.core.domain.error.exceptions.GooglePayException
 import com.paydock.core.domain.error.exceptions.PayPalException
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.domain.error.exceptions.SdkException
@@ -57,14 +58,16 @@ internal inline fun <reified E : Exception> Throwable.mapApiException(): SdkExce
     }
     return when {
         // TODO - Add all other widget type exceptions here!
-        AfterpayException::class.java.isAssignableFrom(E::class.java) ->
-            this.mapAfterpayApiException<E>()
         CardDetailsException::class.java.isAssignableFrom(E::class.java) ->
             this.mapCardDetailsApiException<E>()
         GiftCardException::class.java.isAssignableFrom(E::class.java) ->
             this.mapGiftCardDetailsApiException<E>()
+        AfterpayException::class.java.isAssignableFrom(E::class.java) ->
+            this.mapAfterpayApiException<E>()
         FlyPayException::class.java.isAssignableFrom(E::class.java) ->
             this.mapFlyPayApiException<E>()
+        GooglePayException::class.java.isAssignableFrom(E::class.java) ->
+            this.mapGooglePayApiException<E>()
         PayPalException::class.java.isAssignableFrom(E::class.java) ->
             this.mapPayPalApiException<E>()
         PayPalVaultException::class.java.isAssignableFrom(E::class.java) ->
@@ -277,6 +280,57 @@ internal inline fun <reified E : Throwable> Throwable.mapPayPalApiException(): P
         is UnknownApiException -> PayPalException.UnknownException(displayableMessage = this.errorMessage)
 
         else -> PayPalException.UnknownException(
+            displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+        )
+    }
+
+/**
+ * Maps a generic `Throwable` to a specific type of `GooglePayException` based on the provided reified exception type.
+ *
+ * This function handles known `ApiException` and `UnknownApiException` types, converting them into
+ * corresponding `GooglePayException` subclasses. For other exceptions, a default `GooglePayException.UnknownException`
+ * is returned.
+ *
+ * @param E The target type of `GooglePayException` to map the throwable to. This is a reified type parameter, allowing the function
+ *          to infer the target exception type at runtime.
+ * @receiver The throwable to map.
+ * @return A `GooglePayException` instance that represents the mapped exception.
+ *
+ * ## Behavior:
+ * - **`ApiException` Handling**:
+ *   - Maps to `GooglePayException.CapturingChargeException` if `E` is `GooglePayException.CapturingChargeException`.
+ *   - Defaults to `GooglePayException.UnknownException` for other `ApiException` cases.
+ * - **`UnknownApiException` Handling**:
+ *   - Maps to `GooglePayException.UnknownException` with the error message from the `UnknownApiException`.
+ * - **Fallback Handling**:
+ *   - Maps other exception types to `GooglePayException.UnknownException` with a generic error message.
+ *
+ * ## Example Usage:
+ * ```kotlin
+ * val apiException = ApiException(error = "Invalid token")
+ * val mappedException: GooglePayException = apiException.mapPayPalApiException<GooglePayException.CapturingChargeException>()
+ * println(mappedException) // Output: GooglePayException.CapturingChargeException(error="Invalid token")
+ * ```
+ *
+ * ## Notes:
+ * - Ensure that the type parameter `E` is a subclass of `Throwable`.
+ */
+internal inline fun <reified E : Throwable> Throwable.mapGooglePayApiException(): GooglePayException =
+    when (this) {
+        is ApiException -> {
+            when (E::class) {
+                GooglePayException.CapturingChargeException::class ->
+                    GooglePayException.CapturingChargeException(error = this.error)
+
+                else -> GooglePayException.UnknownException(
+                    displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+                )
+            }
+        }
+
+        is UnknownApiException -> GooglePayException.UnknownException(displayableMessage = this.errorMessage)
+
+        else -> GooglePayException.UnknownException(
             displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
         )
     }

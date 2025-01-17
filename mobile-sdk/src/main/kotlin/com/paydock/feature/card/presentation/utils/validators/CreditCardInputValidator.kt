@@ -1,5 +1,6 @@
 package com.paydock.feature.card.presentation.utils.validators
 
+import com.paydock.feature.card.domain.model.integration.enums.CardScheme
 import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
 
 /**
@@ -54,10 +55,11 @@ internal object CreditCardInputValidator {
      *
      * @param code The security code input string to parse and validate.
      * @param securityCodeType The type of security code to validate against.
+     * @param cardScheme The scheme type of the card.
      * @return The parsed and validated security code if valid, an empty string if input is empty, or null if invalid.
      */
-    fun parseSecurityCode(code: String, securityCodeType: SecurityCodeType): String? = when {
-        CardSecurityCodeValidator.isSecurityCodeValid(code, securityCodeType) -> code
+    fun parseSecurityCode(code: String, securityCodeType: SecurityCodeType, cardScheme: CardScheme?): String? = when {
+        CardSecurityCodeValidator.isSecurityCodeValid(code, securityCodeType, cardScheme) -> code
         code.isEmpty() -> ""
         else -> null
     }

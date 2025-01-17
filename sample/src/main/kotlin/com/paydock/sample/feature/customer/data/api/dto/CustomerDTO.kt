@@ -6,7 +6,7 @@ data class CustomerDTO(
     @SerializedName("company_id") val companyId: String,
     @SerializedName("first_name") val firstName: String,
     @SerializedName("last_name") val lastName: String,
-    val email: String,
+    val email: String?,
     val phone: String,
     @SerializedName("_check_expire_date") val checkExpireDate: Boolean,
     @SerializedName("_service") val service: ServiceDTO,

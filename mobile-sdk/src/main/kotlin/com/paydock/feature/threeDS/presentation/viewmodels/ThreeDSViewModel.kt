@@ -61,7 +61,6 @@ internal class ThreeDSViewModel(dispatchers: DispatchersProvider) : BaseViewMode
      *
      * @param event The 3DS event to be processed.
      */
-    @Suppress("LongMethod")
     fun updateThreeDSEvent(event: ThreeDSEvent) {
         when (event) {
             is ThreeDSEvent.ChargeAuthSuccessEvent -> {

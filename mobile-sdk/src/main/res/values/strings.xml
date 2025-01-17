@@ -10,7 +10,7 @@
     <string name="label_country">Country</string>
     <string name="label_city">City</string>
     <string name="label_cvv">CVV</string>
-    <string name="label_csc">CSC</string>
+    <string name="label_cid">CID</string>
     <string name="label_cvc">CVC</string>
     <string name="label_expiry">Expiry</string>
     <string name="label_find_an_address">Find an address</string>
@@ -26,6 +26,7 @@
     <string name="error_luhn_card_holder_name">Card number is in the wrong field!</string>
     <string name="error_card_holder_name">Invalid name</string>
     <string name="error_card_number">Invalid card number</string>
+    <string name="error_unsupported_card_scheme">Card type not accepted</string>
     <string name="error_expiry_date">Invalid expiry date</string>
     <string name="error_expiry_expired">Card expired</string>
     <string name="error_security_code">Invalid security code</string>
@@ -34,7 +35,6 @@
     <string name="error_web_server_error">Server Error: The server encountered an issue.</string>
     <string name="error_web_unknown_error">An unexpected error occurred</string>
     <string name="error_web_display_error">Sorry, there was an issue loading the page: %s</string>
-    <string name="error_googlepay_payment_methods">Unexpected non API exception when trying to retrieve [allowedPaymentMethods] parameter from paymentRequest!</string>
     <string name="error_googlepay_cancelled">Google Pay transaction was cancelled!</string>
     <string name="error_googlepay_unexpected">An unexpected error has occurred trying to use Google Pay!</string>
     <string name="error_paypal_canceled">PayPal transaction was cancelled!</string>

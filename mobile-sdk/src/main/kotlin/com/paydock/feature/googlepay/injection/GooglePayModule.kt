@@ -6,7 +6,8 @@ import com.google.android.gms.wallet.WalletConstants
 import com.paydock.MobileSDK
 import com.paydock.core.domain.model.Environment
 import com.paydock.feature.googlepay.presentation.viewmodels.GooglePayViewModel
-import org.koin.androidx.viewmodel.dsl.viewModelOf
+import org.json.JSONObject
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 /**
@@ -32,5 +33,14 @@ internal val googlePayModule = module {
     }
 
     // Define a view model for GooglePayViewModel
-    viewModelOf(::GooglePayViewModel)
+    viewModel { (isReadyToPayRequest: JSONObject) ->
+        GooglePayViewModel(
+            get(),
+            isReadyToPayRequest,
+            get(),
+            get(),
+            get(),
+            get()
+        )
+    }
 }

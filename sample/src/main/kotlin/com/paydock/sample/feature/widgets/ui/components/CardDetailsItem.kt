@@ -12,7 +12,10 @@ import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.domain.error.exceptions.GenericException
 import com.paydock.core.domain.error.toError
 import com.paydock.core.network.dto.error.displayableMessage
+import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.SaveCardConfig
+import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
+import com.paydock.feature.card.domain.model.integration.enums.CardScheme
 import com.paydock.feature.card.presentation.CardDetailsWidget
 import com.paydock.sample.BuildConfig
 
@@ -20,11 +23,17 @@ import com.paydock.sample.BuildConfig
 fun CardDetailsItem(context: Context, accessToken: String) {
     CardDetailsWidget(
         modifier = Modifier.padding(16.dp),
-        accessToken = accessToken,
-        gatewayId = BuildConfig.GATEWAY_ID,
-        allowSaveCard = SaveCardConfig(
-            privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
-                privacyPolicyURL = "https://www.google.com"
+        config = CardDetailsWidgetConfig(
+            accessToken = accessToken,
+            gatewayId = BuildConfig.GATEWAY_ID,
+            allowSaveCard = SaveCardConfig(
+                privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
+                    privacyPolicyURL = "https://www.google.com"
+                )
+            ),
+            schemeSupport = SupportedSchemeConfig(
+                supportedSchemes = CardScheme.entries.toSet(),
+                enableValidation = true
             )
         ),
         completion = { result ->

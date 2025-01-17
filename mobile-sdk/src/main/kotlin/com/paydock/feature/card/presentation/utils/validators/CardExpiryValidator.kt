@@ -48,8 +48,6 @@ internal object CardExpiryValidator {
      */
     fun isExpiryValid(expiry: String): Boolean {
         val (month, year) = extractMonthAndYear(expiry)
-        println(">>> month: $month -> [${isMonthValid(month)}]")
-        println(">>> year: $year -> [${isYearValid(year)}]")
         return expiry.isNotBlank() && expiry.length <= (MobileSDKConstants.CardDetailsConfig.MAX_EXPIRY_LENGTH + 1) &&
             expiry.matches(MobileSDKConstants.Regex.NUMERIC_DIGITS) && isMonthValid(month) && isYearValid(
                 year
@@ -114,7 +112,8 @@ internal object CardExpiryValidator {
      */
     private fun isYearExpired(inputYear: Int?): Boolean {
         val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-        return isYearValid(inputYear) && currentYear >= MobileSDKConstants.CardDetailsConfig.EXPIRY_BASE_YEAR + inputYear!!
+        val expiryYear = MobileSDKConstants.CardDetailsConfig.EXPIRY_BASE_YEAR + inputYear!!
+        return isYearValid(inputYear) && currentYear > expiryYear
     }
 
     /**

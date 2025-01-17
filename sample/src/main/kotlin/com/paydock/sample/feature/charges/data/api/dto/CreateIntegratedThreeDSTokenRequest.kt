@@ -1,11 +1,14 @@
 package com.paydock.sample.feature.charges.data.api.dto
 
 import com.google.gson.annotations.SerializedName
+import com.paydock.sample.core.AMOUNT
+import com.paydock.sample.core.AU_CURRENCY_CODE
+import java.math.BigDecimal
 
 data class CreateIntegratedThreeDSTokenRequest(
     val token: String? = null,
-    val amount: String = "10",
-    val currency: String = "AUD",
+    val amount: BigDecimal = BigDecimal(AMOUNT),
+    val currency: String = AU_CURRENCY_CODE,
     val customer: ChargesCustomerDTO? = null,
     @SerializedName("_3ds") val threeDSDetails: ThreeDSDetails = ThreeDSDetails(),
     // We do not need any other request properties (ie. customer, shipping)

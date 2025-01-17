@@ -59,6 +59,9 @@ android {
         // https://developer.android.com/jetpack/androidx/releases/compose-compiler
         kotlinCompilerExtensionVersion = "1.5.4"
     }
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
     testOptions.unitTests.all {
         it.jvmArgs(
             "--add-opens",
@@ -100,6 +103,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     // Coroutines
     implementation(libs.kotlinx.coroutines)
+    implementation(libs.kotlinx.coroutines.play.services)
     // Koin - Injection
     implementation(libs.bundles.koin)
     testImplementation(libs.koin.test)
@@ -120,6 +124,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.mockito)
     testImplementation(libs.turbine)
+    testImplementation(libs.json)
     // UI Testing
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.ext)

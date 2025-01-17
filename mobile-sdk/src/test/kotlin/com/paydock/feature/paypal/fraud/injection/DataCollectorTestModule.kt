@@ -9,8 +9,10 @@ import com.paydock.feature.paypal.vault.presentation.viewmodels.PayPalVaultViewM
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.koin.dsl.module
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal val dataCollectorSuccessTestModule = module {
     single {
         mockk<GetPayPalClientIdUseCase>(relaxed = false) {
