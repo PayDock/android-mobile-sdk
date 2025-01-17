@@ -2,7 +2,7 @@ package com.paydock.sample.core
 
 const val SMALL_SCREEN_SIZE = 360
 
-const val AMOUNT = "0.10" // This allows for the exact amount to be used!
+const val AMOUNT = "1.0" // This allows for the exact amount to be used!
 const val AU_CURRENCY_CODE = "AUD"
 const val AU_COUNTRY_CODE = "AU"
 const val US_CURRENCY_CODE = "USD"
