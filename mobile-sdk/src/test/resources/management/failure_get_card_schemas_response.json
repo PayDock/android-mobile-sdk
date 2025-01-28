@@ -1,0 +1,21 @@
+{
+  "status": 403,
+  "error": {
+    "message": "Access forbidden",
+    "code": "token_required",
+    "details": {
+      "path": "",
+      "messages": []
+    }
+  },
+  "resource": {
+    "type": "charge"
+  },
+  "error_summary": {
+    "message": "Access forbidden",
+    "code": "token_required",
+    "details": {
+      "messages": []
+    }
+  }
+}

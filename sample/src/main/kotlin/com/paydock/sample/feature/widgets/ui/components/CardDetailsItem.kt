@@ -52,9 +52,11 @@ fun CardDetailsItem(context: Context, accessToken: String) {
                 } else if (exception is CardDetailsException) {
                     val error = when (exception) {
                         is CardDetailsException.TokenisingCardException -> exception.error.displayableMessage
+                        is CardDetailsException.GetCardSchemasException -> exception.error.displayableMessage
                         is CardDetailsException.UnknownException -> {
                             exception.toError().displayableMessage
                         }
+
                     }
                     Log.d("[CardDetailsWidget]", "Failure: $error")
                     Toast.makeText(context, "Tokenised card failed! [${error}]", Toast.LENGTH_SHORT)

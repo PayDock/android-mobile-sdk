@@ -14,7 +14,7 @@ import androidx.compose.ui.platform.testTag
 import com.paydock.core.MobileSDKConstants
 import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
-import com.paydock.feature.card.presentation.utils.validators.CardSchemeValidator
+import com.paydock.feature.card.domain.model.integration.enums.CardScheme
 
 /**
  * A composable function for rendering input fields for cardholder information and payment details.
@@ -32,6 +32,7 @@ import com.paydock.feature.card.presentation.utils.validators.CardSchemeValidato
  * @param cardNumber The current value of the card number.
  * @param expiry The current value of the expiry date.
  * @param code The current value of the security code.
+ * @param cardScheme The scheme type of the card.
  * @param onCardHolderNameChange A callback invoked when the cardholder's name value changes.
  * @param onCardNumberChange A callback invoked when the card number value changes.
  * @param onExpiryChange A callback invoked when the expiry date value changes.
@@ -50,6 +51,7 @@ fun CardInputFields(
     cardNumber: String,
     expiry: String,
     code: String,
+    cardScheme: CardScheme?,
     onCardHolderNameChange: (String) -> Unit,
     onCardNumberChange: (String) -> Unit,
     onExpiryChange: (String) -> Unit,
@@ -82,6 +84,7 @@ fun CardInputFields(
                 .testTag("cardNumberInput"),
             schemeConfig = schemeConfig,
             value = cardNumber,
+            cardScheme = cardScheme,
             enabled = enabled,
             onValueChange = onCardNumberChange,
             nextFocus = focusExpiry
@@ -95,7 +98,7 @@ fun CardInputFields(
                 focusExpiry = focusExpiry,
                 focusCode = focusCode,
                 enabled = enabled,
-                cardNumber = cardNumber,
+                cardScheme = cardScheme,
                 onExpiryChange = onExpiryChange,
                 onSecurityCodeChange = onSecurityCodeChange
             )
@@ -106,7 +109,7 @@ fun CardInputFields(
                 focusExpiry = focusExpiry,
                 focusCode = focusCode,
                 enabled = enabled,
-                cardNumber = cardNumber,
+                cardScheme = cardScheme,
                 onExpiryChange = onExpiryChange,
                 onSecurityCodeChange = onSecurityCodeChange
             )
@@ -122,7 +125,7 @@ fun CardInputFields(
  * @param focusExpiry The [FocusRequester] used to manage focus for the expiry date input.
  * @param focusCode The [FocusRequester] used to manage focus for the security code input.
  * @param enabled A flag indicating whether the input fields should be enabled or disabled.
- * @param cardNumber The card number used to detect the card scheme.
+ * @param cardScheme The scheme type of the card.
  * @param onExpiryChange Callback function to handle changes to the expiry date input value.
  * @param onSecurityCodeChange Callback function to handle changes to the security code input value.
  */
@@ -134,7 +137,7 @@ private fun ExpiryAndCodeColumn(
     focusExpiry: FocusRequester,
     focusCode: FocusRequester,
     enabled: Boolean,
-    cardNumber: String,
+    cardScheme: CardScheme?,
     onExpiryChange: (String) -> Unit,
     onSecurityCodeChange: (String) -> Unit
 ) {
@@ -158,7 +161,8 @@ private fun ExpiryAndCodeColumn(
                 .testTag("cardSecurityCodeInput"),
             value = code,
             enabled = enabled,
-            cardScheme = CardSchemeValidator.detectCardScheme(cardNumber),
+            cardScheme = cardScheme,
+            nextFocus = null,
             onValueChange = onSecurityCodeChange
         )
     }
@@ -184,7 +188,7 @@ private fun ExpiryAndCodeRow(
     focusExpiry: FocusRequester,
     focusCode: FocusRequester,
     enabled: Boolean,
-    cardNumber: String,
+    cardScheme: CardScheme?,
     onExpiryChange: (String) -> Unit,
     onSecurityCodeChange: (String) -> Unit
 ) {
@@ -210,7 +214,8 @@ private fun ExpiryAndCodeRow(
                 .testTag("cardSecurityCodeInput"),
             value = code,
             enabled = enabled,
-            cardScheme = CardSchemeValidator.detectCardScheme(cardNumber),
+            cardScheme = cardScheme,
+            nextFocus = null,
             onValueChange = onSecurityCodeChange
         )
     }

@@ -50,9 +50,9 @@ import kotlinx.coroutines.delay
 internal fun CardSecurityCodeInput(
     modifier: Modifier = Modifier,
     value: String = "",
-    enabled: Boolean = true,
-    nextFocus: FocusRequester? = null,
-    cardScheme: CardScheme? = null,
+    cardScheme: CardScheme?,
+    enabled: Boolean,
+    nextFocus: FocusRequester?,
     onValueChange: (String) -> Unit
 ) {
     // Tracks whether the user has interacted with the input field
@@ -143,7 +143,7 @@ internal fun CardSecurityCodeInput(
 private fun PreviewCardSecurityCodeCVVInput() {
     SdkTheme {
         Surface(color = Theme.colors.surface) {
-            CardSecurityCodeInput(value = "123", cardScheme = CardScheme.VISA) {
+            CardSecurityCodeInput(value = "123", cardScheme = CardScheme.VISA, enabled = true, nextFocus = null) {
 
             }
         }
@@ -155,7 +155,7 @@ private fun PreviewCardSecurityCodeCVVInput() {
 private fun PreviewCardSecurityCodeCVCInput() {
     SdkTheme {
         Surface(color = Theme.colors.surface) {
-            CardSecurityCodeInput(value = "123", cardScheme = CardScheme.MASTERCARD) {
+            CardSecurityCodeInput(value = "123", cardScheme = CardScheme.MASTERCARD, enabled = true, nextFocus = null) {
 
             }
         }
@@ -167,7 +167,7 @@ private fun PreviewCardSecurityCodeCVCInput() {
 private fun PreviewCardSecurityCodeCIDInput() {
     SdkTheme {
         Surface(color = Theme.colors.surface) {
-            CardSecurityCodeInput(value = "1234", cardScheme = CardScheme.AMEX) {
+            CardSecurityCodeInput(value = "1234", cardScheme = CardScheme.AMEX, enabled = true, nextFocus = null) {
 
             }
         }

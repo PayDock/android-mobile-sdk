@@ -47,8 +47,8 @@ import kotlinx.coroutines.delay
 internal fun CardExpiryInput(
     modifier: Modifier = Modifier,
     value: String = "",
-    enabled: Boolean = true,
-    nextFocus: FocusRequester? = null,
+    enabled: Boolean,
+    nextFocus: FocusRequester?,
     onValueChange: (String) -> Unit
 ) {
     // Tracks if the user has interacted with the field
@@ -115,7 +115,7 @@ internal fun CardExpiryInput(
 private fun PreviewCardExpiryInput() {
     SdkTheme {
         Surface(color = Theme.colors.surface) {
-            CardExpiryInput(value = "0823") {
+            CardExpiryInput(value = "0823", enabled = true, nextFocus = null) {
 
             }
         }

@@ -378,6 +378,9 @@ internal inline fun <reified E : Throwable> Throwable.mapCardDetailsApiException
                 CardDetailsException.TokenisingCardException::class ->
                     CardDetailsException.TokenisingCardException(error = this.error)
 
+                CardDetailsException.GetCardSchemasException::class ->
+                    CardDetailsException.GetCardSchemasException(error = this.error)
+
                 else -> CardDetailsException.UnknownException(
                     displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
                 )

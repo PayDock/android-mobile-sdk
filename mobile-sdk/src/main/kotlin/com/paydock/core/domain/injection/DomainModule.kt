@@ -4,6 +4,7 @@ import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
 import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.api.gateways.domain.usecase.GetPayPalClientIdUseCase
+import com.paydock.api.management.domain.usecase.GetCardSchemasUseCase
 import com.paydock.api.tokens.domain.usecase.CreateCardPaymentTokenFlowUseCase
 import com.paydock.api.tokens.domain.usecase.CreateCardPaymentTokenUseCase
 import com.paydock.api.tokens.domain.usecase.CreateGiftCardPaymentTokenUseCase
@@ -33,4 +34,7 @@ internal val domainModule = module {
 
     // Gateway Based UseCases
     factoryOf(::GetPayPalClientIdUseCase)
+
+    // Management Based UseCases
+    factoryOf(::GetCardSchemasUseCase)
 }

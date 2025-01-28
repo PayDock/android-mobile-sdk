@@ -7,6 +7,7 @@ internal object MobileSDKTestConstants {
         const val MOCK_GATEWAY_ID = "gateway_id"
         const val MOCK_INVALID_GATEWAY_ID = "invalid_gateway_id"
         const val MOCK_ACCESS_TOKEN = "mock_access_token"
+        const val MOCK_INVALID_ACCESS_TOKEN = "invalid_access_token"
     }
 
     object Wallet {

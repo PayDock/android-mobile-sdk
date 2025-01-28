@@ -4,6 +4,8 @@ import com.paydock.api.charges.data.repository.ChargeRepositoryImpl
 import com.paydock.api.charges.domain.repository.ChargeRepository
 import com.paydock.api.gateways.data.repository.GatewayRepositoryImpl
 import com.paydock.api.gateways.domain.repository.GatewayRepository
+import com.paydock.api.management.data.repository.ManagementRepositoryImpl
+import com.paydock.api.management.domain.repository.ManagementRepository
 import com.paydock.api.tokens.data.repository.TokenRepositoryImpl
 import com.paydock.api.tokens.domain.repository.TokenRepository
 import com.paydock.core.data.util.ConnectivityManagerNetworkMonitor
@@ -33,5 +35,10 @@ internal val dataModule = module {
     // Provide the repository for managing charges
     single<GatewayRepository> {
         GatewayRepositoryImpl(dispatcher = get(named("IO")), client = get())
+    }
+
+    // Provide the repository for management type functionality
+    single<ManagementRepository> {
+        ManagementRepositoryImpl(dispatcher = get(named("IO")), client = get())
     }
 }

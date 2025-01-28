@@ -106,6 +106,7 @@ fun CardDetailsWidget(
                 cardNumber = inputState.cardNumber,
                 expiry = inputState.expiry,
                 code = inputState.code,
+                cardScheme = inputState.cardScheme,
                 onCardHolderNameChange = { viewModel.updateCardholderName(it) },
                 onCardNumberChange = { viewModel.updateCardNumber(it) },
                 onExpiryChange = { viewModel.updateExpiry(it) },

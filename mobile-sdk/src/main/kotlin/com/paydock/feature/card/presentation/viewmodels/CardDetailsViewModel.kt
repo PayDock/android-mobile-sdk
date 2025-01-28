@@ -1,5 +1,6 @@
 package com.paydock.feature.card.presentation.viewmodels
 
+import com.paydock.api.management.domain.usecase.GetCardSchemasUseCase
 import com.paydock.api.tokens.data.dto.CreatePaymentTokenRequest
 import com.paydock.api.tokens.domain.usecase.CreateCardPaymentTokenUseCase
 import com.paydock.core.data.util.DispatchersProvider
@@ -12,31 +13,64 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.util.TreeMap
 
 /**
  * ViewModel for managing the state and operations of card details input and tokenization.
  *
  * @param accessToken The access token required for API requests.
  * @param gatewayId Optional ID of the payment gateway for processing card payments.
+ * @param getCardSchemasUseCase The use case responsible for retrieving supported card schemas.
  * @param createCardPaymentTokenUseCase The use case responsible for creating card payment tokens.
  * @param dispatchers The provider for coroutine dispatchers, used for handling asynchronous tasks.
  */
 internal class CardDetailsViewModel(
     private val accessToken: String,
     private val gatewayId: String?,
+    private val getCardSchemasUseCase: GetCardSchemasUseCase,
     private val createCardPaymentTokenUseCase: CreateCardPaymentTokenUseCase,
     dispatchers: DispatchersProvider,
 ) : BaseViewModel(dispatchers) {
 
-    // Holds the current input state of card details
+    /**
+     * Holds the current input state of card details.
+     */
     private val _inputStateFlow: MutableStateFlow<CardDetailsInputState> =
         MutableStateFlow(CardDetailsInputState())
     val inputStateFlow: StateFlow<CardDetailsInputState> = _inputStateFlow.asStateFlow()
 
-    // Holds the current UI state for card details operations
+    /**
+     * Holds the current UI state for card details operations.
+     */
     private val _stateFlow: MutableStateFlow<CardDetailsUIState> =
         MutableStateFlow(CardDetailsUIState.Idle)
     val stateFlow: StateFlow<CardDetailsUIState> = _stateFlow.asStateFlow()
+
+    init {
+        getCardSchemas()
+    }
+
+    /**
+     * Fetches the supported card schemas using the provided use case.
+     *
+     * - On success, updates the input state with the retrieved card schemas.
+     * - On failure, clears the card schemas in the input state.
+     */
+    private fun getCardSchemas() {
+        launchOnIO {
+            getCardSchemasUseCase(accessToken)
+                .onSuccess { schemas ->
+                    _inputStateFlow.update { state ->
+                        state.copy(cardSchemas = schemas)
+                    }
+                }
+                .onFailure {
+                    _inputStateFlow.update { state ->
+                        state.copy(cardSchemas = TreeMap())
+                    }
+                }
+        }
+    }
 
     /**
      * Resets the UI state to idle.
@@ -46,7 +80,7 @@ internal class CardDetailsViewModel(
     }
 
     /**
-     * Sets whether to disable the whole widget.
+     * Sets whether to collect the cardholder's name.
      *
      * @param collectCardHolderName Boolean indicating whether to collect the cardholder's name.
      */
@@ -57,7 +91,6 @@ internal class CardDetailsViewModel(
     }
 
     /**
-     * Reset the result state, clearing token and error.
      * Updates the cardholder's name in the input state.
      *
      * @param name The name of the cardholder to set.

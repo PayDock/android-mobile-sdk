@@ -1,5 +1,6 @@
 package com.paydock.feature.card.presentation.state
 
+import com.paydock.api.management.domain.model.CardSchema
 import com.paydock.core.MobileSDKConstants
 import com.paydock.feature.card.domain.model.integration.enums.CardScheme
 import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
@@ -9,6 +10,7 @@ import com.paydock.feature.card.presentation.utils.validators.CardSchemeValidato
 import com.paydock.feature.card.presentation.utils.validators.CardSecurityCodeValidator
 import com.paydock.feature.card.presentation.utils.validators.CreditCardNumberValidator
 import com.paydock.feature.card.presentation.utils.validators.LuhnValidator
+import java.util.TreeMap
 
 /**
  * Represents the input state for card details, including validation and metadata extraction.
@@ -22,6 +24,7 @@ import com.paydock.feature.card.presentation.utils.validators.LuhnValidator
  * @property code The entered security code (CVV/CVC). Defaults to an empty string.
  * @property collectCardholderName A flag indicating whether the cardholder name is required. Defaults to `true`.
  * @property saveCard A flag indicating whether the user wants to save the card details for future use. Defaults to `false`.
+ * @property cardSchemas A [TreeMap] containing the available card schemas used for validation. Defaults to an empty map.
  */
 internal data class CardDetailsInputState(
     val cardholderName: String? = null,
@@ -29,7 +32,8 @@ internal data class CardDetailsInputState(
     val expiry: String = "",
     val code: String = "",
     val collectCardholderName: Boolean = true,
-    val saveCard: Boolean = false
+    val saveCard: Boolean = false,
+    val cardSchemas: TreeMap<Int, CardSchema> = TreeMap()
 ) {
 
     /**
@@ -37,8 +41,8 @@ internal data class CardDetailsInputState(
      *
      * Uses the `CardSchemeValidator` utility to identify the type of card (e.g., Visa, Mastercard, etc.).
      */
-    private val cardScheme: CardScheme?
-        get() = CardSchemeValidator.detectCardScheme(cardNumber)
+    val cardScheme: CardScheme?
+        get() = CardSchemeValidator.detectCardScheme(cardSchemas, cardNumber)
 
     /**
      * Determines the security code type (CVV/CVC) based on the detected card scheme.
