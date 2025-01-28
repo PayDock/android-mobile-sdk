@@ -23,12 +23,12 @@ import kotlin.test.assertTrue
 internal class CaptureWalletUseCaseTest : BaseKoinUnitTest() {
 
     private lateinit var mockRepository: ChargeRepository
-    private lateinit var useCase: CaptureWalletChargeUseCase
+    private lateinit var captureWalletChargeUseCase: CaptureWalletChargeUseCase
 
     @BeforeTest
     fun setUp() {
         mockRepository = mockk()
-        useCase = CaptureWalletChargeUseCase(mockRepository)
+        captureWalletChargeUseCase = CaptureWalletChargeUseCase(mockRepository)
     }
 
     @Test
@@ -47,7 +47,7 @@ internal class CaptureWalletUseCaseTest : BaseKoinUnitTest() {
             )
         } returns expectedResult
         // WHEN
-        val actualResult = useCase(validAccessToken, request)
+        val actualResult = captureWalletChargeUseCase(validAccessToken, request)
         // THEN
         assertTrue(actualResult.isSuccess)
         assertEquals(expectedResult, actualResult.getOrNull())
@@ -70,7 +70,7 @@ internal class CaptureWalletUseCaseTest : BaseKoinUnitTest() {
             )
         } returns expectedResult
         // WHEN
-        val actualResult = useCase(validAccessToken, request)
+        val actualResult = captureWalletChargeUseCase(validAccessToken, request)
         // THEN
         assertTrue(actualResult.isSuccess)
         assertEquals(expectedResult, actualResult.getOrNull())
@@ -93,7 +93,7 @@ internal class CaptureWalletUseCaseTest : BaseKoinUnitTest() {
             )
         } returns expectedResult
         // WHEN
-        val actualResult = useCase(validAccessToken, request)
+        val actualResult = captureWalletChargeUseCase(validAccessToken, request)
         // THEN
         assertTrue(actualResult.isSuccess)
         assertEquals(expectedResult, actualResult.getOrNull())
@@ -124,7 +124,7 @@ internal class CaptureWalletUseCaseTest : BaseKoinUnitTest() {
             )
         } throws expectedResult
         // WHEN
-        val actualResult = useCase(invalidAccessToken, request)
+        val actualResult = captureWalletChargeUseCase(invalidAccessToken, request)
         // THEN
         assertTrue(actualResult.isFailure)
         assertEquals(expectedResult, actualResult.exceptionOrNull())

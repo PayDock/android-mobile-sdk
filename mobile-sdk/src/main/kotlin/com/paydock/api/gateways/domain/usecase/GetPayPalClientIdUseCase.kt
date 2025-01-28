@@ -30,7 +30,7 @@ internal class GetPayPalClientIdUseCase(private val repository: GatewayRepositor
         accessToken: String,
         gatewayId: String
     ): Result<String> =
-        suspendRunCatchingMapper<String, PayPalVaultException.GetPayPalClientIdException> {
+        suspendRunCatchingMapper(PayPalVaultException.GetPayPalClientIdException::class) {
             repository.getGatewayClientId(accessToken, gatewayId)
         }
 }

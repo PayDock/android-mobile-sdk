@@ -28,7 +28,7 @@ internal class CreatePayPalVaultPaymentTokenUseCase(private val repository: Toke
         setupToken: String,
         request: CreatePaymentTokenRequest.PayPalVaultRequest
     ): Result<PayPalPaymentTokenDetails> =
-        suspendRunCatchingMapper<PayPalPaymentTokenDetails, PayPalVaultException.CreatePaymentTokenException> {
+        suspendRunCatchingMapper(PayPalVaultException.CreatePaymentTokenException::class) {
             repository.createPaymentToken(accessToken, setupToken, request)
         }
 }

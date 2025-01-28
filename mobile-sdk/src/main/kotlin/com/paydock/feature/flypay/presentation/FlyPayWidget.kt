@@ -32,8 +32,6 @@ import com.paydock.feature.flypay.presentation.utils.getOrderIdExtra
 import com.paydock.feature.flypay.presentation.utils.putClientIdExtra
 import com.paydock.feature.flypay.presentation.utils.putOrderIdExtra
 import com.paydock.feature.flypay.presentation.viewmodels.FlyPayViewModel
-import io.ktor.http.parameters
-import io.ktor.http.parametersOf
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -65,7 +63,7 @@ fun FlyPayWidget(
     })
 
     // Collect states for FlyPay and Wallet view models
-    val uiState by viewModel.stateFlow.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
     val scope = rememberCoroutineScope()
 

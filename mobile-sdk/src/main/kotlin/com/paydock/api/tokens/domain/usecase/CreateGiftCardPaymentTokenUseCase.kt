@@ -27,7 +27,7 @@ internal class CreateGiftCardPaymentTokenUseCase(private val repository: TokenRe
         accessToken: String,
         request: CreatePaymentTokenRequest.TokeniseCardRequest.GiftCard,
     ): Result<TokenDetails> =
-        suspendRunCatchingMapper<TokenDetails, GiftCardException.TokenisingCardException> {
+        suspendRunCatchingMapper(GiftCardException.TokenisingCardException::class) {
             repository.createPaymentToken(accessToken, request)
         }
 }

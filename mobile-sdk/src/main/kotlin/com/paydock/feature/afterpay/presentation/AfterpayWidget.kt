@@ -68,7 +68,7 @@ fun AfterpayWidget(
 ) {
     val viewModel: AfterpayViewModel = koinViewModel()
     val context = LocalContext.current
-    val uiState by viewModel.stateFlow.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val isConfigured by viewModel.isConfigured.collectAsState()
 
     // ActivityResultLauncher for handling the checkout result

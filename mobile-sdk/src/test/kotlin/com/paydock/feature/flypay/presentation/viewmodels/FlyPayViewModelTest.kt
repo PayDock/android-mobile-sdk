@@ -73,7 +73,7 @@ internal class FlyPayViewModelTest : BaseKoinUnitTest() {
             val mockResult = Result.success(response.asEntity())
             coEvery { getWalletCallbackUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 // ACTION
                 viewModel.getWalletCallback(walletToken = accessToken)
                 // CHECK
@@ -107,7 +107,7 @@ internal class FlyPayViewModelTest : BaseKoinUnitTest() {
             val mockResult = Result.failure<WalletCallback>(mockError)
             coEvery { getWalletCallbackUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 // ACTION
                 viewModel.getWalletCallback(walletToken = accessToken)
                 // CHECK
@@ -131,7 +131,7 @@ internal class FlyPayViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `completeResult should update UI state to success`() = runTest {
         val mockOrderId = MobileSDKTestConstants.FlyPay.MOCK_ORDER_ID
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             // Initial state
             assertIs<FlyPayUIState.Idle>(awaitItem())
             // ACTION
@@ -147,7 +147,7 @@ internal class FlyPayViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `resetResultState should reset UI state`() = runTest {
         viewModel.completeResult(MobileSDKTestConstants.FlyPay.MOCK_ORDER_ID)
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             assertIs<FlyPayUIState.Success>(awaitItem())
             viewModel.resetResultState()
             // Result state - reset

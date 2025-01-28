@@ -29,7 +29,7 @@ internal class CreateSetupTokenUseCase(private val repository: TokenRepository) 
         accessToken: String,
         request: CreateSetupTokenRequest
     ): Result<String> =
-        suspendRunCatchingMapper<String, PayPalVaultException.CreateSetupTokenException> {
+        suspendRunCatchingMapper(PayPalVaultException.CreateSetupTokenException::class) {
             repository.createSetupToken(accessToken, request)
         }
 }

@@ -6,8 +6,10 @@ import com.paydock.api.management.domain.model.CardSchema
 import com.paydock.api.management.domain.repository.ManagementRepository
 import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.domain.error.extensions.mapCardDetailsApiException
+import com.paydock.core.extensions.multiCatch
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.utils.reader.LocalFileReader
+import java.io.IOException
 import java.util.TreeMap
 
 /**
@@ -33,8 +35,8 @@ internal class GetCardSchemasUseCase(
      */
     suspend operator fun invoke(accessToken: String): Result<TreeMap<Int, CardSchema>> = try {
         Result.success(repository.getCardSchemas(accessToken))
-    } catch (@Suppress("TooGenericExceptionCaught") exception: Exception) {
-        handleGetCardSchemasError(exception)
+    } catch (@Suppress("TooGenericExceptionCaught") apiException: Exception) {
+        handleGetCardSchemasError(apiException)
     }
 
     /**
@@ -46,12 +48,15 @@ internal class GetCardSchemasUseCase(
      * or a `CardDetailsException.GetCardSchemasException` if the fallback also fails.
      */
     private fun handleGetCardSchemasError(exception: Exception): Result<TreeMap<Int, CardSchema>> {
-        return try {
+        return {
             val jsonString = jsonReader.readFileFromAssets("card_schemas.json")
             val response = jsonString.convertToDataClass<CardSchemasResponse>()
             Result.success(response.asEntity())
-        } catch (@Suppress("TooGenericExceptionCaught", "SwallowedException") e: Exception) {
-            Result.failure(exception.mapCardDetailsApiException<CardDetailsException.GetCardSchemasException>())
+        }.multiCatch(
+            IOException::class,
+            IllegalAccessException::class
+        ) {
+            Result.failure(exception.mapCardDetailsApiException(CardDetailsException.GetCardSchemasException::class))
         }
     }
 }

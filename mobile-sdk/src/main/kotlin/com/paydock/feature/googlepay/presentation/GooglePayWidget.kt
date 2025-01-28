@@ -75,7 +75,7 @@ fun GooglePayWidget(
     val scope = rememberCoroutineScope()
 
     // Collect the UI state from the ViewModel
-    val uiState by viewModel.stateFlow.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val googlePayAvailable by viewModel.googlePayAvailable.collectAsState()
     val allowedPaymentMethods = viewModel.extractAllowedPaymentMethods(paymentRequest)
 

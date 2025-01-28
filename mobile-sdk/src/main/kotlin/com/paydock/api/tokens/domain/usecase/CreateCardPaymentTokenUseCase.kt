@@ -26,7 +26,7 @@ internal class CreateCardPaymentTokenUseCase(private val repository: TokenReposi
         accessToken: String,
         request: CreatePaymentTokenRequest.TokeniseCardRequest.CreditCard
     ): Result<TokenDetails> =
-        suspendRunCatchingMapper<TokenDetails, CardDetailsException.TokenisingCardException> {
+        suspendRunCatchingMapper(CardDetailsException.TokenisingCardException::class) {
             repository.createPaymentToken(accessToken, request)
         }
 }

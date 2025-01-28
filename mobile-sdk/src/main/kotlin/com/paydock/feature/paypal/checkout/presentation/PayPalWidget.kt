@@ -72,7 +72,7 @@ fun PayPalWidget(
     val viewModel: PayPalViewModel = koinViewModel()
 
     // Collect states for PayPal view models
-    val uiState by viewModel.stateFlow.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
     val scope = rememberCoroutineScope()
 
