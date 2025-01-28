@@ -50,9 +50,9 @@ import kotlinx.coroutines.delay
 internal fun CardSecurityCodeInput(
     modifier: Modifier = Modifier,
     value: String = "",
-    cardScheme: CardScheme?,
-    enabled: Boolean,
-    nextFocus: FocusRequester?,
+    cardScheme: CardScheme? = null,
+    enabled: Boolean = true,
+    nextFocus: FocusRequester? = null,
     onValueChange: (String) -> Unit
 ) {
     // Tracks whether the user has interacted with the input field

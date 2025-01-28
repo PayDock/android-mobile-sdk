@@ -99,7 +99,7 @@ internal fun <T : Any?> SdkWebView(
         // Display a loading indicator if the WebView is still loading content
         if (shouldShowCustomLoader && (state.isLoading || showWindowLoader)) {
             if (state.loadingState is LoadingState.Loading) {
-                CircularProgressIndicator(progress = (state.loadingState as LoadingState.Loading).progress)
+                CircularProgressIndicator(progress = { (state.loadingState as LoadingState.Loading).progress })
             } else {
                 CircularProgressIndicator()
             }

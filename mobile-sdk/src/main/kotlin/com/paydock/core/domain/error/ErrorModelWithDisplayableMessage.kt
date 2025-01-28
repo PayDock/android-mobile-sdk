@@ -14,7 +14,6 @@ val ErrorModel?.displayableMessage: String
                     ErrorModel.ConnectionError.IOError -> MobileSDKConstants.Errors.IO_ERROR
                     ErrorModel.ConnectionError.Timeout -> MobileSDKConstants.Errors.SOCKET_TIMEOUT_ERROR
                     ErrorModel.ConnectionError.UnknownHost -> MobileSDKConstants.Errors.UNKNOWN_HOST_ERROR
-                    else -> MobileSDKConstants.Errors.CONNECTION_ERROR
                 }
             }
 

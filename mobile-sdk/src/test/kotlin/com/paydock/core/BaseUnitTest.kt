@@ -2,6 +2,7 @@ package com.paydock.core
 
 import android.net.Uri
 import android.util.Log
+import com.paydock.core.extensions.safeCastAs
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkStatic
@@ -76,10 +77,12 @@ abstract class BaseUnitTest : KoinTest {
                         Boolean::class.javaPrimitiveType
                     )
                 getDeclaredFields0.isAccessible = true
-                val fields = getDeclaredFields0.invoke(Field::class.java, false) as Array<Field>
-                for (field in fields) {
-                    if ("modifiers" == field.name) {
-                        return field
+                val fields = getDeclaredFields0.invoke(Field::class.java, false)?.safeCastAs<Array<Field>>()
+                if (!fields.isNullOrEmpty()) {
+                    for (field in fields) {
+                        if ("modifiers" == field.name) {
+                            return field
+                        }
                     }
                 }
             } catch (ex: ReflectiveOperationException) {

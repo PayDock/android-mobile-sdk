@@ -59,7 +59,7 @@ fun SdkBottomSheet(
     ModalBottomSheet(
         modifier = modifier,
         containerColor = containerColor,
-        windowInsets = windowInsets,
+        contentWindowInsets = { windowInsets },
         dragHandle = null,
         onDismissRequest = onDismissRequest,
         sheetState = bottomSheetState

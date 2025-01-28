@@ -56,9 +56,9 @@ internal fun CreditCardNumberInput(
     modifier: Modifier = Modifier,
     schemeConfig: SupportedSchemeConfig,
     value: String = "",
-    cardScheme: CardScheme?,
-    enabled: Boolean,
-    nextFocus: FocusRequester?,
+    cardScheme: CardScheme? = null,
+    enabled: Boolean = true,
+    nextFocus: FocusRequester? = null,
     onValueChange: (String) -> Unit,
 ) {
     // State to track the focus state of the input field
