@@ -61,7 +61,7 @@ internal class CardDetailsViewModel(
      */
     private fun getCardSchemas() {
         launchOnIO {
-            getCardSchemasUseCase(accessToken)
+            getCardSchemasUseCase()
                 .onSuccess { schemas ->
                     _inputStateFlow.update { state ->
                         state.copy(cardSchemas = schemas)

@@ -1,5 +1,7 @@
 package com.paydock.feature.card.data.repository
 
+import com.paydock.core.network.extensions.convertToDataClass
+import com.paydock.core.utils.reader.LocalFileReader
 import com.paydock.feature.card.data.dto.CardSchemasResponse
 import com.paydock.feature.card.data.dto.CardTokenResponse
 import com.paydock.feature.card.data.dto.CreateCardPaymentTokenRequest
@@ -9,7 +11,6 @@ import com.paydock.feature.card.domain.model.ui.TokenDetails
 import com.paydock.feature.card.domain.repository.CardRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.request.get
 import io.ktor.client.request.headers
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -29,12 +30,14 @@ import java.util.TreeMap
  * This class provides methods to create payment tokens, session authentication tokens,
  * and setup tokens by performing HTTP requests to the PayPal API.
  *
- * @property dispatcher The CoroutineDispatcher used for executing network calls.
- * @property client The [HttpClient] instance used to make HTTP requests.
+ * @param dispatcher The CoroutineDispatcher used for executing network calls.
+ * @param client The [HttpClient] instance used to make HTTP requests.
+ * @param jsonReader A reader for accessing local JSON files.
  */
 internal class CardRepositoryImpl(
     private val dispatcher: CoroutineDispatcher,
-    private val client: HttpClient
+    private val client: HttpClient,
+    private val jsonReader: LocalFileReader
 ) : CardRepository {
 
     /**
@@ -84,17 +87,14 @@ internal class CardRepositoryImpl(
     }.flowOn(dispatcher)
 
     /**
-     * Fetches the supported card schemas from the backend.
+     * Fetches the supported card schemas from the a local file.
      *
-     * @param token The access token required for authentication.
      * @return A [TreeMap] containing card schema information.
      */
-    override suspend fun getCardSchemas(token: String): TreeMap<Int, CardSchema> =
+    override suspend fun getCardSchemas(): TreeMap<Int, CardSchema> =
         withContext(dispatcher) {
-            val httpResponse: HttpResponse = client.get {
-                headers { append("x-access-token", token) }
-                url { path("/v1/bin-management/card_schemas") }
-            }
-            httpResponse.body<CardSchemasResponse>().asEntity()
+            val jsonString = jsonReader.readFileFromAssets("card_schemas.json")
+            val response = jsonString.convertToDataClass<CardSchemasResponse>()
+            response.asEntity()
         }
 }

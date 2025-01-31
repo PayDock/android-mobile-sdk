@@ -33,7 +33,7 @@ internal val cardDetailsModule = module {
 
     // Provide the repository for managing tokens
     single<CardRepository> {
-        CardRepositoryImpl(dispatcher = get(named("IO")), client = get())
+        CardRepositoryImpl(dispatcher = get(named("IO")), client = get(), jsonReader = get())
     }
 
     // Token Based UseCases

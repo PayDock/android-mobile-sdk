@@ -32,7 +32,16 @@ fun CardDetailsItem(context: Context, accessToken: String) {
                 )
             ),
             schemeSupport = SupportedSchemeConfig(
-                supportedSchemes = CardScheme.entries.toSet(),
+                supportedSchemes = setOf(
+                    CardScheme.VISA,
+                    CardScheme.MASTERCARD,
+                    CardScheme.AMEX,
+                    CardScheme.AUSBC,
+                    CardScheme.DINERS,
+                    CardScheme.DISCOVER,
+                    CardScheme.JAPCB,
+                    CardScheme.SOLO
+                ),
                 enableValidation = true
             )
         ),
@@ -52,7 +61,6 @@ fun CardDetailsItem(context: Context, accessToken: String) {
                 } else if (exception is CardDetailsException) {
                     val error = when (exception) {
                         is CardDetailsException.TokenisingCardException -> exception.error.displayableMessage
-                        is CardDetailsException.GetCardSchemasException -> exception.error.displayableMessage
                         is CardDetailsException.UnknownException -> {
                             exception.toError().displayableMessage
                         }

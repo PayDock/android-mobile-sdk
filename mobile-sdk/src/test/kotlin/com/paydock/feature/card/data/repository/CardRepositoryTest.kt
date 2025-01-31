@@ -5,6 +5,7 @@ import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.injection.modules.mockFailureNetworkModule
 import com.paydock.core.data.injection.modules.mockSuccessNetworkModule
 import com.paydock.core.network.extensions.convertToDataClass
+import com.paydock.core.utils.reader.LocalFileReader
 import com.paydock.feature.card.data.dto.CardSchemasResponse
 import com.paydock.feature.card.data.dto.CardTokenResponse
 import com.paydock.feature.card.data.dto.CreateCardPaymentTokenRequest
@@ -12,6 +13,8 @@ import com.paydock.feature.card.data.mapper.asEntity
 import com.paydock.feature.card.domain.repository.CardRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.ClientRequestException
+import io.mockk.coEvery
+import io.mockk.mockk
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.test.TestScope
@@ -30,12 +33,13 @@ class CardRepositoryTest : BaseKoinUnitTest() {
 
     private val testScope: TestScope by inject()
     private lateinit var repository: CardRepository
+    private val fileReader: LocalFileReader = mockk()
 
     @Test
     fun `GIVEN valid credit card request WHEN tokenising card THEN should succeed with card token response resource`() =
         testScope.runTest {
             // GIVEN
-            repository = CardRepositoryImpl(get(), httpMockClient)
+            repository = CardRepositoryImpl(get(), httpMockClient, fileReader)
 
             val request =
                 readResourceFile("token/valid_tokenise_credit_card_request.json")
@@ -60,7 +64,7 @@ class CardRepositoryTest : BaseKoinUnitTest() {
             unloadKoinModules(mockSuccessNetworkModule)
             loadKoinModules(mockFailureNetworkModule)
             // GIVEN
-            repository = CardRepositoryImpl(get(), httpMockClient)
+            repository = CardRepositoryImpl(get(), httpMockClient, fileReader)
             val request =
                 readResourceFile("token/invalid_tokenise_credit_card_request.json")
                     .convertToDataClass<CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard>()
@@ -77,7 +81,7 @@ class CardRepositoryTest : BaseKoinUnitTest() {
     fun `GIVEN valid credit card request WHEN tokenising card THEN should emits TokenisedCardDetails successfully using flow`() =
         testScope.runTest {
             // GIVEN
-            repository = CardRepositoryImpl(get(), httpMockClient)
+            repository = CardRepositoryImpl(get(), httpMockClient, fileReader)
             val request =
                 readResourceFile("token/valid_tokenise_credit_card_request.json")
                     .convertToDataClass<CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard>()
@@ -105,7 +109,7 @@ class CardRepositoryTest : BaseKoinUnitTest() {
             unloadKoinModules(mockSuccessNetworkModule)
             loadKoinModules(mockFailureNetworkModule)
             // GIVEN
-            repository = CardRepositoryImpl(get(), httpMockClient)
+            repository = CardRepositoryImpl(get(), httpMockClient, fileReader)
             val request =
                 readResourceFile("token/invalid_tokenise_credit_card_request.json")
                     .convertToDataClass<CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard>()
@@ -126,7 +130,7 @@ class CardRepositoryTest : BaseKoinUnitTest() {
     fun `GIVEN valid gift card request WHEN tokenising card THEN should succeed with card token response resource`() =
         testScope.runTest {
             // GIVEN
-            repository = CardRepositoryImpl(get(), httpMockClient)
+            repository = CardRepositoryImpl(get(), httpMockClient, fileReader)
 
             val request =
                 readResourceFile("token/valid_tokenise_gift_card_request.json")
@@ -151,7 +155,7 @@ class CardRepositoryTest : BaseKoinUnitTest() {
             unloadKoinModules(mockSuccessNetworkModule)
             loadKoinModules(mockFailureNetworkModule)
             // GIVEN
-            repository = CardRepositoryImpl(get(), httpMockClient)
+            repository = CardRepositoryImpl(get(), httpMockClient, fileReader)
             val request =
                 readResourceFile("token/invalid_tokenise_gift_card_request.json")
                     .convertToDataClass<CreateCardPaymentTokenRequest.TokeniseCardRequest.GiftCard>()
@@ -168,38 +172,43 @@ class CardRepositoryTest : BaseKoinUnitTest() {
     fun `GIVEN valid access token WHEN fetching card schemas THEN should succeed with card schemas response list`() =
         testScope.runTest {
             // GIVEN
+            val mockResource = readResourceFile("management/success_get_card_schemas_response.json")
+            coEvery {
+                fileReader.readFileFromAssets(any())
+            } returns mockResource
+
             repository = CardRepositoryImpl(
                 get(),
-                httpMockClient
+                httpMockClient,
+                fileReader
             )
-
-            val response =
-                readResourceFile("management/success_get_card_schemas_response.json")
-                    .convertToDataClass<CardSchemasResponse>()
-            val entity = response.asEntity()
+            val expectedResult = mockResource.convertToDataClass<CardSchemasResponse>().asEntity()
             // WHEN - Call the method to be tested
-            val result = repository.getCardSchemas(
-                MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN
-            )
+            val result = repository.getCardSchemas()
             // THEN - Verify the result
-            assertNotNull(response)
-            assertEquals(entity, result)
+            assertNotNull(result)
+            assertEquals(expectedResult, result)
         }
 
-    @Test(expected = ClientRequestException::class)
+    @Test(expected = IllegalArgumentException::class)
     fun `GIVEN invalid access token WHEN fetching card schemas THEN should fail with error response resource`() =
         testScope.runTest {
-            val invalidAccessToken = MobileSDKTestConstants.Wallet.MOCK_INVALID_WALLET_TOKEN
-
             unloadKoinModules(mockSuccessNetworkModule)
             loadKoinModules(mockFailureNetworkModule)
             // GIVEN
+            val expectedResult = IllegalArgumentException("Unable to parse json file.")
+            coEvery {
+                fileReader.readFileFromAssets(any())
+            } throws expectedResult
+
             repository = CardRepositoryImpl(
                 get(),
-                httpMockClient
+                httpMockClient,
+                fileReader
             )
+
             // WHEN - Call the method to be tested
-            val result = repository.getCardSchemas(invalidAccessToken)
+            val result = repository.getCardSchemas()
             // THEN - It should throw an exception
             assertNotNull(result)
         }

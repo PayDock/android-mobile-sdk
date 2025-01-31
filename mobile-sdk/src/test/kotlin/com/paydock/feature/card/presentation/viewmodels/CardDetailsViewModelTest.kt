@@ -83,7 +83,7 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
         val cardSchemas = response.asEntity()
         val mockResult = Result.success(cardSchemas)
         coEvery {
-            getCardSchemasUseCaseTest(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN)
+            getCardSchemasUseCaseTest()
         } returns mockResult
     }
 

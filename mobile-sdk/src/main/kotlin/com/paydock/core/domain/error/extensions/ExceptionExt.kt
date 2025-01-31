@@ -63,18 +63,25 @@ internal fun Throwable.mapApiException(exceptionClass: KClass<out SdkException>)
     return when {
         CardDetailsException::class.java.isAssignableFrom(exceptionClass.java) ->
             this.mapCardDetailsApiException(exceptionClass.castAs<KClass<CardDetailsException>>())
+
         GiftCardException::class.java.isAssignableFrom(exceptionClass.java) ->
             this.mapGiftCardDetailsApiException(exceptionClass.castAs<KClass<GiftCardException>>())
+
         AfterpayException::class.java.isAssignableFrom(exceptionClass.java) ->
             this.mapAfterpayApiException(exceptionClass.castAs<KClass<AfterpayException>>())
+
         FlyPayException::class.java.isAssignableFrom(exceptionClass.java) ->
             this.mapFlyPayApiException(exceptionClass.castAs<KClass<FlyPayException>>())
+
         GooglePayException::class.java.isAssignableFrom(exceptionClass.java) ->
             this.mapGooglePayApiException(exceptionClass.castAs<KClass<GooglePayException>>())
+
         PayPalException::class.java.isAssignableFrom(exceptionClass.java) ->
             this.mapPayPalApiException(exceptionClass.castAs<KClass<PayPalException>>())
+
         PayPalVaultException::class.java.isAssignableFrom(exceptionClass.java) ->
             this.mapPayPalVaultApiException(exceptionClass.castAs<KClass<PayPalVaultException>>())
+
         else -> GenericException.UnknownException(
             "No suitable exception mapping of [${this::class.java.simpleName}] " +
                 "found for ${exceptionClass.simpleName}"
@@ -375,9 +382,6 @@ internal fun Throwable.mapCardDetailsApiException(exceptionClass: KClass<out Car
             when (exceptionClass) {
                 CardDetailsException.TokenisingCardException::class ->
                     CardDetailsException.TokenisingCardException(error = this.error)
-
-                CardDetailsException.GetCardSchemasException::class ->
-                    CardDetailsException.GetCardSchemasException(error = this.error)
 
                 else -> CardDetailsException.UnknownException(
                     displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR

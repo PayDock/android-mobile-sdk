@@ -47,10 +47,9 @@ internal interface CardRepository {
     ): Flow<TokenDetails>
 
     /**
-     * Fetches the supported card schemas from the backend.
+     * Fetches the supported card schemas from a local file.
      *
-     * @param token The access token required for authentication.
      * @return A [TreeMap] containing card schema information.
      */
-    suspend fun getCardSchemas(token: String): TreeMap<Int, CardSchema>
+    suspend fun getCardSchemas(): TreeMap<Int, CardSchema>
 }

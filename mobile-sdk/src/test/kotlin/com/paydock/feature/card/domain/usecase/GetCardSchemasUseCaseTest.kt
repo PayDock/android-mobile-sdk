@@ -1,16 +1,11 @@
 package com.paydock.feature.card.domain.usecase
 
 import com.paydock.core.BaseKoinUnitTest
-import com.paydock.core.MobileSDKTestConstants
-import com.paydock.core.network.dto.error.ApiErrorResponse
-import com.paydock.core.network.dto.error.ErrorSummary
-import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.utils.reader.LocalFileReader
 import com.paydock.feature.card.data.dto.CardSchemasResponse
 import com.paydock.feature.card.data.mapper.asEntity
 import com.paydock.feature.card.domain.repository.CardRepository
-import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -38,8 +33,7 @@ internal class GetCardSchemasUseCaseTest : BaseKoinUnitTest() {
         } returns expectedResult
 
         getCardSchemasUseCase = GetCardSchemasUseCase(
-            mockRepository,
-            fileReader
+            mockRepository
         )
     }
 
@@ -50,57 +44,33 @@ internal class GetCardSchemasUseCaseTest : BaseKoinUnitTest() {
             readResourceFile("management/success_get_card_schemas_response.json")
                 .convertToDataClass<CardSchemasResponse>().asEntity()
         coEvery {
-            mockRepository.getCardSchemas(
-                MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN
-            )
+            mockRepository.getCardSchemas()
         } returns expectedResult
         // WHEN
-        val actualResult =
-            getCardSchemasUseCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN)
+        val actualResult = getCardSchemasUseCase()
         // THEN
         assertTrue(actualResult.isSuccess)
         assertEquals(expectedResult, actualResult.getOrNull())
         coVerify(exactly = 1) {
-            mockRepository.getCardSchemas(
-                MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN
-            )
+            mockRepository.getCardSchemas()
         }
     }
 
     @Test
-    fun `test invalid access token returns expected error result`() = runTest {
+    fun `test invalid file throws exception result`() = runTest {
         // GIVEN
-        val expectedResult =
-            ApiException(
-                error = ApiErrorResponse(
-                    status = HttpStatusCode.BadRequest.value,
-                    summary = ErrorSummary(
-                        code = "bad_request",
-                        message = MobileSDKTestConstants.Errors.MOCK_AUTH_TOKEN_ERROR
-                    )
-                )
-            )
+        val expectedResult = IllegalArgumentException("Unable to parse json file.")
         coEvery {
-            mockRepository.getCardSchemas(
-                MobileSDKTestConstants.General.MOCK_INVALID_ACCESS_TOKEN
-            )
+            mockRepository.getCardSchemas()
         } throws expectedResult
-        val fallbackResult =
-            readResourceFile("management/success_get_card_schemas_response.json")
-                .convertToDataClass<CardSchemasResponse>().asEntity()
         // WHEN
         val actualResult =
-            getCardSchemasUseCase(
-                MobileSDKTestConstants.General.MOCK_INVALID_ACCESS_TOKEN
-            )
+            getCardSchemasUseCase()
 
         // THEN
-        assertTrue(actualResult.isSuccess)
-        assertEquals(fallbackResult, actualResult.getOrNull())
+        assertTrue(actualResult.isFailure)
         coVerify(exactly = 1) {
-            mockRepository.getCardSchemas(
-                MobileSDKTestConstants.General.MOCK_INVALID_ACCESS_TOKEN
-            )
+            mockRepository.getCardSchemas()
         }
     }
 
