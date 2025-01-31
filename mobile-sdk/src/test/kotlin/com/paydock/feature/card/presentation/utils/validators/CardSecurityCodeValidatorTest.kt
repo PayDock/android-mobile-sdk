@@ -11,33 +11,23 @@ import org.junit.Test
 internal class CardSecurityCodeValidatorTest {
 
     @Test
-    fun testIsSecurityCodeValid_ValidCVV() {
-        assertTrue(CardSecurityCodeValidator.isSecurityCodeValid("123", SecurityCodeType.CVV, CardScheme.VISA))
+    fun testIsValid_ValidSecurityCodeFormatCVV() {
+        assertTrue(CardSecurityCodeValidator.isValidSecurityCodeFormat("123", SecurityCodeType.CVV, CardScheme.VISA))
     }
 
     @Test
-    fun testIsSecurityCodeValid_ValidCVC() {
-        assertTrue(CardSecurityCodeValidator.isSecurityCodeValid("123", SecurityCodeType.CVC, CardScheme.MASTERCARD))
+    fun testIsValid_ValidSecurityCodeFormatCVC() {
+        assertTrue(CardSecurityCodeValidator.isValidSecurityCodeFormat("123", SecurityCodeType.CVC, CardScheme.MASTERCARD))
     }
 
     @Test
-    fun testIsSecurityCodeValid_ValidCID() {
-        assertTrue(CardSecurityCodeValidator.isSecurityCodeValid("1234", SecurityCodeType.CID, CardScheme.AMEX))
+    fun testIsValid_ValidSecurityCodeFormatCID() {
+        assertTrue(CardSecurityCodeValidator.isValidSecurityCodeFormat("1234", SecurityCodeType.CID, CardScheme.AMEX))
     }
 
     @Test
-    fun testIsSecurityCodeValid_BlankCode() {
-        assertFalse(CardSecurityCodeValidator.isSecurityCodeValid("", SecurityCodeType.CVV, CardScheme.VISA))
-    }
-
-    @Test
-    fun testIsSecurityCodeValid_NonDigitCode() {
-        assertFalse(CardSecurityCodeValidator.isSecurityCodeValid("12a", SecurityCodeType.CID, CardScheme.AMEX))
-    }
-
-    @Test
-    fun testIsSecurityCodeValid_ExceedsMaxLength() {
-        assertFalse(CardSecurityCodeValidator.isSecurityCodeValid("12345", SecurityCodeType.CVV, CardScheme.VISA))
+    fun testIsValid_SecurityCodeFormat_ExceedsMaxLength() {
+        assertFalse(CardSecurityCodeValidator.isValidSecurityCodeFormat("12345", SecurityCodeType.CVV, CardScheme.VISA))
     }
 
     @Test

@@ -14,6 +14,7 @@ import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.utils.MainDispatcherRule
+import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.presentation.state.CardDetailsUIState
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
@@ -110,6 +111,7 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
         viewModel = CardDetailsViewModel(
             MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN,
             MobileSDKTestConstants.General.MOCK_GATEWAY_ID,
+            SupportedSchemeConfig(),
             getCardSchemasUseCaseTest,
             createCardPaymentUseCase,
             dispatchersProvider

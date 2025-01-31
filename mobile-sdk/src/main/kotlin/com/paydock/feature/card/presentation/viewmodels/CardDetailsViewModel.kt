@@ -7,6 +7,7 @@ import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.presentation.state.CardDetailsInputState
 import com.paydock.feature.card.presentation.state.CardDetailsUIState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +21,7 @@ import java.util.TreeMap
  *
  * @param accessToken The access token required for API requests.
  * @param gatewayId Optional ID of the payment gateway for processing card payments.
+ * @param schemeConfig Configuration for supported card schemes and scheme validation behavior.
  * @param getCardSchemasUseCase The use case responsible for retrieving supported card schemas.
  * @param createCardPaymentTokenUseCase The use case responsible for creating card payment tokens.
  * @param dispatchers The provider for coroutine dispatchers, used for handling asynchronous tasks.
@@ -27,6 +29,7 @@ import java.util.TreeMap
 internal class CardDetailsViewModel(
     private val accessToken: String,
     private val gatewayId: String?,
+    private val schemeConfig: SupportedSchemeConfig,
     private val getCardSchemasUseCase: GetCardSchemasUseCase,
     private val createCardPaymentTokenUseCase: CreateCardPaymentTokenUseCase,
     dispatchers: DispatchersProvider,
@@ -36,7 +39,7 @@ internal class CardDetailsViewModel(
      * Holds the current input state of card details.
      */
     private val _inputStateFlow: MutableStateFlow<CardDetailsInputState> =
-        MutableStateFlow(CardDetailsInputState())
+        MutableStateFlow(CardDetailsInputState(schemeConfig = schemeConfig))
     val inputStateFlow: StateFlow<CardDetailsInputState> = _inputStateFlow.asStateFlow()
 
     /**

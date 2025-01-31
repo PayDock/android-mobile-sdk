@@ -24,6 +24,13 @@ internal sealed class CardNumberError {
     data object InvalidLuhn : CardNumberError()
 
     /**
+     * Indicates that the card number has an invalid length for the detected card scheme.
+     * This error occurs when the number of digits in the card number does not match
+     * the expected length range for the identified card scheme (e.g., Visa, Mastercard).
+     */
+    data object InvalidLength : CardNumberError()
+
+    /**
      * Indicates that the card number is invalid because it belongs to an unsupported card scheme.
      * This error occurs when the detected card scheme is not included in the list of
      * supported card schemes for the payment integration.

@@ -23,22 +23,6 @@ internal class CardExpiryValidatorTest {
     }
 
     @Test
-    fun testIsExpiryValid_ValidInput() {
-        assertTrue(CardExpiryValidator.isExpiryValid("0129"))
-        assertTrue(CardExpiryValidator.isExpiryValid("1129"))
-        assertTrue(CardExpiryValidator.isExpiryValid("0529"))
-    }
-
-    @Test
-    fun testIsExpiryValid_InvalidInput() {
-        assertFalse(CardExpiryValidator.isExpiryValid(""))
-        assertFalse(CardExpiryValidator.isExpiryValid("01"))
-        assertFalse(CardExpiryValidator.isExpiryValid("12/45"))
-        assertFalse(CardExpiryValidator.isExpiryValid("00"))
-        assertFalse(CardExpiryValidator.isExpiryValid("1325"))
-    }
-
-    @Test
     fun testIsCardExpired_NotExpired() {
         assertFalse(CardExpiryValidator.isCardExpired("1225"))
         assertFalse(CardExpiryValidator.isCardExpired("0127"))

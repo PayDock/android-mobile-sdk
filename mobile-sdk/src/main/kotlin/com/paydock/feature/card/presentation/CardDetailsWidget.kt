@@ -60,7 +60,7 @@ fun CardDetailsWidget(
     completion: (Result<CardResult>) -> Unit
 ) {
     val viewModel: CardDetailsViewModel = koinViewModel(parameters = {
-        parametersOf(config.accessToken, config.gatewayId)
+        parametersOf(config.accessToken, config.gatewayId, config.schemeSupport)
     })
     viewModel.setCollectCardholderName(config.collectCardholderName)
     val inputState by viewModel.inputStateFlow.collectAsState()

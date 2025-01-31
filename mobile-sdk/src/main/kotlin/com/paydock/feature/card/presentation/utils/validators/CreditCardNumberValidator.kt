@@ -53,6 +53,7 @@ internal object CreditCardNumberValidator {
     ): CardNumberError {
         val isLuhnValid = LuhnValidator.isLuhnValid(cardNumber)
         val supportedCardSchemes = getSupportedCardSchemes(schemeConfig)
+        val isValidLength = validateCardNumberLength(cardScheme, cardNumber)
         // Determine if the card scheme is supported (only if validation is enabled)
         val isCardSchemeSupported = supportedCardSchemes?.let {
             it.isNotEmpty() && cardScheme != null && it.contains(cardScheme)
@@ -60,8 +61,43 @@ internal object CreditCardNumberValidator {
         return when {
             cardNumber.isBlank() && hasUserInteracted -> CardNumberError.Empty
             cardNumber.isNotBlank() && !isLuhnValid -> CardNumberError.InvalidLuhn
+            cardNumber.isNotBlank() && !isValidLength -> CardNumberError.InvalidLength
             cardNumber.isNotBlank() && !isCardSchemeSupported -> CardNumberError.UnsupportedCardScheme
             else -> CardNumberError.None
+        }
+    }
+
+    /**
+     * Validates the length of a credit card number based on its card scheme.
+     *
+     * @param cardScheme The card scheme (e.g., Visa, Mastercard).
+     * @param cardNumber The credit card number to validate.
+     * @return `true` if the card number length is valid for the given scheme, `false` otherwise.
+     */
+    private fun validateCardNumberLength(cardScheme: CardScheme?, cardNumber: String): Boolean {
+        val length = cardNumber.length
+        val (minLength, maxLength) = getCardSchemeLengthRange(cardScheme)
+        return length in minLength..maxLength
+    }
+
+    /**
+     * Returns the valid length range (min and max) for a given card scheme.
+     *
+     * @param cardScheme The card scheme.
+     * @return A Pair representing the minimum and maximum valid lengths for the scheme.
+     */
+    @Suppress("MagicNumber")
+    private fun getCardSchemeLengthRange(cardScheme: CardScheme?): Pair<Int, Int> {
+        return when (cardScheme) {
+            CardScheme.VISA -> 16 to 19
+            CardScheme.MASTERCARD -> 16 to 16
+            CardScheme.AMEX -> 15 to 15
+            CardScheme.DINERS -> 14 to 14
+            CardScheme.DISCOVER -> 16 to 19
+            CardScheme.JAPCB -> 16 to 16
+            CardScheme.SOLO -> 12 to 19
+            CardScheme.AUSBC -> 12 to 19
+            else -> 12 to 19
         }
     }
 

@@ -23,7 +23,7 @@ internal object CardSecurityCodeValidator {
      * @param cardScheme The scheme type of the card.
      * @return `true` if the security code is valid; otherwise, `false`.
      */
-    fun isSecurityCodeValid(
+    fun isValidSecurityCodeFormat(
         code: String,
         securityCodeType: SecurityCodeType,
         cardScheme: CardScheme?

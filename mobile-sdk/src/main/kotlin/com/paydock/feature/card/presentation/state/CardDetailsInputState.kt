@@ -2,14 +2,18 @@ package com.paydock.feature.card.presentation.state
 
 import com.paydock.api.management.domain.model.CardSchema
 import com.paydock.core.MobileSDKConstants
+import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.integration.enums.CardScheme
 import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
+import com.paydock.feature.card.presentation.utils.errors.CardExpiryError
+import com.paydock.feature.card.presentation.utils.errors.CardHolderNameError
+import com.paydock.feature.card.presentation.utils.errors.CardNumberError
+import com.paydock.feature.card.presentation.utils.errors.SecurityCodeError
 import com.paydock.feature.card.presentation.utils.validators.CardExpiryValidator
 import com.paydock.feature.card.presentation.utils.validators.CardHolderNameValidator
 import com.paydock.feature.card.presentation.utils.validators.CardSchemeValidator
 import com.paydock.feature.card.presentation.utils.validators.CardSecurityCodeValidator
 import com.paydock.feature.card.presentation.utils.validators.CreditCardNumberValidator
-import com.paydock.feature.card.presentation.utils.validators.LuhnValidator
 import java.util.TreeMap
 
 /**
@@ -24,6 +28,7 @@ import java.util.TreeMap
  * @property code The entered security code (CVV/CVC). Defaults to an empty string.
  * @property collectCardholderName A flag indicating whether the cardholder name is required. Defaults to `true`.
  * @property saveCard A flag indicating whether the user wants to save the card details for future use. Defaults to `false`.
+ * @property schemeConfig Configuration for supported card schemes and scheme validation behavior.
  * @property cardSchemas A [TreeMap] containing the available card schemas used for validation. Defaults to an empty map.
  */
 internal data class CardDetailsInputState(
@@ -33,6 +38,7 @@ internal data class CardDetailsInputState(
     val code: String = "",
     val collectCardholderName: Boolean = true,
     val saveCard: Boolean = false,
+    val schemeConfig: SupportedSchemeConfig = SupportedSchemeConfig(),
     val cardSchemas: TreeMap<Int, CardSchema> = TreeMap()
 ) {
 
@@ -53,20 +59,48 @@ internal data class CardDetailsInputState(
         get() = CardSecurityCodeValidator.detectSecurityCodeType(cardScheme)
 
     /**
-     * Validates the entire input state.
+     * Indicates whether the current card input data is valid.
      *
-     * @return `true` if all inputs are valid; `false` otherwise.
-     * - Validates the cardholder name (if required).
-     * - Checks the card number using the Luhn algorithm.
-     * - Validates the card expiry date format and logic.
-     * - Validates the security code based on the detected card scheme.
+     * This property performs a comprehensive validation of the card input data,
+     * including the cardholder name (if required), card number, expiry date, and security code.
+     * It leverages the respective validator classes to ensure each field meets the required criteria.
+     *
+     * The validation process includes:
+     * - **Cardholder Name Validation:** If `collectCardholderName` is `true`, the cardholder name is
+     *   validated using [CardHolderNameValidator.validateHolderNameInput].
+     *   If `collectCardholderName` is `false`, the cardholder name is considered valid regardless of its content.
+     * - **Card Number Validation:** The card number is validated using [CreditCardNumberValidator.validateCardNumberInput],
+     *   which checks for emptiness, the Luhn algorithm, length, and supported card scheme.
+     * - **Expiry Date Validation:** The expiry date is validated using [CardExpiryValidator.validateExpiryInput],
+     *   which checks for the correct format and whether the date is in the future.
+     * - **Security Code Validation:** The security code is validated using [CardSecurityCodeValidator.validateSecurityCodeInput],
+     *   which checks for emptiness and the correct length based on the card scheme.
+     *
+     * @return `true` if all input fields are valid; `false` otherwise.
      */
     val isDataValid: Boolean
-        get() = (CardHolderNameValidator.isValidHolderNameFormat(cardholderName) || !collectCardholderName) &&
-            CreditCardNumberValidator.isValidNumberFormat(cardNumber) &&
-            LuhnValidator.isLuhnValid(cardNumber) &&
-            CardExpiryValidator.isExpiryValid(expiry) &&
-            CardSecurityCodeValidator.isSecurityCodeValid(code, securityCodeType, cardScheme)
+        get() {
+            val isCardHolderNameValid = CardHolderNameValidator.validateHolderNameInput(
+                cardholderName ?: "",
+                true
+            ) == CardHolderNameError.None || !collectCardholderName
+            val isCardNumberValid = CreditCardNumberValidator.validateCardNumberInput(
+                cardNumber,
+                true,
+                cardScheme,
+                schemeConfig
+            ) == CardNumberError.None
+            val isExpiryValid =
+                CardExpiryValidator.validateExpiryInput(expiry, true) == CardExpiryError.None
+            val isSecurityCodeValid = CardSecurityCodeValidator.validateSecurityCodeInput(
+                code,
+                securityCodeType,
+                cardScheme,
+                true
+            ) == SecurityCodeError.None
+
+            return isCardHolderNameValid && isCardNumberValid && isExpiryValid && isSecurityCodeValid
+        }
 
     /**
      * Extracts the expiry month from the entered expiry string.

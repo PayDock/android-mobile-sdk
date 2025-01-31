@@ -59,7 +59,7 @@ internal object CreditCardInputValidator {
      * @return The parsed and validated security code if valid, an empty string if input is empty, or null if invalid.
      */
     fun parseSecurityCode(code: String, securityCodeType: SecurityCodeType, cardScheme: CardScheme?): String? = when {
-        CardSecurityCodeValidator.isSecurityCodeValid(code, securityCodeType, cardScheme) -> code
+        CardSecurityCodeValidator.isValidSecurityCodeFormat(code, securityCodeType, cardScheme) -> code
         code.isEmpty() -> ""
         else -> null
     }

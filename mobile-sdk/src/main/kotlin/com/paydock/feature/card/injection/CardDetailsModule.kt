@@ -2,6 +2,7 @@ package com.paydock.feature.card.injection
 
 import com.paydock.core.utils.decoder.injection.stringDecoderKoinModule
 import com.paydock.core.utils.reader.injection.fileReaderKoinModule
+import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel
 import com.paydock.feature.card.presentation.viewmodels.GiftCardViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -15,8 +16,8 @@ internal val cardDetailsModule = module {
     includes(stringDecoderKoinModule, fileReaderKoinModule)
 
     // Factory methods for creating instances of ViewModels with access tokens
-    viewModel { (accessToken: String, gatewayId: String?) ->
-        CardDetailsViewModel(accessToken, gatewayId, get(), get(), get())
+    viewModel { (accessToken: String, gatewayId: String?, schemeConfig: SupportedSchemeConfig) ->
+        CardDetailsViewModel(accessToken, gatewayId, schemeConfig, get(), get(), get())
     }
     viewModel { (accessToken: String) ->
         GiftCardViewModel(accessToken, get(), get())

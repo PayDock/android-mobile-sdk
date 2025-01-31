@@ -83,7 +83,8 @@ internal fun CreditCardNumberInput(
 
     val errorMessage = when (cardNumberError) {
         CardNumberError.Empty,
-        CardNumberError.InvalidLuhn -> stringResource(id = R.string.error_card_number)
+        CardNumberError.InvalidLuhn,
+        CardNumberError.InvalidLength -> stringResource(id = R.string.error_card_number)
         CardNumberError.UnsupportedCardScheme -> stringResource(id = R.string.error_unsupported_card_scheme)
         CardNumberError.None -> null
     }

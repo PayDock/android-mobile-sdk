@@ -13,20 +13,6 @@ import java.util.Calendar
 internal object CardExpiryValidator {
 
     /**
-     * Extracts the month and year from the expiry date string.
-     *
-     * @param expiry The expiry date string in "MMYY" or similar format.
-     * @return A pair containing the extracted month and year as nullable integers.
-     */
-    private fun extractMonthAndYear(expiry: String): Pair<Int?, Int?> {
-        val month =
-            expiry.take(MobileSDKConstants.CardDetailsConfig.EXPIRY_CHUNK_SIZE).toIntOrNull()
-        val year = expiry.drop(MobileSDKConstants.CardDetailsConfig.EXPIRY_CHUNK_SIZE)
-            .take(MobileSDKConstants.CardDetailsConfig.EXPIRY_CHUNK_SIZE).toIntOrNull()
-        return month to year
-    }
-
-    /**
      * Checks if the expiry date string has a valid format.
      *
      * A valid format is non-blank, contains only numeric characters,
@@ -41,12 +27,44 @@ internal object CardExpiryValidator {
     }
 
     /**
+     * Validates the expiry date input and determines the type of validation error.
+     *
+     * @param expiry The expiry date string to validate.
+     * @param hasUserInteracted Flag indicating if the user has interacted with the input field.
+     * @return A [CardExpiryError] representing the validation result.
+     */
+    fun validateExpiryInput(expiry: String, hasUserInteracted: Boolean): CardExpiryError {
+        val isValid = isExpiryValid(expiry)
+        val isExpired = isCardExpired(expiry)
+        return when {
+            expiry.isBlank() && hasUserInteracted -> CardExpiryError.Empty
+            expiry.isNotBlank() && !isValid -> CardExpiryError.InvalidFormat
+            expiry.isNotBlank() && isExpired -> CardExpiryError.Expired
+            else -> CardExpiryError.None
+        }
+    }
+
+    /**
+     * Extracts the month and year from the expiry date string.
+     *
+     * @param expiry The expiry date string in "MMYY" or similar format.
+     * @return A pair containing the extracted month and year as nullable integers.
+     */
+    private fun extractMonthAndYear(expiry: String): Pair<Int?, Int?> {
+        val month =
+            expiry.take(MobileSDKConstants.CardDetailsConfig.EXPIRY_CHUNK_SIZE).toIntOrNull()
+        val year = expiry.drop(MobileSDKConstants.CardDetailsConfig.EXPIRY_CHUNK_SIZE)
+            .take(MobileSDKConstants.CardDetailsConfig.EXPIRY_CHUNK_SIZE).toIntOrNull()
+        return month to year
+    }
+
+    /**
      * Checks if the expiry date string represents a valid month and year combination.
      *
      * @param expiry The expiry date string to validate.
      * @return True if the expiry date is valid, otherwise false.
      */
-    fun isExpiryValid(expiry: String): Boolean {
+    private fun isExpiryValid(expiry: String): Boolean {
         val (month, year) = extractMonthAndYear(expiry)
         return expiry.isNotBlank() && expiry.length <= (MobileSDKConstants.CardDetailsConfig.MAX_EXPIRY_LENGTH + 1) &&
             expiry.matches(MobileSDKConstants.Regex.NUMERIC_DIGITS) && isMonthValid(month) && isYearValid(
@@ -124,23 +142,5 @@ internal object CardExpiryValidator {
      */
     fun formatExpiry(input: String): String {
         return input.filter { it.isDigit() }
-    }
-
-    /**
-     * Validates the expiry date input and determines the type of validation error.
-     *
-     * @param expiry The expiry date string to validate.
-     * @param hasUserInteracted Flag indicating if the user has interacted with the input field.
-     * @return A [CardExpiryError] representing the validation result.
-     */
-    fun validateExpiryInput(expiry: String, hasUserInteracted: Boolean): CardExpiryError {
-        val isValid = isExpiryValid(expiry)
-        val isExpired = isCardExpired(expiry)
-        return when {
-            expiry.isBlank() && hasUserInteracted -> CardExpiryError.Empty
-            expiry.isNotBlank() && !isValid -> CardExpiryError.InvalidFormat
-            expiry.isNotBlank() && isExpired -> CardExpiryError.Expired
-            else -> CardExpiryError.None
-        }
     }
 }
