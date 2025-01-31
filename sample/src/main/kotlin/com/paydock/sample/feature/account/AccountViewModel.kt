@@ -5,9 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
-import com.paydock.sample.feature.customer.data.api.dto.CreateCustomerOTTRequest
-import com.paydock.sample.feature.customer.domain.model.Customer
-import com.paydock.sample.feature.customer.domain.usecase.CreateCustomerOTTUseCase
+import com.paydock.sample.feature.account.data.api.dto.CreateCustomerOTTRequest
+import com.paydock.sample.feature.account.domain.model.Customer
+import com.paydock.sample.feature.account.domain.usecase.CreateCustomerOTTUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

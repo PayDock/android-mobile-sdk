@@ -1,7 +1,7 @@
 package com.paydock.feature.card.presentation.utils.validators
 
-import com.paydock.api.management.domain.model.CardSchema
 import com.paydock.feature.card.domain.model.integration.enums.CardScheme
+import com.paydock.feature.card.domain.model.ui.CardSchema
 import java.util.TreeMap
 
 /**

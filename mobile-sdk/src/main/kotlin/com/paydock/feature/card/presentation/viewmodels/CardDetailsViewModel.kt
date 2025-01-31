@@ -1,13 +1,13 @@
 package com.paydock.feature.card.presentation.viewmodels
 
-import com.paydock.api.management.domain.usecase.GetCardSchemasUseCase
-import com.paydock.api.tokens.data.dto.CreatePaymentTokenRequest
-import com.paydock.api.tokens.domain.usecase.CreateCardPaymentTokenUseCase
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.feature.card.data.dto.CreateCardPaymentTokenRequest
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
+import com.paydock.feature.card.domain.usecase.CreateCardPaymentTokenUseCase
+import com.paydock.feature.card.domain.usecase.GetCardSchemasUseCase
 import com.paydock.feature.card.presentation.state.CardDetailsInputState
 import com.paydock.feature.card.presentation.state.CardDetailsUIState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -170,7 +170,7 @@ internal class CardDetailsViewModel(
             updateState(CardDetailsUIState.Loading)
 
             val state = _inputStateFlow.value
-            val request = CreatePaymentTokenRequest.TokeniseCardRequest.CreditCard(
+            val request = CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard(
                 cvv = state.code,
                 cardholderName = state.cardholderName,
                 cardNumber = state.cardNumber,

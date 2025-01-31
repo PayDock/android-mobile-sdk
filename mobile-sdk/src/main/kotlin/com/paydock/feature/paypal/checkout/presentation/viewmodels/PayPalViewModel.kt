@@ -1,21 +1,21 @@
 package com.paydock.feature.paypal.checkout.presentation.viewmodels
 
 import android.net.Uri
-import com.paydock.api.charges.data.dto.CaptureWalletChargeRequest
-import com.paydock.api.charges.data.dto.CustomerData
-import com.paydock.api.charges.data.dto.PaymentSourceData
-import com.paydock.api.charges.data.dto.WalletCallbackRequest
-import com.paydock.api.charges.domain.model.WalletCallback
-import com.paydock.api.charges.domain.model.WalletType
-import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
-import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
-import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.PayPalException
 import com.paydock.core.domain.error.extensions.mapApiException
-import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
+import com.paydock.feature.wallet.data.dto.CaptureWalletChargeRequest
+import com.paydock.feature.wallet.data.dto.CustomerData
+import com.paydock.feature.wallet.data.dto.PaymentSourceData
+import com.paydock.feature.wallet.data.dto.WalletCallbackRequest
+import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.WalletType
+import com.paydock.feature.wallet.domain.model.ui.WalletCallback
+import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
+import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
+import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
 
 /**

@@ -1,10 +1,10 @@
 package com.paydock.feature.card.presentation.state
 
-import com.paydock.api.management.domain.model.CardSchema
 import com.paydock.core.MobileSDKConstants
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.integration.enums.CardScheme
 import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
+import com.paydock.feature.card.domain.model.ui.CardSchema
 import com.paydock.feature.card.presentation.utils.errors.CardExpiryError
 import com.paydock.feature.card.presentation.utils.errors.CardHolderNameError
 import com.paydock.feature.card.presentation.utils.errors.CardNumberError

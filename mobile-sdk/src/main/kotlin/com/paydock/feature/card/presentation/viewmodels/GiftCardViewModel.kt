@@ -1,11 +1,11 @@
 package com.paydock.feature.card.presentation.viewmodels
 
-import com.paydock.api.tokens.data.dto.CreatePaymentTokenRequest
-import com.paydock.api.tokens.domain.usecase.CreateGiftCardPaymentTokenUseCase
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.feature.card.data.dto.CreateCardPaymentTokenRequest
+import com.paydock.feature.card.domain.usecase.CreateGiftCardPaymentTokenUseCase
 import com.paydock.feature.card.presentation.state.GiftCardInputState
 import com.paydock.feature.card.presentation.state.GiftCardUIState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -115,7 +115,7 @@ internal class GiftCardViewModel(
         launchOnIO {
             updateState(GiftCardUIState.Loading)
             val state = _inputStateFlow.value
-            val request = CreatePaymentTokenRequest.TokeniseCardRequest.GiftCard(
+            val request = CreateCardPaymentTokenRequest.TokeniseCardRequest.GiftCard(
                 cardNumber = state.cardNumber,
                 cardPin = state.pin,
                 storePin = state.storePin

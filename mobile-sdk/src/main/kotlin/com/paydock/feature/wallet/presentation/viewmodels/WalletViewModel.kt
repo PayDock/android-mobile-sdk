@@ -1,14 +1,14 @@
 package com.paydock.feature.wallet.presentation.viewmodels
 
-import com.paydock.api.charges.data.dto.CaptureWalletChargeRequest
-import com.paydock.api.charges.data.dto.WalletCallbackRequest
-import com.paydock.api.charges.domain.model.WalletCallback
-import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
-import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
-import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.presentation.viewmodels.BaseViewModel
-import com.paydock.feature.charge.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.data.dto.CaptureWalletChargeRequest
+import com.paydock.feature.wallet.data.dto.WalletCallbackRequest
+import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.ui.WalletCallback
+import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
+import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
+import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

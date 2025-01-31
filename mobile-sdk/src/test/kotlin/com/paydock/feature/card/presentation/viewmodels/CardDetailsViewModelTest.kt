@@ -1,11 +1,6 @@
 package com.paydock.feature.card.presentation.viewmodels
 
 import app.cash.turbine.test
-import com.paydock.api.management.data.dto.CardSchemasResponse
-import com.paydock.api.management.data.mapper.asEntity
-import com.paydock.api.management.domain.usecase.GetCardSchemasUseCase
-import com.paydock.api.tokens.domain.model.TokenDetails
-import com.paydock.api.tokens.domain.usecase.CreateCardPaymentTokenUseCase
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
@@ -14,7 +9,12 @@ import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.utils.MainDispatcherRule
+import com.paydock.feature.card.data.dto.CardSchemasResponse
+import com.paydock.feature.card.data.mapper.asEntity
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
+import com.paydock.feature.card.domain.model.ui.TokenDetails
+import com.paydock.feature.card.domain.usecase.CreateCardPaymentTokenUseCase
+import com.paydock.feature.card.domain.usecase.GetCardSchemasUseCase
 import com.paydock.feature.card.presentation.state.CardDetailsUIState
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
@@ -49,7 +49,12 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
 
     private fun setupCreateCardPaymentUseCaseSuccess() {
         val mockToken = MobileSDKTestConstants.Card.MOCK_CARD_TOKEN
-        val mockResult = Result.success(TokenDetails(token = mockToken, type = "token"))
+        val mockResult = Result.success(
+            TokenDetails(
+                token = mockToken,
+                type = "token"
+            )
+        )
         coEvery {
             createCardPaymentUseCase(
                 MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN,

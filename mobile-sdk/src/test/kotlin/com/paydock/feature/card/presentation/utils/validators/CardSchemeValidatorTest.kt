@@ -1,9 +1,9 @@
 package com.paydock.feature.card.presentation.utils.validators
 
-import com.paydock.api.management.data.dto.CardSchemasResponse
-import com.paydock.api.management.data.mapper.asEntity
 import com.paydock.core.BaseUnitTest
 import com.paydock.core.network.extensions.convertToDataClass
+import com.paydock.feature.card.data.dto.CardSchemasResponse
+import com.paydock.feature.card.data.mapper.asEntity
 import com.paydock.feature.card.domain.model.integration.enums.CardScheme
 import org.junit.Assert.assertEquals
 import org.junit.Test

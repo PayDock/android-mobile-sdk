@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import com.paydock.feature.googlepay.presentation.GooglePayWidget
 import com.paydock.feature.googlepay.util.PaymentsUtil
+import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.AMOUNT
 import com.paydock.sample.core.AU_COUNTRY_CODE

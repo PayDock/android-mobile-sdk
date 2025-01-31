@@ -1,8 +1,8 @@
 package com.paydock.feature.paypal.checkout.presentation.state
 
-import com.paydock.api.charges.domain.model.WalletCallback
 import com.paydock.core.domain.error.exceptions.SdkException
-import com.paydock.feature.charge.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.ui.WalletCallback
 
 /**
  * Represents the various UI states of the PayPal Checkout flow in the SDK.

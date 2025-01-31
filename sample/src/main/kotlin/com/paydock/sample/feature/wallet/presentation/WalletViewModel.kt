@@ -2,15 +2,15 @@ package com.paydock.sample.feature.wallet.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.paydock.api.charges.domain.model.WalletType
+import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
 import com.paydock.sample.core.MERCHANT_NAME
-import com.paydock.sample.feature.charges.data.api.dto.ChargesCustomerDTO
-import com.paydock.sample.feature.charges.data.api.dto.InitiateWalletRequest
-import com.paydock.sample.feature.charges.domain.model.WalletCharge
-import com.paydock.sample.feature.charges.domain.usecase.InitiateWalletTransactionUseCase
+import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
+import com.paydock.sample.feature.wallet.data.api.dto.InitiateWalletRequest
+import com.paydock.sample.feature.wallet.data.model.WalletCharge
+import com.paydock.sample.feature.wallet.domain.usecase.InitiateWalletTransactionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

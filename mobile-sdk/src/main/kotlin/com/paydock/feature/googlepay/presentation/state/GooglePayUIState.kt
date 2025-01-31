@@ -1,7 +1,7 @@
 package com.paydock.feature.googlepay.presentation.state
 
 import com.paydock.core.domain.error.exceptions.SdkException
-import com.paydock.feature.charge.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 
 /**
  * Represents the UI state for Google Pay interactions.

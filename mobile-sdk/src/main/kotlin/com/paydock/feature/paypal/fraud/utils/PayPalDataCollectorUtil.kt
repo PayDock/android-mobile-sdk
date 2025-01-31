@@ -2,11 +2,11 @@ package com.paydock.feature.paypal.fraud.utils
 
 import android.content.Context
 import com.paydock.MobileSDK
-import com.paydock.api.gateways.domain.usecase.GetPayPalClientIdUseCase
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.PayPalDataCollectorException
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.domain.mapper.mapToPayPalEnv
+import com.paydock.feature.paypal.core.domain.usecase.GetPayPalClientIdUseCase
 import com.paydock.feature.paypal.fraud.domain.model.integration.PayPalDataCollectorConfig
 import com.paypal.android.corepayments.CoreConfig
 import com.paypal.android.fraudprotection.PayPalDataCollector

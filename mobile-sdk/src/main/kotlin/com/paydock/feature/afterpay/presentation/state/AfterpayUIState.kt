@@ -3,7 +3,7 @@ package com.paydock.feature.afterpay.presentation.state
 import com.afterpay.android.model.ShippingOptionUpdateResult
 import com.afterpay.android.model.ShippingOptionsSuccessResult
 import com.paydock.core.domain.error.exceptions.SdkException
-import com.paydock.feature.charge.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 
 /**
  * Represents the various UI states for the Afterpay flow.

@@ -1,10 +1,10 @@
 package com.paydock.feature.paypal.fraud.injection
 
-import com.paydock.api.gateways.domain.usecase.GetPayPalClientIdUseCase
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
+import com.paydock.feature.paypal.core.domain.usecase.GetPayPalClientIdUseCase
 import com.paydock.feature.paypal.vault.presentation.viewmodels.PayPalVaultViewModelTest.Companion.MOCK_CLIENT_ID
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery

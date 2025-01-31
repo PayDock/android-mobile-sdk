@@ -34,7 +34,7 @@ import com.paydock.feature.afterpay.presentation.components.AfterpayPaymentButto
 import com.paydock.feature.afterpay.presentation.state.AfterpayUIState
 import com.paydock.feature.afterpay.presentation.utils.CheckoutHandler
 import com.paydock.feature.afterpay.presentation.viewmodels.AfterpayViewModel
-import com.paydock.feature.charge.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import org.koin.androidx.compose.koinViewModel
 
 /**
