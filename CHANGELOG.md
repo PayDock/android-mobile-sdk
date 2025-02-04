@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.1.0] - 2025-02-04
+
+### Added
+- Card schema file for card number validation
+- Logic to validate card number ranges
+
+### Changed
+- Card schema regex to use bin file validation
+- Client-SDK version to `v1.117.0`
+- Compose BOM version to `2024.12.01`
+- Refactored `CardScheme` enum to data class
+- Refactoring code (package restructure)
+
 ## [3.0.0] - 2025-01-14
 
 ### Added

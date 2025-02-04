@@ -19,8 +19,11 @@ import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.extensions.waitUntilTimeout
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.CardResult
+import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
+import com.paydock.feature.card.domain.model.integration.enums.CardType
 import com.paydock.feature.card.domain.model.ui.TokenDetails
 import com.paydock.feature.card.domain.usecase.CreateCardPaymentTokenUseCase
+import com.paydock.feature.card.domain.usecase.GetCardSchemasUseCase
 import com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -56,13 +59,14 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
     )
 
     private val createCardPaymentTokenUseCase: CreateCardPaymentTokenUseCase = mockk(relaxed = true)
-    private val getCardSchemasUseCase: com.paydock.feature.management.domain.usecase.GetCardSchemasUseCase =
+    private val getCardSchemasUseCase: GetCardSchemasUseCase =
         mockk(relaxed = true)
 
     override fun initialiseViewModel(): CardDetailsViewModel =
         CardDetailsViewModel(
             accessToken = "testAccessToken",
             gatewayId = null,
+            schemeConfig = SupportedSchemeConfig(supportedSchemes = CardType.entries.toSet(), enableValidation = true),
             createCardPaymentTokenUseCase = createCardPaymentTokenUseCase,
             getCardSchemasUseCase = getCardSchemasUseCase,
             dispatchers = dispatchersProvider

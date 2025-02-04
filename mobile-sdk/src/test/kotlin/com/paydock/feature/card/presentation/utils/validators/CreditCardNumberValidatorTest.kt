@@ -15,7 +15,6 @@ internal class CreditCardNumberValidatorTest {
 
     @Test
     fun testIsValidNumber_ValidNumberFormat() {
-        val cardScheme = CardScheme(type = CardType.VISA, code = CardCode(CodeType.CVV, 3))
         assertTrue(CreditCardNumberValidator.isCardNumberValid("4111111111111111", null, SupportedSchemeConfig()))
         assertTrue(CreditCardNumberValidator.isCardNumberValid("1466366215019142", null, SupportedSchemeConfig()))
         assertTrue(CreditCardNumberValidator.isCardNumberValid("5555555555554444", null, SupportedSchemeConfig()))
