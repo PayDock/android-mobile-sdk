@@ -1,6 +1,6 @@
 package com.paydock.feature.card.domain.model.ui
 
-import com.paydock.feature.card.domain.model.integration.enums.CardScheme
+import com.paydock.feature.card.domain.model.integration.enums.CardType
 
 /**
  * A data class representing a card schema, which contains a `bin` (Bank Identification Number),
@@ -16,7 +16,7 @@ import com.paydock.feature.card.domain.model.integration.enums.CardScheme
  */
 internal data class CardSchema(
     val bin: String,
-    val schema: CardScheme?
+    val schema: CardType?
 ) {
     val start: String
     val end: String

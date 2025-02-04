@@ -26,5 +26,5 @@ internal data class GiftCardInputState(
      */
     val isDataValid: Boolean
         get() = GiftCardNumberValidator.isCardNumberValid(cardNumber) &&
-            CardPinValidator.isValidPinFormat(pin)
+            CardPinValidator.isCardPinValid(pin)
 }

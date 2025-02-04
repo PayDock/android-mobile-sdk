@@ -2,13 +2,8 @@ package com.paydock.feature.card.presentation.state
 
 import com.paydock.core.MobileSDKConstants
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
-import com.paydock.feature.card.domain.model.integration.enums.CardScheme
-import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
 import com.paydock.feature.card.domain.model.ui.CardSchema
-import com.paydock.feature.card.presentation.utils.errors.CardExpiryError
-import com.paydock.feature.card.presentation.utils.errors.CardHolderNameError
-import com.paydock.feature.card.presentation.utils.errors.CardNumberError
-import com.paydock.feature.card.presentation.utils.errors.SecurityCodeError
+import com.paydock.feature.card.domain.model.ui.CardScheme
 import com.paydock.feature.card.presentation.utils.validators.CardExpiryValidator
 import com.paydock.feature.card.presentation.utils.validators.CardHolderNameValidator
 import com.paydock.feature.card.presentation.utils.validators.CardSchemeValidator
@@ -51,12 +46,31 @@ internal data class CardDetailsInputState(
         get() = CardSchemeValidator.detectCardScheme(cardSchemas, cardNumber)
 
     /**
-     * Determines the security code type (CVV/CVC) based on the detected card scheme.
+     * Extracts the expiry month from the entered expiry string.
      *
-     * Uses the `CardSecurityCodeValidator` utility to identify the expected security code format for the card type.
+     * @return The first two characters of the expiry string, representing the month.
+     * If the expiry string is shorter than the expected size, returns the available part of the string.
      */
-    private val securityCodeType: SecurityCodeType
-        get() = CardSecurityCodeValidator.detectSecurityCodeType(cardScheme)
+    val expiryMonth: String
+        get() = if (expiry.length >= MobileSDKConstants.CardDetailsConfig.EXPIRY_CHUNK_SIZE) {
+            expiry.take(MobileSDKConstants.CardDetailsConfig.EXPIRY_CHUNK_SIZE)
+        } else {
+            expiry
+        }
+
+    /**
+     * Extracts the expiry year from the entered expiry string.
+     *
+     * @return The last two characters of the expiry string, representing the year.
+     * If the expiry string is shorter than the expected size, returns an empty string.
+     */
+    val expiryYear: String
+        get() = if (expiry.length >= MobileSDKConstants.CardDetailsConfig.MAX_EXPIRY_LENGTH) {
+            expiry.drop(MobileSDKConstants.CardDetailsConfig.EXPIRY_CHUNK_SIZE)
+                .take(MobileSDKConstants.CardDetailsConfig.EXPIRY_CHUNK_SIZE)
+        } else {
+            ""
+        }
 
     /**
      * Indicates whether the current card input data is valid.
@@ -80,52 +94,15 @@ internal data class CardDetailsInputState(
      */
     val isDataValid: Boolean
         get() {
-            val isCardHolderNameValid = CardHolderNameValidator.validateHolderNameInput(
-                cardholderName ?: "",
-                true
-            ) == CardHolderNameError.None || !collectCardholderName
-            val isCardNumberValid = CreditCardNumberValidator.validateCardNumberInput(
+            val isCardHolderNameValid = CardHolderNameValidator.isCardHolderNameValid(cardholderName) || !collectCardholderName
+            val isCardNumberValid = CreditCardNumberValidator.isCardNumberValid(
                 cardNumber,
-                true,
                 cardScheme,
                 schemeConfig
-            ) == CardNumberError.None
-            val isExpiryValid =
-                CardExpiryValidator.validateExpiryInput(expiry, true) == CardExpiryError.None
-            val isSecurityCodeValid = CardSecurityCodeValidator.validateSecurityCodeInput(
-                code,
-                securityCodeType,
-                cardScheme,
-                true
-            ) == SecurityCodeError.None
+            )
+            val isExpiryValid = CardExpiryValidator.isExpiryValid(expiry)
+            val isSecurityCodeValid = CardSecurityCodeValidator.isSecurityCodeValid(code, cardScheme?.code)
 
             return isCardHolderNameValid && isCardNumberValid && isExpiryValid && isSecurityCodeValid
-        }
-
-    /**
-     * Extracts the expiry month from the entered expiry string.
-     *
-     * @return The first two characters of the expiry string, representing the month.
-     * If the expiry string is shorter than the expected size, returns the available part of the string.
-     */
-    internal val expiryMonth: String
-        get() = if (expiry.length >= MobileSDKConstants.CardDetailsConfig.EXPIRY_CHUNK_SIZE) {
-            expiry.take(MobileSDKConstants.CardDetailsConfig.EXPIRY_CHUNK_SIZE)
-        } else {
-            expiry
-        }
-
-    /**
-     * Extracts the expiry year from the entered expiry string.
-     *
-     * @return The last two characters of the expiry string, representing the year.
-     * If the expiry string is shorter than the expected size, returns an empty string.
-     */
-    internal val expiryYear: String
-        get() = if (expiry.length >= MobileSDKConstants.CardDetailsConfig.MAX_EXPIRY_LENGTH) {
-            expiry.drop(MobileSDKConstants.CardDetailsConfig.EXPIRY_CHUNK_SIZE)
-                .take(MobileSDKConstants.CardDetailsConfig.EXPIRY_CHUNK_SIZE)
-        } else {
-            ""
         }
 }

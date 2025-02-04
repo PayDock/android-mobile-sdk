@@ -24,7 +24,7 @@ import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.presentation.utils.errors.CardPinError
 import com.paydock.feature.card.presentation.utils.validators.CardPinValidator
-import com.paydock.feature.card.presentation.utils.validators.GiftCardInputValidator
+import com.paydock.feature.card.presentation.utils.validators.GiftCardInputParser
 import kotlinx.coroutines.delay
 
 /**
@@ -52,12 +52,13 @@ internal fun CardPinInput(
         debouncedValue = value
     }
     // Parse the card pin
-    val cardPin = GiftCardInputValidator.parseCardPin(debouncedValue)
+    val cardPin = GiftCardInputParser.parseCardPin(debouncedValue)
     val cardPinError = CardPinValidator.validateCardPinInput(debouncedValue, hasUserInteracted)
 
     // Determine the error message to display
     val errorMessage = when (cardPinError) {
-        CardPinError.Empty -> stringResource(id = R.string.error_pin)
+        CardPinError.Empty,
+        CardPinError.Invalid -> stringResource(id = R.string.error_pin)
         CardPinError.None -> null
     }
 
@@ -68,7 +69,7 @@ internal fun CardPinInput(
         onValueChange = {
             hasUserInteracted = true
             // Parse the input value and invoke the callback
-            GiftCardInputValidator.parseCardPin(it)?.let { code ->
+            GiftCardInputParser.parseCardPin(it)?.let { code ->
                 onValueChange(code)
             }
         },

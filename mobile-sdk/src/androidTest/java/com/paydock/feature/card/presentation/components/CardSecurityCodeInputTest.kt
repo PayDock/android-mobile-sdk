@@ -14,8 +14,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.paydock.core.BaseUITest
-import com.paydock.feature.card.domain.model.integration.enums.CardScheme
-import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
+import com.paydock.feature.card.domain.model.integration.enums.CardType
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,7 +34,7 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
         composeTestRule.setContent {
             CardSecurityCodeInput(
                 value = securityCode,
-                cardScheme = CardScheme.VISA, // CVV
+                cardType = CardType.VISA, // CVV
                 onValueChange = {
                     securityCode = it
                 }
@@ -64,7 +63,7 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
         composeTestRule.setContent {
             CardSecurityCodeInput(
                 value = securityCode,
-                cardScheme = CardScheme.MASTERCARD, // CVC
+                cardType = CardType.MASTERCARD, // CVC
                 onValueChange = {
                     securityCode = it
                 }
@@ -93,7 +92,7 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
         composeTestRule.setContent {
             CardSecurityCodeInput(
                 value = securityCode,
-                cardScheme = CardScheme.AMEX, // CID
+                cardType = CardType.AMEX, // CID
                 onValueChange = {
                     securityCode = it
                 }
@@ -155,7 +154,7 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
         composeTestRule.setContent {
             CardSecurityCodeInput(
                 value = securityCode,
-                cardScheme = CardScheme.AMEX,
+                cardType = CardType.AMEX,
                 onValueChange = {
                     securityCode = it
                 }

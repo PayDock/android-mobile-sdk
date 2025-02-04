@@ -5,7 +5,7 @@ import com.paydock.core.network.dto.Resource
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.feature.card.data.dto.CardSchemasResponse
 import com.paydock.feature.card.data.dto.CardTokenResponse
-import com.paydock.feature.card.domain.model.integration.enums.CardScheme
+import com.paydock.feature.card.domain.model.integration.enums.CardType
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -60,44 +60,44 @@ internal class MapperTest : BaseUnitTest() {
         // Assert that the values are correct
         cardSchemas.forEach { (_, value) ->
             when (value.schema) {
-                CardScheme.VISA -> {
+                CardType.VISA -> {
                     assertEquals("420412", value.bin)
-                    assertEquals(CardScheme.VISA, value.schema)
+                    assertEquals(CardType.VISA, value.schema)
                 }
 
-                CardScheme.MASTERCARD -> {
+                CardType.MASTERCARD -> {
                     assertEquals("2221~2720", value.bin)
-                    assertEquals(CardScheme.MASTERCARD, value.schema)
+                    assertEquals(CardType.MASTERCARD, value.schema)
                 }
 
-                CardScheme.DINERS -> {
+                CardType.DINERS -> {
                     assertEquals("309", value.bin)
-                    assertEquals(CardScheme.DINERS, value.schema)
+                    assertEquals(CardType.DINERS, value.schema)
                 }
 
-                CardScheme.AUSBC -> {
+                CardType.AUSBC -> {
                     assertEquals("5610", value.bin)
-                    assertEquals(CardScheme.AUSBC, value.schema)
+                    assertEquals(CardType.AUSBC, value.schema)
                 }
 
-                CardScheme.JAPCB -> {
+                CardType.JAPCB -> {
                     assertEquals("180000~180099", value.bin)
-                    assertEquals(CardScheme.JAPCB, value.schema)
+                    assertEquals(CardType.JAPCB, value.schema)
                 }
 
-                CardScheme.AMEX -> {
+                CardType.AMEX -> {
                     assertEquals("324000", value.bin)
-                    assertEquals(CardScheme.AMEX, value.schema)
+                    assertEquals(CardType.AMEX, value.schema)
                 }
 
-                CardScheme.SOLO -> {
+                CardType.SOLO -> {
                     assertEquals("633454", value.bin)
-                    assertEquals(CardScheme.SOLO, value.schema)
+                    assertEquals(CardType.SOLO, value.schema)
                 }
 
-                CardScheme.DISCOVER -> {
+                CardType.DISCOVER -> {
                     assertEquals("6011", value.bin)
-                    assertEquals(CardScheme.DISCOVER, value.schema)
+                    assertEquals(CardType.DISCOVER, value.schema)
                 }
 
                 null -> fail("Unknown schema: bin: ${value.bin}")

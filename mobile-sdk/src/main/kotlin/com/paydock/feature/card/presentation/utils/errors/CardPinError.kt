@@ -16,6 +16,14 @@ internal sealed class CardPinError {
     data object Empty : CardPinError()
 
     /**
+     * Indicates that the gift card pib is invalid.
+     *
+     * This error is triggered when the input fails validation checks,
+     * such as format or length constraints.
+     */
+    data object Invalid : CardPinError()
+
+    /**
      * Represents the absence of any validation error.
      *
      * This state implies that the card PIN has been provided and is valid.

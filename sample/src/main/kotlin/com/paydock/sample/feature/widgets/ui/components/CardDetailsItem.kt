@@ -15,7 +15,7 @@ import com.paydock.core.network.dto.error.displayableMessage
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.SaveCardConfig
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
-import com.paydock.feature.card.domain.model.integration.enums.CardScheme
+import com.paydock.feature.card.domain.model.integration.enums.CardType
 import com.paydock.feature.card.presentation.CardDetailsWidget
 import com.paydock.sample.BuildConfig
 
@@ -33,14 +33,14 @@ fun CardDetailsItem(context: Context, accessToken: String) {
             ),
             schemeSupport = SupportedSchemeConfig(
                 supportedSchemes = setOf(
-                    CardScheme.VISA,
-                    CardScheme.MASTERCARD,
-                    CardScheme.AMEX,
-                    CardScheme.AUSBC,
-                    CardScheme.DINERS,
-                    CardScheme.DISCOVER,
-                    CardScheme.JAPCB,
-                    CardScheme.SOLO
+                    CardType.VISA,
+                    CardType.MASTERCARD,
+                    CardType.AMEX,
+                    CardType.AUSBC,
+                    CardType.DINERS,
+                    CardType.DISCOVER,
+                    CardType.JAPCB,
+                    CardType.SOLO
                 ),
                 enableValidation = true
             )

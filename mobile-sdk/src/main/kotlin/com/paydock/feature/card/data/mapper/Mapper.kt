@@ -3,7 +3,7 @@ package com.paydock.feature.card.data.mapper
 import com.paydock.feature.card.data.dto.CardSchemasResponse
 import com.paydock.feature.card.data.dto.CardTokenResponse
 import com.paydock.feature.card.data.dto.Schema
-import com.paydock.feature.card.domain.model.integration.enums.CardScheme
+import com.paydock.feature.card.domain.model.integration.enums.CardType
 import com.paydock.feature.card.domain.model.ui.CardSchema
 import com.paydock.feature.card.domain.model.ui.TokenDetails
 import java.util.TreeMap
@@ -48,16 +48,16 @@ internal fun CardSchemasResponse.asEntity(): TreeMap<Int, CardSchema> {
  * @param schema The `Schema` enum value to be mapped to a `CardScheme`.
  * @return The corresponding `CardScheme` enum value, or `null` if the schema is not recognized.
  */
-private fun mapSchemaStringToEnum(schema: Schema?): CardScheme? {
+private fun mapSchemaStringToEnum(schema: Schema?): CardType? {
     return when (schema) {
-        Schema.VISA -> CardScheme.VISA
-        Schema.MASTERCARD -> CardScheme.MASTERCARD
-        Schema.AMEX -> CardScheme.AMEX
-        Schema.DINERS -> CardScheme.DINERS
-        Schema.DISCOVER -> CardScheme.DISCOVER
-        Schema.SOLO -> CardScheme.SOLO
-        Schema.JAPCB -> CardScheme.JAPCB
-        Schema.AUSBC -> CardScheme.AUSBC
+        Schema.VISA -> CardType.VISA
+        Schema.MASTERCARD -> CardType.MASTERCARD
+        Schema.AMEX -> CardType.AMEX
+        Schema.DINERS -> CardType.DINERS
+        Schema.DISCOVER -> CardType.DISCOVER
+        Schema.SOLO -> CardType.SOLO
+        Schema.JAPCB -> CardType.JAPCB
+        Schema.AUSBC -> CardType.AUSBC
         else -> null
     }
 }

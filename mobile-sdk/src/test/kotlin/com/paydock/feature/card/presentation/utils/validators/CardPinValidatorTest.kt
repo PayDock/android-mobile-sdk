@@ -10,18 +10,18 @@ internal class CardPinValidatorTest {
 
     @Test
     fun testIsValidPin_Format_ValidNumber() {
-        assertTrue(CardPinValidator.isValidPinFormat("1234"))
+        assertTrue(CardPinValidator.isCardPinValid("1234"))
     }
 
     @Test
     fun testIsValidPin_Format_BlankNumber() {
-        assertFalse(CardPinValidator.isValidPinFormat(""))
-        assertFalse(CardPinValidator.isValidPinFormat("  "))
+        assertFalse(CardPinValidator.isCardPinValid(""))
+        assertFalse(CardPinValidator.isCardPinValid("  "))
     }
 
     @Test
     fun testIsValidPin_Format_NonDigitNumber() {
-        assertFalse(CardPinValidator.isValidPinFormat("abcd"))
+        assertFalse(CardPinValidator.isCardPinValid("abcd"))
     }
 
     @Test

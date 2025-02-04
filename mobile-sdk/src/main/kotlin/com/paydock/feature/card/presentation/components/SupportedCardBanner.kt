@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.paydock.feature.card.domain.model.integration.enums.CardScheme
+import com.paydock.feature.card.domain.model.integration.enums.CardType
 
 /**
  * Displays a banner showing the supported card schemes as icons.
@@ -18,10 +18,10 @@ import com.paydock.feature.card.domain.model.integration.enums.CardScheme
  * representing the payment methods accepted by the integration.
  * The icons are aligned to the right/end of the banner and spaced with 7.dp between each image.
  *
- * @param supportedSchemes A list of [CardScheme] enums representing the supported card schemes.
+ * @param supportedSchemes A list of [CardType] enums representing the supported card schemes.
  */
 @Composable
-internal fun SupportedCardBanner(supportedSchemes: Set<CardScheme>) {
+internal fun SupportedCardBanner(supportedSchemes: Set<CardType>) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top,

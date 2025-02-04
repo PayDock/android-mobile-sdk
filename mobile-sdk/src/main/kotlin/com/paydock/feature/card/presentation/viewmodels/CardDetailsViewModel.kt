@@ -29,7 +29,7 @@ import java.util.TreeMap
 internal class CardDetailsViewModel(
     private val accessToken: String,
     private val gatewayId: String?,
-    private val schemeConfig: SupportedSchemeConfig,
+    schemeConfig: SupportedSchemeConfig,
     private val getCardSchemasUseCase: GetCardSchemasUseCase,
     private val createCardPaymentTokenUseCase: CreateCardPaymentTokenUseCase,
     dispatchers: DispatchersProvider,
@@ -39,7 +39,7 @@ internal class CardDetailsViewModel(
      * Holds the current input state of card details.
      */
     private val _inputStateFlow: MutableStateFlow<CardDetailsInputState> =
-        MutableStateFlow(CardDetailsInputState(schemeConfig = schemeConfig))
+        MutableStateFlow(CardDetailsInputState())
     val inputStateFlow: StateFlow<CardDetailsInputState> = _inputStateFlow.asStateFlow()
 
     /**
@@ -50,7 +50,14 @@ internal class CardDetailsViewModel(
     val stateFlow: StateFlow<CardDetailsUIState> = _stateFlow.asStateFlow()
 
     init {
+        updateSchemeConfigState(schemeConfig)
         getCardSchemas()
+    }
+
+    private fun updateSchemeConfigState(schemeConfig: SupportedSchemeConfig) {
+        _inputStateFlow.update { state ->
+            state.copy(schemeConfig = schemeConfig)
+        }
     }
 
     /**

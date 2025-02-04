@@ -10,7 +10,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.card.domain.model.integration.enums.CardScheme
+import com.paydock.feature.card.domain.model.integration.enums.CardType
+import com.paydock.feature.card.domain.model.integration.enums.CardType.Companion.displayLabel
 
 /**
  * A composable function to display an icon representing the card issuer.
@@ -18,20 +19,20 @@ import com.paydock.feature.card.domain.model.integration.enums.CardScheme
  * This function dynamically renders an icon based on the provided card issuer type
  * and adjusts its appearance based on the focus state.
  *
- * @param cardScheme The type of card scheme, represented as a `CardScheme`.
+ * @param cardType The type of card scheme, represented as a `CardScheme`.
  * This determines the specific icon resource to be displayed.
  * @param focused A flag indicating whether the card input field is focused.
  * This affects the tint applied to the icon when the card scheme type is `OTHER`.
  */
 @Composable
-internal fun CardSchemeIcon(cardScheme: CardScheme?, focused: Boolean) {
+internal fun CardSchemeIcon(cardType: CardType?, focused: Boolean) {
     Icon(
         modifier = Modifier
             .testTag("cardIcon")
             .width(24.dp),
-        painter = painterResource(id = mapSchemeToDrawable(cardScheme)),
-        contentDescription = null,
-        tint = if (cardScheme == null) {
+        painter = painterResource(id = mapSchemeToDrawable(cardType)),
+        contentDescription = cardType?.displayLabel(),
+        tint = if (cardType == null) {
             if (focused) Theme.colors.onSurface else Theme.colors.onSurfaceVariant
         } else Color.Unspecified
     )
@@ -48,14 +49,14 @@ internal fun CardSchemeIcon(cardScheme: CardScheme?, focused: Boolean) {
  * @return The drawable resource ID corresponding to the provided card scheme, or
  * the default credit card drawable if the scheme is `null` or unrecognized.
  */
-private fun mapSchemeToDrawable(scheme: CardScheme?): Int = when (scheme) {
-    CardScheme.AMEX -> R.drawable.ic_amex
-    CardScheme.AUSBC -> R.drawable.ic_ausbc
-    CardScheme.DINERS -> R.drawable.ic_diners_club
-    CardScheme.DISCOVER -> R.drawable.ic_discover
-    CardScheme.JAPCB -> R.drawable.ic_jcb
-    CardScheme.MASTERCARD -> R.drawable.ic_mastercard
-    CardScheme.SOLO -> R.drawable.ic_solo
-    CardScheme.VISA -> R.drawable.ic_visa
+private fun mapSchemeToDrawable(scheme: CardType?): Int = when (scheme) {
+    CardType.AMEX -> R.drawable.ic_amex
+    CardType.AUSBC -> R.drawable.ic_ausbc
+    CardType.DINERS -> R.drawable.ic_diners_club
+    CardType.DISCOVER -> R.drawable.ic_discover
+    CardType.JAPCB -> R.drawable.ic_jcb
+    CardType.MASTERCARD -> R.drawable.ic_mastercard
+    CardType.SOLO -> R.drawable.ic_solo
+    CardType.VISA -> R.drawable.ic_visa
     else -> R.drawable.ic_credit_card
 }

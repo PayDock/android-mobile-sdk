@@ -28,7 +28,7 @@ import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.presentation.utils.errors.GiftCardNumberError
 import com.paydock.feature.card.presentation.utils.transformations.CardNumberInputTransformation
-import com.paydock.feature.card.presentation.utils.validators.GiftCardInputValidator
+import com.paydock.feature.card.presentation.utils.validators.GiftCardInputParser
 import com.paydock.feature.card.presentation.utils.validators.GiftCardNumberValidator
 import kotlinx.coroutines.delay
 
@@ -62,7 +62,7 @@ internal fun GiftCardNumberInput(
     }
 
     // Parse the card number to determine its type and validity
-    val cardNumber = GiftCardInputValidator.parseNumber(debouncedValue)
+    val cardNumber = GiftCardInputParser.parseNumber(debouncedValue)
 
     // Check if the card number is valid
     val cardNumberError = GiftCardNumberValidator.validateCardNumberInput(debouncedValue, hasUserInteracted)
@@ -83,7 +83,7 @@ internal fun GiftCardNumberInput(
             hasUserInteracted = true
             if (it.length <= MobileSDKConstants.CardDetailsConfig.MAX_GIFT_CARD_LENGTH) {
                 // Parse the input text to ensure it is a valid card number before invoking the callback
-                GiftCardInputValidator.parseNumber(it)?.let { number ->
+                GiftCardInputParser.parseNumber(it)?.let { number ->
                     onValueChange(number)
                 }
             }
@@ -103,7 +103,7 @@ internal fun GiftCardNumberInput(
             )
         },
         error = errorMessage,
-        visualTransformation = CardNumberInputTransformation(MobileSDKConstants.CardDetailsConfig.MAX_GIFT_CARD_LENGTH),
+        visualTransformation = CardNumberInputTransformation(),
         // Show a success icon when the card number is valid and not blank
         trailingIcon = {
             if (!cardNumber.isNullOrBlank()) {
