@@ -7,9 +7,6 @@ import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wallet.PaymentData
 import com.google.android.gms.wallet.PaymentsClient
 import com.google.android.gms.wallet.WalletConstants
-import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
-import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
-import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.MobileSDKTestConstants
@@ -19,9 +16,12 @@ import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.utils.MainDispatcherRule
-import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.util.PaymentsUtil
+import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
+import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
+import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -85,7 +85,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
         viewModel.googlePayAvailable.test {
             assertEquals(true, awaitItem()) // Updated value after fetchCanUseGooglePay
         }
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             assertIs<GooglePayUIState.Idle>(awaitItem())
         }
     }
@@ -93,7 +93,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `handleGooglePayResultErrors sets cancellation state on CANCELED`() = runTest {
         viewModel.handleGooglePayResultErrors(CommonStatusCodes.CANCELED)
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             awaitItem().let { state ->
                 assertIs<GooglePayUIState.Error>(state)
                 assertIs<GooglePayException.CancellationException>(state.exception)
@@ -105,7 +105,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `handleGooglePayResultErrors sets result state on DEVELOPER_ERROR`() = runTest {
         viewModel.handleGooglePayResultErrors(CommonStatusCodes.DEVELOPER_ERROR)
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             awaitItem().let { state ->
                 assertIs<GooglePayUIState.Error>(state)
                 assertIs<GooglePayException.ResultException>(state.exception)
@@ -118,7 +118,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
     fun `handleGooglePayResultErrors sets result state on ERROR`() = runTest {
         val resultError = "[ERROR] An unexpected error occurred while processing Google Pay. Please try again later or contact support for assistance."
         viewModel.handleGooglePayResultErrors(CommonStatusCodes.ERROR)
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             awaitItem().let { state ->
                 assertIs<GooglePayUIState.Error>(state)
                 assertIs<GooglePayException.ResultException>(state.exception)
@@ -131,7 +131,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
     fun `handleGooglePayResultErrors sets cancellation state on ERROR_CODE_USER_CANCELLED`() = runTest {
         val status = Status(WalletConstants.ERROR_CODE_USER_CANCELLED, "User cancelled request")
         viewModel.handleWalletResultErrors(status)
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             awaitItem().let { state ->
                 assertIs<GooglePayUIState.Error>(state)
                 assertIs<GooglePayException.CancellationException>(state.exception)
@@ -144,7 +144,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
     fun `handleGooglePayResultErrors sets cancellation state on ERROR_CODE_DEVELOPER_ERROR`() = runTest {
         val status = Status(WalletConstants.ERROR_CODE_DEVELOPER_ERROR, "Developer error occurred")
         viewModel.handleWalletResultErrors(status)
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             awaitItem().let { state ->
                 assertIs<GooglePayUIState.Error>(state)
                 assertIs<GooglePayException.ResultException>(state.exception)
@@ -157,7 +157,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
     fun `handleGooglePayResultErrors sets cancellation state on all other errors`() = runTest {
         val status = Status(WalletConstants.ERROR_CODE_INTERNAL_ERROR, "An unexpected error occurred!")
         viewModel.handleWalletResultErrors(status)
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             awaitItem().let { state ->
                 assertIs<GooglePayUIState.Error>(state)
                 assertIs<GooglePayException.ResultException>(state.exception)
@@ -190,7 +190,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
         val methods = viewModel.extractAllowedPaymentMethods(invalidRequest)
         assertNull(methods)
 
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             awaitItem().let { state ->
                 assertIs<GooglePayUIState.Error>(state)
                 assertTrue(state.exception is GooglePayException.InitialisationException)
@@ -221,7 +221,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
             coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
             viewModel.processGooglePayPaymentResult(paymentData)
 
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 // Initial state
                 assertIs<GooglePayUIState.Idle>(awaitItem())
                 // Loading state - before execution
@@ -254,7 +254,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
             coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
 
             viewModel.processGooglePayPaymentResult(paymentData)
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 // Initial state
                 assertIs<GooglePayUIState.Idle>(awaitItem())
                 // Loading state - before execution
@@ -279,7 +279,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
             every { paymentData.toJson() } throws exception
 
             viewModel.processGooglePayPaymentResult(paymentData)
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 awaitItem().let { state ->
                     assertTrue(state is GooglePayUIState.Error)
                     assertTrue((state as GooglePayUIState.Error).exception is GooglePayException.ResultException)
@@ -291,7 +291,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
     fun `resetResultState should reset UI state`() = runTest {
         viewModel.handleGooglePayResultErrors(CommonStatusCodes.CANCELED)
         // Assert state is Idle
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             assertIs<GooglePayUIState.Error>(awaitItem())
             viewModel.resetResultState()
             assertIs<GooglePayUIState.Idle>(awaitItem())

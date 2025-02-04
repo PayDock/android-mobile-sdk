@@ -1,26 +1,25 @@
 package com.paydock.feature.wallet.presentation.viewmodels
 
-import com.paydock.api.charges.data.dto.CaptureWalletChargeRequest
-import com.paydock.api.charges.data.dto.WalletCallbackRequest
-import com.paydock.api.charges.domain.model.WalletCallback
-import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
-import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
-import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.presentation.viewmodels.BaseViewModel
-import com.paydock.feature.charge.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.data.dto.CaptureWalletChargeRequest
+import com.paydock.feature.wallet.data.dto.WalletCallbackRequest
+import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.ui.WalletCallback
+import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
+import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
+import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 
 /**
- * Base ViewModel for handling wallet-related operations, such as capturing wallet transactions.
+ * Abstract base class for Wallet ViewModels, providing common functionality for managing wallet transactions.
  *
- * @param captureWalletChargeUseCase The use case responsible for capturing wallet transactions.
- * @param getWalletCallbackUseCase The use case getting wallet callback details.
- * @param dispatchers Provides the coroutine dispatchers for handling asynchronous tasks.
- * @param T The type representing the UI state of the ViewModel.
+ * @param captureWalletChargeUseCase Use case for capturing wallet charges.
+ * @param declineWalletChargeUseCase Use case for declining wallet charges.
+ * @param getWalletCallbackUseCase Use case for retrieving wallet callback data.
+ * @param dispatchers Provider for coroutine dispatchers.
  */
 internal abstract class WalletViewModel<T>(
     private val captureWalletChargeUseCase: CaptureWalletChargeUseCase,
@@ -29,12 +28,17 @@ internal abstract class WalletViewModel<T>(
     dispatchers: DispatchersProvider
 ) : BaseViewModel(dispatchers) {
 
+    //region Private Properties
     // Mutable state flow to hold the UI state
-    private val _stateFlow: MutableStateFlow<T> = MutableStateFlow(this.createInitialState())
+    private val _uiState: MutableStateFlow<T> = MutableStateFlow(this.createInitialState())
+    //endregion
 
+    //region Public Properties
     // Expose a read-only state flow for observing the UI state changes
-    val stateFlow: StateFlow<T> = _stateFlow.asStateFlow()
+    val uiState: StateFlow<T> = _uiState.asStateFlow()
+    //endregion
 
+    //region Abstract Methods
     /**
      * Creates the initial state for the UI.
      *
@@ -58,7 +62,9 @@ internal abstract class WalletViewModel<T>(
      * Sets the UI state to indicate loading.
      */
     abstract fun setLoadingState()
+    //endregion
 
+    //region Open Methods
     /**
      * Updates the UI state based on the result of a wallet transaction capture.
      *
@@ -72,16 +78,16 @@ internal abstract class WalletViewModel<T>(
      * @param result The result of fetching wallet callback data.
      */
     open fun updateCallbackUIState(result: Result<WalletCallback>) {}
+    //endregion
 
+    //region Protected Methods
     /**
-     * Updates the UI state using the provided update function.
+     * Updates the UI state to a new value.
      *
-     * @param update Function to modify the current UI state.
+     * @param newState The new state to set for the UI.
      */
-    protected fun updateState(update: (T) -> T) {
-        _stateFlow.update { state ->
-            update(state)
-        }
+    protected fun updateUiState(newState: T) {
+        _uiState.value = newState
     }
 
     /**
@@ -145,4 +151,5 @@ internal abstract class WalletViewModel<T>(
             updateCallbackUIState(result)
         }
     }
+    //endregion
 }

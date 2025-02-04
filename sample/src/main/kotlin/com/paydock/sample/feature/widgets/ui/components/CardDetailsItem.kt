@@ -15,7 +15,7 @@ import com.paydock.core.network.dto.error.displayableMessage
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.SaveCardConfig
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
-import com.paydock.feature.card.domain.model.integration.enums.CardScheme
+import com.paydock.feature.card.domain.model.integration.enums.CardType
 import com.paydock.feature.card.presentation.CardDetailsWidget
 import com.paydock.sample.BuildConfig
 
@@ -32,7 +32,16 @@ fun CardDetailsItem(context: Context, accessToken: String) {
                 )
             ),
             schemeSupport = SupportedSchemeConfig(
-                supportedSchemes = CardScheme.entries.toSet(),
+                supportedSchemes = setOf(
+                    CardType.VISA,
+                    CardType.MASTERCARD,
+                    CardType.AMEX,
+                    CardType.AUSBC,
+                    CardType.DINERS,
+                    CardType.DISCOVER,
+                    CardType.JAPCB,
+                    CardType.SOLO
+                ),
                 enableValidation = true
             )
         ),
@@ -55,6 +64,7 @@ fun CardDetailsItem(context: Context, accessToken: String) {
                         is CardDetailsException.UnknownException -> {
                             exception.toError().displayableMessage
                         }
+
                     }
                     Log.d("[CardDetailsWidget]", "Failure: $error")
                     Toast.makeText(context, "Tokenised card failed! [${error}]", Toast.LENGTH_SHORT)

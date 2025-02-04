@@ -7,7 +7,7 @@ import com.paydock.feature.afterpay.injection.afterPayModule
 import com.paydock.feature.card.injection.cardDetailsModule
 import com.paydock.feature.flypay.injection.flyPayModule
 import com.paydock.feature.googlepay.injection.googlePayModule
-import com.paydock.feature.paypal.injection.payPalModule
+import com.paydock.feature.paypal.core.injection.payPalModule
 import com.paydock.feature.src.injection.clickToPayModule
 import com.paydock.feature.threeDS.injection.threeDSModule
 import org.koin.android.ext.koin.androidApplication
@@ -27,10 +27,11 @@ internal val presentationModule = module {
         cardDetailsModule,
         threeDSModule,
         addressDetailsModule,
+        clickToPayModule,
+        // wallet modules
         googlePayModule,
         payPalModule,
         flyPayModule,
-        afterPayModule,
-        clickToPayModule
+        afterPayModule
     )
 }

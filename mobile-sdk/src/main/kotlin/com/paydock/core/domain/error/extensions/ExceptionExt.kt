@@ -10,21 +10,23 @@ import com.paydock.core.domain.error.exceptions.GooglePayException
 import com.paydock.core.domain.error.exceptions.PayPalException
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.domain.error.exceptions.SdkException
+import com.paydock.core.extensions.castAs
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.network.exceptions.UnknownApiException
 import kotlinx.serialization.SerializationException
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import kotlin.reflect.KClass
 
 /**
  * Maps an exception to a corresponding API-related exception or a generic exception.
  *
  * This function provides a structured way to handle and transform different types of exceptions
  * into custom exceptions, improving the granularity and readability of error handling in the SDK.
- * It uses the `E` type parameter to specify an expected exception type.
+ * It uses the `exceptionClass` KClass parameter to specify an expected exception type.
  *
- * @param E The expected exception type to handle, typically a custom exception subclass.
+ * @param exceptionClass The expected exception type to handle, typically a [SdkException] subclass.
  * @receiver Exception The exception to be mapped.
  * @return A [Throwable] that corresponds to the mapped exception type.
  *
@@ -33,9 +35,11 @@ import java.net.UnknownHostException
  * - **[UnknownHostException]**: Mapped to [GenericException.ConnectionException].
  * - **[SerializationException]**: Mapped to [GenericException.DataParsingException].
  * - **[IOException]**: Mapped to [GenericException.GeneralException].
- * - **[AfterpayException]**: Delegates mapping to `mapAfterpayApiException`.
  * - **[CardDetailsException]**: Delegates mapping to `mapCardDetailsApiException`.
+ * - **[GiftCardException]**: Delegates mapping to `mapGiftCardDetailsApiException`.
+ * - **[AfterpayException]**: Delegates mapping to `mapAfterpayApiException`.
  * - **[FlyPayException]**: Delegates mapping to `mapFlyPayApiException`.
+ * - **[GooglePayException]**: Delegates mapping to `mapGooglePayApiException`.
  * - **[PayPalException]**: Delegates mapping to `mapPayPalApiException`.
  * - **[PayPalVaultException]**: Delegates mapping to `mapPayPalVaultException`.
  * - **Fallback**: Maps to [GenericException.UnknownException] if no match is found.
@@ -50,32 +54,37 @@ import java.net.UnknownHostException
  * }
  * ```
  */
-internal inline fun <reified E : Exception> Throwable.mapApiException(): SdkException {
+internal fun Throwable.mapApiException(exceptionClass: KClass<out SdkException>): SdkException {
     // Generic Exception Mapping
     val genericException = this.mapGenericExceptions()
     if (genericException != null) {
         return genericException
     }
     return when {
-        // TODO - Add all other widget type exceptions here!
-        CardDetailsException::class.java.isAssignableFrom(E::class.java) ->
-            this.mapCardDetailsApiException<E>()
-        GiftCardException::class.java.isAssignableFrom(E::class.java) ->
-            this.mapGiftCardDetailsApiException<E>()
-        AfterpayException::class.java.isAssignableFrom(E::class.java) ->
-            this.mapAfterpayApiException<E>()
-        FlyPayException::class.java.isAssignableFrom(E::class.java) ->
-            this.mapFlyPayApiException<E>()
-        GooglePayException::class.java.isAssignableFrom(E::class.java) ->
-            this.mapGooglePayApiException<E>()
-        PayPalException::class.java.isAssignableFrom(E::class.java) ->
-            this.mapPayPalApiException<E>()
-        PayPalVaultException::class.java.isAssignableFrom(E::class.java) ->
-            this.mapPayPalVaultApiException<E>()
-        // Add other mappings for different exception types using similar patterns
+        CardDetailsException::class.java.isAssignableFrom(exceptionClass.java) ->
+            this.mapCardDetailsApiException(exceptionClass.castAs<KClass<CardDetailsException>>())
+
+        GiftCardException::class.java.isAssignableFrom(exceptionClass.java) ->
+            this.mapGiftCardDetailsApiException(exceptionClass.castAs<KClass<GiftCardException>>())
+
+        AfterpayException::class.java.isAssignableFrom(exceptionClass.java) ->
+            this.mapAfterpayApiException(exceptionClass.castAs<KClass<AfterpayException>>())
+
+        FlyPayException::class.java.isAssignableFrom(exceptionClass.java) ->
+            this.mapFlyPayApiException(exceptionClass.castAs<KClass<FlyPayException>>())
+
+        GooglePayException::class.java.isAssignableFrom(exceptionClass.java) ->
+            this.mapGooglePayApiException(exceptionClass.castAs<KClass<GooglePayException>>())
+
+        PayPalException::class.java.isAssignableFrom(exceptionClass.java) ->
+            this.mapPayPalApiException(exceptionClass.castAs<KClass<PayPalException>>())
+
+        PayPalVaultException::class.java.isAssignableFrom(exceptionClass.java) ->
+            this.mapPayPalVaultApiException(exceptionClass.castAs<KClass<PayPalVaultException>>())
+
         else -> GenericException.UnknownException(
             "No suitable exception mapping of [${this::class.java.simpleName}] " +
-                "found for ${E::class.simpleName}"
+                "found for ${exceptionClass.simpleName}"
         )
     }
 }
@@ -123,8 +132,7 @@ internal fun Throwable.mapGenericExceptions(): SdkException? {
  * corresponding `PayPalVaultException` subclasses. For other exceptions, a default `PayPalVaultException.UnknownException`
  * is returned.
  *
- * @param E The target type of `PayPalVaultException` to map the throwable to. This is a reified type parameter, allowing the function
- *          to infer the target exception type at runtime.
+ * @param exceptionClass The target type of `PayPalVaultException` to map the throwable to.
  * @receiver The throwable to map.
  * @return A `PayPalVaultException` instance that represents the mapped exception.
  *
@@ -152,10 +160,10 @@ internal fun Throwable.mapGenericExceptions(): SdkException? {
  * - Ensure that the type parameter `E` is a subclass of `Throwable`.
  * - Use this mapping function to consistently convert low-level exceptions into higher-level domain exceptions.
  */
-internal inline fun <reified E : Throwable> Throwable.mapPayPalVaultApiException(): PayPalVaultException =
+internal fun Throwable.mapPayPalVaultApiException(exceptionClass: KClass<out PayPalVaultException>): PayPalVaultException =
     when (this) {
         is ApiException -> {
-            when (E::class) {
+            when (exceptionClass) {
                 PayPalVaultException.CreateSetupTokenException::class ->
                     PayPalVaultException.CreateSetupTokenException(error = this.error)
 
@@ -185,8 +193,7 @@ internal inline fun <reified E : Throwable> Throwable.mapPayPalVaultApiException
  * corresponding `FlyPayException` subclasses. For other exceptions, a default `FlyPayException.UnknownException`
  * is returned.
  *
- * @param E The target type of `FlyPayException` to map the throwable to. This is a reified type parameter, allowing the function
- *          to infer the target exception type at runtime.
+ * @param exceptionClass The target type of `FlyPayException` to map the throwable to.
  * @receiver The throwable to map.
  * @return A `FlyPayException` instance that represents the mapped exception.
  *
@@ -209,10 +216,10 @@ internal inline fun <reified E : Throwable> Throwable.mapPayPalVaultApiException
  * ## Notes:
  * - Ensure that the type parameter `E` is a subclass of `Throwable`.
  */
-internal inline fun <reified E : Throwable> Throwable.mapFlyPayApiException(): FlyPayException =
+internal fun Throwable.mapFlyPayApiException(exceptionClass: KClass<out FlyPayException>): FlyPayException =
     when (this) {
         is ApiException -> {
-            when (E::class) {
+            when (exceptionClass) {
                 FlyPayException.FetchingUrlException::class ->
                     FlyPayException.FetchingUrlException(error = this.error)
 
@@ -236,8 +243,7 @@ internal inline fun <reified E : Throwable> Throwable.mapFlyPayApiException(): F
  * corresponding `PayPalException` subclasses. For other exceptions, a default `PayPalException.UnknownException`
  * is returned.
  *
- * @param E The target type of `PayPalException` to map the throwable to. This is a reified type parameter, allowing the function
- *          to infer the target exception type at runtime.
+ * @param exceptionClass The target type of `PayPalException` to map the throwable to.
  * @receiver The throwable to map.
  * @return A `PayPalException` instance that represents the mapped exception.
  *
@@ -261,10 +267,10 @@ internal inline fun <reified E : Throwable> Throwable.mapFlyPayApiException(): F
  * ## Notes:
  * - Ensure that the type parameter `E` is a subclass of `Throwable`.
  */
-internal inline fun <reified E : Throwable> Throwable.mapPayPalApiException(): PayPalException =
+internal fun Throwable.mapPayPalApiException(exceptionClass: KClass<out PayPalException>): PayPalException =
     when (this) {
         is ApiException -> {
-            when (E::class) {
+            when (exceptionClass) {
                 PayPalException.CapturingChargeException::class ->
                     PayPalException.CapturingChargeException(error = this.error)
 
@@ -291,8 +297,7 @@ internal inline fun <reified E : Throwable> Throwable.mapPayPalApiException(): P
  * corresponding `GooglePayException` subclasses. For other exceptions, a default `GooglePayException.UnknownException`
  * is returned.
  *
- * @param E The target type of `GooglePayException` to map the throwable to. This is a reified type parameter, allowing the function
- *          to infer the target exception type at runtime.
+ * @param exceptionClass The target type of `GooglePayException` to map the throwable to.
  * @receiver The throwable to map.
  * @return A `GooglePayException` instance that represents the mapped exception.
  *
@@ -315,10 +320,10 @@ internal inline fun <reified E : Throwable> Throwable.mapPayPalApiException(): P
  * ## Notes:
  * - Ensure that the type parameter `E` is a subclass of `Throwable`.
  */
-internal inline fun <reified E : Throwable> Throwable.mapGooglePayApiException(): GooglePayException =
+internal fun Throwable.mapGooglePayApiException(exceptionClass: KClass<out GooglePayException>): GooglePayException =
     when (this) {
         is ApiException -> {
-            when (E::class) {
+            when (exceptionClass) {
                 GooglePayException.CapturingChargeException::class ->
                     GooglePayException.CapturingChargeException(error = this.error)
 
@@ -342,7 +347,7 @@ internal inline fun <reified E : Throwable> Throwable.mapGooglePayApiException()
  * It identifies the type of exception (`ApiException`, `UnknownApiException`, or other `Throwable`)
  * and maps it to an appropriate `CardDetailsException` subtype.
  *
- * @param E The specific subtype of `Throwable` expected for handling (e.g., `CardDetailsException.TokenisingCardException`).
+ * @param exceptionClass The specific subtype of `Throwable` expected for handling (e.g., `CardDetailsException.TokenisingCardException`).
  * @return A `CardDetailsException` that represents the mapped exception.
  *
  * ## Mapping Rules:
@@ -371,10 +376,10 @@ internal inline fun <reified E : Throwable> Throwable.mapGooglePayApiException()
  * - `CardDetailsException.TokenisingCardException`: Represents a specific error during card tokenization.
  * - `CardDetailsException.UnknownException`: Represents all other errors with a generic message.
  */
-internal inline fun <reified E : Throwable> Throwable.mapCardDetailsApiException(): CardDetailsException =
+internal fun Throwable.mapCardDetailsApiException(exceptionClass: KClass<out CardDetailsException>): CardDetailsException =
     when (this) {
         is ApiException -> {
-            when (E::class) {
+            when (exceptionClass) {
                 CardDetailsException.TokenisingCardException::class ->
                     CardDetailsException.TokenisingCardException(error = this.error)
 
@@ -401,15 +406,15 @@ internal inline fun <reified E : Throwable> Throwable.mapCardDetailsApiException
  * to corresponding subclasses of `AfterpayException`. If no specific mapping is found,
  * it defaults to an `UnknownException`.
  *
- * @param E The expected type of the `AfterpayException` to map to. This is inferred at compile time.
+ * @param exceptionClass The expected type of the `AfterpayException` to map to. This is inferred at compile time.
  * @receiver The original exception (`Throwable`) to be mapped.
  * @return An `AfterpayException` that represents the mapped exception.
  */
-internal inline fun <reified E : Throwable> Throwable.mapAfterpayApiException(): AfterpayException =
+internal fun Throwable.mapAfterpayApiException(exceptionClass: KClass<out AfterpayException>): AfterpayException =
     when (this) {
         // Handle cases where the exception is of type ApiException
         is ApiException -> {
-            when (E::class) {
+            when (exceptionClass) {
                 AfterpayException.CapturingChargeException::class ->
                     AfterpayException.CapturingChargeException(error = this.error)
 
@@ -440,16 +445,16 @@ internal inline fun <reified E : Throwable> Throwable.mapAfterpayApiException():
  * `GiftCardException`, ensuring meaningful error information is propagated to the application.
  * If the throwable does not match any specific exception type, it defaults to an `UnknownException`.
  *
- * @param E The type of `GiftCardException` to map to.
+ * @param exceptionClass The type of `GiftCardException` to map to.
  * @return A `GiftCardException` instance that corresponds to the throwable.
  *
  * @throws GiftCardException.TokenisingCardException If the exception is related to card tokenization errors.
  * @throws GiftCardException.UnknownException For all other types of exceptions, including unknown API errors.
  */
-internal inline fun <reified E : Throwable> Throwable.mapGiftCardDetailsApiException(): GiftCardException =
+internal fun Throwable.mapGiftCardDetailsApiException(exceptionClass: KClass<out GiftCardException>): GiftCardException =
     when (this) {
         is ApiException -> {
-            when (E::class) {
+            when (exceptionClass) {
                 GiftCardException.TokenisingCardException::class ->
                     GiftCardException.TokenisingCardException(error = this.error)
 

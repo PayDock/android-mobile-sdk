@@ -1,5 +1,6 @@
 package com.paydock.core.extensions
 
+import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.domain.error.extensions.mapApiException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -47,20 +48,20 @@ internal suspend fun <T> suspendRunCatching(block: suspend () -> T): Result<T> =
  * A utility inline function to execute a suspending block of code and handle exceptions by mapping them to a specific exception type.
  *
  * This function runs a given suspending block, returning a [Result] wrapping the success or failure. If an exception is caught,
- * it maps the caught exception to the specified type [E] using the `mapException` function.
+ * it maps the caught exception to the specified type [E] using the `mapApiException` function.
  *
  * @param T The type of the result to be returned.
- * @param E The type of the exception to map to in case of failure.
+ * @param exceptionClass The type of the exception to map to in case of failure.
  * @param block The suspending block of code to execute.
  * @return A [Result] instance containing either the successful result or the mapped exception.
  */
-@Suppress("REDUNDANT_INLINE_SUSPEND_FUNCTION_TYPE")
-internal suspend inline fun <T, reified E : Exception> suspendRunCatchingMapper(
+internal suspend fun <T> suspendRunCatchingMapper(
+    exceptionClass: KClass<out SdkException>,
     block: suspend () -> T
 ): Result<T> = try {
     Result.success(block())
 } catch (@Suppress("TooGenericExceptionCaught") exception: Exception) {
-    Result.failure(exception.mapApiException<E>())
+    Result.failure(exception.mapApiException(exceptionClass))
 }
 
 /**
@@ -102,6 +103,52 @@ fun <T, E : Throwable> Result<T>.getOrThrow(exceptionClass: KClass<E>): T {
                 continuation.resume(value)
             }
         }
+    }
+}
+
+/**
+ * Executes a given block of code and provides a mechanism to catch multiple specified exception types,
+ * executing an alternative block of code if any of the specified exceptions are caught.
+ *
+ * This function is designed to handle scenarios where you want to catch a specific set of exceptions
+ * and perform a fallback action, while still allowing other exceptions to propagate.
+ *
+ * @param R The return type of the block of code being executed.
+ * @param exceptions A vararg of [KClass] representing the exception types to catch.
+ * @param thenDo The block of code to execute if any of the specified exceptions are caught.
+ * @return The result of the original block of code if no specified exceptions are thrown,
+ * or the result of [thenDo] if a specified exception is caught.
+ * @throws Exception If an exception is thrown that is not in the list of [exceptions].
+ *
+ * @sample
+ *
+ * val result = {
+ * // Some code that might throw exceptions
+ *   throw IllegalArgumentException("Invalid argument")
+ * }.multiCatch(IllegalArgumentException: : class,  IllegalStateException: : class)  {
+ * // Code to execute if IllegalArgumentException or IllegalStateException is thrown
+ *   println("Caught a specified exception")
+ *   "Fallback Result"
+ * }
+ * println(result) // Output: Caught a specified exception, Fallback Result
+ *
+ * @sample
+ *
+ * val result = {
+ * // Some code that might throw exceptions
+ *    throw RuntimeException("Unexpected error")
+ * }.multiCatch(IllegalArgumentException: : class,  IllegalStateException: : class)  {
+ *    // Code to execute if IllegalArgumentException or IllegalStateException is thrown
+ *    println("Caught a specified exception")
+ *    "Fallback Result"
+ * }
+ * println(result) // Output: throws RuntimeException
+ **/
+inline fun <R> (() -> R).multiCatch(vararg exceptions: KClass<out Throwable>, thenDo: () -> R): R {
+    return try {
+        this()
+    } catch (@Suppress("TooGenericExceptionCaught") ex: Exception) {
+        if (ex::class in exceptions) thenDo() else throw ex
     }
 }
 

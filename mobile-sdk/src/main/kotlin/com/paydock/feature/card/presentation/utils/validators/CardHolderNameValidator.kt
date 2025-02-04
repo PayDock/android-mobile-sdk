@@ -10,17 +10,9 @@ import com.paydock.feature.card.presentation.utils.errors.CardHolderNameError
  */
 internal object CardHolderNameValidator {
 
-    /**
-     * Checks if the provided cardholder name is valid in terms of format.
-     *
-     * A valid cardholder name must satisfy the following condition:
-     * - It must not be null, blank, or empty.
-     *
-     * @param name The cardholder name to be validated.
-     * @return `true` if the name is valid, `false` otherwise.
-     */
-    fun isValidHolderNameFormat(name: String?): Boolean =
-        !name.isNullOrBlank()
+    fun isCardHolderNameValid(cardHolderName: String?): Boolean {
+        return cardHolderName?.let { validateHolderNameInput(it, true) == CardHolderNameError.None } ?: true
+    }
 
     /**
      * Validates the cardholder name input and returns an appropriate error state.

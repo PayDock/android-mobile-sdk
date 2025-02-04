@@ -9,17 +9,15 @@ import com.paydock.feature.card.presentation.utils.errors.CardPinError
 internal object CardPinValidator {
 
     /**
-     * Checks if the provided card pin is valid.
+     * Validates the provided card PIN to ensure it meets the required criteria.
+     * This function delegates the validation to the `validateCardPinInput` function and checks
+     * if there are no errors (i.e., `CardPinError.None`).
      *
-     * A valid card pin should meet the following conditions:
-     * 1. It should not be blank or empty.
-     * 2. It should contain only digits.
-     *
-     * @param pin The card pin to be validated.
-     * @return `true` if the name is valid, `false` otherwise.
+     * @param number The card PIN to be validated.
+     * @return `true` if the card PIN is valid, `false` otherwise.
      */
-    fun isValidPinFormat(pin: String): Boolean =
-        pin.isNotBlank() && pin.matches(MobileSDKConstants.Regex.NUMERIC_DIGITS)
+    fun isCardPinValid(number: String): Boolean =
+        validateCardPinInput(number, true) == CardPinError.None
 
     /**
      * Validates the input for a card PIN and determines the corresponding validation error state.
@@ -33,10 +31,24 @@ internal object CardPinValidator {
      * @return A [CardPinError] representing the validation state of the card PIN input.
      */
     fun validateCardPinInput(cardPin: String, hasUserInteracted: Boolean): CardPinError {
+        val isValidFormat = validateCardPinFormat(cardPin)
         return when {
             cardPin.isBlank() && hasUserInteracted -> CardPinError.Empty
+            cardPin.isNotBlank() && !isValidFormat -> CardPinError.Invalid
             else -> CardPinError.None
         }
+    }
+
+    /**
+     * Validates whether the given gift card pin contains only numeric digits.
+     *
+     * This function ensures that the card number matches the expected numeric pattern.
+     *
+     * @param cardPin The gift card pin to check.
+     * @return `true` if the card pin consists only of numeric digits, `false` otherwise.
+     */
+    private fun validateCardPinFormat(cardPin: String): Boolean {
+        return cardPin.matches(MobileSDKConstants.Regex.NUMERIC_DIGITS)
     }
 
 }

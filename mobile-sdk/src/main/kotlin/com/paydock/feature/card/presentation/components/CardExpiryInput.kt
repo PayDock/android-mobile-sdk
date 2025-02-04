@@ -26,7 +26,7 @@ import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.presentation.utils.errors.CardExpiryError
 import com.paydock.feature.card.presentation.utils.transformations.ExpiryInputTransformation
 import com.paydock.feature.card.presentation.utils.validators.CardExpiryValidator
-import com.paydock.feature.card.presentation.utils.validators.CreditCardInputValidator
+import com.paydock.feature.card.presentation.utils.validators.CreditCardInputParser
 import kotlinx.coroutines.delay
 
 /**
@@ -62,7 +62,7 @@ internal fun CardExpiryInput(
     }
 
     // Parse the expiry value for display purposes and validate it
-    val expiry = CreditCardInputValidator.parseExpiry(debouncedValue)
+    val expiry = CreditCardInputParser.parseExpiry(debouncedValue)
     // Validate possible expiry errors
     val expiryError = CardExpiryValidator.validateExpiryInput(debouncedValue, hasUserInteracted)
 
@@ -82,7 +82,7 @@ internal fun CardExpiryInput(
             hasUserInteracted = true
             // Format and validate expiry date
             val formattedExpiry = CardExpiryValidator.formatExpiry(it)
-            CreditCardInputValidator.parseExpiry(formattedExpiry)?.let { expiry ->
+            CreditCardInputParser.parseExpiry(formattedExpiry)?.let { expiry ->
                 onValueChange(expiry)
             }
         },
@@ -115,7 +115,7 @@ internal fun CardExpiryInput(
 private fun PreviewCardExpiryInput() {
     SdkTheme {
         Surface(color = Theme.colors.surface) {
-            CardExpiryInput(value = "0823") {
+            CardExpiryInput(value = "0823", enabled = true, nextFocus = null) {
 
             }
         }

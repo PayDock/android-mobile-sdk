@@ -36,7 +36,6 @@ import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.PayPal
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import com.paydock.feature.paypal.checkout.presentation.components.PayPalButton
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
 import com.paydock.feature.paypal.checkout.presentation.utils.CancellationStatus
@@ -44,6 +43,7 @@ import com.paydock.feature.paypal.checkout.presentation.utils.getCancellationSta
 import com.paydock.feature.paypal.checkout.presentation.utils.getDecodedUrlExtra
 import com.paydock.feature.paypal.checkout.presentation.utils.putCallbackUrlExtra
 import com.paydock.feature.paypal.checkout.presentation.viewmodels.PayPalViewModel
+import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -72,7 +72,7 @@ fun PayPalWidget(
     val viewModel: PayPalViewModel = koinViewModel()
 
     // Collect states for PayPal view models
-    val uiState by viewModel.stateFlow.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
     val scope = rememberCoroutineScope()
 

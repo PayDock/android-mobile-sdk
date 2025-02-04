@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -12,7 +12,7 @@ import com.paydock.sample.designsystems.theme.Theme
 
 @Composable
 fun <T : DisplayableListItem> ListScreen(items: List<T>, onItemClick: (T) -> Unit) {
-    Divider(color = Theme.colors.outlineVariant)
+    HorizontalDivider(color = Theme.colors.outlineVariant)
     LazyColumn(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -23,7 +23,7 @@ fun <T : DisplayableListItem> ListScreen(items: List<T>, onItemClick: (T) -> Uni
             ) {
                 onItemClick.invoke(item)
             }
-            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
         }
     }
 }

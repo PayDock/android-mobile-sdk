@@ -38,9 +38,9 @@ import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.presentation.viewmodels.GooglePayViewModel
+import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import org.koin.androidx.compose.koinViewModel
@@ -75,7 +75,7 @@ fun GooglePayWidget(
     val scope = rememberCoroutineScope()
 
     // Collect the UI state from the ViewModel
-    val uiState by viewModel.stateFlow.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val googlePayAvailable by viewModel.googlePayAvailable.collectAsState()
     val allowedPaymentMethods = viewModel.extractAllowedPaymentMethods(paymentRequest)
 

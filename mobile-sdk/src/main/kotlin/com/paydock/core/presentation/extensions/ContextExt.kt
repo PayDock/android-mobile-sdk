@@ -1,6 +1,5 @@
 package com.paydock.core.presentation.extensions
 
-import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
@@ -94,4 +93,28 @@ internal inline fun <reified Activity : ComponentActivity> Context.getActivity()
             null
         }
     }
+}
+
+/**
+ * Reads the text content from an asset file.
+ *
+ * @param fileName The name of the asset file.
+ * @return The text content of the asset file.
+ */
+fun Context.readTextFromAsset(fileName: String): String {
+    return assets.open(fileName).bufferedReader().use {
+        it.readText()
+    }
+}
+
+/**
+ * Reads the text content from a resource file.
+ *
+ * @param fileName The name of the resource file.
+ * @return The text content of the resource file.
+ */
+fun Context.readTextFromResources(fileName: String): String {
+    return resources.openRawResource(
+        resources.getIdentifier(fileName, "raw", packageName)
+    ).bufferedReader().use { it.readText() }
 }

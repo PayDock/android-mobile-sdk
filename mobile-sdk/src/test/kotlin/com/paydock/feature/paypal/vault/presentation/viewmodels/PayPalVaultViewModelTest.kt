@@ -1,10 +1,6 @@
 package com.paydock.feature.paypal.vault.presentation.viewmodels
 
 import app.cash.turbine.test
-import com.paydock.api.gateways.domain.usecase.GetPayPalClientIdUseCase
-import com.paydock.api.tokens.domain.model.PayPalPaymentTokenDetails
-import com.paydock.api.tokens.domain.usecase.CreatePayPalVaultPaymentTokenUseCase
-import com.paydock.api.tokens.domain.usecase.CreateSetupTokenUseCase
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
@@ -12,6 +8,10 @@ import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.utils.MainDispatcherRule
+import com.paydock.feature.paypal.core.domain.model.ui.PayPalPaymentTokenDetails
+import com.paydock.feature.paypal.core.domain.usecase.CreatePayPalVaultPaymentTokenUseCase
+import com.paydock.feature.paypal.core.domain.usecase.CreateSetupTokenUseCase
+import com.paydock.feature.paypal.core.domain.usecase.GetPayPalClientIdUseCase
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.presentation.state.PayPalVaultUIState
 import com.paydock.feature.paypal.vault.presentation.viewmodel.PayPalVaultViewModel

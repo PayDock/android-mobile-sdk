@@ -1,8 +1,6 @@
 package com.paydock.core.data.injection.modules
 
 import com.paydock.MobileSDK
-import com.paydock.api.charges.data.dto.WalletCallbackRequest
-import com.paydock.api.charges.domain.model.WalletType
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.domain.mapper.mapToBaseUrl
@@ -11,6 +9,8 @@ import com.paydock.core.network.addInterceptor
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.network.interceptor.AuthInterceptor
 import com.paydock.core.utils.MockResponseFileReader
+import com.paydock.feature.wallet.data.dto.WalletCallbackRequest
+import com.paydock.feature.wallet.domain.model.integration.WalletType
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
@@ -229,6 +229,14 @@ private fun MockRequestHandleScope.handleSuccessRequest(request: HttpRequestData
             )
         }
 
+        request.url.encodedPath.endsWith("/bin-management/card_schemas") -> {
+            respondError(
+                content = MockResponseFileReader("management/success_get_card_schemas_response.json").content,
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+        }
+
         request.url.encodedPath.endsWith("/") -> {
             // This is purely for example purposes
             respond(
@@ -304,6 +312,14 @@ private fun MockRequestHandleScope.handleFailureRequest(request: HttpRequestData
         request.url.encodedPath.endsWith("/gateways/${MobileSDKTestConstants.General.MOCK_INVALID_GATEWAY_ID}/wallet-config") -> {
             respondError(
                 content = MockResponseFileReader("gateway/failure_wallet_config_response.json").content,
+                status = HttpStatusCode.BadRequest,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+        }
+
+        request.url.encodedPath.endsWith("/bin-management/card_schemas") -> {
+            respondError(
+                content = MockResponseFileReader("management/failure_get_card_schemas_response.json").content,
                 status = HttpStatusCode.BadRequest,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )

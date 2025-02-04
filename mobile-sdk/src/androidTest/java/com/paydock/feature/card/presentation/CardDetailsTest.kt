@@ -13,14 +13,17 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.paydock.api.tokens.domain.model.TokenDetails
-import com.paydock.api.tokens.domain.usecase.CreateCardPaymentTokenUseCase
 import com.paydock.core.BaseViewModelKoinTest
 import com.paydock.core.KoinTestRule
 import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.extensions.waitUntilTimeout
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.CardResult
+import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
+import com.paydock.feature.card.domain.model.integration.enums.CardType
+import com.paydock.feature.card.domain.model.ui.TokenDetails
+import com.paydock.feature.card.domain.usecase.CreateCardPaymentTokenUseCase
+import com.paydock.feature.card.domain.usecase.GetCardSchemasUseCase
 import com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -55,13 +58,17 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         modules = listOf(instrumentedTestModule, testModule)
     )
 
-    private val useCase: CreateCardPaymentTokenUseCase = mockk(relaxed = true)
+    private val createCardPaymentTokenUseCase: CreateCardPaymentTokenUseCase = mockk(relaxed = true)
+    private val getCardSchemasUseCase: GetCardSchemasUseCase =
+        mockk(relaxed = true)
 
     override fun initialiseViewModel(): CardDetailsViewModel =
         CardDetailsViewModel(
             accessToken = "testAccessToken",
             gatewayId = null,
-            createCardPaymentTokenUseCase = useCase,
+            schemeConfig = SupportedSchemeConfig(supportedSchemes = CardType.entries.toSet(), enableValidation = true),
+            createCardPaymentTokenUseCase = createCardPaymentTokenUseCase,
+            getCardSchemasUseCase = getCardSchemasUseCase,
             dispatchers = dispatchersProvider
         )
 
@@ -277,8 +284,13 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
 
         // For token case
         val mockToken = "mockToken"
-        val mockResult = Result.success(TokenDetails(token = mockToken, type = "token"))
-        coEvery { useCase.invoke("testAccessToken", any()) } returns mockResult
+        val mockResult = Result.success(
+            TokenDetails(
+                token = mockToken,
+                type = "token"
+            )
+        )
+        coEvery { createCardPaymentTokenUseCase.invoke("testAccessToken", any()) } returns mockResult
         every { onCardDetailsResult(any()) } just Runs
 
         composeTestRule.onNodeWithTag("saveCard").assertIsEnabled().performClick()
@@ -360,7 +372,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         // For token case
         val mockError = Exception("Tokenization failed")
         val mockResult = Result.failure<TokenDetails>(mockError)
-        coEvery { useCase.invoke("testAccessToken", any()) } returns mockResult
+        coEvery { createCardPaymentTokenUseCase.invoke("testAccessToken", any()) } returns mockResult
         every { onCardDetailsResult(any()) } just Runs
 
         composeTestRule.onNodeWithTag("saveCard").assertIsEnabled().performClick()

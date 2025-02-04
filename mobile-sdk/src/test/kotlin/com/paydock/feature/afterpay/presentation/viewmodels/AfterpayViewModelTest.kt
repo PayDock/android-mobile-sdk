@@ -4,14 +4,6 @@ import android.content.Context
 import app.cash.turbine.test
 import com.afterpay.android.CancellationStatus
 import com.paydock.MobileSDK
-import com.paydock.api.charges.data.dto.CaptureChargeResponse
-import com.paydock.api.charges.data.dto.ChargeDeclineResponse
-import com.paydock.api.charges.data.dto.WalletCallbackResponse
-import com.paydock.api.charges.data.mapper.asEntity
-import com.paydock.api.charges.domain.model.WalletCallback
-import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
-import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
-import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.core.BaseUnitTest
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.MobileSDKTestConstants
@@ -27,7 +19,15 @@ import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOptionUpdate
 import com.paydock.feature.afterpay.presentation.state.AfterpayUIState
-import com.paydock.feature.charge.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.data.dto.CaptureChargeResponse
+import com.paydock.feature.wallet.data.dto.ChargeDeclineResponse
+import com.paydock.feature.wallet.data.dto.WalletCallbackResponse
+import com.paydock.feature.wallet.data.mapper.asEntity
+import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.ui.WalletCallback
+import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
+import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
+import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.initializeMobileSDK
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
@@ -107,7 +107,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     fun `updateCancellationState should update error state`() = runTest {
         val status = CancellationStatus.USER_INITIATED
         // CHECK
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             // ACTION
             viewModel.updateCancellationState(status)
             // CHECK
@@ -134,7 +134,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
                 country = "AU"
             )
         )
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             // ACTION
             viewModel.configureAfterpaySdk(configuration.config)
             // CHECK
@@ -155,7 +155,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
                 country = Locale.CHINA.country
             )
         )
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             // ACTION
             viewModel.configureAfterpaySdk(configuration.config)
             // CHECK
@@ -178,7 +178,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             val mockResult = Result.success(response.asEntity())
             coEvery { getWalletCallbackUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 // ACTION
                 viewModel.loadCheckoutToken()
                 // CHECK
@@ -211,7 +211,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             )
             coEvery { getWalletCallbackUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 // ACTION
                 viewModel.loadCheckoutToken()
                 // CHECK
@@ -243,7 +243,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             val mockResult = Result.failure<WalletCallback>(mockError)
             coEvery { getWalletCallbackUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 // ACTION
                 viewModel.loadCheckoutToken()
                 // CHECK
@@ -284,7 +284,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
                 )
             )
             // Allows for testing flow state
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 // ACTION
                 viewModel.provideShippingOptions(shippingOptions)
                 // CHECK
@@ -309,7 +309,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
                 "2.00".toBigDecimal(),
             )
             // Allows for testing flow state
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 // ACTION
                 viewModel.provideShippingOptionUpdate(shippingUpdate)
                 // CHECK
@@ -330,7 +330,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             val mockResult = Result.success(response.asEntity())
             coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 // ACTION
                 viewModel.captureWalletTransaction()
                 // CHECK
@@ -363,7 +363,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             val mockResult = Result.failure<ChargeResponse>(mockError)
             coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 // ACTION
                 viewModel.captureWalletTransaction()
                 // CHECK
@@ -389,7 +389,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             val mockResult = Result.success(response.asEntity())
             coEvery { declineWalletChargeUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 // ACTION
                 viewModel.declineWalletTransaction()
                 // CHECK
@@ -414,7 +414,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
         val mockResult = Result.success(response.asEntity())
         coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
         // Allows for testing flow state
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             // ACTION
             viewModel.captureWalletTransaction()
             // CHECK

@@ -25,7 +25,7 @@ import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.presentation.utils.errors.CardHolderNameError
 import com.paydock.feature.card.presentation.utils.validators.CardHolderNameValidator
-import com.paydock.feature.card.presentation.utils.validators.CreditCardInputValidator
+import com.paydock.feature.card.presentation.utils.validators.CreditCardInputParser
 import kotlinx.coroutines.delay
 
 /**
@@ -55,7 +55,7 @@ internal fun CardHolderNameInput(
     }
 
     // Validate the cardholder name using CardInputValidator
-    val cardHolder = CreditCardInputValidator.parseHolderName(debouncedValue)
+    val cardHolder = CreditCardInputParser.parseHolderName(debouncedValue)
     // Validate possible cardholder errors
     val cardHolderError = CardHolderNameValidator.validateHolderNameInput(debouncedValue, hasUserInteracted)
 
@@ -73,7 +73,7 @@ internal fun CardHolderNameInput(
         onValueChange = { newValue ->
             hasUserInteracted = true
             // Validate and parse the input when the value changes
-            CreditCardInputValidator.parseHolderName(newValue)?.let { parsedName ->
+            CreditCardInputParser.parseHolderName(newValue)?.let { parsedName ->
                 onValueChange(parsedName)
             }
         },

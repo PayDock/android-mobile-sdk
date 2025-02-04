@@ -117,7 +117,7 @@ fun AccountScreen(viewModel: AccountViewModel = hiltViewModel()) {
                 }
             }
             HorizontalDivider(
-                modifier = Modifier.padding(vertical = 24.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
                 color = Theme.colors.outlineVariant
             )
         }

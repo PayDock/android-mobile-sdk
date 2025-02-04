@@ -1,7 +1,7 @@
 package com.paydock.feature.paypal.vault.presentation.state
 
-import com.paydock.api.tokens.domain.model.PayPalPaymentTokenDetails
 import com.paydock.core.domain.error.exceptions.SdkException
+import com.paydock.feature.paypal.core.domain.model.ui.PayPalPaymentTokenDetails
 
 /**
  * Represents the various UI states for the PayPal Vault feature.

@@ -2,13 +2,6 @@ package com.paydock.feature.paypal.checkout.presentation.viewmodels
 
 import android.net.Uri
 import app.cash.turbine.test
-import com.paydock.api.charges.data.dto.CaptureChargeResponse
-import com.paydock.api.charges.data.dto.WalletCallbackResponse
-import com.paydock.api.charges.data.mapper.asEntity
-import com.paydock.api.charges.domain.model.WalletCallback
-import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
-import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
-import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.MobileSDKTestConstants
@@ -19,8 +12,15 @@ import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.utils.MainDispatcherRule
-import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
+import com.paydock.feature.wallet.data.dto.CaptureChargeResponse
+import com.paydock.feature.wallet.data.dto.WalletCallbackResponse
+import com.paydock.feature.wallet.data.mapper.asEntity
+import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.ui.WalletCallback
+import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
+import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
+import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -90,7 +90,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
         every { mockUri.getQueryParameter("token") } returns mockToken
         every { mockUri.getQueryParameter("PayerID") } returns mockPayerId
 
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             // ACTION
             viewModel.parsePayPalUrl(mockSuccessUrl)
             // Initial state
@@ -114,7 +114,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
             val mockResult = Result.success(response.asEntity())
             coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 // ACTION
                 viewModel.captureWalletTransaction(paymentMethodId, payerId)
                 // CHECK
@@ -150,7 +150,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
             val mockResult = Result.failure<ChargeResponse>(mockError)
             coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 // ACTION
                 viewModel.captureWalletTransaction(paymentMethodId, payerId)
                 // CHECK
@@ -183,7 +183,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
             val mockResult = Result.success(response.asEntity())
             coEvery { getWalletCallbackUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 // ACTION
                 viewModel.getWalletCallback(walletToken = accessToken, requestShipping = true)
                 // CHECK
@@ -217,7 +217,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
             val mockResult = Result.failure<WalletCallback>(mockError)
             coEvery { getWalletCallbackUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
-            viewModel.stateFlow.test {
+            viewModel.uiState.test {
                 // ACTION
                 viewModel.setWalletToken(accessToken)
                 viewModel.getWalletCallback(walletToken = accessToken, requestShipping = true)
@@ -249,7 +249,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
         coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
         viewModel.captureWalletTransaction(paymentMethodId, payerId)
         // Allows for testing flow state
-        viewModel.stateFlow.test {
+        viewModel.uiState.test {
             // ACTION
             viewModel.resetResultState()
             assertIs<PayPalCheckoutUIState.Idle>(awaitItem())

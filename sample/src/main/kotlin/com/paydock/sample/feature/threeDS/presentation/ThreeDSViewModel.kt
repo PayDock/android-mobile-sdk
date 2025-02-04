@@ -4,11 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.paydock.sample.core.THREE_DS_CARD_ERROR
 import com.paydock.sample.core.presentation.utils.AccessTokenProvider
-import com.paydock.sample.feature.charges.data.api.dto.ChargesCustomerDTO
-import com.paydock.sample.feature.charges.data.api.dto.CreateIntegratedThreeDSTokenRequest
-import com.paydock.sample.feature.charges.data.api.dto.CreateStandaloneThreeDSTokenRequest
-import com.paydock.sample.feature.charges.domain.usecase.CreateIntegratedThreeDSTokenUseCase
-import com.paydock.sample.feature.charges.domain.usecase.CreateStandaloneThreeDSTokenUseCase
+import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
+import com.paydock.sample.feature.threeDS.data.api.dto.CreateIntegratedThreeDSTokenRequest
+import com.paydock.sample.feature.threeDS.data.api.dto.CreateStandaloneThreeDSTokenRequest
+import com.paydock.sample.feature.threeDS.domain.usecase.CreateIntegratedThreeDSTokenUseCase
+import com.paydock.sample.feature.threeDS.domain.usecase.CreateStandaloneThreeDSTokenUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

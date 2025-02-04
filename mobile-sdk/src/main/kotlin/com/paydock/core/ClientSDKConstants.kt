@@ -16,9 +16,9 @@ internal object ClientSDKConstants {
      */
     object Library {
         internal const val PROD =
-            "https://widget.paydock.com/sdk/v1.113.2/widget.umd.min.js"
+            "https://widget.paydock.com/sdk/v1.117.0/widget.umd.min.js"
         internal const val STAGING_SANDBOX =
-            "https://widget.paydock.com/sdk/v1.113.2-beta/widget.umd.min.js"
+            "https://widget.paydock.com/sdk/v1.117.0-beta/widget.umd.min.js"
     }
 
     /**

@@ -1,6 +1,6 @@
 package com.paydock.feature.card.domain.model.integration
 
-import com.paydock.feature.card.domain.model.integration.enums.CardScheme
+import com.paydock.feature.card.domain.model.integration.enums.CardType
 
 /**
  * Configuration for supported card schemes in the widget.
@@ -11,6 +11,6 @@ import com.paydock.feature.card.domain.model.integration.enums.CardScheme
  * When set to `false`, the widget does not enforce restrictions based on `supportedSchemes`, even if provided.
  */
 data class SupportedSchemeConfig(
-    val supportedSchemes: Set<CardScheme>? = null,
+    val supportedSchemes: Set<CardType>? = null,
     val enableValidation: Boolean = false
 )

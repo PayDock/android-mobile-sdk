@@ -10,26 +10,26 @@ internal class GiftCardNumberValidatorTest {
 
     @Test
     fun testIsValidNumber_ValidNumberFormat() {
-        assertTrue(GiftCardNumberValidator.isValidNumberFormat("62734010001104878"))
-        assertTrue(GiftCardNumberValidator.isValidNumberFormat("12345678901234567891234"))
-        assertTrue(GiftCardNumberValidator.isValidNumberFormat("55555555555544"))
+        assertTrue(GiftCardNumberValidator.isCardNumberValid("62734010001104878"))
+        assertTrue(GiftCardNumberValidator.isCardNumberValid("12345678901234567891234"))
+        assertTrue(GiftCardNumberValidator.isCardNumberValid("55555555555544"))
     }
 
     @Test
     fun testIsValidNumber_BlankNumberFormat() {
-        assertFalse(GiftCardNumberValidator.isValidNumberFormat(""))
-        assertFalse(GiftCardNumberValidator.isValidNumberFormat("  "))
+        assertFalse(GiftCardNumberValidator.isCardNumberValid(""))
+        assertFalse(GiftCardNumberValidator.isCardNumberValid("  "))
     }
 
     @Test
     fun testIsValidNumber_NonDigitNumberFormat() {
-        assertFalse(GiftCardNumberValidator.isValidNumberFormat("4111-1111-1111-1111"))
-        assertFalse(GiftCardNumberValidator.isValidNumberFormat("4111 abc 1111 1111"))
+        assertFalse(GiftCardNumberValidator.isCardNumberValid("4111-1111-1111-1111"))
+        assertFalse(GiftCardNumberValidator.isCardNumberValid("4111 abc 1111 1111"))
     }
 
     @Test
     fun testIsValidNumber_Format_ExceedsMaxLength() {
-        assertFalse(GiftCardNumberValidator.isValidNumberFormat("41111222233334444555566667777"))
+        assertFalse(GiftCardNumberValidator.isCardNumberValid("41111222233334444555566667777"))
     }
 
     @Test

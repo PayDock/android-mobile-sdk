@@ -5,8 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
-import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import com.paydock.feature.paypal.checkout.presentation.PayPalWidget
+import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import com.paydock.sample.designsystems.theme.SampleTheme
 
 @Composable

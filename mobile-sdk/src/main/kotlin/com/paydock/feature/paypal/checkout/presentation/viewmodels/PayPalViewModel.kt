@@ -1,22 +1,21 @@
 package com.paydock.feature.paypal.checkout.presentation.viewmodels
 
 import android.net.Uri
-import com.paydock.api.charges.data.dto.CaptureWalletChargeRequest
-import com.paydock.api.charges.data.dto.CustomerData
-import com.paydock.api.charges.data.dto.PaymentSourceData
-import com.paydock.api.charges.data.dto.WalletCallbackRequest
-import com.paydock.api.charges.domain.model.WalletCallback
-import com.paydock.api.charges.domain.model.WalletType
-import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
-import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
-import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.PayPalException
-import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.domain.error.extensions.mapApiException
-import com.paydock.feature.charge.domain.model.integration.ChargeResponse
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
+import com.paydock.feature.wallet.data.dto.CaptureWalletChargeRequest
+import com.paydock.feature.wallet.data.dto.CustomerData
+import com.paydock.feature.wallet.data.dto.PaymentSourceData
+import com.paydock.feature.wallet.data.dto.WalletCallbackRequest
+import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.WalletType
+import com.paydock.feature.wallet.domain.model.ui.WalletCallback
+import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
+import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
+import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
 
 /**
@@ -43,8 +42,16 @@ internal class PayPalViewModel(
     dispatchers
 ) {
 
+    //region Private Properties
+    /**
+     * Holds the wallet token used for PayPal operations.
+     *
+     * This token is essential for authenticating and managing PayPal transactions.
+     */
     private var walletToken: String? = null
+    //endregion
 
+    //region Overridden Methods
     /**
      * Provides the initial state for the PayPal UI.
      *
@@ -68,7 +75,7 @@ internal class PayPalViewModel(
      */
     override fun resetResultState() {
         walletToken = null
-        updateState { PayPalCheckoutUIState.Idle }
+        updateUiState(PayPalCheckoutUIState.Idle)
     }
 
     /**
@@ -77,7 +84,7 @@ internal class PayPalViewModel(
      * Updates the state to `PayPalCheckoutUIState.Loading`.
      */
     override fun setLoadingState() {
-        updateState { PayPalCheckoutUIState.Loading }
+        updateUiState(PayPalCheckoutUIState.Loading)
     }
 
     /**
@@ -86,14 +93,14 @@ internal class PayPalViewModel(
      * @param result The result containing the wallet callback data or an error.
      */
     override fun updateCallbackUIState(result: Result<WalletCallback>) {
-        result.onSuccess { chargeData ->
-            updateState {
-                PayPalCheckoutUIState.LaunchIntent(chargeData)
+        result.fold(
+            onSuccess = { chargeData ->
+                updateUiState(PayPalCheckoutUIState.LaunchIntent(chargeData))
+            },
+            onFailure = { throwable ->
+                updateUiState(PayPalCheckoutUIState.Error(throwable.mapApiException(PayPalException.FetchingUrlException::class)))
             }
-        }.onFailure { throwable ->
-            val error: SdkException = throwable.mapApiException<PayPalException.FetchingUrlException>()
-            updateState { PayPalCheckoutUIState.Error(error) }
-        }
+        )
     }
 
     /**
@@ -102,16 +109,18 @@ internal class PayPalViewModel(
      * @param result The result containing the charge response or an error.
      */
     override fun updateChargeUIState(result: Result<ChargeResponse>) {
-        result.onSuccess { chargeData ->
-            updateState {
-                PayPalCheckoutUIState.Success(chargeData)
+        result.fold(
+            onSuccess = { chargeData ->
+                updateUiState(PayPalCheckoutUIState.Success(chargeData))
+            },
+            onFailure = { throwable ->
+                updateUiState(PayPalCheckoutUIState.Error(throwable.mapApiException(PayPalException.CapturingChargeException::class)))
             }
-        }.onFailure { throwable ->
-            val error: SdkException = throwable.mapApiException<PayPalException.CapturingChargeException>()
-            updateState { PayPalCheckoutUIState.Error(error) }
-        }
+        )
     }
+    //endregion
 
+    //region Public Methods
     /**
      * Fetches wallet callback data using the wallet token and additional parameters.
      *
@@ -145,7 +154,9 @@ internal class PayPalViewModel(
                 )
             )
         )
-        walletToken?.let { captureWalletTransaction(it, request) }
+        walletToken?.let {
+            captureWalletTransaction(it, request)
+        }
     }
 
     /**
@@ -174,7 +185,8 @@ internal class PayPalViewModel(
             requestUri.getQueryParameter("flowId")
         }
         if (payPalToken != null && payerId != null) {
-            updateState { PayPalCheckoutUIState.Capture(payPalToken, payerId) }
+            updateUiState(PayPalCheckoutUIState.Capture(payPalToken, payerId))
         }
     }
+    //endregion
 }

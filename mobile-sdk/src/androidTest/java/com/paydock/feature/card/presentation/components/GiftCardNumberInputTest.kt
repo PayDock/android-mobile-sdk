@@ -68,12 +68,11 @@ internal class GiftCardNumberInputTest : BaseUITest() {
 
         // Start composable with valid card number
         composeTestRule.setContent {
-            CreditCardNumberInput(
+            GiftCardNumberInput(
                 value = cardNumber,
                 onValueChange = {
                     cardNumber = it
-                },
-                schemeConfig = cardSchemeConfig.supportedSchemes
+                }
             )
         }
 

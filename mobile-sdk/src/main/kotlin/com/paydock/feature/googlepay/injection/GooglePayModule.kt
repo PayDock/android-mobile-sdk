@@ -6,6 +6,7 @@ import com.google.android.gms.wallet.WalletConstants
 import com.paydock.MobileSDK
 import com.paydock.core.domain.model.Environment
 import com.paydock.feature.googlepay.presentation.viewmodels.GooglePayViewModel
+import com.paydock.feature.wallet.injection.walletModule
 import org.json.JSONObject
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -14,6 +15,7 @@ import org.koin.dsl.module
  * Koin module for Google Pay-related components including view models.
  */
 internal val googlePayModule = module {
+    includes(walletModule)
 
     // Define a singleton instance of the Google Pay PaymentsClient
     single {

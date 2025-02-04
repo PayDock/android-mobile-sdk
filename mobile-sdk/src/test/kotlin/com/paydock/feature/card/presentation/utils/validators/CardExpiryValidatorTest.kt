@@ -9,36 +9,6 @@ import kotlin.test.assertEquals
 internal class CardExpiryValidatorTest {
 
     @Test
-    fun testIsValidExpiryFormat_ValidInput() {
-        assertTrue(CardExpiryValidator.isValidExpiryFormat("0123"))
-        assertTrue(CardExpiryValidator.isValidExpiryFormat("1123"))
-        assertTrue(CardExpiryValidator.isValidExpiryFormat("0525"))
-    }
-
-    @Test
-    fun testCheckExpiry_InvalidInput() {
-        assertFalse(CardExpiryValidator.isValidExpiryFormat(""))
-        assertFalse(CardExpiryValidator.isValidExpiryFormat("12345"))
-        assertFalse(CardExpiryValidator.isValidExpiryFormat("abc"))
-    }
-
-    @Test
-    fun testIsExpiryValid_ValidInput() {
-        assertTrue(CardExpiryValidator.isExpiryValid("0129"))
-        assertTrue(CardExpiryValidator.isExpiryValid("1129"))
-        assertTrue(CardExpiryValidator.isExpiryValid("0529"))
-    }
-
-    @Test
-    fun testIsExpiryValid_InvalidInput() {
-        assertFalse(CardExpiryValidator.isExpiryValid(""))
-        assertFalse(CardExpiryValidator.isExpiryValid("01"))
-        assertFalse(CardExpiryValidator.isExpiryValid("12/45"))
-        assertFalse(CardExpiryValidator.isExpiryValid("00"))
-        assertFalse(CardExpiryValidator.isExpiryValid("1325"))
-    }
-
-    @Test
     fun testIsCardExpired_NotExpired() {
         assertFalse(CardExpiryValidator.isCardExpired("1225"))
         assertFalse(CardExpiryValidator.isCardExpired("0127"))

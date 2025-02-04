@@ -22,7 +22,6 @@ fun ClickToPayComponent(
             val isSuccess = result.data?.getBooleanExtra("isSuccess", false) ?: false
             // Handle the result (success or failure)
             if (isSuccess) {
-                System.err.println(">>> ClickToPayComponent: Success")
                 val token = result.data?.getStringExtra("token")
                 token?.let { resultHandler(Result.success(it)) }
             } else {
@@ -42,21 +41,4 @@ fun ClickToPayComponent(
             .putExtra("accessToken", accessToken)
         launcher.launch(intent)
     }
-
-//    if (!isLoading) {
-//        ClickToPayWidget(
-//            modifier = Modifier
-//                .fillMaxSize().height(750.dp),
-//            accessToken = accessToken,
-//            serviceId = BuildConfig.GATEWAY_ID_MASTERCARD_SRC,
-//            meta = ClickToPayMeta(
-//                disableSummaryScreen = true
-//            ),
-//            completion = resultHandler
-//        )
-//    } else {
-//        Spacer(modifier = Modifier
-//            .fillMaxWidth()
-//            .height(750.dp))
-//    }
 }

@@ -13,7 +13,7 @@ sealed class CardDetailsException(displayableMessage: String) : SdkException(dis
     /**
      * Exception thrown when there is an error tokenising a card.
      *
-     * @property error The underlying error response causing this exception.
+     * @param error The underlying error response causing this exception.
      * @constructor Creates a TokenisingCardException with the specified error response.
      *              The displayable message is derived from the error response.
      */

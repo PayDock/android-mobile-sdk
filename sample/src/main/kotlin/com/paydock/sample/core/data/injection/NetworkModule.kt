@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder
 import com.paydock.MobileSDK
 import com.paydock.core.domain.model.Environment
 import com.paydock.sample.BuildConfig
-import com.paydock.sample.feature.vaults.data.utils.CreateVaultTokenRequestAdapterFactory
+import com.paydock.sample.feature.card.data.utils.CreateVaultTokenRequestAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

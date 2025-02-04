@@ -1,8 +1,6 @@
 package com.paydock.feature.card.presentation.viewmodels
 
 import app.cash.turbine.test
-import com.paydock.api.tokens.domain.model.TokenDetails
-import com.paydock.api.tokens.domain.usecase.CreateGiftCardPaymentTokenUseCase
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
@@ -10,6 +8,8 @@ import com.paydock.core.domain.error.exceptions.GiftCardException
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.utils.MainDispatcherRule
+import com.paydock.feature.card.domain.model.ui.TokenDetails
+import com.paydock.feature.card.domain.usecase.CreateGiftCardPaymentTokenUseCase
 import com.paydock.feature.card.presentation.state.GiftCardUIState
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
@@ -108,7 +108,12 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
     fun `gift card tokeniseCard should update isLoading, call useCase, and update state on success`() =
         runTest {
             val mockToken = MobileSDKTestConstants.Card.MOCK_CARD_TOKEN
-            val mockResult = Result.success(TokenDetails(token = mockToken, type = "token"))
+            val mockResult = Result.success(
+                TokenDetails(
+                    token = mockToken,
+                    type = "token"
+                )
+            )
             coEvery { useCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any()) } returns mockResult
             // Allows for testing flow state
             viewModel.stateFlow.test {
@@ -167,7 +172,12 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `resetResultState should reset data state`() = runTest {
         val mockToken = MobileSDKTestConstants.Card.MOCK_CARD_TOKEN
-        val mockResult = Result.success(TokenDetails(token = mockToken, type = "token"))
+        val mockResult = Result.success(
+            TokenDetails(
+                token = mockToken,
+                type = "token"
+            )
+        )
         coEvery {
             useCase(
                 MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN,

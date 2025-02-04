@@ -1,17 +1,16 @@
 package com.paydock.feature.flypay.presentation.viewmodels
 
-import com.paydock.api.charges.data.dto.WalletCallbackRequest
-import com.paydock.api.charges.domain.model.WalletCallback
-import com.paydock.api.charges.domain.model.WalletType
-import com.paydock.api.charges.domain.usecase.CaptureWalletChargeUseCase
-import com.paydock.api.charges.domain.usecase.DeclineWalletChargeUseCase
-import com.paydock.api.charges.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.FlyPayException
-import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.domain.error.extensions.mapApiException
 import com.paydock.feature.flypay.presentation.state.FlyPayUIState
+import com.paydock.feature.wallet.data.dto.WalletCallbackRequest
+import com.paydock.feature.wallet.domain.model.integration.WalletType
+import com.paydock.feature.wallet.domain.model.ui.WalletCallback
+import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
+import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
+import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
 
 /**
@@ -40,9 +39,16 @@ internal class FlyPayViewModel(
     dispatchers
 ) {
 
-    // Holds the wallet token used for FlyPay operations
+    //region Private Properties
+    /**
+     * Holds the wallet token used for FlyPay operations.
+     *
+     * This token is essential for authenticating and managing FlyPay transactions.
+     */
     private var walletToken: String? = null
+    //endregion
 
+    //region Overridden Methods
     /**
      * Provides the initial state for the FlyPay UI.
      *
@@ -69,7 +75,7 @@ internal class FlyPayViewModel(
      */
     override fun resetResultState() {
         walletToken = null
-        updateState { FlyPayUIState.Idle }
+        updateUiState(FlyPayUIState.Idle)
     }
 
     /**
@@ -78,7 +84,7 @@ internal class FlyPayViewModel(
      * This is typically invoked during operations that require user feedback, such as API calls.
      */
     override fun setLoadingState() {
-        updateState { FlyPayUIState.Loading }
+        updateUiState(FlyPayUIState.Loading)
     }
 
     /**
@@ -90,16 +96,22 @@ internal class FlyPayViewModel(
      * @param result The result of the operation, containing either the callback data or an error.
      */
     override fun updateCallbackUIState(result: Result<WalletCallback>) {
-        result.onSuccess { chargeData ->
-            updateState {
-                FlyPayUIState.LaunchIntent(chargeData)
+        result.fold(
+            onSuccess = { chargeData ->
+                updateUiState(FlyPayUIState.LaunchIntent(chargeData))
+            },
+            onFailure = { throwable ->
+                updateUiState(
+                    FlyPayUIState.Error(
+                        throwable.mapApiException(FlyPayException.FetchingUrlException::class)
+                    )
+                )
             }
-        }.onFailure { throwable ->
-            val error: SdkException = throwable.mapApiException<FlyPayException.FetchingUrlException>()
-            updateState { FlyPayUIState.Error(error) }
-        }
+        )
     }
+    //endregion
 
+    //region Public Methods
     /**
      * Initiates a fetch operation for wallet callback data using the provided wallet token.
      *
@@ -125,8 +137,7 @@ internal class FlyPayViewModel(
      * @param orderId The ID of the successfully processed order.
      */
     fun completeResult(orderId: String) {
-        updateState {
-            FlyPayUIState.Success(orderId)
-        }
+        updateUiState(FlyPayUIState.Success(orderId))
     }
+    //endregion
 }

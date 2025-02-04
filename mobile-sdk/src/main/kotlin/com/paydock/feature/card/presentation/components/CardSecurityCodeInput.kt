@@ -23,11 +23,11 @@ import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.card.domain.model.integration.enums.CardScheme
-import com.paydock.feature.card.domain.model.integration.enums.SecurityCodeType
+import com.paydock.feature.card.domain.model.ui.CardCode
+import com.paydock.feature.card.domain.model.ui.enums.CodeType
 import com.paydock.feature.card.presentation.utils.errors.SecurityCodeError
 import com.paydock.feature.card.presentation.utils.validators.CardSecurityCodeValidator
-import com.paydock.feature.card.presentation.utils.validators.CreditCardInputValidator
+import com.paydock.feature.card.presentation.utils.validators.CreditCardInputParser
 import kotlinx.coroutines.delay
 
 /**
@@ -39,9 +39,9 @@ import kotlinx.coroutines.delay
  * @param modifier The [Modifier] to be applied to the input field for layout adjustments and styling.
  * @param value The current value of the input field, representing the security code entered by the user.
  * @param enabled Whether the input field is enabled for user input. Defaults to `true`.
+ * @param cardCode The [CardCode] representing the type of the card (e.g., CVV, CVC, CID) along
+ * with the required length.
  * @param nextFocus A [FocusRequester] used to shift focus to the next input field when the "Next" IME action is triggered.
- * @param cardScheme The [CardScheme] representing the scheme of the card (e.g., AMERICAN_EXPRESS, MASTERCARD, VISA).
- *                   This is used to determine the security code type and the required input length.
  * @param onValueChange A callback invoked when the value of the input field changes.
  *                      Provides the parsed security code string as its parameter.
  */
@@ -50,9 +50,9 @@ import kotlinx.coroutines.delay
 internal fun CardSecurityCodeInput(
     modifier: Modifier = Modifier,
     value: String = "",
+    cardCode: CardCode? = null,
     enabled: Boolean = true,
     nextFocus: FocusRequester? = null,
-    cardScheme: CardScheme? = null,
     onValueChange: (String) -> Unit
 ) {
     // Tracks whether the user has interacted with the input field
@@ -66,16 +66,12 @@ internal fun CardSecurityCodeInput(
     }
 
     // Determine the security code type based on the card scheme (e.g., CVV, CVC, CID)
-    val securityCodeType = CardSecurityCodeValidator.detectSecurityCodeType(cardScheme)
-
-    // Parse the security code based on its type
-    val securityCode = CreditCardInputValidator.parseSecurityCode(debouncedValue, securityCodeType, cardScheme)
+    val securityCodeType = cardCode?.type ?: CodeType.CVV
 
     // Validate the input and check for possible errors
     val securityCodeError = CardSecurityCodeValidator.validateSecurityCodeInput(
         debouncedValue,
-        securityCodeType,
-        cardScheme,
+        cardCode,
         hasUserInteracted
     )
 
@@ -83,16 +79,14 @@ internal fun CardSecurityCodeInput(
     val errorMessage = when (securityCodeError) {
         SecurityCodeError.Empty,
         SecurityCodeError.Invalid -> stringResource(id = R.string.error_security_code)
+
         SecurityCodeError.None -> null
     }
 
-    val placeholder = remember(cardScheme, securityCodeType) {
+    val placeholder = remember(cardCode, securityCodeType) {
         buildString {
-            val requiredDigits = when {
-                cardScheme == CardScheme.DISCOVER && securityCodeType == SecurityCodeType.CID ->
-                    MobileSDKConstants.CardDetailsConfig.CID3_LENGTH
-                else -> securityCodeType.requiredDigits
-            }
+            val requiredDigits =
+                cardCode?.size ?: MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
             repeat(requiredDigits) { append("X") }
         }
     }
@@ -104,16 +98,15 @@ internal fun CardSecurityCodeInput(
         onValueChange = {
             hasUserInteracted = true
             // Format and parse the security code input before invoking the callback
-            CreditCardInputValidator.parseSecurityCode(it, securityCodeType, cardScheme)?.let { code ->
+            CreditCardInputParser.parseSecurityCode(
+                it,
+                cardCode?.size ?: MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
+            )?.let { code ->
                 onValueChange(code)
             }
         },
         // Display the label according to the detected security code type
-        label = when (securityCodeType) {
-            SecurityCodeType.CVV -> stringResource(id = R.string.label_cvv)
-            SecurityCodeType.CVC -> stringResource(id = R.string.label_cvc)
-            SecurityCodeType.CID -> stringResource(id = R.string.label_cid)
-        },
+        label = securityCodeType.name,
         // Show a placeholder with 'X' placeholders based on the required digits
         placeholder = placeholder,
         enabled = enabled,
@@ -121,7 +114,7 @@ internal fun CardSecurityCodeInput(
         autofillType = AutofillType.CreditCardSecurityCode,
         // Display a success icon when the input is valid and non-blank
         trailingIcon = {
-            if (!securityCode.isNullOrBlank()) {
+            if (debouncedValue.isNotBlank()) {
                 InputValidIcon()
             }
         },
@@ -143,7 +136,15 @@ internal fun CardSecurityCodeInput(
 private fun PreviewCardSecurityCodeCVVInput() {
     SdkTheme {
         Surface(color = Theme.colors.surface) {
-            CardSecurityCodeInput(value = "123", cardScheme = CardScheme.VISA) {
+            CardSecurityCodeInput(
+                value = "123",
+                cardCode = CardCode(
+                    CodeType.CVV,
+                    MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
+                ),
+                enabled = true,
+                nextFocus = null
+            ) {
 
             }
         }
@@ -155,7 +156,15 @@ private fun PreviewCardSecurityCodeCVVInput() {
 private fun PreviewCardSecurityCodeCVCInput() {
     SdkTheme {
         Surface(color = Theme.colors.surface) {
-            CardSecurityCodeInput(value = "123", cardScheme = CardScheme.MASTERCARD) {
+            CardSecurityCodeInput(
+                value = "123",
+                cardCode = CardCode(
+                    CodeType.CVC,
+                    MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
+                ),
+                enabled = true,
+                nextFocus = null
+            ) {
 
             }
         }
@@ -167,7 +176,12 @@ private fun PreviewCardSecurityCodeCVCInput() {
 private fun PreviewCardSecurityCodeCIDInput() {
     SdkTheme {
         Surface(color = Theme.colors.surface) {
-            CardSecurityCodeInput(value = "1234", cardScheme = CardScheme.AMEX) {
+            CardSecurityCodeInput(
+                value = "1234",
+                cardCode = CardCode(CodeType.CID, MobileSDKConstants.CardDetailsConfig.CID_LENGTH),
+                enabled = true,
+                nextFocus = null
+            ) {
 
             }
         }

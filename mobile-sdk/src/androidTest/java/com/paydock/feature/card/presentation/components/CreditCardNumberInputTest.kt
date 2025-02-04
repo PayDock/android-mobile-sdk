@@ -13,6 +13,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.paydock.core.BaseUITest
+import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
+import com.paydock.feature.card.domain.model.integration.enums.CardType
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,7 +37,7 @@ internal class CreditCardNumberInputTest : BaseUITest() {
                 onValueChange = {
                     cardNumber = it
                 },
-                schemeConfig = cardSchemeConfig.supportedSchemes
+                schemeConfig = SupportedSchemeConfig(supportedSchemes = CardType.entries.toSet(), enableValidation = true)
             )
         }
 
@@ -69,7 +71,7 @@ internal class CreditCardNumberInputTest : BaseUITest() {
                 onValueChange = {
                     cardNumber = it
                 },
-                schemeConfig = cardSchemeConfig.supportedSchemes
+                schemeConfig = SupportedSchemeConfig(supportedSchemes = CardType.entries.toSet(), enableValidation = true)
             )
         }
 

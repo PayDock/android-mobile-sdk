@@ -14,32 +14,43 @@ import androidx.compose.ui.platform.testTag
 import com.paydock.core.MobileSDKConstants
 import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
-import com.paydock.feature.card.presentation.utils.validators.CardSchemeValidator
+import com.paydock.feature.card.domain.model.ui.CardScheme
 
 /**
- * A composable function for rendering input fields for cardholder information and payment details.
+ * A composable function that renders input fields for cardholder and payment details.
  *
- * This function includes input fields for the cardholder's name (optional), card number, expiry date,
- * and security code. It supports customization for enabling/disabling inputs and handling focus transitions.
+ * This function provides input fields for:
+ * - Cardholder's name (optional)
+ * - Card number
+ * - Expiry date
+ * - Security code
  *
- * @param shouldCollectCardholderName Whether the cardholder's name should be collected. If `true`, displays a name input field.
- * @param schemeConfig The configuration defining the supported card schemes and validation settings.
- * @param focusCardNumber The [FocusRequester] for the card number input field to handle focus changes.
- * @param focusExpiry The [FocusRequester] for the expiry date input field to handle focus changes.
- * @param focusCode The [FocusRequester] for the security code input field to handle focus changes.
- * @param enabled Determines whether the input fields are enabled or disabled.
- * @param cardHolderName The current value of the cardholder's name.
- * @param cardNumber The current value of the card number.
- * @param expiry The current value of the expiry date.
- * @param code The current value of the security code.
- * @param onCardHolderNameChange A callback invoked when the cardholder's name value changes.
- * @param onCardNumberChange A callback invoked when the card number value changes.
- * @param onExpiryChange A callback invoked when the expiry date value changes.
- * @param onSecurityCodeChange A callback invoked when the security code value changes.
+ * It supports custom configurations, focus management, and dynamic UI adjustments based on font scaling.
+ *
+ * @param shouldCollectCardholderName Determines whether the cardholder's name field is displayed.
+ * @param schemeConfig Defines the supported card schemes and validation settings.
+ * @param focusCardNumber A [FocusRequester] to manage focus for the card number input.
+ * @param focusExpiry A [FocusRequester] to manage focus for the expiry date input.
+ * @param focusCode A [FocusRequester] to manage focus for the security code input.
+ * @param enabled Controls whether all input fields are enabled or disabled.
+ * @param cardHolderName The current text value of the cardholder name input field.
+ * @param cardNumber The current text value of the card number input field.
+ * @param expiry The current text value of the expiry date input field.
+ * @param code The current text value of the security code input field.
+ * @param cardScheme The detected [CardScheme] based on the card number input.
+ * @param onCardHolderNameChange A callback triggered when the cardholder name input changes.
+ * @param onCardNumberChange A callback triggered when the card number input changes.
+ * @param onExpiryChange A callback triggered when the expiry date input changes.
+ * @param onSecurityCodeChange A callback triggered when the security code input changes.
+ *
+ * UI Behavior:
+ * - If `shouldCollectCardholderName` is `true`, the cardholder name input field is shown.
+ * - When the system's font scale exceeds a predefined threshold, expiry and security code fields are displayed in a column layout.
+ * - Otherwise, expiry and security code fields are displayed in a row layout for better alignment.
  */
 @Suppress("LongParameterList")
 @Composable
-fun CardInputFields(
+internal fun CardInputFields(
     shouldCollectCardholderName: Boolean,
     schemeConfig: SupportedSchemeConfig,
     focusCardNumber: FocusRequester,
@@ -50,6 +61,7 @@ fun CardInputFields(
     cardNumber: String,
     expiry: String,
     code: String,
+    cardScheme: CardScheme?,
     onCardHolderNameChange: (String) -> Unit,
     onCardNumberChange: (String) -> Unit,
     onExpiryChange: (String) -> Unit,
@@ -82,6 +94,7 @@ fun CardInputFields(
                 .testTag("cardNumberInput"),
             schemeConfig = schemeConfig,
             value = cardNumber,
+            cardScheme = cardScheme,
             enabled = enabled,
             onValueChange = onCardNumberChange,
             nextFocus = focusExpiry
@@ -95,7 +108,7 @@ fun CardInputFields(
                 focusExpiry = focusExpiry,
                 focusCode = focusCode,
                 enabled = enabled,
-                cardNumber = cardNumber,
+                cardScheme = cardScheme,
                 onExpiryChange = onExpiryChange,
                 onSecurityCodeChange = onSecurityCodeChange
             )
@@ -106,7 +119,7 @@ fun CardInputFields(
                 focusExpiry = focusExpiry,
                 focusCode = focusCode,
                 enabled = enabled,
-                cardNumber = cardNumber,
+                cardScheme = cardScheme,
                 onExpiryChange = onExpiryChange,
                 onSecurityCodeChange = onSecurityCodeChange
             )
@@ -122,7 +135,7 @@ fun CardInputFields(
  * @param focusExpiry The [FocusRequester] used to manage focus for the expiry date input.
  * @param focusCode The [FocusRequester] used to manage focus for the security code input.
  * @param enabled A flag indicating whether the input fields should be enabled or disabled.
- * @param cardNumber The card number used to detect the card scheme.
+ * @param cardScheme The detected [CardScheme] based on the card number input.
  * @param onExpiryChange Callback function to handle changes to the expiry date input value.
  * @param onSecurityCodeChange Callback function to handle changes to the security code input value.
  */
@@ -134,7 +147,7 @@ private fun ExpiryAndCodeColumn(
     focusExpiry: FocusRequester,
     focusCode: FocusRequester,
     enabled: Boolean,
-    cardNumber: String,
+    cardScheme: CardScheme?,
     onExpiryChange: (String) -> Unit,
     onSecurityCodeChange: (String) -> Unit
 ) {
@@ -158,7 +171,8 @@ private fun ExpiryAndCodeColumn(
                 .testTag("cardSecurityCodeInput"),
             value = code,
             enabled = enabled,
-            cardScheme = CardSchemeValidator.detectCardScheme(cardNumber),
+            cardCode = cardScheme?.code,
+            nextFocus = null,
             onValueChange = onSecurityCodeChange
         )
     }
@@ -172,7 +186,7 @@ private fun ExpiryAndCodeColumn(
  * @param focusExpiry The [FocusRequester] used to manage focus for the expiry date input.
  * @param focusCode The [FocusRequester] used to manage focus for the security code input.
  * @param enabled A flag indicating whether the input fields should be enabled or disabled.
- * @param cardNumber The card number used to detect the card scheme.
+ * @param cardScheme The detected [CardScheme] based on the card number input.
  * @param onExpiryChange Callback function to handle changes to the expiry date input value.
  * @param onSecurityCodeChange Callback function to handle changes to the security code input value.
  */
@@ -184,7 +198,7 @@ private fun ExpiryAndCodeRow(
     focusExpiry: FocusRequester,
     focusCode: FocusRequester,
     enabled: Boolean,
-    cardNumber: String,
+    cardScheme: CardScheme?,
     onExpiryChange: (String) -> Unit,
     onSecurityCodeChange: (String) -> Unit
 ) {
@@ -210,7 +224,8 @@ private fun ExpiryAndCodeRow(
                 .testTag("cardSecurityCodeInput"),
             value = code,
             enabled = enabled,
-            cardScheme = CardSchemeValidator.detectCardScheme(cardNumber),
+            cardCode = cardScheme?.code,
+            nextFocus = null,
             onValueChange = onSecurityCodeChange
         )
     }

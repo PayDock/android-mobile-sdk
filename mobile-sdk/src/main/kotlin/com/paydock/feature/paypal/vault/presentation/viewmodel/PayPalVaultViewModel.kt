@@ -1,14 +1,14 @@
 package com.paydock.feature.paypal.vault.presentation.viewmodel
 
-import com.paydock.api.gateways.domain.usecase.GetPayPalClientIdUseCase
-import com.paydock.api.tokens.data.dto.CreatePaymentTokenRequest
-import com.paydock.api.tokens.data.dto.CreateSetupTokenRequest
-import com.paydock.api.tokens.domain.usecase.CreatePayPalVaultPaymentTokenUseCase
-import com.paydock.api.tokens.domain.usecase.CreateSetupTokenUseCase
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.feature.paypal.core.data.dto.CreateSetupTokenRequest
+import com.paydock.feature.paypal.core.data.dto.PayPalVaultTokenRequest
+import com.paydock.feature.paypal.core.domain.usecase.CreatePayPalVaultPaymentTokenUseCase
+import com.paydock.feature.paypal.core.domain.usecase.CreateSetupTokenUseCase
+import com.paydock.feature.paypal.core.domain.usecase.GetPayPalClientIdUseCase
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.presentation.state.PayPalVaultUIState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -119,7 +119,7 @@ internal class PayPalVaultViewModel(
         launchOnIO {
             setupToken?.let { setupToken ->
                 val request =
-                    CreatePaymentTokenRequest.PayPalVaultRequest(
+                    PayPalVaultTokenRequest(
                         gatewayId = config.gatewayId
                     )
                 createPayPalVaultPaymentTokenUseCase(config.accessToken, setupToken, request)
