@@ -1,4 +1,8 @@
-image: mingc/android-build-box:latest
+# Reference: https://hub.docker.com/r/mingc/android-build-box/
+image: mingc/android-build-box:latest # Sets the latest version of the image
+# NB: Java version is set in .java-version file
+# Alternative is to set a specific version: https://hub.docker.com/r/mingc/android-build-box/tags
+#image: mingc/android-build-box:1.28.0
 
 variables:
   ANDROID_COMPILE_SDK: "33"

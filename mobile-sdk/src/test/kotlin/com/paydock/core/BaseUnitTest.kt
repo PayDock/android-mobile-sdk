@@ -56,6 +56,29 @@ abstract class BaseUnitTest : KoinTest {
         return String(Files.readAllBytes(Paths.get(file)))
     }
 
+    /**
+     * FIXME Static mocking is not working in > Java 17
+     *
+     * @sample (Fix for Static Removal)
+     *
+     * var mockedBuildVersion: MockedConstruction<Build.VERSION>
+     * @BeforeTest
+     * fun setUp() {
+     *     // Mock Build.VERSION before each test
+     *     mockedBuildVersion = mockConstruction(
+     *         Build.VERSION::class.java
+     *     ) { _, _ ->
+     *         // this initializer will be called each time during mock creation
+     *         `when`(Build.VERSION.SDK_INT).thenReturn(Build.VERSION_CODES.TIRAMISU)
+     *     }
+     * }
+     *
+     * @AfterTest
+     * fun tearDown() {
+     *     // Close the mock after each test
+     *     mockedBuildVersion.close()
+     * }
+     */
     fun setStaticFieldViaReflection(field: Field, value: Any) {
         field.isAccessible = true
         getModifiersField().also {
