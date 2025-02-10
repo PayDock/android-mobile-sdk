@@ -1,6 +1,7 @@
 package com.paydock.core.domain.mapper
 
 import com.afterpay.android.AfterpayEnvironment
+import com.google.android.gms.wallet.WalletConstants
 import com.paydock.core.BaseUnitTest
 import com.paydock.core.ClientSDKConstants
 import com.paydock.core.MobileSDKConstants
@@ -171,5 +172,29 @@ class EnvironmentMapperTest : BaseUnitTest() {
             "clientId=$clientId"
         val actualUrl = environment.mapToFlyPayEnv(flyPayOrderId, clientId)
         assertEquals(expectedUrl, actualUrl)
+    }
+
+    @Test
+    fun mapToGooglePayEnv_production_returnsProductionEnv() {
+        val environment = Environment.PRODUCTION
+        val expectedEnv = WalletConstants.ENVIRONMENT_PRODUCTION
+        val actualEnv = environment.mapToGooglePayEnv()
+        assertEquals(expectedEnv, actualEnv)
+    }
+
+    @Test
+    fun mapToGooglePayEnv_sandbox_returnsEnvironmentTest() {
+        val environment = Environment.SANDBOX
+        val expectedEnv = WalletConstants.ENVIRONMENT_TEST
+        val actualEnv = environment.mapToGooglePayEnv()
+        assertEquals(expectedEnv, actualEnv)
+    }
+
+    @Test
+    fun mapToGooglePayEnv_staging_returnsEnvironmentTest() {
+        val environment = Environment.STAGING
+        val expectedEnv = WalletConstants.ENVIRONMENT_TEST
+        val actualEnv = environment.mapToGooglePayEnv()
+        assertEquals(expectedEnv, actualEnv)
     }
 }

@@ -22,6 +22,7 @@ import com.kevinnzou.web.rememberWebViewNavigator
 import com.kevinnzou.web.rememberWebViewState
 import com.kevinnzou.web.rememberWebViewStateWithHTMLData
 import com.paydock.core.MobileSDKConstants
+import com.paydock.core.extensions.safeCastAs
 import com.paydock.designsystems.components.web.extensions.setup
 import com.paydock.designsystems.components.web.utils.SdkJSBridge
 import com.paydock.designsystems.components.web.utils.SdkWebChromeClient
@@ -98,11 +99,9 @@ internal fun <T : Any?> SdkWebView(
 
         // Display a loading indicator if the WebView is still loading content
         if (shouldShowCustomLoader && (state.isLoading || showWindowLoader)) {
-            if (state.loadingState is LoadingState.Loading) {
+            state.safeCastAs<LoadingState.Loading>()?.let {
                 CircularProgressIndicator(progress = { (state.loadingState as LoadingState.Loading).progress })
-            } else {
-                CircularProgressIndicator()
-            }
+            } ?: CircularProgressIndicator()
         }
     }
 }

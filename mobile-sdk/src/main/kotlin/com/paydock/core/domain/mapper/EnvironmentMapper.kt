@@ -1,6 +1,7 @@
 package com.paydock.core.domain.mapper
 
 import com.afterpay.android.AfterpayEnvironment
+import com.google.android.gms.wallet.WalletConstants
 import com.paydock.core.ClientSDKConstants
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.model.Environment
@@ -105,3 +106,15 @@ internal fun Environment.mapToFlyPayEnv(flyPayOrderId: String, clientId: String)
                 "mode=default&" +
                 "clientId=$clientId"
     }
+
+/**
+ * Maps an [Environment] to the corresponding Google Pay environment.
+ *
+ * @return The Google Pay environment constant:
+ * - [WalletConstants.ENVIRONMENT_TEST] for pre-production and staging environments.
+ * - [WalletConstants.ENVIRONMENT_PRODUCTION] for production.
+ */
+internal fun Environment.mapToGooglePayEnv(): Int = when (this) {
+    Environment.SANDBOX, Environment.STAGING -> WalletConstants.ENVIRONMENT_TEST
+    Environment.PRODUCTION -> WalletConstants.ENVIRONMENT_PRODUCTION
+}

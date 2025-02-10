@@ -36,7 +36,7 @@ internal class CreateCardPaymentTokenFlowUseCaseTest : BaseKoinUnitTest() {
     fun `test valid tokenise credit card request returns expected card resource`() = runTest {
         // GIVEN
         val request =
-            readResourceFile("token/valid_tokenise_credit_card_request.json")
+            readResourceFile("card/valid_tokenise_credit_card_request.json")
                 .convertToDataClass<CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard>()
         val expectedResult =
             TokenDetails(
@@ -63,7 +63,7 @@ internal class CreateCardPaymentTokenFlowUseCaseTest : BaseKoinUnitTest() {
     fun `test invalid tokenise credit card request returns expected error resource`() = runTest {
         // GIVEN
         val request =
-            readResourceFile("token/invalid_tokenise_credit_card_request.json")
+            readResourceFile("card/invalid_tokenise_credit_card_request.json")
                 .convertToDataClass<CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard>()
         val expectedResult =
             ApiException(

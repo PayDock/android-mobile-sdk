@@ -21,7 +21,7 @@ package com.paydock.feature.threeDS.domain.model.integration.enums
  * Enum class representing different types of events related to 3D Secure (3DS) charge processing.
  *
  * Each enum constant corresponds to a specific event type, such as successful authentication,
- * rejection, challenge, decoupling, information, error, or an unknown event type.
+ * rejection, challenge, decoupling, information, error.
  *
  * @param type The string representation of the event type.
  */
@@ -54,24 +54,5 @@ enum class EventType(val type: String) {
     /**
      * Represents an error event related to a 3DS charge.
      */
-    CHARGE_ERROR("error"),
-
-    /**
-     * Represents an unknown or unrecognized event type.
-     */
-    UNKNOWN("unknown");
-
-    companion object {
-        /**
-         * Returns the EventType enum constant corresponding to the specified event type name.
-         *
-         * This method is case-insensitive and returns [UNKNOWN] if no matching EventType is found.
-         *
-         * @param input The event type name to look up.
-         * @return The EventType enum constant or [UNKNOWN] if not found.
-         */
-        fun byNameIgnoreCaseOrNull(input: String): EventType {
-            return entries.firstOrNull { it.type.equals(input, true) } ?: UNKNOWN
-        }
-    }
+    CHARGE_ERROR("error")
 }

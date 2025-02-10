@@ -38,10 +38,10 @@ class PayPalRepositoryTest : BaseKoinUnitTest() {
             repository = PayPalRepositoryImpl(get(), httpMockClient)
 
             val request =
-                readResourceFile("token/valid_create_payment_token_request.json")
+                readResourceFile("paypal/valid_create_payment_token_request.json")
                     .convertToDataClass<PayPalVaultTokenRequest>()
             val response =
-                readResourceFile("token/success_payment_token_response.json")
+                readResourceFile("paypal/success_payment_token_response.json")
                     .convertToDataClass<PayPalVaultTokenResponse>()
             val entity = response.asEntity()
             // WHEN - Call the method to be tested
@@ -63,7 +63,7 @@ class PayPalRepositoryTest : BaseKoinUnitTest() {
             // GIVEN
             repository = PayPalRepositoryImpl(get(), httpMockClient)
             val request =
-                readResourceFile("token/invalid_payment_token_request.json")
+                readResourceFile("paypal/invalid_payment_token_request.json")
                     .convertToDataClass<PayPalVaultTokenRequest>()
             // WHEN - Call the method to be tested
             val result = repository.createPaymentToken(
@@ -82,10 +82,10 @@ class PayPalRepositoryTest : BaseKoinUnitTest() {
             repository = PayPalRepositoryImpl(get(), httpMockClient)
 
             val request =
-                readResourceFile("token/valid_create_setup_token_request.json")
+                readResourceFile("paypal/valid_create_setup_token_request.json")
                     .convertToDataClass<CreateSetupTokenRequest>()
             val response =
-                readResourceFile("token/success_setup_token_response.json")
+                readResourceFile("paypal/success_setup_token_response.json")
                     .convertToDataClass<SetupTokenResponse>()
             val setupToken = response.resource.data?.setupToken
             // WHEN - Call the method to be tested
@@ -106,7 +106,7 @@ class PayPalRepositoryTest : BaseKoinUnitTest() {
             // GIVEN
             repository = PayPalRepositoryImpl(get(), httpMockClient)
             val request =
-                readResourceFile("token/invalid_create_setup_token_request.json")
+                readResourceFile("paypal/invalid_create_setup_token_request.json")
                     .convertToDataClass<CreateSetupTokenRequest>()
             // WHEN - Call the method to be tested
             val result = repository.createSetupToken(

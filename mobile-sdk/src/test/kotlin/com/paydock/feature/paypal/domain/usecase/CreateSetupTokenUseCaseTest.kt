@@ -38,7 +38,7 @@ internal class CreateSetupTokenUseCaseTest : BaseKoinUnitTest() {
         runTest {
             // GIVEN
             val request =
-                readResourceFile("token/valid_create_setup_token_request.json").convertToDataClass<CreateSetupTokenRequest>()
+                readResourceFile("paypal/valid_create_setup_token_request.json").convertToDataClass<CreateSetupTokenRequest>()
             val expectedResult = MobileSDKTestConstants.PayPalVault.MOCK_SETUP_TOKEN
             coEvery {
                 mockRepository.createSetupToken(
@@ -64,7 +64,7 @@ internal class CreateSetupTokenUseCaseTest : BaseKoinUnitTest() {
     fun `test invalid create session request returns expected error result`() = runTest {
         // GIVEN
         val request =
-            readResourceFile("token/invalid_create_setup_token_request.json")
+            readResourceFile("paypal/invalid_create_setup_token_request.json")
                 .convertToDataClass<CreateSetupTokenRequest>()
         val expectedResult =
             ApiException(

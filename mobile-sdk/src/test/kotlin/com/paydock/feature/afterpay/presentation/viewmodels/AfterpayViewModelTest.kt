@@ -174,7 +174,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
         runTest {
             val mockCheckoutToken = MobileSDKTestConstants.Afterpay.MOCK_CHECKOUT_TOKEN
             val response =
-                readResourceFile("charges/success_afterpay_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
+                readResourceFile("wallet/success_afterpay_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
             val mockResult = Result.success(response.asEntity())
             coEvery { getWalletCallbackUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
@@ -326,7 +326,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     fun `capture Afterpay wallet charge should update isLoading, call useCase, and update state on success`() =
         runTest {
             val response =
-                readResourceFile("charges/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
+                readResourceFile("wallet/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
             val mockResult = Result.success(response.asEntity())
             coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
@@ -385,7 +385,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     fun `decline Afterpay wallet charge should update isLoading, call useCase, and update state on failure`() =
         runTest {
             val response =
-                readResourceFile("charges/success_afterpay_decline_wallet_charge_response.json").convertToDataClass<ChargeDeclineResponse>()
+                readResourceFile("wallet/success_afterpay_decline_wallet_charge_response.json").convertToDataClass<ChargeDeclineResponse>()
             val mockResult = Result.success(response.asEntity())
             coEvery { declineWalletChargeUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
@@ -410,7 +410,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     @Test
     fun `resetResultState should reset UI state`() = runTest {
         val response =
-            readResourceFile("charges/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
+            readResourceFile("wallet/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
         val mockResult = Result.success(response.asEntity())
         coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
         // Allows for testing flow state

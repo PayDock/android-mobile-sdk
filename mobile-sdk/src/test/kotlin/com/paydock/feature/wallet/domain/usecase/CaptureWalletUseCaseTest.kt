@@ -36,9 +36,9 @@ internal class CaptureWalletUseCaseTest : BaseKoinUnitTest() {
         // GIVEN
         val validAccessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
         val request =
-            readResourceFile("charges/valid_paypal_capture_wallet_charge_request.json").convertToDataClass<CaptureWalletChargeRequest>()
+            readResourceFile("wallet/valid_paypal_capture_wallet_charge_request.json").convertToDataClass<CaptureWalletChargeRequest>()
         val response =
-            readResourceFile("charges/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
+            readResourceFile("wallet/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
         val expectedResult = response.asEntity()
         coEvery {
             mockRepository.captureWalletTransaction(
@@ -59,9 +59,9 @@ internal class CaptureWalletUseCaseTest : BaseKoinUnitTest() {
         // GIVEN
         val validAccessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
         val request =
-            readResourceFile("charges/valid_googlepay_capture_wallet_charge_request.json").convertToDataClass<CaptureWalletChargeRequest>()
+            readResourceFile("wallet/valid_googlepay_capture_wallet_charge_request.json").convertToDataClass<CaptureWalletChargeRequest>()
         val response =
-            readResourceFile("charges/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
+            readResourceFile("wallet/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
         val expectedResult = response.asEntity()
         coEvery {
             mockRepository.captureWalletTransaction(
@@ -82,9 +82,9 @@ internal class CaptureWalletUseCaseTest : BaseKoinUnitTest() {
         // GIVEN
         val validAccessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
         val request =
-            readResourceFile("charges/valid_afterpay_capture_wallet_charge_request.json").convertToDataClass<CaptureWalletChargeRequest>()
+            readResourceFile("wallet/valid_afterpay_capture_wallet_charge_request.json").convertToDataClass<CaptureWalletChargeRequest>()
         val response =
-            readResourceFile("charges/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
+            readResourceFile("wallet/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
         val expectedResult = response.asEntity()
         coEvery {
             mockRepository.captureWalletTransaction(
@@ -106,7 +106,7 @@ internal class CaptureWalletUseCaseTest : BaseKoinUnitTest() {
         val invalidAccessToken = MobileSDKTestConstants.Wallet.MOCK_INVALID_WALLET_TOKEN
 
         val request =
-            readResourceFile("charges/valid_paypal_capture_wallet_charge_request.json").convertToDataClass<CaptureWalletChargeRequest>()
+            readResourceFile("wallet/valid_paypal_capture_wallet_charge_request.json").convertToDataClass<CaptureWalletChargeRequest>()
         val expectedResult =
             ApiException(
                 error = ApiErrorResponse(

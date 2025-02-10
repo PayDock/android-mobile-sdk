@@ -36,9 +36,9 @@ internal class GetWalletCallbackUseCaseTest : BaseKoinUnitTest() {
         // GIVEN
         val validAccessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
         val request =
-            readResourceFile("charges/valid_paypal_wallet_callback_request.json").convertToDataClass<WalletCallbackRequest>()
+            readResourceFile("wallet/valid_paypal_wallet_callback_request.json").convertToDataClass<WalletCallbackRequest>()
         val response =
-            readResourceFile("charges/success_paypal_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
+            readResourceFile("wallet/success_paypal_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
         val expectedResult = response.asEntity()
         coEvery {
             mockRepository.getWalletCallback(
@@ -59,9 +59,9 @@ internal class GetWalletCallbackUseCaseTest : BaseKoinUnitTest() {
         // GIVEN
         val validAccessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
         val request =
-            readResourceFile("charges/valid_afterpay_wallet_callback_request.json").convertToDataClass<WalletCallbackRequest>()
+            readResourceFile("wallet/valid_afterpay_wallet_callback_request.json").convertToDataClass<WalletCallbackRequest>()
         val response =
-            readResourceFile("charges/success_afterpay_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
+            readResourceFile("wallet/success_afterpay_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
         val expectedResult = response.asEntity()
         coEvery {
             mockRepository.getWalletCallback(
@@ -82,9 +82,9 @@ internal class GetWalletCallbackUseCaseTest : BaseKoinUnitTest() {
         // GIVEN
         val validAccessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
         val request =
-            readResourceFile("charges/valid_flypay_wallet_callback_request.json").convertToDataClass<WalletCallbackRequest>()
+            readResourceFile("wallet/valid_flypay_wallet_callback_request.json").convertToDataClass<WalletCallbackRequest>()
         val response =
-            readResourceFile("charges/success_flypay_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
+            readResourceFile("wallet/success_flypay_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
         val expectedResult = response.asEntity()
         coEvery {
             mockRepository.getWalletCallback(
@@ -106,7 +106,7 @@ internal class GetWalletCallbackUseCaseTest : BaseKoinUnitTest() {
         val validAccessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
 
         val request =
-            readResourceFile("charges/invalid_wallet_callback_request.json").convertToDataClass<WalletCallbackRequest>()
+            readResourceFile("wallet/invalid_wallet_callback_request.json").convertToDataClass<WalletCallbackRequest>()
         val expectedResult =
             ApiException(
                 error = ApiErrorResponse(

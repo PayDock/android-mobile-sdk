@@ -110,7 +110,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
             val paymentMethodId = MobileSDKTestConstants.PayPal.MOCK_PAYMENT_METHOD_ID
             val payerId = MobileSDKTestConstants.PayPal.MOCK_PAYER_ID
             val response =
-                readResourceFile("charges/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
+                readResourceFile("wallet/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
             val mockResult = Result.success(response.asEntity())
             coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
@@ -178,7 +178,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
             val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             val mockCallbackUrl = MobileSDKTestConstants.PayPal.MOCK_CALLBACK_URL
 
-            val response = readResourceFile("charges/success_paypal_wallet_callback_response.json")
+            val response = readResourceFile("wallet/success_paypal_wallet_callback_response.json")
                 .convertToDataClass<WalletCallbackResponse>()
             val mockResult = Result.success(response.asEntity())
             coEvery { getWalletCallbackUseCase(any(), any()) } returns mockResult
@@ -244,7 +244,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
         val paymentMethodId = MobileSDKTestConstants.PayPal.MOCK_PAYMENT_METHOD_ID
         val payerId = MobileSDKTestConstants.PayPal.MOCK_PAYER_ID
         val response =
-            readResourceFile("charges/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
+            readResourceFile("wallet/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
         val mockResult = Result.success(response.asEntity())
         coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
         viewModel.captureWalletTransaction(paymentMethodId, payerId)
