@@ -32,11 +32,4 @@ sealed class BottomNavItem(
             R.drawable.ic_style_selected,
             "style"
         )
-
-    data object Settings : BottomNavItem(
-        R.string.nav_settings,
-        R.drawable.ic_settings,
-        R.drawable.ic_settings_selected,
-        "settings"
-    )
 }

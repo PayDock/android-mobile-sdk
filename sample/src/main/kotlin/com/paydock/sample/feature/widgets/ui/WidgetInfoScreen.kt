@@ -3,12 +3,9 @@ package com.paydock.sample.feature.widgets.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.paydock.sample.feature.settings.SettingsViewModel
+import com.paydock.sample.BuildConfig
 import com.paydock.sample.feature.widgets.ui.components.AddressDetailsItem
 import com.paydock.sample.feature.widgets.ui.components.AfterpayItem
 import com.paydock.sample.feature.widgets.ui.components.CardDetailsItem
@@ -24,11 +21,10 @@ import com.paydock.sample.feature.widgets.ui.models.WidgetType
 
 @Composable
 fun WidgetInfoScreen(
-    widgetType: WidgetType,
-    settingsViewModel: SettingsViewModel = hiltViewModel(),
+    widgetType: WidgetType
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        val accessToken by settingsViewModel.accessToken.collectAsState()
+        val accessToken = BuildConfig.ACCESS_TOKEN
         val context = LocalContext.current
 
         when (widgetType) {

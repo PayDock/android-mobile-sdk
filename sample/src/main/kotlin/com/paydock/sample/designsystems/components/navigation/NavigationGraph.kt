@@ -12,7 +12,6 @@ import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.list.ListScreen
 import com.paydock.sample.feature.account.ui.AccountScreen
 import com.paydock.sample.feature.checkout.ui.CheckoutStandalone
-import com.paydock.sample.feature.settings.ui.SettingsScreen
 import com.paydock.sample.feature.style.ui.StyleScreen
 import com.paydock.sample.feature.widgets.ui.WidgetInfoScreen
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
@@ -34,9 +33,6 @@ fun NavigationGraph(navController: NavHostController) {
         }
         composable(BottomNavItem.Style.route) {
             StyleScreen()
-        }
-        composable(BottomNavItem.Settings.route) {
-            SettingsScreen()
         }
 
         composable(
@@ -61,7 +57,6 @@ fun NavBackStackEntry.getRouteTitle(context: Context): String {
         "checkout" -> context.getString(R.string.nav_checkout)
         "widgets" -> context.getString(R.string.nav_widgets)
         "style" -> context.getString(R.string.nav_style)
-        "settings" -> context.getString(R.string.nav_settings)
         "account" -> context.getString(R.string.title_my_account)
         "widget_info/{widget_type}" -> {
             arguments?.getString("widget_type")?.let { type ->
@@ -78,9 +73,7 @@ fun NavBackStackEntry.showBackButton(): Boolean {
     return when (destination.route) {
         BottomNavItem.Checkout.route,
         BottomNavItem.Widgets.route,
-        BottomNavItem.Style.route,
-        BottomNavItem.Settings.route,
-            -> false
+        BottomNavItem.Style.route -> false
 
         else -> true
     }

@@ -27,8 +27,7 @@ fun BottomNavigation(navController: NavController) {
     val items = listOf(
         BottomNavItem.Checkout,
         BottomNavItem.Widgets,
-        BottomNavItem.Style,
-        BottomNavItem.Settings,
+        BottomNavItem.Style
     )
 
     NavigationBar(

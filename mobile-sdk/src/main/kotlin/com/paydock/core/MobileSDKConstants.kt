@@ -1,5 +1,7 @@
 package com.paydock.core
 
+import com.paydock.BuildConfig
+
 /**
  * Constants related to the Mobile SDK configuration.
  */
@@ -131,7 +133,7 @@ internal object MobileSDKConstants {
      */
     object PayPalVaultConfig {
         // This needs to match the scheme used in the manifest file
-        internal const val URL_SCHEME = "com.paydock.paypal.vault"
+        internal const val URL_SCHEME = "${BuildConfig.LIBRARY_PACKAGE_NAME}.paypal.vault"
         internal const val RETURN_URL = "$URL_SCHEME://vault/success"
         internal const val CANCEL_URL = "$URL_SCHEME://vault/cancel"
     }
