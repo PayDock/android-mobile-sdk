@@ -39,10 +39,15 @@ buildExampleApp:
   extends: .setup_bundler  # Apply the shared setup
   script:
     - bundle --version
+    - cp bin_schema/card-schemes.json ./mobile-sdk/src/main/assets/card_schemas.json
     - bundle exec fastlane buildDebug
   artifacts:
     paths:
       - sample/build/outputs/apk/debug/*
+      - bin_schema/
+  needs: ["pull_bin_file"]
+  dependencies:
+    - pull_bin_file
 
 test:
   stage: test
@@ -95,3 +100,12 @@ publish_to_github:
   script:
     - bundle exec fastlane publish_to_github
 
+pull_bin_file:
+  stage: build
+  image: 412245956714.dkr.ecr.ap-southeast-2.amazonaws.com/ci:20241212-1584910654
+  script: |
+    aws s3 cp s3://pd-app-bin-management-staging-11/bins.zip bin_schema/bins.zip
+    unzip bin_schema/bins.zip -d bin_schema/
+  artifacts:
+    paths:
+      - bin_schema/
