@@ -6,6 +6,7 @@ import com.paydock.MobileSDK
 import com.paydock.core.domain.model.Environment
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.feature.card.data.utils.CreateVaultTokenRequestAdapterFactory
+import com.paydock.sample.feature.threeDS.data.utils.Create3DSChargeRequestAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,6 +35,7 @@ class NetworkModule {
     @Provides
     fun provideGson(): Gson = GsonBuilder()
         .registerTypeAdapterFactory(CreateVaultTokenRequestAdapterFactory())
+        .registerTypeAdapterFactory(Create3DSChargeRequestAdapterFactory())
         .create()
 
 

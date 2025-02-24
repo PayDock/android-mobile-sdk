@@ -10,7 +10,7 @@ import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import com.kevinnzou.web.AccompanistWebChromeClient
-import com.paydock.BuildConfig
+import com.paydock.MobileSDK
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.network.NetworkClientBuilder
 import com.paydock.designsystems.components.web.extensions.setup
@@ -39,19 +39,70 @@ internal class SdkWebChromeClient(
     }
 
     /**
-     * Handles console messages from the WebView. In development builds, it logs the messages
-     * to the console with a custom tag and formatting. In non-development builds, it falls back to the default behavior.
+     * Handles console messages from the WebView.
+     *
+     * This method logs messages to the console with a custom tag and formatting.
+     * It also handles different message levels (ERROR, WARNING, LOG, DEBUG, TIP)
+     * and provides custom error handling.
      *
      * @param consoleMessage The message object from the WebView console.
      * @return True if the message was handled by this method, false otherwise.
      */
     override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
-        return if (BuildConfig.DEV_BUILD) {
-            val message = consoleMessage.message()
-            val formattedMessage = formatMessage(message)
-            Log.d(MobileSDKConstants.MOBILE_SDK_TAG, formattedMessage)
+        val messageLevel = consoleMessage.messageLevel()
+        val message = formatMessage(consoleMessage.message())
+        val sourceId = consoleMessage.sourceId()
+        val lineNumber = consoleMessage.lineNumber()
+
+        // Handle specific message levels
+        return if (MobileSDK.getInstance().enableTestMode) {
+            // Log the message with appropriate level and details
+            logConsoleMessage(messageLevel, message, sourceId, lineNumber)
             true
-        } else super.onConsoleMessage(consoleMessage)
+        } else {
+            // In non-development builds, use the default behavior
+            super.onConsoleMessage(consoleMessage)
+        }
+    }
+
+    /**
+     * Logs a console message with the appropriate log level and details.
+     *
+     * @param messageLevel The level of the console message.
+     * @param message The message content.
+     * @param sourceId The source ID of the message.
+     * @param lineNumber The line number of the message.
+     */
+    private fun logConsoleMessage(
+        messageLevel: ConsoleMessage.MessageLevel,
+        message: String,
+        sourceId: String?,
+        lineNumber: Int
+    ) {
+        val logMessage = "$messageLevel: $message at $sourceId:$lineNumber"
+        when (messageLevel) {
+            ConsoleMessage.MessageLevel.ERROR -> Log.e(
+                MobileSDKConstants.MOBILE_SDK_TAG,
+                logMessage
+            )
+
+            ConsoleMessage.MessageLevel.WARNING -> Log.w(
+                MobileSDKConstants.MOBILE_SDK_TAG,
+                logMessage
+            )
+
+            ConsoleMessage.MessageLevel.LOG -> Log.i(MobileSDKConstants.MOBILE_SDK_TAG, logMessage)
+            ConsoleMessage.MessageLevel.DEBUG -> Log.d(
+                MobileSDKConstants.MOBILE_SDK_TAG,
+                logMessage
+            )
+
+            ConsoleMessage.MessageLevel.TIP -> Log.i(MobileSDKConstants.MOBILE_SDK_TAG, logMessage)
+            else -> Log.v(
+                MobileSDKConstants.MOBILE_SDK_TAG,
+                logMessage
+            ) // Verbose for unknown levels
+        }
     }
 
     /**
@@ -157,7 +208,8 @@ internal class SdkWebChromeClient(
             // Try to parse the possible JSON string and format it
             val formattedJson = try {
                 // Use kotlinx.serialization to parse the string as a JSON element
-                NetworkClientBuilder.getNetworkJson().parseToJsonElement(possibleJsonString).toString()
+                NetworkClientBuilder.getNetworkJson().parseToJsonElement(possibleJsonString)
+                    .toString()
             } catch (_: Exception) {
                 // If parsing fails, leave the string as is
                 possibleJsonString

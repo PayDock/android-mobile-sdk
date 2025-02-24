@@ -9,7 +9,8 @@ import com.paydock.feature.flypay.injection.flyPayModule
 import com.paydock.feature.googlepay.injection.googlePayModule
 import com.paydock.feature.paypal.core.injection.payPalModule
 import com.paydock.feature.src.injection.clickToPayModule
-import com.paydock.feature.threeDS.injection.threeDSModule
+import com.paydock.feature.threeDS.integrated.injection.integrated3DSModule
+import com.paydock.feature.threeDS.standalone.injection.standalone3DSModule
 import org.koin.android.ext.koin.androidApplication
 import org.koin.dsl.module
 
@@ -25,7 +26,8 @@ internal val presentationModule = module {
     // Feature modules
     includes(
         cardDetailsModule,
-        threeDSModule,
+        integrated3DSModule,
+        standalone3DSModule,
         addressDetailsModule,
         clickToPayModule,
         // wallet modules

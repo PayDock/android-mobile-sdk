@@ -45,6 +45,10 @@
     <string name="error_afterpay_sdk_internal_status">A cancelled Afterpay transaction always contains a status!</string>
     <string name="error_click_to_pay_cancelled">Click to Pay transaction was cancelled!</string>
     <string name="error_3ds_cancelled_error">3DS transaction was cancelled!</string>
+    <string name="error_standalone_3ds_invalid_token">Invalid Standalone 3DS token!</string>
+    <string name="error_standalone_3ds_invalid_token_format">Invalid Standalone 3DS token format!</string>
+    <string name="error_integrated_3ds_invalid_token">Invalid Integrated 3DS token!</string>
+    <string name="error_integrated_3ds_invalid_token_format">Invalid Integrated 3DS token format!</string>
     <!-- endregion -->
     <!-- region Buttons -->
     <string name="button_enter_address_manually">Or enter address manually</string>

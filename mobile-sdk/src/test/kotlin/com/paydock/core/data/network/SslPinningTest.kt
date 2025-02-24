@@ -3,6 +3,7 @@ package com.paydock.core.data.network
 import android.content.Context
 import com.paydock.MobileSDK
 import com.paydock.core.BaseUnitTest
+import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.injection.modules.mockSuccessNetworkModule
 import com.paydock.core.data.injection.modules.sslFailNetworkTestModule
 import com.paydock.core.data.injection.modules.sslSuccessNetworkTestModule
@@ -69,7 +70,7 @@ internal class SslPinningTest : BaseUnitTest() {
 
         // Create a client and try to make a request to `https://paydock.com`.
         val client: HttpClient by inject()
-        assertFails { client.get("https://paydock.com") }
+        assertFails { client.get(MobileSDKConstants.DEFAULT_WEB_URL) }
     }
 
     /**

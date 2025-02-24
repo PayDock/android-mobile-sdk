@@ -50,7 +50,7 @@ class App : Application() {
         MobileSDK.Builder()
             .environment(Environment.SANDBOX)
             // Set flag for non-production builds
-            .enableTestMode(false)
+            .enableTestMode(true)
             // Uncomment if wanting to use custom SDK theme
             // .applyTheme(theme)
             .build(this)

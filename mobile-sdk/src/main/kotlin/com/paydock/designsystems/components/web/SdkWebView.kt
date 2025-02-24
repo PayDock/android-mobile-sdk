@@ -89,6 +89,7 @@ internal fun <T : Any?> SdkWebView(
                 webView.setup()
                 // Add JavaScript interface for communication between WebView and Android code
                 jsBridge?.let { jsInterface ->
+                    jsInterface.safeCastAs<SdkJSBridge<*>>()?.setWebViewReference(webView)
                     webView.addJavascriptInterface(
                         jsInterface,
                         MobileSDKConstants.JS_BRIDGE_NAME

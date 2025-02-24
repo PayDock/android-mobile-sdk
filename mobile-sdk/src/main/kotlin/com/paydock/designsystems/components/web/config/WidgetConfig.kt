@@ -69,7 +69,7 @@ internal sealed class WidgetConfig {
         ),
         val accessToken: String,
         val serviceId: String,
-        val meta: ClickToPayMeta?
+        val meta: ClickToPayMeta?,
     ) : WidgetConfig() {
 
         /**
@@ -103,42 +103,115 @@ internal sealed class WidgetConfig {
     }
 
     /**
-     * Configuration for 3DS widget.
+     * `ThreeDSConfigBase` is a sealed class that serves as the base configuration for 3D Secure authentication widgets.
+     * It provides a common structure for different types of 3DS configurations, such as Integrated and Standalone.
      *
-     * @property title Title for the 3DS widget. Default is "3DS".
-     * @property jsLibraryUrl URL of the JavaScript library for 3DS widget.
-     *                        Default is [ClientSDKConstants.CLIENT_SDK_JS_LIBRARY].
-     * @property environment Environment for the 3DS widget. Default is the environment
-     *                        mapped from [MobileSDK.getInstance().environment].
-     * @property events List of events supported by the 3DS widget.
-     *                  Default includes "chargeAuthSuccess", "chargeAuthReject", "chargeAuthChallenge",
-     *                  "chargeAuthDecoupled", "chargeAuthInfo", "error".
-     * @property token Token for 3DS widget initialization.
+     * This class inherits from `WidgetConfig`, indicating that it represents the configuration for a widget.
+     *
+     * Each concrete subclass (e.g., `Integrated3DSConfig`, `Standalone3DSConfig`) defines specific properties
+     * and behaviors for its respective 3DS implementation.
+     *
+     * @see Integrated3DSConfig
+     * @see Standalone3DSConfig
+     * @see WidgetConfig
      */
-    data class ThreeDSConfig(
-        override val title: String = "3DS",
-        override val jsLibraryUrl: String = MobileSDK.getInstance().environment.mapToClientSDKLibrary(),
-        override val environment: String = MobileSDK.getInstance().environment.mapToClientSDKEnv(),
-        override val events: List<String> = listOf(
-            "chargeAuthSuccess",
-            "chargeAuthReject",
-            "chargeAuthChallenge",
-            "chargeAuthDecoupled",
-            "chargeAuthInfo",
-            "error"
-        ),
-        val token: String
-    ) : WidgetConfig() {
+    sealed class ThreeDSConfigBase : WidgetConfig() {
 
         /**
-         * Create the widget initialization script for 3DS.
+         * Configuration class for the Integrated 3DS (3D Secure) authentication flow.
          *
-         * @return Widget initialization script.
+         * This class encapsulates the necessary parameters to configure and initialize the 3DS authentication widget
+         * within a mobile application. It extends `ThreeDSConfigBase` and provides specific configuration for
+         * the integrated 3DS experience.
+         *
+         * @property title The title displayed for the 3DS authentication process. Defaults to "3d secure authentication".
+         * @property jsLibraryUrl The URL of the JavaScript library required for the client-side 3DS integration.
+         *                       It's dynamically retrieved from the `MobileSDK` environment.
+         * @property environment The environment in which the 3DS process is running (e.g., "sandbox", "production").
+         *                      It's dynamically retrieved from the `MobileSDK` environment.
+         * @property events A list of event names that the client can subscribe to for the 3DS process. These events indicate
+         *                  the different stages and outcomes of the authentication flow.
+         *                  - "chargeAuthSuccess": Indicates a successful 3DS authentication.
+         *                  - "chargeAuthReject": Indicates a failed or rejected 3DS authentication.
+         *                  - "additionalDataCollectSuccess": Indicates successful collection of additional data.
+         *                  - "additionalDataCollectReject": Indicates a failure in collecting additional data.
+         *                  - "chargeAuth": Indicates the start of the 3DS authentication process.
+         * @property token The unique token required to initialize the 3DS widget. This token is typically provided
+         *                 by the backend server and is essential for the authentication process.
+         *
+         * @constructor Creates an instance of [Integrated3DSConfig].
          */
-        override fun createWidget(): String {
-            return """
+        data class Integrated3DSConfig(
+            override val title: String = "3D Secure Authentication",
+            override val jsLibraryUrl: String = MobileSDK.getInstance().environment.mapToClientSDKLibrary(),
+            override val environment: String = MobileSDK.getInstance().environment.mapToClientSDKEnv(),
+            override val events: List<String> = listOf(
+                "chargeAuthSuccess",
+                "chargeAuthReject",
+                "additionalDataCollectSuccess",
+                "additionalDataCollectReject",
+                "chargeAuth"
+            ),
+            val token: String,
+        ) : ThreeDSConfigBase() {
+            /**
+             * Creates the widget initialization script for integrated 3D Secure.
+             *
+             * This script initializes the 3D Secure widget using the provided token.
+             *
+             * @return The widget initialization script.
+             */
+            override fun createWidget(): String {
+                return """
                 new ${ClientSDKConstants.WIDGET_ID}.Canvas3ds("#${ClientSDKConstants.WIDGET_CONTAINER_ID}", "$token")
-            """.trimIndent()
+                """.trimIndent()
+            }
+        }
+
+        /**
+         * Configuration class for standalone 3D Secure authentication.
+         *
+         * This class defines the necessary parameters for initializing and configuring a standalone 3D Secure flow.
+         * It extends [ThreeDSConfigBase] and provides specific configurations for standalone 3DS, including
+         * the title, JavaScript library URL, environment, supported events, and a unique token.
+         *
+         * @property title The title to be displayed during the 3D Secure process. Defaults to "3d secure authentication".
+         * @property jsLibraryUrl The URL of the JavaScript library required for the 3D Secure flow.
+         *                        It is dynamically retrieved from the Mobile SDK's environment.
+         * @property environment The environment (e.g., "sandbox", "production") in which the 3D Secure process is running.
+         *                       It is dynamically retrieved from the Mobile SDK's environment.
+         * @property events The list of events that the 3D Secure component will emit.
+         *                  This includes events like "chargeAuthSuccess", "chargeAuthReject", "chargeAuthChallenge",
+         *                  "chargeAuthDecoupled", "chargeAuthInfo", and "error".
+         * @property token A unique token required for the standalone 3D Secure process.
+         *                 This token is essential for authenticating the transaction.
+         */
+        data class Standalone3DSConfig(
+            override val title: String = "3D Secure Authentication",
+            override val jsLibraryUrl: String = MobileSDK.getInstance().environment.mapToClientSDKLibrary(),
+            override val environment: String = MobileSDK.getInstance().environment.mapToClientSDKEnv(),
+            override val events: List<String> = listOf(
+                "chargeAuthSuccess",
+                "chargeAuthReject",
+                "chargeAuthChallenge",
+                "chargeAuthDecoupled",
+                "chargeAuthInfo",
+                "error"
+            ),
+            val token: String,
+        ) : ThreeDSConfigBase() {
+            /**
+             * Creates the widget initialization script for standalone 3D Secure.
+             *
+             * This script initializes the 3D Secure widget using the provided token.
+             *
+             * @return The widget initialization script.
+             */
+            override fun createWidget(): String {
+                return """
+                new ${ClientSDKConstants.WIDGET_ID}.Canvas3ds("#${ClientSDKConstants.WIDGET_CONTAINER_ID}", "$token")
+                """.trimIndent()
+            }
         }
     }
 }

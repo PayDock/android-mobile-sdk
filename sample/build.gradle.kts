@@ -128,6 +128,14 @@ android {
     kapt {
         correctErrorTypes = true
     }
+
+//    // TODO This is to show kapt type import errors (debugging)
+//    allprojects {
+//        tasks.matching { it.name.contains("kapt") }.configureEach {
+//            enabled = false
+//        }
+//    }
+
 }
 
 fun getPropertyValue(propertyName: String, defaultValue: String = ""): String {
