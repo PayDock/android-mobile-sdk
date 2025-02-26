@@ -107,7 +107,7 @@ fun NumberCounter(
 
 @Preview
 @Composable
-private fun PreviewCopyTextField() {
+internal fun PreviewNumberCounter() {
     SampleTheme {
         NumberCounter(
             modifier = Modifier.fillMaxWidth(),

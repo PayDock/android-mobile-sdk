@@ -1,6 +1,5 @@
 package com.paydock.sample.designsystems.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
@@ -11,13 +10,9 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
-import androidx.core.view.WindowCompat
 import com.paydock.sample.core.SMALL_SCREEN_SIZE
 import com.paydock.sample.designsystems.theme.dimensions.Dimensions
 import com.paydock.sample.designsystems.theme.dimensions.LocalDimensions
@@ -47,20 +42,6 @@ fun SampleTheme(
 
         isDarkMode -> DarkColors
         else -> LightColors
-    }
-    val view = LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primaryContainer.toArgb() // here change the color
-            window.navigationBarColor =
-                colorScheme.primaryContainer.toArgb() // here change the color
-
-            // here change the status bar element color
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDarkMode
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars =
-                !isDarkMode
-        }
     }
     val dimensions = if (isSmallDevice) Dimensions.Small else Dimensions.Default
     ProvideDimensions(dimensions = dimensions) {

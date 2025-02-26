@@ -52,8 +52,9 @@ fun SdkBottomSheet(
     // Define modifier based on whether full screen is allowed or not
     val modifier = if (allowFullScreen) {
         Modifier.fillMaxSize()
-    } else
+    } else {
         Modifier.fillMaxWidth()
+    }
 
     // Display a modal bottom sheet with customizable content
     ModalBottomSheet(

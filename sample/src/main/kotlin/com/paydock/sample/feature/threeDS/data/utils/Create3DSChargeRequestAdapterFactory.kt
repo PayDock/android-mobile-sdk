@@ -6,7 +6,6 @@ import com.google.gson.TypeAdapterFactory
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
-import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
 import com.paydock.sample.feature.threeDS.data.api.dto.Capture3DSChargeRequest
 
 class Create3DSChargeRequestAdapterFactory : TypeAdapterFactory {

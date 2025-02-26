@@ -16,12 +16,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.FlyPayException
 import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.feature.flypay.presentation.components.FlyPayButton
@@ -234,9 +234,9 @@ private fun handleUiState(
     }
 }
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewFlyPayWidget() {
+internal fun PreviewFlyPayWidget() {
     SdkTheme {
         FlyPayWidget(clientId = "", token = {}, completion = {})
     }

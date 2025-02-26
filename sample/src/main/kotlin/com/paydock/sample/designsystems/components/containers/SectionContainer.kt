@@ -34,7 +34,7 @@ fun SectionContainer(
 
 @Preview
 @Composable
-private fun PreviewSectionContainer() {
+internal fun PreviewSectionContainer() {
     SampleTheme {
         SectionContainer(title = "Environment") {
             Text(text = "Random Content")
@@ -44,7 +44,7 @@ private fun PreviewSectionContainer() {
 
 @Preview
 @Composable
-private fun PreviewSectionContainerWithSubTitle() {
+internal fun PreviewSectionContainerWithSubTitle() {
     SampleTheme {
         SectionContainer(title = "Environment", subTitle = "api-sandbox.paydock,com") {
             Text(text = "Random Content")

@@ -11,7 +11,6 @@ import com.paydock.sample.feature.checkout.ClickToPayActivity
 
 @Composable
 fun ClickToPayComponent(
-    isLoading: Boolean,
     accessToken: String,
     resultHandler: (Result<String>) -> Unit,
 ) {

@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.theme.SdkTheme
@@ -194,9 +194,9 @@ private fun handleUIState(
     }
 }
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewCardDetails() {
+internal fun PreviewCardDetails() {
     SdkTheme {
         CardDetailsWidget(config = CardDetailsWidgetConfig(accessToken = "")) {
 

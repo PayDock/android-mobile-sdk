@@ -23,6 +23,7 @@ import org.koin.core.context.GlobalContext.loadKoinModules
 import org.koin.core.context.GlobalContext.unloadKoinModules
 import org.koin.core.context.stopKoin
 import org.koin.test.inject
+import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
 import kotlin.test.Test
 import kotlin.test.assertFails
@@ -103,7 +104,7 @@ internal class SslPinningTest : BaseUnitTest() {
         unloadKoinModules(mockSuccessNetworkModule)
         loadKoinModules(sslSuccessNetworkTestModule)
 
-        // Create a client and try to make a request to `https://www.commbank.com.au/`.
+        // Create a client and try to make a request to `https://www.paydock.com.au/`.
         val client: HttpClient by inject()
 
         // Assert that the request succeeds and the status code is 200.
@@ -113,6 +114,8 @@ internal class SslPinningTest : BaseUnitTest() {
                 url { path("/v1/charges/66ab783fbf97c12c63bd312e") }
             }
         } catch (e: SSLPeerUnverifiedException) {
+            fail(e.message)
+        } catch (e: SSLHandshakeException) {
             fail(e.message)
         } catch (e: Exception) {
             // It should fail here to invalid authentication: Access forbidden
@@ -133,7 +136,7 @@ internal class SslPinningTest : BaseUnitTest() {
         unloadKoinModules(mockSuccessNetworkModule)
         loadKoinModules(sslSuccessNetworkTestModule)
 
-        // Create a client and try to make a request to `https://www.commbank.com.au/`.
+        // Create a client and try to make a request to `https://www.paydock.com.au/`.
         val client: HttpClient by inject()
 
         // Assert that the request succeeds and the status code is 200.
@@ -143,6 +146,8 @@ internal class SslPinningTest : BaseUnitTest() {
                 url { path("/v1/charges/66ab783fbf97c12c63bd312e") }
             }
         } catch (e: SSLPeerUnverifiedException) {
+            fail(e.message)
+        } catch (e: SSLHandshakeException) {
             fail(e.message)
         } catch (e: Exception) {
             // It should fail here to invalid authentication: Access forbidden
@@ -163,7 +168,7 @@ internal class SslPinningTest : BaseUnitTest() {
         unloadKoinModules(mockSuccessNetworkModule)
         loadKoinModules(sslSuccessNetworkTestModule)
 
-        // Create a client and try to make a request to `https://www.commbank.com.au/`.
+        // Create a client and try to make a request to `https://www.paydock.com.au/`.
         val client: HttpClient by inject()
 
         // Assert that the request succeeds and the status code is 200.
@@ -173,6 +178,8 @@ internal class SslPinningTest : BaseUnitTest() {
                 url { path("/v1/charges/66ab783fbf97c12c63bd312e") }
             }
         } catch (e: SSLPeerUnverifiedException) {
+            fail(e.message)
+        } catch (e: SSLHandshakeException) {
             fail(e.message)
         } catch (e: Exception) {
             // It should fail here to invalid authentication: Access forbidden

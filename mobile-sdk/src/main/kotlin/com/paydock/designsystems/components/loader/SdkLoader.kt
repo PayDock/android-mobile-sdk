@@ -8,9 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
 internal fun SdkLoader() {
     Box(

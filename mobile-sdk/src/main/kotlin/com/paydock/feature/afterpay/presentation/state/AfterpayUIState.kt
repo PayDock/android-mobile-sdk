@@ -59,7 +59,9 @@ internal sealed class AfterpayUIState {
      * @property shippingOptionUpdateResult The result of the update process for the selected shipping option.
      * This may be null if no update result is provided.
      */
-    data class ProvideShippingOptionUpdateResult(val shippingOptionUpdateResult: ShippingOptionUpdateResult?) : AfterpayUIState()
+    data class ProvideShippingOptionUpdateResult(
+        val shippingOptionUpdateResult: ShippingOptionUpdateResult?
+    ) : AfterpayUIState()
 
     /**
      * Represents a successful operation in the Afterpay flow.

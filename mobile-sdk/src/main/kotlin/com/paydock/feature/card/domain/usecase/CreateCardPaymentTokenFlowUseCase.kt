@@ -21,7 +21,10 @@ internal class CreateCardPaymentTokenFlowUseCase(private val repository: CardRep
      * @param request The [CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard] containing credit card information to tokenize.
      * @return A [Result] representing the tokenization result.
      */
-    operator fun invoke(accessToken: String, request: CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard) = runCatchingFlow {
+    operator fun invoke(
+        accessToken: String,
+        request: CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard
+    ) = runCatchingFlow {
         repository.createPaymentTokenFlow(accessToken, request)
     }
 }

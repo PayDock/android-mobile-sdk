@@ -16,9 +16,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.address.domain.model.integration.BillingAddress
@@ -160,17 +160,17 @@ internal fun ManualAddress(
     }
 }
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewManualAddress() {
+internal fun PreviewManualAddress() {
     SdkTheme {
         ManualAddress(onAddressUpdated = {})
     }
 }
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewManualAddressWithDefault() {
+internal fun PreviewManualAddressWithDefault() {
     val address = BillingAddress(
         addressLine1 = "1 Park Avenue",
         city = "Manchester",

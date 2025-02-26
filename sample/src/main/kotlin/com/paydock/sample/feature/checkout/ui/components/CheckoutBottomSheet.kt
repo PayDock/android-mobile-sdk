@@ -94,7 +94,6 @@ fun CheckoutBottomSheet(
                         }
 
                         WidgetType.CLICK_TO_PAY -> ClickToPayComponent(
-                            isLoading = uiState.isLoading,
                             accessToken = accessToken,
                             resultHandler = viewModel::handleClickToPayResult
                         )

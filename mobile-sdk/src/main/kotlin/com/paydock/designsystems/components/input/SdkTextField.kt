@@ -25,10 +25,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.core.presentation.extensions.autofill
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 
@@ -177,9 +177,9 @@ internal fun SdkTextField(
  * Composable function to preview an empty state of the SdkTextField.
  */
 @OptIn(ExperimentalComposeUiApi::class)
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewSdkTextFieldEmptyState() {
+internal fun PreviewSdkTextFieldEmptyState() {
     // Mutable state for the text input field value
     var value by remember { mutableStateOf("") }
     // Preview SdkTextField with an empty state
@@ -200,9 +200,9 @@ private fun PreviewSdkTextFieldEmptyState() {
  * Composable function to preview the SdkTextField with input.
  */
 @OptIn(ExperimentalComposeUiApi::class)
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewSdkTextFieldWithInput() {
+internal fun PreviewSdkTextFieldWithInput() {
     // Mutable state for the text input field value
     var value by remember { mutableStateOf("Input") }
     // Preview SdkTextField with pre-filled input
@@ -222,9 +222,9 @@ private fun PreviewSdkTextFieldWithInput() {
  * Composable function to preview the SdkTextField with an error state.
  */
 @OptIn(ExperimentalComposeUiApi::class)
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewSdkTextFieldError() {
+internal fun PreviewSdkTextFieldError() {
     // Mutable state for the text input field value
     var value by remember { mutableStateOf("xxxx") }
     // Preview SdkTextField with error state

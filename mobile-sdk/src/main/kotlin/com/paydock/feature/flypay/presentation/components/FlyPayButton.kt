@@ -17,10 +17,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.sp
 import com.paydock.R
 import com.paydock.core.presentation.extensions.alpha40
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.FlyPayBlue
 import com.paydock.designsystems.theme.SdkTheme
@@ -91,9 +91,9 @@ internal fun FlyPayButton(
     }
 }
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewFlyPayButton() {
+internal fun PreviewFlyPayButton() {
     SdkTheme {
         FlyPayButton(isEnabled = true, isLoading = false) {}
     }

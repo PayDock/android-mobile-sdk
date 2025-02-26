@@ -201,7 +201,7 @@ private fun DrawScope.drawBitmap(
 
 @Preview
 @Composable
-private fun PreviewSatValPanel() {
+internal fun PreviewSatValPanel() {
     val color = "#3e3e9d".color
     val hsv = floatArrayOf(0f, 0f, 0f)
     AndroidColor.colorToHSV(color!!.toArgb(), hsv)

@@ -76,7 +76,7 @@ private fun RowScope.ButtonContent(text: String, isLoading: Boolean) {
 
 @Composable
 @Preview
-private fun PreviewButtonPrimary() {
+internal fun PreviewButtonPrimary() {
     SampleTheme {
         AppButton(
             text = "Primary",
@@ -88,7 +88,7 @@ private fun PreviewButtonPrimary() {
 
 @Composable
 @Preview
-private fun PreviewButtonPrimaryWithLoading() {
+internal fun PreviewButtonPrimaryWithLoading() {
     SampleTheme() {
         AppButton(
             text = "Primary",

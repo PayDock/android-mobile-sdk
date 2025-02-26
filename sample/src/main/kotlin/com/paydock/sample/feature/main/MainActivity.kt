@@ -3,7 +3,10 @@ package com.paydock.sample.feature.main
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
@@ -18,9 +21,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.view.WindowCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.paydock.sample.designsystems.components.CenterAppTopBar
@@ -36,13 +40,25 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // We handle all the insets manually
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
+            enableEdgeToEdge(
+                statusBarStyle = getSystemBarStyle(),
+                navigationBarStyle = getSystemBarStyle()
+            )
             SampleTheme {
                 MainScreenView()
             }
         }
+    }
+}
+
+@Composable
+private fun getSystemBarStyle(): SystemBarStyle = SystemBarStyle.run {
+    val color = Color.Transparent.toArgb()
+    if (isSystemInDarkTheme()) {
+        dark(color)
+    } else {
+        light(color, color)
     }
 }
 
@@ -114,7 +130,7 @@ fun rememberActionBarDetails(navController: NavHostController, context: Context)
 
 @Preview
 @Composable
-private fun PreviewMainScreen() {
+internal fun PreviewMainScreen() {
     SampleTheme {
         MainScreenView()
     }

@@ -11,8 +11,8 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.core.MobileSDKConstants
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 
@@ -58,9 +58,9 @@ internal fun HyperlinkText(
     )
 }
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewHyperlinkText() {
+internal fun PreviewHyperlinkText() {
     SdkTheme {
         HyperlinkText(text = "Privacy Policy", url = MobileSDKConstants.DEFAULT_WEB_URL)
     }

@@ -82,7 +82,7 @@ fun BottomNavigation(navController: NavController) {
 
 @Composable
 @Preview
-private fun PreviewBottomNavigation() {
+internal fun PreviewBottomNavigation() {
     SampleTheme {
         val navController = rememberNavController()
         BottomNavigation(navController)

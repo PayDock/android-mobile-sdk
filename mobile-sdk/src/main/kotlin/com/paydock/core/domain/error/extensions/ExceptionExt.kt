@@ -160,7 +160,9 @@ internal fun Throwable.mapGenericExceptions(): SdkException? {
  * - Ensure that the type parameter `E` is a subclass of `Throwable`.
  * - Use this mapping function to consistently convert low-level exceptions into higher-level domain exceptions.
  */
-internal fun Throwable.mapPayPalVaultApiException(exceptionClass: KClass<out PayPalVaultException>): PayPalVaultException =
+internal fun Throwable.mapPayPalVaultApiException(
+    exceptionClass: KClass<out PayPalVaultException>
+): PayPalVaultException =
     when (this) {
         is ApiException -> {
             when (exceptionClass) {
@@ -376,7 +378,9 @@ internal fun Throwable.mapGooglePayApiException(exceptionClass: KClass<out Googl
  * - `CardDetailsException.TokenisingCardException`: Represents a specific error during card tokenization.
  * - `CardDetailsException.UnknownException`: Represents all other errors with a generic message.
  */
-internal fun Throwable.mapCardDetailsApiException(exceptionClass: KClass<out CardDetailsException>): CardDetailsException =
+internal fun Throwable.mapCardDetailsApiException(
+    exceptionClass: KClass<out CardDetailsException>
+): CardDetailsException =
     when (this) {
         is ApiException -> {
             when (exceptionClass) {
@@ -451,7 +455,9 @@ internal fun Throwable.mapAfterpayApiException(exceptionClass: KClass<out Afterp
  * @throws GiftCardException.TokenisingCardException If the exception is related to card tokenization errors.
  * @throws GiftCardException.UnknownException For all other types of exceptions, including unknown API errors.
  */
-internal fun Throwable.mapGiftCardDetailsApiException(exceptionClass: KClass<out GiftCardException>): GiftCardException =
+internal fun Throwable.mapGiftCardDetailsApiException(
+    exceptionClass: KClass<out GiftCardException>
+): GiftCardException =
     when (this) {
         is ApiException -> {
             when (exceptionClass) {

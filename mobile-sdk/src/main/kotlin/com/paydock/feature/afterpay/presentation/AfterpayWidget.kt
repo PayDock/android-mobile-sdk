@@ -15,12 +15,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.viewinterop.AndroidView
 import com.afterpay.android.Afterpay
 import com.afterpay.android.view.AfterpayPaymentButton
 import com.paydock.R
 import com.paydock.core.domain.error.exceptions.AfterpayException
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.designsystems.theme.SdkTheme
@@ -58,7 +58,10 @@ fun AfterpayWidget(
     config: AfterpaySDKConfig,
     enabled: Boolean = true,
     token: (onTokenReceived: (String) -> Unit) -> Unit,
-    selectAddress: (address: BillingAddress, provideShippingOptions: (List<AfterpayShippingOption>) -> Unit) -> Unit = { _, _ -> },
+    selectAddress: (
+        address: BillingAddress,
+        provideShippingOptions: (List<AfterpayShippingOption>) -> Unit
+    ) -> Unit = { _, _ -> },
     selectShippingOption: (
         shippingOption: AfterpayShippingOption,
         provideShippingOptionUpdateResult: (AfterpayShippingOptionUpdate?) -> Unit,
@@ -242,9 +245,9 @@ private fun handleUIState(
     }
 }
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewAfterpayWidget() {
+internal fun PreviewAfterpayWidget() {
     SdkTheme {
         AndroidView(factory = { context ->
             AfterpayPaymentButton(context).apply {

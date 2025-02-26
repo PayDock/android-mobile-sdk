@@ -24,13 +24,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.PayPalException
 import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.PayPal
@@ -275,9 +275,9 @@ private fun handleUIState(
     }
 }
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewPayPalWidget() {
+internal fun PreviewPayPalWidget() {
     SdkTheme {
         PayPalWidget(token = {}, completion = {})
     }

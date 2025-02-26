@@ -27,11 +27,11 @@ import io.mockk.verify
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.compose.LocalKoinApplication
 import org.koin.compose.LocalKoinScope
 import org.koin.core.annotation.KoinInternalApi
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import org.koin.mp.KoinPlatformTools
 import kotlin.test.assertEquals

@@ -7,7 +7,7 @@ import com.paydock.core.domain.mapper.mapToGooglePayEnv
 import com.paydock.feature.googlepay.presentation.viewmodels.GooglePayViewModel
 import com.paydock.feature.wallet.injection.walletModule
 import org.json.JSONObject
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**

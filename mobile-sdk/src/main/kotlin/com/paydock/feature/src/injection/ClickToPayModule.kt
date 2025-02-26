@@ -1,7 +1,7 @@
 package com.paydock.feature.src.injection
 
 import com.paydock.feature.src.presentation.viewmodels.ClickToPayViewModel
-import org.koin.androidx.viewmodel.dsl.viewModelOf
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 /**

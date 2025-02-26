@@ -116,6 +116,7 @@ internal class GooglePayViewModel(
      * @param result The result of the wallet charge operation.
      */
     override fun updateChargeUIState(result: Result<ChargeResponse>) {
+        println(">>> Update result: $result")
         result.fold(
             onSuccess = { chargeData ->
                 updateUiState(GooglePayUIState.Success(chargeData))

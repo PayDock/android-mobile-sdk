@@ -73,7 +73,7 @@ fun ColourSelectionField(
 
 @Preview
 @Composable
-private fun PreviewColorSelectionField() {
+internal fun PreviewColorSelectionField() {
     SampleTheme() {
         PreviewColorSelectionField()
     }

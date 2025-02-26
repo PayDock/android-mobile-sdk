@@ -30,14 +30,14 @@ fun DesignSection(
                 title = stringResource(R.string.label_text_corner_radius),
                 value = dimensionsTheme.textFieldCornerRadius.value.toInt(),
                 onValueChange = {
-                    onDimensionsUpdated(dimensionsTheme.copy(textFieldCornerRadius = it.dp))
+                    onDimensionsUpdated(dimensionsTheme.with(textFieldCornerRadius = it.dp))
                 })
             NumberCounter(
                 modifier = Modifier.weight(0.5f),
                 title = stringResource(R.string.label_button_corner_radius),
                 value = dimensionsTheme.buttonCornerRadius.value.toInt(),
                 onValueChange = {
-                    onDimensionsUpdated(dimensionsTheme.copy(buttonCornerRadius = it.dp))
+                    onDimensionsUpdated(dimensionsTheme.with(buttonCornerRadius = it.dp))
                 })
         }
 
@@ -51,7 +51,7 @@ fun DesignSection(
                 title = stringResource(R.string.label_shadow),
                 value = dimensionsTheme.shadow.value.toInt(),
                 onValueChange = {
-                    onDimensionsUpdated(dimensionsTheme.copy(shadow = it.dp))
+                    onDimensionsUpdated(dimensionsTheme.with(shadow = it.dp))
                 })
             Spacer(modifier = Modifier.weight(0.5f))
         }
@@ -66,14 +66,14 @@ fun DesignSection(
                 title = stringResource(R.string.label_border_width),
                 value = dimensionsTheme.borderWidth.value.toInt(),
                 onValueChange = {
-                    onDimensionsUpdated(dimensionsTheme.copy(borderWidth = it.dp))
+                    onDimensionsUpdated(dimensionsTheme.with(borderWidth = it.dp))
                 })
             NumberCounter(
                 modifier = Modifier.weight(0.5f),
                 title = stringResource(R.string.label_spacing),
                 value = dimensionsTheme.spacing.value.toInt(),
                 onValueChange = {
-                    onDimensionsUpdated(dimensionsTheme.copy(spacing = it.dp))
+                    onDimensionsUpdated(dimensionsTheme.with(spacing = it.dp))
                 })
         }
     }

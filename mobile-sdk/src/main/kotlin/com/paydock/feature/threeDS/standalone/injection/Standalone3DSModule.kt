@@ -1,7 +1,7 @@
 package com.paydock.feature.threeDS.standalone.injection
 
 import com.paydock.feature.threeDS.standalone.presentation.viewmodels.Standalone3DSViewModel
-import org.koin.androidx.viewmodel.dsl.viewModelOf
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 /**

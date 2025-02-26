@@ -168,7 +168,7 @@ private fun DrawScope.drawBitmap(
 
 @Preview
 @Composable
-private fun PreviewHueBar() {
+internal fun PreviewHueBar() {
     val color = Color.Blue
     val hue = color.toHSV()[0]
     SampleTheme {

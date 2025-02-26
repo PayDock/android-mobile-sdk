@@ -107,6 +107,7 @@ internal abstract class WalletViewModel<T>(
             val result: Result<ChargeResponse> =
                 captureWalletChargeUseCase(token = walletToken, request = request)
             // Update the UI state with the result
+            println(">>> UseCase Result: $result")
             updateChargeUIState(result)
         }
     }

@@ -11,8 +11,8 @@ import com.paydock.feature.card.domain.usecase.CreateGiftCardPaymentTokenUseCase
 import com.paydock.feature.card.domain.usecase.GetCardSchemasUseCase
 import com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel
 import com.paydock.feature.card.presentation.viewmodels.GiftCardViewModel
-import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.viewModel
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 

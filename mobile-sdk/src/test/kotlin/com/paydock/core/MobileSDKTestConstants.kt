@@ -117,7 +117,7 @@ internal object MobileSDKTestConstants {
         const val MOCK_INVALID_CARD_DETAILS_ERROR = "Invalid Transaction Details"
         const val MOCK_INVALID_GIFT_CARD_DETAILS_ERROR = "Card scheme is required"
         const val MOCK_AFTER_PAY_LOCALE_ERROR =
-            "Locale contains an unsupported country: CN. Supported countries include: AU,CA,CA,GB,NZ,US,IT,FR,ES"
+            "Locale contains an unsupported country: CN. Supported countries include: AU,CA,CA,GB,NZ,US"
         const val MOCK_AFTER_PAY_TOKEN_ERROR = "Error fetching checkout token"
         const val MOCK_INVALID_OAUTH_TOKEN_ERROR = "Token signature verification failed"
         const val MOCK_AUTH_TOKEN_ERROR = "Error creating session auth token"

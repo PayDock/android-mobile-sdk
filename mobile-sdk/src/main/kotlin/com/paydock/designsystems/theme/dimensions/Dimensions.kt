@@ -4,7 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.paydock.MobileSDK
-import com.paydock.MobileSDKTheme
+import com.paydock.ThemeDimensions
 
 /**
  * Holder for the app dimensions that can be used to avoid hardcoded margins and paddings
@@ -25,19 +25,22 @@ internal class Dimensions(
     val buttonHeight: Dp = 48.dp,
 )
 
-internal fun dimensions(sdkTheme: MobileSDKTheme, isSmallDevice: Boolean = false) = Dimensions(
-    borderWidth = if (isSmallDevice) sdkTheme.dimensions.borderWidth * 0.8f else sdkTheme.dimensions.borderWidth,
+internal fun dimensions(dimensions: ThemeDimensions, isSmallDevice: Boolean = false) = Dimensions(
+    borderWidth = if (isSmallDevice) dimensions.borderWidth * 0.8f else dimensions.borderWidth,
     textFieldCornerRadius = if (isSmallDevice) {
-        sdkTheme.dimensions.textFieldCornerRadius * 0.8f
-    } else
-        sdkTheme.dimensions.textFieldCornerRadius,
+        dimensions.textFieldCornerRadius * 0.8f
+    } else {
+        dimensions.textFieldCornerRadius
+    },
     buttonCornerRadius = if (isSmallDevice) {
-        sdkTheme.dimensions.buttonCornerRadius * 0.8f
-    } else
-        sdkTheme.dimensions.buttonCornerRadius,
+        dimensions.buttonCornerRadius * 0.8f
+    } else {
+        dimensions.buttonCornerRadius
+    },
     spacing = if (isSmallDevice) {
-        sdkTheme.dimensions.spacing * 0.8f
-    } else
-        sdkTheme.dimensions.spacing,
-    shadow = sdkTheme.dimensions.shadow
+        dimensions.spacing * 0.8f
+    } else {
+        dimensions.spacing
+    },
+    shadow = dimensions.shadow
 )

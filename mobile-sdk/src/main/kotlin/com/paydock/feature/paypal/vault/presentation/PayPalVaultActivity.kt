@@ -117,12 +117,12 @@ internal class PayPalVaultActivity : AppCompatActivity() {
      * Called when new data is passed to this activity through an Intent.
      * This is necessary to handle the PayPal vault callbacks correctly.
      *
-     * @param newIntent The new Intent that was started for this activity.
+     * @param intent The new Intent that was started for this activity.
      */
-    override fun onNewIntent(newIntent: Intent) {
-        super.onNewIntent(newIntent)
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
         // Update the intent with the new data to ensure PayPalVault callbacks are triggered
-        intent = newIntent
+        this.intent = intent
     }
 
     /**

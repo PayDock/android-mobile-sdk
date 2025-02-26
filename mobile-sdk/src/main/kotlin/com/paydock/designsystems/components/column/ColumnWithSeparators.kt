@@ -6,7 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 
 /**
  * A composable that arranges its children in a column with separators between them.
@@ -65,9 +65,9 @@ internal fun ColumnWithSeparators(
  */
 private data class ContentChild(val height: Int)
 
-@Preview(name = "Column With Separators", showBackground = true)
+@PreviewLightDark
 @Composable
-private fun PreviewColumnWithSeparators() {
+internal fun PreviewColumnWithSeparators() {
     ColumnWithSeparators {
         repeat(times = 10) { Text(text = "Hello $it") }
     }

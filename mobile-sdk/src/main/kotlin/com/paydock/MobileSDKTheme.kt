@@ -125,7 +125,7 @@ class MobileSDKTheme(
             error: Color = SdkErrorLight,
             background: Color = SdkBackgroundLight,
             outline: Color = SdkOutlineLight,
-        ): ThemeColor = ThemeColor(
+        ): ThemeColor = ThemeColor.create(
             primary = primary,
             onPrimary = onPrimary,
             text = text,
@@ -150,7 +150,7 @@ class MobileSDKTheme(
             error: Color = SdkErrorDark,
             background: Color = SdkBackgroundDark,
             outline: Color = SdkOutlineDark,
-        ): ThemeColor = ThemeColor(
+        ): ThemeColor = ThemeColor.create(
             primary = primary,
             onPrimary = onPrimary,
             text = text,
@@ -182,7 +182,7 @@ class MobileSDKTheme(
             shadow: Int = 0,
             borderWidth: Int = 1,
             spacing: Int = 16,
-        ): ThemeDimensions = ThemeDimensions(
+        ): ThemeDimensions = ThemeDimensions.create(
             textFieldCornerRadius = textFieldCornerRadius.dp,
             buttonCornerRadius = buttonCornerRadius.dp,
             shadow = shadow.dp,
@@ -202,9 +202,7 @@ class MobileSDKTheme(
          * @return A [ThemeFont] instance with the specified fonts.
          */
         fun themeFont(fonts: List<Font> = AcidGroteskFontList + ArialFontList): ThemeFont =
-            ThemeFont(
-                familyName = FontFamily(fonts)
-            )
+            ThemeFont.create(FontFamily(fonts))
     }
 }
 
@@ -233,7 +231,8 @@ class ThemeColors(
      * @param outline The outline color.
      */
     @Suppress("LongParameterList")
-    data class ThemeColor internal constructor(
+    @ConsistentCopyVisibility
+    data class ThemeColor private constructor(
         val primary: Color,
         val onPrimary: Color,
         val text: Color,
@@ -276,6 +275,52 @@ class ThemeColors(
         override fun toString(): String {
             return "ThemeColor(primary=$primary, onPrimary=$onPrimary, text=$text, placeholder=$placeholder, success=$success, error=$error, background=$background, outline=$outline)"
         }
+
+        companion object {
+            fun create(
+                primary: Color,
+                onPrimary: Color,
+                text: Color,
+                placeholder: Color,
+                success: Color,
+                error: Color,
+                background: Color,
+                outline: Color
+            ): ThemeColor {
+                return ThemeColor(
+                    primary,
+                    onPrimary,
+                    text,
+                    placeholder,
+                    success,
+                    error,
+                    background,
+                    outline
+                )
+            }
+        }
+
+        fun with(
+            primary: Color = this.primary,
+            onPrimary: Color = this.onPrimary,
+            text: Color = this.text,
+            placeholder: Color = this.placeholder,
+            success: Color = this.success,
+            error: Color = this.error,
+            background: Color = this.background,
+            outline: Color = this.outline
+        ): ThemeColor {
+            return create(
+                primary,
+                onPrimary,
+                text,
+                placeholder,
+                success,
+                error,
+                background,
+                outline
+            )
+        }
     }
 }
 
@@ -288,8 +333,9 @@ class ThemeColors(
  * @param borderWidth The border width.
  * @param spacing The default spacing value.
  */
+@ConsistentCopyVisibility
 @Immutable
-data class ThemeDimensions internal constructor(
+data class ThemeDimensions private constructor(
     val textFieldCornerRadius: Dp,
     val buttonCornerRadius: Dp,
     val shadow: Dp,
@@ -323,6 +369,39 @@ data class ThemeDimensions internal constructor(
     override fun toString(): String {
         return "ThemeDimensions(textFieldCornerRadius=$textFieldCornerRadius, buttonCornerRadius=$buttonCornerRadius, shadow=$shadow, borderWidth=$borderWidth, spacing=$spacing)"
     }
+
+    companion object {
+        fun create(
+            textFieldCornerRadius: Dp,
+            buttonCornerRadius: Dp,
+            shadow: Dp,
+            borderWidth: Dp,
+            spacing: Dp
+        ): ThemeDimensions {
+            require(textFieldCornerRadius >= 0.dp) { "textFieldCornerRadius must be non-negative" }
+            require(buttonCornerRadius >= 0.dp) { "buttonCornerRadius must be non-negative" }
+            require(shadow >= 0.dp) { "shadow must be non-negative" }
+            require(borderWidth >= 0.dp) { "borderWidth must be non-negative" }
+            require(spacing >= 0.dp) { "spacing must be non-negative" }
+            return ThemeDimensions(
+                textFieldCornerRadius = textFieldCornerRadius,
+                buttonCornerRadius = buttonCornerRadius,
+                shadow = shadow,
+                borderWidth = borderWidth,
+                spacing = spacing
+            )
+        }
+    }
+
+    fun with(
+        textFieldCornerRadius: Dp = this.textFieldCornerRadius,
+        buttonCornerRadius: Dp = this.buttonCornerRadius,
+        shadow: Dp = this.shadow,
+        borderWidth: Dp = this.borderWidth,
+        spacing: Dp = this.spacing
+    ): ThemeDimensions {
+        return create(textFieldCornerRadius, buttonCornerRadius, shadow, borderWidth, spacing)
+    }
 }
 
 /**
@@ -330,8 +409,9 @@ data class ThemeDimensions internal constructor(
  *
  * @param familyName The font family to use.
  */
+@ConsistentCopyVisibility
 @Immutable
-data class ThemeFont internal constructor(
+data class ThemeFont private constructor(
     val familyName: FontFamily,
 ) {
 
@@ -350,5 +430,15 @@ data class ThemeFont internal constructor(
 
     override fun toString(): String {
         return "ThemeFont(familyName=$familyName)"
+    }
+
+    companion object {
+        fun create(familyName: FontFamily): ThemeFont {
+            return ThemeFont(familyName)
+        }
+    }
+
+    fun with(fontFamily: FontFamily = this.familyName): ThemeFont {
+        return create(fontFamily)
     }
 }

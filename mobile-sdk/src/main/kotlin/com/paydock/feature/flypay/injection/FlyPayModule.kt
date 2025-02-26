@@ -2,7 +2,7 @@ package com.paydock.feature.flypay.injection
 
 import com.paydock.feature.flypay.presentation.viewmodels.FlyPayViewModel
 import com.paydock.feature.wallet.injection.walletModule
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**

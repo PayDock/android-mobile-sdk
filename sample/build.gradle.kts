@@ -2,19 +2,20 @@ import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.android)
-    kotlin("kapt")
-    id("com.google.dagger.hilt.android")
+    alias(libs.plugins.ksp.devtools)
+    alias(libs.plugins.dagger.hilt)
 }
 
 android {
     namespace = "com.paydock.sample"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.paydock.sample"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
 
@@ -90,6 +91,14 @@ android {
             getPropertyValue("FLY_PAY_CLIENT_ID")
         )
     }
+    signingConfigs {
+        create("debugtest") {
+            storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
     buildTypes {
         getByName("debug") {
             isDebuggable = true
@@ -102,6 +111,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debugtest")
         }
     }
     compileOptions {
@@ -117,25 +127,13 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.7"
+        kotlinCompilerExtensionVersion = libs.versions.kotlinCompilerExtension.get()
     }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    // Allow references to generated code
-    kapt {
-        correctErrorTypes = true
-    }
-
-//    // TODO This is to show kapt type import errors (debugging)
-//    allprojects {
-//        tasks.matching { it.name.contains("kapt") }.configureEach {
-//            enabled = false
-//        }
-//    }
-
 }
 
 fun getPropertyValue(propertyName: String, defaultValue: String = ""): String {
@@ -151,14 +149,21 @@ dependencies {
     // Modules
     implementation(project(":mobile-sdk"))
     // Libraries
-    implementation(libs.bundles.androidx)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.ktx)
     implementation(platform(libs.kotlin.bom))
     // Compose
     implementation(platform(libs.compose.bom))
-    implementation(libs.bundles.compose.sample.app)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
+    implementation(libs.navigation.compose)
+    implementation(libs.accompanist.system.ui)
+    // To allow builds to build for release
+    implementation(libs.androidx.ui.tooling.preview.android)
+    implementation(libs.androidx.ui.tooling)
     // Hilt
     implementation(libs.bundles.hilt)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler)
     // Retrofit
     implementation(libs.bundles.retrofit)
     // Test Libraries
