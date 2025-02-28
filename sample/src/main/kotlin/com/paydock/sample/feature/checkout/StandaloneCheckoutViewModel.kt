@@ -214,7 +214,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
                     request = CreateIntegratedThreeDSTokenRequest(
                         customer = ChargesCustomerDTO(
                             paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                                gatewayId = BuildConfig.GATEWAY_ID,
+                                gatewayId = BuildConfig.GATEWAY_ID_MPGS,
                                 vaultToken = vaultToken
                             )
                         )
@@ -462,7 +462,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
             val request = CaptureCardChargeRequest(
                 currency = AU_CURRENCY_CODE, customer = ChargesCustomerDTO(
                     paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                        gatewayId = BuildConfig.GATEWAY_ID,
+                        gatewayId = BuildConfig.GATEWAY_ID_MPGS,
                         vaultToken = vaultToken
                     )
                 )
@@ -497,7 +497,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
                 threeDSChargeId = threeDSChargeId,
                 customer = ChargesCustomerDTO(
                     paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                        gatewayId = BuildConfig.GATEWAY_ID,
+                        gatewayId = BuildConfig.GATEWAY_ID_MPGS,
                         vaultToken = vaultToken
                     )
                 )

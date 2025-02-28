@@ -1,87 +1,133 @@
-# This file contains the fastlane.tools configuration
-# You can find the documentation at https://docs.fastlane.tools
-#
-# For a list of all available actions, check out
-#
-#     https://docs.fastlane.tools/actions
-#
-# For a list of all available plugins, check out
-#
-#     https://docs.fastlane.tools/plugins/available-plugins
-#
+# This Fastfile defines the automation lanes for building, testing, and releasing the Mobile SDK Android project.
+# It uses Fastlane to interact with the Android build system, Git, and external services like GitLab and GitHub.
 
-# Uncomment the line if you want fastlane to automatically update itself
-# update_fastlane
-
-default_platform(:android)
+default_platform(:android) # Specifies that this Fastfile is for Android.
 
 platform :android do
+  # --- Build Lanes ---
 
-    desc "Builds the debug code"
-    lane :buildDebug do
-        gradle(task: "clean assembleDebug")
-    end
+  desc "Builds the debug code"
+  lane :buildDebug do
+    # This lane builds the debug version of the Android application.
+    # It uses the 'gradle' action to execute the 'clean assembleDebug' Gradle task.
+    gradle(task: "clean assembleDebug")
+  end
 
-    desc "Builds the release code"
-    lane :buildRelease do
-        gradle(task: "assembleRelease")
-    end
+  desc "Builds the release code"
+  lane :buildRelease do
+    # This lane builds the release version of the Android application.
+    # It uses the 'gradle' action to execute the 'assembleRelease' Gradle task.
+    gradle(task: "assembleRelease")
+  end
 
-    desc "Runs all the tests"
-    lane :test do
-        gradle(task: "test")
-    end
+  desc "Builds the staging debug environment"
+  lane :buildStaging do
+    # This lane builds the staging version of the Android application.
+    # It uses the 'gradle' action to execute the 'assembleStagingDebug' Gradle task.
+    gradle(task: "assembleStagingDebug")
+  end
 
-    desc "Creates and pushes a tag on GitLab"
-    lane :tag_release do
-        result = gradle(task: "-q :mobile-sdk:printVersionName", print_command: false, print_command_output: true)
+  desc "Builds the sandbox debug environment"
+  lane :buildSandbox do
+    # This lane builds the sandbox version of the Android application.
+    # It uses the 'gradle' action to execute the 'assembleSandboxDebug' Gradle task.
+    gradle(task: "assembleSandboxDebug")
+  end
 
-        # Extract version number using a regular expression
-        version_match = result.match(/(\d+\.\d+\.\d+)/) # Match a pattern like "1.0.0"
-        version_name = version_match[1] if version_match
+  desc "Builds the production debug environment"
+  lane :buildProd do
+    # This lane builds the production version of the Android application.
+    # It uses the 'gradle' action to execute the 'assembleProdDebug' Gradle task.
+    gradle(task: "assembleProdDebug")
+  end
 
-        # Configure Git user (if needed)
-        sh("git config --global user.email \"ricardo.dasilva@paydock.com\"")
-        sh("git config --global user.name \"Ricardo\"")
+  # --- Test Lane ---
 
-        # Create and push the tag
-        sh("git tag -a #{version_name} -m \"Release version #{version_name}\"")
+  desc "Runs all the tests"
+  lane :test do
+    # This lane runs all the unit tests for the Android application.
+    # It uses the 'gradle' action to execute the 'test' Gradle task.
+    gradle(task: "test")
+  end
 
-        # Use the GITLAB_TOKEN environment variable for authentication
-        git_url_with_token = "https://gitlab-ci-token:#{ENV['GITLAB_TOKEN']}@gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android.git"
-        sh("git remote set-url origin #{git_url_with_token}")
+  # --- Release Lanes ---
 
-        # Push the tag to the remote repository
-        sh("git push origin #{version_name}")
-    end
+  desc "Creates and pushes a tag on GitLab"
+  lane :tag_release do
+    # This lane automates the process of creating and pushing a tag to the GitLab repository.
+    # It extracts the version number from the Gradle output, creates a Git tag, and pushes it to the remote repository.
 
-    desc "Creates a release on GitHub"
-    lane :create_github_release do
-        # Extract version name from tag (assuming tags are in the format "v1.0.0")
-        version_name = sh("git describe --tags --abbrev=0").strip
+    # Get the version name from the Gradle output.
+    result = gradle(task: "-q :mobile-sdk:printVersionName", print_command: false, print_command_output: true)
+    # The 'gradle' action is used to execute a Gradle task.
+    #   - '-q' flag: Runs Gradle in quiet mode.
+    #   - ':mobile-sdk:printVersionName': The specific Gradle task to run, which prints the version name.
+    #   - 'print_command: false': Prevents the Gradle command from being printed to the console.
+    #   - 'print_command_output: true': Prints the output of the Gradle command to the console.
 
-        require 'octokit'
+    # Extract version number using a regular expression.
+    version_match = result.match(/(\d+\.\d+\.\d+)/) # Match a pattern like "1.0.0"
+    version_name = version_match[1] if version_match # Extracts the version number from the match.
 
-        # Authenticate with GitHub (assuming GITHUB_TOKEN is set in your CI/CD variables)
-        # Set up Octokit client
-        client = Octokit::Client.new(access_token: ENV['GITHUB_TOKEN'])
+    # Configure Git user (if needed).
+    sh("git config --global user.email \"ricardo.dasilva@paydock.com\"") # Sets the Git user email.
+    sh("git config --global user.name \"Ricardo\"") # Sets the Git user name.
+    # The 'sh' action is used to execute shell commands.
 
-        # Create a release on GitHub
-        repo = 'PayDock/android-mobile-sdk' # Replace with your GitHub repository
-        release_name = "v#{version_name}"
-        release_body = "**Full Changelog**: https://github.com/PayDock/android-mobile-sdk/commits/#{version_name}"
+    # Create and push the tag.
+    sh("git tag -a #{version_name} -m \"Release version #{version_name}\"") # Creates an annotated Git tag.
+    #   - '-a': Creates an annotated tag.
+    #   - '#{version_name}': The tag name (e.g., "1.0.0").
+    #   - '-m': Specifies the tag message.
 
-        release = client.create_release(repo, "#{version_name}", {
-          tag_name: "#{version_name}",
-          name: release_name,
-          body: release_body,
-          is_generate_release_notes: true,
-          make_latest: 'true'
-        })
-    end
+    # Use the GITLAB_TOKEN environment variable for authentication.
+    git_url_with_token = "https://gitlab-ci-token:#{ENV['GITLAB_TOKEN']}@gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android.git"
+    sh("git remote set-url origin #{git_url_with_token}") # Updates the remote URL to include the token.
+    #   - 'ENV['GITLAB_TOKEN']': Accesses the 'GITLAB_TOKEN' environment variable.
 
-    desc "Publishes the SDK to GitHub Packages"
-    lane :publish_to_github do
-        gradle(task: ":mobile-sdk:publishAllPublicationsToGitHubPackagesRepository")
-    end
+    # Push the tag to the remote repository.
+    sh("git push origin #{version_name}") # Pushes the tag to the remote repository.
+  end
+
+  desc "Creates a release on GitHub"
+  lane :create_github_release do
+    # This lane automates the process of creating a release on GitHub.
+    # It extracts the version name from the Git tag, authenticates with GitHub, and creates a new release.
+
+    # Extract version name from tag (assuming tags are in the format "v1.0.0").
+    version_name = sh("git describe --tags --abbrev=0").strip # Gets the latest tag name.
+    # The 'sh' action is used to execute shell commands.
+    #   - 'git describe --tags --abbrev=0': Gets the latest tag name.
+    #   - '.strip': Removes leading/trailing whitespace.
+
+    require 'octokit' # Loads the Octokit library for interacting with the GitHub API.
+
+    # Authenticate with GitHub (assuming GITHUB_TOKEN is set in your CI/CD variables).
+    # Set up Octokit client.
+    client = Octokit::Client.new(access_token: ENV['GITHUB_TOKEN']) # Creates an Octokit client.
+    #   - 'ENV['GITHUB_TOKEN']': Accesses the 'GITHUB_TOKEN' environment variable.
+
+    # Create a release on GitHub.
+    repo = 'PayDock/android-mobile-sdk' # Replace with your GitHub repository
+    release_name = "v#{version_name}" # Creates the release name (e.g., "v1.0.0").
+    release_body = "**Full Changelog**: https://github.com/PayDock/android-mobile-sdk/commits/#{version_name}" # Creates the release body.
+
+    release = client.create_release(repo, "#{version_name}", { # Creates the release on GitHub.
+      tag_name: "#{version_name}", # Sets the tag name.
+      name: release_name, # Sets the release name.
+      body: release_body, # Sets the release body.
+      is_generate_release_notes: true, # Enables automatic generation of release notes.
+      make_latest: 'true' # Marks the release as the latest.
+    })
+    # The 'client.create_release' method is used to create the release.
+  end
+
+   # --- Publish Lanes ---
+
+  desc "Publishes the SDK to GitHub Packages"
+  lane :publish_to_github do
+    # This lane publishes the built SDK to GitHub Packages.
+    # It uses the 'gradle' action to execute the 'publishAllPublicationsToGitHubPackagesRepository' Gradle task.
+    gradle(task: ":mobile-sdk:publishAllPublicationsToGitHubPackagesRepository")
+  end
 end

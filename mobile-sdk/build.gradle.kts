@@ -1,5 +1,3 @@
-import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
-
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.compose.compiler)
@@ -23,7 +21,6 @@ android {
 
     buildTypes {
         getByName("debug") {
-            buildConfigField("boolean", "DEV_BUILD", "true")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -31,7 +28,6 @@ android {
             )
         }
         getByName("release") {
-            buildConfigField("boolean", "DEV_BUILD", "false")
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -76,15 +72,6 @@ android {
             excludes += "/META-INF/{LICENSE.md,LICENSE-notice.md}"
         }
     }
-}
-
-fun getPropertyValue(propertyName: String): String {
-    val envValue = System.getenv(propertyName)
-    if (envValue != null) {
-        return envValue
-    }
-    val localProperties = gradleLocalProperties(rootDir, providers)
-    return localProperties.getProperty(propertyName) ?: ""
 }
 
 dependencies {

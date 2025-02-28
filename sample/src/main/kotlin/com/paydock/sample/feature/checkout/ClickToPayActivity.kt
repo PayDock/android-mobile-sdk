@@ -50,7 +50,7 @@ fun ClickToPayScreen(accessToken: String, resultHandler: (Result<String>) -> Uni
     ClickToPayWidget(
         modifier = Modifier.fillMaxWidth(),
         accessToken = accessToken,
-        serviceId = BuildConfig.GATEWAY_ID_MASTERCARD_SRC,
+        serviceId = BuildConfig.GATEWAY_ID_CLICK_TO_PAY,
         meta = ClickToPayMeta(disableSummaryScreen = true),
         completion = resultHandler
     )

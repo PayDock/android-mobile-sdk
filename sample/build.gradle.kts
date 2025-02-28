@@ -1,4 +1,7 @@
-import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+import com.android.build.api.dsl.ApplicationProductFlavor
+import com.android.build.api.dsl.ProductFlavor
+import java.io.FileInputStream
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -23,73 +26,6 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-
-        // These values are added from local.properties
-        buildConfigField(
-            "String",
-            "SECRET_KEY",
-            getPropertyValue("SECRET_KEY")
-        )
-
-        buildConfigField(
-            "String",
-            "ACCESS_TOKEN",
-            getPropertyValue("ACCESS_TOKEN")
-        )
-
-        buildConfigField(
-            "String",
-            "GATEWAY_ID",
-            getPropertyValue("GATEWAY_ID")
-        )
-
-        buildConfigField(
-            "String",
-            "GATEWAY_ID_PAY_PAL",
-            getPropertyValue("GATEWAY_ID_PAY_PAL")
-        )
-
-        buildConfigField(
-            "String",
-            "GATEWAY_ID_FLY_PAY",
-            getPropertyValue("GATEWAY_ID_FLY_PAY")
-        )
-
-        buildConfigField(
-            "String",
-            "GATEWAY_ID_AFTER_PAY",
-            getPropertyValue("GATEWAY_ID_AFTER_PAY")
-        )
-
-        buildConfigField(
-            "String",
-            "GATEWAY_ID_GOOGLE_PAY",
-            getPropertyValue("GATEWAY_ID_GOOGLE_PAY")
-        )
-
-        buildConfigField(
-            "String",
-            "GATEWAY_ID_MASTERCARD_SRC",
-            getPropertyValue("GATEWAY_ID_MASTERCARD_SRC")
-        )
-
-        buildConfigField(
-            "String",
-            "MERCHANT_IDENTIFIER",
-            getPropertyValue("MERCHANT_IDENTIFIER")
-        )
-
-        buildConfigField(
-            "String",
-            "STANDALONE_3DS_SERVICE_ID",
-            getPropertyValue("STANDALONE_3DS_SERVICE_ID")
-        )
-
-        buildConfigField(
-            "String",
-            "FLY_PAY_CLIENT_ID",
-            getPropertyValue("FLY_PAY_CLIENT_ID")
-        )
     }
     signingConfigs {
         create("debugtest") {
@@ -101,6 +37,7 @@ android {
     }
     buildTypes {
         getByName("debug") {
+            isDefault = true
             isDebuggable = true
             isMinifyEnabled = false
         }
@@ -112,6 +49,38 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("debugtest")
+        }
+    }
+    flavorDimensions += "environment"
+    productFlavors {
+        create("staging") {
+            dimension = "environment"
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+            configureFlavorBuildConfig(
+                "com.paydock.core.domain.model.Environment.STAGING",
+                true,
+                "staging"
+            )
+        }
+        create("sandbox") {
+            isDefault = true
+            dimension = "environment"
+            applicationIdSuffix = ".sandbox"
+            versionNameSuffix = "-sandbox"
+            configureFlavorBuildConfig(
+                "com.paydock.core.domain.model.Environment.SANDBOX",
+                true,
+                "sandbox"
+            )
+        }
+        create("prod") {
+            dimension = "environment"
+            configureFlavorBuildConfig(
+                "com.paydock.core.domain.model.Environment.PRODUCTION",
+                false,
+                "prod",
+            )
         }
     }
     compileOptions {
@@ -136,14 +105,89 @@ android {
     }
 }
 
-fun getPropertyValue(propertyName: String, defaultValue: String = ""): String {
-    val envValue = System.getenv(propertyName)
-    if (envValue != null) {
-        return envValue
+enum class BuildVariable(private val baseEnvName: String) {
+    // Shared Variables
+    MERCHANT_IDENTIFIER("MERCHANT_IDENTIFIER"),
+    // Environment Specific Variables
+    ACCESS_TOKEN("ACCESS_TOKEN"),
+    SECRET_KEY("SECRET_KEY"),
+    GATEWAY_ID_MPGS("GATEWAY_ID_MPGS"),
+    GATEWAY_ID_PAY_PAL("GATEWAY_ID_PAY_PAL"),
+    GATEWAY_ID_FLY_PAY("GATEWAY_ID_FLY_PAY"),
+    GATEWAY_ID_AFTER_PAY("GATEWAY_ID_AFTER_PAY"),
+    GATEWAY_ID_ZIP_MONEY("GATEWAY_ID_ZIP_MONEY"),
+    GATEWAY_ID_CLICK_TO_PAY("GATEWAY_ID_CLICK_TO_PAY"),
+    GATEWAY_ID_GOOGLE_PAY("GATEWAY_ID_GOOGLE_PAY"),
+    STANDALONE_3DS_SERVICE_ID("STANDALONE_3DS_SERVICE_ID"),
+    FLY_PAY_CLIENT_ID("FLY_PAY_CLIENT_ID");
+
+    fun getEnvName(flavor: String): String {
+        return when {
+            this == MERCHANT_IDENTIFIER -> this.baseEnvName
+            flavor.isEmpty() -> this.baseEnvName
+            else -> "${this.baseEnvName}_${flavor.uppercase()}"
+        }
     }
-    val localProperties = gradleLocalProperties(rootDir, providers)
-    return localProperties.getProperty(propertyName) ?: defaultValue
 }
+
+fun ApplicationProductFlavor.configureFlavorBuildConfig(
+    sdkEnvironment: String,
+    enableTestMode: Boolean,
+    flavor: String
+): ApplicationProductFlavor {
+    return this.apply {
+        addBuildConfigField(
+            "com.paydock.core.domain.model.Environment",
+            "SDK_ENVIRONMENT",
+            sdkEnvironment
+        )
+        addBuildConfigField("Boolean", "ENABLE_TEST_MODE", enableTestMode.toString())
+        BuildVariable.values().forEach { variable ->
+            addBuildConfigField("String", variable.name, readBuildVariable(variable, flavor))
+        }
+    }
+}
+
+fun readBuildVariable(variable: BuildVariable, flavor: String): String {
+    val envValue = System.getenv(variable.getEnvName(flavor))
+    val configValue: String = if (envValue != null) {
+        // CI/CD environment - Remove excessive double quotes if present
+        sanitizeEnvValue("\"${System.getenv(envValue)}\"")
+    } else {
+        // Config properties fallback
+        val props = getLocalConfigProps(flavor)
+        props.getProperty(variable.name) ?: "\"\""
+    }
+    return configValue
+}
+
+fun sanitizeEnvValue(value: String): String {
+    return if (value.startsWith("\"") && value.endsWith("\"")) {
+        value.trim('"') // Remove surrounding double quotes
+    } else {
+        value
+    }
+}
+
+fun getLocalConfigProps(flavor: String): Properties {
+    val props = Properties()
+    val propsFile = file("src/$flavor/config.properties")
+    if (propsFile.exists()) {
+        try {
+            FileInputStream(propsFile).use {
+                props.load(it)
+            }
+        } catch (e: Exception) {
+            println("Error loading properties from $path: ${e.message}")
+        }
+    } else {
+        println("Properties file not found: $path")
+    }
+    return props
+}
+
+fun ProductFlavor.addBuildConfigField(type: String, name: String, value: String) =
+    buildConfigField(type, name, value)
 
 dependencies {
     // Modules

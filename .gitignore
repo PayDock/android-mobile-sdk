@@ -23,6 +23,7 @@ local.properties
 github.properties
 gitlab.properties
 sonatype.properties
+config.properties
 
 # Log/OS Files
 *.log

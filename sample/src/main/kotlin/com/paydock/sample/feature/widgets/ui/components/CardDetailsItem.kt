@@ -25,7 +25,7 @@ fun CardDetailsItem(context: Context, accessToken: String) {
         modifier = Modifier.padding(16.dp),
         config = CardDetailsWidgetConfig(
             accessToken = accessToken,
-            gatewayId = BuildConfig.GATEWAY_ID,
+            gatewayId = BuildConfig.GATEWAY_ID_MPGS,
             allowSaveCard = SaveCardConfig(
                 privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
                     privacyPolicyURL = "https://www.google.com"
