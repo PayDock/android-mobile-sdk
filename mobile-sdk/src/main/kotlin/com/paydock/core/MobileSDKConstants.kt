@@ -16,6 +16,7 @@ internal object MobileSDKConstants {
     object General {
         // UI Constants
         internal const val SMALL_SCREEN_SIZE = 360
+        internal const val MEDIUM_SCREEN_SIZE = 600
         internal const val INPUT_DELAY = 300L
         internal const val DEBOUNCE_DELAY = 500L
 

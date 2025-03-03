@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.unit.dp
 import com.paydock.MobileSDK
 import com.paydock.MobileSDKTheme
 import com.paydock.ThemeColors
@@ -26,18 +27,18 @@ import com.paydock.designsystems.theme.typography.typography
  *
  * @param sdkTheme The theme configuration for the Mobile SDK, defaulting to the SDK's theme.
  * @param isDarkMode Boolean indicating if dark mode should be used, defaulting to system setting.
- * @param isSmallDevice Boolean indicating if the device is considered small (e.g., a narrow screen).
+ * @param deviceSize
  * @param content The composable content that will be wrapped with the SDK's theme.
  */
 @Composable
 internal fun SdkTheme(
     sdkTheme: MobileSDKTheme = MobileSDK.getInstance().sdkTheme,
     isDarkMode: Boolean = isSystemInDarkTheme(),
-    isSmallDevice: Boolean = isSmallDevice(),
+    deviceSize: DeviceSize = getDeviceSize(),
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(
-        LocalSdkDimensions provides dimensions(sdkTheme.dimensions, isSmallDevice),
+        LocalSdkDimensions provides dimensions(sdkTheme.dimensions, deviceSize),
     ) {
         MaterialTheme(
             colorScheme = if (isDarkMode) {
@@ -56,7 +57,7 @@ internal fun SdkTheme(
 }
 
 internal val LocalSdkDimensions = staticCompositionLocalOf {
-    dimensions(MobileSDK.getInstance().sdkTheme.dimensions)
+    dimensions(MobileSDK.getInstance().sdkTheme.dimensions, DeviceSize.LARGE)
 }
 
 /**
@@ -126,10 +127,28 @@ private fun darkColors(themeColor: ThemeColors.ThemeColor): ColorScheme = darkCo
 )
 
 /**
- * Determines if the device is considered small based on its screen width.
+ * Determines the approximate size of the device's screen based on its width in density-independent pixels (dp).
  *
- * @return Boolean indicating if the device's screen width is less than or equal to the defined small screen size.
+ * This function uses the screen's width to categorize the device into one of three size categories:
+ * - **SMALL:** Devices with a screen width less than or equal to `MobileSDKConstants.General.SMALL_SCREEN_SIZE.dp`.
+ * - **MEDIUM:** Devices with a screen width greater than `MobileSDKConstants.General.SMALL_SCREEN_SIZE.dp`
+ *      and less than or equal to `MobileSDKConstants.General.MEDIUM_SCREEN_SIZE.dp`.
+ * - **LARGE:** Devices with a screen width greater than `MobileSDKConstants.General.MEDIUM_SCREEN_SIZE.dp`.
+ *
+ * This is useful for adapting the UI layout or behavior to different screen sizes. For example, you might
+ * choose to display more information on a LARGE screen or adjust the spacing between elements on a SMALL screen.
+ *
+ * @return A [DeviceSize] enum value representing the categorized size of the device's screen.
+ * @see DeviceSize
+ * @see MobileSDKConstants.General.SMALL_SCREEN_SIZE
+ * @see MobileSDKConstants.General.MEDIUM_SCREEN_SIZE
  */
 @Composable
-private fun isSmallDevice(): Boolean =
-    LocalConfiguration.current.screenWidthDp <= MobileSDKConstants.General.SMALL_SCREEN_SIZE
+internal fun getDeviceSize(): DeviceSize {
+    val screenWidthDp = LocalConfiguration.current.screenWidthDp.dp
+    return when {
+        screenWidthDp <= MobileSDKConstants.General.SMALL_SCREEN_SIZE.dp -> DeviceSize.SMALL
+        screenWidthDp <= MobileSDKConstants.General.MEDIUM_SCREEN_SIZE.dp -> DeviceSize.MEDIUM
+        else -> DeviceSize.LARGE
+    }
+}

@@ -2,7 +2,6 @@ package com.paydock.sample.feature.style.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -47,33 +46,11 @@ fun DesignSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             NumberCounter(
-                modifier = Modifier.weight(0.5f),
-                title = stringResource(R.string.label_shadow),
-                value = dimensionsTheme.shadow.value.toInt(),
-                onValueChange = {
-                    onDimensionsUpdated(dimensionsTheme.with(shadow = it.dp))
-                })
-            Spacer(modifier = Modifier.weight(0.5f))
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            NumberCounter(
-                modifier = Modifier.weight(0.5f),
+                modifier = Modifier.weight(1.0f),
                 title = stringResource(R.string.label_border_width),
                 value = dimensionsTheme.borderWidth.value.toInt(),
                 onValueChange = {
                     onDimensionsUpdated(dimensionsTheme.with(borderWidth = it.dp))
-                })
-            NumberCounter(
-                modifier = Modifier.weight(0.5f),
-                title = stringResource(R.string.label_spacing),
-                value = dimensionsTheme.spacing.value.toInt(),
-                onValueChange = {
-                    onDimensionsUpdated(dimensionsTheme.with(spacing = it.dp))
                 })
         }
     }

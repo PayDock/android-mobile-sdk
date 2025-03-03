@@ -39,9 +39,7 @@ class App : Application() {
             dimensions = MobileSDKTheme.Dimensions.themeDimensions(
                 textFieldCornerRadius = 4,
                 buttonCornerRadius = 4,
-                shadow = 0,
-                borderWidth = 1,
-                spacing = 10
+                borderWidth = 1
             ),
             font = MobileSDKTheme.FontName.themeFont(
                 fonts = listOf(AcidGroteskNormal)
