@@ -7,16 +7,10 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.unit.dp
 import com.paydock.MobileSDK
 import com.paydock.MobileSDKTheme
 import com.paydock.ThemeColors
-import com.paydock.core.MobileSDKConstants
 import com.paydock.designsystems.theme.dimensions.Dimensions
-import com.paydock.designsystems.theme.dimensions.dimensions
 import com.paydock.designsystems.theme.typography.SdkTypography
 import com.paydock.designsystems.theme.typography.typography
 
@@ -27,37 +21,27 @@ import com.paydock.designsystems.theme.typography.typography
  *
  * @param sdkTheme The theme configuration for the Mobile SDK, defaulting to the SDK's theme.
  * @param isDarkMode Boolean indicating if dark mode should be used, defaulting to system setting.
- * @param deviceSize
  * @param content The composable content that will be wrapped with the SDK's theme.
  */
 @Composable
 internal fun SdkTheme(
     sdkTheme: MobileSDKTheme = MobileSDK.getInstance().sdkTheme,
     isDarkMode: Boolean = isSystemInDarkTheme(),
-    deviceSize: DeviceSize = getDeviceSize(),
     content: @Composable () -> Unit,
 ) {
-    CompositionLocalProvider(
-        LocalSdkDimensions provides dimensions(sdkTheme.dimensions, deviceSize),
+    MaterialTheme(
+        colorScheme = if (isDarkMode) {
+            darkColors(sdkTheme.getDarkColorTheme())
+        } else {
+            lightColors(
+                sdkTheme.getLightColorTheme()
+            )
+        },
+        typography = typography(sdkTheme.font),
+        shapes = buttonShapes(sdkTheme.dimensions)
     ) {
-        MaterialTheme(
-            colorScheme = if (isDarkMode) {
-                darkColors(sdkTheme.getDarkColorTheme())
-            } else {
-                lightColors(
-                    sdkTheme.getLightColorTheme()
-                )
-            },
-            typography = typography(sdkTheme.font),
-            shapes = buttonShapes(sdkTheme.dimensions)
-        ) {
-            content.invoke()
-        }
+        content.invoke()
     }
-}
-
-internal val LocalSdkDimensions = staticCompositionLocalOf {
-    dimensions(MobileSDK.getInstance().sdkTheme.dimensions, DeviceSize.LARGE)
 }
 
 /**
@@ -87,7 +71,7 @@ internal object Theme {
     /**
      * Provides the current dimensions for the theme.
      */
-    val dimensions: Dimensions @Composable get() = LocalSdkDimensions.current
+    val dimensions: Dimensions @Composable get() = Dimensions()
 }
 
 /**
@@ -125,30 +109,3 @@ private fun darkColors(themeColor: ThemeColors.ThemeColor): ColorScheme = darkCo
     outline = themeColor.outline,
     error = themeColor.error
 )
-
-/**
- * Determines the approximate size of the device's screen based on its width in density-independent pixels (dp).
- *
- * This function uses the screen's width to categorize the device into one of three size categories:
- * - **SMALL:** Devices with a screen width less than or equal to `MobileSDKConstants.General.SMALL_SCREEN_SIZE.dp`.
- * - **MEDIUM:** Devices with a screen width greater than `MobileSDKConstants.General.SMALL_SCREEN_SIZE.dp`
- *      and less than or equal to `MobileSDKConstants.General.MEDIUM_SCREEN_SIZE.dp`.
- * - **LARGE:** Devices with a screen width greater than `MobileSDKConstants.General.MEDIUM_SCREEN_SIZE.dp`.
- *
- * This is useful for adapting the UI layout or behavior to different screen sizes. For example, you might
- * choose to display more information on a LARGE screen or adjust the spacing between elements on a SMALL screen.
- *
- * @return A [DeviceSize] enum value representing the categorized size of the device's screen.
- * @see DeviceSize
- * @see MobileSDKConstants.General.SMALL_SCREEN_SIZE
- * @see MobileSDKConstants.General.MEDIUM_SCREEN_SIZE
- */
-@Composable
-internal fun getDeviceSize(): DeviceSize {
-    val screenWidthDp = LocalConfiguration.current.screenWidthDp.dp
-    return when {
-        screenWidthDp <= MobileSDKConstants.General.SMALL_SCREEN_SIZE.dp -> DeviceSize.SMALL
-        screenWidthDp <= MobileSDKConstants.General.MEDIUM_SCREEN_SIZE.dp -> DeviceSize.MEDIUM
-        else -> DeviceSize.LARGE
-    }
-}

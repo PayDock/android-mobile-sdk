@@ -178,10 +178,12 @@ class MobileSDKTheme(
             textFieldCornerRadius: Int = 4,
             buttonCornerRadius: Int = 4,
             borderWidth: Int = 1,
+            spacing: Int = 16
         ): ThemeDimensions = ThemeDimensions.create(
             textFieldCornerRadius = textFieldCornerRadius.dp,
             buttonCornerRadius = buttonCornerRadius.dp,
-            borderWidth = borderWidth.dp
+            borderWidth = borderWidth.dp,
+            spacing = spacing.dp
         )
     }
 
@@ -324,13 +326,15 @@ class ThemeColors(
  * @param textFieldCornerRadius The corner radius for text fields.
  * @param buttonCornerRadius The corner radius for buttons.
  * @param borderWidth The border width.
+ * @param spacing The spacing between components.
  */
 @ConsistentCopyVisibility
 @Immutable
 data class ThemeDimensions private constructor(
     val textFieldCornerRadius: Dp,
     val buttonCornerRadius: Dp,
-    val borderWidth: Dp
+    val borderWidth: Dp,
+    val spacing: Dp,
 ) {
 
     @Suppress("MaxLineLength")
@@ -343,14 +347,18 @@ data class ThemeDimensions private constructor(
             textFieldCornerRadius: Dp,
             buttonCornerRadius: Dp,
             borderWidth: Dp,
+            spacing: Dp
         ): ThemeDimensions {
             require(textFieldCornerRadius >= 0.dp) { "textFieldCornerRadius must be non-negative" }
             require(buttonCornerRadius >= 0.dp) { "buttonCornerRadius must be non-negative" }
             require(borderWidth >= 0.dp) { "borderWidth must be non-negative" }
+            require(borderWidth >= 0.dp) { "borderWidth must be non-negative" }
+            require(spacing >= 0.dp) { "spacing must be non-negative" }
             return ThemeDimensions(
                 textFieldCornerRadius = textFieldCornerRadius,
                 buttonCornerRadius = buttonCornerRadius,
                 borderWidth = borderWidth,
+                spacing = spacing
             )
         }
     }
@@ -358,9 +366,10 @@ data class ThemeDimensions private constructor(
     fun with(
         textFieldCornerRadius: Dp = this.textFieldCornerRadius,
         buttonCornerRadius: Dp = this.buttonCornerRadius,
-        borderWidth: Dp = this.borderWidth
+        borderWidth: Dp = this.borderWidth,
+        spacing: Dp = this.spacing
     ): ThemeDimensions {
-        return create(textFieldCornerRadius, buttonCornerRadius, borderWidth)
+        return create(textFieldCornerRadius, buttonCornerRadius, borderWidth, spacing)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -372,6 +381,7 @@ data class ThemeDimensions private constructor(
         if (textFieldCornerRadius != other.textFieldCornerRadius) return false
         if (buttonCornerRadius != other.buttonCornerRadius) return false
         if (borderWidth != other.borderWidth) return false
+        if (spacing != other.spacing) return false
 
         return true
     }
@@ -380,8 +390,10 @@ data class ThemeDimensions private constructor(
         var result = textFieldCornerRadius.hashCode()
         result = 31 * result + buttonCornerRadius.hashCode()
         result = 31 * result + borderWidth.hashCode()
+        result = 31 * result + spacing.hashCode()
         return result
     }
+
 }
 
 /**

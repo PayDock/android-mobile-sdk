@@ -13,7 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import com.paydock.sample.core.SMALL_SCREEN_SIZE
+import androidx.compose.ui.unit.dp
 import com.paydock.sample.designsystems.theme.dimensions.Dimensions
 import com.paydock.sample.designsystems.theme.dimensions.LocalDimensions
 import com.paydock.sample.designsystems.theme.dimensions.ProvideDimensions
@@ -31,7 +31,7 @@ fun SampleTheme(
     isDarkMode: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = false,
-    isSmallDevice: Boolean = isSmallDevice(),
+    deviceSize: DeviceSize = getDeviceSize(),
     content: @Composable () -> Unit,
 ) {
     val colorScheme = when {
@@ -43,7 +43,11 @@ fun SampleTheme(
         isDarkMode -> DarkColors
         else -> LightColors
     }
-    val dimensions = if (isSmallDevice) Dimensions.Small else Dimensions.Default
+    val dimensions = when (deviceSize) {
+        DeviceSize.SMALL -> Dimensions.Small
+        DeviceSize.MEDIUM,
+        DeviceSize.LARGE -> Dimensions.Default
+    }
     ProvideDimensions(dimensions = dimensions) {
         ProvideSampleTypography {
             MaterialTheme(
@@ -139,4 +143,11 @@ private val DarkColors = darkColorScheme(
 )
 
 @Composable
-private fun isSmallDevice(): Boolean = LocalConfiguration.current.screenWidthDp <= SMALL_SCREEN_SIZE
+internal fun getDeviceSize(): DeviceSize {
+    val screenWidthDp = LocalConfiguration.current.screenWidthDp.dp
+    return when {
+        screenWidthDp <= 300.dp -> DeviceSize.SMALL
+        screenWidthDp <= 600.dp -> DeviceSize.MEDIUM
+        else -> DeviceSize.LARGE
+    }
+}

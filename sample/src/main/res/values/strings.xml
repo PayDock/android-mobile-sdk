@@ -16,6 +16,7 @@
     <string name="label_text_corner_radius">TextField Corner Radius</string>
     <string name="label_button_corner_radius">Button Corner Radius</string>
     <string name="label_border_width">Border Width</string>
+    <string name="label_spacing">Spacing</string>
     <string name="label_font">Font</string>
     <string name="label_something_went_wrong">Something went wrong</string>
     <string name="label_card">Card</string>

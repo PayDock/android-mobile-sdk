@@ -1,4 +1,4 @@
-package com.paydock.designsystems.theme
+package com.paydock.sample.designsystems.theme
 
 /**
  * Represents the size of a device screen.
@@ -19,6 +19,6 @@ package com.paydock.designsystems.theme
  * and target audience. This enum primarily serves as a high-level
  * classification system.
  */
-internal enum class DeviceSize {
+enum class DeviceSize {
     SMALL, MEDIUM, LARGE
 }

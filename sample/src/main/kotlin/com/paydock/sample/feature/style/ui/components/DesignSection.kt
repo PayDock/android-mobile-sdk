@@ -46,12 +46,21 @@ fun DesignSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             NumberCounter(
-                modifier = Modifier.weight(1.0f),
+                modifier = Modifier.weight(0.5f),
                 title = stringResource(R.string.label_border_width),
                 value = dimensionsTheme.borderWidth.value.toInt(),
                 onValueChange = {
                     onDimensionsUpdated(dimensionsTheme.with(borderWidth = it.dp))
                 })
+            NumberCounter(
+                modifier = Modifier.weight(0.5f),
+                title = stringResource(R.string.label_spacing),
+                value = dimensionsTheme.spacing.value.toInt(),
+                onValueChange = {
+                    onDimensionsUpdated(dimensionsTheme.with(spacing = it.dp))
+                })
+
         }
+
     }
 }
