@@ -1,6 +1,4 @@
 <resources>
-    <string name="app_name">SampleApp</string>
-
     <!-- Bottom Navigation -->
     <string name="nav_checkout">Checkout</string>
     <string name="nav_widgets">Widgets</string>
