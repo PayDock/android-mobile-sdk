@@ -200,8 +200,6 @@ dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons.extended)
-    implementation(libs.navigation.compose)
-    implementation(libs.accompanist.system.ui)
     // To allow builds to build for release
     implementation(libs.androidx.ui.tooling.preview.android)
     implementation(libs.androidx.ui.tooling)

@@ -127,7 +127,7 @@ fun CardDetailsWidget(
             SdkButton(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("saveCard"),
+                    .testTag("submitDetails"),
                 text = config.actionText,
                 enabled = isDataValid && uiState !is CardDetailsUIState.Loading && enabled,
                 isLoading = loadingDelegate == null && uiState is CardDetailsUIState.Loading

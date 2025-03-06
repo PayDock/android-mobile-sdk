@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.paydock.R
 import com.paydock.core.BaseUITest
 import com.paydock.feature.card.domain.model.ui.CardCode
 import com.paydock.feature.card.domain.model.ui.enums.CodeType
@@ -151,8 +152,7 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
 
     @Test
     fun testCardSecurityCodeInputDisplaysError() {
-        // Invalid security code exceeds expected expected digits (CVC = 4)
-        var securityCode by mutableStateOf("123")
+        var securityCode by mutableStateOf("")
         val cardCode = CardCode(CodeType.CID, 4)
 
         // Start composable with valid card security code
@@ -166,10 +166,13 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
             )
         }
 
+        // Invalid security code exceeds expected expected digits (CVC = 4)
+        composeTestRule.onNodeWithTag("sdkInput").performTextInput("123")
+
         // Assert that an error message is displayed
         composeTestRule.onNodeWithTag("successIcon", true).assertDoesNotExist()
         composeTestRule.onNodeWithTag("errorIcon", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithTag("errorLabel").assertIsDisplayed()
-            .assertTextEquals("Card failed")
+            .assertTextEquals(getStringRes(R.string.error_security_code))
     }
 }

@@ -218,7 +218,6 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
                     )
                 )
             )
-            println(">>> MockResult: $mockResult")
             coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
             viewModel.processGooglePayPaymentResult(paymentData)
 

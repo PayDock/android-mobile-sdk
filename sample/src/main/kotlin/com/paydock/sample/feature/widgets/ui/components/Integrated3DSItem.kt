@@ -43,7 +43,6 @@ fun IntegratedThreeDSItem(
         !threeDSToken.isNullOrBlank() -> {
             Integrated3DSWidget(token = threeDSToken) { result ->
                 result.onSuccess {
-                    println(">>> onSuccess: $it")
                     Log.d("[Integrated3DSWidget]", "Success: $it")
                     Toast.makeText(context, "3DS Result returned [$it]", Toast.LENGTH_SHORT).show()
                 }.onFailure {

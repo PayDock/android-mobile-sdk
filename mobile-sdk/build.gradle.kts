@@ -82,12 +82,13 @@ dependencies {
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.ext)
     androidTestImplementation(libs.androidx.test.espresso.core)
-    androidTestImplementation(libs.androidx.ui.test.junit4.android)
     // Compose
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
     // Release requires this to be included for previews
     implementation(libs.bundles.composeDebug)
+    androidTestImplementation(libs.androidx.ui.test.junit4.android)
+    androidTestImplementation(libs.androidx.ui.test.manifest)
     // Kotlin
     implementation(platform(libs.kotlin.bom))
     implementation(libs.bundles.kotlin)
@@ -120,8 +121,6 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.json)
     // UI Testing (General)
-    androidTestImplementation(libs.mockk.android) {
-        exclude(group = "io.mockk", module = "mockk-agent-android")
-    }
+    androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.mockito.android)
 }
