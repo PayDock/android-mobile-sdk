@@ -4,15 +4,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.paydock.core.presentation.extensions.alpha20
 import com.paydock.designsystems.components.link.HyperlinkText
+import com.paydock.designsystems.components.toggle.SdkSwitch
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.domain.model.integration.SaveCardConfig
@@ -58,18 +56,10 @@ internal fun SaveCardToggle(
             }
         }
 
-        Switch(
+        SdkSwitch(
             modifier = Modifier.align(Alignment.CenterVertically),
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Theme.colors.onPrimary,
-                checkedTrackColor = Theme.colors.primary,
-                checkedBorderColor = Theme.colors.outline,
-                uncheckedBorderColor = Theme.colors.outline,
-                uncheckedThumbColor = Theme.colors.outline,
-                uncheckedTrackColor = Theme.colors.primary.alpha20,
-            ),
             enabled = enabled,
-            checked = saveCard,
+            isChecked = saveCard,
             onCheckedChange = onToggle
         )
     }

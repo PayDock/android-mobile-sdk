@@ -117,7 +117,7 @@ internal fun SdkTextField(
                 .autofillModifier(autofillType, onValueChange),
             enabled = enabled, // Use the parameter value
             readOnly = readOnly,
-            textStyle = Theme.typography.body1,
+            textStyle = Theme.typography.body1.copy(color = Theme.colors.onSurface),
             keyboardActions = keyboardActions,
             keyboardOptions = keyboardOptions,
             singleLine = singleLine,

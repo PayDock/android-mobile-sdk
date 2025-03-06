@@ -123,8 +123,8 @@ private val DarkColors = darkColorScheme(
     tertiaryContainer = PaydockBlack,
     onTertiaryContainer = Color.White,
 
-    background = OffWhiteDark,
-    onBackground = PaydockBlack,
+    background = PaydockBlack,
+    onBackground = PaydockWhite,
 
     surface = PaydockBlack,
     onSurface = Color.White,
