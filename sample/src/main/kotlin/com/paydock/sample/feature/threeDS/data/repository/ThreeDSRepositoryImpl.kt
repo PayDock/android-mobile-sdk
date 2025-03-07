@@ -18,11 +18,10 @@ class ThreeDSRepositoryImpl @Inject constructor(
     private val threeDSApi: ThreeDSApi,
 ) : ThreeDSRepository {
     override suspend fun createIntegrated3dsToken(
-        accessToken: String,
         request: CreateIntegratedThreeDSTokenRequest
     ): ThreeDSToken =
         withContext(dispatcher) {
-            threeDSApi.createIntegrated3dsToken(accessToken = accessToken, request = request).mapToDomain()
+            threeDSApi.createIntegrated3dsToken(request = request).mapToDomain()
         }
 
     override suspend fun createStandalone3dsToken(request: CreateStandaloneThreeDSTokenRequest): ThreeDSToken =

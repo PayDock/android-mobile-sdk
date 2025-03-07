@@ -3,7 +3,6 @@ package com.paydock.sample.feature.threeDS.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.paydock.sample.core.THREE_DS_CARD_ERROR
-import com.paydock.sample.core.presentation.utils.AccessTokenProvider
 import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
 import com.paydock.sample.feature.threeDS.data.api.dto.CreateIntegratedThreeDSTokenRequest
 import com.paydock.sample.feature.threeDS.data.api.dto.CreateStandaloneThreeDSTokenRequest
@@ -18,7 +17,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ThreeDSViewModel @Inject constructor(
-    private val accessTokenProvider: AccessTokenProvider,
     private val createIntegratedThreeDSTokenUseCase: CreateIntegratedThreeDSTokenUseCase,
     private val createStandaloneThreeDSTokenUseCase: CreateStandaloneThreeDSTokenUseCase,
 ) : ViewModel() {
@@ -29,13 +27,11 @@ class ThreeDSViewModel @Inject constructor(
 
     fun createIntegrated3dsToken(cardToken: String) {
         viewModelScope.launch {
-            val accessToken = accessTokenProvider.accessToken.value
             _stateFlow.update { state ->
                 state.copy(isLoading = true)
             }
             val result =
                 createIntegratedThreeDSTokenUseCase(
-                    accessToken,
                     CreateIntegratedThreeDSTokenRequest(token = cardToken)
                 )
             result.onSuccess { threeDSResult ->

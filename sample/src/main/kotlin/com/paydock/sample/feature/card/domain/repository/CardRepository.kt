@@ -6,7 +6,7 @@ import com.paydock.sample.feature.card.data.api.dto.TokeniseCardRequest
 import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
 
 interface CardRepository {
-    suspend fun tokeniseCardDetails(accessToken: String, request: TokeniseCardRequest): String
+    suspend fun tokeniseCardDetails(request: TokeniseCardRequest): String
     suspend fun captureCardCharge(request: CaptureCardChargeRequest): ChargeResponse
     suspend fun createCardVaultToken(request: VaultTokenRequest): String
 }

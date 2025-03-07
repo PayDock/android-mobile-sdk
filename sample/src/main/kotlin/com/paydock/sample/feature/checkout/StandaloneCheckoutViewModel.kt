@@ -16,7 +16,6 @@ import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
 import com.paydock.sample.core.THREE_DS_CARD_ERROR
 import com.paydock.sample.core.THREE_DS_STATUS_ERROR
 import com.paydock.sample.core.TOKENISE_CARD_ERROR
-import com.paydock.sample.core.presentation.utils.AccessTokenProvider
 import com.paydock.sample.feature.card.data.api.dto.CaptureCardChargeRequest
 import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
 import com.paydock.sample.feature.card.domain.usecase.CaptureCardChargeTokenUseCase
@@ -42,7 +41,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class StandaloneCheckoutViewModel @Inject constructor(
-    accessTokenProvider: AccessTokenProvider,
     private val initiateWalletTransactionUseCase: InitiateWalletTransactionUseCase,
     private val createCardSessionVaultTokenUseCase: CreateCardSessionVaultTokenUseCase,
     private val createIntegratedThreeDSTokenUseCase: CreateIntegratedThreeDSTokenUseCase,
@@ -54,8 +52,6 @@ class StandaloneCheckoutViewModel @Inject constructor(
 
     private val _stateFlow: MutableStateFlow<CheckoutUIState> = MutableStateFlow(CheckoutUIState())
     val stateFlow: StateFlow<CheckoutUIState> = _stateFlow
-
-    val accessToken: StateFlow<String> = accessTokenProvider.accessToken
 
     val threeDSType: ThreeDSType = ThreeDSType.INTEGRATED
 
@@ -210,7 +206,6 @@ class StandaloneCheckoutViewModel @Inject constructor(
             }
             val result =
                 createIntegratedThreeDSTokenUseCase(
-                    accessToken = accessToken.value,
                     request = CreateIntegratedThreeDSTokenRequest(
                         customer = ChargesCustomerDTO(
                             paymentSource = ChargesCustomerDTO.PaymentSourceDTO(

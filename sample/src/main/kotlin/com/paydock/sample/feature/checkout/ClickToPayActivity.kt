@@ -28,8 +28,7 @@ class ClickToPayActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
 
         setContent {
-            val accessToken = intent.getStringExtra("accessToken") ?: ""
-            ClickToPayScreen(accessToken) { result ->
+            ClickToPayScreen { result ->
                 val intent = Intent().putExtra("isSuccess", result.isSuccess)
                 result.onSuccess {
                     intent.putExtra("token", it)
@@ -46,10 +45,10 @@ class ClickToPayActivity : ComponentActivity() {
 }
 
 @Composable
-fun ClickToPayScreen(accessToken: String, resultHandler: (Result<String>) -> Unit) {
+fun ClickToPayScreen(resultHandler: (Result<String>) -> Unit) {
     ClickToPayWidget(
         modifier = Modifier.fillMaxWidth(),
-        accessToken = accessToken,
+        accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
         serviceId = BuildConfig.GATEWAY_ID_CLICK_TO_PAY,
         meta = ClickToPayMeta(disableSummaryScreen = true),
         completion = resultHandler

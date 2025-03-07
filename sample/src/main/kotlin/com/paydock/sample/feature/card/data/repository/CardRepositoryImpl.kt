@@ -17,12 +17,10 @@ class CardRepositoryImpl @Inject constructor(
 ) : CardRepository {
 
     override suspend fun tokeniseCardDetails(
-        accessToken: String,
         request: TokeniseCardRequest,
     ): String =
         withContext(dispatcher) {
             cardApi.tokeniseCardDetails(
-                accessToken = accessToken,
                 request = request
             ).resource.resourceData
         }

@@ -7,8 +7,8 @@ import javax.inject.Inject
 
 class TokeniseCardUseCase @Inject constructor(private val repository: CardRepository) {
 
-    suspend operator fun invoke(accessToken: String, request: TokeniseCardRequest) =
+    suspend operator fun invoke(request: TokeniseCardRequest) =
         suspendRunCatching {
-            repository.tokeniseCardDetails(accessToken, request)
+            repository.tokeniseCardDetails(request)
         }
 }

@@ -1,9 +1,13 @@
 package com.paydock.designsystems.components.toggle
 
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import com.paydock.core.presentation.extensions.alpha20
+import com.paydock.core.presentation.extensions.alpha40
+import com.paydock.designsystems.theme.Theme
 
 /**
  * A customizable switch component for the SDK.
@@ -33,6 +37,14 @@ internal fun SdkSwitch(
         modifier = modifier,
         enabled = enabled,
         checked = isChecked,
+        colors = SwitchDefaults.colors(
+            disabledUncheckedThumbColor = Theme.colors.outline.alpha20,
+            disabledUncheckedBorderColor = Theme.colors.outline.alpha20,
+            disabledUncheckedTrackColor = Theme.colors.outlineVariant.alpha40,
+            disabledCheckedThumbColor = Theme.colors.outline.alpha20,
+            disabledCheckedBorderColor = Theme.colors.outline.alpha20,
+            disabledCheckedTrackColor = Theme.colors.outlineVariant.alpha40,
+        ),
         onCheckedChange = onCheckedChange
     )
 }

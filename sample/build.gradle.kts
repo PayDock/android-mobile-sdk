@@ -109,8 +109,8 @@ enum class BuildVariable(private val baseEnvName: String) {
     // Shared Variables
     MERCHANT_IDENTIFIER("MERCHANT_IDENTIFIER"),
     // Environment Specific Variables
-    ACCESS_TOKEN("ACCESS_TOKEN"),
-    SECRET_KEY("SECRET_KEY"),
+    WIDGET_ACCESS_TOKEN("WIDGET_ACCESS_TOKEN"),
+    API_ACCESS_TOKEN("API_ACCESS_TOKEN"),
     GATEWAY_ID_MPGS("GATEWAY_ID_MPGS"),
     GATEWAY_ID_PAY_PAL("GATEWAY_ID_PAY_PAL"),
     GATEWAY_ID_FLY_PAY("GATEWAY_ID_FLY_PAY"),

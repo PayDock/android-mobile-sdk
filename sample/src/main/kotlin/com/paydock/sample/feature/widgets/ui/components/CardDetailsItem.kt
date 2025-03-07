@@ -20,11 +20,11 @@ import com.paydock.feature.card.presentation.CardDetailsWidget
 import com.paydock.sample.BuildConfig
 
 @Composable
-fun CardDetailsItem(context: Context, accessToken: String) {
+fun CardDetailsItem(context: Context) {
     CardDetailsWidget(
         modifier = Modifier.padding(16.dp),
         config = CardDetailsWidgetConfig(
-            accessToken = accessToken,
+            accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
             gatewayId = BuildConfig.GATEWAY_ID_MPGS,
             allowSaveCard = SaveCardConfig(
                 privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(

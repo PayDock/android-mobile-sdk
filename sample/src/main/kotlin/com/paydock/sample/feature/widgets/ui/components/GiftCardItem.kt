@@ -7,11 +7,12 @@ import androidx.compose.runtime.Composable
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
 import com.paydock.feature.card.presentation.GiftCardWidget
+import com.paydock.sample.BuildConfig
 
 @Composable
-fun GiftCardItem(context: Context, accessToken: String) {
+fun GiftCardItem(context: Context) {
     GiftCardWidget(
-        accessToken = accessToken,
+        accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
         storePin = true, completion = { result ->
             result.onSuccess {
                 Log.d("[GiftCardWidget]", "Success: $it")

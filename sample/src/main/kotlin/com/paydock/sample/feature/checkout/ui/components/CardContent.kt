@@ -9,11 +9,11 @@ import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.CardResult
 import com.paydock.feature.card.domain.model.integration.SaveCardConfig
 import com.paydock.feature.card.presentation.CardDetailsWidget
+import com.paydock.sample.BuildConfig
 
 @Composable
 fun CardContent(
     enabled: Boolean = true,
-    accessToken: String,
     loadingDelegate: WidgetLoadingDelegate?,
     resultHandler: (Result<CardResult>) -> Unit
 ) {
@@ -21,7 +21,7 @@ fun CardContent(
         modifier = Modifier.padding(vertical = 16.dp),
         enabled = enabled,
         config = CardDetailsWidgetConfig(
-            accessToken = accessToken,
+            accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
             actionText = "Pay",
             showCardTitle = false,
             collectCardholderName = false,

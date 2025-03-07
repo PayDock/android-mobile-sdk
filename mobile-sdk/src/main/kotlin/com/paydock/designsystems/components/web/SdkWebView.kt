@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.webkit.WebResourceRequest
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,6 +28,7 @@ import com.paydock.designsystems.components.web.extensions.setup
 import com.paydock.designsystems.components.web.utils.SdkJSBridge
 import com.paydock.designsystems.components.web.utils.SdkWebChromeClient
 import com.paydock.designsystems.components.web.utils.SdkWebViewClient
+import com.paydock.designsystems.theme.Theme
 
 /**
  * Composable function to display a WebView with customizable settings and event handling.
@@ -68,7 +70,7 @@ internal fun <T : Any?> SdkWebView(
     ) {
         WebView(
             state = state,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().background(Theme.colors.background),
             navigator = rememberWebViewNavigator(),
             client = remember {
                 SdkWebViewClient(

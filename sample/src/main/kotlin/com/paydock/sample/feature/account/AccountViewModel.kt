@@ -32,12 +32,12 @@ class AccountViewModel @Inject constructor(
         }
     }
 
-    fun createCustomer(token: String) {
+    fun createCustomer(vaultToken: String) {
         viewModelScope.launch {
             _stateFlow.update { state ->
                 state.copy(isLoading = true, customer = null)
             }
-            val request = CreateCustomerOTTRequest(token)
+            val request = CreateCustomerOTTRequest(vaultToken)
             createCustomerOTTUseCase(request).onSuccess { result ->
                 _stateFlow.update { state ->
                     state.copy(isLoading = false, customer = result)

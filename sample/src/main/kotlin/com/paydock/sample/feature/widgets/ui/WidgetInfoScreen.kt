@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.paydock.sample.BuildConfig
 import com.paydock.sample.feature.widgets.ui.components.AddressDetailsItem
 import com.paydock.sample.feature.widgets.ui.components.AfterpayItem
 import com.paydock.sample.feature.widgets.ui.components.CardDetailsItem
@@ -24,7 +23,6 @@ fun WidgetInfoScreen(
     widgetType: WidgetType
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        val accessToken = BuildConfig.ACCESS_TOKEN
         val context = LocalContext.current
 
         when (widgetType) {
@@ -37,11 +35,11 @@ fun WidgetInfoScreen(
             }
 
             WidgetType.CARD_DETAILS -> {
-                CardDetailsItem(context = context, accessToken = accessToken)
+                CardDetailsItem(context = context)
             }
 
             WidgetType.CLICK_TO_PAY -> {
-                ClickToPayItem(context = context, accessToken = accessToken)
+                ClickToPayItem(context = context)
             }
 
             WidgetType.FLY_PAY -> {
@@ -49,7 +47,7 @@ fun WidgetInfoScreen(
             }
 
             WidgetType.GIFT_CARD -> {
-                GiftCardItem(context = context, accessToken = accessToken)
+                GiftCardItem(context = context)
             }
 
             WidgetType.GOOGLE_PAY -> {
