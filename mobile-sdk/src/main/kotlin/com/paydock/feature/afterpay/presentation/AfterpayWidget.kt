@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,6 +25,7 @@ import com.paydock.core.domain.error.exceptions.AfterpayException
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.designsystems.theme.SdkTheme
+import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.afterpay.domain.mapper.integration.mapFromBillingAddress
 import com.paydock.feature.afterpay.domain.mapper.integration.mapFromShippingOption
@@ -107,7 +109,7 @@ fun AfterpayWidget(
 
     // Render the Afterpay widget UI
     SdkTheme {
-        Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Box(modifier = modifier.background(Theme.colors.background), contentAlignment = Alignment.Center) {
             if (isConfigured) {
                 AfterpayPaymentButtonView(
                     config = config,

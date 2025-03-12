@@ -1,5 +1,6 @@
 package com.paydock.feature.address.presentation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -75,6 +76,7 @@ fun AddressDetailsWidget(
         Column(
             modifier = modifier
                 .fillMaxWidth()
+                .background(Theme.colors.background)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.Top),
             horizontalAlignment = Alignment.Start

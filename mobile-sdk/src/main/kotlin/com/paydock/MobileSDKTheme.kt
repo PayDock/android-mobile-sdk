@@ -172,6 +172,7 @@ class MobileSDKTheme(
          * @param textFieldCornerRadius The corner radius for text fields.
          * @param buttonCornerRadius The corner radius for buttons.
          * @param borderWidth The border width.
+         * @param spacing The spacing between individual views on UI Elements.
          * @return A [ThemeDimensions] instance with the specified dimension values.
          */
         fun themeDimensions(

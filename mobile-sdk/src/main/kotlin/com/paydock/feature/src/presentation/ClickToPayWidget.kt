@@ -1,5 +1,6 @@
 package com.paydock.feature.src.presentation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -67,7 +68,7 @@ fun ClickToPayWidget(
     SdkTheme {
         Box(contentAlignment = Alignment.Center) {
             Column(
-                modifier = modifier.fillMaxWidth(),
+                modifier = modifier.fillMaxWidth().background(Theme.colors.background),
                 verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.Top),
                 horizontalAlignment = Alignment.Start
             ) {

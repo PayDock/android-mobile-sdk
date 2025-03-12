@@ -15,7 +15,7 @@ interface CardApi {
 
     @POST("/v1/payment_sources/tokens")
     suspend fun tokeniseCardDetails(
-        @Header("X-Access-Token") accessToken: String = BuildConfig.API_ACCESS_TOKEN,
+        @Header("X-Access-Token") accessToken: String = BuildConfig.WIDGET_ACCESS_TOKEN,
         @Body request: TokeniseCardRequest,
     ): PaymentOTTResponse
 

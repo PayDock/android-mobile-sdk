@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.SideEffect
@@ -17,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.designsystems.theme.SdkTheme
+import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.paypal.vault.presentation.state.PayPalWebVaultState
 import com.paydock.feature.paypal.vault.presentation.utils.CancellationStatus
 import com.paydock.feature.paypal.vault.presentation.utils.getClientIdExtra
@@ -74,7 +76,7 @@ internal class PayPalVaultActivity : AppCompatActivity() {
                 }
 
                 // Box layout to show UI based on the current vault result state
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.fillMaxSize().background(Theme.colors.background), contentAlignment = Alignment.Center) {
                     when (vaultResult) {
                         // Show a loader during the idle state
                         is PayPalWebVaultState.Idle -> SdkLoader()

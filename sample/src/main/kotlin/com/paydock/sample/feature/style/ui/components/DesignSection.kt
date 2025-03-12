@@ -28,15 +28,15 @@ fun DesignSection(
                 modifier = Modifier.weight(0.5f),
                 title = stringResource(R.string.label_text_corner_radius),
                 value = dimensionsTheme.textFieldCornerRadius.value.toInt(),
-                onValueChange = {
-                    onDimensionsUpdated(dimensionsTheme.with(textFieldCornerRadius = it.dp))
+                onValueChange = { newValue ->
+                    onDimensionsUpdated(dimensionsTheme.with(textFieldCornerRadius = newValue.dp))
                 })
             NumberCounter(
                 modifier = Modifier.weight(0.5f),
                 title = stringResource(R.string.label_button_corner_radius),
                 value = dimensionsTheme.buttonCornerRadius.value.toInt(),
-                onValueChange = {
-                    onDimensionsUpdated(dimensionsTheme.with(buttonCornerRadius = it.dp))
+                onValueChange = { newValue ->
+                    onDimensionsUpdated(dimensionsTheme.with(buttonCornerRadius = newValue.dp))
                 })
         }
 
@@ -49,18 +49,17 @@ fun DesignSection(
                 modifier = Modifier.weight(0.5f),
                 title = stringResource(R.string.label_border_width),
                 value = dimensionsTheme.borderWidth.value.toInt(),
-                onValueChange = {
-                    onDimensionsUpdated(dimensionsTheme.with(borderWidth = it.dp))
+                onValueChange = { newValue ->
+                    onDimensionsUpdated(dimensionsTheme.with(borderWidth = newValue.dp))
                 })
             NumberCounter(
                 modifier = Modifier.weight(0.5f),
                 title = stringResource(R.string.label_spacing),
                 value = dimensionsTheme.spacing.value.toInt(),
-                onValueChange = {
-                    onDimensionsUpdated(dimensionsTheme.with(spacing = it.dp))
+                onValueChange = { newValue ->
+                    onDimensionsUpdated(dimensionsTheme.with(spacing = newValue.dp))
                 })
 
         }
-
     }
 }

@@ -38,6 +38,7 @@ internal fun SdkSwitch(
         enabled = enabled,
         checked = isChecked,
         colors = SwitchDefaults.colors(
+            uncheckedTrackColor = Theme.colors.outlineVariant.alpha20,
             disabledUncheckedThumbColor = Theme.colors.outline.alpha20,
             disabledUncheckedBorderColor = Theme.colors.outline.alpha20,
             disabledUncheckedTrackColor = Theme.colors.outlineVariant.alpha40,

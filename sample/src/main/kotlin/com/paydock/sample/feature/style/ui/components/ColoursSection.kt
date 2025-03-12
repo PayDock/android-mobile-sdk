@@ -64,7 +64,8 @@ fun ColoursSection(
             ColourTheme("Placeholder", colorTheme.placeholder),
             ColourTheme("Success", colorTheme.success),
             ColourTheme("Error", colorTheme.error),
-            ColourTheme("Background", colorTheme.background)
+            ColourTheme("Background", colorTheme.background),
+            ColourTheme("Outline", colorTheme.outline)
         )
     }
     // Handles selected item for updating colour
@@ -102,7 +103,6 @@ fun ColoursSection(
                     scope.launch {
                         selectedItem = updatedItem
                         showBottomSheet = true
-                        //
                     }
                 }
             )

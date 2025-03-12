@@ -1,10 +1,10 @@
 package com.paydock.feature.card.presentation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -76,7 +76,7 @@ fun GiftCardWidget(
         Column(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(Theme.dimensions.spacing),
+                .background(Theme.colors.background),
             verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.Top),
             horizontalAlignment = Alignment.Start
         ) {
