@@ -26,12 +26,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.paydock.R
 import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.SdkTheme
@@ -191,12 +189,12 @@ private fun ButtonContent(
                     is ButtonIcon.Vector -> Icon(
                         modifier = Modifier.size(Theme.dimensions.buttonIconSize),
                         imageVector = buttonIcon.icon,
-                        contentDescription = stringResource(id = R.string.content_desc_button_icon),
+                        contentDescription = null
                     )
                     is ButtonIcon.DrawableRes -> Icon(
                         modifier = Modifier.size(Theme.dimensions.buttonIconSize),
                         painter = painterResource(buttonIcon.drawable),
-                        contentDescription = stringResource(id = R.string.content_desc_button_icon),
+                        contentDescription = null
                     )
 
                     else -> Unit
