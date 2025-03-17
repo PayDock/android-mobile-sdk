@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,6 +14,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,7 +23,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.paydock.R
-import com.paydock.core.presentation.ui.utils.rememberImeState
 import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
@@ -48,8 +46,6 @@ fun AddressDetailsWidget(
     address: BillingAddress? = null,
     completion: (BillingAddress) -> Unit,
 ) {
-    val imeState = rememberImeState()
-    val scrollState = rememberScrollState()
     // Get the ViewModel using Koin dependency injection
     val viewModel: AddressDetailsViewModel = koinViewModel()
 
@@ -57,7 +53,9 @@ fun AddressDetailsWidget(
     val uiState by viewModel.stateFlow.collectAsState()
 
     // Control whether the manual address section is shown
-    var isManualAddressVisible by remember { mutableStateOf(address != null) }
+    var isManualAddressVisible by rememberSaveable(key = "isManualAddressVisible_${address?.hashCode()}") {
+        mutableStateOf(address != null)
+    }
     // Control whether the manual address input is valid (improve recompositions)
     val isDataValid by remember(uiState) { derivedStateOf { uiState.isDataValid } }
 
@@ -66,18 +64,11 @@ fun AddressDetailsWidget(
         address?.let(viewModel::updateDefaultAddress)
     }
 
-    LaunchedEffect(imeState) {
-        if (imeState.value) {
-            scrollState.animateScrollTo(scrollState.maxValue)
-        }
-    }
-
     SdkTheme {
         Column(
             modifier = modifier
                 .fillMaxWidth()
-                .background(Theme.colors.background)
-                .verticalScroll(rememberScrollState()),
+                .background(Theme.colors.background),
             verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.Top),
             horizontalAlignment = Alignment.Start
         ) {
