@@ -1,5 +1,7 @@
 package com.paydock.feature.card.presentation.components
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,8 +10,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.paydock.designsystems.components.link.HyperlinkText
+import com.paydock.designsystems.components.link.LinkText
 import com.paydock.designsystems.components.toggle.SdkSwitch
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
@@ -30,6 +33,7 @@ internal fun SaveCardToggle(
     config: SaveCardConfig,
     onToggle: (Boolean) -> Unit
 ) {
+    val context = LocalContext.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -48,11 +52,13 @@ internal fun SaveCardToggle(
             )
             // Privacy Policy Label
             if (config.privacyPolicyConfig != null) {
-                HyperlinkText(
-                    enabled = enabled,
-                    text = config.privacyPolicyConfig.privacyPolicyText,
-                    url = config.privacyPolicyConfig.privacyPolicyURL
-                )
+                LinkText(linkText = config.privacyPolicyConfig.privacyPolicyText) {
+                    if (enabled) {
+                        val uri = Uri.parse(config.privacyPolicyConfig.privacyPolicyURL)
+                        val intent = Intent(Intent.ACTION_VIEW, uri)
+                        context.startActivity(intent)
+                    }
+                }
             }
         }
 
