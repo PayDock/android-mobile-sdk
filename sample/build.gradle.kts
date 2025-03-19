@@ -148,39 +148,39 @@ fun ApplicationProductFlavor.configureFlavorBuildConfig(
 }
 
 fun readBuildVariable(variable: BuildVariable, flavor: String): String {
-    val envValue = System.getenv(variable.getEnvName(flavor))
-    val configValue: String = if (envValue != null) {
+    val envName = variable.getEnvName(flavor)
+    // Read the environment variable value, trimming any leading/trailing whitespace
+    var envValue = System.getenv(envName)?.trim()
+    println(">>> envName: $envName -> envValue: $envValue")
+    val configValue: String = if (!envValue.isNullOrEmpty()) {
         // CI/CD environment - Remove excessive double quotes if present
-        sanitizeEnvValue("\"${System.getenv(envValue)}\"")
+        // Remove surrounding double quotes if present
+        if (envValue.startsWith("\"") && envValue.endsWith("\"")) {
+            envValue = envValue.substring(1, envValue.length - 1)
+        }
+        return "\"$envValue\""
     } else {
         // Config properties fallback
         val props = getLocalConfigProps(flavor)
-        props.getProperty(variable.name) ?: "\"\""
+        props.getProperty(variable.name) ?: ""
     }
     return configValue
 }
 
-fun sanitizeEnvValue(value: String): String {
-    return if (value.startsWith("\"") && value.endsWith("\"")) {
-        value.trim('"') // Remove surrounding double quotes
-    } else {
-        value
-    }
-}
-
 fun getLocalConfigProps(flavor: String): Properties {
     val props = Properties()
-    val propsFile = file("src/$flavor/config.properties")
+    val configPath = "src/$flavor/config.properties"
+    val propsFile = file(configPath)
     if (propsFile.exists()) {
         try {
             FileInputStream(propsFile).use {
                 props.load(it)
             }
         } catch (e: Exception) {
-            println("Error loading properties from $path: ${e.message}")
+            println("Error loading properties from $configPath: ${e.message}")
         }
     } else {
-        println("Properties file not found: $path")
+        println("Properties file not found: $configPath")
     }
     return props
 }
