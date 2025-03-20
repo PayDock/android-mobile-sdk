@@ -187,7 +187,7 @@ deployProd:
   variables:
     APP_ID: $FIREBASE_APP_ID_PROD # Firebase App ID for the production environment.
   environment:
-    name: prod # Sets the environment name to 'prod'.
+    name: production # Sets the environment name to 'production'.
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run automatically on merge to main.
       when: on_success # Only run when the previous job in the pipeline has succeeded.
