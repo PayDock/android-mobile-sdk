@@ -1,12 +1,6 @@
 package com.paydock.sample.feature.widgets.ui
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.paydock.sample.feature.widgets.ui.components.AddressDetailsItem
 import com.paydock.sample.feature.widgets.ui.components.AfterpayItem
@@ -25,13 +19,7 @@ import com.paydock.sample.feature.widgets.ui.models.WidgetType
 fun WidgetInfoScreen(
     widgetType: WidgetType
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-    ) {
         val context = LocalContext.current
-
         when (widgetType) {
             WidgetType.ADDRESS_DETAILS -> {
                 AddressDetailsItem(context = context)
@@ -77,5 +65,4 @@ fun WidgetInfoScreen(
                 StandaloneThreeDSItem(context = context)
             }
         }
-    }
 }
