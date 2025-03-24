@@ -126,6 +126,21 @@ buildProd:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run automatically on merge to main
       when: on_success
 
+## test: (All flavors are the same)
+## This job runs the unit tests for the various flavors of the Android application.
+test:
+  stage: test # Runs in the 'test' stage.
+  extends: .setup_bundler # Extends the '.setup_bundler' template.
+  script:
+    - bundle exec fastlane test flavor:staging build_type:Debug
+  environment:
+    name: staging # Sets the environment name to 'staging'.
+  artifacts:
+    expire_in: 7 days
+    when: always # Always creates artifacts, even if the job fails.
+    reports:
+      junit: mobile-sdk/build/test-results/testDebugUnitTest/TEST-*.xml # Publishes the JUnit test reports.
+
 # .deploy_template:
 # This is a hidden job template for deploying the Android application to Firebase App Distribution.
 # This template handles the setup of the Bundler and Google Cloud credentials required for the pipeline and Firebase interaction.
@@ -193,22 +208,6 @@ deployProd:
       when: on_success # Only run when the previous job in the pipeline has succeeded.
   script:
     - bundle exec fastlane deploy flavor:prod # Executes the 'deploy' lane using prod flavor in the Fastfile.
-
-## test: (All flavors are the same)
-## This job runs the unit tests for the various flavors of the Android application.
-test:
-  stage: test # Runs in the 'test' stage.
-  extends: .setup_bundler # Extends the '.setup_bundler' template.
-  script:
-    - bundle exec fastlane test flavor:staging build_type:Debug
-  environment:
-    name: staging # Sets the environment name to 'staging'.
-  artifacts:
-    expire_in: 7 days
-    when: always # Always creates artifacts, even if the job fails.
-    reports:
-      junit: mobile-sdk/build/test-results/testDebugUnitTest/TEST-*.xml # Publishes the JUnit test reports.
-
 
 # tag_release:
 # This job tags a release in the repository.

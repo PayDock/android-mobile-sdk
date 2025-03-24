@@ -18,6 +18,18 @@ platform :android do
         gradle(task: "assemble", flavor: flavor.capitalize, build_type: "Release")
     end
 
+    # --- Test Lane ---
+
+    desc "Runs all unit tests for specified flavor"
+    lane :test do |options|
+         flavor = options[:flavor] || "staging" # Default to staging if no flavor is provided
+         build_type = options[:build_type] || "Debug" # Default to Debug if no build type is provided
+
+        # This lane runs all the unit tests for the Android application.
+        # It uses the 'gradle' action to execute the 'test' Gradle task.
+        gradle(task: "test#{flavor.capitalize}#{build_type.capitalize}UnitTest")
+    end
+
     # -- Deploy Lane --
 
     desc "Deploys the Build to Firebase App Distribution for the specified flavor"
@@ -64,18 +76,6 @@ platform :android do
             service_credentials_file: ENV["GOOGLE_CREDENTIALS_FILE_PATH"],
             debug: true
         )
-    end
-
-    # --- Test Lane ---
-
-    desc "Runs all unit tests for specified flavor"
-    lane :test do |options|
-         flavor = options[:flavor] || "staging" # Default to staging if no flavor is provided
-         build_type = options[:build_type] || "Debug" # Default to Debug if no build type is provided
-
-        # This lane runs all the unit tests for the Android application.
-        # It uses the 'gradle' action to execute the 'test' Gradle task.
-        gradle(task: "test#{flavor.capitalize}#{build_type.capitalize}UnitTest")
     end
 
     # --- Release Lanes ---
@@ -211,7 +211,6 @@ platform :android do
         # Authenticate with GitHub (assuming GITHUB_TOKEN is set in your CI/CD variables).
         # Set up Octokit client.
         client = Octokit::Client.new(access_token: ENV['GITHUB_TOKEN']) # Creates an Octokit client.
-        #   - 'ENV['GITHUB_TOKEN']': Accesses the 'GITHUB_TOKEN' environment variable.
 
         # Get release notes from CHANGELOG.md
         release_notes = get_release_notes(version_tag)

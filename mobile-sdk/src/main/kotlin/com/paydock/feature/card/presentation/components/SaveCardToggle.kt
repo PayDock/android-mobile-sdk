@@ -1,7 +1,6 @@
 package com.paydock.feature.card.presentation.components
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.core.net.toUri
 import com.paydock.designsystems.components.link.LinkText
 import com.paydock.designsystems.components.toggle.SdkSwitch
 import com.paydock.designsystems.theme.SdkTheme
@@ -54,7 +54,7 @@ internal fun SaveCardToggle(
             if (config.privacyPolicyConfig != null) {
                 LinkText(linkText = config.privacyPolicyConfig.privacyPolicyText) {
                     if (enabled) {
-                        val uri = Uri.parse(config.privacyPolicyConfig.privacyPolicyURL)
+                        val uri = config.privacyPolicyConfig.privacyPolicyURL.toUri()
                         val intent = Intent(Intent.ACTION_VIEW, uri)
                         context.startActivity(intent)
                     }

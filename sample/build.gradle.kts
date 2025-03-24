@@ -151,7 +151,6 @@ fun readBuildVariable(variable: BuildVariable, flavor: String): String {
     val envName = variable.getEnvName(flavor)
     // Read the environment variable value, trimming any leading/trailing whitespace
     var envValue = System.getenv(envName)?.trim()
-    println(">>> envName: $envName -> envValue: $envValue")
     val configValue: String = if (!envValue.isNullOrEmpty()) {
         // CI/CD environment - Remove excessive double quotes if present
         // Remove surrounding double quotes if present
