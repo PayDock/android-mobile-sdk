@@ -36,7 +36,6 @@
     <string name="error_googlepay_unexpected">An unexpected error has occurred trying to use Google Pay!</string>
     <string name="error_paypal_canceled">PayPal transaction was cancelled!</string>
     <string name="error_paypal_vault_canceled">PayPal Vault process was cancelled!</string>
-    <string name="error_paypal_vault_invalid">An unexpected error has occurred trying to use PayPal Vault!</string>
     <string name="error_flypay_canceled">FlyPay transaction was cancelled!</string>
     <string name="error_wallet_canceled">A wallet token is always associated with a wallet transaction!</string>
     <string name="error_afterpay_canceled">Afterpay transaction was cancelled!</string>

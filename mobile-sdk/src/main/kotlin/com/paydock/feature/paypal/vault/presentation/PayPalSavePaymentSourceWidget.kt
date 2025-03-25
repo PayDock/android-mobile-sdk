@@ -136,18 +136,6 @@ private fun handlePayPalVaultResult(
             // Handles the cancellation case, determining the reason for cancellation and acting accordingly.
             AppCompatActivity.RESULT_CANCELED -> {
                 when (data.getCancellationStatusExtra()) {
-                    // If the cancellation was due to invalid parameters (e.g., clientId or setup token).
-                    CancellationStatus.INVALID_PARAMS -> {
-                        completion(
-                            Result.failure(
-                                PayPalVaultException.CancellationException(
-                                    displayableMessage = context.getString(
-                                        R.string.error_paypal_vault_invalid
-                                    )
-                                )
-                            )
-                        )
-                    }
                     // If the cancellation was initiated by the user.
                     CancellationStatus.USER_INITIATED -> {
                         completion(
