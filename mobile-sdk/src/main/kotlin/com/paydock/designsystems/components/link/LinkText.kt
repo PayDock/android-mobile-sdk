@@ -1,11 +1,16 @@
 package com.paydock.designsystems.components.link
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paydock.designsystems.theme.Theme
 
@@ -25,19 +30,23 @@ internal fun LinkText(
     linkText: String,
     onClick: () -> Unit
 ) {
-    Text(
-        text = linkText,
-        modifier = modifier
-            .clickable {
-                onClick()
-            },
-        style = Theme.typography.body1.copy(
-            fontSize = 17.sp,
-            lineHeight = 22.sp,
-            textDecoration = TextDecoration.Underline
-        ),
-        color = Theme.colors.primary
-    )
+    Box {
+        Text(
+            text = linkText,
+            modifier = modifier
+                .sizeIn(minHeight = 24.dp)
+                .wrapContentSize(Alignment.Center)
+                .clickable {
+                    onClick()
+                },
+            style = Theme.typography.body1.copy(
+                fontSize = 17.sp,
+                lineHeight = 22.sp,
+                textDecoration = TextDecoration.Underline
+            ),
+            color = Theme.colors.primary
+        )
+    }
 }
 
 @PreviewLightDark
