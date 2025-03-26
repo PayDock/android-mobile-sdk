@@ -73,10 +73,8 @@ fun CardDetailsItem(context: Context) {
                     } else if (exception is CardDetailsException) {
                         val error = when (exception) {
                             is CardDetailsException.TokenisingCardException -> exception.error.displayableMessage
-                            is CardDetailsException.UnknownException -> {
-                                exception.toError().displayableMessage
-                            }
-
+                            is CardDetailsException.ParseException ->  exception.toError().displayableMessage
+                            is CardDetailsException.UnknownException -> exception.toError().displayableMessage
                         }
                         Log.d("[CardDetailsWidget]", "Failure: $error")
                         Toast.makeText(

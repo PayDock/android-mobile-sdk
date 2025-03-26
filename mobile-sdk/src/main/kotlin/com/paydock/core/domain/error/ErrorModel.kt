@@ -12,7 +12,6 @@ import com.paydock.core.domain.error.exceptions.PayPalDataCollectorException
 import com.paydock.core.domain.error.exceptions.PayPalException
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.domain.error.exceptions.Standalone3DSException
-import com.paydock.core.network.exceptions.UnknownApiException
 
 /**
  * Represents various types of errors that can occur within the application.
@@ -133,7 +132,6 @@ sealed interface ErrorModel {
 @Suppress("MaxLineLength", "CyclomaticComplexMethod")
 fun Throwable.toError(): ErrorModel {
     return when (this) {
-        is UnknownApiException -> ErrorModel.UnknownError(this)
         // Widget Exceptions
         is CardDetailsException -> ErrorModel.CardDetailsError(this)
         is GiftCardException -> ErrorModel.GiftCardError(this)
