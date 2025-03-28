@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.webkit.WebResourceRequest
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -22,10 +23,12 @@ import com.kevinnzou.web.rememberWebViewNavigator
 import com.kevinnzou.web.rememberWebViewState
 import com.kevinnzou.web.rememberWebViewStateWithHTMLData
 import com.paydock.core.MobileSDKConstants
+import com.paydock.core.extensions.safeCastAs
 import com.paydock.designsystems.components.web.extensions.setup
 import com.paydock.designsystems.components.web.utils.SdkJSBridge
 import com.paydock.designsystems.components.web.utils.SdkWebChromeClient
 import com.paydock.designsystems.components.web.utils.SdkWebViewClient
+import com.paydock.designsystems.theme.Theme
 
 /**
  * Composable function to display a WebView with customizable settings and event handling.
@@ -67,7 +70,7 @@ internal fun <T : Any?> SdkWebView(
     ) {
         WebView(
             state = state,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().background(Theme.colors.background),
             navigator = rememberWebViewNavigator(),
             client = remember {
                 SdkWebViewClient(
@@ -88,6 +91,7 @@ internal fun <T : Any?> SdkWebView(
                 webView.setup()
                 // Add JavaScript interface for communication between WebView and Android code
                 jsBridge?.let { jsInterface ->
+                    jsInterface.safeCastAs<SdkJSBridge<*>>()?.setWebViewReference(webView)
                     webView.addJavascriptInterface(
                         jsInterface,
                         MobileSDKConstants.JS_BRIDGE_NAME
@@ -98,11 +102,9 @@ internal fun <T : Any?> SdkWebView(
 
         // Display a loading indicator if the WebView is still loading content
         if (shouldShowCustomLoader && (state.isLoading || showWindowLoader)) {
-            if (state.loadingState is LoadingState.Loading) {
+            state.safeCastAs<LoadingState.Loading>()?.let {
                 CircularProgressIndicator(progress = { (state.loadingState as LoadingState.Loading).progress })
-            } else {
-                CircularProgressIndicator()
-            }
+            } ?: CircularProgressIndicator()
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.paydock.feature.card.presentation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,8 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.theme.SdkTheme
@@ -79,7 +80,9 @@ fun CardDetailsWidget(
     // UI Layout starts here
     SdkTheme {
         Column(
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier
+                .fillMaxWidth()
+                .background(Theme.colors.background),
             verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.Top),
             horizontalAlignment = Alignment.Start
         ) {
@@ -89,7 +92,7 @@ fun CardDetailsWidget(
                     modifier = Modifier.fillMaxWidth(),
                     style = Theme.typography.body1,
                     text = stringResource(id = R.string.label_card_information),
-                    color = Theme.colors.onSurfaceVariant
+                    color = Theme.colors.onSurface
                 )
             }
             if (!config.schemeSupport.supportedSchemes.isNullOrEmpty()) {
@@ -127,7 +130,7 @@ fun CardDetailsWidget(
             SdkButton(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("saveCard"),
+                    .testTag("submitDetails"),
                 text = config.actionText,
                 enabled = isDataValid && uiState !is CardDetailsUIState.Loading && enabled,
                 isLoading = loadingDelegate == null && uiState is CardDetailsUIState.Loading
@@ -194,9 +197,9 @@ private fun handleUIState(
     }
 }
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewCardDetails() {
+internal fun PreviewCardDetails() {
     SdkTheme {
         CardDetailsWidget(config = CardDetailsWidgetConfig(accessToken = "")) {
 

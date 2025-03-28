@@ -3,7 +3,11 @@ package com.paydock.sample.feature.widgets.ui.components
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -20,59 +24,69 @@ import com.paydock.feature.card.presentation.CardDetailsWidget
 import com.paydock.sample.BuildConfig
 
 @Composable
-fun CardDetailsItem(context: Context, accessToken: String) {
-    CardDetailsWidget(
-        modifier = Modifier.padding(16.dp),
-        config = CardDetailsWidgetConfig(
-            accessToken = accessToken,
-            gatewayId = BuildConfig.GATEWAY_ID,
-            allowSaveCard = SaveCardConfig(
-                privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
-                    privacyPolicyURL = "https://www.google.com"
+fun CardDetailsItem(context: Context) {
+        CardDetailsWidget(
+            modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState()),
+            config = CardDetailsWidgetConfig(
+                accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
+                gatewayId = BuildConfig.GATEWAY_ID_MPGS,
+                allowSaveCard = SaveCardConfig(
+                    privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
+                        privacyPolicyURL = "https://www.google.com"
+                    )
+                ),
+                schemeSupport = SupportedSchemeConfig(
+                    supportedSchemes = setOf(
+                        CardType.VISA,
+                        CardType.MASTERCARD,
+                        CardType.AMEX,
+                        CardType.AUSBC,
+                        CardType.DINERS,
+                        CardType.DISCOVER,
+                        CardType.JAPCB,
+                        CardType.SOLO
+                    ),
+                    enableValidation = true
                 )
             ),
-            schemeSupport = SupportedSchemeConfig(
-                supportedSchemes = setOf(
-                    CardType.VISA,
-                    CardType.MASTERCARD,
-                    CardType.AMEX,
-                    CardType.AUSBC,
-                    CardType.DINERS,
-                    CardType.DISCOVER,
-                    CardType.JAPCB,
-                    CardType.SOLO
-                ),
-                enableValidation = true
-            )
-        ),
-        completion = { result ->
-            // This breaks down 3 ways to retrieve and handle the result
-            // Option 1: Default Result Handler
-            result.onSuccess {
-                Log.d("[CardDetailsWidget]", "Success: $it")
-                Toast.makeText(context, "Tokenised card was successful! [$it]", Toast.LENGTH_SHORT)
-                    .show()
-            }.onFailure { exception: Throwable ->
-                if (exception is GenericException) {
-                    val error = exception.toError().displayableMessage
-                    Log.d("[CardDetailsWidget]", "Failure: $error")
-                    Toast.makeText(context, "Tokenised card failed! [${error}]", Toast.LENGTH_SHORT)
+            completion = { result ->
+                // This breaks down 3 ways to retrieve and handle the result
+                // Option 1: Default Result Handler
+                result.onSuccess {
+                    Log.d("[CardDetailsWidget]", "Success: $it")
+                    Toast.makeText(
+                        context,
+                        "Tokenised card was successful! [$it]",
+                        Toast.LENGTH_SHORT
+                    )
                         .show()
-                } else if (exception is CardDetailsException) {
-                    val error = when (exception) {
-                        is CardDetailsException.TokenisingCardException -> exception.error.displayableMessage
-                        is CardDetailsException.UnknownException -> {
-                            exception.toError().displayableMessage
+                }.onFailure { exception: Throwable ->
+                    if (exception is GenericException) {
+                        val error = exception.toError().displayableMessage
+                        Log.d("[CardDetailsWidget]", "Failure: $error")
+                        Toast.makeText(
+                            context,
+                            "Tokenised card failed! [${error}]",
+                            Toast.LENGTH_SHORT
+                        )
+                            .show()
+                    } else if (exception is CardDetailsException) {
+                        val error = when (exception) {
+                            is CardDetailsException.TokenisingCardException -> exception.error.displayableMessage
+                            is CardDetailsException.ParseException ->  exception.toError().displayableMessage
+                            is CardDetailsException.UnknownException -> exception.toError().displayableMessage
                         }
-
+                        Log.d("[CardDetailsWidget]", "Failure: $error")
+                        Toast.makeText(
+                            context,
+                            "Tokenised card failed! [${error}]",
+                            Toast.LENGTH_SHORT
+                        )
+                            .show()
                     }
-                    Log.d("[CardDetailsWidget]", "Failure: $error")
-                    Toast.makeText(context, "Tokenised card failed! [${error}]", Toast.LENGTH_SHORT)
-                        .show()
                 }
-            }
 
-            // Option 2: Use try catch block with getOrThrow extension function
+                // Option 2: Use try catch block with getOrThrow extension function
 //                        try {
 //                            val token: String = result.getOrThrow(CardDetailsException::class)
 //                            Log.d("[CardDetailsWidget]", "Success: $token")
@@ -88,7 +102,7 @@ fun CardDetailsItem(context: Context, accessToken: String) {
 //                            Log.d("[WidgetFailure]", "Failure: ${error.displayableMessage}")
 //                        }
 
-            // Option 3: Use onFailure extension function to specify Exception
+                // Option 3: Use onFailure extension function to specify Exception
 //                        result.onSuccess {
 //                            Log.d("[CardDetailsWidget]", "Success: $it")
 //                            context.toast("Tokenised card was successful! [$it]")
@@ -102,5 +116,5 @@ fun CardDetailsItem(context: Context, accessToken: String) {
 //                                val error = it.toError()
 //                                Log.d("[CardDetailsWidget]", "Failure: ${error.displayableMessage}")
 //                            }
-        })
+            })
 }

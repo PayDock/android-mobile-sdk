@@ -25,13 +25,4 @@ sealed class ClickToPayException(displayableMessage: String) : SdkException(disp
      */
     class WebViewException(val code: Int? = null, displayableMessage: String) :
         ClickToPayException(displayableMessage)
-
-    /**
-     * Exception thrown when there is a cancellation error related to ClickToPay.
-     *
-     * @param displayableMessage A human-readable message describing the error.
-     * @constructor Creates a CancellationException with the specified displayable message.
-     */
-    class CancellationException(displayableMessage: String) :
-        ClickToPayException(displayableMessage)
 }

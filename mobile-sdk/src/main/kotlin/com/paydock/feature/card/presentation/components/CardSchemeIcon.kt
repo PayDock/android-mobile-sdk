@@ -34,7 +34,9 @@ internal fun CardSchemeIcon(cardType: CardType?, focused: Boolean) {
         contentDescription = cardType?.displayLabel(),
         tint = if (cardType == null) {
             if (focused) Theme.colors.onSurface else Theme.colors.onSurfaceVariant
-        } else Color.Unspecified
+        } else {
+            Color.Unspecified
+        }
     )
 }
 

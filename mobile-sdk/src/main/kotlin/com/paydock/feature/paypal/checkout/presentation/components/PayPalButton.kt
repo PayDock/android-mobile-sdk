@@ -13,9 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.presentation.extensions.alpha40
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.PayPal
 import com.paydock.designsystems.theme.SdkTheme
@@ -72,9 +72,9 @@ internal fun PayPalButton(
     }
 }
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewPayPalButton() {
+internal fun PreviewPayPalButton() {
     SdkTheme {
         PayPalButton(isEnabled = true, isLoading = false) {}
     }

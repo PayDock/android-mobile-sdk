@@ -13,11 +13,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.paydock.core.presentation.extensions.alpha20
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 
@@ -56,7 +56,7 @@ internal fun <String : Any> SdkDropDownMenu(
                 .background(Theme.colors.primary.alpha20)
                 .testTag("sdkDropDownMenu"),
             properties = PopupProperties(
-                dismissOnClickOutside = dismissOnClickOutside
+                dismissOnClickOutside = dismissOnClickOutside,
             ),
             expanded = expanded,
             onDismissRequest = {
@@ -90,9 +90,9 @@ internal fun <String : Any> SdkDropDownMenu(
 /**
  * Composable function to preview the expanded state of the SdkDropDownMenu.
  */
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewSdkDropDownMenuExpanded() {
+internal fun PreviewSdkDropDownMenuExpanded() {
     // Preview SdkDropDownMenu in the expanded state
     SdkTheme {
         SdkDropDownMenu(

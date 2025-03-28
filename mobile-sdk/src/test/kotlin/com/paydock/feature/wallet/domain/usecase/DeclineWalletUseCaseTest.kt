@@ -37,7 +37,7 @@ internal class DeclineWalletUseCaseTest : BaseKoinUnitTest() {
         val validAccessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
         val validChargeId = MobileSDKTestConstants.Charge.MOCK_CHARGE_ID
         val response =
-            readResourceFile("charges/success_afterpay_decline_wallet_charge_response.json").convertToDataClass<ChargeDeclineResponse>()
+            readResourceFile("wallet/success_afterpay_decline_wallet_charge_response.json").convertToDataClass<ChargeDeclineResponse>()
         val expectedResult = response.asEntity()
         coEvery {
             mockRepository.declineWalletCharge(
@@ -65,7 +65,7 @@ internal class DeclineWalletUseCaseTest : BaseKoinUnitTest() {
             val validAccessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             val validChargeId = MobileSDKTestConstants.Charge.MOCK_INVALID_CHARGE_ID
             val response =
-                readResourceFile("charges/failure_decline_wallet_invalid_chargeid_response.json").convertToDataClass<ApiErrorResponse>()
+                readResourceFile("wallet/failure_decline_wallet_invalid_chargeid_response.json").convertToDataClass<ApiErrorResponse>()
             val expectedResult = response.toApiError()
             coEvery {
                 mockRepository.declineWalletCharge(

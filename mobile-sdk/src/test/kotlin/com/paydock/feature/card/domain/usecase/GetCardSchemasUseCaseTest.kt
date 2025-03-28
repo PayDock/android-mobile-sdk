@@ -27,7 +27,7 @@ internal class GetCardSchemasUseCaseTest : BaseKoinUnitTest() {
         fileReader = mockk()
 
         val expectedResult =
-            readResourceFile("management/success_get_card_schemas_response.json")
+            readResourceFile("card/success_get_card_schemas_response.json")
         coEvery {
             fileReader.readFileFromAssets(any())
         } returns expectedResult
@@ -41,7 +41,7 @@ internal class GetCardSchemasUseCaseTest : BaseKoinUnitTest() {
     fun `test valid access token returns expected card schemas list result`() = runTest {
         // GIVEN
         val expectedResult =
-            readResourceFile("management/success_get_card_schemas_response.json")
+            readResourceFile("card/success_get_card_schemas_response.json")
                 .convertToDataClass<CardSchemasResponse>().asEntity()
         coEvery {
             mockRepository.getCardSchemas()

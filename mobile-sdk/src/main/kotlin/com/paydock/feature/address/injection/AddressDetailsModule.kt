@@ -6,7 +6,7 @@ import com.paydock.feature.address.presentation.viewmodels.AddressDetailsViewMod
 import com.paydock.feature.address.presentation.viewmodels.AddressSearchViewModel
 import com.paydock.feature.address.presentation.viewmodels.CountryAutoCompleteViewModel
 import com.paydock.feature.address.presentation.viewmodels.ManualAddressViewModel
-import org.koin.androidx.viewmodel.dsl.viewModelOf
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 import java.util.Locale
 

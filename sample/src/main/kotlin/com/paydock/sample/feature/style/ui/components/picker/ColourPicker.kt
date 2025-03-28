@@ -101,7 +101,7 @@ fun ColourPicker(color: Color, onColourUpdated: (Color) -> Unit, onCanceled: () 
 
 @Preview
 @Composable
-private fun PreviewStyleScreen() {
+internal fun PreviewStyleScreen() {
     SampleTheme {
         ColourPicker("#854646".color!!, {}, {})
     }

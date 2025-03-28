@@ -15,19 +15,19 @@ interface CardApi {
 
     @POST("/v1/payment_sources/tokens")
     suspend fun tokeniseCardDetails(
-        @Header("X-Access-Token") accessToken: String,
+        @Header("X-Access-Token") accessToken: String = BuildConfig.WIDGET_ACCESS_TOKEN,
         @Body request: TokeniseCardRequest,
     ): PaymentOTTResponse
 
     @POST("/v1/charges")
     suspend fun captureCharge(
-        @Header("x-user-secret-key") secretKey: String = BuildConfig.SECRET_KEY,
+        @Header("X-Access-Token") accessToken: String = BuildConfig.API_ACCESS_TOKEN,
         @Body request: CaptureCardChargeRequest,
     ): CaptureChargeResponse
 
     @POST("/v1/vault/payment_sources")
     suspend fun createVaultToken(
-        @Header("x-user-secret-key") secretKey: String = BuildConfig.SECRET_KEY,
+        @Header("X-Access-Token") accessToken: String = BuildConfig.API_ACCESS_TOKEN,
         @Body request: VaultTokenRequest,
     ): VaultTokenResponse
 }

@@ -130,7 +130,7 @@ private fun MockRequestHandleScope.handleSuccessRequest(request: HttpRequestData
         request.url.encodedPath.endsWith("/payment_sources/tokens") -> {
             // Check if the custom header indicating success is present
             respond(
-                content = MockResponseFileReader("token/success_card_token_response.json").content,
+                content = MockResponseFileReader("card/success_card_token_response.json").content,
                 status = HttpStatusCode.Created,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
@@ -139,16 +139,7 @@ private fun MockRequestHandleScope.handleSuccessRequest(request: HttpRequestData
         request.url.encodedPath.endsWith("/payment_sources/setup-tokens/${MobileSDKTestConstants.PayPalVault.MOCK_SETUP_TOKEN}/tokens") -> {
             // Check if the custom header indicating success is present
             respond(
-                content = MockResponseFileReader("token/success_payment_token_response.json").content,
-                status = HttpStatusCode.Created,
-                headers = headersOf(HttpHeaders.ContentType, "application/json")
-            )
-        }
-
-        request.url.encodedPath.endsWith("/payment_sources/oauth-tokens") -> {
-            // Check if the custom header indicating success is present
-            respond(
-                content = MockResponseFileReader("token/success_session_auth_response.json").content,
+                content = MockResponseFileReader("paypal/success_payment_token_response.json").content,
                 status = HttpStatusCode.Created,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
@@ -157,7 +148,7 @@ private fun MockRequestHandleScope.handleSuccessRequest(request: HttpRequestData
         request.url.encodedPath.endsWith("/payment_sources/setup-tokens") -> {
             // Check if the custom header indicating success is present
             respond(
-                content = MockResponseFileReader("token/success_setup_token_response.json").content,
+                content = MockResponseFileReader("paypal/success_setup_token_response.json").content,
                 status = HttpStatusCode.Created,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
@@ -166,7 +157,7 @@ private fun MockRequestHandleScope.handleSuccessRequest(request: HttpRequestData
         request.url.encodedPath.endsWith("/charges/wallet/capture") -> {
             // Check if the custom header indicating success is present
             respond(
-                content = MockResponseFileReader("charges/success_capture_wallet_response.json").content,
+                content = MockResponseFileReader("wallet/success_capture_wallet_response.json").content,
                 status = HttpStatusCode.OK,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
@@ -181,7 +172,7 @@ private fun MockRequestHandleScope.handleSuccessRequest(request: HttpRequestData
                     WalletType.PAY_PAL.type -> {
                         // Check if the custom header indicating success is present
                         respond(
-                            content = MockResponseFileReader("charges/success_paypal_wallet_callback_response.json").content,
+                            content = MockResponseFileReader("wallet/success_paypal_wallet_callback_response.json").content,
                             status = HttpStatusCode.OK,
                             headers = headersOf(HttpHeaders.ContentType, "application/json")
                         )
@@ -190,7 +181,7 @@ private fun MockRequestHandleScope.handleSuccessRequest(request: HttpRequestData
                     WalletType.AFTER_PAY.type -> {
                         // Check if the custom header indicating success is present
                         respond(
-                            content = MockResponseFileReader("charges/success_afterpay_wallet_callback_response.json").content,
+                            content = MockResponseFileReader("wallet/success_afterpay_wallet_callback_response.json").content,
                             status = HttpStatusCode.OK,
                             headers = headersOf(HttpHeaders.ContentType, "application/json")
                         )
@@ -199,7 +190,7 @@ private fun MockRequestHandleScope.handleSuccessRequest(request: HttpRequestData
                     WalletType.FLY_PAY.type -> {
                         // Check if the custom header indicating success is present
                         respond(
-                            content = MockResponseFileReader("charges/success_flypay_wallet_callback_response.json").content,
+                            content = MockResponseFileReader("wallet/success_flypay_wallet_callback_response.json").content,
                             status = HttpStatusCode.OK,
                             headers = headersOf(HttpHeaders.ContentType, "application/json")
                         )
@@ -215,7 +206,7 @@ private fun MockRequestHandleScope.handleSuccessRequest(request: HttpRequestData
         request.url.encodedPath.endsWith("/charges/wallet/${MobileSDKTestConstants.Charge.MOCK_CHARGE_ID}/decline") -> {
             // Check if the custom header indicating success is present
             respond(
-                content = MockResponseFileReader("charges/success_afterpay_decline_wallet_charge_response.json").content,
+                content = MockResponseFileReader("wallet/success_afterpay_decline_wallet_charge_response.json").content,
                 status = HttpStatusCode.OK,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
@@ -231,7 +222,7 @@ private fun MockRequestHandleScope.handleSuccessRequest(request: HttpRequestData
 
         request.url.encodedPath.endsWith("/bin-management/card_schemas") -> {
             respondError(
-                content = MockResponseFileReader("management/success_get_card_schemas_response.json").content,
+                content = MockResponseFileReader("card/success_get_card_schemas_response.json").content,
                 status = HttpStatusCode.OK,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
@@ -255,7 +246,7 @@ private fun MockRequestHandleScope.handleFailureRequest(request: HttpRequestData
         // Check for matching endpoint path
         request.url.encodedPath.endsWith("/payment_sources/tokens") -> {
             respondError(
-                content = MockResponseFileReader("token/failure_credit_card_token_response.json").content,
+                content = MockResponseFileReader("card/failure_credit_card_token_response.json").content,
                 status = HttpStatusCode.BadRequest,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
@@ -263,15 +254,7 @@ private fun MockRequestHandleScope.handleFailureRequest(request: HttpRequestData
 
         request.url.encodedPath.endsWith("/payment_sources/setup-tokens/${MobileSDKTestConstants.PayPalVault.MOCK_SETUP_TOKEN}/tokens") -> {
             respondError(
-                content = MockResponseFileReader("token/failure_payment_token_response.json").content,
-                status = HttpStatusCode.BadRequest,
-                headers = headersOf(HttpHeaders.ContentType, "application/json")
-            )
-        }
-
-        request.url.encodedPath.endsWith("/payment_sources/oauth-tokens") -> {
-            respondError(
-                content = MockResponseFileReader("token/failure_session_auth_response.json").content,
+                content = MockResponseFileReader("paypal/failure_payment_token_response.json").content,
                 status = HttpStatusCode.BadRequest,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
@@ -279,7 +262,7 @@ private fun MockRequestHandleScope.handleFailureRequest(request: HttpRequestData
 
         request.url.encodedPath.endsWith("/payment_sources/setup-tokens") -> {
             respondError(
-                content = MockResponseFileReader("token/failure_setup_token_response.json").content,
+                content = MockResponseFileReader("paypal/failure_setup_token_response.json").content,
                 status = HttpStatusCode.BadRequest,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
@@ -287,7 +270,7 @@ private fun MockRequestHandleScope.handleFailureRequest(request: HttpRequestData
 
         request.url.encodedPath.endsWith("/charges/wallet/capture") -> {
             respondError(
-                content = MockResponseFileReader("charges/failure_capture_wallet_response.json").content,
+                content = MockResponseFileReader("wallet/failure_capture_wallet_response.json").content,
                 status = HttpStatusCode.Forbidden,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
@@ -295,7 +278,7 @@ private fun MockRequestHandleScope.handleFailureRequest(request: HttpRequestData
 
         request.url.encodedPath.endsWith("/charges/wallet/callback") -> {
             respondError(
-                content = MockResponseFileReader("charges/failure_wallet_callback_response.json").content,
+                content = MockResponseFileReader("wallet/failure_wallet_callback_response.json").content,
                 status = HttpStatusCode.BadRequest,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
@@ -303,7 +286,7 @@ private fun MockRequestHandleScope.handleFailureRequest(request: HttpRequestData
 
         request.url.encodedPath.endsWith("/charges/wallet/${MobileSDKTestConstants.Charge.MOCK_INVALID_CHARGE_ID}/decline") -> {
             respondError(
-                content = MockResponseFileReader("charges/failure_decline_wallet_invalid_chargeid_response.json").content,
+                content = MockResponseFileReader("wallet/failure_decline_wallet_invalid_chargeid_response.json").content,
                 status = HttpStatusCode.BadRequest,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
@@ -319,7 +302,7 @@ private fun MockRequestHandleScope.handleFailureRequest(request: HttpRequestData
 
         request.url.encodedPath.endsWith("/bin-management/card_schemas") -> {
             respondError(
-                content = MockResponseFileReader("management/failure_get_card_schemas_response.json").content,
+                content = MockResponseFileReader("card/failure_get_card_schemas_response.json").content,
                 status = HttpStatusCode.BadRequest,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )

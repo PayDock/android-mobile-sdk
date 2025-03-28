@@ -6,15 +6,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.MobileSDK
 import com.paydock.R
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 
 /**
  * Composable function to display an input validation icon.
  * The icon displayed indicates a successful validation state.
  */
-@LightDarkPreview
+@PreviewLightDark
 @Composable
 internal fun InputValidIcon() {
     Icon(

@@ -1,16 +1,19 @@
 package com.paydock.feature.card.presentation.components
 
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
-import com.paydock.designsystems.components.link.HyperlinkText
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.core.net.toUri
+import com.paydock.designsystems.components.link.LinkText
+import com.paydock.designsystems.components.toggle.SdkSwitch
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.domain.model.integration.SaveCardConfig
@@ -30,6 +33,7 @@ internal fun SaveCardToggle(
     config: SaveCardConfig,
     onToggle: (Boolean) -> Unit
 ) {
+    val context = LocalContext.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -48,26 +52,28 @@ internal fun SaveCardToggle(
             )
             // Privacy Policy Label
             if (config.privacyPolicyConfig != null) {
-                HyperlinkText(
-                    enabled = enabled,
-                    text = config.privacyPolicyConfig.privacyPolicyText,
-                    url = config.privacyPolicyConfig.privacyPolicyURL
-                )
+                LinkText(linkText = config.privacyPolicyConfig.privacyPolicyText) {
+                    if (enabled) {
+                        val uri = config.privacyPolicyConfig.privacyPolicyURL.toUri()
+                        val intent = Intent(Intent.ACTION_VIEW, uri)
+                        context.startActivity(intent)
+                    }
+                }
             }
         }
 
-        Switch(
+        SdkSwitch(
             modifier = Modifier.align(Alignment.CenterVertically),
             enabled = enabled,
-            checked = saveCard,
+            isChecked = saveCard,
             onCheckedChange = onToggle
         )
     }
 }
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewSaveCardToggleOff() {
+internal fun PreviewSaveCardToggleOff() {
     SdkTheme {
         SaveCardToggle(saveCard = false, config = SaveCardConfig()) {
 
@@ -75,9 +81,9 @@ private fun PreviewSaveCardToggleOff() {
     }
 }
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewSaveCardToggleOn() {
+internal fun PreviewSaveCardToggleOn() {
     SdkTheme {
         SaveCardToggle(saveCard = true, config = SaveCardConfig()) {
 

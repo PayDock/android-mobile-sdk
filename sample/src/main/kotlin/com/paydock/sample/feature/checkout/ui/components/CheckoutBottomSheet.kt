@@ -13,7 +13,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,7 +45,6 @@ fun CheckoutBottomSheet(
             WidgetType.FLY_PAY,
             WidgetType.AFTER_PAY
         )
-    val accessToken by viewModel.accessToken.collectAsState()
     var selectedTab by remember { mutableStateOf(supportedPaymentMethods.first()) }
     SdkBottomSheet(
         containerColor = Theme.colors.surface,
@@ -86,7 +84,6 @@ fun CheckoutBottomSheet(
                             ) {
                                 CardContent(
                                     enabled = !uiState.isLoading,
-                                    accessToken = accessToken,
                                     loadingDelegate = viewModel,
                                     resultHandler = viewModel::handleCardResult
                                 )
@@ -94,8 +91,6 @@ fun CheckoutBottomSheet(
                         }
 
                         WidgetType.CLICK_TO_PAY -> ClickToPayComponent(
-                            isLoading = uiState.isLoading,
-                            accessToken = accessToken,
                             resultHandler = viewModel::handleClickToPayResult
                         )
 

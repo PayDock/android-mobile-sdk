@@ -23,9 +23,13 @@ val ErrorModel?.displayableMessage: String
                     ?: MobileSDKConstants.Errors.CARD_ERROR
 
             is ErrorModel.GiftCardError -> exception.message ?: MobileSDKConstants.Errors.CARD_ERROR
-            is ErrorModel.ThreeDSError ->
+            is ErrorModel.Standalone3DSError ->
                 exception.message
-                    ?: MobileSDKConstants.Errors.THREE_DS_ERROR
+                    ?: MobileSDKConstants.Errors.STANDALONE_3DS_ERROR
+
+            is ErrorModel.Integrated3DSError ->
+                exception.message
+                    ?: MobileSDKConstants.Errors.INTEGRATED_3DS_ERROR
 
             is ErrorModel.PayPalError ->
                 exception.message

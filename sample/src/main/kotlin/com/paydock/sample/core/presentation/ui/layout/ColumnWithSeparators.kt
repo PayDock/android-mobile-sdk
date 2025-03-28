@@ -47,7 +47,7 @@ private data class ContentChild(val height: Int)
 
 @Preview
 @Composable
-private fun PreviewColumnWithSeparators() {
+internal fun PreviewColumnWithSeparators() {
     ColumnWithSeparators {
         repeat(times = 10) { Text(text = "Hello $it") }
     }

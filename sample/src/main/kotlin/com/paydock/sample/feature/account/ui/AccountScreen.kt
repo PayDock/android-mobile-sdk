@@ -134,7 +134,7 @@ fun AccountScreen(viewModel: AccountViewModel = hiltViewModel()) {
 
 private fun getPayPalVaultConfig(): PayPalVaultConfig {
     return PayPalVaultConfig(
-        accessToken = BuildConfig.ACCESS_TOKEN,
+        accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
         gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL
     )
 }

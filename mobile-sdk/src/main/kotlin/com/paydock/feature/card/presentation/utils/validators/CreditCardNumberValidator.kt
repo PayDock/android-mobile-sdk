@@ -95,7 +95,9 @@ internal object CreditCardNumberValidator {
     private fun getCardSchemeLengthRange(lengths: List<Int>): Pair<Int, Int> {
         return if (lengths.isNotEmpty()) {
             lengths.min() to lengths.max()
-        } else MobileSDKConstants.CardDetailsConfig.MIN_CREDIT_CARD_LENGTH to MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH
+        } else {
+            MobileSDKConstants.CardDetailsConfig.MIN_CREDIT_CARD_LENGTH to MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH
+        }
     }
 
     /**

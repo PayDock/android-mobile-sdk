@@ -1,6 +1,7 @@
 package com.paydock.sample.feature.style.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -62,6 +63,7 @@ fun ColourSelectionField(
                 modifier = Modifier
                     .width(20.dp)
                     .height(20.dp)
+                    .border(1.dp, Theme.colors.outline)
                     .background(
                         color = colourTheme.color,
                         shape = RectangleShape
@@ -73,7 +75,7 @@ fun ColourSelectionField(
 
 @Preview
 @Composable
-private fun PreviewColorSelectionField() {
+internal fun PreviewColorSelectionField() {
     SampleTheme() {
         PreviewColorSelectionField()
     }

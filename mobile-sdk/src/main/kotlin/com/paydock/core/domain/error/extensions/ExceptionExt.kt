@@ -12,7 +12,7 @@ import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.castAs
 import com.paydock.core.network.exceptions.ApiException
-import com.paydock.core.network.exceptions.UnknownApiException
+import com.paydock.core.network.exceptions.ApiParseException
 import kotlinx.serialization.SerializationException
 import java.io.IOException
 import java.net.SocketTimeoutException
@@ -115,7 +115,7 @@ internal fun Throwable.mapGenericExceptions(): SdkException? {
         )
 
         // Maps non-API-related `IOException` instances to a `GeneralException`.
-        !(this is ApiException || this is UnknownApiException) && this is IOException ->
+        !(this is ApiException || this is ApiParseException) && this is IOException ->
             GenericException.GeneralException(
                 MobileSDKConstants.Errors.IO_ERROR
             )
@@ -160,7 +160,9 @@ internal fun Throwable.mapGenericExceptions(): SdkException? {
  * - Ensure that the type parameter `E` is a subclass of `Throwable`.
  * - Use this mapping function to consistently convert low-level exceptions into higher-level domain exceptions.
  */
-internal fun Throwable.mapPayPalVaultApiException(exceptionClass: KClass<out PayPalVaultException>): PayPalVaultException =
+internal fun Throwable.mapPayPalVaultApiException(
+    exceptionClass: KClass<out PayPalVaultException>
+): PayPalVaultException =
     when (this) {
         is ApiException -> {
             when (exceptionClass) {
@@ -179,7 +181,7 @@ internal fun Throwable.mapPayPalVaultApiException(exceptionClass: KClass<out Pay
             }
         }
 
-        is UnknownApiException -> PayPalVaultException.UnknownException(displayableMessage = this.errorMessage)
+        is ApiParseException -> PayPalVaultException.ParseException(displayableMessage = this.errorMessage, errorBody = this.errorBody)
 
         else -> PayPalVaultException.UnknownException(
             displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
@@ -229,7 +231,7 @@ internal fun Throwable.mapFlyPayApiException(exceptionClass: KClass<out FlyPayEx
             }
         }
 
-        is UnknownApiException -> FlyPayException.UnknownException(displayableMessage = this.errorMessage)
+        is ApiParseException -> FlyPayException.ParseException(displayableMessage = this.errorMessage, errorBody = this.errorBody)
 
         else -> FlyPayException.UnknownException(
             displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
@@ -282,8 +284,7 @@ internal fun Throwable.mapPayPalApiException(exceptionClass: KClass<out PayPalEx
                 )
             }
         }
-
-        is UnknownApiException -> PayPalException.UnknownException(displayableMessage = this.errorMessage)
+        is ApiParseException -> PayPalException.ParseException(displayableMessage = this.errorMessage, errorBody = this.errorBody)
 
         else -> PayPalException.UnknownException(
             displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
@@ -333,7 +334,7 @@ internal fun Throwable.mapGooglePayApiException(exceptionClass: KClass<out Googl
             }
         }
 
-        is UnknownApiException -> GooglePayException.UnknownException(displayableMessage = this.errorMessage)
+        is ApiParseException -> GooglePayException.ParseException(displayableMessage = this.errorMessage, errorBody = this.errorBody)
 
         else -> GooglePayException.UnknownException(
             displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
@@ -376,7 +377,9 @@ internal fun Throwable.mapGooglePayApiException(exceptionClass: KClass<out Googl
  * - `CardDetailsException.TokenisingCardException`: Represents a specific error during card tokenization.
  * - `CardDetailsException.UnknownException`: Represents all other errors with a generic message.
  */
-internal fun Throwable.mapCardDetailsApiException(exceptionClass: KClass<out CardDetailsException>): CardDetailsException =
+internal fun Throwable.mapCardDetailsApiException(
+    exceptionClass: KClass<out CardDetailsException>
+): CardDetailsException =
     when (this) {
         is ApiException -> {
             when (exceptionClass) {
@@ -389,7 +392,7 @@ internal fun Throwable.mapCardDetailsApiException(exceptionClass: KClass<out Car
             }
         }
 
-        is UnknownApiException -> CardDetailsException.UnknownException(displayableMessage = this.errorMessage)
+        is ApiParseException -> CardDetailsException.ParseException(displayableMessage = this.errorMessage, errorBody = this.errorBody)
 
         else -> CardDetailsException.UnknownException(
             displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
@@ -427,10 +430,7 @@ internal fun Throwable.mapAfterpayApiException(exceptionClass: KClass<out Afterp
             }
         }
 
-        // Handle cases where the exception is of type UnknownApiException
-        is UnknownApiException -> AfterpayException.UnknownException(
-            displayableMessage = this.errorMessage
-        )
+        is ApiParseException -> AfterpayException.ParseException(displayableMessage = this.errorMessage, errorBody = this.errorBody)
 
         // Default case for any other types of exceptions
         else -> AfterpayException.UnknownException(
@@ -451,7 +451,9 @@ internal fun Throwable.mapAfterpayApiException(exceptionClass: KClass<out Afterp
  * @throws GiftCardException.TokenisingCardException If the exception is related to card tokenization errors.
  * @throws GiftCardException.UnknownException For all other types of exceptions, including unknown API errors.
  */
-internal fun Throwable.mapGiftCardDetailsApiException(exceptionClass: KClass<out GiftCardException>): GiftCardException =
+internal fun Throwable.mapGiftCardDetailsApiException(
+    exceptionClass: KClass<out GiftCardException>
+): GiftCardException =
     when (this) {
         is ApiException -> {
             when (exceptionClass) {
@@ -464,9 +466,7 @@ internal fun Throwable.mapGiftCardDetailsApiException(exceptionClass: KClass<out
             }
         }
 
-        is UnknownApiException -> GiftCardException.UnknownException(
-            displayableMessage = this.errorMessage
-        )
+        is ApiParseException -> GiftCardException.ParseException(displayableMessage = this.errorMessage, errorBody = this.errorBody)
 
         else -> GiftCardException.UnknownException(
             displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR

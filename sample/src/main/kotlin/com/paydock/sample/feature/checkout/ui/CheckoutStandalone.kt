@@ -36,10 +36,16 @@ fun CheckoutStandalone(viewModel: StandaloneCheckoutViewModel = hiltViewModel())
     )
 
     LaunchedEffect(uiState.chargeResult) {
-        uiState.chargeResult?.let {
-            // TODO - Implement a success screen state
-            Toast.makeText(context, "Transaction Successful", Toast.LENGTH_SHORT).show()
-            openBottomSheet = false
+        uiState.chargeResult?.let { result ->
+            if (result.resource.data?.status == "complete") {
+                // TODO - Implement a success screen state
+                Toast.makeText(context, "Transaction Successful", Toast.LENGTH_SHORT).show()
+                openBottomSheet = false
+            } else {
+                // TODO - Implement a failure screen state
+                Toast.makeText(context, "Transaction Failed", Toast.LENGTH_SHORT).show()
+                openBottomSheet = false
+            }
         }
     }
 
@@ -54,9 +60,7 @@ fun CheckoutStandalone(viewModel: StandaloneCheckoutViewModel = hiltViewModel())
     }
 
     LaunchedEffect(uiState.threeDSToken) {
-        uiState.threeDSToken?.let {
-            open3DSBottomSheet = true
-        }
+        open3DSBottomSheet = uiState.threeDSToken != null
     }
 
     if (!uiState.error.isNullOrBlank()) {
@@ -87,7 +91,9 @@ fun CheckoutStandalone(viewModel: StandaloneCheckoutViewModel = hiltViewModel())
     if (open3DSBottomSheet) {
         Checkout3DSBottomSheet(
             bottom3DSSheetState = bottom3DSSheetState,
-            onDismissRequest = { open3DSBottomSheet = false },
+            onDismissRequest = {
+                open3DSBottomSheet = false
+            },
             vaultToken = uiState.vaultToken,
             threeDSToken = uiState.threeDSToken?.token,
             viewModel = viewModel

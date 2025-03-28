@@ -1,12 +1,14 @@
 package com.paydock.core
 
 import android.content.Context
+import androidx.test.platform.app.InstrumentationRegistry
 import com.paydock.MobileSDK
 import com.paydock.core.domain.model.Environment
 import com.paydock.initializeMobileSDK
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -39,13 +41,17 @@ internal abstract class BaseUITest : KoinTest {
     @After
     fun tearDownMocks() {
         clearAllMocks()
+        unmockkAll()
         MobileSDK.reset() // Reset MobileSDK before each test
     }
 
     @After
-    fun tearDownKoin() {
+    open fun tearDownKoin() {
         // As the SDK will startKoin, we need to ensure that after each test we stop koin to be able to restart it in each test
         stopKoin()
     }
+
+    protected fun getStringRes(resId: Int): String =
+        InstrumentationRegistry.getInstrumentation().targetContext.getString(resId)
 
 }

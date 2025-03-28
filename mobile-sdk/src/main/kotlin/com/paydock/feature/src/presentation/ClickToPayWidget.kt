@@ -1,7 +1,6 @@
 package com.paydock.feature.src.presentation
 
-import androidx.activity.compose.BackHandler
-import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,14 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import com.paydock.R
+import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.ClickToPayException
 import com.paydock.designsystems.components.web.SdkWebView
 import com.paydock.designsystems.components.web.config.WidgetConfig
@@ -27,8 +22,6 @@ import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.src.domain.model.integration.meta.ClickToPayMeta
 import com.paydock.feature.src.presentation.utils.ClickToPayJSBridge
 import com.paydock.feature.src.presentation.viewmodels.ClickToPayViewModel
-import kotlinx.coroutines.android.awaitFrame
-import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -48,37 +41,11 @@ fun ClickToPayWidget(
     meta: ClickToPayMeta? = null,
     completion: (Result<String>) -> Unit
 ) {
-    val context = LocalContext.current
-
     // Obtain instances of view models
     val viewModel: ClickToPayViewModel = koinViewModel()
 
     // Collect states for Click to PayC view models
     val uiState by viewModel.stateFlow.collectAsState()
-
-    val scope = rememberCoroutineScope()
-
-    // Handle back button press
-    val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
-    var backPressHandled by remember { mutableStateOf(false) }
-    BackHandler(enabled = !backPressHandled) {
-        backPressHandled = true
-        scope.launch {
-            awaitFrame()
-            onBackPressedDispatcher?.onBackPressed()
-            backPressHandled = false
-            // Notify completion with failure and error message upon back press
-            completion(
-                Result.failure(
-                    ClickToPayException.CancellationException(
-                        displayableMessage = context.getString(
-                            R.string.error_click_to_pay_cancelled
-                        )
-                    )
-                )
-            )
-        }
-    }
 
     // Handle result and reset state
     LaunchedEffect(uiState) {
@@ -101,7 +68,7 @@ fun ClickToPayWidget(
     SdkTheme {
         Box(contentAlignment = Alignment.Center) {
             Column(
-                modifier = modifier.fillMaxWidth(),
+                modifier = modifier.fillMaxWidth().background(Theme.colors.background),
                 verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.Top),
                 horizontalAlignment = Alignment.Start
             ) {
@@ -115,7 +82,7 @@ fun ClickToPayWidget(
                 )
                 // Render WebView for Click to Pay
                 SdkWebView(
-                    webUrl = "https://paydock.com", // Placeholder URL
+                    webUrl = MobileSDKConstants.DEFAULT_WEB_URL, // Placeholder URL
                     data = htmlString,
                     jsBridge = ClickToPayJSBridge {
                         viewModel.updateSRCEvent(it)

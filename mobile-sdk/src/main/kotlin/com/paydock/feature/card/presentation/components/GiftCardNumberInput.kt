@@ -19,9 +19,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.theme.SdkTheme
@@ -99,7 +99,9 @@ internal fun GiftCardNumberInput(
                 contentDescription = null,
                 tint = if (focusedState.value) {
                     Theme.colors.onSurface // Use primary color when focused
-                } else Theme.colors.onSurfaceVariant // Use secondary color when not focused
+                } else {
+                    Theme.colors.onSurfaceVariant // Use secondary color when not focused
+                }
             )
         },
         error = errorMessage,
@@ -125,9 +127,9 @@ internal fun GiftCardNumberInput(
     )
 }
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewCardNumberInput() {
+internal fun PreviewGiftCardNumberInput() {
     SdkTheme {
         Surface(color = Theme.colors.surface) {
             GiftCardNumberInput(value = "4242424242424242") {

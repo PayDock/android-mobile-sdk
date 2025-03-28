@@ -5,7 +5,7 @@ import com.paydock.core.data.injection.modules.mockApiInterceptorOkHttpModule
 import com.paydock.core.data.injection.modules.mockSuccessNetworkModule
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.exceptions.ApiException
-import com.paydock.core.network.exceptions.UnknownApiException
+import com.paydock.core.network.exceptions.ApiParseException
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.ServerResponseException
 import io.ktor.client.request.get
@@ -65,7 +65,7 @@ internal class ApiErrorInterceptorTest : BaskMockServerUnitTest() {
             // Sample request URL
             val requestUrl = "http://${mockServer.hostName}:${mockServer.port}"
             // Sample error body in JSON format.
-            val errorBodyJson = readResourceFile("token/failure_credit_card_token_response.json")
+            val errorBodyJson = readResourceFile("card/failure_credit_card_token_response.json")
             val mockResponse = MockResponse()
                 .setResponseCode(HttpStatusCode.BadRequest.value)
                 .setBody(errorBodyJson)
@@ -79,7 +79,7 @@ internal class ApiErrorInterceptorTest : BaskMockServerUnitTest() {
                 e // If a [ApiErrorInterceptor] exception is thrown, store it in the 'exception' variable.
             }
             // Verify that the interceptor throws a [ApiErrorInterceptor] exception with the corresponding error information.
-            assertIs<UnknownApiException>(exception)
+            assertIs<ApiParseException>(exception)
             assertNotNull(exception.errorBody)
             assertEquals(
                 HttpStatusCode.BadRequest.value,
@@ -98,7 +98,7 @@ internal class ApiErrorInterceptorTest : BaskMockServerUnitTest() {
             // Sample request URL
             val requestUrl = "http://${mockServer.hostName}:${mockServer.port}"
             // Sample error body in JSON format.
-            val errorBodyJson = readResourceFile("charges/failure_wallet_callback_response.json")
+            val errorBodyJson = readResourceFile("wallet/failure_wallet_callback_response.json")
             val mockResponse = MockResponse()
                 .setResponseCode(HttpStatusCode.BadRequest.value)
                 .setBody(errorBodyJson)
@@ -132,7 +132,7 @@ internal class ApiErrorInterceptorTest : BaskMockServerUnitTest() {
             // Sample request URL
             val requestUrl = "http://${mockServer.hostName}:${mockServer.port}"
             // Sample error body in JSON format.
-            val errorBodyJson = readResourceFile("charges/failure_capture_wallet_response.json")
+            val errorBodyJson = readResourceFile("wallet/failure_capture_wallet_response.json")
             val mockResponse = MockResponse()
                 .setResponseCode(HttpStatusCode.BadRequest.value)
                 .setBody(errorBodyJson)
@@ -166,7 +166,7 @@ internal class ApiErrorInterceptorTest : BaskMockServerUnitTest() {
             // Sample request URL
             val requestUrl = "http://${mockServer.hostName}:${mockServer.port}"
             // Sample error body in JSON format.
-            val errorBodyJson = readResourceFile("charges/failure_capture_wallet_full_response.json")
+            val errorBodyJson = readResourceFile("wallet/failure_capture_wallet_full_response.json")
             val mockResponse = MockResponse()
                 .setResponseCode(HttpStatusCode.BadRequest.value)
                 .setBody(errorBodyJson)
@@ -180,7 +180,7 @@ internal class ApiErrorInterceptorTest : BaskMockServerUnitTest() {
                 e // If a [ApiErrorInterceptor] exception is thrown, store it in the 'exception' variable.
             }
             // Verify that the interceptor throws a [ApiErrorInterceptor] exception with the corresponding error information.
-            assertIs<UnknownApiException>(exception)
+            assertIs<ApiParseException>(exception)
             assertNotNull(exception.errorBody)
             assertEquals(
                 HttpStatusCode.BadRequest.value,

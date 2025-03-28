@@ -4,7 +4,7 @@ import com.paydock.core.data.injection.modules.dispatchersModule
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.presentation.viewmodel.PayPalVaultViewModel
 import com.paydock.feature.paypal.vault.presentation.viewmodel.PayPalWebVaultViewModel
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**

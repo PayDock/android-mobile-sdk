@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,6 +27,7 @@ import com.paydock.designsystems.components.button.AppButtonType
 import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.theme.PayPalVault
 import com.paydock.designsystems.theme.SdkTheme
+import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultResult
 import com.paydock.feature.paypal.vault.presentation.state.PayPalVaultUIState
@@ -94,6 +96,7 @@ fun PayPalSavePaymentSourceWidget(
             // Display a button to link the PayPal account
             SdkButton(
                 modifier = Modifier
+                    .background(Theme.colors.background)
                     .testTag("linkPayPalAccount"),
                 buttonColor = PayPalVault,
                 buttonIcon = config.icon,
@@ -133,18 +136,6 @@ private fun handlePayPalVaultResult(
             // Handles the cancellation case, determining the reason for cancellation and acting accordingly.
             AppCompatActivity.RESULT_CANCELED -> {
                 when (data.getCancellationStatusExtra()) {
-                    // If the cancellation was due to invalid parameters (e.g., clientId or setup token).
-                    CancellationStatus.INVALID_PARAMS -> {
-                        completion(
-                            Result.failure(
-                                PayPalVaultException.CancellationException(
-                                    displayableMessage = context.getString(
-                                        R.string.error_paypal_vault_invalid
-                                    )
-                                )
-                            )
-                        )
-                    }
                     // If the cancellation was initiated by the user.
                     CancellationStatus.USER_INITIATED -> {
                         completion(

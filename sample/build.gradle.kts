@@ -1,20 +1,24 @@
-import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+import com.android.build.api.dsl.ApplicationProductFlavor
+import com.android.build.api.dsl.ProductFlavor
+import java.io.FileInputStream
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.android)
-    kotlin("kapt")
-    id("com.google.dagger.hilt.android")
+    alias(libs.plugins.ksp.devtools)
+    alias(libs.plugins.dagger.hilt)
 }
 
 android {
     namespace = "com.paydock.sample"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.paydock.sample"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
 
@@ -22,76 +26,18 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-
-        // These values are added from local.properties
-        buildConfigField(
-            "String",
-            "SECRET_KEY",
-            getPropertyValue("SECRET_KEY")
-        )
-
-        buildConfigField(
-            "String",
-            "ACCESS_TOKEN",
-            getPropertyValue("ACCESS_TOKEN")
-        )
-
-        buildConfigField(
-            "String",
-            "GATEWAY_ID",
-            getPropertyValue("GATEWAY_ID")
-        )
-
-        buildConfigField(
-            "String",
-            "GATEWAY_ID_PAY_PAL",
-            getPropertyValue("GATEWAY_ID_PAY_PAL")
-        )
-
-        buildConfigField(
-            "String",
-            "GATEWAY_ID_FLY_PAY",
-            getPropertyValue("GATEWAY_ID_FLY_PAY")
-        )
-
-        buildConfigField(
-            "String",
-            "GATEWAY_ID_AFTER_PAY",
-            getPropertyValue("GATEWAY_ID_AFTER_PAY")
-        )
-
-        buildConfigField(
-            "String",
-            "GATEWAY_ID_GOOGLE_PAY",
-            getPropertyValue("GATEWAY_ID_GOOGLE_PAY")
-        )
-
-        buildConfigField(
-            "String",
-            "GATEWAY_ID_MASTERCARD_SRC",
-            getPropertyValue("GATEWAY_ID_MASTERCARD_SRC")
-        )
-
-        buildConfigField(
-            "String",
-            "MERCHANT_IDENTIFIER",
-            getPropertyValue("MERCHANT_IDENTIFIER")
-        )
-
-        buildConfigField(
-            "String",
-            "STANDALONE_3DS_SERVICE_ID",
-            getPropertyValue("STANDALONE_3DS_SERVICE_ID")
-        )
-
-        buildConfigField(
-            "String",
-            "FLY_PAY_CLIENT_ID",
-            getPropertyValue("FLY_PAY_CLIENT_ID")
-        )
+    }
+    signingConfigs {
+        create("debugtest") {
+            storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
     buildTypes {
         getByName("debug") {
+            isDefault = true
             isDebuggable = true
             isMinifyEnabled = false
         }
@@ -101,6 +47,39 @@ android {
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
+            )
+            signingConfig = signingConfigs.getByName("debugtest")
+        }
+    }
+    flavorDimensions += "environment"
+    productFlavors {
+        create("staging") {
+            dimension = "environment"
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+            configureFlavorBuildConfig(
+                "com.paydock.core.domain.model.Environment.STAGING",
+                true,
+                "staging"
+            )
+        }
+        create("sandbox") {
+            isDefault = true
+            dimension = "environment"
+            applicationIdSuffix = ".sandbox"
+            versionNameSuffix = "-sandbox"
+            configureFlavorBuildConfig(
+                "com.paydock.core.domain.model.Environment.SANDBOX",
+                true,
+                "sandbox"
+            )
+        }
+        create("prod") {
+            dimension = "environment"
+            configureFlavorBuildConfig(
+                "com.paydock.core.domain.model.Environment.PRODUCTION",
+                false,
+                "prod",
             )
         }
     }
@@ -117,40 +96,114 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.7"
+        kotlinCompilerExtensionVersion = libs.versions.kotlinCompilerExtension.get()
     }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    // Allow references to generated code
-    kapt {
-        correctErrorTypes = true
+}
+
+enum class BuildVariable(private val baseEnvName: String) {
+    // Shared Variables
+    MERCHANT_IDENTIFIER("MERCHANT_IDENTIFIER"),
+    // Environment Specific Variables
+    WIDGET_ACCESS_TOKEN("WIDGET_ACCESS_TOKEN"),
+    API_ACCESS_TOKEN("API_ACCESS_TOKEN"),
+    GATEWAY_ID_MPGS("GATEWAY_ID_MPGS"),
+    GATEWAY_ID_PAY_PAL("GATEWAY_ID_PAY_PAL"),
+    GATEWAY_ID_FLY_PAY("GATEWAY_ID_FLY_PAY"),
+    GATEWAY_ID_AFTER_PAY("GATEWAY_ID_AFTER_PAY"),
+    GATEWAY_ID_CLICK_TO_PAY("GATEWAY_ID_CLICK_TO_PAY"),
+    GATEWAY_ID_GOOGLE_PAY("GATEWAY_ID_GOOGLE_PAY"),
+    STANDALONE_3DS_SERVICE_ID("STANDALONE_3DS_SERVICE_ID"),
+    FLY_PAY_CLIENT_ID("FLY_PAY_CLIENT_ID");
+
+    fun getEnvName(flavor: String): String {
+        return when {
+            this == MERCHANT_IDENTIFIER -> this.baseEnvName
+            flavor.isEmpty() -> this.baseEnvName
+            else -> "${this.baseEnvName}_${flavor.uppercase()}"
+        }
     }
 }
 
-fun getPropertyValue(propertyName: String, defaultValue: String = ""): String {
-    val envValue = System.getenv(propertyName)
-    if (envValue != null) {
-        return envValue
+fun ApplicationProductFlavor.configureFlavorBuildConfig(
+    sdkEnvironment: String,
+    enableTestMode: Boolean,
+    flavor: String
+): ApplicationProductFlavor {
+    return this.apply {
+        addBuildConfigField(
+            "com.paydock.core.domain.model.Environment",
+            "SDK_ENVIRONMENT",
+            sdkEnvironment
+        )
+        addBuildConfigField("Boolean", "ENABLE_TEST_MODE", enableTestMode.toString())
+        BuildVariable.values().forEach { variable ->
+            addBuildConfigField("String", variable.name, readBuildVariable(variable, flavor))
+        }
     }
-    val localProperties = gradleLocalProperties(rootDir, providers)
-    return localProperties.getProperty(propertyName) ?: defaultValue
 }
+
+fun readBuildVariable(variable: BuildVariable, flavor: String): String {
+    val envName = variable.getEnvName(flavor)
+    // Read the environment variable value, trimming any leading/trailing whitespace
+    var envValue = System.getenv(envName)?.trim()
+    val configValue: String = if (!envValue.isNullOrEmpty()) {
+        // CI/CD environment - Remove excessive double quotes if present
+        // Remove surrounding double quotes if present
+        if (envValue.startsWith("\"") && envValue.endsWith("\"")) {
+            envValue = envValue.substring(1, envValue.length - 1)
+        }
+        return "\"$envValue\""
+    } else {
+        // Config properties fallback
+        val props = getLocalConfigProps(flavor)
+        props.getProperty(variable.name) ?: ""
+    }
+    return configValue
+}
+
+fun getLocalConfigProps(flavor: String): Properties {
+    val props = Properties()
+    val configPath = "src/$flavor/config.properties"
+    val propsFile = file(configPath)
+    if (propsFile.exists()) {
+        try {
+            FileInputStream(propsFile).use {
+                props.load(it)
+            }
+        } catch (e: Exception) {
+            println("Error loading properties from $configPath: ${e.message}")
+        }
+    } else {
+        println("Properties file not found: $configPath")
+    }
+    return props
+}
+
+fun ProductFlavor.addBuildConfigField(type: String, name: String, value: String) =
+    buildConfigField(type, name, value)
 
 dependencies {
     // Modules
     implementation(project(":mobile-sdk"))
     // Libraries
-    implementation(libs.bundles.androidx)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.ktx)
     implementation(platform(libs.kotlin.bom))
     // Compose
     implementation(platform(libs.compose.bom))
-    implementation(libs.bundles.compose.sample.app)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
+    // To allow builds to build for release
+    implementation(libs.androidx.ui.tooling.preview.android)
+    implementation(libs.androidx.ui.tooling)
     // Hilt
     implementation(libs.bundles.hilt)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler)
     // Retrofit
     implementation(libs.bundles.retrofit)
     // Test Libraries

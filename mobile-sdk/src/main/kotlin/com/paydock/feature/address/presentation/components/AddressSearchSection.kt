@@ -39,7 +39,7 @@ fun AddressSearchSection(onAddressSelected: (Address) -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         style = Theme.typography.body1,
         text = stringResource(R.string.label_find_an_address),
-        color = Theme.colors.onSurfaceVariant
+        color = Theme.colors.onSurface
     )
 
     // Address search input

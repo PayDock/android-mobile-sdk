@@ -40,10 +40,10 @@ internal class WalletRepositoryTest : BaseKoinUnitTest() {
             repository = WalletRepositoryImpl(get(), httpMockClient)
 
             val request =
-                readResourceFile("charges/valid_googlepay_capture_wallet_charge_request.json")
+                readResourceFile("wallet/valid_googlepay_capture_wallet_charge_request.json")
                     .convertToDataClass<CaptureWalletChargeRequest>()
             val response =
-                readResourceFile("charges/success_capture_wallet_response.json")
+                readResourceFile("wallet/success_capture_wallet_response.json")
                     .convertToDataClass<CaptureChargeResponse>()
             val entity = response.asEntity()
             // WHEN - Call the method to be tested
@@ -61,10 +61,10 @@ internal class WalletRepositoryTest : BaseKoinUnitTest() {
             repository = WalletRepositoryImpl(get(), httpMockClient)
 
             val request =
-                readResourceFile("charges/valid_paypal_capture_wallet_charge_request.json")
+                readResourceFile("wallet/valid_paypal_capture_wallet_charge_request.json")
                     .convertToDataClass<CaptureWalletChargeRequest>()
             val response =
-                readResourceFile("charges/success_capture_wallet_response.json")
+                readResourceFile("wallet/success_capture_wallet_response.json")
                     .convertToDataClass<CaptureChargeResponse>()
             val entity = response.asEntity()
             // WHEN - Call the method to be tested
@@ -82,10 +82,10 @@ internal class WalletRepositoryTest : BaseKoinUnitTest() {
             repository = WalletRepositoryImpl(get(), httpMockClient)
 
             val request =
-                readResourceFile("charges/valid_afterpay_capture_wallet_charge_request.json")
+                readResourceFile("wallet/valid_afterpay_capture_wallet_charge_request.json")
                     .convertToDataClass<CaptureWalletChargeRequest>()
             val response =
-                readResourceFile("charges/success_capture_wallet_response.json")
+                readResourceFile("wallet/success_capture_wallet_response.json")
                     .convertToDataClass<CaptureChargeResponse>()
             val entity = response.asEntity()
             // WHEN - Call the method to be tested
@@ -105,7 +105,7 @@ internal class WalletRepositoryTest : BaseKoinUnitTest() {
             // GIVEN
             repository = WalletRepositoryImpl(get(), httpMockClient)
             val request =
-                readResourceFile("charges/valid_googlepay_capture_wallet_charge_request.json")
+                readResourceFile("wallet/valid_googlepay_capture_wallet_charge_request.json")
                     .convertToDataClass<CaptureWalletChargeRequest>()
             // WHEN - Call the method to be tested
             val result = repository.captureWalletTransaction(invalidAccessToken, request)
@@ -122,10 +122,10 @@ internal class WalletRepositoryTest : BaseKoinUnitTest() {
             repository = WalletRepositoryImpl(get(), httpMockClient)
 
             val request =
-                readResourceFile("charges/valid_paypal_wallet_callback_request.json")
+                readResourceFile("wallet/valid_paypal_wallet_callback_request.json")
                     .convertToDataClass<WalletCallbackRequest>()
             val response =
-                readResourceFile("charges/success_paypal_wallet_callback_response.json")
+                readResourceFile("wallet/success_paypal_wallet_callback_response.json")
                     .convertToDataClass<WalletCallbackResponse>()
             val entity = response.asEntity()
             // WHEN - Call the method to be tested
@@ -144,10 +144,10 @@ internal class WalletRepositoryTest : BaseKoinUnitTest() {
             repository = WalletRepositoryImpl(get(), httpMockClient)
 
             val request =
-                readResourceFile("charges/valid_afterpay_wallet_callback_request.json")
+                readResourceFile("wallet/valid_afterpay_wallet_callback_request.json")
                     .convertToDataClass<WalletCallbackRequest>()
             val response =
-                readResourceFile("charges/success_afterpay_wallet_callback_response.json")
+                readResourceFile("wallet/success_afterpay_wallet_callback_response.json")
                     .convertToDataClass<WalletCallbackResponse>()
 
             val entity = response.asEntity()
@@ -168,10 +168,10 @@ internal class WalletRepositoryTest : BaseKoinUnitTest() {
             repository = WalletRepositoryImpl(get(), httpMockClient)
 
             val request =
-                readResourceFile("charges/valid_flypay_wallet_callback_request.json")
+                readResourceFile("wallet/valid_flypay_wallet_callback_request.json")
                     .convertToDataClass<WalletCallbackRequest>()
             val response =
-                readResourceFile("charges/success_flypay_wallet_callback_response.json")
+                readResourceFile("wallet/success_flypay_wallet_callback_response.json")
                     .convertToDataClass<WalletCallbackResponse>()
             val entity = response.asEntity()
             // WHEN - Call the method to be tested
@@ -191,7 +191,7 @@ internal class WalletRepositoryTest : BaseKoinUnitTest() {
             // GIVEN
             repository = WalletRepositoryImpl(get(), httpMockClient)
             val request =
-                readResourceFile("charges/invalid_wallet_callback_request.json")
+                readResourceFile("wallet/invalid_wallet_callback_request.json")
                     .convertToDataClass<WalletCallbackRequest>()
             // WHEN - Call the method to be tested
             val result = repository.getWalletCallback(accessToken, request)
@@ -209,7 +209,7 @@ internal class WalletRepositoryTest : BaseKoinUnitTest() {
             repository = WalletRepositoryImpl(get(), httpMockClient)
 
             val response =
-                readResourceFile("charges/success_afterpay_decline_wallet_charge_response.json")
+                readResourceFile("wallet/success_afterpay_decline_wallet_charge_response.json")
                     .convertToDataClass<ChargeDeclineResponse>()
 
             val entity = response.asEntity()

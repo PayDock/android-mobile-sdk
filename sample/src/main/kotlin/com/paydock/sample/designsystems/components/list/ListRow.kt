@@ -45,7 +45,7 @@ fun ListRow(
 
 @Preview
 @Composable
-private fun PreviewListRow() {
+internal fun PreviewListRow() {
     SampleTheme {
         ListRow(
             title = CheckoutType.STANDALONE.displayName(),

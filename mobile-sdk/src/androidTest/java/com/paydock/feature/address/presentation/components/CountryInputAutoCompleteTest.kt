@@ -11,22 +11,25 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.paydock.core.BaseViewModelKoinTest
-import com.paydock.core.KoinTestRule
 import com.paydock.core.extensions.waitUntilTimeout
+import com.paydock.feature.address.injection.addressDetailsModule
 import com.paydock.feature.address.presentation.viewmodels.CountryAutoCompleteViewModel
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.Rule
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.compose.LocalKoinApplication
 import org.koin.compose.LocalKoinScope
 import org.koin.core.annotation.KoinInternalApi
+import org.koin.core.context.loadKoinModules
+import org.koin.core.context.unloadKoinModules
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import org.koin.mp.KoinPlatformTools
 import kotlin.test.assertEquals
@@ -42,10 +45,17 @@ internal class CountryInputAutoCompleteTest :
 
     }
 
-    @get:Rule
-    override val koinTestRule = KoinTestRule(
-        modules = listOf(instrumentedTestModule, testModule)
-    )
+    @Before
+    fun setUpKoin() {
+        unloadKoinModules(addressDetailsModule)
+        loadKoinModules(testModule)
+    }
+
+    @After
+    override fun tearDownKoin() {
+        unloadKoinModules(testModule)
+        super.tearDownKoin()
+    }
 
     override fun initialiseViewModel(): CountryAutoCompleteViewModel =
         CountryAutoCompleteViewModel(dispatchersProvider)

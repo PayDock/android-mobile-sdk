@@ -11,6 +11,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -104,7 +105,7 @@ fun GooglePayWidget(
     SdkTheme {
         Box(contentAlignment = Alignment.Center) {
             Column(
-                modifier = modifier,
+                modifier = modifier.background(Theme.colors.background),
                 verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.Top),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {

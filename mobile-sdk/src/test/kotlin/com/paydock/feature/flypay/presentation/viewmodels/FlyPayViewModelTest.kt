@@ -68,7 +68,7 @@ internal class FlyPayViewModelTest : BaseKoinUnitTest() {
             val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             val mockFlyPayOrderId = MobileSDKTestConstants.FlyPay.MOCK_ORDER_ID
             val response =
-                readResourceFile("charges/success_flypay_wallet_callback_response.json")
+                readResourceFile("wallet/success_flypay_wallet_callback_response.json")
                     .convertToDataClass<WalletCallbackResponse>()
             val mockResult = Result.success(response.asEntity())
             coEvery { getWalletCallbackUseCase(any(), any()) } returns mockResult

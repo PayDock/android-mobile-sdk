@@ -1,7 +1,6 @@
-import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
-
 plugins {
     alias(libs.plugins.android.library)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
     // linting
@@ -12,7 +11,7 @@ plugins {
 
 android {
     namespace = "com.paydock"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 24
@@ -22,7 +21,6 @@ android {
 
     buildTypes {
         getByName("debug") {
-            buildConfigField("boolean", "DEV_BUILD", "true")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -30,7 +28,6 @@ android {
             )
         }
         getByName("release") {
-            buildConfigField("boolean", "DEV_BUILD", "false")
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -57,7 +54,7 @@ android {
     }
     composeOptions {
         // https://developer.android.com/jetpack/androidx/releases/compose-compiler
-        kotlinCompilerExtensionVersion = "1.5.7"
+        kotlinCompilerExtensionVersion = libs.versions.kotlinCompilerExtension.get()
     }
     testOptions {
         unitTests.isReturnDefaultValues = true
@@ -77,36 +74,33 @@ android {
     }
 }
 
-fun getPropertyValue(propertyName: String): String {
-    val envValue = System.getenv(propertyName)
-    if (envValue != null) {
-        return envValue
-    }
-    val localProperties = gradleLocalProperties(rootDir, providers)
-    return localProperties.getProperty(propertyName) ?: ""
-}
-
 dependencies {
     // Paydock Modules (Libs)
     api(libs.paydock.core.networking)
     // Android
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.bundles.androidx)
+    androidTestImplementation(libs.androidx.test.junit)
+    androidTestImplementation(libs.androidx.test.ext)
+    androidTestImplementation(libs.androidx.test.espresso.core)
     // Compose
     implementation(platform(libs.compose.bom))
-    implementation(libs.bundles.compose.sdk)
-    implementation(libs.compose.webview)
+    implementation(libs.bundles.compose)
+    // Release requires this to be included for previews
+    implementation(libs.bundles.composeDebug)
+    androidTestImplementation(libs.androidx.ui.test.junit4.android)
+    androidTestImplementation(libs.androidx.ui.test.manifest)
     // Kotlin
     implementation(platform(libs.kotlin.bom))
-    implementation(libs.kotlinx.html.jvm)
-    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.bundles.kotlin)
+    testImplementation(libs.kotlin.test.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
     // Coroutines
-    implementation(libs.kotlinx.coroutines)
-    implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.bundles.coroutins)
     // Koin - Injection
     implementation(libs.bundles.koin)
     testImplementation(libs.koin.test)
+    androidTestImplementation(libs.koin.test)
     // Ktor - Networking
     implementation(libs.ktor.client.android)
     implementation(libs.ktor.client.okhttp)
@@ -117,23 +111,16 @@ dependencies {
     // Afterpay SDK
     implementation(libs.afterpay.android)
     // PayPal SDK
-    implementation(libs.paypal.web.payments)
-    implementation(libs.paypal.fraud.protection)
-    // Unit Testing
+    implementation(libs.bundles.paypal)
+    // Mocking
+    implementation(libs.slf4j.jdk14)
+    // Unit Testing (General)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.mockito)
     testImplementation(libs.turbine)
     testImplementation(libs.json)
-    // UI Testing
-    androidTestImplementation(libs.androidx.test.junit)
-    androidTestImplementation(libs.androidx.test.ext)
-    androidTestImplementation(libs.androidx.test.espresso.core)
-    androidTestImplementation(libs.androidx.ui.test.junit4.android)
-    androidTestImplementation(libs.koin.test)
-    androidTestImplementation(libs.mockk.android) {
-        exclude(group = "io.mockk", module = "mockk-agent-android")
-    }
+    // UI Testing (General)
+    androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.mockito.android)
-    androidTestImplementation(libs.kotlinx.coroutines.test)
 }

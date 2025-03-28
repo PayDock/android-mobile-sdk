@@ -37,7 +37,7 @@ internal class CreatePayPalVaultPaymentTokenUseCaseTest : BaseKoinUnitTest() {
     fun `test valid payment token request returns expected ott payment token resource`() = runTest {
         // GIVEN
         val request =
-            readResourceFile("token/valid_create_payment_token_request.json")
+            readResourceFile("paypal/valid_create_payment_token_request.json")
                 .convertToDataClass<PayPalVaultTokenRequest>()
         val mockToken = MobileSDKTestConstants.PayPalVault.MOCK_PAYMENT_TOKEN
         val mockEmail = MobileSDKTestConstants.PayPalVault.MOCK_EMAIL
@@ -73,7 +73,7 @@ internal class CreatePayPalVaultPaymentTokenUseCaseTest : BaseKoinUnitTest() {
     fun `test invalid payment token request returns expected error resource`() = runTest {
         // GIVEN
         val request =
-            readResourceFile("token/invalid_payment_token_request.json").convertToDataClass<PayPalVaultTokenRequest>()
+            readResourceFile("paypal/invalid_payment_token_request.json").convertToDataClass<PayPalVaultTokenRequest>()
         val expectedResult =
             ApiException(
                 error = ApiErrorResponse(

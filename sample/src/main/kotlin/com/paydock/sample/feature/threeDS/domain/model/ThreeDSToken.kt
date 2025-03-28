@@ -16,6 +16,6 @@ data class ThreeDSToken(
     }
 
     override fun toString(): String {
-        return "ThreeDSToken(token='$token', status=$status)"
+        return "ThreeDSToken(token=$token, status=$status, id=$id)"
     }
 }

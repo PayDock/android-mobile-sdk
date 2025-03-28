@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
@@ -13,14 +14,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paydock.R
 import com.paydock.core.presentation.extensions.alpha40
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
+import com.paydock.core.presentation.extensions.scaled
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.FlyPayBlue
 import com.paydock.designsystems.theme.SdkTheme
@@ -45,13 +49,21 @@ internal fun FlyPayButton(
     isLoading: Boolean,
     onClick: () -> Unit
 ) {
+    val configuration = LocalConfiguration.current
+    val fontScale = configuration.fontScale
+    // Calculate adjusted height using the extension function
+    val adjustedButtonHeight = Theme.dimensions.buttonHeight.scaled(fontScale)
+
+    // Calculate the adjusted image size based on the font scale and a base image size.
+    val baseImageSize = Theme.dimensions.buttonHeight
+    val adjustedImageSize = baseImageSize.value.scaled(fontScale).dp
     // Button to initiate FlyPay transaction
     Button(
         onClick = onClick,
         modifier = Modifier
             .testTag("flypayButton")
             .fillMaxWidth()
-            .height(Theme.dimensions.buttonHeight),
+            .height(adjustedButtonHeight),
         enabled = isEnabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = FlyPayBlue,
@@ -75,11 +87,12 @@ internal fun FlyPayButton(
                     fontSize = 22.sp,
                     lineHeight = 48.sp,
                     color = Color.White,
-                    platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    platformStyle = PlatformTextStyle(includeFontPadding = true)
                 )
             )
             // Display FlyPay icon
             Image(
+                modifier = Modifier.size(adjustedImageSize),
                 painter = painterResource(id = R.drawable.ic_flypay_button),
                 contentDescription = stringResource(id = R.string.content_desc_flypay_button_icon)
             )
@@ -91,9 +104,9 @@ internal fun FlyPayButton(
     }
 }
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewFlyPayButton() {
+internal fun PreviewFlyPayButton() {
     SdkTheme {
         FlyPayButton(isEnabled = true, isLoading = false) {}
     }

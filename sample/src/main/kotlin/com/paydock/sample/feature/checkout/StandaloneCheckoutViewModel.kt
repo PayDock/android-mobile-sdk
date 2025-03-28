@@ -4,7 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.card.domain.model.integration.CardResult
-import com.paydock.feature.threeDS.domain.model.integration.ThreeDSResult
+import com.paydock.feature.threeDS.integrated.domain.model.integration.Integrated3DSResult
+import com.paydock.feature.threeDS.integrated.domain.model.integration.enums.IntegratedEventType
+import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
+import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.StandaloneEventType
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.BuildConfig
@@ -13,7 +16,6 @@ import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
 import com.paydock.sample.core.THREE_DS_CARD_ERROR
 import com.paydock.sample.core.THREE_DS_STATUS_ERROR
 import com.paydock.sample.core.TOKENISE_CARD_ERROR
-import com.paydock.sample.core.presentation.utils.AccessTokenProvider
 import com.paydock.sample.feature.card.data.api.dto.CaptureCardChargeRequest
 import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
 import com.paydock.sample.feature.card.domain.usecase.CaptureCardChargeTokenUseCase
@@ -21,9 +23,11 @@ import com.paydock.sample.feature.card.domain.usecase.CreateCardSessionVaultToke
 import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
 import com.paydock.sample.feature.threeDS.data.api.dto.Capture3DSChargeRequest
 import com.paydock.sample.feature.threeDS.data.api.dto.CreateIntegratedThreeDSTokenRequest
+import com.paydock.sample.feature.threeDS.data.api.dto.CreateStandaloneThreeDSTokenRequest
 import com.paydock.sample.feature.threeDS.domain.model.ThreeDSToken
 import com.paydock.sample.feature.threeDS.domain.usecase.CaptureThreeDSChargeTokenUseCase
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateIntegratedThreeDSTokenUseCase
+import com.paydock.sample.feature.threeDS.domain.usecase.CreateStandaloneThreeDSTokenUseCase
 import com.paydock.sample.feature.wallet.data.api.dto.InitiateWalletRequest
 import com.paydock.sample.feature.wallet.data.model.WalletCharge
 import com.paydock.sample.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
@@ -37,10 +41,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class StandaloneCheckoutViewModel @Inject constructor(
-    accessTokenProvider: AccessTokenProvider,
     private val initiateWalletTransactionUseCase: InitiateWalletTransactionUseCase,
     private val createCardSessionVaultTokenUseCase: CreateCardSessionVaultTokenUseCase,
     private val createIntegratedThreeDSTokenUseCase: CreateIntegratedThreeDSTokenUseCase,
+    private val createStandaloneThreeDSTokenUseCase: CreateStandaloneThreeDSTokenUseCase,
     private val captureCardChargeTokenUseCase: CaptureCardChargeTokenUseCase,
     private val capture3DSChargeTokenUseCase: CaptureThreeDSChargeTokenUseCase,
     private val captureWalletChargeUseCase: CaptureWalletChargeUseCase,
@@ -49,7 +53,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
     private val _stateFlow: MutableStateFlow<CheckoutUIState> = MutableStateFlow(CheckoutUIState())
     val stateFlow: StateFlow<CheckoutUIState> = _stateFlow
 
-    val accessToken: StateFlow<String> = accessTokenProvider.accessToken
+    val threeDSType: ThreeDSType = ThreeDSType.INTEGRATED
 
     fun resetResultState() {
         _stateFlow.update { state ->
@@ -178,7 +182,11 @@ class StandaloneCheckoutViewModel @Inject constructor(
                 _stateFlow.update { state ->
                     state.copy(vaultToken = vaultToken)
                 }
-                createIntegrated3dsToken(vaultToken)
+                // Can switch between integrated 3DS flow vs standalone 3DS flow
+                when (threeDSType) {
+                    ThreeDSType.INTEGRATED -> createIntegrated3dsToken(vaultToken)
+                    ThreeDSType.STANDALONE -> createStandalone3dsToken(vaultToken)
+                }
             }
             result.onFailure {
                 _stateFlow.update { state ->
@@ -198,49 +206,71 @@ class StandaloneCheckoutViewModel @Inject constructor(
             }
             val result =
                 createIntegratedThreeDSTokenUseCase(
-                    accessToken = accessToken.value,
                     request = CreateIntegratedThreeDSTokenRequest(
                         customer = ChargesCustomerDTO(
                             paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                                gatewayId = BuildConfig.GATEWAY_ID,
+                                gatewayId = BuildConfig.GATEWAY_ID_MPGS,
                                 vaultToken = vaultToken
                             )
                         )
                     )
                 )
-            result.onSuccess { threeDSResult ->
-                when (threeDSResult.status) {
-                    ThreeDSToken.ThreeDSStatus.NOT_SUPPORTED -> threeDSResult.id?.let {
-                        capture3DSCharge(
-                            it
+            handle3DSTokenResult(result)
+        }
+    }
+
+    private fun createStandalone3dsToken(vaultToken: String) {
+        viewModelScope.launch {
+            _stateFlow.update { state ->
+                state.copy(isLoading = true)
+            }
+
+            val result =
+                createStandaloneThreeDSTokenUseCase(
+                    CreateStandaloneThreeDSTokenRequest(
+                        customer = ChargesCustomerDTO(
+                            paymentSource = ChargesCustomerDTO.PaymentSourceDTO(vaultToken = vaultToken)
                         )
-                    }
+                    )
+                )
+            handle3DSTokenResult(result)
+        }
+    }
 
-                    ThreeDSToken.ThreeDSStatus.PRE_AUTH_PENDING -> {
-                        _stateFlow.update { state ->
-                            state.copy(
-                                threeDSToken = threeDSResult,
-                                isLoading = false,
-                                error = null
-                            )
-                        }
+    private fun handle3DSTokenResult(result: Result<ThreeDSToken>) {
+        result.onSuccess { threeDSResult ->
+            when (threeDSResult.status) {
+                ThreeDSToken.ThreeDSStatus.NOT_SUPPORTED -> threeDSResult.id?.let {
+                    when (threeDSType) {
+                        ThreeDSType.INTEGRATED -> captureIntegrated3DSCharge(it)
+                        ThreeDSType.STANDALONE -> captureStandalone3DSCharge(it)
                     }
+                }
 
-                    else -> _stateFlow.update { state ->
+                ThreeDSToken.ThreeDSStatus.PRE_AUTH_PENDING -> {
+                    _stateFlow.update { state ->
                         state.copy(
+                            threeDSToken = threeDSResult,
                             isLoading = false,
-                            error = THREE_DS_STATUS_ERROR
+                            error = null
                         )
                     }
                 }
-            }
-            result.onFailure {
-                _stateFlow.update { state ->
+
+                else -> _stateFlow.update { state ->
                     state.copy(
                         isLoading = false,
-                        error = it.message ?: THREE_DS_CARD_ERROR
+                        error = THREE_DS_STATUS_ERROR
                     )
                 }
+            }
+        }
+        result.onFailure {
+            _stateFlow.update { state ->
+                state.copy(
+                    isLoading = false,
+                    error = it.message ?: THREE_DS_CARD_ERROR
+                )
             }
         }
     }
@@ -291,18 +321,61 @@ class StandaloneCheckoutViewModel @Inject constructor(
         }
     }
 
-    fun handleThreeDSResult(result: Result<ThreeDSResult>) {
+    fun handleIntegrated3DSResult(result: Result<Integrated3DSResult>) {
         result.onSuccess {
-            val threeDSToken = _stateFlow.value.threeDSToken
-            threeDSToken?.id?.let { id ->
-                capture3DSCharge(
-                    id
-                )
+            when (it.event) {
+                IntegratedEventType.CHARGE_AUTH_SUCCESS -> {
+                    it.charge3dsId?.let { chargeId ->
+                        captureIntegrated3DSCharge(chargeId)
+                    }
+                    _stateFlow.update { state -> state.copy(threeDSToken = null) }
+                }
+
+                IntegratedEventType.CHARGE_AUTH_REJECT -> {
+                    _stateFlow.update { state ->
+                        state.copy(
+                            isLoading = false,
+                            error = CHARGE_TRANSACTION_ERROR,
+                            threeDSToken = null
+                        )
+                    }
+                }
+
+                else -> Unit
             }
-            _stateFlow.update { state -> state.copy(threeDSToken = null) }
         }.onFailure {
             _stateFlow.update { state ->
-                state.copy(isLoading = false, error = CHARGE_TRANSACTION_ERROR)
+                state.copy(isLoading = false, error = CHARGE_TRANSACTION_ERROR, threeDSToken = null)
+            }
+        }
+    }
+
+    fun handleStandalone3DSResult(result: Result<Standalone3DSResult>) {
+        result.onSuccess {
+            when (it.event) {
+                StandaloneEventType.CHARGE_AUTH_SUCCESS -> {
+                    it.charge3dsId?.let { chargeId ->
+                        captureStandalone3DSCharge(chargeId)
+                    }
+                    _stateFlow.update { state -> state.copy(threeDSToken = null) }
+                }
+
+                StandaloneEventType.CHARGE_AUTH_REJECT,
+                StandaloneEventType.CHARGE_ERROR -> {
+                    _stateFlow.update { state ->
+                        state.copy(
+                            isLoading = false,
+                            error = CHARGE_TRANSACTION_ERROR,
+                            threeDSToken = null
+                        )
+                    }
+                }
+
+                else -> Unit
+            }
+        }.onFailure {
+            _stateFlow.update { state ->
+                state.copy(isLoading = false, error = CHARGE_TRANSACTION_ERROR, threeDSToken = null)
             }
         }
     }
@@ -384,7 +457,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
             val request = CaptureCardChargeRequest(
                 currency = AU_CURRENCY_CODE, customer = ChargesCustomerDTO(
                     paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                        gatewayId = BuildConfig.GATEWAY_ID,
+                        gatewayId = BuildConfig.GATEWAY_ID_MPGS,
                         vaultToken = vaultToken
                     )
                 )
@@ -393,14 +466,36 @@ class StandaloneCheckoutViewModel @Inject constructor(
         }
     }
 
-    private fun capture3DSCharge(threeDSId: String) {
+    private fun captureIntegrated3DSCharge(threeDSChargeId: String) {
         // This capture flow follows the 3DS pre-auth flow
         viewModelScope.launch {
             _stateFlow.update { state ->
                 state.copy(isLoading = true, threeDSToken = null)
             }
-            val request = Capture3DSChargeRequest(
-                threeDSData = Capture3DSChargeRequest.ThreeDSChargeData(threeDSId)
+            val request = Capture3DSChargeRequest.CaptureIntegrated3DSChargeRequest(
+                threeDSData = Capture3DSChargeRequest.CaptureIntegrated3DSChargeRequest.ThreeDSChargeData(
+                    threeDSChargeId
+                )
+            )
+            handleChargeResult(capture3DSChargeTokenUseCase(request))
+        }
+    }
+
+    private fun captureStandalone3DSCharge(threeDSChargeId: String) {
+        // This capture flow follows the 3DS pre-auth flow
+        viewModelScope.launch {
+            _stateFlow.update { state ->
+                state.copy(isLoading = true, threeDSToken = null)
+            }
+            val vaultToken = stateFlow.value.vaultToken
+            val request = Capture3DSChargeRequest.CaptureStandalone3DSChargeRequest(
+                threeDSChargeId = threeDSChargeId,
+                customer = ChargesCustomerDTO(
+                    paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
+                        gatewayId = BuildConfig.GATEWAY_ID_MPGS,
+                        vaultToken = vaultToken
+                    )
+                )
             )
             handleChargeResult(capture3DSChargeTokenUseCase(request))
         }
@@ -430,3 +525,7 @@ data class CheckoutUIState(
     val afterPayResult: String? = null,
     val error: String? = null,
 )
+
+enum class ThreeDSType {
+    INTEGRATED, STANDALONE
+}

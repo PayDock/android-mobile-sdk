@@ -17,9 +17,9 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.theme.SdkTheme
@@ -138,9 +138,9 @@ internal fun CreditCardNumberInput(
     )
 }
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewCardNumberInput() {
+internal fun PreviewCreditCardNumberInput() {
     SdkTheme {
         Surface(color = Theme.colors.surface) {
             CreditCardNumberInput(

@@ -11,8 +11,6 @@ import com.paydock.sample.feature.checkout.ClickToPayActivity
 
 @Composable
 fun ClickToPayComponent(
-    isLoading: Boolean,
-    accessToken: String,
     resultHandler: (Result<String>) -> Unit,
 ) {
     val launcher = rememberLauncherForActivityResult(
@@ -38,7 +36,6 @@ fun ClickToPayComponent(
 
     LaunchedEffect(Unit) {
         val intent = Intent(context, ClickToPayActivity::class.java)
-            .putExtra("accessToken", accessToken)
         launcher.launch(intent)
     }
 }

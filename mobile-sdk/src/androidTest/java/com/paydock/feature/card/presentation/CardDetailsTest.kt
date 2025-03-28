@@ -14,9 +14,13 @@ import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.paydock.core.BaseViewModelKoinTest
-import com.paydock.core.KoinTestRule
 import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.extensions.waitUntilTimeout
+import com.paydock.core.network.dto.error.ApiErrorResponse
+import com.paydock.core.network.dto.error.ErrorSummary
+import com.paydock.core.network.extensions.convertToDataClass
+import com.paydock.feature.card.data.dto.CardSchemasResponse
+import com.paydock.feature.card.data.mapper.asEntity
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.CardResult
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
@@ -24,7 +28,9 @@ import com.paydock.feature.card.domain.model.integration.enums.CardType
 import com.paydock.feature.card.domain.model.ui.TokenDetails
 import com.paydock.feature.card.domain.usecase.CreateCardPaymentTokenUseCase
 import com.paydock.feature.card.domain.usecase.GetCardSchemasUseCase
+import com.paydock.feature.card.injection.cardDetailsModule
 import com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel
+import io.ktor.http.HttpStatusCode
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.every
@@ -32,14 +38,17 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
-import org.junit.Rule
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.compose.LocalKoinApplication
 import org.koin.compose.LocalKoinScope
 import org.koin.core.annotation.KoinInternalApi
+import org.koin.core.context.loadKoinModules
+import org.koin.core.context.unloadKoinModules
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import org.koin.mp.KoinPlatformTools
 import kotlin.test.assertFalse
@@ -53,24 +62,61 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         viewModel { viewModel }
     }
 
-    @get:Rule
-    override val koinTestRule = KoinTestRule(
-        modules = listOf(instrumentedTestModule, testModule)
-    )
+    @Before
+    fun setUpKoin() {
+        unloadKoinModules(cardDetailsModule)
+        loadKoinModules(testModule)
+    }
+
+    private fun setupGetCardSchemasSuccess() {
+        val json = """
+            {
+              "card_schemas": [
+                { "bin": "400000~420317", "schema": "visa"},
+                { "bin": "420412", "schema": "visa"},
+                { "bin": "2221~2720", "schema": "mastercard" },
+                { "bin": "324000", "schema": "amex" },
+                { "bin": "309", "schema": "diners" },
+                { "bin": "6011", "schema": "discover" },
+                { "bin": "180000~180099", "schema": "japcb" },
+                { "bin": "633454", "schema": "solo" },
+                { "bin": "5610", "schema": "ausbc" }
+              ]
+            }
+        """.trimIndent()
+        val response = json.convertToDataClass<CardSchemasResponse>()
+        // Act
+        val cardSchemas = response.asEntity()
+        val mockResult = Result.success(cardSchemas)
+        coEvery {
+            getCardSchemasUseCase()
+        } returns mockResult
+    }
+
+    @After
+    override fun tearDownKoin() {
+        unloadKoinModules(testModule)
+        super.tearDownKoin()
+    }
 
     private val createCardPaymentTokenUseCase: CreateCardPaymentTokenUseCase = mockk(relaxed = true)
     private val getCardSchemasUseCase: GetCardSchemasUseCase =
         mockk(relaxed = true)
 
-    override fun initialiseViewModel(): CardDetailsViewModel =
-        CardDetailsViewModel(
+    override fun initialiseViewModel(): CardDetailsViewModel {
+        setupGetCardSchemasSuccess()
+        return CardDetailsViewModel(
             accessToken = "testAccessToken",
             gatewayId = null,
-            schemeConfig = SupportedSchemeConfig(supportedSchemes = CardType.entries.toSet(), enableValidation = true),
+            schemeConfig = SupportedSchemeConfig(
+                supportedSchemes = CardType.entries.toSet(),
+                enableValidation = true
+            ),
             createCardPaymentTokenUseCase = createCardPaymentTokenUseCase,
             getCardSchemasUseCase = getCardSchemasUseCase,
             dispatchers = dispatchersProvider
         )
+    }
 
     @Test
     fun testCardDetailsInitialStateInput() {
@@ -98,7 +144,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         composeTestRule.onNodeWithTag("cardNumberInput").assertIsDisplayed()
         composeTestRule.onNodeWithTag("cardExpiryInput").assertIsDisplayed()
         composeTestRule.onNodeWithTag("cardSecurityCodeInput").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("saveCard").assertIsDisplayed().assertIsNotEnabled()
+        composeTestRule.onNodeWithTag("submitDetails").assertIsDisplayed().assertIsNotEnabled()
     }
 
     @Test
@@ -160,7 +206,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         composeTestRule.onNodeWithText("Card number").assert(hasText("4111 1111 1111 1111 "))
         composeTestRule.onNodeWithText("Expiry").assert(hasText("05/36"))
         composeTestRule.onNodeWithText("CVV").assert(hasText("123"))
-        composeTestRule.onNodeWithTag("saveCard").assertIsDisplayed().assertIsEnabled()
+        composeTestRule.onNodeWithTag("submitDetails").assertIsDisplayed().assertIsEnabled()
 
         // Assert ViewModel interactions
         assertTrue(viewModel.inputStateFlow.value.isDataValid)
@@ -228,16 +274,23 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
     @Test
     fun testValidSubmissionWithSuccessTokenResult() {
         val onCardDetailsResult: (Result<CardResult>) -> Unit = mockk()
-
-        // Set up your ViewModel and other dependencies
         composeTestRule.setContent {
-            CardDetailsWidget(
-                config = CardDetailsWidgetConfig(
-                    gatewayId = "testGateway",
-                    accessToken = "testAccessToken"
-                ),
-                completion = onCardDetailsResult
-            )
+            // This shouldn't be needed, but allows robolectric tests to run successfully
+            // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557
+            CompositionLocalProvider(
+                LocalKoinScope provides KoinPlatformTools.defaultContext()
+                    .get().scopeRegistry.rootScope,
+                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
+            ) {
+                // Set up your ViewModel and other dependencies
+                CardDetailsWidget(
+                    config = CardDetailsWidgetConfig(
+                        gatewayId = "testGateway",
+                        accessToken = "testAccessToken"
+                    ),
+                    completion = onCardDetailsResult
+                )
+            }
         }
 
         // Simulate user interactions
@@ -277,7 +330,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         composeTestRule.onNodeWithText("Card number").assert(hasText("4111 1111 1111 1111 "))
         composeTestRule.onNodeWithText("Expiry").assert(hasText("05/36"))
         composeTestRule.onNodeWithText("CVV").assert(hasText("123"))
-        composeTestRule.onNodeWithTag("saveCard").assertIsDisplayed().assertIsEnabled()
+        composeTestRule.onNodeWithTag("submitDetails").assertIsDisplayed().assertIsEnabled()
 
         // Allow some time for the UI to update
         composeTestRule.waitForIdle()
@@ -290,10 +343,15 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
                 type = "token"
             )
         )
-        coEvery { createCardPaymentTokenUseCase.invoke("testAccessToken", any()) } returns mockResult
+        coEvery {
+            createCardPaymentTokenUseCase.invoke(
+                "testAccessToken",
+                any()
+            )
+        } returns mockResult
         every { onCardDetailsResult(any()) } just Runs
 
-        composeTestRule.onNodeWithTag("saveCard").assertIsEnabled().performClick()
+        composeTestRule.onNodeWithTag("submitDetails").assertIsEnabled().performClick()
 
         // Trigger the LaunchedEffects
         composeTestRule.waitUntilTimeout(5000)
@@ -364,24 +422,32 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         composeTestRule.onNodeWithText("Card number").assert(hasText("4111 1111 1111 1111 "))
         composeTestRule.onNodeWithText("Expiry").assert(hasText("05/36"))
         composeTestRule.onNodeWithText("CVV").assert(hasText("123"))
-        composeTestRule.onNodeWithTag("saveCard").assertIsDisplayed().assertIsEnabled()
+        composeTestRule.onNodeWithTag("submitDetails").assertIsDisplayed().assertIsEnabled()
 
         // Allow some time for the UI to update
         composeTestRule.waitForIdle()
 
         // For token case
-        val mockError = Exception("Tokenization failed")
+        val mockError = CardDetailsException.TokenisingCardException(
+            error = ApiErrorResponse(
+                status = HttpStatusCode.InternalServerError.value,
+                summary = ErrorSummary(
+                    code = "tokenisation_error",
+                    message = "Tokenization failed"
+                )
+            )
+        )
         val mockResult = Result.failure<TokenDetails>(mockError)
         coEvery { createCardPaymentTokenUseCase.invoke("testAccessToken", any()) } returns mockResult
         every { onCardDetailsResult(any()) } just Runs
 
-        composeTestRule.onNodeWithTag("saveCard").assertIsEnabled().performClick()
+        composeTestRule.onNodeWithTag("submitDetails").assertIsEnabled().performClick()
 
         // Trigger the LaunchedEffects
         composeTestRule.waitForIdle()
 
         verify {
-            onCardDetailsResult(Result.failure(CardDetailsException.UnknownException("_Unknown error")))
+            onCardDetailsResult(Result.failure(mockError))
         }
     }
 }

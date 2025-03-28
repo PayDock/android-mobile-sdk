@@ -70,7 +70,7 @@ fun CopyTextField(
 
 @Preview
 @Composable
-private fun PreviewCopyTextField() {
+internal fun PreviewCopyTextField() {
     SampleTheme {
         CopyTextField(value = "1e092408bsdsh4343232js")
     }

@@ -27,8 +27,7 @@ fun BottomNavigation(navController: NavController) {
     val items = listOf(
         BottomNavItem.Checkout,
         BottomNavItem.Widgets,
-        BottomNavItem.Style,
-        BottomNavItem.Settings,
+        BottomNavItem.Style
     )
 
     NavigationBar(
@@ -83,7 +82,7 @@ fun BottomNavigation(navController: NavController) {
 
 @Composable
 @Preview
-private fun PreviewBottomNavigation() {
+internal fun PreviewBottomNavigation() {
     SampleTheme {
         val navController = rememberNavController()
         BottomNavigation(navController)

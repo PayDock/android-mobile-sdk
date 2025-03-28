@@ -30,10 +30,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.paydock.R
 import com.paydock.core.presentation.extensions.alpha20
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.theme.Theme
@@ -97,7 +95,7 @@ internal fun SdkDropdownListField(
                     )
                     Icon(
                         painter = rememberVectorPainter(Icons.Default.ArrowDropDown),
-                        contentDescription = stringResource(R.string.content_desc_dropdown_arrow),
+                        contentDescription = null,
                         modifier = Modifier.rotate(rotation)
                     )
                 }

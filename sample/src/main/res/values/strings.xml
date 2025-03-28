@@ -1,11 +1,8 @@
 <resources>
-    <string name="app_name">SampleApp</string>
-
     <!-- Bottom Navigation -->
     <string name="nav_checkout">Checkout</string>
     <string name="nav_widgets">Widgets</string>
     <string name="nav_style">Style</string>
-    <string name="nav_settings">Settings</string>
 
     <!-- Titles -->
     <string name="title_my_account">My Account</string>">
@@ -13,14 +10,9 @@
     <!-- Labels -->
     <string name="label_colours">Colours</string>
     <string name="label_design">Design</string>
-    <string name="item_english">English</string>
-    <string name="label_environment">Environment</string>
-    <string name="label_language">Language</string>
-    <string name="label_secret_key">Secret Key</string>
     <string name="label_button_update_styles">Update styles</string>
     <string name="label_text_corner_radius">TextField Corner Radius</string>
     <string name="label_button_corner_radius">Button Corner Radius</string>
-    <string name="label_shadow">Shadow</string>
     <string name="label_border_width">Border Width</string>
     <string name="label_spacing">Spacing</string>
     <string name="label_font">Font</string>

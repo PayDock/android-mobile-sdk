@@ -2,7 +2,7 @@ package com.paydock.feature.afterpay.injection
 
 import com.paydock.feature.afterpay.presentation.viewmodels.AfterpayViewModel
 import com.paydock.feature.wallet.injection.walletModule
-import org.koin.androidx.viewmodel.dsl.viewModelOf
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 /**

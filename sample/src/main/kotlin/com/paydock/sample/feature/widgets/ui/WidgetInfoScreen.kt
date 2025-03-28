@@ -1,14 +1,7 @@
 package com.paydock.sample.feature.widgets.ui
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.paydock.sample.feature.settings.SettingsViewModel
 import com.paydock.sample.feature.widgets.ui.components.AddressDetailsItem
 import com.paydock.sample.feature.widgets.ui.components.AfterpayItem
 import com.paydock.sample.feature.widgets.ui.components.CardDetailsItem
@@ -24,13 +17,9 @@ import com.paydock.sample.feature.widgets.ui.models.WidgetType
 
 @Composable
 fun WidgetInfoScreen(
-    widgetType: WidgetType,
-    settingsViewModel: SettingsViewModel = hiltViewModel(),
+    widgetType: WidgetType
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        val accessToken by settingsViewModel.accessToken.collectAsState()
         val context = LocalContext.current
-
         when (widgetType) {
             WidgetType.ADDRESS_DETAILS -> {
                 AddressDetailsItem(context = context)
@@ -41,11 +30,11 @@ fun WidgetInfoScreen(
             }
 
             WidgetType.CARD_DETAILS -> {
-                CardDetailsItem(context = context, accessToken = accessToken)
+                CardDetailsItem(context = context)
             }
 
             WidgetType.CLICK_TO_PAY -> {
-                ClickToPayItem(context = context, accessToken = accessToken)
+                ClickToPayItem(context = context)
             }
 
             WidgetType.FLY_PAY -> {
@@ -53,7 +42,7 @@ fun WidgetInfoScreen(
             }
 
             WidgetType.GIFT_CARD -> {
-                GiftCardItem(context = context, accessToken = accessToken)
+                GiftCardItem(context = context)
             }
 
             WidgetType.GOOGLE_PAY -> {
@@ -76,5 +65,4 @@ fun WidgetInfoScreen(
                 StandaloneThreeDSItem(context = context)
             }
         }
-    }
 }

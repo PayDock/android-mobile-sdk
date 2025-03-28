@@ -95,7 +95,7 @@ class PayPalDataCollectorUtil private constructor(
      * @param additionalData Additional optional data for collection.
      * @return A string representing collected device data, or null if the collector is not initialized.
      */
-    fun collectDeviceInfo(
+    fun collectDeviceId(
         context: Context,
         hasUserLocationConsent: Boolean = false,
         clientMetadataId: String? = null,

@@ -99,7 +99,7 @@ fun StyleScreen(isDarkMode: Boolean = isSystemInDarkTheme()) {
                     }
                 }
                 FontSection(fontTheme) { fontFamily ->
-                    fontTheme = MobileSDKTheme.FontName.themeFont().copy(fontFamily)
+                    fontTheme = MobileSDKTheme.FontName.themeFont().with(fontFamily)
                 }
                 DesignSection(dimensionsTheme) { themeDimensions ->
                     dimensionsTheme = themeDimensions
@@ -111,7 +111,7 @@ fun StyleScreen(isDarkMode: Boolean = isSystemInDarkTheme()) {
 
 @Preview
 @Composable
-private fun PreviewStyleScreen() {
+internal fun PreviewStyleScreen() {
     SampleTheme {
         StyleScreen()
     }

@@ -45,7 +45,7 @@ internal fun CountryInputAutoComplete(
             } else {
                 Icon(
                     painter = rememberVectorPainter(Icons.Default.ArrowDropDown),
-                    contentDescription = stringResource(id = R.string.content_desc_dropdown_arrow),
+                    contentDescription = null,
                 )
             }
         },

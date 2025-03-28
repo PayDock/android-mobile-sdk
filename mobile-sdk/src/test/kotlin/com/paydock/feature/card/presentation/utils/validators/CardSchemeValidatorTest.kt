@@ -58,7 +58,7 @@ internal class CardSchemeValidatorTest : BaseUnitTest() {
     @Test
     fun testValidateCardNumber() {
         val cardSchemasCollection =
-            readResourceFile("management/success_get_card_schemas_response.json")
+            readResourceFile("card/success_get_card_schemas_response.json")
                 .convertToDataClass<CardSchemasResponse>().asEntity()
 
         assertEquals(

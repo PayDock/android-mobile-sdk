@@ -87,10 +87,10 @@ internal class PayPalDataCollectorUtilTest : BaseUnitTest() {
         // Set the mockPayPalCollector to the payPalDataCollector instance
         val randomMetaDataId = UUID.randomUUID().toString()
         val mockPayPalCollector = mockk<PayPalDataCollectorUtil>(relaxed = true)
-        every { mockPayPalCollector.collectDeviceInfo(any(), any(), any(), any()) } returns randomMetaDataId
+        every { mockPayPalCollector.collectDeviceId(any(), any(), any(), any()) } returns randomMetaDataId
 
         // Call collectDeviceInfo
-        val result = mockPayPalCollector.collectDeviceInfo(context = mockk(), hasUserLocationConsent = true)
+        val result = mockPayPalCollector.collectDeviceId(context = mockk(), hasUserLocationConsent = true)
 
         // Assert that the result is not null and equals the expected value
         assertNotNull(result)
@@ -112,7 +112,7 @@ internal class PayPalDataCollectorUtilTest : BaseUnitTest() {
         // The slot needs to be declared outside the every block
         val slot = slot<PayPalDataCollectorRequest>()
         every {
-            mockPayPalCollector.collectDeviceInfo(context, hasUserLocationConsent, clientMetadataId, additionalData)
+            mockPayPalCollector.collectDeviceId(context, hasUserLocationConsent, clientMetadataId, additionalData)
         } answers {
             val request = PayPalDataCollectorRequest(
                 hasUserLocationConsent = arg(1),
@@ -123,10 +123,10 @@ internal class PayPalDataCollectorUtilTest : BaseUnitTest() {
             randomMetaDataId
         }
 
-        mockPayPalCollector.collectDeviceInfo(context, hasUserLocationConsent, clientMetadataId, additionalData)
+        mockPayPalCollector.collectDeviceId(context, hasUserLocationConsent, clientMetadataId, additionalData)
 
         // Verify that PayPalDataCollectorRequest was called with the correct parameters
-        verify { mockPayPalCollector.collectDeviceInfo(context, hasUserLocationConsent, clientMetadataId, additionalData) }
+        verify { mockPayPalCollector.collectDeviceId(context, hasUserLocationConsent, clientMetadataId, additionalData) }
         val capturedRequest = slot.captured
         assertEquals(hasUserLocationConsent, capturedRequest.hasUserLocationConsent)
         assertEquals(clientMetadataId, capturedRequest.clientMetadataId)

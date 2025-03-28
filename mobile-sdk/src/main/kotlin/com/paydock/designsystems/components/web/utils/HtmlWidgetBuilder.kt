@@ -69,6 +69,10 @@ internal object HtmlWidgetBuilder {
         unsafe {
             raw(
                 """
+                body {
+                    margin: 0;
+                }
+                
                 iframe {
                     border: 0;
                     width: 100%;

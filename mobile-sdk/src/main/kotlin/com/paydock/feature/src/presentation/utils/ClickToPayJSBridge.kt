@@ -12,11 +12,11 @@ import kotlinx.serialization.SerializationException
 /**
  * Bridge class responsible for handling JavaScript messages sent to the Click to Pay widget.
  *
- * @param onResultCallback Callback function to handle the processed Click to Pay events.
+ * @param eventCallback Callback function to handle the processed Click to Pay events.
  */
 internal class ClickToPayJSBridge(
-    onResultCallback: (ClickToPayEvent) -> Unit
-) : SdkJSBridge<ClickToPayEvent>(onResultCallback) {
+    eventCallback: (ClickToPayEvent) -> Unit
+) : SdkJSBridge<ClickToPayEvent>(eventCallback) {
 
     /**
      * Receives and processes messages sent from JavaScript to the Android WebView.
@@ -27,10 +27,10 @@ internal class ClickToPayJSBridge(
     override fun postMessage(eventJson: String) {
         try {
             val event = eventJson.convertToDataClass<ClickToPayEvent>()
-            onResultCallback(event)
+            eventCallback(event)
         } catch (e: SerializationException) {
             // Handle decoding-specific errors by creating a CheckoutErrorEvent with CriticalErrorData
-            onResultCallback(
+            eventCallback(
                 ClickToPayEvent.CheckoutErrorEvent(
                     data = ErrorData.CriticalErrorData(
                         type = EventDataType.CRITICAL_ERROR,
@@ -40,7 +40,7 @@ internal class ClickToPayJSBridge(
             )
         } catch (e: IllegalArgumentException) {
             // Handle invalid input errors by creating a CheckoutErrorEvent with CriticalErrorData
-            onResultCallback(
+            eventCallback(
                 ClickToPayEvent.CheckoutErrorEvent(
                     data = ErrorData.CriticalErrorData(
                         type = EventDataType.CRITICAL_ERROR,

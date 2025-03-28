@@ -110,7 +110,7 @@ fun ColorInputField(
 
 @Preview
 @Composable
-private fun PreviewColorInputField() {
+internal fun PreviewColorInputField() {
     val color = Color.Blue
     SampleTheme {
         ColorInputField(

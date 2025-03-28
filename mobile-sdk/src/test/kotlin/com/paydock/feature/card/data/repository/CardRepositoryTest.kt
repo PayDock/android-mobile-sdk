@@ -42,10 +42,10 @@ class CardRepositoryTest : BaseKoinUnitTest() {
             repository = CardRepositoryImpl(get(), httpMockClient, fileReader)
 
             val request =
-                readResourceFile("token/valid_tokenise_credit_card_request.json")
+                readResourceFile("card/valid_tokenise_credit_card_request.json")
                     .convertToDataClass<CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard>()
             val response =
-                readResourceFile("token/success_card_token_response.json")
+                readResourceFile("card/success_card_token_response.json")
                     .convertToDataClass<CardTokenResponse>()
             val entity = response.asEntity()
             // WHEN - Call the method to be tested
@@ -66,7 +66,7 @@ class CardRepositoryTest : BaseKoinUnitTest() {
             // GIVEN
             repository = CardRepositoryImpl(get(), httpMockClient, fileReader)
             val request =
-                readResourceFile("token/invalid_tokenise_credit_card_request.json")
+                readResourceFile("card/invalid_tokenise_credit_card_request.json")
                     .convertToDataClass<CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard>()
             // WHEN - Call the method to be tested
             val result = repository.createPaymentToken(
@@ -83,10 +83,10 @@ class CardRepositoryTest : BaseKoinUnitTest() {
             // GIVEN
             repository = CardRepositoryImpl(get(), httpMockClient, fileReader)
             val request =
-                readResourceFile("token/valid_tokenise_credit_card_request.json")
+                readResourceFile("card/valid_tokenise_credit_card_request.json")
                     .convertToDataClass<CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard>()
             val response =
-                readResourceFile("token/success_card_token_response.json")
+                readResourceFile("card/success_card_token_response.json")
                     .convertToDataClass<CardTokenResponse>()
             val entity = response.asEntity()
 
@@ -111,7 +111,7 @@ class CardRepositoryTest : BaseKoinUnitTest() {
             // GIVEN
             repository = CardRepositoryImpl(get(), httpMockClient, fileReader)
             val request =
-                readResourceFile("token/invalid_tokenise_credit_card_request.json")
+                readResourceFile("card/invalid_tokenise_credit_card_request.json")
                     .convertToDataClass<CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard>()
             // WHEN - Call the method to be tested
             val tokenisedCardDetailsFlow = repository.createPaymentTokenFlow(
@@ -133,10 +133,10 @@ class CardRepositoryTest : BaseKoinUnitTest() {
             repository = CardRepositoryImpl(get(), httpMockClient, fileReader)
 
             val request =
-                readResourceFile("token/valid_tokenise_gift_card_request.json")
+                readResourceFile("card/valid_tokenise_gift_card_request.json")
                     .convertToDataClass<CreateCardPaymentTokenRequest.TokeniseCardRequest.GiftCard>()
             val response =
-                readResourceFile("token/success_card_token_response.json")
+                readResourceFile("card/success_card_token_response.json")
                     .convertToDataClass<CardTokenResponse>()
             val entity = response.asEntity()
             // WHEN - Call the method to be tested
@@ -157,7 +157,7 @@ class CardRepositoryTest : BaseKoinUnitTest() {
             // GIVEN
             repository = CardRepositoryImpl(get(), httpMockClient, fileReader)
             val request =
-                readResourceFile("token/invalid_tokenise_gift_card_request.json")
+                readResourceFile("card/invalid_tokenise_gift_card_request.json")
                     .convertToDataClass<CreateCardPaymentTokenRequest.TokeniseCardRequest.GiftCard>()
             // WHEN - Call the method to be tested
             val result = repository.createPaymentToken(
@@ -172,7 +172,7 @@ class CardRepositoryTest : BaseKoinUnitTest() {
     fun `GIVEN valid access token WHEN fetching card schemas THEN should succeed with card schemas response list`() =
         testScope.runTest {
             // GIVEN
-            val mockResource = readResourceFile("management/success_get_card_schemas_response.json")
+            val mockResource = readResourceFile("card/success_get_card_schemas_response.json")
             coEvery {
                 fileReader.readFileFromAssets(any())
             } returns mockResource

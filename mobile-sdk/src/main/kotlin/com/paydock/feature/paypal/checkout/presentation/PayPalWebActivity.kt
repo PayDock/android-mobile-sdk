@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,6 +25,7 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.extensions.putMessageExtra
 import com.paydock.core.presentation.extensions.putStatusExtra
 import com.paydock.designsystems.theme.SdkTheme
+import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.paypal.checkout.presentation.components.PayPalWebView
 import com.paydock.feature.paypal.checkout.presentation.utils.CancellationStatus
 import com.paydock.feature.paypal.checkout.presentation.utils.getCallbackUrlExtra
@@ -77,7 +79,7 @@ internal class PayPalWebActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
                     // Apply inner padding to avoid content overlapping with the TopAppBar
-                    Box(modifier = Modifier.padding(innerPadding)) {
+                    Box(modifier = Modifier.padding(innerPadding).background(Theme.colors.background)) {
                         // Stores and remembers the PayPal URL created from the callback URL.
                         val payPalUrl: String by remember(callbackUrl) {
                             mutableStateOf(createPayPalUrl(callbackUrl))

@@ -17,7 +17,7 @@ import com.paydock.feature.src.presentation.ClickToPayWidget
 import com.paydock.sample.BuildConfig
 
 @Composable
-fun ClickToPayItem(context: Context, accessToken: String) {
+fun ClickToPayItem(context: Context) {
     // This is to ensure we hide the WebView once completed
     var hasCompletedFlow: Boolean by remember { mutableStateOf(false) }
     if (!hasCompletedFlow) {
@@ -25,8 +25,8 @@ fun ClickToPayItem(context: Context, accessToken: String) {
         ClickToPayWidget(
             modifier = Modifier
                 .fillMaxWidth(),
-            accessToken = accessToken,
-            serviceId = BuildConfig.GATEWAY_ID_MASTERCARD_SRC,
+            accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
+            serviceId = BuildConfig.GATEWAY_ID_CLICK_TO_PAY,
             meta = ClickToPayMeta(
                 disableSummaryScreen = true
             )

@@ -64,7 +64,8 @@ fun ColoursSection(
             ColourTheme("Placeholder", colorTheme.placeholder),
             ColourTheme("Success", colorTheme.success),
             ColourTheme("Error", colorTheme.error),
-            ColourTheme("Background", colorTheme.background)
+            ColourTheme("Background", colorTheme.background),
+            ColourTheme("Outline", colorTheme.outline)
         )
     }
     // Handles selected item for updating colour
@@ -80,14 +81,14 @@ fun ColoursSection(
     fun updateColorThemeItem(updatedItem: ColourTheme): ThemeColors.ThemeColor {
         // Update the specific color in the ThemeColors.ThemeColor object
         val updatedThemeColor = when (updatedItem.themeName) {
-            "Primary" -> colorTheme.copy(primary = updatedItem.color)
-            "On Primary" -> colorTheme.copy(onPrimary = updatedItem.color)
-            "Text" -> colorTheme.copy(text = updatedItem.color)
-            "Placeholder" -> colorTheme.copy(placeholder = updatedItem.color)
-            "Success" -> colorTheme.copy(success = updatedItem.color)
-            "Error" -> colorTheme.copy(error = updatedItem.color)
-            "Background" -> colorTheme.copy(background = updatedItem.color)
-            "Outline" -> colorTheme.copy(outline = updatedItem.color)
+            "Primary" -> colorTheme.with(primary = updatedItem.color)
+            "On Primary" -> colorTheme.with(onPrimary = updatedItem.color)
+            "Text" -> colorTheme.with(text = updatedItem.color)
+            "Placeholder" -> colorTheme.with(placeholder = updatedItem.color)
+            "Success" -> colorTheme.with(success = updatedItem.color)
+            "Error" -> colorTheme.with(error = updatedItem.color)
+            "Background" -> colorTheme.with(background = updatedItem.color)
+            "Outline" -> colorTheme.with(outline = updatedItem.color)
             else -> colorTheme
         }
         return updatedThemeColor
@@ -102,7 +103,6 @@ fun ColoursSection(
                     scope.launch {
                         selectedItem = updatedItem
                         showBottomSheet = true
-                        //
                     }
                 }
             )

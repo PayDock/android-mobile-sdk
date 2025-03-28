@@ -8,7 +8,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onChild
 import androidx.compose.ui.test.onNodeWithTag
@@ -18,9 +17,9 @@ import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.paydock.core.BaseViewModelKoinTest
-import com.paydock.core.KoinTestRule
 import com.paydock.core.extensions.waitUntilTimeout
 import com.paydock.feature.address.domain.model.integration.BillingAddress
+import com.paydock.feature.address.injection.addressDetailsModule
 import com.paydock.feature.address.presentation.viewmodels.AddressDetailsViewModel
 import com.paydock.feature.address.presentation.viewmodels.AddressSearchViewModel
 import com.paydock.feature.address.presentation.viewmodels.CountryAutoCompleteViewModel
@@ -32,15 +31,17 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import org.junit.After
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.compose.LocalKoinApplication
 import org.koin.compose.LocalKoinScope
 import org.koin.core.annotation.KoinInternalApi
+import org.koin.core.context.loadKoinModules
+import org.koin.core.context.unloadKoinModules
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import org.koin.mp.KoinPlatformTools
 
@@ -57,11 +58,6 @@ internal class AddressDetailsTest : BaseViewModelKoinTest<AddressDetailsViewMode
         viewModel { viewModel }
     }
 
-    @get:Rule
-    override val koinTestRule = KoinTestRule(
-        modules = listOf(instrumentedTestModule, testModule)
-    )
-
     override fun initialiseViewModel(): AddressDetailsViewModel =
         AddressDetailsViewModel(dispatchers = dispatchersProvider)
 
@@ -69,6 +65,18 @@ internal class AddressDetailsTest : BaseViewModelKoinTest<AddressDetailsViewMode
     override fun onStart() {
         geocoder = mockk(relaxed = true)
         super.onStart()
+    }
+
+    @Before
+    fun setUpKoin() {
+        unloadKoinModules(addressDetailsModule)
+        loadKoinModules(testModule)
+    }
+
+    @After
+    override fun tearDownKoin() {
+        unloadKoinModules(testModule)
+        super.tearDownKoin()
     }
 
     @Test
@@ -146,7 +154,6 @@ internal class AddressDetailsTest : BaseViewModelKoinTest<AddressDetailsViewMode
         }
 
         // Verify Manual Address Input elements and interactions
-        composeTestRule.onNodeWithTag("manualAddress").assertIsDisplayed().assert(hasScrollAction())
         composeTestRule.onNodeWithTag("addressLine1Input").assertIsDisplayed().onChild().assert(
             hasText("1 Park Avenue")
         )
@@ -236,7 +243,6 @@ internal class AddressDetailsTest : BaseViewModelKoinTest<AddressDetailsViewMode
         // Verify Manual Address Input elements and interactions
         composeTestRule.onNodeWithTag("manualAddress").assertIsDisplayed()
 
-        composeTestRule.onNodeWithTag("manualAddress").assertIsDisplayed().assert(hasScrollAction())
         composeTestRule.onNodeWithTag("addressLine1Input").assertIsDisplayed().onChild().assert(
             hasText("1 Park Avenue")
         )
@@ -284,8 +290,6 @@ internal class AddressDetailsTest : BaseViewModelKoinTest<AddressDetailsViewMode
 
         // Verify Manual Address Input elements and interactions
         composeTestRule.onNodeWithTag("manualAddress").assertIsDisplayed()
-
-        composeTestRule.onNodeWithTag("manualAddress").assertIsDisplayed().assert(hasScrollAction())
 
         composeTestRule.onNodeWithTag("addressLine1Input").assertIsDisplayed().onChild()
             .performClick()

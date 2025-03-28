@@ -1,5 +1,25 @@
 # Changelog
 
+## [4.0.0] - 2025-03-28
+
+### Changed
+- Split ThreeDSWidget into Integrated3DS and Standalone3DS widgets
+- Updated dependencies and gradle version to `8.8.2`
+- SDK theme colours to be accessibility compliant
+- Content descriptions for implied buttons (Used by accessibility TalkBack)
+- Replaced `HyperlinkText` with `LinkText` composable
+- `PayPalDataCollectorUtil` calling function from `collectDeviceInfo()` to `collectDeviceId`
+
+### Fixed
+- SDK Theming consistency (removed scale factor, device size)
+- `LinkText` tappable area to use `minHeight = 24.dp` for better accessibility
+- Updated network version to `1.3.0` containing fix for different API error response mappings
+
+### Removed
+- `verticalScroll()` from `AddressDetailsWidget`
+- Settings screen from sample app
+- `secretKey` functionality in place of `apiAccessToken`
+
 ## [3.1.0] - 2025-02-04
 
 ### Added

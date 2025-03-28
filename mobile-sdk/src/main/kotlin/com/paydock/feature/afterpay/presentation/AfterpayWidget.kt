@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -15,15 +16,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.viewinterop.AndroidView
 import com.afterpay.android.Afterpay
 import com.afterpay.android.view.AfterpayPaymentButton
 import com.paydock.R
 import com.paydock.core.domain.error.exceptions.AfterpayException
-import com.paydock.core.presentation.ui.preview.LightDarkPreview
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.designsystems.theme.SdkTheme
+import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.afterpay.domain.mapper.integration.mapFromBillingAddress
 import com.paydock.feature.afterpay.domain.mapper.integration.mapFromShippingOption
@@ -58,7 +60,10 @@ fun AfterpayWidget(
     config: AfterpaySDKConfig,
     enabled: Boolean = true,
     token: (onTokenReceived: (String) -> Unit) -> Unit,
-    selectAddress: (address: BillingAddress, provideShippingOptions: (List<AfterpayShippingOption>) -> Unit) -> Unit = { _, _ -> },
+    selectAddress: (
+        address: BillingAddress,
+        provideShippingOptions: (List<AfterpayShippingOption>) -> Unit
+    ) -> Unit = { _, _ -> },
     selectShippingOption: (
         shippingOption: AfterpayShippingOption,
         provideShippingOptionUpdateResult: (AfterpayShippingOptionUpdate?) -> Unit,
@@ -104,7 +109,7 @@ fun AfterpayWidget(
 
     // Render the Afterpay widget UI
     SdkTheme {
-        Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Box(modifier = modifier.background(Theme.colors.background), contentAlignment = Alignment.Center) {
             if (isConfigured) {
                 AfterpayPaymentButtonView(
                     config = config,
@@ -242,9 +247,9 @@ private fun handleUIState(
     }
 }
 
-@LightDarkPreview
+@PreviewLightDark
 @Composable
-private fun PreviewAfterpayWidget() {
+internal fun PreviewAfterpayWidget() {
     SdkTheme {
         AndroidView(factory = { context ->
             AfterpayPaymentButton(context).apply {
