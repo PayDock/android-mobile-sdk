@@ -112,6 +112,7 @@ internal object MobileSDKConstants {
         internal const val ALLOWED_PAYMENT_METHODS_KEY = "allowedPaymentMethods"
         internal const val TOKENIZATION_DATA_KEY = "tokenizationData"
         internal const val TOKEN_KEY = "token"
+        internal const val GATEWAY = "paydock"
 
         /**
          * MIN: Name, country code, and postal code (default).
