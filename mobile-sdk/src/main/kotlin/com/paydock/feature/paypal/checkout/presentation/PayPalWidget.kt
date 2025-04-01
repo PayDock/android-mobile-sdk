@@ -128,7 +128,6 @@ fun PayPalWidget(
                     isLoading = loadingDelegate == null && uiState is PayPalCheckoutUIState.Loading
                 ) {
                     // Use the callback to obtain the token asynchronously
-                    viewModel.setLoadingState()
                     token { obtainedToken ->
                         scope.launch {
                             viewModel.setWalletToken(obtainedToken)

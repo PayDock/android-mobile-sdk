@@ -1,6 +1,6 @@
 # Changelog
 
-## [4.0.0] - 2025-03-26
+## [4.0.0] - 2025-03-28
 
 ### Changed
 - Split ThreeDSWidget into Integrated3DS and Standalone3DS widgets

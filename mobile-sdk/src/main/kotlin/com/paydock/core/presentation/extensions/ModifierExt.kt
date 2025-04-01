@@ -5,6 +5,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
@@ -52,3 +53,25 @@ internal fun Modifier.gradientBackground(colors: List<Color>, angle: Float) = th
         )
     }
 )
+
+/**
+ * Extension function to calculate the scaled size based on the font scale.
+ *
+ * @param baseSize The base size (in Dp) before scaling.
+ * @param fontScale The font scale factor from LocalConfiguration.
+ * @return The scaled size as Dp.
+ */
+fun Dp.scaled(fontScale: Float): Dp {
+    return (this * (1 + (fontScale - 1) * 0.5f))
+}
+
+/**
+ * Extension function to calculate the scaled size based on the font scale.
+ *
+ * @param baseSize The base size (in Float) before scaling.
+ * @param fontScale The font scale factor from LocalConfiguration.
+ * @return The scaled size as Float.
+ */
+fun Float.scaled(fontScale: Float): Float {
+    return this * (1 + (fontScale - 1) * 0.5f)
+}

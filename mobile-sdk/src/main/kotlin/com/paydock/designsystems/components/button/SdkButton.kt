@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.paydock.core.presentation.extensions.alpha40
+import com.paydock.core.presentation.extensions.scaled
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
@@ -69,7 +70,7 @@ internal fun SdkButton(
     val configuration = LocalConfiguration.current
     val fontScale = configuration.fontScale
     // Calculate adjusted height with a scaling factor
-    val adjustedButtonHeight = Theme.dimensions.buttonHeight * (1 + (fontScale - 1) * 0.5f)
+    val adjustedButtonHeight = Theme.dimensions.buttonHeight.scaled(fontScale)
 
     // Decide button appearance based on type
     when (type) {
