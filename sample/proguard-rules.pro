@@ -21,6 +21,7 @@
 #-renamesourcefileattribute SourceFile
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 
+###---------------Begin: proguard configuration for Retrofit  ----------
 
 # Retrofit does reflection on generic parameters. InnerClasses is required to use Signature and
 # EnclosingMethod is required to use InnerClasses.
@@ -70,3 +71,12 @@
 
 # With R8 full mode generic signatures are stripped for classes that are not kept.
 -keep,allowobfuscation,allowshrinking class retrofit2.Response
+
+##---------------End: proguard configuration for Retrofit  ----------
+
+###---------------Begin: proguard configuration for SampleApp  ----------
+
+-keep class com.paydock.sample.core.data.api.dto.** { *; }
+-keep class com.paydock.sample.feature.** { <fields>; }
+
+##---------------End: proguard configuration for SampleApp  ----------
