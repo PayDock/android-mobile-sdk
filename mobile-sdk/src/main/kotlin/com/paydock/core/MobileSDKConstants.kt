@@ -129,6 +129,12 @@ internal object MobileSDKConstants {
         internal const val PAY_PAL_REDIRECT_PARAM_VALUE =
             "${DEFAULT_WEB_URL}paypal/success&native_xo=1"
         internal const val REDIRECT_PARAM_NAME = "redirect_uri"
+        internal const val TOKEN_KEY = "token"
+        internal const val PAYER_ID_KEY = "PayerID"
+        internal const val FLOW_ID_KEY = "flowId"
+        internal const val OP_TYPE_KEY = "opType"
+        internal const val CANCEL_TYPE = "cancel"
+        internal const val COMPLETE_TYPE = "payment"
     }
 
     /**

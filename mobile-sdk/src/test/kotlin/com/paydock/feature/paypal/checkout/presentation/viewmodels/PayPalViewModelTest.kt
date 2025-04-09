@@ -68,17 +68,6 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
     }
 
     @Test
-    fun `createPayPalUrl should return PayPal callback url with redirect url`() = runTest {
-        val callbackUrl = MobileSDKTestConstants.PayPal.MOCK_CALLBACK_URL
-        val resultUrl = viewModel.createPayPalUrl(callbackUrl)
-        assertEquals(
-            "$callbackUrl&${MobileSDKConstants.PayPalConfig.REDIRECT_PARAM_NAME}" +
-                "=${MobileSDKConstants.PayPalConfig.PAY_PAL_REDIRECT_PARAM_VALUE}",
-            resultUrl
-        )
-    }
-
-    @Test
     fun `parsePayPalUrl should extract PayPal data and populate UI state`() = runTest {
         val mockToken = MobileSDKTestConstants.PayPal.MOCK_TOKEN
         val mockPayerId = MobileSDKTestConstants.PayPal.MOCK_PAYER_ID
@@ -88,7 +77,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
         val mockUri = mockk<Uri>()
         every { Uri.parse(any()) } returns mockUri
         every { mockUri.getQueryParameter("token") } returns mockToken
-        every { mockUri.getQueryParameter("PayerID") } returns mockPayerId
+        every { mockUri.getQueryParameter(MobileSDKConstants.PayPalConfig.PAYER_ID_KEY) } returns mockPayerId
 
         viewModel.uiState.test {
             // ACTION
