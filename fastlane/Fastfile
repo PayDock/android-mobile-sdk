@@ -5,6 +5,15 @@ default_platform(:android) # Specifies that this Fastfile is for Android.
 
 platform :android do
 
+    # --- Linting Lanes ---
+
+    desc "Run Detekt formatting and analysis"
+    lane :code_quality do
+        # Run detekt on the entire codebase
+        gradle(task: "detektFormat")
+        gradle(task: "detektAll")
+    end
+
     # --- Version Lanes ---
 
     desc "Update the version name in GitLab CI variables"

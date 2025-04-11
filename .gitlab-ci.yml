@@ -30,6 +30,7 @@ variables:
 # Jobs in subsequent stages run after the previous stage has completed successfully.
 stages:
   - quality # Stage for code quality checks (e.g., linting, static analysis).
+  - code_quality # Stage for linting the codebase using detekt
   - versioning # Stage for incrementing version code for new builds.
   - build # Stage for building the Android application.
   - test # Stage for running unit and integration tests.
@@ -60,6 +61,17 @@ include:
   script:
     - bundle --version # Checks the version of Bundler.
 
+# linting:
+# This job runs linting checks on the codebase using detekt.
+# It extends the '.setup_bundler' template to ensure the Ruby dependencies are set up.
+code_quality:
+  stage: code_quality # Runs in the 'code_quality' stage.
+  extends: .setup_bundler # Inherits configurations (like Bundler setup) from the '.setup_bundler' template.
+  script:
+    - bundle exec fastlane code_quality # Executes the 'formatting, style, issues' lane in Fastlane.
+
+# increment_version:
+# This job increments the version code for the build and deployment.
 increment_version:
   stage: versioning # Specifies that this job runs in the '.pre' stage, which should be defined before other stages.
   extends: .setup_bundler # Inherits configurations (like Bundler setup) from the '.setup_bundler' template.
@@ -103,6 +115,7 @@ pull_bin_file:
       - sample/build/outputs/apk/* # Makes the APK files available as artifacts.
       - bin_schema/ # Makes the 'bin_schema/' directory available as an artifact.
   dependencies:
+    - code_quality # Specifies the dependency on the 'linting' job
     - pull_bin_file # Specifies the dependency on the 'pull_bin_file' job
   rules:
     - when: on_success # Run only when the previous stage has passed
@@ -116,7 +129,7 @@ build_staging:
     # Fastfile Reference: This lane is defined in the Fastfile and handles the actual build process.
   environment:
     name: staging
-  needs: [pull_bin_file]
+  needs: [code_quality, pull_bin_file]
   rules:
     - if: $CI_COMMIT_BRANCH # Run on all branches
       when: on_success
@@ -130,7 +143,7 @@ build_sandbox:
     # Fastfile Reference: This lane is defined in the Fastfile and handles the actual build process.
   environment:
     name: sandbox
-  needs: [pull_bin_file, increment_version]
+  needs: [code_quality, pull_bin_file, increment_version]
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run automatically on merge to main
       when: on_success
@@ -144,7 +157,7 @@ build_prod:
     # Fastfile Reference: This lane is defined in the Fastfile and handles the actual build process.
   environment:
     name: production
-  needs: [pull_bin_file, increment_version]
+  needs: [code_quality, pull_bin_file, increment_version]
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run automatically on merge to main
       when: on_success
