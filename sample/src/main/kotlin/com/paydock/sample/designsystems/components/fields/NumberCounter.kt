@@ -29,7 +29,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.designsystems.theme.SampleTheme
-import com.paydock.sample.designsystems.theme.Theme
 
 @Composable
 fun NumberCounter(
@@ -47,8 +46,8 @@ fun NumberCounter(
     ) {
         Text(
             text = title,
-            style = Theme.typography.label,
-            color = Theme.colors.onBackground
+//            style = Theme.typography.label,
+//            color = Theme.colors.onBackground
         )
         Row(
             modifier = Modifier
@@ -67,11 +66,11 @@ fun NumberCounter(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 keyboardActions = KeyboardActions(onDone = { /* Handle keyboard done action if needed */ }),
                 modifier = Modifier.weight(1f),
-                textStyle = Theme.typography.body,
+//                textStyle = Theme.typography.body,
                 shape = RectangleShape,
                 colors = TextFieldDefaults.colors(
-                    focusedTextColor = Theme.colors.onBackground,
-                    unfocusedTextColor = Theme.colors.onBackground,
+//                    focusedTextColor = Theme.colors.onBackground,
+//                    unfocusedTextColor = Theme.colors.onBackground,
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White,
                     focusedIndicatorColor = Color.Transparent,

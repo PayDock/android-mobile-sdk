@@ -11,20 +11,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.paydock.sample.designsystems.theme.Border
-import com.paydock.sample.designsystems.theme.Theme
 
 @Composable
 fun TabButton(
     isSelected: Boolean,
-    selectedBorderColor: Color,
-    selectedBackgroundColor: Color,
+    selectedBorderColor: Color = MaterialTheme.colorScheme.primary,
+    selectedBackgroundColor: Color = MaterialTheme.colorScheme.surface,
     onClick: () -> Unit,
     content: @Composable RowScope.() -> Unit,
 ) {
@@ -35,12 +34,12 @@ fun TabButton(
             .border(
                 border = BorderStroke(
                     width = if (isSelected) 3.dp else 1.dp,
-                    color = if (isSelected) selectedBorderColor else Border
+                    color = if (isSelected) selectedBorderColor else MaterialTheme.colorScheme.outline
                 ),
                 shape = RoundedCornerShape(size = 4.dp)
             )
             .background(
-                color = if (isSelected) selectedBackgroundColor else Theme.colors.tertiaryContainer,
+                color = if (isSelected) selectedBackgroundColor else MaterialTheme.colorScheme.surface,
                 shape = RoundedCornerShape(size = 4.dp)
             )
             .selectable(

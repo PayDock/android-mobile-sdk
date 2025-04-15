@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CopyAll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -20,7 +21,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import com.paydock.sample.designsystems.theme.SampleTheme
-import com.paydock.sample.designsystems.theme.Theme
 
 @Composable
 fun CopyTextField(
@@ -28,7 +28,7 @@ fun CopyTextField(
     value: String,
     readOnly: Boolean = true,
     onValueChange: (String) -> Unit = { /* Read-only default, do nothing */ },
-    textStyle: TextStyle = Theme.typography.body,
+    textStyle: TextStyle = MaterialTheme.typography.bodyMedium,
     trailingIconColor: Color = Color.Black,
 ) {
     val context = LocalContext.current
@@ -40,10 +40,10 @@ fun CopyTextField(
         value = value,
         onValueChange = { onValueChange(value) },
         readOnly = readOnly,
-        textStyle = textStyle,
+//        textStyle = textStyle,
         colors = TextFieldDefaults.colors(
-            focusedTextColor = Theme.colors.onBackground,
-            unfocusedTextColor = Theme.colors.onBackground,
+//            focusedTextColor = Theme.colors.onBackground,
+//            unfocusedTextColor = Theme.colors.onBackground,
             disabledTextColor = Color.Transparent,
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,

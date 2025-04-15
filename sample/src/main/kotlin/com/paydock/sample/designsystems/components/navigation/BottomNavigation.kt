@@ -20,7 +20,6 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.paydock.sample.designsystems.theme.SampleTheme
-import com.paydock.sample.designsystems.theme.Theme
 
 @Composable
 fun BottomNavigation(navController: NavController) {
@@ -31,8 +30,8 @@ fun BottomNavigation(navController: NavController) {
     )
 
     NavigationBar(
-        containerColor = Theme.colors.primaryContainer,
-        contentColor = Theme.colors.onPrimaryContainer,
+//        containerColor = Theme.colors.primaryContainer,
+//        contentColor = Theme.colors.onPrimaryContainer,
     ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination
@@ -49,18 +48,18 @@ fun BottomNavigation(navController: NavController) {
                 label = {
                     Text(
                         text = stringResource(id = item.label),
-                        style = Theme.typography.caption,
+//                        style = Theme.typography.caption,
                         fontWeight = FontWeight(500),
                         textAlign = TextAlign.Center,
-                        color = Theme.colors.onPrimaryContainer
+//                        color = Theme.colors.onPrimaryContainer
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = Theme.colors.primary,
-                    selectedIconColor = Theme.colors.onPrimaryContainer,
-                    selectedTextColor = Theme.colors.onPrimaryContainer,
-                    unselectedTextColor = Theme.colors.onPrimaryContainer,
-                    unselectedIconColor = Theme.colors.onPrimaryContainer
+//                    indicatorColor = Theme.colors.primary,
+//                    selectedIconColor = Theme.colors.onPrimaryContainer,
+//                    selectedTextColor = Theme.colors.onPrimaryContainer,
+//                    unselectedTextColor = Theme.colors.onPrimaryContainer,
+//                    unselectedIconColor = Theme.colors.onPrimaryContainer
                 ),
                 alwaysShowLabel = true,
                 selected = selected,

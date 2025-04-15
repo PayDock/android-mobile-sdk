@@ -29,7 +29,6 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.paydock.sample.designsystems.theme.Theme
 import kotlinx.coroutines.flow.filter
 
 /**
@@ -61,10 +60,10 @@ fun DropdownListField(
                 onValueChange = {},
                 interactionSource = interactionSource,
                 readOnly = true,
-                textStyle = Theme.typography.body,
+//                textStyle = Theme.typography.body,
                 colors = TextFieldDefaults.colors(
-                    focusedTextColor = Theme.colors.onBackground,
-                    unfocusedTextColor = Theme.colors.onBackground,
+//                    focusedTextColor = Theme.colors.onBackground,
+//                    unfocusedTextColor = Theme.colors.onBackground,
                     disabledTextColor = Color.Transparent,
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White,
@@ -107,14 +106,14 @@ fun DropdownListField(
                                     text = {
                                         Text(
                                             text = item,
-                                            style = Theme.typography.body,
-                                            color = Theme.colors.onPrimary
+//                                            style = Theme.typography.body,
+//                                            color = Theme.colors.onPrimary
                                         )
                                     },
                                     modifier = Modifier
                                         .height(itemHeight)
-                                        .width(boxWidth)
-                                        .background(if (item == selected) Theme.colors.primary else Color.White),
+                                        .width(boxWidth),
+//                                        .background(if (item == selected) Theme.colors.primary else Color.White),
                                     onClick = {
                                         expanded = false
                                         onItemSelected(item)

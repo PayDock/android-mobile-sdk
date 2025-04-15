@@ -19,7 +19,6 @@ import com.paydock.sample.core.AMOUNT
 import com.paydock.sample.core.AU_COUNTRY_CODE
 import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.designsystems.components.button.AppButton
-import com.paydock.sample.designsystems.theme.Theme
 import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.Currency
@@ -33,7 +32,9 @@ fun CheckoutBaseScreen(onCheckoutButtonClick: () -> Unit) {
     val formattedProductAmount = formatCurrency(productAmount)
 
     Column {
-        HorizontalDivider(color = Theme.colors.outlineVariant)
+        HorizontalDivider(
+//            color = Theme.colors.outlineVariant
+        )
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -61,14 +62,19 @@ fun CheckoutBaseScreen(onCheckoutButtonClick: () -> Unit) {
             TotalRowView(
                 title = "Subtotal",
                 value = formattedSubtotal,
-                color = Theme.colors.outlineVariant
+//                color = Theme.colors.outlineVariant
             )
-            TotalRowView(title = "Shipping", value = "Free", color = Theme.colors.outlineVariant)
-            HorizontalDivider(color = Theme.colors.outlineVariant)
+            TotalRowView(
+                title = "Shipping", value = "Free",
+//                color = Theme.colors.outlineVariant
+            )
+            HorizontalDivider(
+//                color = Theme.colors.outlineVariant
+            )
             TotalRowView(
                 title = "Total",
                 value = formattedSubtotal,
-                color = Theme.colors.onBackground
+//                color = Theme.colors.onBackground
             )
             AppButton(
                 modifier = Modifier.fillMaxWidth(),

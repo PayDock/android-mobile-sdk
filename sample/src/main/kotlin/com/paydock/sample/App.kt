@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.compose.ui.graphics.Color
 import com.paydock.MobileSDK
 import com.paydock.MobileSDKTheme
-import com.paydock.sample.designsystems.theme.typography.AcidGroteskNormal
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
@@ -39,9 +38,6 @@ class App : Application() {
                 textFieldCornerRadius = 4,
                 buttonCornerRadius = 4,
                 borderWidth = 1
-            ),
-            font = MobileSDKTheme.FontName.themeFont(
-                fonts = listOf(AcidGroteskNormal)
             )
         )
         MobileSDK.Builder()

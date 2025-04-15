@@ -18,7 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.theme.SampleTheme
-import com.paydock.sample.designsystems.theme.Theme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,15 +34,15 @@ fun CenterAppTopBar(
                 Text(
                     modifier = modifier,
                     text = title,
-                    style = Theme.typography.navTitle,
-                    color = Theme.colors.onPrimaryContainer,
+//                    style = Theme.typography.navTitle,
+//                    color = Theme.colors.onPrimaryContainer,
                     fontWeight = FontWeight(590)
                 )
             },
             modifier = modifier,
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = Theme.colors.primaryContainer,
-                titleContentColor = Theme.colors.onPrimaryContainer
+//                containerColor = Theme.colors.primaryContainer,
+//                titleContentColor = Theme.colors.onPrimaryContainer
             ),
             navigationIcon = {
                 onBackButtonClick?.let { clickListener ->
@@ -51,7 +50,7 @@ fun CenterAppTopBar(
                         Icon(
                             imageVector = Icons.AutoMirrored.Default.ArrowBack,
                             contentDescription = "back",
-                            tint = Theme.colors.onPrimaryContainer
+//                            tint = Theme.colors.onPrimaryContainer
                         )
                     }
                 }
@@ -67,15 +66,15 @@ fun CenterAppTopBar(
             },
             modifier = modifier,
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = Theme.colors.primaryContainer,
-                titleContentColor = Theme.colors.onPrimaryContainer
+//                containerColor = Theme.colors.primaryContainer,
+//                titleContentColor = Theme.colors.onPrimaryContainer
             ),
             actions = {
                 IconButton(onClick = { onActionButtonClick?.invoke() }) {
                     Icon(
                         imageVector = Icons.Default.Person,
                         contentDescription = "Profile",
-                        tint = Theme.colors.onPrimaryContainer
+//                        tint = Theme.colors.onPrimaryContainer
                     )
                 }
             },
@@ -85,7 +84,7 @@ fun CenterAppTopBar(
                         Icon(
                             imageVector = Icons.AutoMirrored.Default.ArrowBack,
                             contentDescription = "back",
-                            tint = Theme.colors.onPrimaryContainer
+//                            tint = Theme.colors.onPrimaryContainer
                         )
                     }
                 }

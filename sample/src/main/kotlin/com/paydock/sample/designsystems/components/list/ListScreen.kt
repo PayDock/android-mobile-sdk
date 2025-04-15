@@ -8,11 +8,12 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.paydock.sample.designsystems.theme.Theme
 
 @Composable
 fun <T : DisplayableListItem> ListScreen(items: List<T>, onItemClick: (T) -> Unit) {
-    HorizontalDivider(color = Theme.colors.outlineVariant)
+    HorizontalDivider(
+//        color = Theme.colors.outlineVariant
+    )
     LazyColumn(
         modifier = Modifier.fillMaxSize()
     ) {

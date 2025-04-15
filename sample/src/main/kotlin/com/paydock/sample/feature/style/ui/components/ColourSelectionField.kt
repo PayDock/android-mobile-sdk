@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,7 +22,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.core.extensions.toHexCode
 import com.paydock.sample.designsystems.theme.SampleTheme
-import com.paydock.sample.designsystems.theme.Theme
 import com.paydock.sample.feature.style.models.ColourTheme
 
 @Composable
@@ -37,8 +37,8 @@ fun ColourSelectionField(
     ) {
         Text(
             text = colourTheme.themeName,
-            style = Theme.typography.label,
-            color = Theme.colors.onBackground
+//            style = Theme.typography.label,
+//            color = Theme.colors.onBackground
         )
         Row(
             modifier = Modifier
@@ -56,14 +56,14 @@ fun ColourSelectionField(
             ) {
                 Text(
                     text = colourTheme.color.toHexCode(),
-                    style = Theme.typography.label.copy(color = Theme.colors.onBackground)
+//                    style = Theme.typography.label.copy(color = Theme.colors.onBackground)
                 )
             }
             Box(
                 modifier = Modifier
                     .width(20.dp)
                     .height(20.dp)
-                    .border(1.dp, Theme.colors.outline)
+                    .border(1.dp, MaterialTheme.colorScheme.outline)
                     .background(
                         color = colourTheme.color,
                         shape = RectangleShape

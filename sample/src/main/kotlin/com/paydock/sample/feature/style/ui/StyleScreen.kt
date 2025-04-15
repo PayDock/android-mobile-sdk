@@ -25,7 +25,6 @@ import com.paydock.sample.R
 import com.paydock.sample.core.presentation.ui.layout.ColumnWithSeparators
 import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.theme.SampleTheme
-import com.paydock.sample.designsystems.theme.Theme
 import com.paydock.sample.feature.style.ui.components.ColoursSection
 import com.paydock.sample.feature.style.ui.components.DesignSection
 import com.paydock.sample.feature.style.ui.components.FontSection
@@ -106,7 +105,9 @@ fun StyleScreen(isDarkMode: Boolean = isSystemInDarkTheme()) {
                 }
             })
     }
-    HorizontalDivider(color = Theme.colors.outlineVariant)
+    HorizontalDivider(
+//        color = Theme.colors.outlineVariant
+    )
 }
 
 @Preview

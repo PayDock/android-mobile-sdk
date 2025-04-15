@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.paydock.designsystems.components.sheet.SdkBottomSheet
 import com.paydock.feature.wallet.domain.model.integration.WalletType
-import com.paydock.sample.designsystems.theme.Theme
 import com.paydock.sample.feature.checkout.CheckoutUIState
 import com.paydock.sample.feature.checkout.StandaloneCheckoutViewModel
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
@@ -47,7 +46,7 @@ fun CheckoutBottomSheet(
         )
     var selectedTab by remember { mutableStateOf(supportedPaymentMethods.first()) }
     SdkBottomSheet(
-        containerColor = Theme.colors.surface,
+//        containerColor = Theme.colors.surface,
         bottomSheetState = bottomSheetState,
         onDismissRequest = onDismissRequest
     ) {

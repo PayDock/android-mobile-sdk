@@ -16,7 +16,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.designsystems.components.containers.TitleSection
 import com.paydock.sample.designsystems.theme.SampleTheme
-import com.paydock.sample.designsystems.theme.Theme
 import com.paydock.sample.feature.checkout.models.CheckoutType
 
 @Composable
@@ -38,7 +37,7 @@ fun ListRow(
             imageVector = Icons.Filled.ChevronRight,
             contentDescription = "Chevron",
             modifier = Modifier.size(40.dp),
-            tint = Theme.colors.onBackground
+//            tint = Theme.colors.onBackground
         )
     }
 }

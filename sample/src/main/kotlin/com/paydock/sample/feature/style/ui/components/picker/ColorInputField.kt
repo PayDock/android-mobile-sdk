@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -27,7 +28,6 @@ import com.paydock.sample.core.extensions.color
 import com.paydock.sample.core.extensions.isValidHexCode
 import com.paydock.sample.core.extensions.toHexCode
 import com.paydock.sample.designsystems.theme.SampleTheme
-import com.paydock.sample.designsystems.theme.Theme
 
 @Composable
 fun ColorInputField(
@@ -52,7 +52,7 @@ fun ColorInputField(
         colors = OutlinedTextFieldDefaults.colors(
             disabledBorderColor = Color.LightGray
         ),
-        textStyle = Theme.typography.label.copy(color = Theme.colors.onBackground),
+//        textStyle = Theme.typography.label.copy(color = Theme.colors.onBackground),
         value = color.replace("#", ""),
         supportingText = {
             if (showCounter) {
@@ -76,7 +76,10 @@ fun ColorInputField(
             onTextColorChanged(hexValue)
         },
         prefix = {
-            Text(text = "#", style = Theme.typography.label)
+            Text(
+                text = "#",
+//                style = Theme.typography.label
+            )
         },
         trailingIcon = {
             if (isValid.value) {
@@ -89,7 +92,7 @@ fun ColorInputField(
                 Icon(
                     imageVector = Icons.Filled.Clear,
                     contentDescription = "Color Invalid",
-                    tint = Theme.colors.error
+                    tint = MaterialTheme.colorScheme.error
                 )
             }
         },

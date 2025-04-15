@@ -25,7 +25,7 @@ import com.paydock.ThemeFont
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
 import com.paydock.sample.designsystems.components.fields.DropdownListField
-import com.paydock.sample.designsystems.theme.typography.AcidGroteskFontFamily
+import com.paydock.sample.designsystems.theme.appFontFamily
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -59,7 +59,7 @@ fun FontSection(fontTheme: ThemeFont, onFontUpdated: (FontFamily) -> Unit) {
         ) {
             selectedFontName = it
             val selectedFont = getSelectedSystemFont(it)
-            selectedFontFamily = selectedFont?.toFontFamily() ?: AcidGroteskFontFamily
+            selectedFontFamily = selectedFont?.toFontFamily() ?: appFontFamily
             onFontUpdated(selectedFontFamily)
         }
 

@@ -1,7 +1,6 @@
 package com.paydock.sample.designsystems.components.button
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.designsystems.theme.SampleTheme
-import com.paydock.sample.designsystems.theme.Theme
 
 @Composable
 internal fun AppButton(
@@ -42,8 +40,8 @@ private fun PrimaryButton(
     content: @Composable RowScope.() -> Unit,
 ) {
     val colors = ButtonDefaults.buttonColors(
-        disabledContainerColor = Theme.colors.primary.copy(alpha = 0.4f),
-        disabledContentColor = Theme.colors.onSurface
+//        disabledContainerColor = Theme.colors.primary.copy(alpha = 0.4f),
+//        disabledContentColor = Theme.colors.onSurface
     )
     Button(
         onClick = onClick,
@@ -52,7 +50,7 @@ private fun PrimaryButton(
         content = content,
         colors = colors,
         shape = RoundedCornerShape(4.dp),
-        contentPadding = PaddingValues(vertical = Theme.dimensions.medium2)
+//        contentPadding = PaddingValues(vertical = Theme.dimensions.medium2)
     )
 }
 
@@ -61,14 +59,14 @@ private fun RowScope.ButtonContent(text: String, isLoading: Boolean) {
     Crossfade(targetState = isLoading, label = "coss_fade") {
         if (it) {
             CircularProgressIndicator(
-                color = Theme.colors.onSurface,
+//                color = Theme.colors.onSurface,
                 modifier = Modifier.size(24.dp),
                 strokeWidth = 1.dp
             )
         } else {
             Text(
                 text = text,
-                style = Theme.typography.button
+//                style = Theme.typography.button
             )
         }
     }

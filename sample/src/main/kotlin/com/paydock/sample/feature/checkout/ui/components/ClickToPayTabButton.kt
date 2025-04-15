@@ -16,31 +16,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.theme.SampleTheme
-import com.paydock.sample.designsystems.theme.Theme
-import com.paydock.sample.designsystems.theme.typography.FontFamily
 
 @Composable
 fun ClickToPayTabButton(isSelected: Boolean, onClick: () -> Unit) {
-    val selectedColor = Theme.colors.primary
+//    val selectedColor = Theme.colors.primary
     TabButton(
         isSelected = isSelected,
-        selectedBorderColor = selectedColor,
+//        selectedBorderColor = selectedColor,
         selectedBackgroundColor = Color.White,
         onClick = onClick
     ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_src),
             contentDescription = null,
-            tint = if (isSelected) Theme.colors.primary else Theme.colors.onSurface
+//            tint = if (isSelected) Theme.colors.primary else Theme.colors.onSurface
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = stringResource(id = R.string.label_click_to_pay),
-            color = if (isSelected) selectedColor else Theme.colors.onSurface,
+//            color = if (isSelected) selectedColor else Theme.colors.onSurface,
             style = TextStyle(
                 fontSize = 14.sp,
                 lineHeight = 16.8.sp,
-                fontFamily = FontFamily,
+//                fontFamily = FontFamily,
                 fontWeight = FontWeight(500)
             )
         )
