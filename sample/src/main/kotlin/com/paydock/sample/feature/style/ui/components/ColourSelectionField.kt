@@ -8,9 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,8 +36,7 @@ fun ColourSelectionField(
     ) {
         Text(
             text = colourTheme.themeName,
-//            style = Theme.typography.label,
-//            color = Theme.colors.onBackground
+            style = MaterialTheme.typography.labelMedium
         )
         Row(
             modifier = Modifier
@@ -49,21 +47,17 @@ fun ColourSelectionField(
         ) {
             Box(
                 modifier = Modifier
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
                     .padding(14.dp)
                     .align(Alignment.CenterVertically)
                     .weight(1f)
             ) {
-                Text(
-                    text = colourTheme.color.toHexCode(),
-//                    style = Theme.typography.label.copy(color = Theme.colors.onBackground)
-                )
+                Text(text = colourTheme.color.toHexCode())
             }
             Box(
                 modifier = Modifier
-                    .width(20.dp)
-                    .height(20.dp)
-                    .border(1.dp, MaterialTheme.colorScheme.outline)
+                    .size(20.dp)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     .background(
                         color = colourTheme.color,
                         shape = RectangleShape
@@ -77,6 +71,6 @@ fun ColourSelectionField(
 @Composable
 internal fun PreviewColorSelectionField() {
     SampleTheme() {
-        PreviewColorSelectionField()
+        ColourSelectionField(colourTheme = ColourTheme("Test", Color.Red), onItemClicked = {})
     }
 }

@@ -73,10 +73,7 @@ fun MainScreenView() {
             CenterAppTopBar(
                 title = actionBarDetails.title,
                 showTitle = actionBarDetails.showTitle,
-                onActionButtonClick = {
-                    // Navigate to my account screen
-                    navController.navigate("account")
-                },
+                onActionButtonClick = { navController.navigate("account") },
                 onBackButtonClick = if (actionBarDetails.showBackButton) {
                     { navController.navigateUp() }
                 } else null

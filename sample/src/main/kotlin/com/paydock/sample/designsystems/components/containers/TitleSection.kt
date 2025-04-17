@@ -3,12 +3,11 @@ package com.paydock.sample.designsystems.components.containers
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -28,8 +27,7 @@ fun SectionTitle(title: String) {
     Text(
         modifier = Modifier.fillMaxWidth(),
         text = title,
-//        style = Theme.typography.cardTitle,
-//        color = Theme.colors.onBackground
+        style = MaterialTheme.typography.titleMedium
     )
 }
 
@@ -38,8 +36,7 @@ fun SubSectionTitle(subTitle: String) {
     Text(
         modifier = Modifier.fillMaxWidth(),
         text = subTitle,
-//        style = Theme.typography.body,
-        color = Color(0xFF8C8C8C),
-        fontWeight = FontWeight(400)
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }

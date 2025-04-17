@@ -5,15 +5,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.paydock.sample.R
-import com.paydock.sample.designsystems.theme.PayPalYellow
 import com.paydock.sample.designsystems.theme.SampleTheme
 
 @Composable
 fun PayPalTabButton(isSelected: Boolean, onClick: () -> Unit) {
     TabButton(
         isSelected = isSelected,
-        selectedBorderColor = PayPalYellow,
-        selectedBackgroundColor = PayPalYellow,
         onClick = onClick
     ) {
         Image(

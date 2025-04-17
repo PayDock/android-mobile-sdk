@@ -36,8 +36,7 @@ fun ListRow(
         Icon(
             imageVector = Icons.Filled.ChevronRight,
             contentDescription = "Chevron",
-            modifier = Modifier.size(40.dp),
-//            tint = Theme.colors.onBackground
+            modifier = Modifier.size(40.dp)
         )
     }
 }

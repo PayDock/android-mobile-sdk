@@ -38,6 +38,8 @@ fun FontSection(fontTheme: ThemeFont, onFontUpdated: (FontFamily) -> Unit) {
     val context: Context = LocalContext.current
     var selectedFontFamily by remember { mutableStateOf(fontTheme.familyName) }
     var selectedFontName by remember { mutableStateOf("") }
+    // Initial loading state
+    var isLoading by remember { mutableStateOf(true) }
 
     // State to hold the list of fonts
     val fontsState = remember { mutableStateListOf<String>() }
@@ -50,17 +52,23 @@ fun FontSection(fontTheme: ThemeFont, onFontUpdated: (FontFamily) -> Unit) {
             ?: if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 getSelectedSystemFontName(selectedFontFamily) ?: ""
             } else ""
+        isLoading = false //Loading finished
     }
     SectionContainer(title = stringResource(R.string.label_font)) {
-        DropdownListField(
-            modifier = Modifier.fillMaxWidth(),
-            items = fontsState,
-            selected = selectedFontName
-        ) {
-            selectedFontName = it
-            val selectedFont = getSelectedSystemFont(it)
-            selectedFontFamily = selectedFont?.toFontFamily() ?: appFontFamily
-            onFontUpdated(selectedFontFamily)
+        // Show a loading indicator or skip the DropdownListField
+        if (isLoading) {
+            Text("Loading Fonts") // Or any loading indicator
+        } else {
+            DropdownListField(
+                modifier = Modifier.fillMaxWidth(),
+                items = fontsState,
+                selected = selectedFontName
+            ) {
+                selectedFontName = it
+                val selectedFont = getSelectedSystemFont(it)
+                selectedFontFamily = selectedFont?.toFontFamily() ?: appFontFamily
+                onFontUpdated(selectedFontFamily)
+            }
         }
 
         Text(fontFamily = selectedFontFamily, text = "Sample Text")
@@ -73,20 +81,8 @@ fun getSelectedSystemFont(fontName: String): Font? =
 
 @RequiresApi(Build.VERSION_CODES.Q)
 fun getSystemFonts(): List<android.graphics.fonts.Font> {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        // Then we get any device system fonts
-        SystemFonts.getAvailableFonts().mapNotNull {
-            it
-        }
-    } else {
-        val path = "/system/fonts"
-        val file = File(path)
-        val fontFamily: Array<out File>? = file.listFiles()
-
-        fontFamily?.map { fontFile ->
-            android.graphics.fonts.Font.Builder(fontFile).build()
-        } ?: listOf()
-    }
+    // Then we get any device system fonts
+    return SystemFonts.getAvailableFonts().mapNotNull { it }
 }
 
 fun getSystemFontFiles(): List<File> {

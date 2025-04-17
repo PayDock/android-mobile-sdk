@@ -46,7 +46,6 @@ fun CheckoutBottomSheet(
         )
     var selectedTab by remember { mutableStateOf(supportedPaymentMethods.first()) }
     SdkBottomSheet(
-//        containerColor = Theme.colors.surface,
         bottomSheetState = bottomSheetState,
         onDismissRequest = onDismissRequest
     ) {

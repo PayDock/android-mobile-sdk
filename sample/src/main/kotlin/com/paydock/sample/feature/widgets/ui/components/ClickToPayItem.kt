@@ -22,6 +22,7 @@ fun ClickToPayItem(context: Context) {
     var hasCompletedFlow: Boolean by remember { mutableStateOf(false) }
     if (!hasCompletedFlow) {
         // Test Cards: https://developer.mastercard.com/unified-checkout-solutions/documentation/testing/test_cases/click_to_pay_case/#test-cards
+        // Test Cards (MPGS): https://ap-gateway.mastercard.com/api/documentation/integrationGuidelines/supportedFeatures/testAndGoLive.html?locale=en_US
         ClickToPayWidget(
             modifier = Modifier
                 .fillMaxWidth(),

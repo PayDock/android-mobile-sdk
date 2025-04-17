@@ -9,12 +9,13 @@ import android.graphics.PorterDuff
 import android.graphics.RectF
 import android.graphics.Shader
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +34,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.createBitmap
 import androidx.core.graphics.toRect
 import com.paydock.sample.core.extensions.color
 import com.paydock.sample.designsystems.theme.SampleTheme
@@ -65,14 +67,14 @@ fun SatValPanel(
     Canvas(
         modifier = Modifier
             .size(300.dp)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
             .emitDragGesture(interactionSource)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(MaterialTheme.shapes.medium)
     ) {
         val cornerRadius = 12.dp.toPx()
         val satValSize = size
 
-        val bitmap =
-            Bitmap.createBitmap(size.width.toInt(), size.height.toInt(), Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(size.width.toInt(), size.height.toInt())
         val canvas = Canvas(bitmap)
         val satValPanel = RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat())
 

@@ -3,7 +3,6 @@ package com.paydock.sample.feature.checkout.ui.components
 import androidx.compose.foundation.Image
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -16,12 +15,11 @@ fun FlyPayTabButton(isSelected: Boolean, onClick: () -> Unit) {
     TabButton(
         isSelected = isSelected,
         selectedBorderColor = FlyPayBlue,
-        selectedBackgroundColor = FlyPayBlue,
         onClick = onClick
     ) {
         Image(
             painter = painterResource(id = R.drawable.ic_flypay),
-            colorFilter = ColorFilter.tint(if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface),
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
             contentDescription = null
         )
     }

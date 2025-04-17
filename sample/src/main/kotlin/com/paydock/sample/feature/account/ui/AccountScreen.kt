@@ -73,8 +73,6 @@ fun AccountScreen(viewModel: AccountViewModel = hiltViewModel()) {
     ) {
         Column {
             Text(
-//                color = Theme.colors.onSurface,
-//                style = Theme.typography.sectionHeader,
                 text = stringResource(R.string.label_saved_payment_method),
                 modifier = Modifier.padding(bottom = 24.dp)
             )
@@ -97,7 +95,6 @@ fun AccountScreen(viewModel: AccountViewModel = hiltViewModel()) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         modifier = Modifier.padding(bottom = 24.dp),
-//                        style = Theme.typography.cardDescription,
                         text = stringResource(R.string.label_link_paypal_desc)
                     )
                     PayPalSavePaymentSourceWidget(
@@ -118,8 +115,7 @@ fun AccountScreen(viewModel: AccountViewModel = hiltViewModel()) {
             HorizontalDivider(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 24.dp),
-//                color = Theme.colors.outlineVariant
+                    .padding(vertical = 24.dp)
             )
         }
     }

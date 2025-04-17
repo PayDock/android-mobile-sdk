@@ -11,7 +11,7 @@ import androidx.navigation.navArgument
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.list.ListScreen
 import com.paydock.sample.feature.account.ui.AccountScreen
-import com.paydock.sample.feature.checkout.ui.CheckoutStandalone
+import com.paydock.sample.feature.checkout.ui.CheckoutStandaloneScreen
 import com.paydock.sample.feature.style.ui.StyleScreen
 import com.paydock.sample.feature.widgets.ui.WidgetInfoScreen
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
@@ -20,7 +20,7 @@ import com.paydock.sample.feature.widgets.ui.models.WidgetType
 fun NavigationGraph(navController: NavHostController) {
     NavHost(navController, startDestination = BottomNavItem.Checkout.route) {
         composable(BottomNavItem.Checkout.route) {
-            CheckoutStandalone()
+            CheckoutStandaloneScreen()
         }
         composable(BottomNavItem.Widgets.route) {
             ListScreen(items = WidgetType.entries.sortedBy { it.displayName() }) { widgetType ->

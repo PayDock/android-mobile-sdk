@@ -2,6 +2,7 @@ package com.paydock.sample.feature.style.ui
 
 import android.widget.Toast
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -87,7 +88,7 @@ fun StyleScreen(isDarkMode: Boolean = isSystemInDarkTheme()) {
     ) { innerPadding ->
         ColumnWithSeparators(
             modifier = Modifier
-                .padding(paddingValues = innerPadding)
+                .padding(paddingValues = PaddingValues(bottom = innerPadding.calculateBottomPadding()))
                 .verticalScroll(scrollState),
             content = {
                 ColoursSection(if (isDarkMode) darkTheme else lightTheme) { theme ->
@@ -105,9 +106,7 @@ fun StyleScreen(isDarkMode: Boolean = isSystemInDarkTheme()) {
                 }
             })
     }
-    HorizontalDivider(
-//        color = Theme.colors.outlineVariant
-    )
+    HorizontalDivider()
 }
 
 @Preview

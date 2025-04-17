@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,6 +37,7 @@ import com.paydock.R
 import com.paydock.core.presentation.extensions.alpha20
 import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.designsystems.theme.Theme
 
 /**
@@ -103,7 +103,7 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
             trailingIcon = {
                 // Show progress indicator if searching and focused
                 if (isTextFieldFocused && isSearching) {
-                    CircularProgressIndicator(modifier = Modifier.size(25.dp))
+                    SdkLoader(modifier = Modifier.size(25.dp))
                 } else if (!isTextFieldFocused && trailingIcon != null) {
                     trailingIcon()
                 }

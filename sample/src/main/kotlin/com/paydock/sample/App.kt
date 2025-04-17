@@ -38,7 +38,10 @@ class App : Application() {
                 textFieldCornerRadius = 4,
                 buttonCornerRadius = 4,
                 borderWidth = 1
-            )
+            ),
+//            font = MobileSDKTheme.FontName.themeFont(
+//                fonts = listOf(AcidGroteskNormal)
+//            )
         )
         MobileSDK.Builder()
             .environment(BuildConfig.SDK_ENVIRONMENT)

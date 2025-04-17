@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.dp
 import com.paydock.ThemeDimensions
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
-import com.paydock.sample.designsystems.components.fields.NumberCounter
 
 @Composable
 fun DesignSection(

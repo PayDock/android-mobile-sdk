@@ -11,9 +11,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun <T : DisplayableListItem> ListScreen(items: List<T>, onItemClick: (T) -> Unit) {
-    HorizontalDivider(
-//        color = Theme.colors.outlineVariant
-    )
+    HorizontalDivider()
     LazyColumn(
         modifier = Modifier.fillMaxSize()
     ) {

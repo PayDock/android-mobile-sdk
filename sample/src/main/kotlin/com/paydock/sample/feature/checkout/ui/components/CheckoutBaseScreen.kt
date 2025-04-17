@@ -32,9 +32,7 @@ fun CheckoutBaseScreen(onCheckoutButtonClick: () -> Unit) {
     val formattedProductAmount = formatCurrency(productAmount)
 
     Column {
-        HorizontalDivider(
-//            color = Theme.colors.outlineVariant
-        )
+        HorizontalDivider()
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -61,20 +59,15 @@ fun CheckoutBaseScreen(onCheckoutButtonClick: () -> Unit) {
             Spacer(modifier = Modifier.weight(1.0f))
             TotalRowView(
                 title = "Subtotal",
-                value = formattedSubtotal,
-//                color = Theme.colors.outlineVariant
+                value = formattedSubtotal
             )
             TotalRowView(
-                title = "Shipping", value = "Free",
-//                color = Theme.colors.outlineVariant
+                title = "Shipping", value = "Free"
             )
-            HorizontalDivider(
-//                color = Theme.colors.outlineVariant
-            )
+            HorizontalDivider()
             TotalRowView(
                 title = "Total",
-                value = formattedSubtotal,
-//                color = Theme.colors.onBackground
+                value = formattedSubtotal
             )
             AppButton(
                 modifier = Modifier.fillMaxWidth(),

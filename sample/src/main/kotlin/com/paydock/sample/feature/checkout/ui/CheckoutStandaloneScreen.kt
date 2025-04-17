@@ -20,7 +20,7 @@ import com.paydock.sample.feature.checkout.ui.components.CheckoutBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CheckoutStandalone(viewModel: StandaloneCheckoutViewModel = hiltViewModel()) {
+fun CheckoutStandaloneScreen(viewModel: StandaloneCheckoutViewModel = hiltViewModel()) {
     val context = LocalContext.current
     val uiState by viewModel.stateFlow.collectAsState()
     var openBottomSheet by rememberSaveable { mutableStateOf(false) }

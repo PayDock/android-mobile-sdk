@@ -9,7 +9,6 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,10 +48,7 @@ fun ColorInputField(
         singleLine = true,
         enabled = !readOnly,
         readOnly = readOnly,
-        colors = OutlinedTextFieldDefaults.colors(
-            disabledBorderColor = Color.LightGray
-        ),
-//        textStyle = Theme.typography.label.copy(color = Theme.colors.onBackground),
+        textStyle = MaterialTheme.typography.labelMedium,
         value = color.replace("#", ""),
         supportingText = {
             if (showCounter) {
@@ -78,7 +74,7 @@ fun ColorInputField(
         prefix = {
             Text(
                 text = "#",
-//                style = Theme.typography.label
+                style = MaterialTheme.typography.labelMedium
             )
         },
         trailingIcon = {

@@ -1,4 +1,4 @@
-package com.paydock.sample.designsystems.components.fields
+package com.paydock.sample.feature.style.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -46,13 +47,10 @@ fun NumberCounter(
     ) {
         Text(
             text = title,
-//            style = Theme.typography.label,
-//            color = Theme.colors.onBackground
+            style = MaterialTheme.typography.labelMedium
         )
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextField(
@@ -64,22 +62,21 @@ fun NumberCounter(
                 },
                 readOnly = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                keyboardActions = KeyboardActions(onDone = { /* Handle keyboard done action if needed */ }),
+                keyboardActions = KeyboardActions(onDone = { onValueChange(currentValue) }),
                 modifier = Modifier.weight(1f),
-//                textStyle = Theme.typography.body,
                 shape = RectangleShape,
                 colors = TextFieldDefaults.colors(
-//                    focusedTextColor = Theme.colors.onBackground,
-//                    unfocusedTextColor = Theme.colors.onBackground,
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent
                 )
             )
             Column(
-                modifier = Modifier.padding(end = 14.dp),
+                modifier = Modifier
+                    .padding(end = 0.dp)
+                    .background(MaterialTheme.colorScheme.inverseOnSurface),
                 verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
                 horizontalAlignment = Alignment.Start,
             ) {

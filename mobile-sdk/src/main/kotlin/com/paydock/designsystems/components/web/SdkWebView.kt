@@ -8,7 +8,6 @@ import android.webkit.WebResourceRequest
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,6 +23,8 @@ import com.kevinnzou.web.rememberWebViewState
 import com.kevinnzou.web.rememberWebViewStateWithHTMLData
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.extensions.safeCastAs
+import com.paydock.designsystems.components.loader.SdkLoader
+import com.paydock.designsystems.components.loader.SdkProgressLoader
 import com.paydock.designsystems.components.web.extensions.setup
 import com.paydock.designsystems.components.web.utils.SdkJSBridge
 import com.paydock.designsystems.components.web.utils.SdkWebChromeClient
@@ -70,7 +71,9 @@ internal fun <T : Any?> SdkWebView(
     ) {
         WebView(
             state = state,
-            modifier = Modifier.fillMaxSize().background(Theme.colors.background),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Theme.colors.background),
             navigator = rememberWebViewNavigator(),
             client = remember {
                 SdkWebViewClient(
@@ -103,8 +106,8 @@ internal fun <T : Any?> SdkWebView(
         // Display a loading indicator if the WebView is still loading content
         if (shouldShowCustomLoader && (state.isLoading || showWindowLoader)) {
             state.safeCastAs<LoadingState.Loading>()?.let {
-                CircularProgressIndicator(progress = { (state.loadingState as LoadingState.Loading).progress })
-            } ?: CircularProgressIndicator()
+                SdkProgressLoader(progress = { (state.loadingState as LoadingState.Loading).progress })
+            } ?: SdkLoader()
         }
     }
 }
