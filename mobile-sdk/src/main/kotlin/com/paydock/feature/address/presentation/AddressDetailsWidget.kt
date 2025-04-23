@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -22,8 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.components.link.LinkText
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.theme.SPACING
 import com.paydock.feature.address.domain.mapper.integration.asEntity
 import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.address.presentation.components.AddressSearchSection
@@ -62,47 +62,45 @@ fun AddressDetailsWidget(
         address?.let(viewModel::updateDefaultAddress)
     }
 
-    SdkTheme {
-        Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .background(Theme.colors.background),
-            verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.Top),
-            horizontalAlignment = Alignment.Start
-        ) {
-            AddressSearchSection { address ->
-                isManualAddressVisible = true
-                viewModel.updateDefaultAddress(address.asEntity())
-            }
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background),
+        verticalArrangement = Arrangement.spacedBy(SPACING, Alignment.Top),
+        horizontalAlignment = Alignment.Start
+    ) {
+        AddressSearchSection { address ->
+            isManualAddressVisible = true
+            viewModel.updateDefaultAddress(address.asEntity())
+        }
 
-            // Show the "Enter Address Manually" text
-            if (!isManualAddressVisible) {
-                LinkText(
-                    modifier = Modifier.testTag("showManualAddressButton"),
-                    linkText = stringResource(R.string.button_enter_address_manually)
-                ) {
-                    isManualAddressVisible = !isManualAddressVisible
-                }
-            }
-
-            ManualAddressEntry(
-                isManualAddressVisible = isManualAddressVisible,
-                address = uiState.billingAddress,
-            ) { addressState ->
-                viewModel.updateManualAddress(addressState)
-            }
-
-            // Save Address button
-            SdkButton(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp)
-                    .testTag("saveAddress"),
-                text = stringResource(R.string.button_save_address),
-                enabled = isDataValid
+        // Show the "Enter Address Manually" text
+        if (!isManualAddressVisible) {
+            LinkText(
+                modifier = Modifier.testTag("showManualAddressButton"),
+                linkText = stringResource(R.string.button_enter_address_manually)
             ) {
-                completion(uiState.billingAddress)
+                isManualAddressVisible = !isManualAddressVisible
             }
+        }
+
+        ManualAddressEntry(
+            isManualAddressVisible = isManualAddressVisible,
+            address = uiState.billingAddress,
+        ) { addressState ->
+            viewModel.updateManualAddress(addressState)
+        }
+
+        // Save Address button
+        SdkButton(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp)
+                .testTag("saveAddress"),
+            text = stringResource(R.string.button_save_address),
+            enabled = isDataValid
+        ) {
+            completion(uiState.billingAddress)
         }
     }
 }

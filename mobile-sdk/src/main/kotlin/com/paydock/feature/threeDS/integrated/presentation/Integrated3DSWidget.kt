@@ -11,7 +11,6 @@ import com.paydock.core.domain.error.exceptions.Integrated3DSException
 import com.paydock.designsystems.components.web.SdkWebView
 import com.paydock.designsystems.components.web.config.WidgetConfig
 import com.paydock.designsystems.components.web.utils.HtmlWidgetBuilder
-import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.feature.threeDS.common.domain.model.ui.enums.TokenFormat
 import com.paydock.feature.threeDS.common.domain.presentation.utils.ThreeDSTokenUtils
 import com.paydock.feature.threeDS.integrated.domain.model.integration.Integrated3DSResult
@@ -69,27 +68,25 @@ fun Integrated3DSWidget(
     }
 
     // Apply the SdkTheme for consistent styling
-    SdkTheme {
-        // Display the 3DS WebView within the bottom sheet
-        val htmlString = HtmlWidgetBuilder.createHtml(
-            config = WidgetConfig.ThreeDSConfigBase.Integrated3DSConfig(
-                token = token
-            )
+    // Display the 3DS WebView within the bottom sheet
+    val htmlString = HtmlWidgetBuilder.createHtml(
+        config = WidgetConfig.ThreeDSConfigBase.Integrated3DSConfig(
+            token = token
         )
-        val jsBridge = remember {
-            Integrated3DSJSBridge { eventResult ->
-                viewModel.handleEventResult(eventResult)
-            }
+    )
+    val jsBridge = remember {
+        Integrated3DSJSBridge { eventResult ->
+            viewModel.handleEventResult(eventResult)
         }
+    }
 
-        SdkWebView(
-            webUrl = MobileSDKConstants.DEFAULT_WEB_URL,
-            data = htmlString,
-            jsBridge = jsBridge
-        ) { status, message ->
-            // Invoke the onWebViewError callback with the WebView ThreeDSException exception
-            completion(Result.failure(Integrated3DSException.WebViewException(status, message)))
-        }
+    SdkWebView(
+        webUrl = MobileSDKConstants.DEFAULT_WEB_URL,
+        data = htmlString,
+        jsBridge = jsBridge
+    ) { status, message ->
+        // Invoke the onWebViewError callback with the WebView ThreeDSException exception
+        completion(Result.failure(Integrated3DSException.WebViewException(status, message)))
     }
 }
 

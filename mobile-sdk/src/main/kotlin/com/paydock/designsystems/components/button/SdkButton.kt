@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,8 +34,10 @@ import androidx.compose.ui.unit.dp
 import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.core.presentation.extensions.scaled
 import com.paydock.designsystems.components.loader.SdkButtonLoader
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.theme.BORDER_WIDTH
+import com.paydock.designsystems.theme.BUTTON_HEIGHT
+import com.paydock.designsystems.theme.BUTTON_ICON_SIZE
+import com.paydock.designsystems.theme.BUTTON_SPACING
 import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 
 /**
@@ -63,14 +66,14 @@ internal fun SdkButton(
     type: AppButtonType = AppButtonType.Filled,
     isLoading: Boolean = false,
     buttonIcon: ButtonIcon? = null,
-    buttonColor: Color = Theme.colors.primary,
-    buttonShape: Shape = Theme.buttonShapes.small,
+    buttonColor: Color = MaterialTheme.colorScheme.primary,
+    buttonShape: Shape = MaterialTheme.shapes.small,
     onClick: () -> Unit,
 ) {
     val configuration = LocalConfiguration.current
     val fontScale = configuration.fontScale
     // Calculate adjusted height with a scaling factor
-    val adjustedButtonHeight = Theme.dimensions.buttonHeight.scaled(fontScale)
+    val adjustedButtonHeight = BUTTON_HEIGHT.scaled(fontScale)
 
     // Decide button appearance based on type
     when (type) {
@@ -103,10 +106,10 @@ internal fun SdkButton(
                 contentColor = buttonColor,
                 containerColor = Color.Transparent,
                 disabledContainerColor = buttonColor.alpha40,
-                disabledContentColor = Theme.colors.onPrimary
+                disabledContentColor = MaterialTheme.colorScheme.onPrimary
             ),
             shape = buttonShape,
-            border = BorderStroke(1.dp, buttonColor)
+            border = BorderStroke(BORDER_WIDTH, buttonColor)
         )
 
         AppButtonType.Text -> {
@@ -142,7 +145,7 @@ private fun PrimaryButton(
     onClick: () -> Unit = {},
     enabled: Boolean = false,
     shape: Shape,
-    buttonColor: Color = Theme.colors.primary,
+    buttonColor: Color = MaterialTheme.colorScheme.primary,
     content: @Composable RowScope.() -> Unit,
 ) {
     Button(
@@ -151,9 +154,9 @@ private fun PrimaryButton(
         enabled = enabled,
         content = content,
         colors = ButtonDefaults.buttonColors(
-            contentColor = Theme.colors.onPrimary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
             disabledContainerColor = buttonColor.alpha40,
-            disabledContentColor = Theme.colors.onPrimary,
+            disabledContentColor = MaterialTheme.colorScheme.onPrimary,
         ),
         shape = shape
     )
@@ -177,7 +180,7 @@ private fun ButtonContent(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(
-                Theme.dimensions.buttonSpacing,
+                BUTTON_SPACING,
                 Alignment.CenterHorizontally
             ),
             modifier = Modifier.fillMaxWidth()
@@ -188,12 +191,12 @@ private fun ButtonContent(
                 // Display the icon (if any) and text in a consistent layout
                 when (buttonIcon) {
                     is ButtonIcon.Vector -> Icon(
-                        modifier = Modifier.size(Theme.dimensions.buttonIconSize),
+                        modifier = Modifier.size(BUTTON_ICON_SIZE),
                         imageVector = buttonIcon.icon,
                         contentDescription = null
                     )
                     is ButtonIcon.DrawableRes -> Icon(
-                        modifier = Modifier.size(Theme.dimensions.buttonIconSize),
+                        modifier = Modifier.size(BUTTON_ICON_SIZE),
                         painter = painterResource(buttonIcon.drawable),
                         contentDescription = null
                     )
@@ -205,7 +208,7 @@ private fun ButtonContent(
                 text = text,
                 modifier = Modifier.align(Alignment.CenterVertically),
                 textAlign = TextAlign.Center,
-                style = Theme.typography.button.copy(
+                style = MaterialTheme.typography.bodySmall.copy(
                     platformStyle = PlatformTextStyle(includeFontPadding = false)
                 )
             )
@@ -216,192 +219,164 @@ private fun ButtonContent(
 @PreviewLightDark
 @Composable
 internal fun PreviewSdkButtonFilledEnabled() {
-    SdkTheme {
-        SdkButton(
-            text = "Filled Enabled",
-            onClick = {},
-            type = AppButtonType.Filled,
-            modifier = Modifier.padding(8.dp)
-        )
-    }
+    SdkButton(
+        text = "Filled Enabled",
+        onClick = {},
+        type = AppButtonType.Filled,
+        modifier = Modifier.padding(8.dp)
+    )
 }
 
 @PreviewLightDark
 @Composable
 internal fun PreviewSdkButtonFilledDisabled() {
-    SdkTheme {
-        SdkButton(
-            text = "Filled Disabled",
-            onClick = {},
-            type = AppButtonType.Filled,
-            enabled = false,
-            modifier = Modifier.padding(8.dp)
-        )
-    }
+    SdkButton(
+        text = "Filled Disabled",
+        onClick = {},
+        type = AppButtonType.Filled,
+        enabled = false,
+        modifier = Modifier.padding(8.dp)
+    )
 }
 
 @PreviewLightDark
 @Composable
 internal fun PreviewSdkButtonFilledLoading() {
-    SdkTheme {
-        SdkButton(
-            text = "Filled Loading",
-            onClick = {},
-            type = AppButtonType.Filled,
-            isLoading = true,
-            modifier = Modifier.padding(8.dp)
-        )
-    }
+    SdkButton(
+        text = "Filled Loading",
+        onClick = {},
+        type = AppButtonType.Filled,
+        isLoading = true,
+        modifier = Modifier.padding(8.dp)
+    )
 }
 
 @PreviewLightDark
 @Composable
 internal fun PreviewSdkButtonFilledWithIcon() {
-    SdkTheme {
-        SdkButton(
-            text = "Filled With Icon",
-            onClick = {},
-            type = AppButtonType.Filled,
-            buttonIcon = ButtonIcon.Vector(Icons.Filled.Add),
-            modifier = Modifier.padding(8.dp)
-        )
-    }
+    SdkButton(
+        text = "Filled With Icon",
+        onClick = {},
+        type = AppButtonType.Filled,
+        buttonIcon = ButtonIcon.Vector(Icons.Filled.Add),
+        modifier = Modifier.padding(8.dp)
+    )
 }
 
 @PreviewLightDark
 @Composable
 internal fun PreviewSdkButtonOutlinedEnabled() {
-    SdkTheme {
-        SdkButton(
-            text = "Outlined Enabled",
-            onClick = {},
-            type = AppButtonType.Outlined,
-            modifier = Modifier.padding(8.dp)
-        )
-    }
+    SdkButton(
+        text = "Outlined Enabled",
+        onClick = {},
+        type = AppButtonType.Outlined,
+        modifier = Modifier.padding(8.dp)
+    )
 }
 
 @PreviewLightDark
 @Composable
 internal fun PreviewSdkButtonOutlinedDisabled() {
-    SdkTheme {
-        SdkButton(
-            text = "Outlined Disabled",
-            onClick = {},
-            type = AppButtonType.Outlined,
-            enabled = false,
-            modifier = Modifier.padding(8.dp)
-        )
-    }
+    SdkButton(
+        text = "Outlined Disabled",
+        onClick = {},
+        type = AppButtonType.Outlined,
+        enabled = false,
+        modifier = Modifier.padding(8.dp)
+    )
 }
 
 @PreviewLightDark
 @Composable
 internal fun PreviewSdkButtonOutlinedLoading() {
-    SdkTheme {
-        SdkButton(
-            text = "Outlined Loading",
-            onClick = {},
-            type = AppButtonType.Outlined,
-            isLoading = true,
-            modifier = Modifier.padding(8.dp)
-        )
-    }
+    SdkButton(
+        text = "Outlined Loading",
+        onClick = {},
+        type = AppButtonType.Outlined,
+        isLoading = true,
+        modifier = Modifier.padding(8.dp)
+    )
 }
 
 @PreviewLightDark
 @Composable
 internal fun PreviewSdkButtonOutlinedWithIcon() {
-    SdkTheme {
-        SdkButton(
-            text = "Outlined With Icon",
-            onClick = {},
-            type = AppButtonType.Outlined,
-            buttonIcon = ButtonIcon.Vector(Icons.Filled.Add),
-            modifier = Modifier.padding(8.dp)
-        )
-    }
+    SdkButton(
+        text = "Outlined With Icon",
+        onClick = {},
+        type = AppButtonType.Outlined,
+        buttonIcon = ButtonIcon.Vector(Icons.Filled.Add),
+        modifier = Modifier.padding(8.dp)
+    )
 }
 
 @PreviewLightDark
 @Composable
 internal fun PreviewSdkButtonTextEnabled() {
-    SdkTheme {
-        SdkButton(
-            text = "Text Enabled",
-            onClick = {},
-            type = AppButtonType.Text,
-            modifier = Modifier.padding(8.dp)
-        )
-    }
+    SdkButton(
+        text = "Text Enabled",
+        onClick = {},
+        type = AppButtonType.Text,
+        modifier = Modifier.padding(8.dp)
+    )
 }
 
 @PreviewLightDark
 @Composable
 internal fun PreviewSdkButtonTextDisabled() {
-    SdkTheme {
-        SdkButton(
-            text = "Text Disabled",
-            onClick = {},
-            type = AppButtonType.Text,
-            enabled = false,
-            modifier = Modifier.padding(8.dp)
-        )
-    }
+    SdkButton(
+        text = "Text Disabled",
+        onClick = {},
+        type = AppButtonType.Text,
+        enabled = false,
+        modifier = Modifier.padding(8.dp)
+    )
 }
 
 @PreviewLightDark
 @Composable
 internal fun PreviewSdkButtonTextLoading() {
-    SdkTheme {
-        SdkButton(
-            text = "Text Loading",
-            onClick = {},
-            type = AppButtonType.Text,
-            isLoading = true,
-            modifier = Modifier.padding(8.dp)
-        )
-    }
+    SdkButton(
+        text = "Text Loading",
+        onClick = {},
+        type = AppButtonType.Text,
+        isLoading = true,
+        modifier = Modifier.padding(8.dp)
+    )
 }
 
 @PreviewLightDark
 @Composable
 internal fun PreviewSdkButtonTextWithIcon() {
-    SdkTheme {
-        SdkButton(
-            text = "Text With Icon",
-            onClick = {},
-            type = AppButtonType.Text,
-            buttonIcon = ButtonIcon.Vector(Icons.Filled.Add),
-            modifier = Modifier.padding(8.dp)
-        )
-    }
+    SdkButton(
+        text = "Text With Icon",
+        onClick = {},
+        type = AppButtonType.Text,
+        buttonIcon = ButtonIcon.Vector(Icons.Filled.Add),
+        modifier = Modifier.padding(8.dp)
+    )
 }
 
 @PreviewLightDark
 @Composable
 internal fun PreviewSdkButtonCustomColor() {
-    SdkTheme {
-        SdkButton(
-            text = "Custom Color",
-            onClick = {},
-            type = AppButtonType.Filled,
-            buttonColor = Color.Green,
-            modifier = Modifier.padding(8.dp)
-        )
-    }
+    SdkButton(
+        text = "Custom Color",
+        onClick = {},
+        type = AppButtonType.Filled,
+        buttonColor = Color.Green,
+        modifier = Modifier.padding(8.dp)
+    )
 }
 
 @PreviewLightDark
 @Composable
 internal fun PreviewSdkButtonCustomShape() {
-    SdkTheme {
-        SdkButton(
-            text = "Custom Shape",
-            onClick = {},
-            type = AppButtonType.Filled,
-            buttonShape = Theme.buttonShapes.large,
-            modifier = Modifier.padding(8.dp)
-        )
-    }
+    SdkButton(
+        text = "Custom Shape",
+        onClick = {},
+        type = AppButtonType.Filled,
+        buttonShape = MaterialTheme.shapes.large,
+        modifier = Modifier.padding(8.dp)
+    )
 }

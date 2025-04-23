@@ -10,7 +10,6 @@ import com.paydock.core.domain.error.exceptions.Standalone3DSException
 import com.paydock.designsystems.components.web.SdkWebView
 import com.paydock.designsystems.components.web.config.WidgetConfig
 import com.paydock.designsystems.components.web.utils.HtmlWidgetBuilder
-import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.feature.threeDS.common.domain.model.ui.enums.TokenFormat
 import com.paydock.feature.threeDS.common.domain.presentation.utils.ThreeDSTokenUtils
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
@@ -72,25 +71,23 @@ fun Standalone3DSWidget(
     }
 
     // Apply the SdkTheme for consistent styling
-    SdkTheme {
-        // Display the 3DS WebView within the bottom sheet
-        val htmlString = HtmlWidgetBuilder.createHtml(
-            config = WidgetConfig.ThreeDSConfigBase.Standalone3DSConfig(token = token)
-        )
-        val jsBridge = remember {
-            Standalone3DSJSBridge { eventResult ->
-                viewModel.handleEventResult(eventResult)
-            }
+    // Display the 3DS WebView within the bottom sheet
+    val htmlString = HtmlWidgetBuilder.createHtml(
+        config = WidgetConfig.ThreeDSConfigBase.Standalone3DSConfig(token = token)
+    )
+    val jsBridge = remember {
+        Standalone3DSJSBridge { eventResult ->
+            viewModel.handleEventResult(eventResult)
         }
+    }
 
-        SdkWebView(
-            webUrl = MobileSDKConstants.DEFAULT_WEB_URL,
-            data = htmlString,
-            jsBridge = jsBridge
-        ) { status, message ->
-            // Invoke the onWebViewError callback with the WebView ThreeDSException exception
-            completion(Result.failure(Standalone3DSException.WebViewException(status, message)))
-        }
+    SdkWebView(
+        webUrl = MobileSDKConstants.DEFAULT_WEB_URL,
+        data = htmlString,
+        jsBridge = jsBridge
+    ) { status, message ->
+        // Invoke the onWebViewError callback with the WebView ThreeDSException exception
+        completion(Result.failure(Standalone3DSException.WebViewException(status, message)))
     }
 }
 

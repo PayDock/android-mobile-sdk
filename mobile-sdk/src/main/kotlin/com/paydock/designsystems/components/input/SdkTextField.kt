@@ -10,6 +10,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -34,8 +35,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.core.presentation.extensions.autofill
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.theme.BORDER_WIDTH
 
 /**
 - * Composable function to display a text input field with various customization options.
@@ -99,9 +99,9 @@ internal fun SdkTextField(
 
     // Set the current label text style based on the focused state and whether there's text
     val labelTextStyle = if (shouldShowLabel) {
-        Theme.typography.label
+        MaterialTheme.typography.labelMedium
     } else {
-        Theme.typography.label.copy(fontSize = Theme.typography.body1.fontSize)
+        MaterialTheme.typography.labelMedium.copy(fontSize = MaterialTheme.typography.bodyMedium.fontSize)
     }
 
     Column(modifier = modifier) {
@@ -117,14 +117,14 @@ internal fun SdkTextField(
                 .autofillModifier(autofillType, onValueChange),
             enabled = enabled, // Use the parameter value
             readOnly = readOnly,
-            textStyle = Theme.typography.body1.copy(color = Theme.colors.onSurface),
+            textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
             keyboardActions = keyboardActions,
             keyboardOptions = keyboardOptions,
             singleLine = singleLine,
             maxLines = maxLines,
             visualTransformation = visualTransformation,
             interactionSource = interactionSource,
-            cursorBrush = SolidColor(Theme.colors.primary)
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
         ) { innerTextField ->
             OutlinedTextFieldDefaults.DecorationBox(
                 value = value,
@@ -145,17 +145,17 @@ internal fun SdkTextField(
                 },
                 leadingIcon = leadingIcon,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedLabelColor = Theme.colors.primary,
-                    unfocusedLabelColor = Theme.colors.onBackground
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.onBackground
                 ),
                 container = {
                     OutlinedTextFieldDefaults.Container(
                         enabled = enabled, // Use the parameter value
                         isError = error != null,
                         interactionSource = interactionSource,
-                        shape = Theme.textFieldShapes.small,
-                        focusedBorderThickness = Theme.dimensions.borderWidth.times(2),
-                        unfocusedBorderThickness = Theme.dimensions.borderWidth
+                        shape = MaterialTheme.shapes.small,
+                        focusedBorderThickness = BORDER_WIDTH.times(2),
+                        unfocusedBorderThickness = BORDER_WIDTH
                     )
                 }
             )
@@ -192,7 +192,7 @@ private fun TextFieldPlaceholder(placeholder: String, maxLines: Int) {
     Text(
         modifier = Modifier.testTag("sdkPlaceholder"),
         maxLines = maxLines,
-        style = Theme.typography.body1,
+        style = MaterialTheme.typography.bodyMedium,
         text = placeholder
     )
 }
@@ -258,7 +258,7 @@ private fun TextFieldErrorIcon() {
         modifier = Modifier.testTag("errorIcon"),
         painter = painterResource(id = R.drawable.ic_error),
         contentDescription = stringResource(id = R.string.content_desc_error_icon),
-        tint = Theme.colors.error
+        tint = MaterialTheme.colorScheme.error
     )
 }
 
@@ -289,8 +289,8 @@ private fun TextFieldErrorLabel(error: String?) {
                 .padding(start = 15.dp, top = 6.dp)
                 .testTag("errorLabel"),
             text = error ?: "",
-            color = Theme.colors.error,
-            style = Theme.typography.label
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.labelMedium
         )
     }
 }
@@ -330,16 +330,14 @@ internal fun PreviewSdkTextFieldEmptyState() {
     // Mutable state for the text input field value
     var value by remember { mutableStateOf("") }
     // Preview SdkTextField with an empty state
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            SdkTextField(
-                value = value,
-                onValueChange = { value = it },
-                placeholder = "Placeholder",
-                label = "Label",
-                error = if (value == "error") "This is error" else null
-            )
-        }
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        SdkTextField(
+            value = value,
+            onValueChange = { value = it },
+            placeholder = "Placeholder",
+            label = "Label",
+            error = if (value == "error") "This is error" else null
+        )
     }
 }
 
@@ -353,15 +351,13 @@ internal fun PreviewSdkTextFieldWithInput() {
     // Mutable state for the text input field value
     var value by remember { mutableStateOf("Input") }
     // Preview SdkTextField with pre-filled input
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            SdkTextField(
-                value = value,
-                onValueChange = { value = it },
-                placeholder = "Placeholder",
-                label = "Label"
-            )
-        }
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        SdkTextField(
+            value = value,
+            onValueChange = { value = it },
+            placeholder = "Placeholder",
+            label = "Label"
+        )
     }
 }
 
@@ -375,21 +371,19 @@ internal fun PreviewSdkTextFieldError() {
     // Mutable state for the text input field value
     var value by remember { mutableStateOf("xxxx") }
     // Preview SdkTextField with error state
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            SdkTextField(
-                value = value,
-                onValueChange = { value = it },
-                placeholder = "Placeholder",
-                label = "Label",
-                error = "Enter valid input",
-                trailingIcon = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_error),
-                        contentDescription = "Error Icon",
-                    )
-                }
-            )
-        }
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        SdkTextField(
+            value = value,
+            onValueChange = { value = it },
+            placeholder = "Placeholder",
+            label = "Label",
+            error = "Enter valid input",
+            trailingIcon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_error),
+                    contentDescription = "Error Icon",
+                )
+            }
+        )
     }
 }

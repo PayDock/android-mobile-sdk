@@ -2,6 +2,7 @@ package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,8 +22,6 @@ import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.presentation.utils.errors.CardHolderNameError
 import com.paydock.feature.card.presentation.utils.validators.CardHolderNameValidator
 import com.paydock.feature.card.presentation.utils.validators.CreditCardInputParser
@@ -105,11 +104,9 @@ internal fun CardHolderNameInput(
 @PreviewLightDark
 @Composable
 internal fun PreviewCardHolderNameInput() {
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            CardHolderNameInput(value = "J DOE") {
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        CardHolderNameInput(value = "J DOE") {
 
-            }
         }
     }
 }

@@ -9,6 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -24,8 +25,6 @@ import com.paydock.core.domain.error.exceptions.FlyPayException
 import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.flypay.presentation.components.FlyPayButton
 import com.paydock.feature.flypay.presentation.state.FlyPayUIState
 import com.paydock.feature.flypay.presentation.utils.CancellationStatus
@@ -89,25 +88,23 @@ fun FlyPayWidget(
     }
 
     // Composable content rendering
-    SdkTheme {
-        Box(modifier = modifier.background(Theme.colors.background), contentAlignment = Alignment.Center) {
-            // Button to initiate FlyPay transaction
-            FlyPayButton(
-                onClick = {
-                    // Use the callback to obtain the token asynchronously
-                    token { obtainedToken ->
-                        scope.launch {
-                            viewModel.setWalletToken(obtainedToken)
-                            viewModel.getWalletCallback(
-                                walletToken = obtainedToken
-                            )
-                        }
+    Box(modifier = modifier.background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+        // Button to initiate FlyPay transaction
+        FlyPayButton(
+            onClick = {
+                // Use the callback to obtain the token asynchronously
+                token { obtainedToken ->
+                    scope.launch {
+                        viewModel.setWalletToken(obtainedToken)
+                        viewModel.getWalletCallback(
+                            walletToken = obtainedToken
+                        )
                     }
-                },
-                isEnabled = uiState !is FlyPayUIState.Loading && enabled,
-                isLoading = loadingDelegate == null && uiState is FlyPayUIState.Loading
-            )
-        }
+                }
+            },
+            isEnabled = uiState !is FlyPayUIState.Loading && enabled,
+            isLoading = loadingDelegate == null && uiState is FlyPayUIState.Loading
+        )
     }
 }
 
@@ -239,7 +236,5 @@ private fun handleUiState(
 @PreviewLightDark
 @Composable
 internal fun PreviewFlyPayWidget() {
-    SdkTheme {
-        FlyPayWidget(clientId = "", token = {}, completion = {})
-    }
+    FlyPayWidget(clientId = "", token = {}, completion = {})
 }

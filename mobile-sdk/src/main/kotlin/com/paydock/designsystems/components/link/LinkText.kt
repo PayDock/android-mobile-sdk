@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -12,7 +13,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.paydock.designsystems.theme.Theme
 
 /**
  * A composable function that renders a clickable text link.
@@ -39,12 +39,12 @@ internal fun LinkText(
                 .clickable {
                     onClick()
                 },
-            style = Theme.typography.body1.copy(
+            style = MaterialTheme.typography.bodyMedium.copy(
                 fontSize = 17.sp,
                 lineHeight = 22.sp,
                 textDecoration = TextDecoration.Underline
             ),
-            color = Theme.colors.primary
+            color = MaterialTheme.colorScheme.primary
         )
     }
 }

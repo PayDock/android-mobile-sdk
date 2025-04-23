@@ -2,6 +2,7 @@ package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,8 +22,6 @@ import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.domain.model.ui.CardCode
 import com.paydock.feature.card.domain.model.ui.enums.CodeType
 import com.paydock.feature.card.presentation.utils.errors.SecurityCodeError
@@ -134,19 +133,17 @@ internal fun CardSecurityCodeInput(
 @PreviewLightDark
 @Composable
 internal fun PreviewCardSecurityCodeCVVInput() {
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            CardSecurityCodeInput(
-                value = "123",
-                cardCode = CardCode(
-                    CodeType.CVV,
-                    MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
-                ),
-                enabled = true,
-                nextFocus = null
-            ) {
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        CardSecurityCodeInput(
+            value = "123",
+            cardCode = CardCode(
+                CodeType.CVV,
+                MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
+            ),
+            enabled = true,
+            nextFocus = null
+        ) {
 
-            }
         }
     }
 }
@@ -154,19 +151,17 @@ internal fun PreviewCardSecurityCodeCVVInput() {
 @PreviewLightDark
 @Composable
 internal fun PreviewCardSecurityCodeCVCInput() {
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            CardSecurityCodeInput(
-                value = "123",
-                cardCode = CardCode(
-                    CodeType.CVC,
-                    MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
-                ),
-                enabled = true,
-                nextFocus = null
-            ) {
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        CardSecurityCodeInput(
+            value = "123",
+            cardCode = CardCode(
+                CodeType.CVC,
+                MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
+            ),
+            enabled = true,
+            nextFocus = null
+        ) {
 
-            }
         }
     }
 }
@@ -174,16 +169,14 @@ internal fun PreviewCardSecurityCodeCVCInput() {
 @PreviewLightDark
 @Composable
 internal fun PreviewCardSecurityCodeCIDInput() {
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            CardSecurityCodeInput(
-                value = "1234",
-                cardCode = CardCode(CodeType.CID, MobileSDKConstants.CardDetailsConfig.CID_LENGTH),
-                enabled = true,
-                nextFocus = null
-            ) {
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        CardSecurityCodeInput(
+            value = "1234",
+            cardCode = CardCode(CodeType.CID, MobileSDKConstants.CardDetailsConfig.CID_LENGTH),
+            enabled = true,
+            nextFocus = null
+        ) {
 
-            }
         }
     }
 }

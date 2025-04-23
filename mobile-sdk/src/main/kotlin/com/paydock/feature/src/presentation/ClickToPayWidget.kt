@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -17,8 +18,7 @@ import com.paydock.core.domain.error.exceptions.ClickToPayException
 import com.paydock.designsystems.components.web.SdkWebView
 import com.paydock.designsystems.components.web.config.WidgetConfig
 import com.paydock.designsystems.components.web.utils.HtmlWidgetBuilder
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.theme.SPACING
 import com.paydock.feature.src.domain.model.integration.meta.ClickToPayMeta
 import com.paydock.feature.src.presentation.utils.ClickToPayJSBridge
 import com.paydock.feature.src.presentation.viewmodels.ClickToPayViewModel
@@ -65,40 +65,38 @@ fun ClickToPayWidget(
     }
 
     // Render Click to Pay widget
-    SdkTheme {
-        Box(contentAlignment = Alignment.Center) {
-            Column(
-                modifier = modifier.fillMaxWidth().background(Theme.colors.background),
-                verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.Top),
-                horizontalAlignment = Alignment.Start
-            ) {
-                // Generate HTML string for Click to Pay checkout
-                val htmlString = HtmlWidgetBuilder.createHtml(
-                    config = WidgetConfig.ClickToPayConfig(
-                        accessToken = accessToken,
-                        serviceId = serviceId,
-                        meta = meta
-                    )
+    Box(contentAlignment = Alignment.Center) {
+        Column(
+            modifier = modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background),
+            verticalArrangement = Arrangement.spacedBy(SPACING, Alignment.Top),
+            horizontalAlignment = Alignment.Start
+        ) {
+            // Generate HTML string for Click to Pay checkout
+            val htmlString = HtmlWidgetBuilder.createHtml(
+                config = WidgetConfig.ClickToPayConfig(
+                    accessToken = accessToken,
+                    serviceId = serviceId,
+                    meta = meta
                 )
-                // Render WebView for Click to Pay
-                SdkWebView(
-                    webUrl = MobileSDKConstants.DEFAULT_WEB_URL, // Placeholder URL
-                    data = htmlString,
-                    jsBridge = ClickToPayJSBridge {
-                        viewModel.updateSRCEvent(it)
-                    },
-                    shouldShowCustomLoader = true,
-                ) { status, message ->
-                    // Invoke the completion callback with the Click to Pay exception upon WebView error
-                    completion(
-                        Result.failure(
-                            ClickToPayException.WebViewException(
-                                code = status,
-                                displayableMessage = message
-                            )
+            )
+            // Render WebView for Click to Pay
+            SdkWebView(
+                webUrl = MobileSDKConstants.DEFAULT_WEB_URL, // Placeholder URL
+                data = htmlString,
+                jsBridge = ClickToPayJSBridge {
+                    viewModel.updateSRCEvent(it)
+                },
+                shouldShowCustomLoader = true,
+            ) { status, message ->
+                // Invoke the completion callback with the Click to Pay exception upon WebView error
+                completion(
+                    Result.failure(
+                        ClickToPayException.WebViewException(
+                            code = status,
+                            displayableMessage = message
                         )
                     )
-                }
+                )
             }
         }
     }

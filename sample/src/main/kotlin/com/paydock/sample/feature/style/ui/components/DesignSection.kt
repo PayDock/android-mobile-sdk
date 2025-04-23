@@ -8,57 +8,56 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.paydock.ThemeDimensions
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
 
-@Composable
-fun DesignSection(
-    dimensionsTheme: ThemeDimensions,
-    onDimensionsUpdated: (ThemeDimensions) -> Unit,
-) {
-    SectionContainer(title = stringResource(R.string.label_design)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            NumberCounter(
-                modifier = Modifier.weight(0.5f),
-                title = stringResource(R.string.label_text_corner_radius),
-                value = dimensionsTheme.textFieldCornerRadius.value.toInt(),
-                onValueChange = { newValue ->
-                    onDimensionsUpdated(dimensionsTheme.with(textFieldCornerRadius = newValue.dp))
-                })
-            NumberCounter(
-                modifier = Modifier.weight(0.5f),
-                title = stringResource(R.string.label_button_corner_radius),
-                value = dimensionsTheme.buttonCornerRadius.value.toInt(),
-                onValueChange = { newValue ->
-                    onDimensionsUpdated(dimensionsTheme.with(buttonCornerRadius = newValue.dp))
-                })
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            NumberCounter(
-                modifier = Modifier.weight(0.5f),
-                title = stringResource(R.string.label_border_width),
-                value = dimensionsTheme.borderWidth.value.toInt(),
-                onValueChange = { newValue ->
-                    onDimensionsUpdated(dimensionsTheme.with(borderWidth = newValue.dp))
-                })
-            NumberCounter(
-                modifier = Modifier.weight(0.5f),
-                title = stringResource(R.string.label_spacing),
-                value = dimensionsTheme.spacing.value.toInt(),
-                onValueChange = { newValue ->
-                    onDimensionsUpdated(dimensionsTheme.with(spacing = newValue.dp))
-                })
-
-        }
-    }
-}
+//@Composable
+//fun DesignSection(
+//    dimensionsTheme: ThemeDimensions,
+//    onDimensionsUpdated: (ThemeDimensions) -> Unit,
+//) {
+//    SectionContainer(title = stringResource(R.string.label_design)) {
+//        Row(
+//            modifier = Modifier.fillMaxWidth(),
+//            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            NumberCounter(
+//                modifier = Modifier.weight(0.5f),
+//                title = stringResource(R.string.label_text_corner_radius),
+//                value = dimensionsTheme.textFieldCornerRadius.value.toInt(),
+//                onValueChange = { newValue ->
+//                    onDimensionsUpdated(dimensionsTheme.with(textFieldCornerRadius = newValue.dp))
+//                })
+//            NumberCounter(
+//                modifier = Modifier.weight(0.5f),
+//                title = stringResource(R.string.label_button_corner_radius),
+//                value = dimensionsTheme.buttonCornerRadius.value.toInt(),
+//                onValueChange = { newValue ->
+//                    onDimensionsUpdated(dimensionsTheme.with(buttonCornerRadius = newValue.dp))
+//                })
+//        }
+//
+//        Row(
+//            modifier = Modifier.fillMaxWidth(),
+//            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            NumberCounter(
+//                modifier = Modifier.weight(0.5f),
+//                title = stringResource(R.string.label_border_width),
+//                value = dimensionsTheme.borderWidth.value.toInt(),
+//                onValueChange = { newValue ->
+//                    onDimensionsUpdated(dimensionsTheme.with(borderWidth = newValue.dp))
+//                })
+//            NumberCounter(
+//                modifier = Modifier.weight(0.5f),
+//                title = stringResource(R.string.label_spacing),
+//                value = dimensionsTheme.spacing.value.toInt(),
+//                onValueChange = { newValue ->
+//                    onDimensionsUpdated(dimensionsTheme.with(spacing = newValue.dp))
+//                })
+//
+//        }
+//    }
+//}

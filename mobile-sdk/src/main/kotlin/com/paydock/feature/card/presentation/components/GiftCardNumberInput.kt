@@ -3,6 +3,7 @@ package com.paydock.feature.card.presentation.components
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,8 +25,6 @@ import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.presentation.utils.errors.GiftCardNumberError
 import com.paydock.feature.card.presentation.utils.transformations.CardNumberInputTransformation
 import com.paydock.feature.card.presentation.utils.validators.GiftCardInputParser
@@ -98,9 +97,9 @@ internal fun GiftCardNumberInput(
                 painter = painterResource(id = R.drawable.ic_credit_card),
                 contentDescription = null,
                 tint = if (focusedState.value) {
-                    Theme.colors.onSurface // Use primary color when focused
+                    MaterialTheme.colorScheme.onSurface // Use primary color when focused
                 } else {
-                    Theme.colors.onSurfaceVariant // Use secondary color when not focused
+                    MaterialTheme.colorScheme.onSurfaceVariant // Use secondary color when not focused
                 }
             )
         },
@@ -130,11 +129,9 @@ internal fun GiftCardNumberInput(
 @PreviewLightDark
 @Composable
 internal fun PreviewGiftCardNumberInput() {
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            GiftCardNumberInput(value = "4242424242424242") {
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        GiftCardNumberInput(value = "4242424242424242") {
 
-            }
         }
     }
 }

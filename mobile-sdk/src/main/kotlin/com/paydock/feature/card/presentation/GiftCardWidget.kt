@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -19,8 +20,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.SdkButton
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.theme.SPACING
 import com.paydock.feature.card.presentation.components.CardPinInput
 import com.paydock.feature.card.presentation.components.GiftCardNumberInput
 import com.paydock.feature.card.presentation.state.GiftCardUIState
@@ -72,57 +72,55 @@ fun GiftCardWidget(
     }
 
     // Composing the UI
-    SdkTheme {
-        Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .background(Theme.colors.background),
-            verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.Top),
-            horizontalAlignment = Alignment.Start
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background),
+        verticalArrangement = Arrangement.spacedBy(SPACING, Alignment.Top),
+        horizontalAlignment = Alignment.Start
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(
+                SPACING,
+                Alignment.CenterHorizontally
+            ),
+            verticalAlignment = Alignment.Top
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(
-                    Theme.dimensions.spacing,
-                    Alignment.CenterHorizontally
-                ),
-                verticalAlignment = Alignment.Top
-            ) {
-                // Card number input field
-                GiftCardNumberInput(
-                    modifier = Modifier
-                        .weight(0.7f)
-                        .focusRequester(focusCardNumber)
-                        .testTag("cardNumberInput"),
-                    value = inputState.cardNumber,
-                    enabled = uiState !is GiftCardUIState.Loading && enabled,
-                    onValueChange = { viewModel.updateCardNumber(it) },
-                    nextFocus = focusCardPin
-                )
-
-                // PIN input field
-                CardPinInput(
-                    modifier = Modifier
-                        .weight(0.3f)
-                        .focusRequester(focusCardPin)
-                        .testTag("cardPinInput"),
-                    value = inputState.pin,
-                    enabled = uiState !is GiftCardUIState.Loading && enabled,
-                    onValueChange = { viewModel.updateCardPin(it) }
-                )
-            }
-
-            // Submit button
-            SdkButton(
+            // Card number input field
+            GiftCardNumberInput(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("addCard"),
-                text = stringResource(R.string.button_submit),
-                enabled = inputState.isDataValid && uiState !is GiftCardUIState.Loading && enabled,
-                isLoading = loadingDelegate == null && uiState is GiftCardUIState.Loading
-            ) {
-                viewModel.tokeniseCard()
-            }
+                    .weight(0.7f)
+                    .focusRequester(focusCardNumber)
+                    .testTag("cardNumberInput"),
+                value = inputState.cardNumber,
+                enabled = uiState !is GiftCardUIState.Loading && enabled,
+                onValueChange = { viewModel.updateCardNumber(it) },
+                nextFocus = focusCardPin
+            )
+
+            // PIN input field
+            CardPinInput(
+                modifier = Modifier
+                    .weight(0.3f)
+                    .focusRequester(focusCardPin)
+                    .testTag("cardPinInput"),
+                value = inputState.pin,
+                enabled = uiState !is GiftCardUIState.Loading && enabled,
+                onValueChange = { viewModel.updateCardPin(it) }
+            )
+        }
+
+        // Submit button
+        SdkButton(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("addCard"),
+            text = stringResource(R.string.button_submit),
+            enabled = inputState.isDataValid && uiState !is GiftCardUIState.Loading && enabled,
+            isLoading = loadingDelegate == null && uiState is GiftCardUIState.Loading
+        ) {
+            viewModel.tokeniseCard()
         }
     }
 }
@@ -168,9 +166,7 @@ private fun handleUIState(
 @PreviewLightDark
 @Composable
 internal fun PreviewGiftCardDetails() {
-    SdkTheme {
-        GiftCardWidget(accessToken = "accessToken") {
+    GiftCardWidget(accessToken = "accessToken") {
 
-        }
     }
 }

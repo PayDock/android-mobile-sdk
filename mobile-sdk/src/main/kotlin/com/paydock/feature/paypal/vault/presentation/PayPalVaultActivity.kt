@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -17,8 +18,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.paydock.designsystems.components.loader.SdkLoader
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.paypal.vault.presentation.state.PayPalWebVaultState
 import com.paydock.feature.paypal.vault.presentation.utils.CancellationStatus
 import com.paydock.feature.paypal.vault.presentation.utils.getClientIdExtra
@@ -46,63 +45,61 @@ internal class PayPalVaultActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             // Apply the SDK theme for consistent styling
-            SdkTheme {
-                // Collect the current vault result state from the ViewModel
-                val vaultResult by viewModel.vaultResult.collectAsState()
+            // Collect the current vault result state from the ViewModel
+            val vaultResult by viewModel.vaultResult.collectAsState()
 
-                // Tracks whether the PayPal vault flow should be initiated
-                var shouldStartPayPal by remember { mutableStateOf(true) }
+            // Tracks whether the PayPal vault flow should be initiated
+            var shouldStartPayPal by remember { mutableStateOf(true) }
 
-                // SideEffect to start PayPal vault when the activity first loads
-                SideEffect {
-                    if (shouldStartPayPal) {
-                        // Retrieve client ID and setup token from the Intent extras
-                        val clientId = intent.getClientIdExtra() ?: ""
-                        val setupToken = intent.getSetupTokenExtra() ?: ""
-                        viewModel.initiatePayPalVault(
-                            this@PayPalVaultActivity,
-                            clientId,
-                            setupToken
-                        )
-                        shouldStartPayPal = false
-                    }
+            // SideEffect to start PayPal vault when the activity first loads
+            SideEffect {
+                if (shouldStartPayPal) {
+                    // Retrieve client ID and setup token from the Intent extras
+                    val clientId = intent.getClientIdExtra() ?: ""
+                    val setupToken = intent.getSetupTokenExtra() ?: ""
+                    viewModel.initiatePayPalVault(
+                        this@PayPalVaultActivity,
+                        clientId,
+                        setupToken
+                    )
+                    shouldStartPayPal = false
                 }
+            }
 
-                // Box layout to show UI based on the current vault result state
-                Box(modifier = Modifier.fillMaxSize().background(Theme.colors.background), contentAlignment = Alignment.Center) {
-                    when (vaultResult) {
-                        // Show a loader during the idle state
-                        is PayPalWebVaultState.Idle -> SdkLoader()
+            // Box layout to show UI based on the current vault result state
+            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+                when (vaultResult) {
+                    // Show a loader during the idle state
+                    is PayPalWebVaultState.Idle -> SdkLoader()
 
-                        // Handle user-initiated cancellation and finish the activity
-                        is PayPalWebVaultState.Canceled -> {
-                            setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(CancellationStatus.USER_INITIATED))
-                            finish()
-                        }
+                    // Handle user-initiated cancellation and finish the activity
+                    is PayPalWebVaultState.Canceled -> {
+                        setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(CancellationStatus.USER_INITIATED))
+                        finish()
+                    }
 
-                        // Handle failure state by extracting the error and returning a failure result
-                        is PayPalWebVaultState.Failure -> {
-                            val error = (vaultResult as PayPalWebVaultState.Failure).error
-                            setResult(
-                                Activity.RESULT_CANCELED,
-                                Intent().apply {
-                                    putExtra("STATUS", error.code)
-                                    putExtra("DESCRIPTION", error.errorDescription)
-                                }
-                            )
-                            finish()
-                        }
+                    // Handle failure state by extracting the error and returning a failure result
+                    is PayPalWebVaultState.Failure -> {
+                        val error = (vaultResult as PayPalWebVaultState.Failure).error
+                        setResult(
+                            Activity.RESULT_CANCELED,
+                            Intent().apply {
+                                putExtra("STATUS", error.code)
+                                putExtra("DESCRIPTION", error.errorDescription)
+                            }
+                        )
+                        finish()
+                    }
 
-                        // Handle success state by returning the approval session ID and finishing the activity
-                        is PayPalWebVaultState.Success -> {
-                            val approvalSessionId =
-                                (vaultResult as PayPalWebVaultState.Success).approvalSessionId
-                            setResult(
-                                RESULT_OK,
-                                Intent().putExtra("PAYPAL_APPROVAL_SESSION_ID", approvalSessionId)
-                            )
-                            finish()
-                        }
+                    // Handle success state by returning the approval session ID and finishing the activity
+                    is PayPalWebVaultState.Success -> {
+                        val approvalSessionId =
+                            (vaultResult as PayPalWebVaultState.Success).approvalSessionId
+                        setResult(
+                            RESULT_OK,
+                            Intent().putExtra("PAYPAL_APPROVAL_SESSION_ID", approvalSessionId)
+                        )
+                        finish()
                     }
                 }
             }

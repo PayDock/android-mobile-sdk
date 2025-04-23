@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.getValue
@@ -26,8 +27,6 @@ import com.paydock.R
 import com.paydock.core.domain.mapper.mapToFlyPayEnv
 import com.paydock.core.presentation.extensions.putMessageExtra
 import com.paydock.core.presentation.extensions.putStatusExtra
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.flypay.presentation.components.FlyPayWebView
 import com.paydock.feature.flypay.presentation.utils.CancellationStatus
 import com.paydock.feature.flypay.presentation.utils.getClientIdExtra
@@ -49,46 +48,44 @@ internal class FlyPayWebActivity : ComponentActivity() {
 
         setContent {
             // Applies the SDK theme.
-            SdkTheme {
-                Scaffold(
-                    topBar = {
-                        TopAppBar(
-                            title = {},
-                            actions = {
-                                IconButton(onClick = { finish(CancellationStatus.USER_INITIATED) }) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_close_circle),
-                                        contentDescription = stringResource(id = R.string.content_desc_close_icon)
-                                    )
-                                }
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = {},
+                        actions = {
+                            IconButton(onClick = { finish(CancellationStatus.USER_INITIATED) }) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_close_circle),
+                                    contentDescription = stringResource(id = R.string.content_desc_close_icon)
+                                )
                             }
-                        )
-                    }
-                ) { innerPadding ->
-                    // Apply inner padding to avoid content overlapping with the TopAppBar
-                    Box(modifier = Modifier.padding(innerPadding).background(Theme.colors.background)) {
-                        val flyPayOrderId = requireNotNull(intent.getOrderIdExtra())
-                        val flyPayClientId = requireNotNull(intent.getClientIdExtra())
-                        // Stores and remembers the FlyPay URL created from the callback URL.
-                        val flyPayUrl: String by remember(flyPayOrderId, flyPayClientId) {
-                            mutableStateOf(createFlyPayUrl(flyPayOrderId, flyPayClientId))
                         }
-                        FlyPayWebView(flyPayUrl = flyPayUrl, onSuccess = {
-                            setResult(
-                                Activity.RESULT_OK,
-                                Intent().putOrderIdExtra(flyPayOrderId)
-                            )
-                            finish()
-                        }, onFailure = { status, message ->
-                            setResult(
-                                Activity.RESULT_CANCELED,
-                                Intent()
-                                    .putStatusExtra(status)
-                                    .putMessageExtra(message)
-                            )
-                            finish()
-                        })
+                    )
+                }
+            ) { innerPadding ->
+                // Apply inner padding to avoid content overlapping with the TopAppBar
+                Box(modifier = Modifier.padding(innerPadding).background(MaterialTheme.colorScheme.background)) {
+                    val flyPayOrderId = requireNotNull(intent.getOrderIdExtra())
+                    val flyPayClientId = requireNotNull(intent.getClientIdExtra())
+                    // Stores and remembers the FlyPay URL created from the callback URL.
+                    val flyPayUrl: String by remember(flyPayOrderId, flyPayClientId) {
+                        mutableStateOf(createFlyPayUrl(flyPayOrderId, flyPayClientId))
                     }
+                    FlyPayWebView(flyPayUrl = flyPayUrl, onSuccess = {
+                        setResult(
+                            Activity.RESULT_OK,
+                            Intent().putOrderIdExtra(flyPayOrderId)
+                        )
+                        finish()
+                    }, onFailure = { status, message ->
+                        setResult(
+                            RESULT_CANCELED,
+                            Intent()
+                                .putStatusExtra(status)
+                                .putMessageExtra(message)
+                        )
+                        finish()
+                    })
                 }
             }
         }
@@ -107,7 +104,7 @@ internal class FlyPayWebActivity : ComponentActivity() {
         MobileSDK.getInstance().environment.mapToFlyPayEnv(flyPayOrderId, clientId)
 
     private fun finish(status: CancellationStatus) {
-        setResult(Activity.RESULT_CANCELED, Intent().putCancellationStatusExtra(status))
+        setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(status))
         finish()
     }
 }

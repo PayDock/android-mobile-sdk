@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -14,8 +15,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.core.net.toUri
 import com.paydock.designsystems.components.link.LinkText
 import com.paydock.designsystems.components.toggle.SdkSwitch
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.theme.TEXT_SPACING
 import com.paydock.feature.card.domain.model.integration.SaveCardConfig
 
 /**
@@ -40,15 +40,15 @@ internal fun SaveCardToggle(
     ) {
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(Theme.dimensions.textSpacing, Alignment.Top),
+            verticalArrangement = Arrangement.spacedBy(TEXT_SPACING, Alignment.Top),
             horizontalAlignment = Alignment.Start
         ) {
             // Consent Label
             Text(
                 modifier = Modifier.fillMaxWidth(),
-                style = Theme.typography.body1,
+                style = MaterialTheme.typography.bodyMedium,
                 text = config.consentText,
-                color = Theme.colors.onSurface
+                color = MaterialTheme.colorScheme.onSurface
             )
             // Privacy Policy Label
             if (config.privacyPolicyConfig != null) {
@@ -74,19 +74,15 @@ internal fun SaveCardToggle(
 @PreviewLightDark
 @Composable
 internal fun PreviewSaveCardToggleOff() {
-    SdkTheme {
-        SaveCardToggle(saveCard = false, config = SaveCardConfig()) {
+    SaveCardToggle(saveCard = false, config = SaveCardConfig()) {
 
-        }
     }
 }
 
 @PreviewLightDark
 @Composable
 internal fun PreviewSaveCardToggleOn() {
-    SdkTheme {
-        SaveCardToggle(saveCard = true, config = SaveCardConfig()) {
+    SaveCardToggle(saveCard = true, config = SaveCardConfig()) {
 
-        }
     }
 }

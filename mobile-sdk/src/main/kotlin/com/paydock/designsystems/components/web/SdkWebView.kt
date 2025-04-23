@@ -8,6 +8,7 @@ import android.webkit.WebResourceRequest
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,7 +30,6 @@ import com.paydock.designsystems.components.web.extensions.setup
 import com.paydock.designsystems.components.web.utils.SdkJSBridge
 import com.paydock.designsystems.components.web.utils.SdkWebChromeClient
 import com.paydock.designsystems.components.web.utils.SdkWebViewClient
-import com.paydock.designsystems.theme.Theme
 
 /**
  * Composable function to display a WebView with customizable settings and event handling.
@@ -73,7 +73,7 @@ internal fun <T : Any?> SdkWebView(
             state = state,
             modifier = Modifier
                 .fillMaxSize()
-                .background(Theme.colors.background),
+                .background(MaterialTheme.colorScheme.background),
             navigator = rememberWebViewNavigator(),
             client = remember {
                 SdkWebViewClient(

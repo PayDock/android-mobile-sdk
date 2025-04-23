@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,8 +38,8 @@ import com.google.pay.button.PayButton
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.loader.SdkLoader
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.theme.BUTTON_CORNER_RADIUS
+import com.paydock.designsystems.theme.SPACING
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.presentation.viewmodels.GooglePayViewModel
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
@@ -102,46 +103,44 @@ fun GooglePayWidget(
         )
     }
 
-    SdkTheme {
-        Box(contentAlignment = Alignment.Center) {
-            Column(
-                modifier = modifier.background(Theme.colors.background),
-                verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.Top),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                if (!allowedPaymentMethods.isNullOrBlank()) {
-                    // Show the Google Pay button when it's available
-                    AnimatedVisibility(
-                        visible = googlePayAvailable,
-                        enter = fadeIn(animationSpec = tween(MobileSDKConstants.General.DEFAULT_ANIMATION_DURATION)),
-                        exit = fadeOut(animationSpec = tween(MobileSDKConstants.General.DEFAULT_ANIMATION_DURATION))
-                    ) {
-                        // Google Pay Button - https://developers.google.com/pay/api/android/reference/request-objects#ButtonOptions
-                        PayButton(
-                            modifier = Modifier
-                                .testTag("payButton")
-                                .fillMaxWidth(),
-                            theme = if (isSystemInDarkTheme()) ButtonTheme.Dark else ButtonTheme.Light,
-                            type = ButtonType.Pay,
-                            onClick = {
-                                // Use the callback to obtain the token asynchronously
-                                token { obtainedToken ->
-                                    scope.launch {
-                                        viewModel.setWalletToken(obtainedToken)
-                                        val task = viewModel.getLoadPaymentDataTask(paymentRequest)
-                                        task.addOnCompleteListener(paymentDataTaskResult::launch)
-                                    }
+    Box(contentAlignment = Alignment.Center) {
+        Column(
+            modifier = modifier.background(MaterialTheme.colorScheme.background),
+            verticalArrangement = Arrangement.spacedBy(SPACING, Alignment.Top),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (!allowedPaymentMethods.isNullOrBlank()) {
+                // Show the Google Pay button when it's available
+                AnimatedVisibility(
+                    visible = googlePayAvailable,
+                    enter = fadeIn(animationSpec = tween(MobileSDKConstants.General.DEFAULT_ANIMATION_DURATION)),
+                    exit = fadeOut(animationSpec = tween(MobileSDKConstants.General.DEFAULT_ANIMATION_DURATION))
+                ) {
+                    // Google Pay Button - https://developers.google.com/pay/api/android/reference/request-objects#ButtonOptions
+                    PayButton(
+                        modifier = Modifier
+                            .testTag("payButton")
+                            .fillMaxWidth(),
+                        theme = if (isSystemInDarkTheme()) ButtonTheme.Dark else ButtonTheme.Light,
+                        type = ButtonType.Pay,
+                        onClick = {
+                            // Use the callback to obtain the token asynchronously
+                            token { obtainedToken ->
+                                scope.launch {
+                                    viewModel.setWalletToken(obtainedToken)
+                                    val task = viewModel.getLoadPaymentDataTask(paymentRequest)
+                                    task.addOnCompleteListener(paymentDataTaskResult::launch)
                                 }
-                            },
-                            radius = Theme.dimensions.buttonCornerRadius,
-                            allowedPaymentMethods = allowedPaymentMethods
-                        )
-                    }
+                            }
+                        },
+                        radius = BUTTON_CORNER_RADIUS,
+                        allowedPaymentMethods = allowedPaymentMethods
+                    )
                 }
             }
-            if (loadingDelegate == null && uiState is GooglePayUIState.Loading) {
-                SdkLoader()
-            }
+        }
+        if (loadingDelegate == null && uiState is GooglePayUIState.Loading) {
+            SdkLoader()
         }
     }
 }

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -34,9 +35,9 @@ import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.loader.SdkButtonLoader
+import com.paydock.designsystems.theme.BUTTON_HEIGHT
+import com.paydock.designsystems.theme.BUTTON_SPACING
 import com.paydock.designsystems.theme.PayPal
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.paypal.checkout.presentation.components.PayPalButton
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
 import com.paydock.feature.paypal.checkout.presentation.utils.CancellationStatus
@@ -95,47 +96,45 @@ fun PayPalWidget(
         )
     }
 
-    SdkTheme {
-        Box(modifier = modifier.background(Theme.colors.background), contentAlignment = Alignment.Center) {
-            if (loadingDelegate == null && uiState is PayPalCheckoutUIState.Loading) {
-                Button(
-                    onClick = {},
-                    modifier = Modifier
-                        .testTag("loadingPayPalButton")
-                        .fillMaxWidth()
-                        .height(Theme.dimensions.buttonHeight),
-                    enabled = true,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PayPal,
-                        disabledContainerColor = PayPal.alpha40
+    Box(modifier = modifier.background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+        if (loadingDelegate == null && uiState is PayPalCheckoutUIState.Loading) {
+            Button(
+                onClick = {},
+                modifier = Modifier
+                    .testTag("loadingPayPalButton")
+                    .fillMaxWidth()
+                    .height(BUTTON_HEIGHT),
+                enabled = true,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PayPal,
+                    disabledContainerColor = PayPal.alpha40
+                ),
+                shape = MaterialTheme.shapes.small
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(
+                        BUTTON_SPACING,
+                        Alignment.CenterHorizontally
                     ),
-                    shape = Theme.buttonShapes.small
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(
-                            Theme.dimensions.buttonSpacing,
-                            Alignment.CenterHorizontally
-                        ),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        SdkButtonLoader(color = Color.Black)
-                    }
+                    SdkButtonLoader(color = Color.Black)
                 }
-            } else {
-                // Button to initiate PayPal transaction
-                PayPalButton(
-                    isEnabled = uiState !is PayPalCheckoutUIState.Loading && enabled,
-                    isLoading = loadingDelegate == null && uiState is PayPalCheckoutUIState.Loading
-                ) {
-                    // Use the callback to obtain the token asynchronously
-                    token { obtainedToken ->
-                        scope.launch {
-                            viewModel.setWalletToken(obtainedToken)
-                            viewModel.getWalletCallback(
-                                walletToken = obtainedToken,
-                                requestShipping = requestShipping
-                            )
-                        }
+            }
+        } else {
+            // Button to initiate PayPal transaction
+            PayPalButton(
+                isEnabled = uiState !is PayPalCheckoutUIState.Loading && enabled,
+                isLoading = loadingDelegate == null && uiState is PayPalCheckoutUIState.Loading
+            ) {
+                // Use the callback to obtain the token asynchronously
+                token { obtainedToken ->
+                    scope.launch {
+                        viewModel.setWalletToken(obtainedToken)
+                        viewModel.getWalletCallback(
+                            walletToken = obtainedToken,
+                            requestShipping = requestShipping
+                        )
                     }
                 }
             }
@@ -278,7 +277,5 @@ private fun handleUIState(
 @PreviewLightDark
 @Composable
 internal fun PreviewPayPalWidget() {
-    SdkTheme {
-        PayPalWidget(token = {}, completion = {})
-    }
+    PayPalWidget(token = {}, completion = {})
 }

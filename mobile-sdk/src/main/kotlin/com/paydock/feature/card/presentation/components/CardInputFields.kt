@@ -12,7 +12,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import com.paydock.core.MobileSDKConstants
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.theme.SPACING
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.ui.CardScheme
 
@@ -72,7 +72,7 @@ internal fun CardInputFields(
     // Define threshold for large font scale
     val largeFontScaleThreshold = MobileSDKConstants.CardDetailsConfig.FONT_SCALE_THRESHOLD
 
-    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing)) {
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(SPACING)) {
         // Cardholder Name Input
         if (shouldCollectCardholderName) {
             CardHolderNameInput(
@@ -153,7 +153,7 @@ private fun ExpiryAndCodeColumn(
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing),
+        verticalArrangement = Arrangement.spacedBy(SPACING),
         horizontalAlignment = Alignment.Start
     ) {
         CardExpiryInput(
@@ -204,7 +204,7 @@ private fun ExpiryAndCodeRow(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.spacedBy(SPACING, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.Top
     ) {
         CardExpiryInput(

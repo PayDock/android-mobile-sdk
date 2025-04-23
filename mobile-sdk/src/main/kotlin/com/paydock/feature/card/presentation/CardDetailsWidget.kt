@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,8 +21,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.SdkButton
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.theme.SPACING
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.CardResult
 import com.paydock.feature.card.presentation.components.CardInputFields
@@ -78,65 +78,63 @@ fun CardDetailsWidget(
     }
 
     // UI Layout starts here
-    SdkTheme {
-        Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .background(Theme.colors.background),
-            verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.Top),
-            horizontalAlignment = Alignment.Start
-        ) {
-            // Title for the card information section
-            if (config.showCardTitle) {
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    style = Theme.typography.body1,
-                    text = stringResource(id = R.string.label_card_information),
-                    color = Theme.colors.onSurface
-                )
-            }
-            if (!config.schemeSupport.supportedSchemes.isNullOrEmpty()) {
-                SupportedCardBanner(config.schemeSupport.supportedSchemes)
-            }
-            CardInputFields(
-                shouldCollectCardholderName = config.collectCardholderName,
-                schemeConfig = config.schemeSupport,
-                focusCardNumber = focusCardNumber,
-                focusExpiry = focusExpiration,
-                focusCode = focusCVV,
-                enabled = uiState !is CardDetailsUIState.Loading && enabled,
-                cardHolderName = inputState.cardholderName ?: "",
-                cardNumber = inputState.cardNumber,
-                expiry = inputState.expiry,
-                code = inputState.code,
-                cardScheme = inputState.cardScheme,
-                onCardHolderNameChange = { viewModel.updateCardholderName(it) },
-                onCardNumberChange = { viewModel.updateCardNumber(it) },
-                onExpiryChange = { viewModel.updateExpiry(it) },
-                onSecurityCodeChange = { viewModel.updateSecurityCode(it) }
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background),
+        verticalArrangement = Arrangement.spacedBy(SPACING, Alignment.Top),
+        horizontalAlignment = Alignment.Start
+    ) {
+        // Title for the card information section
+        if (config.showCardTitle) {
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodyMedium,
+                text = stringResource(id = R.string.label_card_information),
+                color = MaterialTheme.colorScheme.onSurface
             )
+        }
+        if (!config.schemeSupport.supportedSchemes.isNullOrEmpty()) {
+            SupportedCardBanner(config.schemeSupport.supportedSchemes)
+        }
+        CardInputFields(
+            shouldCollectCardholderName = config.collectCardholderName,
+            schemeConfig = config.schemeSupport,
+            focusCardNumber = focusCardNumber,
+            focusExpiry = focusExpiration,
+            focusCode = focusCVV,
+            enabled = uiState !is CardDetailsUIState.Loading && enabled,
+            cardHolderName = inputState.cardholderName ?: "",
+            cardNumber = inputState.cardNumber,
+            expiry = inputState.expiry,
+            code = inputState.code,
+            cardScheme = inputState.cardScheme,
+            onCardHolderNameChange = { viewModel.updateCardholderName(it) },
+            onCardNumberChange = { viewModel.updateCardNumber(it) },
+            onExpiryChange = { viewModel.updateExpiry(it) },
+            onSecurityCodeChange = { viewModel.updateSecurityCode(it) }
+        )
 
-            // Save card toggle switch (if configured)
-            if (config.allowSaveCard != null) {
-                SaveCardToggle(
-                    enabled = uiState !is CardDetailsUIState.Loading && enabled,
-                    saveCard = inputState.saveCard,
-                    config = config.allowSaveCard,
-                    onToggle = viewModel::updateSaveCard
-                )
-            }
+        // Save card toggle switch (if configured)
+        if (config.allowSaveCard != null) {
+            SaveCardToggle(
+                enabled = uiState !is CardDetailsUIState.Loading && enabled,
+                saveCard = inputState.saveCard,
+                config = config.allowSaveCard,
+                onToggle = viewModel::updateSaveCard
+            )
+        }
 
-            // Submit button for tokenizing the card
-            SdkButton(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("submitDetails"),
-                text = config.actionText,
-                enabled = isDataValid && uiState !is CardDetailsUIState.Loading && enabled,
-                isLoading = loadingDelegate == null && uiState is CardDetailsUIState.Loading
-            ) {
-                viewModel.tokeniseCard()
-            }
+        // Submit button for tokenizing the card
+        SdkButton(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("submitDetails"),
+            text = config.actionText,
+            enabled = isDataValid && uiState !is CardDetailsUIState.Loading && enabled,
+            isLoading = loadingDelegate == null && uiState is CardDetailsUIState.Loading
+        ) {
+            viewModel.tokeniseCard()
         }
     }
 }
@@ -200,9 +198,7 @@ private fun handleUIState(
 @PreviewLightDark
 @Composable
 internal fun PreviewCardDetails() {
-    SdkTheme {
-        CardDetailsWidget(config = CardDetailsWidgetConfig(accessToken = "")) {
+    CardDetailsWidget(config = CardDetailsWidgetConfig(accessToken = "")) {
 
-        }
     }
 }

@@ -9,6 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -26,8 +27,6 @@ import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.AppButtonType
 import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.theme.PayPalVault
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultResult
 import com.paydock.feature.paypal.vault.presentation.state.PayPalVaultUIState
@@ -91,23 +90,21 @@ fun PayPalSavePaymentSourceWidget(
     }
 
     // Apply the SDK's theme to the widget
-    SdkTheme {
-        Box(modifier = modifier) {
-            // Display a button to link the PayPal account
-            SdkButton(
-                modifier = Modifier
-                    .background(Theme.colors.background)
-                    .testTag("linkPayPalAccount"),
-                buttonColor = PayPalVault,
-                buttonIcon = config.icon,
-                text = config.actionText
-                    ?: stringResource(id = R.string.button_link_paypal_account),
-                type = AppButtonType.Outlined,
-                enabled = uiState !is PayPalVaultUIState.Loading && enabled,
-                isLoading = loadingDelegate == null && uiState is PayPalVaultUIState.Loading
-            ) {
-                viewModel.createPayPalSetupToken()
-            }
+    Box(modifier = modifier) {
+        // Display a button to link the PayPal account
+        SdkButton(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.background)
+                .testTag("linkPayPalAccount"),
+            buttonColor = PayPalVault,
+            buttonIcon = config.icon,
+            text = config.actionText
+                ?: stringResource(id = R.string.button_link_paypal_account),
+            type = AppButtonType.Outlined,
+            enabled = uiState !is PayPalVaultUIState.Loading && enabled,
+            isLoading = loadingDelegate == null && uiState is PayPalVaultUIState.Loading
+        ) {
+            viewModel.createPayPalSetupToken()
         }
     }
 }

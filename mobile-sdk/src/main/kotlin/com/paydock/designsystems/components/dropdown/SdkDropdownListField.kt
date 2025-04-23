@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,7 +35,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.paydock.core.presentation.extensions.alpha20
 import com.paydock.designsystems.components.input.SdkTextField
-import com.paydock.designsystems.theme.Theme
 import kotlinx.coroutines.flow.filter
 
 /**
@@ -109,7 +109,7 @@ internal fun SdkDropdownListField(
                     .wrapContentSize(Alignment.TopStart)
             ) {
                 DropdownMenu(
-                    modifier = Modifier.background(Theme.colors.primary.alpha20),
+                    modifier = Modifier.background(MaterialTheme.colorScheme.primary.alpha20),
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
@@ -129,15 +129,15 @@ internal fun SdkDropdownListField(
                                         // Display each item as a selectable dropdown menu item
                                         Text(
                                             text = item,
-                                            style = Theme.typography.body1,
-                                            color = Theme.colors.onPrimary
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onPrimary
                                         )
                                     },
                                     modifier = Modifier
                                         .height(itemHeight)
                                         .width(boxWidth)
                                         .background(
-                                            if (item == selected) Theme.colors.primary else Color.Unspecified
+                                            if (item == selected) MaterialTheme.colorScheme.primary else Color.Unspecified
                                         ),
                                     onClick = {
                                         // Handle item selection

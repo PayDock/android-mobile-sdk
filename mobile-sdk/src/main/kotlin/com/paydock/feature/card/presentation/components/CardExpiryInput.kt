@@ -2,6 +2,7 @@ package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,8 +22,6 @@ import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.presentation.utils.errors.CardExpiryError
 import com.paydock.feature.card.presentation.utils.transformations.ExpiryInputTransformation
 import com.paydock.feature.card.presentation.utils.validators.CardExpiryValidator
@@ -113,11 +112,9 @@ internal fun CardExpiryInput(
 @PreviewLightDark
 @Composable
 internal fun PreviewCardExpiryInput() {
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            CardExpiryInput(value = "0823", enabled = true, nextFocus = null) {
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        CardExpiryInput(value = "0823", enabled = true, nextFocus = null) {
 
-            }
         }
     }
 }

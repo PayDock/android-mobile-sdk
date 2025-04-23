@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,8 +24,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.paydock.core.presentation.extensions.alpha20
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
 
 /**
  * Composable function to display a dropdown menu with a list of selectable items.
@@ -66,7 +65,7 @@ internal fun <String : Any> SdkDropDownMenu(
     ) {
         DropdownMenu(
             modifier = modifier
-                .background(Theme.colors.primary.alpha20)
+                .background(MaterialTheme.colorScheme.primary.alpha20)
                 .testTag("sdkDropDownMenu"),
             properties = PopupProperties(dismissOnClickOutside = dismissOnClickOutside),
             expanded = expanded,
@@ -77,13 +76,13 @@ internal fun <String : Any> SdkDropDownMenu(
                 DropdownMenuItem(
                     modifier = Modifier
                         .width(itemWidth)
-                        .background(if (isSelected) Theme.colors.primary else Color.Transparent),
+                        .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent),
                     text = {
                         Text(
                             modifier = Modifier.fillMaxWidth(),
                             text = AnnotatedString(text = item.toString()),
-                            style = Theme.typography.body1,
-                            color = if (isSelected) Theme.colors.onPrimary else Theme.colors.onSurface
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                         )
                     },
                     enabled = isClickEnabled,
@@ -103,14 +102,12 @@ internal fun <String : Any> SdkDropDownMenu(
 @Composable
 internal fun PreviewSdkDropDownMenuExpanded() {
     // Preview SdkDropDownMenu in the expanded state
-    SdkTheme {
-        SdkDropDownMenu(
-            expanded = true,
-            itemWidth = 300.dp,
-            items = listOf("Item 1", "Item 2", "Item 3"),
-            onItemSelected = {},
-            onDismissed = {},
-            selectedIndex = 0
-        )
-    }
+    SdkDropDownMenu(
+        expanded = true,
+        itemWidth = 300.dp,
+        items = listOf("Item 1", "Item 2", "Item 3"),
+        onItemSelected = {},
+        onDismissed = {},
+        selectedIndex = 0
+    )
 }

@@ -2,6 +2,7 @@ package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,8 +23,6 @@ import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.integration.enums.CardType
 import com.paydock.feature.card.domain.model.ui.CardCode
@@ -141,22 +140,20 @@ internal fun CreditCardNumberInput(
 @PreviewLightDark
 @Composable
 internal fun PreviewCreditCardNumberInput() {
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            CreditCardNumberInput(
-                value = "4242424242424242",
-                cardScheme = CardScheme(
-                    type = CardType.VISA,
-                    code = CardCode(
-                        CodeType.CVV,
-                        MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
-                    )
-                ),
-                enabled = true,
-                nextFocus = null,
-                onValueChange = {},
-                schemeConfig = SupportedSchemeConfig()
-            )
-        }
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        CreditCardNumberInput(
+            value = "4242424242424242",
+            cardScheme = CardScheme(
+                type = CardType.VISA,
+                code = CardCode(
+                    CodeType.CVV,
+                    MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
+                )
+            ),
+            enabled = true,
+            nextFocus = null,
+            onValueChange = {},
+            schemeConfig = SupportedSchemeConfig()
+        )
     }
 }

@@ -12,7 +12,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.designsystems.components.search.SearchTextField
-import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.feature.address.presentation.viewmodels.AddressSearchViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -48,7 +47,5 @@ internal fun AddressSearchInput(
 @PreviewLightDark
 @Composable
 internal fun PreviewAddressSearchInput() {
-    SdkTheme {
-        AddressSearchInput(onAddressSelected = {})
-    }
+    AddressSearchInput(onAddressSelected = {})
 }

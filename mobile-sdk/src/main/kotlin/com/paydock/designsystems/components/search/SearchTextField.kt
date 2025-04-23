@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,7 +39,6 @@ import com.paydock.core.presentation.extensions.alpha20
 import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.components.loader.SdkLoader
-import com.paydock.designsystems.theme.Theme
 
 /**
  * A composable function that creates a search text field with a dropdown for suggestions.
@@ -135,7 +135,7 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
 
         AnimatedVisibility(visible = isDropdownExpanded) {
             Card(
-                modifier = Modifier.background(Theme.colors.primary.alpha40),
+                modifier = Modifier.background(MaterialTheme.colorScheme.primary.alpha40),
                 shape = RoundedCornerShape(0.dp)
             ) {
                 // Calculate the height based on items.
@@ -210,7 +210,7 @@ private fun DropdownItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Theme.colors.primary.alpha20)
+            .background(MaterialTheme.colorScheme.primary.alpha20)
             .clickable {
                 onItemSelected(item)
             }
@@ -219,7 +219,7 @@ private fun DropdownItem(
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = AnnotatedString(text = item),
-            style = Theme.typography.body1
+            style = MaterialTheme.typography.bodyMedium
         )
     }
 }

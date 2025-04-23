@@ -17,7 +17,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SheetState
@@ -41,7 +43,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.paydock.ThemeColors
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
 import com.paydock.sample.feature.style.models.ColourTheme
@@ -49,109 +50,109 @@ import com.paydock.sample.feature.style.ui.components.picker.ColourPicker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ColoursSection(
-    colorTheme: ThemeColors.ThemeColor,
-    onColorUpdated: (ThemeColors.ThemeColor) -> Unit,
-) {
-    // Creates list of actual theming colours to show
-    val colourThemeItems = remember {
-        mutableStateListOf(
-            ColourTheme("Primary", colorTheme.primary),
-            ColourTheme("On Primary", colorTheme.onPrimary),
-            ColourTheme("Text", colorTheme.text),
-            ColourTheme("Placeholder", colorTheme.placeholder),
-            ColourTheme("Success", colorTheme.success),
-            ColourTheme("Error", colorTheme.error),
-            ColourTheme("Background", colorTheme.background),
-            ColourTheme("Outline", colorTheme.outline)
-        )
-    }
-    // Handles selected item for updating colour
-    var selectedItem by remember { mutableStateOf<ColourTheme?>(null) }
-    var showBottomSheet by rememberSaveable { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(
-        // This will expand the modal fully based on the size
-        skipPartiallyExpanded = true
-    )
-
-    // Function to update a color theme item
-    fun updateColorThemeItem(updatedItem: ColourTheme): ThemeColors.ThemeColor {
-        // Update the specific color in the ThemeColors.ThemeColor object
-        val updatedThemeColor = when (updatedItem.themeName) {
-            "Primary" -> colorTheme.with(primary = updatedItem.color)
-            "On Primary" -> colorTheme.with(onPrimary = updatedItem.color)
-            "Text" -> colorTheme.with(text = updatedItem.color)
-            "Placeholder" -> colorTheme.with(placeholder = updatedItem.color)
-            "Success" -> colorTheme.with(success = updatedItem.color)
-            "Error" -> colorTheme.with(error = updatedItem.color)
-            "Background" -> colorTheme.with(background = updatedItem.color)
-            "Outline" -> colorTheme.with(outline = updatedItem.color)
-            else -> colorTheme
-        }
-        return updatedThemeColor
-    }
-
-    SectionContainer(title = stringResource(R.string.label_colours)) {
-        colourThemeItems.forEach { theme ->
-            ColourSelectionField(
-                modifier = Modifier.fillMaxWidth(),
-                colourTheme = ColourTheme(theme.themeName, theme.color),
-                onItemClicked = { updatedItem ->
-                    scope.launch {
-                        selectedItem = updatedItem
-                        showBottomSheet = true
-                    }
-                }
-            )
-        }
-    }
-
-    if (showBottomSheet) {
-        ModalBottomSheet(
-            // This is to show above device navigation
-            contentWindowInsets = { WindowInsets(bottom = 30.dp) },
-            onDismissRequest = {
-                showBottomSheet = false
-            },
-            sheetState = sheetState
-        ) {
-            // Sheet content
-            selectedItem?.let {
-                ColourPicker(color = it.color, onColourUpdated = { color ->
-                    scope.launch { sheetState.hide() }.invokeOnCompletion {
-                        selectedItem = selectedItem?.copy(color = color)
-                        // Updates the color theme component
-                        val updatedColorTheme =
-                            colourThemeItems.find { theme -> theme.themeName == selectedItem?.themeName }
-                                ?.apply {
-                                    this.color = color
-                                }
-                        // Updates the color theme as a whole
-                        updatedColorTheme?.let { colorTheme ->
-                            onColorUpdated(
-                                updateColorThemeItem(
-                                    colorTheme
-                                )
-                            )
-                        }
-                        if (!sheetState.isVisible) {
-                            showBottomSheet = false
-                        }
-                    }
-                }, onCanceled = {
-                    scope.launch { sheetState.hide() }.invokeOnCompletion {
-                        if (!sheetState.isVisible) {
-                            showBottomSheet = false
-                        }
-                    }
-                })
-            }
-        }
-    }
-}
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Composable
+//fun ColoursSection(
+//    colorTheme: ThemeColors.ThemeColor,
+//    onColorUpdated: (ThemeColors.ThemeColor) -> Unit,
+//) {
+//    // Creates list of actual theming colours to show
+//    val colourThemeItems = remember {
+//        mutableStateListOf(
+//            ColourTheme("Primary", colorTheme.primary),
+//            ColourTheme("On Primary", colorTheme.onPrimary),
+//            ColourTheme("Text", colorTheme.text),
+//            ColourTheme("Placeholder", colorTheme.placeholder),
+//            ColourTheme("Success", colorTheme.success),
+//            ColourTheme("Error", colorTheme.error),
+//            ColourTheme("Background", colorTheme.background),
+//            ColourTheme("Outline", colorTheme.outline)
+//        )
+//    }
+//    // Handles selected item for updating colour
+//    var selectedItem by remember { mutableStateOf<ColourTheme?>(null) }
+//    var showBottomSheet by rememberSaveable { mutableStateOf(false) }
+//    val scope = rememberCoroutineScope()
+//    val sheetState = rememberModalBottomSheetState(
+//        // This will expand the modal fully based on the size
+//        skipPartiallyExpanded = true
+//    )
+//
+//    // Function to update a color theme item
+//    fun updateColorThemeItem(updatedItem: ColourTheme): ThemeColors.ThemeColor {
+//        // Update the specific color in the ThemeColors.ThemeColor object
+//        val updatedThemeColor = when (updatedItem.themeName) {
+//            "Primary" -> colorTheme.with(primary = updatedItem.color)
+//            "On Primary" -> colorTheme.with(onPrimary = updatedItem.color)
+//            "Text" -> colorTheme.with(text = updatedItem.color)
+//            "Placeholder" -> colorTheme.with(placeholder = updatedItem.color)
+//            "Success" -> colorTheme.with(success = updatedItem.color)
+//            "Error" -> colorTheme.with(error = updatedItem.color)
+//            "Background" -> colorTheme.with(background = updatedItem.color)
+//            "Outline" -> colorTheme.with(outline = updatedItem.color)
+//            else -> colorTheme
+//        }
+//        return updatedThemeColor
+//    }
+//
+//    SectionContainer(title = stringResource(R.string.label_colours)) {
+//        colourThemeItems.forEach { theme ->
+//            ColourSelectionField(
+//                modifier = Modifier.fillMaxWidth(),
+//                colourTheme = ColourTheme(theme.themeName, theme.color),
+//                onItemClicked = { updatedItem ->
+//                    scope.launch {
+//                        selectedItem = updatedItem
+//                        showBottomSheet = true
+//                    }
+//                }
+//            )
+//        }
+//    }
+//
+//    if (showBottomSheet) {
+//        ModalBottomSheet(
+//            // This is to show above device navigation
+//            contentWindowInsets = { WindowInsets(bottom = 30.dp) },
+//            onDismissRequest = {
+//                showBottomSheet = false
+//            },
+//            sheetState = sheetState
+//        ) {
+//            // Sheet content
+//            selectedItem?.let {
+//                ColourPicker(color = it.color, onColourUpdated = { color ->
+//                    scope.launch { sheetState.hide() }.invokeOnCompletion {
+//                        selectedItem = selectedItem?.copy(color = color)
+//                        // Updates the color theme component
+//                        val updatedColorTheme =
+//                            colourThemeItems.find { theme -> theme.themeName == selectedItem?.themeName }
+//                                ?.apply {
+//                                    this.color = color
+//                                }
+//                        // Updates the color theme as a whole
+//                        updatedColorTheme?.let { colorTheme ->
+//                            onColorUpdated(
+//                                updateColorThemeItem(
+//                                    colorTheme
+//                                )
+//                            )
+//                        }
+//                        if (!sheetState.isVisible) {
+//                            showBottomSheet = false
+//                        }
+//                    }
+//                }, onCanceled = {
+//                    scope.launch { sheetState.hide() }.invokeOnCompletion {
+//                        if (!sheetState.isVisible) {
+//                            showBottomSheet = false
+//                        }
+//                    }
+//                })
+//            }
+//        }
+//    }
+//}
 
 sealed class Header {
     data class HeaderPlain(val titleText: String) : Header()

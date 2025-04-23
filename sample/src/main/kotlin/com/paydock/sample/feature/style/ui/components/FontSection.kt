@@ -21,7 +21,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontListFontFamily
 import androidx.compose.ui.text.font.ResourceFont
 import androidx.compose.ui.text.font.toFontFamily
-import com.paydock.ThemeFont
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
 import com.paydock.sample.designsystems.components.fields.DropdownListField
@@ -33,48 +32,48 @@ import java.util.regex.Pattern
 
 const val DEFAULT_FONT_NAME = "Acid-Grotesk*.otf"
 
-@Composable
-fun FontSection(fontTheme: ThemeFont, onFontUpdated: (FontFamily) -> Unit) {
-    val context: Context = LocalContext.current
-    var selectedFontFamily by remember { mutableStateOf(fontTheme.familyName) }
-    var selectedFontName by remember { mutableStateOf("") }
-    // Initial loading state
-    var isLoading by remember { mutableStateOf(true) }
-
-    // State to hold the list of fonts
-    val fontsState = remember { mutableStateListOf<String>() }
-    // Fetch the list of fonts using a coroutine
-    LaunchedEffect(Unit) {
-        val fonts: List<String> = listOf(DEFAULT_FONT_NAME) + getSystemFontNames()
-        // Update the fontsState with the fetched list of fonts
-        fontsState.addAll(fonts)
-        selectedFontName = context.getResourceFontName(selectedFontFamily)
-            ?: if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                getSelectedSystemFontName(selectedFontFamily) ?: ""
-            } else ""
-        isLoading = false //Loading finished
-    }
-    SectionContainer(title = stringResource(R.string.label_font)) {
-        // Show a loading indicator or skip the DropdownListField
-        if (isLoading) {
-            Text("Loading Fonts") // Or any loading indicator
-        } else {
-            DropdownListField(
-                modifier = Modifier.fillMaxWidth(),
-                items = fontsState,
-                selected = selectedFontName
-            ) {
-                selectedFontName = it
-                val selectedFont = getSelectedSystemFont(it)
-                selectedFontFamily = selectedFont?.toFontFamily() ?: appFontFamily
-                onFontUpdated(selectedFontFamily)
-            }
-        }
-
-        Text(fontFamily = selectedFontFamily, text = "Sample Text")
-    }
-
-}
+//@Composable
+//fun FontSection(fontTheme: ThemeFont, onFontUpdated: (FontFamily) -> Unit) {
+//    val context: Context = LocalContext.current
+//    var selectedFontFamily by remember { mutableStateOf(fontTheme.familyName) }
+//    var selectedFontName by remember { mutableStateOf("") }
+//    // Initial loading state
+//    var isLoading by remember { mutableStateOf(true) }
+//
+//    // State to hold the list of fonts
+//    val fontsState = remember { mutableStateListOf<String>() }
+//    // Fetch the list of fonts using a coroutine
+//    LaunchedEffect(Unit) {
+//        val fonts: List<String> = listOf(DEFAULT_FONT_NAME) + getSystemFontNames()
+//        // Update the fontsState with the fetched list of fonts
+//        fontsState.addAll(fonts)
+//        selectedFontName = context.getResourceFontName(selectedFontFamily)
+//            ?: if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+//                getSelectedSystemFontName(selectedFontFamily) ?: ""
+//            } else ""
+//        isLoading = false //Loading finished
+//    }
+//    SectionContainer(title = stringResource(R.string.label_font)) {
+//        // Show a loading indicator or skip the DropdownListField
+//        if (isLoading) {
+//            Text("Loading Fonts") // Or any loading indicator
+//        } else {
+//            DropdownListField(
+//                modifier = Modifier.fillMaxWidth(),
+//                items = fontsState,
+//                selected = selectedFontName
+//            ) {
+//                selectedFontName = it
+//                val selectedFont = getSelectedSystemFont(it)
+//                selectedFontFamily = selectedFont?.toFontFamily() ?: appFontFamily
+//                onFontUpdated(selectedFontFamily)
+//            }
+//        }
+//
+//        Text(fontFamily = selectedFontFamily, text = "Sample Text")
+//    }
+//
+//}
 
 fun getSelectedSystemFont(fontName: String): Font? =
     getSystemFontFiles().find { it.name == fontName }?.let { Font(it) }

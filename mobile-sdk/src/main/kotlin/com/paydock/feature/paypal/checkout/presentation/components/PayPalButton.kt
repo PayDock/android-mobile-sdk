@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,9 +18,9 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.designsystems.components.loader.SdkButtonLoader
+import com.paydock.designsystems.theme.BUTTON_HEIGHT
+import com.paydock.designsystems.theme.BUTTON_SPACING
 import com.paydock.designsystems.theme.PayPal
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
 
 /**
  * A composable function that displays a customizable PayPal button.
@@ -44,17 +45,17 @@ internal fun PayPalButton(
         modifier = Modifier
             .testTag("payPalButton")
             .fillMaxWidth()
-            .height(Theme.dimensions.buttonHeight),
+            .height(BUTTON_HEIGHT),
         enabled = isEnabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = PayPal,
             disabledContainerColor = PayPal.alpha40
         ),
-        shape = Theme.buttonShapes.small
+        shape = MaterialTheme.shapes.small
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(
-                Theme.dimensions.buttonSpacing,
+                BUTTON_SPACING,
                 Alignment.CenterHorizontally
             ),
             verticalAlignment = Alignment.CenterVertically,
@@ -75,7 +76,5 @@ internal fun PayPalButton(
 @PreviewLightDark
 @Composable
 internal fun PreviewPayPalButton() {
-    SdkTheme {
-        PayPalButton(isEnabled = true, isLoading = false) {}
-    }
+    PayPalButton(isEnabled = true, isLoading = false) {}
 }
