@@ -3,7 +3,7 @@ package com.paydock.sample.feature.checkout.ui.components
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.paypal.checkout.presentation.PayPalWidget
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
@@ -27,7 +27,7 @@ fun PayPalContent(
 }
 
 @Composable
-@Preview
+@PreviewLightDark
 private fun PayPalContentDefault() {
     SampleTheme {
         PayPalContent(true, {}, null, {})

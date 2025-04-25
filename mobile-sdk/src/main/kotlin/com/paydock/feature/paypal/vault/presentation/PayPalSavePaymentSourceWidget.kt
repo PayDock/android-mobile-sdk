@@ -7,9 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -23,10 +21,10 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.AppButtonType
 import com.paydock.designsystems.components.button.SdkButton
-import com.paydock.designsystems.theme.PayPalVault
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultResult
 import com.paydock.feature.paypal.vault.presentation.state.PayPalVaultUIState
@@ -94,9 +92,7 @@ fun PayPalSavePaymentSourceWidget(
         // Display a button to link the PayPal account
         SdkButton(
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.background)
                 .testTag("linkPayPalAccount"),
-            buttonColor = PayPalVault,
             buttonIcon = config.icon,
             text = config.actionText
                 ?: stringResource(id = R.string.button_link_paypal_account),
@@ -228,4 +224,15 @@ private fun handleUIState(
             viewModel.resetResultState()
         }
     }
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewPayPalWidget() {
+    PayPalSavePaymentSourceWidget(
+        config = PayPalVaultConfig(
+            accessToken = "xxx",
+            gatewayId = "xxx"
+        )
+    ) { }
 }

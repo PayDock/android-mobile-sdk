@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package com.paydock.designsystems.components.input
 
 import androidx.compose.animation.AnimatedVisibility
@@ -8,14 +10,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,16 +26,16 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.core.presentation.extensions.autofill
+import com.paydock.core.presentation.ui.previews.SdkFontScalePreviews
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.theme.BORDER_WIDTH
 
 /**
@@ -117,14 +118,13 @@ internal fun SdkTextField(
                 .autofillModifier(autofillType, onValueChange),
             enabled = enabled, // Use the parameter value
             readOnly = readOnly,
-            textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
+            textStyle = MaterialTheme.typography.bodyMedium,
             keyboardActions = keyboardActions,
             keyboardOptions = keyboardOptions,
             singleLine = singleLine,
             maxLines = maxLines,
             visualTransformation = visualTransformation,
-            interactionSource = interactionSource,
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
+            interactionSource = interactionSource
         ) { innerTextField ->
             OutlinedTextFieldDefaults.DecorationBox(
                 value = value,
@@ -144,16 +144,11 @@ internal fun SdkTextField(
                     TextFieldTrailingIcon(error, trailingIcon)
                 },
                 leadingIcon = leadingIcon,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = MaterialTheme.colorScheme.onBackground
-                ),
                 container = {
                     OutlinedTextFieldDefaults.Container(
                         enabled = enabled, // Use the parameter value
                         isError = error != null,
                         interactionSource = interactionSource,
-                        shape = MaterialTheme.shapes.small,
                         focusedBorderThickness = BORDER_WIDTH.times(2),
                         unfocusedBorderThickness = BORDER_WIDTH
                     )
@@ -178,7 +173,11 @@ internal fun SdkTextField(
  *                 exceeds this limit, it will be truncated.
  */
 @Composable
-private fun TextFieldLabel(label: String, labelTextStyle: TextStyle, maxLines: Int) {
+private fun TextFieldLabel(
+    label: String,
+    labelTextStyle: TextStyle = MaterialTheme.typography.bodyMedium,
+    maxLines: Int = 1
+) {
     Text(
         modifier = Modifier.testTag("sdkLabel"),
         maxLines = maxLines,
@@ -187,14 +186,36 @@ private fun TextFieldLabel(label: String, labelTextStyle: TextStyle, maxLines: I
     )
 }
 
+@SdkFontScalePreviews
 @Composable
-private fun TextFieldPlaceholder(placeholder: String, maxLines: Int) {
+internal fun TextFieldLabelPreview() {
+    Column {
+        TextFieldLabel(label = "This is a label")
+    }
+}
+
+/**
+ * Composable function to display a placeholder text within a TextField.
+ *
+ * @param placeholder The text to be displayed as a placeholder.
+ * @param maxLines The maximum number of lines the placeholder text can occupy.
+ */
+@Composable
+private fun TextFieldPlaceholder(placeholder: String, maxLines: Int = 1) {
     Text(
         modifier = Modifier.testTag("sdkPlaceholder"),
         maxLines = maxLines,
         style = MaterialTheme.typography.bodyMedium,
         text = placeholder
     )
+}
+
+@SdkFontScalePreviews
+@Composable
+internal fun TextFieldPlaceholderPreview() {
+    Column {
+        TextFieldPlaceholder(placeholder = "This is a placeholder label")
+    }
 }
 
 /**
@@ -217,6 +238,25 @@ private fun TextFieldTrailingIcon(error: String?, trailingIcon: @Composable (() 
     }
 }
 
+@SdkLightDarkPreviews
+@Composable
+internal fun TextFieldTrailingIconErrorPreview() {
+    Column {
+        TextFieldTrailingIcon(error = "This is an error message", null)
+    }
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun TextFieldTrailingIconCustomPreview() {
+    Column {
+        TextFieldTrailingIcon(
+            error = null,
+            { Icon(imageVector = Icons.Filled.Close, contentDescription = null) }
+        )
+    }
+}
+
 /**
  * Displays an error icon, typically used to indicate an error state within a TextField.
  *
@@ -228,29 +268,6 @@ private fun TextFieldTrailingIcon(error: String?, trailingIcon: @Composable (() 
  *
  * @see androidx.compose.material3.TextField
  * @see androidx.compose.material3.OutlinedTextField
- *
- * Example usage:
- * ```
- * var text by remember { mutableStateOf("") }
- * var isError by remember { mutableStateOf(false) }
- *
- * Column {
- *     OutlinedTextField(
- *         value = text,
- *         onValueChange = {
- *             text = it
- *             isError = it.length < 5 // Example error condition
- *         },
- *         isError = isError,
- *         trailingIcon = {
- *              if(isError){
- *                  TextFieldErrorIcon()
- *              }
- *         },
- *         label = { Text("Enter at least 5 characters") }
- *     )
- * }
- * ```
  */
 @Composable
 private fun TextFieldErrorIcon() {
@@ -262,6 +279,14 @@ private fun TextFieldErrorIcon() {
     )
 }
 
+@SdkLightDarkPreviews
+@Composable
+internal fun TextFieldErrorIconPreview() {
+    Column {
+        TextFieldErrorIcon()
+    }
+}
+
 /**
  * Displays an error label below a TextField if an error message is provided.
  *
@@ -270,16 +295,6 @@ private fun TextFieldErrorIcon() {
  *
  * @param error The error message string to display. If `null`, the error label will be hidden.
  *              If an empty string is provided it will display an empty label.
- *
- * Example Usage:
- *
- * ```kotlin
- *  TextFieldErrorLabel(error = "This field is required")
- *
- *  TextFieldErrorLabel(error = null) // No error label shown
- *
- *  TextFieldErrorLabel(error = "") // Empty label shown, but visible
- * ```
  */
 @Composable
 private fun TextFieldErrorLabel(error: String?) {
@@ -292,6 +307,14 @@ private fun TextFieldErrorLabel(error: String?) {
             color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.labelMedium
         )
+    }
+}
+
+@SdkFontScalePreviews
+@Composable
+internal fun TextFieldErrorLabelPreview() {
+    Column {
+        TextFieldErrorLabel(error = "This is an error message")
     }
 }
 
@@ -324,66 +347,54 @@ private fun Modifier.autofillModifier(autofillType: AutofillType?, onFill: (Stri
  * Composable function to preview an empty state of the SdkTextField.
  */
 @OptIn(ExperimentalComposeUiApi::class)
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkTextFieldEmptyState() {
     // Mutable state for the text input field value
     var value by remember { mutableStateOf("") }
     // Preview SdkTextField with an empty state
-    Surface(color = MaterialTheme.colorScheme.surface) {
-        SdkTextField(
-            value = value,
-            onValueChange = { value = it },
-            placeholder = "Placeholder",
-            label = "Label",
-            error = if (value == "error") "This is error" else null
-        )
-    }
+    SdkTextField(
+        value = value,
+        onValueChange = { value = it },
+        placeholder = "Placeholder",
+        label = "Label",
+        error = if (value == "error") "This is error" else null
+    )
 }
 
 /**
  * Composable function to preview the SdkTextField with input.
  */
 @OptIn(ExperimentalComposeUiApi::class)
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkTextFieldWithInput() {
     // Mutable state for the text input field value
     var value by remember { mutableStateOf("Input") }
     // Preview SdkTextField with pre-filled input
-    Surface(color = MaterialTheme.colorScheme.surface) {
-        SdkTextField(
-            value = value,
-            onValueChange = { value = it },
-            placeholder = "Placeholder",
-            label = "Label"
-        )
-    }
+    SdkTextField(
+        value = value,
+        onValueChange = { value = it },
+        placeholder = "Placeholder",
+        label = "Label"
+    )
 }
 
 /**
  * Composable function to preview the SdkTextField with an error state.
  */
 @OptIn(ExperimentalComposeUiApi::class)
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkTextFieldError() {
     // Mutable state for the text input field value
     var value by remember { mutableStateOf("xxxx") }
     // Preview SdkTextField with error state
-    Surface(color = MaterialTheme.colorScheme.surface) {
-        SdkTextField(
-            value = value,
-            onValueChange = { value = it },
-            placeholder = "Placeholder",
-            label = "Label",
-            error = "Enter valid input",
-            trailingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_error),
-                    contentDescription = "Error Icon",
-                )
-            }
-        )
-    }
+    SdkTextField(
+        value = value,
+        onValueChange = { value = it },
+        placeholder = "Placeholder",
+        label = "Label",
+        error = "Enter valid input"
+    )
 }

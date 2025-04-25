@@ -2,8 +2,6 @@ package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,9 +15,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.feature.card.presentation.utils.errors.CardHolderNameError
@@ -101,12 +99,16 @@ internal fun CardHolderNameInput(
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
-internal fun PreviewCardHolderNameInput() {
-    Surface(color = MaterialTheme.colorScheme.surface) {
-        CardHolderNameInput(value = "J DOE") {
+internal fun PreviewCardHolderNameInputDefault() {
+    CardHolderNameInput {}
+}
 
-        }
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewCardHolderNameInputValue() {
+    CardHolderNameInput(value = "J DOE") {
+
     }
 }

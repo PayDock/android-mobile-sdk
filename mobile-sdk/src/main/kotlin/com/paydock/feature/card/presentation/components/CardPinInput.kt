@@ -2,8 +2,6 @@ package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -16,9 +14,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.feature.card.presentation.utils.errors.CardPinError
@@ -97,12 +95,16 @@ internal fun CardPinInput(
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
-internal fun PreviewCardPinInput() {
-    Surface(color = MaterialTheme.colorScheme.surface) {
-        CardPinInput(value = "1234") {
+internal fun PreviewCardPinInputDefault() {
+    CardPinInput {}
+}
 
-        }
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewCardPinInputValue() {
+    CardPinInput(value = "1234") {
+
     }
 }

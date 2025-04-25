@@ -32,7 +32,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.toRect
@@ -201,7 +201,7 @@ private fun DrawScope.drawBitmap(
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 internal fun PreviewSatValPanel() {
     val color = "#3e3e9d".color

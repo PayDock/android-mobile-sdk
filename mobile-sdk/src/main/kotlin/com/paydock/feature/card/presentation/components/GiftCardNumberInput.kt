@@ -3,8 +3,6 @@ package com.paydock.feature.card.presentation.components
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,9 +18,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.feature.card.presentation.utils.errors.GiftCardNumberError
@@ -95,12 +93,7 @@ internal fun GiftCardNumberInput(
             Icon(
                 modifier = Modifier.testTag("cardIcon"),
                 painter = painterResource(id = R.drawable.ic_credit_card),
-                contentDescription = null,
-                tint = if (focusedState.value) {
-                    MaterialTheme.colorScheme.onSurface // Use primary color when focused
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant // Use secondary color when not focused
-                }
+                contentDescription = null
             )
         },
         error = errorMessage,
@@ -126,12 +119,16 @@ internal fun GiftCardNumberInput(
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewGiftCardNumberInputDefault() {
+    GiftCardNumberInput {}
+}
+
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewGiftCardNumberInput() {
-    Surface(color = MaterialTheme.colorScheme.surface) {
-        GiftCardNumberInput(value = "4242424242424242") {
+    GiftCardNumberInput(value = "4242424242424242") {
 
-        }
     }
 }

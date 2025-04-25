@@ -9,10 +9,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.paydock.core.presentation.ui.previews.SdkFontScalePreviews
 
 /**
  * A composable function that renders a clickable text link.
@@ -25,7 +24,7 @@ import androidx.compose.ui.unit.sp
  * @param onClick A callback function that is invoked when the link is clicked.
  */
 @Composable
-internal fun LinkText(
+internal fun SdkLinkText(
     modifier: Modifier = Modifier,
     linkText: String,
     onClick: () -> Unit
@@ -40,17 +39,15 @@ internal fun LinkText(
                     onClick()
                 },
             style = MaterialTheme.typography.bodyMedium.copy(
-                fontSize = 17.sp,
-                lineHeight = 22.sp,
-                textDecoration = TextDecoration.Underline
+                fontSize = (MaterialTheme.typography.bodyMedium.fontSize.value + 1).sp
             ),
             color = MaterialTheme.colorScheme.primary
         )
     }
 }
 
-@PreviewLightDark
+@SdkFontScalePreviews
 @Composable
 internal fun PreviewLinkText() {
-    LinkText(linkText = "Privacy Policy") { }
+    SdkLinkText(linkText = "Privacy Policy") { }
 }

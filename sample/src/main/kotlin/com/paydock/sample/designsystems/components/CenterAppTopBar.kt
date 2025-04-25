@@ -15,7 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.theme.SampleTheme
 
@@ -33,7 +33,7 @@ fun CenterAppTopBar(
             title = {
                 Text(
                     modifier = modifier,
-                    text = title,
+                    text = title
                 )
             },
             modifier = modifier,
@@ -84,7 +84,7 @@ fun CenterAppTopBar(
 }
 
 @Composable
-@Preview
+@PreviewLightDark
 internal fun PreviewCenterAppTopBar() {
     SampleTheme {
         CenterAppTopBar(title = "Center Top Bar", showTitle = true)
@@ -92,7 +92,7 @@ internal fun PreviewCenterAppTopBar() {
 }
 
 @Composable
-@Preview
+@PreviewLightDark
 internal fun PreviewCenterAppTopBarWithoutTitle() {
     SampleTheme {
         CenterAppTopBar(title = "Center Top Bar", showTitle = false)
@@ -100,7 +100,7 @@ internal fun PreviewCenterAppTopBarWithoutTitle() {
 }
 
 @Composable
-@Preview
+@PreviewLightDark
 internal fun PreviewCenterAppTopBarWithBackButton() {
     SampleTheme {
         CenterAppTopBar(
@@ -112,7 +112,7 @@ internal fun PreviewCenterAppTopBarWithBackButton() {
 }
 
 @Composable
-@Preview
+@PreviewLightDark
 internal fun PreviewCenterAppTopBarWithoutTitleWithBackButton() {
     SampleTheme {
         CenterAppTopBar(

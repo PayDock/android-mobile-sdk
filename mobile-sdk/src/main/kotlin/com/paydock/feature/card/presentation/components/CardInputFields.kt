@@ -139,7 +139,6 @@ internal fun CardInputFields(
  * @param onExpiryChange Callback function to handle changes to the expiry date input value.
  * @param onSecurityCodeChange Callback function to handle changes to the security code input value.
  */
-@Suppress("LongParameterList")
 @Composable
 private fun ExpiryAndCodeColumn(
     expiry: String,
@@ -190,7 +189,6 @@ private fun ExpiryAndCodeColumn(
  * @param onExpiryChange Callback function to handle changes to the expiry date input value.
  * @param onSecurityCodeChange Callback function to handle changes to the security code input value.
  */
-@Suppress("LongParameterList")
 @Composable
 private fun ExpiryAndCodeRow(
     expiry: String,

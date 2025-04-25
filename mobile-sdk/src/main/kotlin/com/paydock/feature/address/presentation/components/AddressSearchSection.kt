@@ -37,9 +37,8 @@ fun AddressSearchSection(onAddressSelected: (Address) -> Unit) {
     // Header text
     Text(
         modifier = Modifier.fillMaxWidth(),
-        style = MaterialTheme.typography.bodyMedium,
-        text = stringResource(R.string.label_find_an_address),
-        color = MaterialTheme.colorScheme.onSurface
+        style = MaterialTheme.typography.titleMedium,
+        text = stringResource(R.string.label_find_an_address)
     )
 
     // Address search input

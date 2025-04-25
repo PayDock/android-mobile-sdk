@@ -3,7 +3,7 @@ package com.paydock.sample.feature.checkout.ui.components
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.theme.SampleTheme
 
@@ -21,7 +21,7 @@ fun GooglePayTabButton(isSelected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-@Preview
+@PreviewLightDark
 private fun GooglePayTabButtonDefault() {
     SampleTheme {
         GooglePayTabButton(
@@ -31,7 +31,7 @@ private fun GooglePayTabButtonDefault() {
 }
 
 @Composable
-@Preview
+@PreviewLightDark
 private fun GooglePayTabButtonSelected() {
     SampleTheme {
         GooglePayTabButton(

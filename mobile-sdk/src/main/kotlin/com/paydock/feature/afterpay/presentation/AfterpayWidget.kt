@@ -6,9 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -17,12 +15,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.viewinterop.AndroidView
 import com.afterpay.android.Afterpay
 import com.afterpay.android.view.AfterpayPaymentButton
 import com.paydock.R
 import com.paydock.core.domain.error.exceptions.AfterpayException
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.feature.address.domain.model.integration.BillingAddress
@@ -107,7 +105,7 @@ fun AfterpayWidget(
     }
 
     // Render the Afterpay widget UI
-    Box(modifier = modifier.background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
         if (isConfigured) {
             AfterpayPaymentButtonView(
                 config = config,
@@ -244,7 +242,7 @@ private fun handleUIState(
     }
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewAfterpayWidget() {
     AndroidView(factory = { context ->

@@ -1,7 +1,6 @@
 package com.paydock.feature.card.presentation.components
 
 import android.content.Intent
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,11 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.core.net.toUri
-import com.paydock.designsystems.components.link.LinkText
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.link.SdkLinkText
 import com.paydock.designsystems.components.toggle.SdkSwitch
-import com.paydock.designsystems.theme.TEXT_SPACING
 import com.paydock.feature.card.domain.model.integration.SaveCardConfig
 
 /**
@@ -40,19 +38,17 @@ internal fun SaveCardToggle(
     ) {
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(TEXT_SPACING, Alignment.Top),
             horizontalAlignment = Alignment.Start
         ) {
             // Consent Label
             Text(
                 modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.bodyMedium,
-                text = config.consentText,
-                color = MaterialTheme.colorScheme.onSurface
+                text = config.consentText
             )
             // Privacy Policy Label
             if (config.privacyPolicyConfig != null) {
-                LinkText(linkText = config.privacyPolicyConfig.privacyPolicyText) {
+                SdkLinkText(linkText = config.privacyPolicyConfig.privacyPolicyText) {
                     if (enabled) {
                         val uri = config.privacyPolicyConfig.privacyPolicyURL.toUri()
                         val intent = Intent(Intent.ACTION_VIEW, uri)
@@ -71,18 +67,28 @@ internal fun SaveCardToggle(
     }
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSaveCardToggleOff() {
-    SaveCardToggle(saveCard = false, config = SaveCardConfig()) {
+    SaveCardToggle(
+        saveCard = false,
+        config = SaveCardConfig(
+            privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(privacyPolicyURL = "https://google.com")
+        )
+    ) {
 
     }
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSaveCardToggleOn() {
-    SaveCardToggle(saveCard = true, config = SaveCardConfig()) {
+    SaveCardToggle(
+        saveCard = true,
+        config = SaveCardConfig(
+            privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(privacyPolicyURL = "https://google.com")
+        )
+    ) {
 
     }
 }

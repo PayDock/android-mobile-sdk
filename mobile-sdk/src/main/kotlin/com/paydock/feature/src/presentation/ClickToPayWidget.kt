@@ -1,11 +1,9 @@
 package com.paydock.feature.src.presentation
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -67,7 +65,7 @@ fun ClickToPayWidget(
     // Render Click to Pay widget
     Box(contentAlignment = Alignment.Center) {
         Column(
-            modifier = modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background),
+            modifier = modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(SPACING, Alignment.Top),
             horizontalAlignment = Alignment.Start
         ) {

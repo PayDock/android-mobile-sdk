@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -29,10 +30,9 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.core.presentation.extensions.scaled
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.BORDER_WIDTH
 import com.paydock.designsystems.theme.BUTTON_HEIGHT
@@ -82,6 +82,7 @@ internal fun SdkButton(
             onClick = onClick,
             enabled = enabled && !isLoading,
             shape = buttonShape,
+            buttonColor = buttonColor,
             content = {
                 ButtonContent(
                     text = text,
@@ -103,10 +104,7 @@ internal fun SdkButton(
                 )
             },
             colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = buttonColor,
-                containerColor = Color.Transparent,
-                disabledContainerColor = buttonColor.alpha40,
-                disabledContentColor = MaterialTheme.colorScheme.onPrimary
+                contentColor = buttonColor
             ),
             shape = buttonShape,
             border = BorderStroke(BORDER_WIDTH, buttonColor)
@@ -118,12 +116,8 @@ internal fun SdkButton(
                 modifier = modifier,
                 enabled = enabled && !isLoading,
                 shape = buttonShape,
-                colors = ButtonDefaults.textButtonColors(
-                    disabledContainerColor = buttonColor.alpha40,
-                    disabledContentColor = buttonColor.alpha40,
-                ),
                 content = {
-                    ButtonContent(text = text, isLoading = isLoading)
+                    ButtonContent(text = text, buttonIcon = buttonIcon, isLoading = isLoading)
                 }
             )
         }
@@ -154,9 +148,7 @@ private fun PrimaryButton(
         enabled = enabled,
         content = content,
         colors = ButtonDefaults.buttonColors(
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-            disabledContainerColor = buttonColor.alpha40,
-            disabledContentColor = MaterialTheme.colorScheme.onPrimary,
+            containerColor = buttonColor
         ),
         shape = shape
     )
@@ -208,7 +200,7 @@ private fun ButtonContent(
                 text = text,
                 modifier = Modifier.align(Alignment.CenterVertically),
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodySmall.copy(
+                style = LocalTextStyle.current.copy(
                     platformStyle = PlatformTextStyle(includeFontPadding = false)
                 )
             )
@@ -216,7 +208,7 @@ private fun ButtonContent(
     }
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkButtonFilledEnabled() {
     SdkButton(
@@ -227,7 +219,7 @@ internal fun PreviewSdkButtonFilledEnabled() {
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkButtonFilledDisabled() {
     SdkButton(
@@ -239,7 +231,7 @@ internal fun PreviewSdkButtonFilledDisabled() {
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkButtonFilledLoading() {
     SdkButton(
@@ -251,7 +243,7 @@ internal fun PreviewSdkButtonFilledLoading() {
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkButtonFilledWithIcon() {
     SdkButton(
@@ -263,7 +255,7 @@ internal fun PreviewSdkButtonFilledWithIcon() {
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkButtonOutlinedEnabled() {
     SdkButton(
@@ -274,7 +266,7 @@ internal fun PreviewSdkButtonOutlinedEnabled() {
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkButtonOutlinedDisabled() {
     SdkButton(
@@ -286,7 +278,7 @@ internal fun PreviewSdkButtonOutlinedDisabled() {
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkButtonOutlinedLoading() {
     SdkButton(
@@ -298,7 +290,7 @@ internal fun PreviewSdkButtonOutlinedLoading() {
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkButtonOutlinedWithIcon() {
     SdkButton(
@@ -310,7 +302,7 @@ internal fun PreviewSdkButtonOutlinedWithIcon() {
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkButtonTextEnabled() {
     SdkButton(
@@ -321,7 +313,7 @@ internal fun PreviewSdkButtonTextEnabled() {
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkButtonTextDisabled() {
     SdkButton(
@@ -333,7 +325,7 @@ internal fun PreviewSdkButtonTextDisabled() {
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkButtonTextLoading() {
     SdkButton(
@@ -345,7 +337,7 @@ internal fun PreviewSdkButtonTextLoading() {
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkButtonTextWithIcon() {
     SdkButton(
@@ -357,7 +349,7 @@ internal fun PreviewSdkButtonTextWithIcon() {
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkButtonCustomColor() {
     SdkButton(
@@ -369,7 +361,7 @@ internal fun PreviewSdkButtonCustomColor() {
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkButtonCustomShape() {
     SdkButton(

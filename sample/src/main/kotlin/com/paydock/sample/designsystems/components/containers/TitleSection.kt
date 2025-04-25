@@ -36,7 +36,7 @@ fun SubSectionTitle(subTitle: String) {
     Text(
         modifier = Modifier.fillMaxWidth(),
         text = subTitle,
-        style = MaterialTheme.typography.bodyMedium,
+        style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }

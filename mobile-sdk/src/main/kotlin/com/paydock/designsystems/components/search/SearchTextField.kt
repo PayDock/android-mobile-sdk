@@ -11,10 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,16 +30,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.paydock.R
-import com.paydock.core.presentation.extensions.alpha20
-import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.designsystems.components.input.SdkTextField
-import com.paydock.designsystems.components.loader.SdkLoader
 
 /**
  * A composable function that creates a search text field with a dropdown for suggestions.
@@ -103,7 +102,7 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
             trailingIcon = {
                 // Show progress indicator if searching and focused
                 if (isTextFieldFocused && isSearching) {
-                    SdkLoader(modifier = Modifier.size(25.dp))
+                    CircularProgressIndicator(modifier = Modifier.size(25.dp))
                 } else if (!isTextFieldFocused && trailingIcon != null) {
                     trailingIcon()
                 }
@@ -135,8 +134,8 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
 
         AnimatedVisibility(visible = isDropdownExpanded) {
             Card(
-                modifier = Modifier.background(MaterialTheme.colorScheme.primary.alpha40),
-                shape = RoundedCornerShape(0.dp)
+                shape = RectangleShape,
+                elevation = CardDefaults.elevatedCardElevation()
             ) {
                 // Calculate the height based on items.
                 val dropdownHeight = 50.dp * dropdownContent.size
@@ -210,7 +209,7 @@ private fun DropdownItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.primary.alpha20)
+            .background(MaterialTheme.colorScheme.surface)
             .clickable {
                 onItemSelected(item)
             }

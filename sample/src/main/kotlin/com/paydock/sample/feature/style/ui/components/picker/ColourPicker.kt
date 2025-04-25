@@ -15,7 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.core.extensions.color
 import com.paydock.sample.core.extensions.toColor
@@ -99,9 +99,9 @@ fun ColourPicker(color: Color, onColourUpdated: (Color) -> Unit, onCanceled: () 
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
-internal fun PreviewStyleScreen() {
+internal fun PreviewColourPicker() {
     SampleTheme {
         ColourPicker("#854646".color!!, {}, {})
     }

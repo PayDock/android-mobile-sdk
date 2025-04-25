@@ -14,9 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.presentation.extensions.alpha40
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.BUTTON_HEIGHT
 import com.paydock.designsystems.theme.BUTTON_SPACING
@@ -36,8 +36,8 @@ import com.paydock.designsystems.theme.PayPal
  */
 @Composable
 internal fun PayPalButton(
-    isEnabled: Boolean,
-    isLoading: Boolean,
+    isEnabled: Boolean = true,
+    isLoading: Boolean = false,
     onClick: () -> Unit
 ) {
     Button(
@@ -73,8 +73,20 @@ internal fun PayPalButton(
     }
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
-internal fun PreviewPayPalButton() {
-    PayPalButton(isEnabled = true, isLoading = false) {}
+internal fun PreviewPayPalButtonDefault() {
+    PayPalButton {}
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewPayPalButtonDisabled() {
+    PayPalButton(isEnabled = false, isLoading = false) {}
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewPayPalButtonLoading() {
+    PayPalButton(isLoading = true) {}
 }

@@ -1,11 +1,11 @@
-package com.paydock.sample.core.presentation.ui.layout
+package com.paydock.sample.designsystems.components.list
 
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 
 @Composable
 internal fun ColumnWithSeparators(
@@ -45,7 +45,7 @@ internal fun ColumnWithSeparators(
 
 private data class ContentChild(val height: Int)
 
-@Preview
+@PreviewLightDark
 @Composable
 internal fun PreviewColumnWithSeparators() {
     ColumnWithSeparators {

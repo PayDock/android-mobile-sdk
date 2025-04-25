@@ -6,13 +6,11 @@ import android.view.ViewGroup
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.getValue
@@ -77,7 +75,7 @@ internal class PayPalWebActivity : ComponentActivity() {
                 }
             ) { innerPadding ->
                 // Apply inner padding to avoid content overlapping with the TopAppBar
-                Box(modifier = Modifier.padding(innerPadding).background(MaterialTheme.colorScheme.background)) {
+                Box(modifier = Modifier.padding(innerPadding)) {
                     // Stores and remembers the PayPal URL created from the callback URL.
                     val payPalUrl: String by remember(callbackUrl) {
                         mutableStateOf(createPayPalUrl(callbackUrl))

@@ -17,9 +17,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.feature.card.domain.model.ui.CardCode
@@ -130,7 +130,15 @@ internal fun CardSecurityCodeInput(
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewCardSecurityCodeInputDefault() {
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        CardSecurityCodeInput {}
+    }
+}
+
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewCardSecurityCodeCVVInput() {
     Surface(color = MaterialTheme.colorScheme.surface) {
@@ -148,7 +156,7 @@ internal fun PreviewCardSecurityCodeCVVInput() {
     }
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewCardSecurityCodeCVCInput() {
     Surface(color = MaterialTheme.colorScheme.surface) {
@@ -166,7 +174,7 @@ internal fun PreviewCardSecurityCodeCVCInput() {
     }
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewCardSecurityCodeCIDInput() {
     Surface(color = MaterialTheme.colorScheme.surface) {

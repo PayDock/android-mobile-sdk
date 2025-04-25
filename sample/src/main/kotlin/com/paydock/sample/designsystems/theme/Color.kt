@@ -218,9 +218,7 @@ val surfaceContainerDarkHighContrast = Color(0xFF2E3036)
 val surfaceContainerHighDarkHighContrast = Color(0xFF393B41)
 val surfaceContainerHighestDarkHighContrast = Color(0xFF45474C)
 
-val PayPalYellow = Color(0xFFFFC43A)
 val FlyPayBlue = Color(0xFF007BBF)
-val AfterpayGreen = Color(0xFFB2FCE4)
 
 
 

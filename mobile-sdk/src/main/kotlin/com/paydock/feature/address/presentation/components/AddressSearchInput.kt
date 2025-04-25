@@ -9,7 +9,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.designsystems.components.search.SearchTextField
 import com.paydock.feature.address.presentation.viewmodels.AddressSearchViewModel
@@ -42,10 +41,4 @@ internal fun AddressSearchInput(
             address?.let { onAddressSelected(it) }
         }
     )
-}
-
-@PreviewLightDark
-@Composable
-internal fun PreviewAddressSearchInput() {
-    AddressSearchInput(onAddressSelected = {})
 }

@@ -17,7 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.core.extensions.toHexCode
 import com.paydock.sample.designsystems.theme.SampleTheme
@@ -67,7 +67,7 @@ fun ColourSelectionField(
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 internal fun PreviewColorSelectionField() {
     SampleTheme() {

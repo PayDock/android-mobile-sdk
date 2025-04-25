@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.sample.core.extensions.color
 import com.paydock.sample.core.extensions.isValidHexCode
 import com.paydock.sample.core.extensions.toHexCode
@@ -107,7 +107,7 @@ fun ColorInputField(
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 internal fun PreviewColorInputField() {
     val color = Color.Blue

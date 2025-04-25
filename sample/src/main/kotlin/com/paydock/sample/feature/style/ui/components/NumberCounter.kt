@@ -27,7 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.designsystems.theme.SampleTheme
 
@@ -103,7 +103,7 @@ fun NumberCounter(
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 internal fun PreviewNumberCounter() {
     SampleTheme {

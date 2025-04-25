@@ -1,13 +1,9 @@
 package com.paydock.designsystems.components.toggle
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.paydock.core.presentation.extensions.alpha20
-import com.paydock.core.presentation.extensions.alpha40
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 
 /**
  * A customizable switch component for the SDK.
@@ -25,7 +21,6 @@ import com.paydock.core.presentation.extensions.alpha40
  *   changes. It receives a boolean parameter representing the new checked state.
  *   Defaults to an empty lambda.
  */
-@PreviewLightDark
 @Composable
 internal fun SdkSwitch(
     modifier: Modifier = Modifier,
@@ -37,15 +32,44 @@ internal fun SdkSwitch(
         modifier = modifier,
         enabled = enabled,
         checked = isChecked,
-        colors = SwitchDefaults.colors(
-            uncheckedTrackColor = MaterialTheme.colorScheme.outlineVariant.alpha20,
-            disabledUncheckedThumbColor = MaterialTheme.colorScheme.outline.alpha20,
-            disabledUncheckedBorderColor = MaterialTheme.colorScheme.outline.alpha20,
-            disabledUncheckedTrackColor = MaterialTheme.colorScheme.outlineVariant.alpha40,
-            disabledCheckedThumbColor = MaterialTheme.colorScheme.outline.alpha20,
-            disabledCheckedBorderColor = MaterialTheme.colorScheme.outline.alpha20,
-            disabledCheckedTrackColor = MaterialTheme.colorScheme.outlineVariant.alpha40,
-        ),
         onCheckedChange = onCheckedChange
+    )
+}
+
+@SdkLightDarkPreviews
+@Composable
+fun SdkSwitchPreviewUnchecked() {
+    SdkSwitch(
+        isChecked = false,
+        onCheckedChange = { }
+    )
+}
+
+@SdkLightDarkPreviews
+@Composable
+fun SdkSwitchPreviewChecked() {
+    SdkSwitch(
+        isChecked = true,
+        onCheckedChange = { }
+    )
+}
+
+@SdkLightDarkPreviews
+@Composable
+fun SdkSwitchPreviewDisabledUnchecked() {
+    SdkSwitch(
+        enabled = false,
+        isChecked = false,
+        onCheckedChange = { }
+    )
+}
+
+@SdkLightDarkPreviews
+@Composable
+fun SdkSwitchPreviewDisabledChecked() {
+    SdkSwitch(
+        enabled = false,
+        isChecked = true,
+        onCheckedChange = { }
     )
 }

@@ -1,6 +1,5 @@
 package com.paydock.feature.card.presentation
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,8 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.theme.SPACING
@@ -80,8 +79,7 @@ fun CardDetailsWidget(
     // UI Layout starts here
     Column(
         modifier = modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background),
+            .fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(SPACING, Alignment.Top),
         horizontalAlignment = Alignment.Start
     ) {
@@ -195,7 +193,7 @@ private fun handleUIState(
     }
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewCardDetails() {
     CardDetailsWidget(config = CardDetailsWidgetConfig(accessToken = "")) {

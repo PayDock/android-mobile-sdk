@@ -9,7 +9,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -24,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.paydock.sample.designsystems.components.CenterAppTopBar
@@ -89,7 +88,6 @@ fun MainScreenView() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxSize()
-                    .imePadding()
                     .padding(paddingValues = innerPadding)
             ) {
                 NavigationGraph(navController = navController)
@@ -125,7 +123,7 @@ fun rememberActionBarDetails(navController: NavHostController, context: Context)
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 internal fun PreviewMainScreen() {
     SampleTheme {

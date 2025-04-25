@@ -2,8 +2,6 @@ package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,9 +16,9 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
@@ -137,23 +135,30 @@ internal fun CreditCardNumberInput(
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewCreditCardNumberInputDefault() {
+    CreditCardNumberInput(
+        schemeConfig = SupportedSchemeConfig(),
+        onValueChange = {}
+    )
+}
+
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewCreditCardNumberInput() {
-    Surface(color = MaterialTheme.colorScheme.surface) {
-        CreditCardNumberInput(
-            value = "4242424242424242",
-            cardScheme = CardScheme(
-                type = CardType.VISA,
-                code = CardCode(
-                    CodeType.CVV,
-                    MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
-                )
-            ),
-            enabled = true,
-            nextFocus = null,
-            onValueChange = {},
-            schemeConfig = SupportedSchemeConfig()
-        )
-    }
+    CreditCardNumberInput(
+        value = "4242424242424242",
+        cardScheme = CardScheme(
+            type = CardType.VISA,
+            code = CardCode(
+                CodeType.CVV,
+                MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
+            )
+        ),
+        enabled = true,
+        nextFocus = null,
+        onValueChange = {},
+        schemeConfig = SupportedSchemeConfig()
+    )
 }

@@ -20,12 +20,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paydock.R
 import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.core.presentation.extensions.scaled
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.ArialFontFamily
 import com.paydock.designsystems.theme.BUTTON_HEIGHT
@@ -46,8 +46,8 @@ import com.paydock.designsystems.theme.FlyPayBlue
  */
 @Composable
 internal fun FlyPayButton(
-    isEnabled: Boolean,
-    isLoading: Boolean,
+    isEnabled: Boolean = true,
+    isLoading: Boolean = false,
     onClick: () -> Unit
 ) {
     val configuration = LocalConfiguration.current
@@ -105,8 +105,20 @@ internal fun FlyPayButton(
     }
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewFlyPayButton() {
     FlyPayButton(isEnabled = true, isLoading = false) {}
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewFlyPayButtonDisabled() {
+    FlyPayButton(isEnabled = false, isLoading = false) {}
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewFlyPayButtonLoading() {
+    FlyPayButton(isLoading = true) {}
 }
