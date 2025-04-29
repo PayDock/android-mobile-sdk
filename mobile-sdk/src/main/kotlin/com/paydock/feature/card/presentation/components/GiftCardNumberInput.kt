@@ -2,7 +2,6 @@ package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,6 +20,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.icon.SdkIcon
 import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.feature.card.presentation.utils.errors.GiftCardNumberError
@@ -90,7 +90,7 @@ internal fun GiftCardNumberInput(
         label = stringResource(id = R.string.label_card_number),
         leadingIcon = {
             // Display the card scheme icon as a leading icon in the input field
-            Icon(
+            SdkIcon(
                 modifier = Modifier.testTag("cardIcon"),
                 painter = painterResource(id = R.drawable.ic_credit_card),
                 contentDescription = null

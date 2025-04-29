@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,6 +33,7 @@ import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.icon.SdkIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.components.text.SdkText
 
@@ -123,7 +123,7 @@ private fun SdkDropdownTextField(
                 if (expanded) 180F else 0F,
                 label = "rotation"
             )
-            Icon(
+            SdkIcon(
                 painter = rememberVectorPainter(Icons.Default.ArrowDropDown),
                 contentDescription = null,
                 modifier = Modifier.rotate(rotation)

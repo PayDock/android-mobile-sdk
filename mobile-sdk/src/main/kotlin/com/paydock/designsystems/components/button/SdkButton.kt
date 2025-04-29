@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -32,6 +31,7 @@ import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.unit.dp
 import com.paydock.core.presentation.extensions.scaled
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.icon.SdkIcon
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
@@ -183,12 +183,12 @@ private fun ButtonContent(
             } else {
                 // Display the icon (if any) and text in a consistent layout
                 when (buttonIcon) {
-                    is ButtonIcon.Vector -> Icon(
+                    is ButtonIcon.Vector -> SdkIcon(
                         modifier = Modifier.size(BUTTON_ICON_SIZE),
                         imageVector = buttonIcon.icon,
                         contentDescription = null
                     )
-                    is ButtonIcon.DrawableRes -> Icon(
+                    is ButtonIcon.DrawableRes -> SdkIcon(
                         modifier = Modifier.size(BUTTON_ICON_SIZE),
                         painter = painterResource(buttonIcon.drawable),
                         contentDescription = null

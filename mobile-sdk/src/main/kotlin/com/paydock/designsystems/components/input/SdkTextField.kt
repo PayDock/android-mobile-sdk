@@ -13,7 +13,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -35,6 +34,8 @@ import com.paydock.R
 import com.paydock.core.presentation.extensions.autofill
 import com.paydock.core.presentation.ui.previews.SdkFontScalePreviews
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.icon.IconAppearanceDefaults
+import com.paydock.designsystems.components.icon.SdkIcon
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
 import com.paydock.designsystems.theme.BORDER_WIDTH
@@ -257,7 +258,7 @@ internal fun TextFieldTrailingIconCustomPreview() {
     Column {
         TextFieldTrailingIcon(
             error = null,
-            { Icon(imageVector = Icons.Filled.Close, contentDescription = null) }
+            { SdkIcon(imageVector = Icons.Filled.Close, contentDescription = null) }
         )
     }
 }
@@ -276,11 +277,12 @@ internal fun TextFieldTrailingIconCustomPreview() {
  */
 @Composable
 private fun TextFieldErrorIcon() {
-    Icon(
+    SdkIcon(
         modifier = Modifier.testTag("errorIcon"),
         painter = painterResource(id = R.drawable.ic_error),
         contentDescription = stringResource(id = R.string.content_desc_error_icon),
-        tint = MaterialTheme.colorScheme.error
+        appearance = IconAppearanceDefaults.appearance()
+            .copy(tint = MaterialTheme.colorScheme.error)
     )
 }
 

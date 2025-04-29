@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -20,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.paydock.R
+import com.paydock.designsystems.components.icon.SdkIcon
 
 /**
  * Composable function to display a modal bottom sheet with customizable content.
@@ -75,7 +75,7 @@ fun SdkBottomSheet(
         ) {
             // Close button at the top-right corner
             IconButton(modifier = Modifier.align(Alignment.End), onClick = onDismissRequest) {
-                Icon(
+                SdkIcon(
                     painter = painterResource(id = R.drawable.ic_close_circle),
                     contentDescription = stringResource(id = R.string.content_desc_close_icon)
                 )

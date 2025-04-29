@@ -2,7 +2,6 @@ package com.paydock.feature.address.presentation.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -11,6 +10,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.paydock.R
+import com.paydock.designsystems.components.icon.SdkIcon
 import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.search.SearchTextField
 import com.paydock.feature.address.presentation.viewmodels.CountryAutoCompleteViewModel
@@ -43,7 +43,7 @@ internal fun CountryInputAutoComplete(
             if (selectedItem.isNotBlank()) {
                 InputValidIcon()
             } else {
-                Icon(
+                SdkIcon(
                     painter = rememberVectorPainter(Icons.Default.ArrowDropDown),
                     contentDescription = null,
                 )

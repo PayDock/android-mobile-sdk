@@ -1,7 +1,6 @@
 package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -11,6 +10,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.icon.IconAppearanceDefaults
+import com.paydock.designsystems.components.icon.SdkIcon
 import com.paydock.feature.card.domain.model.integration.enums.CardType
 import com.paydock.feature.card.domain.model.integration.enums.CardType.Companion.displayLabel
 
@@ -27,17 +28,19 @@ import com.paydock.feature.card.domain.model.integration.enums.CardType.Companio
  */
 @Composable
 internal fun CardSchemeIcon(cardType: CardType?, focused: Boolean = false) {
-    Icon(
+    SdkIcon(
         modifier = Modifier
             .testTag("cardIcon")
             .width(24.dp),
         painter = painterResource(id = mapSchemeToDrawable(cardType)),
         contentDescription = cardType?.displayLabel(),
-        tint = if (cardType == null) {
-            if (focused) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-        } else {
-            Color.Unspecified
-        }
+        appearance = IconAppearanceDefaults.appearance().copy(
+            tint = if (cardType == null) {
+                if (focused) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+            } else {
+                Color.Unspecified
+            }
+        ),
     )
 }
 
