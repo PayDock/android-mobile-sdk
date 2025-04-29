@@ -16,7 +16,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +35,8 @@ import com.paydock.R
 import com.paydock.core.presentation.extensions.autofill
 import com.paydock.core.presentation.ui.previews.SdkFontScalePreviews
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.text.SdkText
+import com.paydock.designsystems.components.text.TextAppearanceDefaults
 import com.paydock.designsystems.theme.BORDER_WIDTH
 
 /**
@@ -178,11 +179,13 @@ private fun TextFieldLabel(
     labelTextStyle: TextStyle = MaterialTheme.typography.bodyMedium,
     maxLines: Int = 1
 ) {
-    Text(
+    SdkText(
         modifier = Modifier.testTag("sdkLabel"),
-        maxLines = maxLines,
-        style = labelTextStyle,
-        text = label
+        text = label,
+        appearance = TextAppearanceDefaults.appearance().copy(
+            style = labelTextStyle,
+            maxLines = maxLines
+        )
     )
 }
 
@@ -202,11 +205,13 @@ internal fun TextFieldLabelPreview() {
  */
 @Composable
 private fun TextFieldPlaceholder(placeholder: String, maxLines: Int = 1) {
-    Text(
+    SdkText(
         modifier = Modifier.testTag("sdkPlaceholder"),
-        maxLines = maxLines,
-        style = MaterialTheme.typography.bodyMedium,
-        text = placeholder
+        text = placeholder,
+        appearance = TextAppearanceDefaults.appearance().copy(
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = maxLines
+        )
     )
 }
 
@@ -299,13 +304,14 @@ internal fun TextFieldErrorIconPreview() {
 @Composable
 private fun TextFieldErrorLabel(error: String?) {
     AnimatedVisibility(visible = error != null) {
-        Text(
+        SdkText(
             modifier = Modifier
                 .padding(start = 15.dp, top = 6.dp)
                 .testTag("errorLabel"),
             text = error ?: "",
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.labelMedium
+            appearance = TextAppearanceDefaults.appearance().copy(
+                style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.error)
+            )
         )
     }
 }

@@ -29,11 +29,12 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.paydock.core.presentation.extensions.scaled
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.loader.SdkButtonLoader
+import com.paydock.designsystems.components.text.SdkText
+import com.paydock.designsystems.components.text.TextAppearanceDefaults
 import com.paydock.designsystems.theme.BORDER_WIDTH
 import com.paydock.designsystems.theme.BUTTON_HEIGHT
 import com.paydock.designsystems.theme.BUTTON_ICON_SIZE
@@ -196,12 +197,13 @@ private fun ButtonContent(
                     else -> Unit
                 }
             }
-            Text(
-                text = text,
+            SdkText(
                 modifier = Modifier.align(Alignment.CenterVertically),
-                textAlign = TextAlign.Center,
-                style = LocalTextStyle.current.copy(
-                    platformStyle = PlatformTextStyle(includeFontPadding = false)
+                text = text,
+                appearance = TextAppearanceDefaults.appearance().copy(
+                    style = LocalTextStyle.current.copy(
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    )
                 )
             )
         }

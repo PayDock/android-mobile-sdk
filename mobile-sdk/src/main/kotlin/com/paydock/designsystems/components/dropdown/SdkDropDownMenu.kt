@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -23,6 +22,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.text.SdkText
 
 /**
  * Composable function to display a dropdown menu with a list of selectable items.
@@ -75,7 +75,7 @@ internal fun <String : Any> SdkDropDownMenu(
                         .width(itemWidth)
                         .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Unspecified),
                     text = {
-                        Text(
+                        SdkText(
                             modifier = Modifier.fillMaxWidth(),
                             text = AnnotatedString(text = item.toString())
                         )

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +26,8 @@ import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.core.presentation.extensions.scaled
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.loader.SdkButtonLoader
+import com.paydock.designsystems.components.text.SdkText
+import com.paydock.designsystems.components.text.TextAppearanceDefaults
 import com.paydock.designsystems.theme.ArialFontFamily
 import com.paydock.designsystems.theme.BUTTON_HEIGHT
 import com.paydock.designsystems.theme.BUTTON_SPACING
@@ -80,15 +81,17 @@ internal fun FlyPayButton(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // Display button text
-            Text(
+            SdkText(
                 modifier = Modifier.fillMaxHeight(),
                 text = stringResource(R.string.button_pay_with),
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontFamily = ArialFontFamily,
-                    fontSize = 22.sp,
-                    lineHeight = 48.sp,
-                    color = Color.White,
-                    platformStyle = PlatformTextStyle(includeFontPadding = true)
+                appearance = TextAppearanceDefaults.appearance().copy(
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontFamily = ArialFontFamily,
+                        fontSize = 22.sp,
+                        lineHeight = 48.sp,
+                        color = Color.White,
+                        platformStyle = PlatformTextStyle(includeFontPadding = true)
+                    )
                 )
             )
             // Display FlyPay icon

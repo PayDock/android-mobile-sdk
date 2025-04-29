@@ -2,11 +2,11 @@ package com.paydock.designsystems.components.column
 
 import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.text.SdkText
 
 /**
  * A composable that arranges its children in a column with separators between them.
@@ -69,6 +69,6 @@ private data class ContentChild(val height: Int)
 @Composable
 internal fun PreviewColumnWithSeparators() {
     ColumnWithSeparators {
-        repeat(times = 10) { Text(text = "Hello $it") }
+        repeat(times = 10) { SdkText(text = "Hello $it") }
     }
 }

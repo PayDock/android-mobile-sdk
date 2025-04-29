@@ -3,12 +3,13 @@ package com.paydock.feature.address.presentation.components
 import android.location.Address
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.paydock.R
+import com.paydock.designsystems.components.text.SdkText
+import com.paydock.designsystems.components.text.TextAppearanceDefaults
 
 /**
  * A composable that displays an address search section with a header and an input field
@@ -35,10 +36,12 @@ import com.paydock.R
 @Composable
 fun AddressSearchSection(onAddressSelected: (Address) -> Unit) {
     // Header text
-    Text(
+    SdkText(
         modifier = Modifier.fillMaxWidth(),
-        style = MaterialTheme.typography.titleMedium,
-        text = stringResource(R.string.label_find_an_address)
+        text = stringResource(R.string.label_find_an_address),
+        appearance = TextAppearanceDefaults.appearance().copy(
+            style = MaterialTheme.typography.titleMedium,
+        )
     )
 
     // Address search input

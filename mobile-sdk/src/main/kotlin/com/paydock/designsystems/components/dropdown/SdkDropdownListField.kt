@@ -18,7 +18,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +35,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.text.SdkText
 
 /**
  * Composable function to display a dropdown list field with a selectable list of items.
@@ -164,7 +164,9 @@ private fun SdkDropdownMenu(
                 LazyColumn {
                     items(items) { item ->
                         DropdownMenuItem(
-                            text = { Text(text = item) },
+                            text = {
+                                SdkText(text = item)
+                            },
                             modifier = Modifier
                                 .height(itemHeight)
                                 .width(boxWidth)

@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -20,6 +19,8 @@ import com.paydock.R
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.SdkButton
+import com.paydock.designsystems.components.text.SdkText
+import com.paydock.designsystems.components.text.TextAppearanceDefaults
 import com.paydock.designsystems.theme.SPACING
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.CardResult
@@ -85,11 +86,12 @@ fun CardDetailsWidget(
     ) {
         // Title for the card information section
         if (config.showCardTitle) {
-            Text(
+            SdkText(
                 modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.bodyMedium,
                 text = stringResource(id = R.string.label_card_information),
-                color = MaterialTheme.colorScheme.onSurface
+                appearance = TextAppearanceDefaults.appearance().copy(
+                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
+                )
             )
         }
         if (!config.schemeSupport.supportedSchemes.isNullOrEmpty()) {

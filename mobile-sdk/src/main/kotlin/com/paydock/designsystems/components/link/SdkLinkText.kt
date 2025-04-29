@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paydock.core.presentation.ui.previews.SdkFontScalePreviews
+import com.paydock.designsystems.components.text.SdkText
+import com.paydock.designsystems.components.text.TextAppearanceDefaults
 
 /**
  * A composable function that renders a clickable text link.
@@ -30,18 +32,20 @@ internal fun SdkLinkText(
     onClick: () -> Unit
 ) {
     Box {
-        Text(
-            text = linkText,
+        SdkText(
             modifier = modifier
                 .sizeIn(minHeight = 24.dp)
                 .wrapContentSize(Alignment.Center)
                 .clickable {
                     onClick()
                 },
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontSize = (MaterialTheme.typography.bodyMedium.fontSize.value + 1).sp
-            ),
-            color = MaterialTheme.colorScheme.primary
+            text = linkText,
+            appearance = TextAppearanceDefaults.appearance().copy(
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = (MaterialTheme.typography.bodyMedium.fontSize.value + 1).sp
+                )
+            )
         )
     }
 }
