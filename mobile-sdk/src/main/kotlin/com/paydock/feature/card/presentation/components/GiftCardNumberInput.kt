@@ -21,8 +21,8 @@ import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.icon.SdkIcon
-import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.presentation.utils.errors.GiftCardNumberError
 import com.paydock.feature.card.presentation.utils.transformations.CardNumberInputTransformation
 import com.paydock.feature.card.presentation.utils.validators.GiftCardInputParser
@@ -58,9 +58,6 @@ internal fun GiftCardNumberInput(
         debouncedValue = value
     }
 
-    // Parse the card number to determine its type and validity
-    val cardNumber = GiftCardInputParser.parseNumber(debouncedValue)
-
     // Check if the card number is valid
     val cardNumberError = GiftCardNumberValidator.validateCardNumberInput(debouncedValue, hasUserInteracted)
 
@@ -75,6 +72,7 @@ internal fun GiftCardNumberInput(
         modifier = modifier.onFocusChanged {
             focusedState.value = it.isFocused
         },
+        appearance = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
         value = value,
         onValueChange = {
             hasUserInteracted = true
@@ -98,14 +96,6 @@ internal fun GiftCardNumberInput(
         },
         error = errorMessage,
         visualTransformation = CardNumberInputTransformation(),
-        // Show a success icon when the card number is valid and not blank
-        trailingIcon = {
-            if (!cardNumber.isNullOrBlank()) {
-                InputValidIcon()
-            }
-        },
-        singleLine = true,
-        maxLines = 1,
         // Use keyboard options and actions for a more user-friendly input experience
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number,

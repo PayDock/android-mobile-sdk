@@ -5,17 +5,18 @@ package com.paydock.designsystems.components.input
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,88 +25,65 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.core.presentation.extensions.autofill
 import com.paydock.core.presentation.ui.previews.SdkFontScalePreviews
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.icon.IconAppearance
 import com.paydock.designsystems.components.icon.IconAppearanceDefaults
 import com.paydock.designsystems.components.icon.SdkIcon
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults.appearance
 import com.paydock.designsystems.components.text.SdkText
+import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
-import com.paydock.designsystems.theme.BORDER_WIDTH
+import com.paydock.designsystems.theme.Success
 
 /**
-- * Composable function to display a text input field with various customization options.
-+ * A composable function that renders a customizable text input field.
-+ * This field provides a wide range of options for styling and interaction, including:
-+ * - Placeholder and label text
-+ * - Enable/disable state
-+ * - Read-only mode
-+ * - Error message display
-+ * - Visual transformations
-+ * - Keyboard options and actions
-+ * - Single-line or multi-line input
-+ * - Autofill support
-+ * - Trailing and leading icons
+ * A customizable text field component that provides various styling and functionality options.
  *
-- * @param modifier Modifier for the text input field layout.
-- * @param value The current value of the text input field.
-- * @param onValueChange Callback function triggered when the value of the text input field changes.
-- * @param placeholder Placeholder text displayed when the text input field is empty.
-- * @param label Label text displayed above the text input field.
-- * @param enabled Flag to determine whether the text input field is enabled for user input.
-- * @param readOnly Flag to determine whether the text input field is read-only.
-- * @param error Error message displayed below the text input field when there's an input validation error.
-- * @param visualTransformation Transformation applied to the visual representation of the text input field.
-- * @param keyboardOptions Keyboard configuration options for the text input field.
-- * @param keyboardActions Keyboard actions for handling keyboard events.
-- * @param singleLine Flag to determine whether the text input field supports single-line input.
-- * @param maxLines Maximum number of lines allowed in the text input field.
-- * @param autofillType An optional [AutofillType] indicating the type of data that can be
-- * autofilled for this input field (e.g., address, postal code). If provided, it enables
-- * autofill support.
-- * @param interactionSource Interaction source for tracking user interactions with the text input field.
-- * @param trailingIcon Icon displayed at the end of the text input field.
-- * @param leadingIcon Icon displayed at the start of the text input field.
-+ * @param modifier [Modifier] to be */
+ * This composable wraps the Material Design [BasicTextField] and [OutlinedTextFieldDefaults.DecorationBox]
+ * to offer a tailored text field experience. It allows setting a placeholder, label, error state,
+ * custom icons, and more.
+ *
+ * @param modifier Modifier to be applied to the text field.
+ * @param appearance Customization options for the text field's appearance, such as colors, shape, and text styles.
+ *                   Defaults to [TextFieldAppearanceDefaults.appearance].
+ * @param value The current text value of the text field.
+ * @param onValueChange Callback that is triggered when the text value changes. Provides the new text value.
+ * @param placeholder The placeholder text to display when the text field is empty.
+ */
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 internal fun SdkTextField(
     modifier: Modifier = Modifier,
+    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String = "",
     label: String = "",
     enabled: Boolean = true,
-    readOnly: Boolean = false,
+    showValidIcon: Boolean = true,
     error: String? = null,
+    autofillType: AutofillType? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
-    singleLine: Boolean = false,
-    maxLines: Int = Int.MAX_VALUE,
-    autofillType: AutofillType? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     trailingIcon: @Composable (() -> Unit)? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
 ) {
     // State to track whether the text input field is focused
     var isFocused by remember { mutableStateOf(false) }
-    // State to track whether the label should be displayed based on focus and text input
-    val shouldShowLabel = isFocused || value.isNotEmpty()
-
-    // Set the current label text style based on the focused state and whether there's text
-    val labelTextStyle = if (shouldShowLabel) {
-        MaterialTheme.typography.labelMedium
-    } else {
-        MaterialTheme.typography.labelMedium.copy(fontSize = MaterialTheme.typography.bodyMedium.fontSize)
-    }
 
     Column(modifier = modifier) {
         BasicTextField(
@@ -119,12 +97,9 @@ internal fun SdkTextField(
                 .testTag("sdkInput")
                 .autofillModifier(autofillType, onValueChange),
             enabled = enabled, // Use the parameter value
-            readOnly = readOnly,
-            textStyle = MaterialTheme.typography.bodyMedium,
+            textStyle = appearance.style,
             keyboardActions = keyboardActions,
             keyboardOptions = keyboardOptions,
-            singleLine = singleLine,
-            maxLines = maxLines,
             visualTransformation = visualTransformation,
             interactionSource = interactionSource
         ) { innerTextField ->
@@ -132,61 +107,231 @@ internal fun SdkTextField(
                 value = value,
                 innerTextField = innerTextField,
                 enabled = enabled, // Use the parameter value
-                singleLine = singleLine,
+                singleLine = appearance.singleLine,
                 visualTransformation = VisualTransformation.None,
                 interactionSource = interactionSource,
                 isError = error != null,
                 label = {
-                    TextFieldLabel(label, labelTextStyle, maxLines)
+                    // State to track whether the label should be displayed based on focus and text input
+                    val shouldShowLabel = isFocused || value.isNotEmpty()
+
+                    // Set the current label text style based on the focused state and whether there's text
+                    val labelTextAppearance = if (shouldShowLabel) {
+                        appearance.label
+                    } else {
+                        appearance.label.copy(
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontSize = MaterialTheme.typography.bodyMedium.fontSize
+                            )
+                        )
+                    }
+                    TextFieldLabel(label, labelTextAppearance)
                 },
                 placeholder = {
-                    TextFieldPlaceholder(placeholder, maxLines)
+                    TextFieldPlaceholder(placeholder, appearance.placeholder)
                 },
                 trailingIcon = {
-                    TextFieldTrailingIcon(error, trailingIcon)
+                    when {
+                        error != null -> TextFieldErrorIcon()
+                        showValidIcon && value.isNotEmpty() -> TextFieldValidIcon(appearance.validIcon)
+                        else -> trailingIcon?.invoke()
+                    }
                 },
                 leadingIcon = leadingIcon,
                 container = {
                     OutlinedTextFieldDefaults.Container(
-                        enabled = enabled, // Use the parameter value
+                        enabled = enabled,
                         isError = error != null,
                         interactionSource = interactionSource,
-                        focusedBorderThickness = BORDER_WIDTH.times(2),
-                        unfocusedBorderThickness = BORDER_WIDTH
+                        shape = appearance.shape,
+                        focusedBorderThickness = appearance.focusedBorderThickness,
+                        unfocusedBorderThickness = appearance.unfocusedBorderThickness
                     )
                 }
             )
         }
 
-        TextFieldErrorLabel(error)
+        TextFieldErrorLabel(error, appearance.errorLabel)
     }
 }
 
 /**
- * Displays a label for a text field.
+ * Defines the visual appearance of a text field.
  *
- * This composable renders a simple text label with specified styling and line limits.
- * It's designed to be used as a descriptive label associated with a text field.
+ * This class encapsulates various styling properties for both the [BasicTextField]
+ * and the surrounding decoration box of a text field in Jetpack Compose. It includes
+ * settings for text, placeholder, labels, icons, colors, padding, and borders.
  *
- * @param label The text content of the label.
- * @param labelTextStyle The [TextStyle] to apply to the label's text. This controls
- *                       font, color, size, etc. of the label.
- * @param maxLines The maximum number of lines the label can occupy. If the text
- *                 exceeds this limit, it will be truncated.
+ * @property style The [TextStyle] to apply to the input text within the text field.
+ * @property placeholder The [TextAppearance] for the placeholder text displayed when the text field is empty.
+ * @property label The [TextAppearance] for the label displayed above the text field.
+ * @property errorLabel The [TextAppearance] for the error label displayed below the text field when an error occurs.
+ * @property validIcon The [IconAppearance] for the icon displayed when the input is valid.
+ * @property cursorBrush The [Brush] to use for the text cursor.
+ * @property singleLine Whether the text field should be limited to a single line of text.
+ * @property colors The [TextFieldColors] to use for the different states of the text field (e.g., focused, unfocused, disabled).
+ * @property contentPadding The [PaddingValues] to apply to the content within the text field.
+ * @property shape The [Shape] to use for the background of the text field.
+ * @property focusedBorderThickness The thickness of the border when the text field is focused.
+ * @property unfocusedBorderThickness The thickness of the border when the text field is unfocused.
+ */
+@Immutable
+class TextFieldAppearance(
+    // BasicTextField
+    val style: TextStyle,
+    val placeholder: TextAppearance,
+    val label: TextAppearance,
+    val errorLabel: TextAppearance,
+    val validIcon: IconAppearance,
+    val cursorBrush: Brush,
+    // DecorationBox
+    val singleLine: Boolean,
+    val colors: TextFieldColors,
+    val contentPadding: PaddingValues,
+    val shape: Shape,
+    val focusedBorderThickness: Dp,
+    val unfocusedBorderThickness: Dp
+) {
+    /**
+     * Creates a copy of this [TextFieldAppearance], optionally overriding some of the values.
+     *
+     * This function allows creating a new [TextFieldAppearance] instance based on the current one,
+     * but with modifications to specific properties. It's useful for creating variations of a
+     * text field's appearance without modifying the original.
+     *
+     * @param style The text style of the input text. Defaults to the style of the current [TextFieldAppearance].
+     * @param placeholder The appearance of the placeholder text. Defaults to the placeholder of the current [TextFieldAppearance].
+     * @param label The appearance of the label text. Defaults to the label of the current [TextFieldAppearance].
+     * @param error The appearance of the error label text. Defaults to the error label of the current [TextFieldAppearance].
+     * @param validIcon The appearance of the valid icon. Defaults to the valid icon of the current [TextFieldAppearance].
+     * @param cursorBrush The brush used to paint the cursor. Defaults to the cursor brush of the current [TextFieldAppearance].
+     * @param singleLine Whether the text field should be single-line or multi-line.
+     *      Defaults to the singleLine value of the current [TextFieldAppearance].
+     * @param colors The colors used for different parts of the text field. Defaults to the colors of the current [TextFieldAppearance].
+     * @param contentPadding The padding around the content of the text field.
+     *      Defaults to the content padding of the current [TextFieldAppearance].
+     * @param shape The shape of the text field's background. Defaults to the shape of the current [TextFieldAppearance].
+     * @param focusedBorderThickness The thickness of the border when the text field is focused.
+     *      Defaults to the focused border thickness of the current [TextFieldAppearance].
+     * @param unfocusedBorderThickness The thickness of the border when the text field is unfocused.
+     *      Defaults to the unfocused border thickness of the current [TextFieldAppearance].
+     * @return A new [TextFieldAppearance] instance with the specified properties.
+     */
+    fun copy(
+        // BasicTextField
+        style: TextStyle = this.style,
+        placeholder: TextAppearance = this.placeholder,
+        label: TextAppearance = this.label,
+        error: TextAppearance = this.errorLabel,
+        validIcon: IconAppearance = this.validIcon,
+        cursorBrush: Brush = this.cursorBrush,
+        // DecorationBox
+        singleLine: Boolean = this.singleLine,
+        colors: TextFieldColors = this.colors,
+        contentPadding: PaddingValues = this.contentPadding,
+        shape: Shape = this.shape,
+        focusedBorderThickness: Dp = this.focusedBorderThickness,
+        unfocusedBorderThickness: Dp = this.unfocusedBorderThickness,
+    ): TextFieldAppearance = TextFieldAppearance(
+        // BasicTextField
+        style = style.copy(),
+        placeholder = placeholder.copy(),
+        label = label.copy(),
+        errorLabel = error.copy(),
+        validIcon = validIcon.copy(),
+        cursorBrush = cursorBrush,
+        // DecorationBox
+        singleLine = singleLine,
+        colors = colors.copy(),
+        contentPadding = contentPadding,
+        shape = shape,
+        focusedBorderThickness = focusedBorderThickness,
+        unfocusedBorderThickness = unfocusedBorderThickness,
+    )
+}
+
+/**
+ * `TextFieldAppearanceDefaults` provides default appearance configurations for text fields.
+ *
+ * It offers a set of pre-configured styles and visual elements that can be used to quickly
+ * set up the appearance of `TextField` components in your application. These defaults align
+ * with the Material Design 3 guidelines and can be easily customized or overridden as needed.
+ *
+ * The main entry point is the [appearance] function, which returns a [TextFieldAppearance] object
+ * encapsulating all the default settings.
+ */
+object TextFieldAppearanceDefaults {
+
+    /**
+     * Defines the default appearance of a text field, including styling, colors, and other visual properties.
+     *
+     * This function provides a pre-configured [TextFieldAppearance] instance suitable for use with
+     * Material Design 3 guidelines. It includes settings for:
+     *
+     * - **Basic Text Field Styling:**
+     *   - `style`: Sets the text style using `MaterialTheme.typography.bodyMedium`.
+     *   - `cursorBrush`: Sets the cursor color using `MaterialTheme.colorScheme.primary`.
+     *
+     * - **Decoration Box Styling:**
+     *   - `singleLine`: Set to `false` allowing for multi-line text input.
+     *   - `placeholder`: Configures the appearance of the placeholder text, inheriting from [TextAppearanceDefaults]
+     *     but overriding the text style to `MaterialTheme.typography.bodyMedium` and restricting to a single line.
+     *   - `label`: Configures the appearance of the label text, inheriting from [TextAppearanceDefaults],
+     *     restricting to a single line, and using `MaterialTheme.typography.labelMedium`.
+     *   - `errorLabel`: Configures the appearance of the error label text, inheriting from [TextAppearanceDefaults],
+     *     using `MaterialTheme.typography.labelMedium` with the color set to `MaterialTheme.colorScheme.error`.
+     *   - `validIcon`: Configures the appearance of the valid icon, using [IconAppearanceDefaults] and
+     *    setting its tint to the Success color.
+     * - **Outlined Text Field Styling:**
+     *   - `colors`: Uses the default colors provided by `OutlinedTextFieldDefaults.colors()`.
+     *   - `contentPadding`: Uses the default content padding provided by `OutlinedTextFieldDefaults.contentPadding()`.
+     */
+    @Composable
+    fun appearance(): TextFieldAppearance = TextFieldAppearance(
+        // BasicTextField
+        style = MaterialTheme.typography.bodyMedium,
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        // DecorationBox
+        singleLine = false,
+        placeholder = TextAppearanceDefaults.appearance().copy(
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1
+        ),
+        label = TextAppearanceDefaults.appearance().copy(
+            maxLines = 1,
+            style = MaterialTheme.typography.labelMedium
+        ),
+        errorLabel = TextAppearanceDefaults.appearance().copy(
+            style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.error)
+        ),
+        validIcon = IconAppearanceDefaults.appearance().copy(tint = Success),
+        colors = OutlinedTextFieldDefaults.colors(),
+        contentPadding = OutlinedTextFieldDefaults.contentPadding(),
+        shape = OutlinedTextFieldDefaults.shape,
+        focusedBorderThickness = OutlinedTextFieldDefaults.FocusedBorderThickness,
+        unfocusedBorderThickness = OutlinedTextFieldDefaults.UnfocusedBorderThickness,
+    )
+}
+
+/**
+ * A composable function that displays a label for a text field.
+ *
+ * This function renders a label using the provided [label] string and [appearance].
+ * It's designed to be used alongside text fields to provide context and descriptions.
+ *
+ * @param label The text content of the label. This will be displayed as the label text.
+ * @param appearance The styling configuration for the label text. Defaults to the label appearance
+ *   defined in [TextFieldAppearanceDefaults]. This allows customization of font, color, etc.
  */
 @Composable
 private fun TextFieldLabel(
     label: String,
-    labelTextStyle: TextStyle = MaterialTheme.typography.bodyMedium,
-    maxLines: Int = 1
+    appearance: TextAppearance = TextFieldAppearanceDefaults.appearance().label,
 ) {
     SdkText(
         modifier = Modifier.testTag("sdkLabel"),
         text = label,
-        appearance = TextAppearanceDefaults.appearance().copy(
-            style = labelTextStyle,
-            maxLines = maxLines
-        )
+        appearance = appearance
     )
 }
 
@@ -199,20 +344,26 @@ internal fun TextFieldLabelPreview() {
 }
 
 /**
- * Composable function to display a placeholder text within a TextField.
+ * A composable function that displays a placeholder text for a text field.
  *
- * @param placeholder The text to be displayed as a placeholder.
- * @param maxLines The maximum number of lines the placeholder text can occupy.
+ * This function utilizes the [SdkText] composable to render the placeholder
+ * string with the specified appearance. It's primarily intended to provide
+ * visual cues to the user about what kind of input is expected in an empty
+ * text field.
+ *
+ * @param placeholder The string to be displayed as the placeholder text.
+ * @param appearance The [TextAppearance] to apply to the placeholder text.
+ *                   Defaults to [TextFieldAppearanceDefaults.appearance().placeholder].
  */
 @Composable
-private fun TextFieldPlaceholder(placeholder: String, maxLines: Int = 1) {
+private fun TextFieldPlaceholder(
+    placeholder: String,
+    appearance: TextAppearance = TextFieldAppearanceDefaults.appearance().placeholder
+) {
     SdkText(
         modifier = Modifier.testTag("sdkPlaceholder"),
         text = placeholder,
-        appearance = TextAppearanceDefaults.appearance().copy(
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = maxLines
-        )
+        appearance = appearance
     )
 }
 
@@ -225,42 +376,27 @@ internal fun TextFieldPlaceholderPreview() {
 }
 
 /**
- * Displays a trailing icon in a TextField based on the presence of an error.
+ * Composable function that displays a valid/success icon within a text field.
  *
- * If an error message is provided, it displays a default error icon.
- * Otherwise, it displays the custom trailing icon provided by the caller, if any.
+ * This function renders a checkmark icon, typically used to visually indicate
+ * that the content of a text field has passed validation or meets certain criteria.
  *
- * @param error The error message to display. If not null, a default error icon will be shown.
- * @param trailingIcon An optional composable lambda to display as a custom trailing icon.
- *                     If `error` is null and `trailingIcon` is provided, this icon will be displayed.
- *                     If `error` is not null, this icon will be ignored and the error icon will be shown.
+ * @param appearance  An [IconAppearance] object that defines the visual styling of the icon.
+ *                    Defaults to [TextFieldAppearanceDefaults.appearance().validIcon] if not specified.
+ *
+ * @see IconAppearance
+ * @see TextFieldAppearanceDefaults
+ * @see SdkIcon
  */
-@Composable
-private fun TextFieldTrailingIcon(error: String?, trailingIcon: @Composable (() -> Unit)?) {
-    if (error != null) {
-        TextFieldErrorIcon()
-    } else {
-        trailingIcon?.invoke()
-    }
-}
-
 @SdkLightDarkPreviews
 @Composable
-internal fun TextFieldTrailingIconErrorPreview() {
-    Column {
-        TextFieldTrailingIcon(error = "This is an error message", null)
-    }
-}
-
-@SdkLightDarkPreviews
-@Composable
-internal fun TextFieldTrailingIconCustomPreview() {
-    Column {
-        TextFieldTrailingIcon(
-            error = null,
-            { SdkIcon(imageVector = Icons.Filled.Close, contentDescription = null) }
-        )
-    }
+private fun TextFieldValidIcon(appearance: IconAppearance = TextFieldAppearanceDefaults.appearance().validIcon) {
+    SdkIcon(
+        modifier = Modifier.testTag("successIcon"),
+        painter = painterResource(id = R.drawable.ic_success),
+        contentDescription = stringResource(id = R.string.content_desc_success_icon),
+        appearance = appearance
+    )
 }
 
 /**
@@ -295,25 +431,29 @@ internal fun TextFieldErrorIconPreview() {
 }
 
 /**
- * Displays an error label below a TextField if an error message is provided.
+ * Displays an error label below a text field when an error is present.
  *
- * This composable conditionally renders a Text component to display an error message.
- * It uses [AnimatedVisibility] to smoothly show/hide the error label based on the presence of the error string.
+ * This composable conditionally renders an error message using [SdkText].
+ * The visibility of the error label is controlled by the [error] parameter.
+ * If [error] is null, the label is hidden; otherwise, the label is displayed
+ * with the provided error message.
  *
- * @param error The error message string to display. If `null`, the error label will be hidden.
- *              If an empty string is provided it will display an empty label.
+ * @param error The error message to display. If null, the error label will be hidden.
+ * @param appearance The [TextAppearance] to use for styling the error label. Defaults to
+ *                   [TextFieldAppearanceDefaults.appearance().errorLabel].
  */
 @Composable
-private fun TextFieldErrorLabel(error: String?) {
+private fun TextFieldErrorLabel(
+    error: String?,
+    appearance: TextAppearance = TextFieldAppearanceDefaults.appearance().errorLabel
+) {
     AnimatedVisibility(visible = error != null) {
         SdkText(
             modifier = Modifier
                 .padding(start = 15.dp, top = 6.dp)
                 .testTag("errorLabel"),
             text = error ?: "",
-            appearance = TextAppearanceDefaults.appearance().copy(
-                style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.error)
-            )
+            appearance = appearance
         )
     }
 }

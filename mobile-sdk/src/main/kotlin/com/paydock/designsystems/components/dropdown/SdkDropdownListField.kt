@@ -42,7 +42,6 @@ import com.paydock.designsystems.components.text.SdkText
  *
  * @param modifier Modifier for the dropdown list field layout.
  * @param label The label displayed above the dropdown list field.
- * @param readOnly Flag to determine if the dropdown list field is read-only.
  * @param placeholder Placeholder text displayed when no item is selected.
  * @param items The list of items to be displayed in the dropdown list.
  * @param selected The currently selected item in the dropdown list.
@@ -52,7 +51,6 @@ import com.paydock.designsystems.components.text.SdkText
 internal fun SdkDropdownListField(
     modifier: Modifier = Modifier,
     label: String,
-    readOnly: Boolean = true,
     placeholder: String? = null,
     items: List<String>,
     selected: String? = items.firstOrNull(),
@@ -74,7 +72,6 @@ internal fun SdkDropdownListField(
             SdkDropdownTextField(
                 modifier,
                 label,
-                readOnly,
                 placeholder,
                 selected,
                 expanded,
@@ -104,7 +101,7 @@ internal fun SdkDropdownListField(
 private fun SdkDropdownTextField(
     modifier: Modifier,
     label: String,
-    readOnly: Boolean,
+//    readOnly: Boolean,
     placeholder: String?,
     selected: String?,
     expanded: Boolean,
@@ -117,7 +114,6 @@ private fun SdkDropdownTextField(
         placeholder = placeholder ?: label,
         onValueChange = { },
         interactionSource = interactionSource,
-        readOnly = readOnly,
         trailingIcon = {
             val rotation by animateFloatAsState(
                 if (expanded) 180F else 0F,

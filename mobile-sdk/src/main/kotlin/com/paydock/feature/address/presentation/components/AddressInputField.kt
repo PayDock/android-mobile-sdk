@@ -8,8 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.input.ImeAction
-import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 
 /**
  * A composable function representing an input field for entering an address component.
@@ -44,19 +44,12 @@ internal fun AddressInputField(
 ) {
     SdkTextField(
         modifier = modifier,
+        appearance = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
         value = value,
         onValueChange = { newValue ->
             onValueUpdated(newValue)
         },
         label = label,
-        // Show a success icon when the address component is valid and not blank
-        trailingIcon = if (value.isNotBlank()) {
-            {
-                InputValidIcon()
-            }
-        } else {
-            null
-        },
         autofillType = autofillType,
         // Use keyboard options and actions for a more user-friendly input experience
         keyboardOptions = KeyboardOptions(

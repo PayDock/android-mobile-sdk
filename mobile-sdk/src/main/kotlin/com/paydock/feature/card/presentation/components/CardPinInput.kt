@@ -17,8 +17,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
-import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.presentation.utils.errors.CardPinError
 import com.paydock.feature.card.presentation.utils.validators.CardPinValidator
 import com.paydock.feature.card.presentation.utils.validators.GiftCardInputParser
@@ -49,7 +49,6 @@ internal fun CardPinInput(
         debouncedValue = value
     }
     // Parse the card pin
-    val cardPin = GiftCardInputParser.parseCardPin(debouncedValue)
     val cardPinError = CardPinValidator.validateCardPinInput(debouncedValue, hasUserInteracted)
 
     // Determine the error message to display
@@ -62,6 +61,7 @@ internal fun CardPinInput(
     // Create the visual representation of the security code input field
     SdkTextField(
         modifier = modifier,
+        appearance = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
         value = value,
         onValueChange = {
             hasUserInteracted = true
@@ -74,14 +74,6 @@ internal fun CardPinInput(
         placeholder = stringResource(id = R.string.placeholder_card_pin),
         enabled = enabled,
         error = errorMessage,
-        // Show a success icon when the security code is valid and not blank
-        trailingIcon = {
-            if (!cardPin.isNullOrBlank()) {
-                InputValidIcon()
-            }
-        },
-        singleLine = true,
-        maxLines = 1,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number,
             imeAction = if (nextFocus != null) ImeAction.Next else ImeAction.Done

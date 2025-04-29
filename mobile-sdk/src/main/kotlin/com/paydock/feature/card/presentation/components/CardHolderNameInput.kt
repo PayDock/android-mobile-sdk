@@ -18,8 +18,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
-import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.presentation.utils.errors.CardHolderNameError
 import com.paydock.feature.card.presentation.utils.validators.CardHolderNameValidator
 import com.paydock.feature.card.presentation.utils.validators.CreditCardInputParser
@@ -51,8 +51,6 @@ internal fun CardHolderNameInput(
         debouncedValue = value
     }
 
-    // Validate the cardholder name using CardInputValidator
-    val cardHolder = CreditCardInputParser.parseHolderName(debouncedValue)
     // Validate possible cardholder errors
     val cardHolderError = CardHolderNameValidator.validateHolderNameInput(debouncedValue, hasUserInteracted)
 
@@ -66,6 +64,7 @@ internal fun CardHolderNameInput(
     // Use AppTextField from the AppCompat library with the specified properties
     SdkTextField(
         modifier = modifier,
+        appearance = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
         value = value,
         onValueChange = { newValue ->
             hasUserInteracted = true
@@ -78,14 +77,6 @@ internal fun CardHolderNameInput(
         enabled = enabled,
         error = errorMessage,
         autofillType = AutofillType.PersonFullName,
-        // Show a success icon when the cardholder name is valid and not blank
-        trailingIcon = if (!cardHolder.isNullOrBlank()) {
-            {
-                InputValidIcon()
-            }
-        } else {
-            null
-        },
         // Use keyboard options and actions for a more user-friendly input experience
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.Words,

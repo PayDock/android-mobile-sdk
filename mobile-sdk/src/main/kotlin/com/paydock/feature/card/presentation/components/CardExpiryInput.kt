@@ -18,8 +18,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
-import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.presentation.utils.errors.CardExpiryError
 import com.paydock.feature.card.presentation.utils.transformations.ExpiryInputTransformation
 import com.paydock.feature.card.presentation.utils.validators.CardExpiryValidator
@@ -74,6 +74,7 @@ internal fun CardExpiryInput(
     // Input field configuration
     SdkTextField(
         modifier = modifier,
+        appearance = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
         value = value,
         onValueChange = {
             hasUserInteracted = true
@@ -89,12 +90,6 @@ internal fun CardExpiryInput(
         error = errorMessage, // Dynamically show error messages if validation fails
         autofillType = AutofillType.CreditCardExpirationDate,
         visualTransformation = ExpiryInputTransformation(), // Format input as MM/YY
-        trailingIcon = {
-            // Display a success icon when the expiry input is valid and non-blank
-            if (!expiry.isNullOrBlank()) {
-                InputValidIcon()
-            }
-        },
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number, // Input limited to numbers
             imeAction = if (nextFocus != null) ImeAction.Next else ImeAction.Done

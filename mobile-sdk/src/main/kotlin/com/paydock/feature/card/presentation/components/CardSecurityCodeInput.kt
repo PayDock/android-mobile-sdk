@@ -20,8 +20,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
-import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.domain.model.ui.CardCode
 import com.paydock.feature.card.domain.model.ui.enums.CodeType
 import com.paydock.feature.card.presentation.utils.errors.SecurityCodeError
@@ -93,6 +93,7 @@ internal fun CardSecurityCodeInput(
     // Render the security code input field with appropriate properties
     SdkTextField(
         modifier = modifier,
+        appearance = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
         value = value,
         onValueChange = {
             hasUserInteracted = true
@@ -111,12 +112,6 @@ internal fun CardSecurityCodeInput(
         enabled = enabled,
         error = errorMessage,
         autofillType = AutofillType.CreditCardSecurityCode,
-        // Display a success icon when the input is valid and non-blank
-        trailingIcon = {
-            if (debouncedValue.isNotBlank()) {
-                InputValidIcon()
-            }
-        },
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number,
             imeAction = if (nextFocus != null) ImeAction.Next else ImeAction.Done

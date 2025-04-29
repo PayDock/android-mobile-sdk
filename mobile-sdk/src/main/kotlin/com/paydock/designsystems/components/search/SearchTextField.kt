@@ -13,6 +13,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -30,13 +32,16 @@ import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.paydock.R
+import com.paydock.designsystems.components.icon.SdkIcon
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
 
@@ -46,8 +51,6 @@ import com.paydock.designsystems.components.text.TextAppearanceDefaults
  * @param modifier The modifier to be applied to the search text field.
  * @param label The label to be displayed on the search text field.
  * @param autofillType The autofill type for the search text field (optional).
- * @param leadingIcon The composable function to render the leading icon (optional).
- * @param trailingIcon The composable function to render the trailing icon (optional).
  * @param noResultsFoundLabel The label to be displayed when no results are found (defaults to "No results found").
  * @param selectedItem The currently selected item in the dropdown (optional).
  * @param viewModel The [SearchViewModel] instance responsible for managing search operations.
@@ -58,8 +61,6 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
     modifier: Modifier = Modifier,
     label: String,
     autofillType: AutofillType? = null,
-    leadingIcon: @Composable (() -> Unit)? = null,
-    trailingIcon: @Composable (() -> Unit)? = null,
     noResultsFoundLabel: String = stringResource(R.string.label_no_results_found),
     selectedItem: String? = null,
     viewModel: T,
@@ -98,21 +99,25 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
             modifier = Modifier.onFocusChanged { focusState ->
                 isTextFieldFocused = focusState.isFocused
             },
+            appearance = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
             value = searchText,
             label = label,
+            showValidIcon = !selectedItem.isNullOrBlank(),
             trailingIcon = {
                 // Show progress indicator if searching and focused
                 if (isTextFieldFocused && isSearching) {
                     CircularProgressIndicator(modifier = Modifier.size(25.dp))
-                } else if (!isTextFieldFocused && trailingIcon != null) {
-                    trailingIcon()
+                } else if (!isTextFieldFocused) {
+                    SdkIcon(
+                        painter = rememberVectorPainter(Icons.Default.ArrowDropDown),
+                        contentDescription = null,
+                    )
                 }
             },
             onValueChange = { value ->
                 // Update the search text in the ViewModel
                 viewModel.onSearchTextChange(value)
             },
-            leadingIcon = leadingIcon,
             autofillType = autofillType,
             // Use keyboard options and actions for a user-friendly input experience
             keyboardOptions = KeyboardOptions(
@@ -125,8 +130,7 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
                         focusManager.clearFocus()
                     }
                 }
-            ),
-            singleLine = true
+            )
         )
 
         // Refactor the logic in a val to make the code more readable

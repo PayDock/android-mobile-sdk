@@ -19,8 +19,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
-import com.paydock.designsystems.components.input.InputValidIcon
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.integration.enums.CardType
 import com.paydock.feature.card.domain.model.ui.CardCode
@@ -92,6 +92,7 @@ internal fun CreditCardNumberInput(
         modifier = modifier.onFocusChanged {
             focusedState = it.isFocused
         },
+        appearance = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
         value = value,
         onValueChange = {
             hasUserInteracted = true
@@ -113,12 +114,6 @@ internal fun CreditCardNumberInput(
                 subSectionSizes = it.gaps
             )
         } ?: CardNumberInputTransformation(),
-        // Show a success icon when the card number is valid and not blank
-        trailingIcon = {
-            if (debouncedValue.isNotBlank()) {
-                InputValidIcon()
-            }
-        },
         // Use keyboard options and actions for a more user-friendly input experience
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number,

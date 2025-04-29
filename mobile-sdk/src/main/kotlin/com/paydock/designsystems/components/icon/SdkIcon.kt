@@ -112,6 +112,6 @@ object IconAppearanceDefaults {
      */
     @Composable
     fun appearance(): IconAppearance = IconAppearance(
-        tint = LocalContentColor.current
+        tint = Color.Unspecified
     )
 }
