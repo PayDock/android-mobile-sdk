@@ -1,5 +1,6 @@
 package com.paydock.designsystems.components.icon
 
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
@@ -9,6 +10,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.takeOrElse
 
 /**
  * A composable function that displays an icon using a provided [Painter].
@@ -32,7 +35,7 @@ fun SdkIcon(
     appearance: IconAppearance = IconAppearanceDefaults.appearance()
 ) {
     Icon(
-        modifier = modifier,
+        modifier = modifier.size(appearance.size),
         painter = painter,
         contentDescription = contentDescription,
         tint = appearance.tint
@@ -60,7 +63,7 @@ fun SdkIcon(
     appearance: IconAppearance = IconAppearanceDefaults.appearance()
 ) {
     Icon(
-        modifier = modifier,
+        modifier = modifier.size(appearance.size),
         imageVector = imageVector,
         contentDescription = contentDescription,
         tint = appearance.tint
@@ -77,6 +80,7 @@ fun SdkIcon(
  */
 @Immutable
 class IconAppearance(
+    val size: Dp,
     val tint: Color
 ) {
     /**
@@ -86,8 +90,10 @@ class IconAppearance(
      * @return A new [IconAppearance] instance with the specified properties.
      */
     fun copy(
+        size: Dp = this.size,
         tint: Color = this.tint
     ): IconAppearance = IconAppearance(
+        size = size.takeOrElse { this.size },
         tint = tint.takeOrElse { this.tint }
     )
 }
@@ -112,6 +118,7 @@ object IconAppearanceDefaults {
      */
     @Composable
     fun appearance(): IconAppearance = IconAppearance(
+        size = Dp.Unspecified,
         tint = Color.Unspecified
     )
 }

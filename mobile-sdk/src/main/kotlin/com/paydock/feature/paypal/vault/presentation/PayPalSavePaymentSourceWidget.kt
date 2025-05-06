@@ -23,8 +23,7 @@ import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
-import com.paydock.designsystems.components.button.AppButtonType
-import com.paydock.designsystems.components.button.SdkButton
+import com.paydock.designsystems.components.button.SdkOutlineButton
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultResult
 import com.paydock.feature.paypal.vault.presentation.state.PayPalVaultUIState
@@ -90,13 +89,12 @@ fun PayPalSavePaymentSourceWidget(
     // Apply the SDK's theme to the widget
     Box(modifier = modifier) {
         // Display a button to link the PayPal account
-        SdkButton(
+        SdkOutlineButton(
             modifier = Modifier
                 .testTag("linkPayPalAccount"),
             buttonIcon = config.icon,
             text = config.actionText
                 ?: stringResource(id = R.string.button_link_paypal_account),
-            type = AppButtonType.Outlined,
             enabled = uiState !is PayPalVaultUIState.Loading && enabled,
             isLoading = loadingDelegate == null && uiState is PayPalVaultUIState.Loading
         ) {

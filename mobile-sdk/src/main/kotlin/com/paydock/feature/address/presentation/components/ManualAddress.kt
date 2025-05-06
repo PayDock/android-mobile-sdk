@@ -19,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
-import com.paydock.designsystems.theme.SPACING
+import com.paydock.designsystems.core.WidgetDefaults
 import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.address.presentation.state.AddressDetailsInputState
 import com.paydock.feature.address.presentation.viewmodels.ManualAddressViewModel
@@ -80,7 +80,7 @@ internal fun ManualAddress(
     // Create a vertical column layout for address input fields
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(SPACING, Alignment.Top),
+        verticalArrangement = Arrangement.spacedBy(WidgetDefaults.SPACING, Alignment.Top),
         horizontalAlignment = Alignment.Start
     ) {
         // Focus requesters for managing keyboard navigation

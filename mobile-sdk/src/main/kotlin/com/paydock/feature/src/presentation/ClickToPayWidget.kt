@@ -16,7 +16,7 @@ import com.paydock.core.domain.error.exceptions.ClickToPayException
 import com.paydock.designsystems.components.web.SdkWebView
 import com.paydock.designsystems.components.web.config.WidgetConfig
 import com.paydock.designsystems.components.web.utils.HtmlWidgetBuilder
-import com.paydock.designsystems.theme.SPACING
+import com.paydock.designsystems.core.WidgetDefaults
 import com.paydock.feature.src.domain.model.integration.meta.ClickToPayMeta
 import com.paydock.feature.src.presentation.utils.ClickToPayJSBridge
 import com.paydock.feature.src.presentation.viewmodels.ClickToPayViewModel
@@ -66,7 +66,7 @@ fun ClickToPayWidget(
     Box(contentAlignment = Alignment.Center) {
         Column(
             modifier = modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(SPACING, Alignment.Top),
+            verticalArrangement = Arrangement.spacedBy(WidgetDefaults.SPACING, Alignment.Top),
             horizontalAlignment = Alignment.Start
         ) {
             // Generate HTML string for Click to Pay checkout

@@ -18,7 +18,7 @@ import com.paydock.R
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.SdkButton
-import com.paydock.designsystems.theme.SPACING
+import com.paydock.designsystems.core.WidgetDefaults
 import com.paydock.feature.card.presentation.components.CardPinInput
 import com.paydock.feature.card.presentation.components.GiftCardNumberInput
 import com.paydock.feature.card.presentation.state.GiftCardUIState
@@ -73,13 +73,13 @@ fun GiftCardWidget(
     Column(
         modifier = modifier
             .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(SPACING, Alignment.Top),
+        verticalArrangement = Arrangement.spacedBy(WidgetDefaults.SPACING, Alignment.Top),
         horizontalAlignment = Alignment.Start
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(
-                SPACING,
+                WidgetDefaults.SPACING,
                 Alignment.CenterHorizontally
             ),
             verticalAlignment = Alignment.Top

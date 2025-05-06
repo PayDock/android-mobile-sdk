@@ -33,9 +33,9 @@ import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
+import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkButtonLoader
-import com.paydock.designsystems.theme.BUTTON_HEIGHT
-import com.paydock.designsystems.theme.BUTTON_SPACING
 import com.paydock.designsystems.theme.PayPal
 import com.paydock.feature.paypal.checkout.presentation.components.PayPalButton
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
@@ -102,7 +102,7 @@ fun PayPalWidget(
                 modifier = Modifier
                     .testTag("loadingPayPalButton")
                     .fillMaxWidth()
-                    .height(BUTTON_HEIGHT),
+                    .height(ButtonAppearanceDefaults.BUTTON_HEIGHT),
                 enabled = true,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = PayPal,
@@ -112,12 +112,15 @@ fun PayPalWidget(
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(
-                        BUTTON_SPACING,
+                        ButtonAppearanceDefaults.BUTTON_SPACING,
                         Alignment.CenterHorizontally
                     ),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    SdkButtonLoader(color = Color.Black)
+                    SdkButtonLoader(
+                        appearance = LoaderAppearanceDefaults.appearance()
+                            .copy(strokeWidth = ButtonAppearanceDefaults.BUTTON_LOADER_WIDTH, color = Color.Black)
+                    )
                 }
             }
         } else {

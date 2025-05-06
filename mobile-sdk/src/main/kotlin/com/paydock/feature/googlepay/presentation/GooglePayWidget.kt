@@ -35,9 +35,9 @@ import com.google.pay.button.ButtonType
 import com.google.pay.button.PayButton
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkLoader
-import com.paydock.designsystems.theme.BUTTON_CORNER_RADIUS
-import com.paydock.designsystems.theme.SPACING
+import com.paydock.designsystems.core.WidgetDefaults
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.presentation.viewmodels.GooglePayViewModel
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
@@ -104,7 +104,7 @@ fun GooglePayWidget(
     Box(contentAlignment = Alignment.Center) {
         Column(
             modifier = modifier,
-            verticalArrangement = Arrangement.spacedBy(SPACING, Alignment.Top),
+            verticalArrangement = Arrangement.spacedBy(WidgetDefaults.SPACING, Alignment.Top),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (!allowedPaymentMethods.isNullOrBlank()) {
@@ -131,7 +131,7 @@ fun GooglePayWidget(
                                 }
                             }
                         },
-                        radius = BUTTON_CORNER_RADIUS,
+                        radius = ButtonAppearanceDefaults.BUTTON_CORNER_RADIUS,
                         allowedPaymentMethods = allowedPaymentMethods
                     )
                 }

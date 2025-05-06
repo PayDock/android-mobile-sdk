@@ -25,12 +25,12 @@ import com.paydock.R
 import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.core.presentation.extensions.scaled
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
+import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
 import com.paydock.designsystems.theme.ArialFontFamily
-import com.paydock.designsystems.theme.BUTTON_HEIGHT
-import com.paydock.designsystems.theme.BUTTON_SPACING
 import com.paydock.designsystems.theme.FlyPayBlue
 
 /**
@@ -54,10 +54,10 @@ internal fun FlyPayButton(
     val configuration = LocalConfiguration.current
     val fontScale = configuration.fontScale
     // Calculate adjusted height using the extension function
-    val adjustedButtonHeight = BUTTON_HEIGHT.scaled(fontScale)
+    val adjustedButtonHeight = ButtonAppearanceDefaults.BUTTON_HEIGHT.scaled(fontScale)
 
     // Calculate the adjusted image size based on the font scale and a base image size.
-    val baseImageSize = BUTTON_HEIGHT
+    val baseImageSize = ButtonAppearanceDefaults.BUTTON_HEIGHT
     val adjustedImageSize = baseImageSize.value.scaled(fontScale).dp
     // Button to initiate FlyPay transaction
     Button(
@@ -75,14 +75,17 @@ internal fun FlyPayButton(
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(
-                BUTTON_SPACING,
+                ButtonAppearanceDefaults.BUTTON_SPACING,
                 Alignment.CenterHorizontally
             ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // Show a progress indicator if the FlyPay wallet is loading
             if (isLoading) {
-                SdkButtonLoader()
+                SdkButtonLoader(
+                    appearance = LoaderAppearanceDefaults.appearance()
+                        .copy(strokeWidth = ButtonAppearanceDefaults.BUTTON_LOADER_WIDTH)
+                )
             } else {
                 // Display button text
                 SdkText(

@@ -21,7 +21,7 @@ import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
-import com.paydock.designsystems.theme.SPACING
+import com.paydock.designsystems.core.WidgetDefaults
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.CardResult
 import com.paydock.feature.card.presentation.components.CardInputFields
@@ -81,7 +81,7 @@ fun CardDetailsWidget(
     Column(
         modifier = modifier
             .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(SPACING, Alignment.Top),
+        verticalArrangement = Arrangement.spacedBy(WidgetDefaults.SPACING, Alignment.Top),
         horizontalAlignment = Alignment.Start
     ) {
         // Title for the card information section

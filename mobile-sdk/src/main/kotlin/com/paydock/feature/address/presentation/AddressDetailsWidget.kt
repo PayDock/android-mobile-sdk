@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.components.link.SdkLinkText
-import com.paydock.designsystems.theme.SPACING
+import com.paydock.designsystems.core.WidgetDefaults
 import com.paydock.feature.address.domain.mapper.integration.asEntity
 import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.address.presentation.components.AddressSearchSection
@@ -62,7 +62,7 @@ fun AddressDetailsWidget(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(SPACING, Alignment.Top),
+        verticalArrangement = Arrangement.spacedBy(WidgetDefaults.SPACING, Alignment.Top),
         horizontalAlignment = Alignment.Start
     ) {
         AddressSearchSection { address ->

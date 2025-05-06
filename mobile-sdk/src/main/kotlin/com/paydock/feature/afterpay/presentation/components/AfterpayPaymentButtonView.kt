@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.afterpay.android.Afterpay
 import com.afterpay.android.view.AfterpayPaymentButton
-import com.paydock.designsystems.theme.BUTTON_HEIGHT
+import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.feature.afterpay.domain.mapper.integration.mapToAfterpayV2Options
 import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
 import com.paydock.feature.afterpay.presentation.viewmodels.AfterpayViewModel
@@ -43,7 +43,7 @@ internal fun AfterpayPaymentButtonView(
     AndroidView(
         modifier = Modifier
             .fillMaxWidth()
-            .height(BUTTON_HEIGHT),
+            .height(ButtonAppearanceDefaults.BUTTON_HEIGHT),
         factory = { context ->
             AfterpayPaymentButton(context).apply {
                 this.buttonText = config.buttonTheme.buttonText

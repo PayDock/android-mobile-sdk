@@ -3,7 +3,6 @@ package com.paydock.designsystems.components.loader
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -14,8 +13,7 @@ import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.takeOrElse
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
-import com.paydock.designsystems.theme.BUTTON_LOADER_SIZE
-import com.paydock.designsystems.theme.BUTTON_LOADER_WIDTH
+import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 
 /**
  * A composable function that displays a loading indicator (CircularProgressIndicator).
@@ -53,22 +51,20 @@ internal fun SdkLoader(
  * within a button's UI. It uses the `onPrimary` color from the Material Theme for its color,
  * making it suitable for display on primary-colored backgrounds.
  *
- * @param color The color to apply to the loader.
- * Defaults to the `onPrimary` color from the Material Theme.
- *
  * @see SdkLoader
  * @see LoaderAppearanceDefaults
  */
-@SdkLightDarkPreviews
 @Composable
 internal fun SdkButtonLoader(
-    color: Color = MaterialTheme.colorScheme.onPrimary
+    appearance: LoaderAppearance = LoaderAppearanceDefaults.appearance()
 ) {
     SdkLoader(
-        modifier = Modifier.size(BUTTON_LOADER_SIZE),
+        modifier = Modifier.size(ButtonAppearanceDefaults.BUTTON_LOADER_SIZE),
         appearance = LoaderAppearanceDefaults.appearance().copy(
-            color = color,
-            strokeWidth = BUTTON_LOADER_WIDTH
+            color = appearance.color,
+            strokeWidth = appearance.strokeWidth,
+            trackColor = appearance.trackColor,
+            strokeCap = appearance.strokeCap
         )
     )
 }
