@@ -18,6 +18,7 @@ import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.presentation.utils.errors.CardPinError
 import com.paydock.feature.card.presentation.utils.validators.CardPinValidator
@@ -37,6 +38,7 @@ import kotlinx.coroutines.delay
 @Composable
 internal fun CardPinInput(
     modifier: Modifier = Modifier,
+    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     value: String = "",
     enabled: Boolean = true,
     nextFocus: FocusRequester? = null,
@@ -61,7 +63,7 @@ internal fun CardPinInput(
     // Create the visual representation of the security code input field
     SdkTextField(
         modifier = modifier,
-        appearance = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
+        appearance = appearance,
         value = value,
         onValueChange = {
             hasUserInteracted = true

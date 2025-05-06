@@ -22,6 +22,7 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.icon.SdkIcon
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.presentation.utils.errors.GiftCardNumberError
 import com.paydock.feature.card.presentation.utils.transformations.CardNumberInputTransformation
@@ -43,6 +44,7 @@ import kotlinx.coroutines.delay
 @Composable
 internal fun GiftCardNumberInput(
     modifier: Modifier = Modifier,
+    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     value: String = "",
     enabled: Boolean = true,
     nextFocus: FocusRequester? = null,
@@ -72,7 +74,7 @@ internal fun GiftCardNumberInput(
         modifier = modifier.onFocusChanged {
             focusedState.value = it.isFocused
         },
-        appearance = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
+        appearance = appearance,
         value = value,
         onValueChange = {
             hasUserInteracted = true

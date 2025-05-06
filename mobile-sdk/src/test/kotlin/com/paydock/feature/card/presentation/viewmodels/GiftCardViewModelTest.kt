@@ -8,6 +8,7 @@ import com.paydock.core.domain.error.exceptions.GiftCardException
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.utils.MainDispatcherRule
+import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
 import com.paydock.feature.card.domain.model.ui.TokenDetails
 import com.paydock.feature.card.domain.usecase.CreateGiftCardPaymentTokenUseCase
 import com.paydock.feature.card.presentation.state.GiftCardUIState
@@ -44,17 +45,11 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
     @Before
     fun setup() {
         useCase = mockk()
-        viewModel = GiftCardViewModel(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, useCase, dispatchersProvider)
-    }
-
-    @Test
-    fun `setStorePin should update storePin`() = runTest {
-        val storePin = false
-        // ACTION
-        viewModel.setStorePin(storePin)
-        // CHECK
-        val state = viewModel.inputStateFlow.first()
-        assertEquals(storePin, state.storePin)
+        viewModel = GiftCardViewModel(
+            GiftCardWidgetConfig(accessToken = MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN),
+            useCase,
+            dispatchersProvider
+        )
     }
 
     @Test

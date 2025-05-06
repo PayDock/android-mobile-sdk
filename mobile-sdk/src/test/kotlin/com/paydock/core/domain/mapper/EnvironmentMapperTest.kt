@@ -45,17 +45,17 @@ class EnvironmentMapperTest : BaseUnitTest() {
     }
 
     @Test
-    fun mapToClientSDKLibrary_sandbox_returnsStagingSandboxLibrary() {
+    fun mapToClientSDKLibrary_sandbox_returnsSandboxLibrary() {
         val environment = Environment.SANDBOX
-        val expectedLibrary = ClientSDKConstants.Library.STAGING_SANDBOX
+        val expectedLibrary = ClientSDKConstants.Library.SANDBOX
         val actualLibrary = environment.mapToClientSDKLibrary()
         assertEquals(expectedLibrary, actualLibrary)
     }
 
     @Test
-    fun mapToClientSDKLibrary_staging_returnsStagingSandboxLibrary() {
+    fun mapToClientSDKLibrary_staging_returnsStagingLibrary() {
         val environment = Environment.STAGING
-        val expectedLibrary = ClientSDKConstants.Library.STAGING_SANDBOX
+        val expectedLibrary = ClientSDKConstants.Library.STAGING
         val actualLibrary = environment.mapToClientSDKLibrary()
         assertEquals(expectedLibrary, actualLibrary)
     }

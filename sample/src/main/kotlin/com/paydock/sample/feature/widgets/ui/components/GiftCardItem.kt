@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
+import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
 import com.paydock.feature.card.presentation.GiftCardWidget
 import com.paydock.sample.BuildConfig
 
@@ -16,8 +17,11 @@ import com.paydock.sample.BuildConfig
 fun GiftCardItem(context: Context) {
     GiftCardWidget(
         modifier = Modifier.padding(16.dp),
-        accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
-        storePin = true, completion = { result ->
+        config = GiftCardWidgetConfig(
+            accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
+            storePin = true
+        ),
+        completion = { result ->
             result.onSuccess {
                 Log.d("[GiftCardWidget]", "Success: $it")
                 Toast.makeText(context, "Tokenised card was successful! [$it]", Toast.LENGTH_SHORT)
