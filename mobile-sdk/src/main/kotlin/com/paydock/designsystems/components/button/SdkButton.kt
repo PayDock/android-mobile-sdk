@@ -18,7 +18,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -179,7 +178,9 @@ private fun ButtonContent(
             modifier = Modifier.fillMaxWidth()
         ) {
             if (loadingState) {
-                SdkButtonLoader()
+                val color =
+                    if (isLoading) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.primary
+                SdkButtonLoader(color = color)
             } else {
                 // Display the icon (if any) and text in a consistent layout
                 when (buttonIcon) {

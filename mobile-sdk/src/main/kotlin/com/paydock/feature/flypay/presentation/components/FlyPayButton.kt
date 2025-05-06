@@ -80,29 +80,30 @@ internal fun FlyPayButton(
             ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Display button text
-            SdkText(
-                modifier = Modifier.fillMaxHeight(),
-                text = stringResource(R.string.button_pay_with),
-                appearance = TextAppearanceDefaults.appearance().copy(
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontFamily = ArialFontFamily,
-                        fontSize = 22.sp,
-                        lineHeight = 48.sp,
-                        color = Color.White,
-                        platformStyle = PlatformTextStyle(includeFontPadding = true)
-                    )
-                )
-            )
-            // Display FlyPay icon
-            Image(
-                modifier = Modifier.size(adjustedImageSize),
-                painter = painterResource(id = R.drawable.ic_flypay_button),
-                contentDescription = stringResource(id = R.string.content_desc_flypay_button_icon)
-            )
             // Show a progress indicator if the FlyPay wallet is loading
             if (isLoading) {
                 SdkButtonLoader()
+            } else {
+                // Display button text
+                SdkText(
+                    modifier = Modifier.fillMaxHeight(),
+                    text = stringResource(R.string.button_pay_with),
+                    appearance = TextAppearanceDefaults.appearance().copy(
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontFamily = ArialFontFamily,
+                            fontSize = 22.sp,
+                            lineHeight = 48.sp,
+                            color = Color.White,
+                            platformStyle = PlatformTextStyle(includeFontPadding = true)
+                        )
+                    )
+                )
+                // Display FlyPay icon
+                Image(
+                    modifier = Modifier.size(adjustedImageSize),
+                    painter = painterResource(id = R.drawable.ic_flypay_button),
+                    contentDescription = stringResource(id = R.string.content_desc_flypay_button_icon)
+                )
             }
         }
     }

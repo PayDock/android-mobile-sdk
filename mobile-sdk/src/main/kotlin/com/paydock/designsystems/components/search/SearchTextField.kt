@@ -13,8 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -32,14 +30,12 @@ import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.paydock.R
-import com.paydock.designsystems.components.icon.SdkIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.designsystems.components.text.SdkText
@@ -61,6 +57,7 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
     modifier: Modifier = Modifier,
     label: String,
     autofillType: AutofillType? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
     noResultsFoundLabel: String = stringResource(R.string.label_no_results_found),
     selectedItem: String? = null,
     viewModel: T,
@@ -107,11 +104,8 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
                 // Show progress indicator if searching and focused
                 if (isTextFieldFocused && isSearching) {
                     CircularProgressIndicator(modifier = Modifier.size(25.dp))
-                } else if (!isTextFieldFocused) {
-                    SdkIcon(
-                        painter = rememberVectorPainter(Icons.Default.ArrowDropDown),
-                        contentDescription = null,
-                    )
+                } else if (!isTextFieldFocused && trailingIcon != null) {
+                    trailingIcon()
                 }
             },
             onValueChange = { value ->
