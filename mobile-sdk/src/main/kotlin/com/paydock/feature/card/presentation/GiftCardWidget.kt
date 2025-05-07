@@ -192,9 +192,7 @@ class GiftCardWidgetAppearance(
         horizontalSpacing: Dp = this.horizontalSpacing,
         textField: TextFieldAppearance = this.textField,
         actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance = { isEnabled ->
-            ButtonAppearanceDefaults.filledButtonAppearance(
-                isEnabled
-            )
+            this.actionButton(isEnabled)
         }
     ): GiftCardWidgetAppearance = GiftCardWidgetAppearance(
         verticalSpacing = verticalSpacing.takeOrElse { this.verticalSpacing },

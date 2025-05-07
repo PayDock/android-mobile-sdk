@@ -20,6 +20,7 @@ import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.integration.enums.CardType
@@ -40,7 +41,8 @@ import kotlinx.coroutines.delay
  * focus handling, and dynamic input validation.
  *
  * @param modifier Modifier to customize the layout or styling of the input field.
- * @param schemeConfig The configuration defining the supported card schemes and validation settings.
+ * @param appearance Defines the visual appearance of the text field, including colors, typography, etc.
+ * @param schemeConfig The configuration defining the supported card schemes and validation settings.]
  * @param value The current value of the input field, representing the credit card number.
  * @param cardScheme The detected [CardScheme] based on the card number input.
  * @param enabled Flag to enable or disable user interaction with the input field.
@@ -54,6 +56,7 @@ import kotlinx.coroutines.delay
 @Composable
 internal fun CreditCardNumberInput(
     modifier: Modifier = Modifier,
+    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     schemeConfig: SupportedSchemeConfig,
     value: String = "",
     cardScheme: CardScheme? = null,
@@ -92,7 +95,7 @@ internal fun CreditCardNumberInput(
         modifier = modifier.onFocusChanged {
             focusedState = it.isFocused
         },
-        appearance = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
+        appearance = appearance,
         value = value,
         onValueChange = {
             hasUserInteracted = true
@@ -143,6 +146,7 @@ internal fun PreviewCreditCardNumberInputDefault() {
 @Composable
 internal fun PreviewCreditCardNumberInput() {
     CreditCardNumberInput(
+        schemeConfig = SupportedSchemeConfig(),
         value = "4242424242424242",
         cardScheme = CardScheme(
             type = CardType.VISA,
@@ -153,7 +157,6 @@ internal fun PreviewCreditCardNumberInput() {
         ),
         enabled = true,
         nextFocus = null,
-        onValueChange = {},
-        schemeConfig = SupportedSchemeConfig()
+        onValueChange = {}
     )
 }

@@ -19,6 +19,7 @@ import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.presentation.utils.errors.CardExpiryError
 import com.paydock.feature.card.presentation.utils.transformations.ExpiryInputTransformation
@@ -43,6 +44,7 @@ import kotlinx.coroutines.delay
 @Composable
 internal fun CardExpiryInput(
     modifier: Modifier = Modifier,
+    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     value: String = "",
     enabled: Boolean = true,
     nextFocus: FocusRequester? = null,
@@ -74,7 +76,7 @@ internal fun CardExpiryInput(
     // Input field configuration
     SdkTextField(
         modifier = modifier,
-        appearance = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
+        appearance = appearance,
         value = value,
         onValueChange = {
             hasUserInteracted = true
@@ -105,15 +107,15 @@ internal fun CardExpiryInput(
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewCardExpiryInputDefault() {
-    CardExpiryInput(nextFocus = null) {
+    CardExpiryInput(nextFocus = null, onValueChange = {
 
-    }
+    })
 }
 
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewCardExpiryInputValue() {
-    CardExpiryInput(value = "0823", nextFocus = null) {
+    CardExpiryInput(value = "0823", nextFocus = null, onValueChange = {
 
-    }
+    })
 }

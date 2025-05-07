@@ -21,6 +21,7 @@ import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.domain.model.ui.CardCode
 import com.paydock.feature.card.domain.model.ui.enums.CodeType
@@ -48,6 +49,7 @@ import kotlinx.coroutines.delay
 @Composable
 internal fun CardSecurityCodeInput(
     modifier: Modifier = Modifier,
+    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     value: String = "",
     cardCode: CardCode? = null,
     enabled: Boolean = true,
@@ -93,7 +95,7 @@ internal fun CardSecurityCodeInput(
     // Render the security code input field with appropriate properties
     SdkTextField(
         modifier = modifier,
-        appearance = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
+        appearance = appearance,
         value = value,
         onValueChange = {
             hasUserInteracted = true

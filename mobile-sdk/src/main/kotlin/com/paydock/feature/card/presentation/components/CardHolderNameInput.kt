@@ -19,6 +19,7 @@ import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.presentation.utils.errors.CardHolderNameError
 import com.paydock.feature.card.presentation.utils.validators.CardHolderNameValidator
@@ -28,16 +29,25 @@ import kotlinx.coroutines.delay
 /**
  * Composable that displays an input field for the cardholder name.
  *
+ * This composable provides a text field specifically designed for entering the cardholder's full name.
+ * It handles basic validation, autofill suggestions, and keyboard actions for a smooth user experience.
+ * The input is automatically formatted to capitalize words.
+ *
  * @param modifier The modifier to be applied to the composable.
- * @param value The current value of the cardholder name.
- * @param enabled Controls the enabled state of this Widget
- * @param nextFocus The focus requester for the next input field (optional).
- * @param onValueChange The callback function to be invoked when the value of the cardholder name changes.
+ * @param appearance Defines the visual appearance of the text field, including colors, typography, etc.
+ * @param value The current value displayed in the cardholder name input field.
+ * @param enabled Controls the enabled state of this Widget. When disabled, the input is not editable
+ * and appears grayed out.
+ * @param nextFocus An optional [FocusRequester] that allows programmatically moving focus to the next
+ * input field in a form when the user presses the "Next" button on the keyboard.
+ * @param onValueChange The callback function to be invoked when the value of the cardholder name
+ * changes due to user input. This function receives the updated string value after parsing and formatting.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun CardHolderNameInput(
     modifier: Modifier = Modifier,
+    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     value: String = "",
     enabled: Boolean = true,
     nextFocus: FocusRequester? = null,
@@ -64,7 +74,7 @@ internal fun CardHolderNameInput(
     // Use AppTextField from the AppCompat library with the specified properties
     SdkTextField(
         modifier = modifier,
-        appearance = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
+        appearance = appearance,
         value = value,
         onValueChange = { newValue ->
             hasUserInteracted = true
@@ -93,13 +103,13 @@ internal fun CardHolderNameInput(
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewCardHolderNameInputDefault() {
-    CardHolderNameInput {}
+    CardHolderNameInput(onValueChange = {})
 }
 
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewCardHolderNameInputValue() {
-    CardHolderNameInput(value = "J DOE") {
+    CardHolderNameInput(value = "J DOE", onValueChange = {
 
-    }
+    })
 }

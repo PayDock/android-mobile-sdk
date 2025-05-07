@@ -4,7 +4,6 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -13,23 +12,32 @@ import androidx.core.net.toUri
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.link.SdkLinkText
 import com.paydock.designsystems.components.text.SdkText
+import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
-import com.paydock.designsystems.components.toggle.SdkSwitch
+import com.paydock.designsystems.components.toggle.SdkToggle
+import com.paydock.designsystems.components.toggle.ToggleAppearance
+import com.paydock.designsystems.components.toggle.ToggleAppearanceDefaults
 import com.paydock.feature.card.domain.model.integration.SaveCardConfig
 
 /**
- * A composable for displaying a toggle switch to save card details.
+ * A composable for displaying a toggle switch to save card details, along with associated consent and privacy policy links.
  *
- * @param enabled Controls the enabled state of this section.
- * @param saveCard The current state of the save card toggle switch.
- * @param config The configuration for the save card toggle, including consent text and privacy policy.
- * @param onToggle A callback invoked when the toggle switch is changed.
+ * @param enabled Controls the enabled state of this section, affecting the toggle and clickable links.
+ * @param saveCard The current state of the save card toggle switch (true if card details are to be saved, false otherwise).
+ * @param config The configuration for the save card toggle, including the consent text and details for the privacy policy link.
+ * @param linkTextAppearance The appearance for the consent text.
+ * @param linkAppearance The appearance for the privacy policy link.
+ * @param toggleAppearance The appearance for the toggle switch.
+ * @param onToggle A callback invoked when the toggle switch is changed. The boolean parameter indicates the new checked state.
  */
 @Composable
 internal fun SaveCardToggle(
     enabled: Boolean = true,
     saveCard: Boolean,
     config: SaveCardConfig,
+    linkTextAppearance: TextAppearance = TextAppearanceDefaults.appearance(),
+    linkAppearance: TextAppearance = TextAppearanceDefaults.appearance(),
+    toggleAppearance: ToggleAppearance = ToggleAppearanceDefaults.appearance(),
     onToggle: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
@@ -45,13 +53,11 @@ internal fun SaveCardToggle(
             SdkText(
                 modifier = Modifier.fillMaxWidth(),
                 text = config.consentText,
-                appearance = TextAppearanceDefaults.appearance().copy(
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                appearance = linkTextAppearance
             )
             // Privacy Policy Label
             if (config.privacyPolicyConfig != null) {
-                SdkLinkText(linkText = config.privacyPolicyConfig.privacyPolicyText) {
+                SdkLinkText(linkText = config.privacyPolicyConfig.privacyPolicyText, appearance = linkAppearance) {
                     if (enabled) {
                         val uri = config.privacyPolicyConfig.privacyPolicyURL.toUri()
                         val intent = Intent(Intent.ACTION_VIEW, uri)
@@ -61,10 +67,11 @@ internal fun SaveCardToggle(
             }
         }
 
-        SdkSwitch(
+        SdkToggle(
             modifier = Modifier.align(Alignment.CenterVertically),
             enabled = enabled,
             isChecked = saveCard,
+            appearance = toggleAppearance,
             onCheckedChange = onToggle
         )
     }

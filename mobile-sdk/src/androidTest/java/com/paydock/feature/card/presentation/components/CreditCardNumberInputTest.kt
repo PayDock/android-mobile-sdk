@@ -37,18 +37,19 @@ internal class CreditCardNumberInputTest : BaseUITest() {
         // Start composable with valid card number
         composeTestRule.setContent {
             CreditCardNumberInput(
-                value = cardNumber,
-                onValueChange = {
-                    cardNumber = it
-                },
                 schemeConfig = SupportedSchemeConfig(supportedSchemes = CardType.entries.toSet(), enableValidation = true),
+                value = cardNumber,
                 cardScheme = CardScheme(
                     type = CardType.VISA,
                     code = CardCode(
                         CodeType.CVV,
                         MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
                     )
-                )
+                ),
+                onValueChange = {
+                    cardNumber = it
+                },
+                appearance = textFieldAppearance
             )
         }
 
@@ -77,11 +78,12 @@ internal class CreditCardNumberInputTest : BaseUITest() {
         // Start composable with valid card number
         composeTestRule.setContent {
             CreditCardNumberInput(
+                schemeConfig = SupportedSchemeConfig(supportedSchemes = CardType.entries.toSet(), enableValidation = true),
                 value = cardNumber,
                 onValueChange = {
                     cardNumber = it
                 },
-                schemeConfig = SupportedSchemeConfig(supportedSchemes = CardType.entries.toSet(), enableValidation = true)
+                appearance = textFieldAppearance
             )
         }
 

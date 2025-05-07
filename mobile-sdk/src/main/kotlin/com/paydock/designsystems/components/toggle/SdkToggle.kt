@@ -12,24 +12,26 @@ import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
  * A customizable switch component for the SDK.
  *
  * This composable provides a styled switch that conforms to the SDK's design system.
- * It allows customization of its enabled state, checked state, and the callback
- * triggered when the checked state changes.
+ * It allows customization of its enabled state, checked state, the appearance of the toggle,
+ * and the callback triggered when the checked state changes.
  *
  * @param modifier Modifier to be applied to the switch.
  * @param enabled Controls the enabled state of the switch. When `false`, the switch
  *   is not interactable and appears visually disabled. Defaults to `true`.
  * @param isChecked The checked state of the switch. When `true`, the switch is in the
  *   "on" position. Defaults to `false`.
+ * @param appearance Defines the visual appearance of the toggle, including its colors.
+ *   Defaults to the standard SDK toggle appearance.
  * @param onCheckedChange Callback that is invoked when the checked state of the switch
  *   changes. It receives a boolean parameter representing the new checked state.
  *   Defaults to an empty lambda.
  */
 @Composable
-internal fun SdkSwitch(
+internal fun SdkToggle(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isChecked: Boolean = false,
-    appearance: SwitchAppearance = SwitchAppearanceDefaults.appearance(),
+    appearance: ToggleAppearance = ToggleAppearanceDefaults.appearance(),
     onCheckedChange: (Boolean) -> Unit = {}
 ) {
     Switch(
@@ -50,23 +52,23 @@ internal fun SdkSwitch(
  * @param colors The [SwitchColors] that define the color scheme for the Switch.
  */
 @Immutable
-class SwitchAppearance(
+class ToggleAppearance(
     val colors: SwitchColors
 ) {
     /**
-     * Creates a copy of this [SwitchAppearance] with optional modifications.
+     * Creates a copy of this [ToggleAppearance] with optional modifications.
      *
-     * This function allows you to create a new [SwitchAppearance] instance that is
+     * This function allows you to create a new [ToggleAppearance] instance that is
      * a copy of the current instance. You can optionally provide new values for
-     * the properties of the [SwitchAppearance] to customize the copied instance.
+     * the properties of the [ToggleAppearance] to customize the copied instance.
      *
      * @param colors The new [SwitchColors] to use for the copied appearance.
      *   Defaults to a copy of the current [colors] if not provided.
-     * @return A new [SwitchAppearance] instance with the specified modifications.
+     * @return A new [ToggleAppearance] instance with the specified modifications.
      */
     fun copy(
         colors: SwitchColors = this.colors
-    ): SwitchAppearance = SwitchAppearance(
+    ): ToggleAppearance = ToggleAppearance(
         colors = colors.copy()
     )
 }
@@ -74,40 +76,40 @@ class SwitchAppearance(
 /**
  * Defaults for the appearance of the Switch composable.
  *
- * This object provides a default [SwitchAppearance] configuration, which can be used
+ * This object provides a default [ToggleAppearance] configuration, which can be used
  * as a starting point for customizing the visual look of [Switch] composables.
  *
- * It defines a default `appearance` function that creates a [SwitchAppearance]
+ * It defines a default `appearance` function that creates a [ToggleAppearance]
  * using the standard colors provided by [SwitchDefaults.colors()].
  *
  * You can create custom appearance configurations by defining functions similar to
- * `appearance()` that return [SwitchAppearance] instances with different parameters
+ * `appearance()` that return [ToggleAppearance] instances with different parameters
  * (e.g., custom colors, track shapes, thumb shapes, etc.).
  */
-object SwitchAppearanceDefaults {
+object ToggleAppearanceDefaults {
 
     /**
      * Defines the appearance of the Switch composable.
      *
-     * This function creates a [SwitchAppearance] object, which encapsulates
+     * This function creates a [ToggleAppearance] object, which encapsulates
      * the visual properties of the switch, such as its colors.
      *
      * By default, it uses the standard colors provided by [SwitchDefaults.colors()].
      * You can customize the appearance by providing a different [SwitchColors] instance
-     * to the `colors` parameter of [SwitchAppearance].
+     * to the `colors` parameter of [ToggleAppearance].
      *
-     * @return a [SwitchAppearance] object defining the visual appearance of the switch.
+     * @return a [ToggleAppearance] object defining the visual appearance of the switch.
      */
     @Composable
-    fun appearance(): SwitchAppearance = SwitchAppearance(
+    fun appearance(): ToggleAppearance = ToggleAppearance(
         colors = SwitchDefaults.colors()
     )
 }
 
 @SdkLightDarkPreviews
 @Composable
-fun SdkSwitchPreviewUnchecked() {
-    SdkSwitch(
+fun SdkTogglePreviewUnchecked() {
+    SdkToggle(
         isChecked = false,
         onCheckedChange = { }
     )
@@ -115,8 +117,8 @@ fun SdkSwitchPreviewUnchecked() {
 
 @SdkLightDarkPreviews
 @Composable
-fun SdkSwitchPreviewChecked() {
-    SdkSwitch(
+fun SdkTogglePreviewChecked() {
+    SdkToggle(
         isChecked = true,
         onCheckedChange = { }
     )
@@ -124,8 +126,8 @@ fun SdkSwitchPreviewChecked() {
 
 @SdkLightDarkPreviews
 @Composable
-fun SdkSwitchPreviewDisabledUnchecked() {
-    SdkSwitch(
+fun SdkTogglePreviewDisabledUnchecked() {
+    SdkToggle(
         enabled = false,
         isChecked = false,
         onCheckedChange = { }
@@ -134,8 +136,8 @@ fun SdkSwitchPreviewDisabledUnchecked() {
 
 @SdkLightDarkPreviews
 @Composable
-fun SdkSwitchPreviewDisabledChecked() {
-    SdkSwitch(
+fun SdkTogglePreviewDisabledChecked() {
+    SdkToggle(
         enabled = false,
         isChecked = true,
         onCheckedChange = { }
