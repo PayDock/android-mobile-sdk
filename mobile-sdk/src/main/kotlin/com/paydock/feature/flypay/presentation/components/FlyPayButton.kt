@@ -54,10 +54,10 @@ internal fun FlyPayButton(
     val configuration = LocalConfiguration.current
     val fontScale = configuration.fontScale
     // Calculate adjusted height using the extension function
-    val adjustedButtonHeight = ButtonAppearanceDefaults.BUTTON_HEIGHT.scaled(fontScale)
+    val adjustedButtonHeight = ButtonAppearanceDefaults.ButtonHeight.scaled(fontScale)
 
     // Calculate the adjusted image size based on the font scale and a base image size.
-    val baseImageSize = ButtonAppearanceDefaults.BUTTON_HEIGHT
+    val baseImageSize = ButtonAppearanceDefaults.ButtonHeight
     val adjustedImageSize = baseImageSize.value.scaled(fontScale).dp
     // Button to initiate FlyPay transaction
     Button(
@@ -75,7 +75,7 @@ internal fun FlyPayButton(
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(
-                ButtonAppearanceDefaults.BUTTON_SPACING,
+                ButtonAppearanceDefaults.ButtonSpacing,
                 Alignment.CenterHorizontally
             ),
             verticalAlignment = Alignment.CenterVertically,
@@ -84,7 +84,7 @@ internal fun FlyPayButton(
             if (isLoading) {
                 SdkButtonLoader(
                     appearance = LoaderAppearanceDefaults.appearance()
-                        .copy(strokeWidth = ButtonAppearanceDefaults.BUTTON_LOADER_WIDTH)
+                        .copy(strokeWidth = ButtonAppearanceDefaults.ButtonLoaderWidth)
                 )
             } else {
                 // Display button text

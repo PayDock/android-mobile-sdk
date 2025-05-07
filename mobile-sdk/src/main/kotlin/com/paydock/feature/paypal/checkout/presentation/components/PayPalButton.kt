@@ -44,7 +44,7 @@ internal fun PayPalButton(
         modifier = Modifier
             .testTag("payPalButton")
             .fillMaxWidth()
-            .height(ButtonAppearanceDefaults.BUTTON_HEIGHT),
+            .height(ButtonAppearanceDefaults.ButtonHeight),
         enabled = isEnabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = PayPal,
@@ -54,7 +54,7 @@ internal fun PayPalButton(
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(
-                ButtonAppearanceDefaults.BUTTON_SPACING,
+                ButtonAppearanceDefaults.ButtonSpacing,
                 Alignment.CenterHorizontally
             ),
             verticalAlignment = Alignment.CenterVertically,

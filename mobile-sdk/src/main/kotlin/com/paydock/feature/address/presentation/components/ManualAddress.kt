@@ -80,7 +80,7 @@ internal fun ManualAddress(
     // Create a vertical column layout for address input fields
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(WidgetDefaults.SPACING, Alignment.Top),
+        verticalArrangement = Arrangement.spacedBy(WidgetDefaults.Spacing, Alignment.Top),
         horizontalAlignment = Alignment.Start
     ) {
         // Focus requesters for managing keyboard navigation

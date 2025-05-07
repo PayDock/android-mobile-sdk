@@ -59,7 +59,7 @@ internal fun SdkButtonLoader(
     appearance: LoaderAppearance = LoaderAppearanceDefaults.appearance()
 ) {
     SdkLoader(
-        modifier = Modifier.size(ButtonAppearanceDefaults.BUTTON_LOADER_SIZE),
+        modifier = Modifier.size(ButtonAppearanceDefaults.ButtonLoaderSize),
         appearance = LoaderAppearanceDefaults.appearance().copy(
             color = appearance.color,
             strokeWidth = appearance.strokeWidth,

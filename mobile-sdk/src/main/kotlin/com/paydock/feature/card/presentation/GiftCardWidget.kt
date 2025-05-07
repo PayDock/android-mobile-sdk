@@ -224,8 +224,8 @@ object GiftCardAppearanceDefaults {
      */
     @Composable
     fun appearance(): GiftCardWidgetAppearance = GiftCardWidgetAppearance(
-        verticalSpacing = WidgetDefaults.SPACING,
-        horizontalSpacing = WidgetDefaults.SPACING,
+        verticalSpacing = WidgetDefaults.Spacing,
+        horizontalSpacing = WidgetDefaults.Spacing,
         textField = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
         actionButton = { isEnabled -> ButtonAppearanceDefaults.filledButtonAppearance(isEnabled) }
     )

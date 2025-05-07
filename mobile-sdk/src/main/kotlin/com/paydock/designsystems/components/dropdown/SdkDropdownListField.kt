@@ -101,7 +101,6 @@ internal fun SdkDropdownListField(
 private fun SdkDropdownTextField(
     modifier: Modifier,
     label: String,
-//    readOnly: Boolean,
     placeholder: String?,
     selected: String?,
     expanded: Boolean,

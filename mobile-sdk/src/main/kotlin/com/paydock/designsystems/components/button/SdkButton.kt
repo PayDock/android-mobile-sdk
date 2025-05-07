@@ -230,12 +230,12 @@ sealed class ButtonAppearance(
  */
 object ButtonAppearanceDefaults {
 
-    internal val BUTTON_CORNER_RADIUS = 4.dp
-    internal val BUTTON_SPACING = 8.dp
-    internal val BUTTON_ICON_SIZE = 20.dp
-    internal val BUTTON_LOADER_SIZE = 22.dp
-    internal val BUTTON_LOADER_WIDTH = 2.dp
-    internal val BUTTON_HEIGHT = 48.dp
+    internal val ButtonCornerRadius = 4.dp
+    internal val ButtonSpacing = 8.dp
+    internal val ButtonIconSize = 20.dp
+    internal val ButtonLoaderSize = 22.dp
+    internal val ButtonLoaderWidth = 2.dp
+    internal val ButtonHeight = 48.dp
 
     /**
      * Creates the appearance configuration for a filled button.
@@ -256,8 +256,8 @@ object ButtonAppearanceDefaults {
     @Composable
     fun filledButtonAppearance(enabled: Boolean = true): ButtonAppearance =
         ButtonAppearance.FilledButtonAppearance(
-            height = BUTTON_HEIGHT,
-            contentSpacing = BUTTON_SPACING,
+            height = ButtonHeight,
+            contentSpacing = ButtonSpacing,
             shape = MaterialTheme.shapes.small,
             colors = ButtonDefaults.buttonColors(),
             elevation = ButtonDefaults.buttonElevation(),
@@ -265,7 +265,7 @@ object ButtonAppearanceDefaults {
             contentPadding = ButtonDefaults.ContentPadding,
             iconAppearance = IconAppearanceDefaults.appearance()
                 .copy(
-                    size = BUTTON_ICON_SIZE,
+                    size = ButtonIconSize,
                     tint = if (enabled) ButtonDefaults.buttonColors().contentColor else ButtonDefaults.buttonColors().disabledContentColor
                 ),
             textAppearance = TextAppearanceDefaults.appearance().copy(
@@ -275,7 +275,7 @@ object ButtonAppearanceDefaults {
             ),
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
                 color = if (enabled) ButtonDefaults.buttonColors().containerColor else ButtonDefaults.buttonColors().disabledContentColor,
-                strokeWidth = BUTTON_LOADER_WIDTH
+                strokeWidth = ButtonLoaderWidth
             )
         )
 
@@ -293,8 +293,8 @@ object ButtonAppearanceDefaults {
     @Composable
     fun outlineButtonAppearance(enabled: Boolean = true): ButtonAppearance =
         ButtonAppearance.OutlineButtonAppearance(
-            height = BUTTON_HEIGHT,
-            contentSpacing = BUTTON_SPACING,
+            height = ButtonHeight,
+            contentSpacing = ButtonSpacing,
             shape = MaterialTheme.shapes.small,
             colors = ButtonDefaults.outlinedButtonColors(),
             elevation = null,
@@ -305,7 +305,7 @@ object ButtonAppearanceDefaults {
             contentPadding = ButtonDefaults.ContentPadding,
             iconAppearance = IconAppearanceDefaults.appearance()
                 .copy(
-                    size = BUTTON_ICON_SIZE,
+                    size = ButtonIconSize,
                     tint = if (enabled) ButtonDefaults.buttonColors().containerColor else ButtonDefaults.buttonColors().disabledContentColor
                 ),
             textAppearance = TextAppearanceDefaults.appearance().copy(
@@ -315,7 +315,7 @@ object ButtonAppearanceDefaults {
             ),
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
                 color = if (enabled) ButtonDefaults.buttonColors().containerColor else ButtonDefaults.buttonColors().disabledContentColor,
-                strokeWidth = BUTTON_LOADER_WIDTH
+                strokeWidth = ButtonLoaderWidth
             )
         )
 
@@ -335,8 +335,8 @@ object ButtonAppearanceDefaults {
     @Composable
     fun textButtonAppearance(enabled: Boolean = true): ButtonAppearance =
         ButtonAppearance.TextButtonAppearance(
-            height = BUTTON_HEIGHT,
-            contentSpacing = BUTTON_SPACING,
+            height = ButtonHeight,
+            contentSpacing = ButtonSpacing,
             shape = ButtonDefaults.textShape,
             colors = ButtonDefaults.textButtonColors(),
             elevation = null,
@@ -344,7 +344,7 @@ object ButtonAppearanceDefaults {
             contentPadding = ButtonDefaults.TextButtonContentPadding,
             iconAppearance = IconAppearanceDefaults.appearance()
                 .copy(
-                    size = BUTTON_ICON_SIZE,
+                    size = ButtonIconSize,
                     tint = if (enabled) ButtonDefaults.buttonColors().containerColor else ButtonDefaults.buttonColors().disabledContentColor
                 ),
             textAppearance = TextAppearanceDefaults.appearance().copy(
@@ -354,7 +354,7 @@ object ButtonAppearanceDefaults {
             ),
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
                 color = if (enabled) ButtonDefaults.buttonColors().containerColor else ButtonDefaults.buttonColors().disabledContentColor,
-                strokeWidth = BUTTON_LOADER_WIDTH
+                strokeWidth = ButtonLoaderWidth
             )
         )
 }

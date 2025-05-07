@@ -102,7 +102,7 @@ fun PayPalWidget(
                 modifier = Modifier
                     .testTag("loadingPayPalButton")
                     .fillMaxWidth()
-                    .height(ButtonAppearanceDefaults.BUTTON_HEIGHT),
+                    .height(ButtonAppearanceDefaults.ButtonHeight),
                 enabled = true,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = PayPal,
@@ -112,14 +112,14 @@ fun PayPalWidget(
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(
-                        ButtonAppearanceDefaults.BUTTON_SPACING,
+                        ButtonAppearanceDefaults.ButtonSpacing,
                         Alignment.CenterHorizontally
                     ),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     SdkButtonLoader(
                         appearance = LoaderAppearanceDefaults.appearance()
-                            .copy(strokeWidth = ButtonAppearanceDefaults.BUTTON_LOADER_WIDTH, color = Color.Black)
+                            .copy(strokeWidth = ButtonAppearanceDefaults.ButtonLoaderWidth, color = Color.Black)
                     )
                 }
             }

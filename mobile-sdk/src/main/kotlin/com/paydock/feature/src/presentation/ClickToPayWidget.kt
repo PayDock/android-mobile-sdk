@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.paydock.core.MobileSDKConstants
@@ -66,7 +65,7 @@ fun ClickToPayWidget(
     Box(contentAlignment = Alignment.Center) {
         Column(
             modifier = modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(WidgetDefaults.SPACING, Alignment.Top),
+            verticalArrangement = Arrangement.spacedBy(WidgetDefaults.Spacing, Alignment.Top),
             horizontalAlignment = Alignment.Start
         ) {
             // Generate HTML string for Click to Pay checkout

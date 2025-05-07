@@ -32,8 +32,8 @@ import com.paydock.feature.card.domain.model.ui.CardScheme
  *
  * @param shouldCollectCardholderName Determines whether the cardholder's name field is displayed.
  * @param schemeConfig Defines the supported card schemes and validation settings.
- * @param verticalSpacing The spacing between the expiry and security code input fields in a column. Defaults to [WidgetDefaults.SPACING].
- * @param horizontalSpacing The spacing between the expiry and security code input fields in a row. Defaults to [WidgetDefaults.SPACING].
+ * @param verticalSpacing The spacing between the expiry and security code input fields in a column. Defaults to [WidgetDefaults.Spacing].
+ * @param horizontalSpacing The spacing between the expiry and security code input fields in a row. Defaults to [WidgetDefaults.Spacing].
  * @param textFieldAppearance The appearance configuration for the text fields. Defaults to [TextFieldAppearanceDefaults.appearance].
  * @param focusCardNumber A [FocusRequester] to manage focus for the card number input.
  * @param focusExpiry A [FocusRequester] to manage focus for the expiry date input.
@@ -59,8 +59,8 @@ import com.paydock.feature.card.domain.model.ui.CardScheme
 internal fun CardInputFields(
     shouldCollectCardholderName: Boolean,
     schemeConfig: SupportedSchemeConfig,
-    verticalSpacing: Dp = WidgetDefaults.SPACING,
-    horizontalSpacing: Dp = WidgetDefaults.SPACING,
+    verticalSpacing: Dp = WidgetDefaults.Spacing,
+    horizontalSpacing: Dp = WidgetDefaults.Spacing,
     textFieldAppearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     focusCardNumber: FocusRequester,
     focusExpiry: FocusRequester,
@@ -148,7 +148,7 @@ internal fun CardInputFields(
 /**
  * Composable function to display the expiry and security code input fields in a column layout.
  *
- * @param spacing The spacing between the expiry and security code input fields. Defaults to [WidgetDefaults.SPACING].
+ * @param spacing The spacing between the expiry and security code input fields. Defaults to [WidgetDefaults.Spacing].
  * @param appearance The appearance configuration for the text fields. Defaults to [TextFieldAppearanceDefaults.appearance].
  * @param expiry The expiry date value to be displayed in the input field.
  * @param code The security code value to be displayed in the input field.
@@ -161,7 +161,7 @@ internal fun CardInputFields(
  */
 @Composable
 private fun ExpiryAndCodeColumn(
-    spacing: Dp = WidgetDefaults.SPACING,
+    spacing: Dp = WidgetDefaults.Spacing,
     appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     expiry: String,
     code: String,
@@ -204,7 +204,7 @@ private fun ExpiryAndCodeColumn(
 /**
  * Composable function to display the expiry and security code input fields in a row layout.
  *
- * @param spacing The spacing between the expiry and security code input fields. Defaults to [WidgetDefaults.SPACING].
+ * @param spacing The spacing between the expiry and security code input fields. Defaults to [WidgetDefaults.Spacing].
  * @param appearance The appearance configuration for the text fields. Defaults to [TextFieldAppearanceDefaults.appearance].
  * @param expiry The expiry date value to be displayed in the input field.
  * @param code The security code value to be displayed in the input field.
@@ -218,7 +218,7 @@ private fun ExpiryAndCodeColumn(
  */
 @Composable
 private fun ExpiryAndCodeRow(
-    spacing: Dp = WidgetDefaults.SPACING,
+    spacing: Dp = WidgetDefaults.Spacing,
     appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     expiry: String,
     code: String,

@@ -43,7 +43,7 @@ internal fun AfterpayPaymentButtonView(
     AndroidView(
         modifier = Modifier
             .fillMaxWidth()
-            .height(ButtonAppearanceDefaults.BUTTON_HEIGHT),
+            .height(ButtonAppearanceDefaults.ButtonHeight),
         factory = { context ->
             AfterpayPaymentButton(context).apply {
                 this.buttonText = config.buttonTheme.buttonText

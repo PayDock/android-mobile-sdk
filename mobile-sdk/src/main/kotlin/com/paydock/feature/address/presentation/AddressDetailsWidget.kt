@@ -62,7 +62,7 @@ fun AddressDetailsWidget(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(WidgetDefaults.SPACING, Alignment.Top),
+        verticalArrangement = Arrangement.spacedBy(WidgetDefaults.Spacing, Alignment.Top),
         horizontalAlignment = Alignment.Start
     ) {
         AddressSearchSection { address ->

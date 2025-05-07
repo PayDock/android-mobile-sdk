@@ -104,7 +104,7 @@ fun GooglePayWidget(
     Box(contentAlignment = Alignment.Center) {
         Column(
             modifier = modifier,
-            verticalArrangement = Arrangement.spacedBy(WidgetDefaults.SPACING, Alignment.Top),
+            verticalArrangement = Arrangement.spacedBy(WidgetDefaults.Spacing, Alignment.Top),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (!allowedPaymentMethods.isNullOrBlank()) {
@@ -131,7 +131,7 @@ fun GooglePayWidget(
                                 }
                             }
                         },
-                        radius = ButtonAppearanceDefaults.BUTTON_CORNER_RADIUS,
+                        radius = ButtonAppearanceDefaults.ButtonCornerRadius,
                         allowedPaymentMethods = allowedPaymentMethods
                     )
                 }

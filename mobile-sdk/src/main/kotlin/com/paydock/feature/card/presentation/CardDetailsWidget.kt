@@ -230,8 +230,8 @@ object CardDetailsAppearanceDefaults {
      */
     @Composable
     fun appearance(): CardDetailsWidgetAppearance = CardDetailsWidgetAppearance(
-        verticalSpacing = WidgetDefaults.SPACING,
-        horizontalSpacing = WidgetDefaults.SPACING,
+        verticalSpacing = WidgetDefaults.Spacing,
+        horizontalSpacing = WidgetDefaults.Spacing,
         title = TextAppearanceDefaults.appearance().copy(
             style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
         ),
