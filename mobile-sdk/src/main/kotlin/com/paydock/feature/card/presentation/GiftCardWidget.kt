@@ -42,10 +42,10 @@ import org.koin.core.parameter.parametersOf
  * via a callback.
  *
  * @param modifier The modifier to be applied to the widget.
- * @param appearance Defines the visual appearance of the gift card widget elements. Defaults to a standard appearance.
  * @param enabled Controls whether the widget is enabled or disabled. When `false`, the widget
  *                will appear disabled and not respond to user interactions.
  * @param config The configuration for the gift card widget, including necessary access details.
+ * @param appearance Defines the visual appearance of the gift card widget elements. Defaults to a standard appearance.
  * @param loadingDelegate An optional delegate to manage the visibility of loading indicators externally.
  * @param completion A callback invoked with the result of the tokenization process, providing either
  *                   a success with the token or a failure with an exception.
@@ -53,9 +53,9 @@ import org.koin.core.parameter.parametersOf
 @Composable
 fun GiftCardWidget(
     modifier: Modifier = Modifier,
-    appearance: GiftCardAppearance = GiftCardAppearanceDefaults.appearance(),
     enabled: Boolean = true,
     config: GiftCardWidgetConfig,
+    appearance: GiftCardWidgetAppearance = GiftCardAppearanceDefaults.appearance(),
     loadingDelegate: WidgetLoadingDelegate? = null,
     completion: (Result<String>) -> Unit,
 ) {
@@ -160,16 +160,16 @@ fun GiftCardWidget(
  * @see ButtonAppearance
  */
 @Immutable
-class GiftCardAppearance(
+class GiftCardWidgetAppearance(
     val verticalSpacing: Dp,
     val horizontalSpacing: Dp,
     val textField: TextFieldAppearance,
     val actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance,
 ) {
     /**
-     * Creates a new [GiftCardAppearance] instance with optional overrides.
+     * Creates a new [GiftCardWidgetAppearance] instance with optional overrides.
      *
-     * This function allows for creating a modified copy of the current [GiftCardAppearance] object,
+     * This function allows for creating a modified copy of the current [GiftCardWidgetAppearance] object,
      * selectively overriding specific properties while retaining the original values of others. It is
      * commonly used to create variations of the [GiftCardWidget]'s appearance without altering the
      * original configuration.
@@ -185,7 +185,7 @@ class GiftCardAppearance(
      *  [ButtonAppearanceDefaults.filledButtonAppearance] which dynamically updates the button style based
      *  on the enabled state.
      *
-     * @return A new [GiftCardAppearance] instance with the specified overrides applied.
+     * @return A new [GiftCardWidgetAppearance] instance with the specified overrides applied.
      */
     fun copy(
         verticalSpacing: Dp = this.verticalSpacing,
@@ -196,7 +196,7 @@ class GiftCardAppearance(
                 isEnabled
             )
         }
-    ): GiftCardAppearance = GiftCardAppearance(
+    ): GiftCardWidgetAppearance = GiftCardWidgetAppearance(
         verticalSpacing = verticalSpacing.takeOrElse { this.verticalSpacing },
         horizontalSpacing = horizontalSpacing.takeOrElse { this.horizontalSpacing },
         textField = textField.copy(),
@@ -222,10 +222,10 @@ object GiftCardAppearanceDefaults {
      * This function provides a standard look and feel for gift card-related UI elements,
      * specifying spacing, text field appearance, and action button appearance.
      *
-     * @return A [GiftCardAppearance] object configured with default values.
+     * @return A [GiftCardWidgetAppearance] object configured with default values.
      */
     @Composable
-    fun appearance(): GiftCardAppearance = GiftCardAppearance(
+    fun appearance(): GiftCardWidgetAppearance = GiftCardWidgetAppearance(
         verticalSpacing = WidgetDefaults.SPACING,
         horizontalSpacing = WidgetDefaults.SPACING,
         textField = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
