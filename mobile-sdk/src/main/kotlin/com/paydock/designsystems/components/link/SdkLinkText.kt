@@ -4,11 +4,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.paydock.core.presentation.ui.previews.SdkFontScalePreviews
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearance
@@ -30,7 +33,7 @@ import com.paydock.designsystems.components.text.TextAppearanceDefaults
 internal fun SdkLinkText(
     modifier: Modifier = Modifier,
     linkText: String,
-    appearance: TextAppearance = TextAppearanceDefaults.appearance(),
+    appearance: LinkAppearance = LinkAppearanceDefaults.appearance(),
     onClick: () -> Unit
 ) {
     Box {
@@ -42,9 +45,54 @@ internal fun SdkLinkText(
                     onClick()
                 },
             text = linkText,
-            appearance = appearance
+            appearance = appearance.textAppearance
         )
     }
+}
+
+/**
+ * Represents the visual appearance of a link text.
+ *
+ * This class encapsulates the [TextAppearance] that should be applied to the text of a link.
+ *
+ * @property textAppearance The [TextAppearance] to be used for the link text.
+ */
+@Immutable
+class LinkAppearance(
+    val textAppearance: TextAppearance
+) {
+    /**
+     * Creates a copy of this [LinkAppearance] with optionally modified parameters.
+     *
+     * @param textAppearance The new [TextAppearance] to use for the copy. Defaults to the current [textAppearance].
+     * @return A new [LinkAppearance] instance with the specified parameters.
+     */
+    fun copy(textAppearance: TextAppearance = this.textAppearance) = LinkAppearance(textAppearance)
+}
+
+/**
+ * Default values and configurations for [LinkAppearance].
+ *
+ * This object provides a default [LinkAppearance] that can be used for [SdkLinkText].
+ */
+object LinkAppearanceDefaults {
+    /**
+     * Provides a default [LinkAppearance] for links.
+     *
+     * This appearance applies a primary color and a slightly larger font size to the text,
+     * resembling a typical hyperlink style within the theme.
+     *
+     * @return The default [LinkAppearance].
+     */
+    @Composable
+    fun appearance() = LinkAppearance(
+        textAppearance = TextAppearanceDefaults.appearance().copy(
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = (MaterialTheme.typography.bodyMedium.fontSize.value + 1).sp
+            )
+        )
+    )
 }
 
 @SdkFontScalePreviews

@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.link.LinkAppearance
+import com.paydock.designsystems.components.link.LinkAppearanceDefaults
 import com.paydock.designsystems.components.link.SdkLinkText
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearance
@@ -36,7 +38,7 @@ internal fun SaveCardToggle(
     saveCard: Boolean,
     config: SaveCardConfig,
     linkTextAppearance: TextAppearance = TextAppearanceDefaults.appearance(),
-    linkAppearance: TextAppearance = TextAppearanceDefaults.appearance(),
+    linkAppearance: LinkAppearance = LinkAppearanceDefaults.appearance(),
     toggleAppearance: ToggleAppearance = ToggleAppearanceDefaults.appearance(),
     onToggle: (Boolean) -> Unit
 ) {

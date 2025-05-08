@@ -17,7 +17,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.takeOrElse
 import com.paydock.R
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
@@ -27,6 +26,8 @@ import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
+import com.paydock.designsystems.components.link.LinkAppearance
+import com.paydock.designsystems.components.link.LinkAppearanceDefaults
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
@@ -132,6 +133,8 @@ fun CardDetailsWidget(
         // Save card toggle switch (if configured)
         if (config.allowSaveCard != null) {
             SaveCardToggle(
+                linkAppearance = appearance.linkButton,
+                linkTextAppearance = appearance.linkText,
                 enabled = uiState !is CardDetailsUIState.Loading && enabled,
                 saveCard = inputState.saveCard,
                 config = config.allowSaveCard,
@@ -153,6 +156,22 @@ fun CardDetailsWidget(
     }
 }
 
+/**
+ * Represents the appearance settings for the Card Details Widget.
+ *
+ * This class defines the visual styling for various components within the
+ * [CardDetailsWidget], such as spacing, text appearances, button appearance,
+ * and toggle appearance.
+ *
+ * @property verticalSpacing The vertical spacing between elements in the widget.
+ * @property horizontalSpacing The horizontal spacing within composite elements (e.g., text fields).
+ * @property title The text appearance for the widget's title.
+ * @property textField The appearance settings for the text input fields (e.g., card number, expiry).
+ * @property actionButton A composable lambda that provides the [ButtonAppearance] based on whether the button is enabled.
+ * @property switch The appearance settings for the toggle switch (e.g., save card option).
+ * @property linkText The text appearance for non-interactive link-style text.
+ * @property linkButton The text appearance for interactive link elements.
+ */
 @Immutable
 class CardDetailsWidgetAppearance(
     val verticalSpacing: Dp,
@@ -162,7 +181,7 @@ class CardDetailsWidgetAppearance(
     val actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance,
     val switch: ToggleAppearance,
     val linkText: TextAppearance,
-    val link: TextAppearance
+    val linkButton: LinkAppearance
 ) {
     /**
      * Creates a copy of this [CardDetailsWidgetAppearance] with optional overriding parameters.
@@ -180,7 +199,7 @@ class CardDetailsWidgetAppearance(
      *   Defaults to the original action button appearance.
      * @param switch The appearance for the switch toggle. Defaults to the original switch appearance.
      * @param linkText The text appearance for non-interactive link text. Defaults to the original link text appearance.
-     * @param link The text appearance for interactive links. Defaults to the original link appearance.
+     * @param linkButton The text appearance for interactive links. Defaults to the original link appearance.
      * @return A new [CardDetailsWidgetAppearance] instance with the specified or default properties.
      */
     fun copy(
@@ -193,7 +212,7 @@ class CardDetailsWidgetAppearance(
         },
         switch: ToggleAppearance = this.switch,
         linkText: TextAppearance = this.linkText,
-        link: TextAppearance = this.link
+        linkButton: LinkAppearance = this.linkButton
     ): CardDetailsWidgetAppearance =
         CardDetailsWidgetAppearance(
             verticalSpacing = verticalSpacing.takeOrElse { this.verticalSpacing },
@@ -205,7 +224,7 @@ class CardDetailsWidgetAppearance(
             },
             switch = switch.copy(),
             linkText = linkText.copy(),
-            link = link.copy()
+            linkButton = linkButton.copy()
         )
 }
 
@@ -241,12 +260,7 @@ object CardDetailsAppearanceDefaults {
         linkText = TextAppearanceDefaults.appearance().copy(
             style = MaterialTheme.typography.bodyMedium,
         ),
-        link = TextAppearanceDefaults.appearance().copy(
-            style = MaterialTheme.typography.bodyMedium.copy(
-                color = MaterialTheme.colorScheme.primary,
-                fontSize = (MaterialTheme.typography.bodyMedium.fontSize.value + 1).sp
-            )
-        )
+        linkButton = LinkAppearanceDefaults.appearance()
     )
 }
 
