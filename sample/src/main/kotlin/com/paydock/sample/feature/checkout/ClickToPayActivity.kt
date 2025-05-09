@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
+import com.paydock.feature.src.domain.model.integration.ClickToPayWidgetConfig
 import com.paydock.feature.src.domain.model.integration.meta.ClickToPayMeta
 import com.paydock.feature.src.presentation.ClickToPayWidget
 import com.paydock.sample.BuildConfig
@@ -48,9 +49,11 @@ class ClickToPayActivity : ComponentActivity() {
 fun ClickToPayScreen(resultHandler: (Result<String>) -> Unit) {
     ClickToPayWidget(
         modifier = Modifier.fillMaxWidth(),
-        accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
-        serviceId = BuildConfig.GATEWAY_ID_CLICK_TO_PAY,
-        meta = ClickToPayMeta(disableSummaryScreen = true),
+        config = ClickToPayWidgetConfig(
+            accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
+            serviceId = BuildConfig.GATEWAY_ID_CLICK_TO_PAY,
+            meta = ClickToPayMeta(disableSummaryScreen = true),
+        ),
         completion = resultHandler
     )
 }

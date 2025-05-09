@@ -22,6 +22,8 @@ import com.kevinnzou.web.rememberWebViewState
 import com.kevinnzou.web.rememberWebViewStateWithHTMLData
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.extensions.safeCastAs
+import com.paydock.designsystems.components.loader.LoaderAppearance
+import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.designsystems.components.loader.SdkProgressLoader
 import com.paydock.designsystems.components.web.extensions.setup
@@ -45,6 +47,7 @@ internal fun <T : Any?> SdkWebView(
     data: String? = null,
     shouldShowCustomLoader: Boolean = true,
     jsBridge: SdkJSBridge<T>? = null,
+    loaderAppearance: LoaderAppearance = LoaderAppearanceDefaults.appearance(),
     onShouldOverrideUrlLoading: ((request: WebResourceRequest?) -> Boolean)? = null,
     onWebViewError: (Int, String) -> Unit,
 ) {
@@ -103,8 +106,8 @@ internal fun <T : Any?> SdkWebView(
         // Display a loading indicator if the WebView is still loading content
         if (shouldShowCustomLoader && (state.isLoading || showWindowLoader)) {
             state.safeCastAs<LoadingState.Loading>()?.let {
-                SdkProgressLoader(progress = { (state.loadingState as LoadingState.Loading).progress })
-            } ?: SdkLoader()
+                SdkProgressLoader(appearance = loaderAppearance, progress = { (state.loadingState as LoadingState.Loading).progress })
+            } ?: SdkLoader(appearance = loaderAppearance)
         }
     }
 }
