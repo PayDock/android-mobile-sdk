@@ -1,31 +1,17 @@
 package com.paydock.feature.afterpay.domain.model.integration
 
-import com.afterpay.android.view.AfterpayColorScheme
-import com.afterpay.android.view.AfterpayPaymentButton
 import java.util.Locale
 
 /**
  * Configuration class for Afterpay SDK settings.
  *
- * @property buttonTheme The theme settings for Afterpay payment button.
  * @property config The main configuration settings for Afterpay.
  * @property options Additional checkout options for Afterpay.
  */
 data class AfterpaySDKConfig(
-    val buttonTheme: ButtonTheme = ButtonTheme(),
     val config: AfterpayConfiguration,
     val options: CheckoutOptions? = null
 ) {
-    /**
-     * Theme settings for the Afterpay payment button.
-     *
-     * @property buttonText The text displayed on the payment button.
-     * @property colorScheme The color scheme of the payment button.
-     */
-    data class ButtonTheme(
-        val buttonText: AfterpayPaymentButton.ButtonText = AfterpayPaymentButton.ButtonText.DEFAULT,
-        val colorScheme: AfterpayColorScheme = AfterpayColorScheme.BLACK_ON_MINT
-    )
 
     /**
      * Additional checkout options for Afterpay.

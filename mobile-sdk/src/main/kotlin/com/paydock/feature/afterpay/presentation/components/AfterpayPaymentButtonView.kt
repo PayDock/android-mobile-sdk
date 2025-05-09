@@ -10,6 +10,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.afterpay.android.Afterpay
+import com.afterpay.android.view.AfterpayColorScheme
 import com.afterpay.android.view.AfterpayPaymentButton
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.feature.afterpay.domain.mapper.integration.mapToAfterpayV2Options
@@ -33,6 +34,8 @@ import kotlinx.coroutines.launch
 internal fun AfterpayPaymentButtonView(
     config: AfterpaySDKConfig,
     enabled: Boolean,
+    buttonText: AfterpayPaymentButton.ButtonText,
+    colorScheme: AfterpayColorScheme,
     onObtainToken: (onTokenReceived: (String) -> Unit) -> Unit,
     viewModel: AfterpayViewModel,
     resolvePaymentForResult: ActivityResultLauncher<Intent>,
@@ -46,8 +49,8 @@ internal fun AfterpayPaymentButtonView(
             .height(ButtonAppearanceDefaults.ButtonHeight),
         factory = { context ->
             AfterpayPaymentButton(context).apply {
-                this.buttonText = config.buttonTheme.buttonText
-                this.colorScheme = config.buttonTheme.colorScheme
+                this.buttonText = buttonText
+                this.colorScheme = colorScheme
                 this.isEnabled = enabled
 
                 // Set up click listener to initiate the checkout process

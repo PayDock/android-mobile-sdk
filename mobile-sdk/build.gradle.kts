@@ -109,7 +109,7 @@ dependencies {
     // Google Services
     implementation(libs.bundles.google.pay.services)
     // Afterpay SDK
-    implementation(libs.afterpay.android)
+    api(libs.afterpay.android)
     // PayPal SDK
     implementation(libs.bundles.paypal)
     // Mocking
