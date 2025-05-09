@@ -26,8 +26,8 @@ import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.button.SdkButton
 import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
-import com.paydock.designsystems.components.link.LinkAppearance
-import com.paydock.designsystems.components.link.LinkAppearanceDefaults
+import com.paydock.designsystems.components.link.LinkTextAppearance
+import com.paydock.designsystems.components.link.LinkTextAppearanceDefaults
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
@@ -133,11 +133,11 @@ fun CardDetailsWidget(
         // Save card toggle switch (if configured)
         if (config.allowSaveCard != null) {
             SaveCardToggle(
-                linkAppearance = appearance.linkButton,
-                linkTextAppearance = appearance.linkText,
                 enabled = uiState !is CardDetailsUIState.Loading && enabled,
                 saveCard = inputState.saveCard,
                 config = config.allowSaveCard,
+                linkTextAppearance = appearance.linkText,
+                linkToggleAppearance = appearance.toggleText,
                 onToggle = viewModel::updateSaveCard
             )
         }
@@ -168,9 +168,9 @@ fun CardDetailsWidget(
  * @property title The text appearance for the widget's title.
  * @property textField The appearance settings for the text input fields (e.g., card number, expiry).
  * @property actionButton A composable lambda that provides the [ButtonAppearance] based on whether the button is enabled.
- * @property switch The appearance settings for the toggle switch (e.g., save card option).
- * @property linkText The text appearance for non-interactive link-style text.
- * @property linkButton The text appearance for interactive link elements.
+ * @property toggle The appearance settings for the toggle switch (e.g., save card option).
+ * @property toggleText The text appearance for non-interactive link-style text.
+ * @property linkText The text appearance for interactive link elements.
  */
 @Immutable
 class CardDetailsWidgetAppearance(
@@ -179,9 +179,9 @@ class CardDetailsWidgetAppearance(
     val title: TextAppearance,
     val textField: TextFieldAppearance,
     val actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance,
-    val switch: ToggleAppearance,
-    val linkText: TextAppearance,
-    val linkButton: LinkAppearance
+    val toggle: ToggleAppearance,
+    val toggleText: TextAppearance,
+    val linkText: LinkTextAppearance
 ) {
     /**
      * Creates a copy of this [CardDetailsWidgetAppearance] with optional overriding parameters.
@@ -198,8 +198,8 @@ class CardDetailsWidgetAppearance(
      * @param actionButton A composable lambda that defines the appearance of the action button based on its enabled state.
      *   Defaults to the original action button appearance.
      * @param switch The appearance for the switch toggle. Defaults to the original switch appearance.
-     * @param linkText The text appearance for non-interactive link text. Defaults to the original link text appearance.
-     * @param linkButton The text appearance for interactive links. Defaults to the original link appearance.
+     * @param toggleText The text appearance for non-interactive link text. Defaults to the original link text appearance.
+     * @param linkText The text appearance for interactive links. Defaults to the original link appearance.
      * @return A new [CardDetailsWidgetAppearance] instance with the specified or default properties.
      */
     fun copy(
@@ -210,9 +210,9 @@ class CardDetailsWidgetAppearance(
         actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance = { isEnabled ->
             this.actionButton(isEnabled)
         },
-        switch: ToggleAppearance = this.switch,
-        linkText: TextAppearance = this.linkText,
-        linkButton: LinkAppearance = this.linkButton
+        switch: ToggleAppearance = this.toggle,
+        toggleText: TextAppearance = this.toggleText,
+        linkText: LinkTextAppearance = this.linkText
     ): CardDetailsWidgetAppearance =
         CardDetailsWidgetAppearance(
             verticalSpacing = verticalSpacing.takeOrElse { this.verticalSpacing },
@@ -222,9 +222,9 @@ class CardDetailsWidgetAppearance(
             actionButton = { isEnabled ->
                 actionButton(isEnabled)
             },
-            switch = switch.copy(),
-            linkText = linkText.copy(),
-            linkButton = linkButton.copy()
+            toggle = switch.copy(),
+            toggleText = toggleText.copy(),
+            linkText = linkText.copy()
         )
 }
 
@@ -256,11 +256,11 @@ object CardDetailsAppearanceDefaults {
         ),
         textField = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
         actionButton = { isEnabled -> ButtonAppearanceDefaults.filledButtonAppearance(isEnabled) },
-        switch = ToggleAppearanceDefaults.appearance(),
-        linkText = TextAppearanceDefaults.appearance().copy(
+        toggle = ToggleAppearanceDefaults.appearance(),
+        toggleText = TextAppearanceDefaults.appearance().copy(
             style = MaterialTheme.typography.bodyMedium,
         ),
-        linkButton = LinkAppearanceDefaults.appearance()
+        linkText = LinkTextAppearanceDefaults.appearance()
     )
 }
 

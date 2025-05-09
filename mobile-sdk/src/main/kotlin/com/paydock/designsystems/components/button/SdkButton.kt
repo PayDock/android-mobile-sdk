@@ -8,7 +8,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -34,6 +33,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.takeOrElse
 import com.paydock.core.presentation.extensions.scaled
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.icon.IconAppearance
@@ -124,7 +124,28 @@ sealed class ButtonAppearance(
         iconAppearance,
         textAppearance,
         loaderAppearance
-    )
+    ) {
+        fun copy(
+            height: Dp = this.height,
+            contentSpacing: Dp = this.contentSpacing,
+            shape: Shape = this.shape,
+            colors: ButtonColors = this.colors,
+            elevation: ButtonElevation? = this.elevation,
+            border: BorderStroke? = this.border,
+            contentPadding: PaddingValues = this.contentPadding
+        ): FilledButtonAppearance = FilledButtonAppearance(
+            height = height.takeOrElse { this.height },
+            contentSpacing = contentSpacing.takeOrElse { this.contentSpacing },
+            shape = shape,
+            colors = colors.copy(),
+            elevation = elevation,
+            border = border,
+            contentPadding = contentPadding,
+            iconAppearance = iconAppearance.copy(),
+            textAppearance = textAppearance.copy(),
+            loaderAppearance = loaderAppearance.copy()
+        )
+    }
 
     /**
      * Represents the appearance configuration for an outlined button.
@@ -172,7 +193,28 @@ sealed class ButtonAppearance(
         iconAppearance,
         textAppearance,
         loaderAppearance
-    )
+    ) {
+        fun copy(
+            height: Dp = this.height,
+            contentSpacing: Dp = this.contentSpacing,
+            shape: Shape = this.shape,
+            colors: ButtonColors = this.colors,
+            elevation: ButtonElevation? = this.elevation,
+            border: BorderStroke? = this.border,
+            contentPadding: PaddingValues = this.contentPadding
+        ): OutlineButtonAppearance = OutlineButtonAppearance(
+            height = height.takeOrElse { this.height },
+            contentSpacing = contentSpacing.takeOrElse { this.contentSpacing },
+            shape = shape,
+            colors = colors.copy(),
+            elevation = elevation,
+            border = border,
+            contentPadding = contentPadding,
+            iconAppearance = iconAppearance.copy(),
+            textAppearance = textAppearance.copy(),
+            loaderAppearance = loaderAppearance.copy()
+        )
+    }
 
     /**
      * Represents the visual appearance of a text button.
@@ -218,7 +260,28 @@ sealed class ButtonAppearance(
         iconAppearance,
         textAppearance,
         loaderAppearance
-    )
+    ) {
+        fun copy(
+            height: Dp = this.height,
+            contentSpacing: Dp = this.contentSpacing,
+            shape: Shape = this.shape,
+            colors: ButtonColors = this.colors,
+            elevation: ButtonElevation? = this.elevation,
+            border: BorderStroke? = this.border,
+            contentPadding: PaddingValues = this.contentPadding
+        ): TextButtonAppearance = TextButtonAppearance(
+            height = height.takeOrElse { this.height },
+            contentSpacing = contentSpacing.takeOrElse { this.contentSpacing },
+            shape = shape,
+            colors = colors.copy(),
+            elevation = elevation,
+            border = border,
+            contentPadding = contentPadding,
+            iconAppearance = iconAppearance.copy(),
+            textAppearance = textAppearance.copy(),
+            loaderAppearance = loaderAppearance.copy()
+        )
+    }
 }
 
 /**
@@ -406,7 +469,7 @@ internal fun SdkButton(
                 text = text,
                 buttonIcon = buttonIcon,
                 isLoading = isLoading,
-                spacing = actualAppearance.contentSpacing,
+                horizontalSpacing = actualAppearance.contentSpacing,
                 iconAppearance = actualAppearance.iconAppearance,
                 textAppearance = actualAppearance.textAppearance,
                 loaderAppearance = actualAppearance.loaderAppearance
@@ -472,7 +535,7 @@ internal fun SdkOutlineButton(
                 text = text,
                 buttonIcon = buttonIcon,
                 isLoading = isLoading,
-                spacing = appearance.contentSpacing,
+                horizontalSpacing = appearance.contentSpacing,
                 iconAppearance = appearance.iconAppearance,
                 textAppearance = appearance.textAppearance,
                 loaderAppearance = appearance.loaderAppearance
@@ -530,7 +593,7 @@ internal fun SdkTextButton(
                 text = text,
                 buttonIcon = buttonIcon,
                 isLoading = isLoading,
-                spacing = appearance.contentSpacing,
+                horizontalSpacing = appearance.contentSpacing,
                 iconAppearance = appearance.iconAppearance,
                 textAppearance = appearance.textAppearance,
                 loaderAppearance = appearance.loaderAppearance
@@ -556,7 +619,7 @@ private fun ButtonContent(
     text: String,
     buttonIcon: ButtonIcon? = null,
     isLoading: Boolean,
-    spacing: Dp,
+    horizontalSpacing: Dp,
     iconAppearance: IconAppearance,
     textAppearance: TextAppearance,
     loaderAppearance: LoaderAppearance
@@ -565,10 +628,9 @@ private fun ButtonContent(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(
-                spacing,
+                horizontalSpacing,
                 Alignment.CenterHorizontally
             ),
-            modifier = Modifier.fillMaxWidth()
         ) {
             if (loadingState) {
                 SdkButtonLoader(appearance = loaderAppearance)

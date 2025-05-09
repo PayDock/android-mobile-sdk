@@ -11,6 +11,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.paydock.R
 import com.paydock.designsystems.components.icon.SdkIcon
+import com.paydock.designsystems.components.search.SearchDropdownAppearance
+import com.paydock.designsystems.components.search.SearchDropdownAppearanceDefaults
 import com.paydock.designsystems.components.search.SearchTextField
 import com.paydock.feature.address.presentation.viewmodels.CountryAutoCompleteViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -30,6 +32,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 internal fun CountryInputAutoComplete(
     modifier: Modifier = Modifier,
+    appearance: SearchDropdownAppearance = SearchDropdownAppearanceDefaults.appearance(),
     viewModel: CountryAutoCompleteViewModel = koinViewModel(),
     autofillType: AutofillType? = null,
     selectedItem: String = "",
@@ -37,6 +40,7 @@ internal fun CountryInputAutoComplete(
 ) {
     SearchTextField(
         modifier = modifier.testTag("countrySearch"),
+        appearance = appearance,
         label = stringResource(R.string.label_country),
         autofillType = autofillType,
         trailingIcon = {

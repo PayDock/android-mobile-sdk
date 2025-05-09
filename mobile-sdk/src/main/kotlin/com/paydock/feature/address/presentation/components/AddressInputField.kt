@@ -9,6 +9,7 @@ import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.input.ImeAction
 import com.paydock.designsystems.components.input.SdkTextField
+import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 
 /**
@@ -36,6 +37,7 @@ import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 @Composable
 internal fun AddressInputField(
     modifier: Modifier = Modifier,
+    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     value: String,
     label: String,
     nextFocus: FocusRequester? = null,
@@ -44,7 +46,7 @@ internal fun AddressInputField(
 ) {
     SdkTextField(
         modifier = modifier,
-        appearance = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
+        appearance = appearance,
         value = value,
         onValueChange = { newValue ->
             onValueUpdated(newValue)

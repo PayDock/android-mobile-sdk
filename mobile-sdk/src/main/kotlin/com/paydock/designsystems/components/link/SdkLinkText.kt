@@ -33,7 +33,7 @@ import com.paydock.designsystems.components.text.TextAppearanceDefaults
 internal fun SdkLinkText(
     modifier: Modifier = Modifier,
     linkText: String,
-    appearance: LinkAppearance = LinkAppearanceDefaults.appearance(),
+    appearance: LinkTextAppearance = LinkTextAppearanceDefaults.appearance(),
     onClick: () -> Unit
 ) {
     Box {
@@ -58,34 +58,34 @@ internal fun SdkLinkText(
  * @property textAppearance The [TextAppearance] to be used for the link text.
  */
 @Immutable
-class LinkAppearance(
+class LinkTextAppearance(
     val textAppearance: TextAppearance
 ) {
     /**
-     * Creates a copy of this [LinkAppearance] with optionally modified parameters.
+     * Creates a copy of this [LinkTextAppearance] with optionally modified parameters.
      *
      * @param textAppearance The new [TextAppearance] to use for the copy. Defaults to the current [textAppearance].
-     * @return A new [LinkAppearance] instance with the specified parameters.
+     * @return A new [LinkTextAppearance] instance with the specified parameters.
      */
-    fun copy(textAppearance: TextAppearance = this.textAppearance) = LinkAppearance(textAppearance)
+    fun copy(textAppearance: TextAppearance = this.textAppearance) = LinkTextAppearance(textAppearance)
 }
 
 /**
- * Default values and configurations for [LinkAppearance].
+ * Default values and configurations for [LinkTextAppearance].
  *
- * This object provides a default [LinkAppearance] that can be used for [SdkLinkText].
+ * This object provides a default [LinkTextAppearance] that can be used for [SdkLinkText].
  */
-object LinkAppearanceDefaults {
+object LinkTextAppearanceDefaults {
     /**
-     * Provides a default [LinkAppearance] for links.
+     * Provides a default [LinkTextAppearance] for links.
      *
      * This appearance applies a primary color and a slightly larger font size to the text,
      * resembling a typical hyperlink style within the theme.
      *
-     * @return The default [LinkAppearance].
+     * @return The default [LinkTextAppearance].
      */
     @Composable
-    fun appearance() = LinkAppearance(
+    fun appearance() = LinkTextAppearance(
         textAppearance = TextAppearanceDefaults.appearance().copy(
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = MaterialTheme.colorScheme.primary,

@@ -10,8 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
-import com.paydock.designsystems.components.link.LinkAppearance
-import com.paydock.designsystems.components.link.LinkAppearanceDefaults
+import com.paydock.designsystems.components.link.LinkTextAppearance
+import com.paydock.designsystems.components.link.LinkTextAppearanceDefaults
 import com.paydock.designsystems.components.link.SdkLinkText
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearance
@@ -27,8 +27,8 @@ import com.paydock.feature.card.domain.model.integration.SaveCardConfig
  * @param enabled Controls the enabled state of this section, affecting the toggle and clickable links.
  * @param saveCard The current state of the save card toggle switch (true if card details are to be saved, false otherwise).
  * @param config The configuration for the save card toggle, including the consent text and details for the privacy policy link.
- * @param linkTextAppearance The appearance for the consent text.
- * @param linkAppearance The appearance for the privacy policy link.
+ * @param linkToggleAppearance The appearance for the consent text.
+ * @param linkTextAppearance The appearance for the tappable link text.
  * @param toggleAppearance The appearance for the toggle switch.
  * @param onToggle A callback invoked when the toggle switch is changed. The boolean parameter indicates the new checked state.
  */
@@ -37,8 +37,8 @@ internal fun SaveCardToggle(
     enabled: Boolean = true,
     saveCard: Boolean,
     config: SaveCardConfig,
-    linkTextAppearance: TextAppearance = TextAppearanceDefaults.appearance(),
-    linkAppearance: LinkAppearance = LinkAppearanceDefaults.appearance(),
+    linkToggleAppearance: TextAppearance = TextAppearanceDefaults.appearance(),
+    linkTextAppearance: LinkTextAppearance = LinkTextAppearanceDefaults.appearance(),
     toggleAppearance: ToggleAppearance = ToggleAppearanceDefaults.appearance(),
     onToggle: (Boolean) -> Unit
 ) {
@@ -55,11 +55,14 @@ internal fun SaveCardToggle(
             SdkText(
                 modifier = Modifier.fillMaxWidth(),
                 text = config.consentText,
-                appearance = linkTextAppearance
+                appearance = linkToggleAppearance
             )
             // Privacy Policy Label
             if (config.privacyPolicyConfig != null) {
-                SdkLinkText(linkText = config.privacyPolicyConfig.privacyPolicyText, appearance = linkAppearance) {
+                SdkLinkText(
+                    linkText = config.privacyPolicyConfig.privacyPolicyText,
+                    appearance = linkTextAppearance
+                ) {
                     if (enabled) {
                         val uri = config.privacyPolicyConfig.privacyPolicyURL.toUri()
                         val intent = Intent(Intent.ACTION_VIEW, uri)
