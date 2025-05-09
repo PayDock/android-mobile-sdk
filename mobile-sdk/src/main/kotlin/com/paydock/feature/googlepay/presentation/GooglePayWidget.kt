@@ -12,11 +12,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -24,6 +23,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.takeOrElse
 import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.wallet.AutoResolveHelper
 import com.google.android.gms.wallet.PaymentData
@@ -36,13 +37,14 @@ import com.google.pay.button.PayButton
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
+import com.paydock.designsystems.components.loader.LoaderAppearance
+import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkLoader
-import com.paydock.designsystems.core.WidgetDefaults
+import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.presentation.viewmodels.GooglePayViewModel
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -53,31 +55,33 @@ import org.koin.core.parameter.parametersOf
  * handles user interactions, and manages the payment lifecycle through state management.
  *
  * @param modifier Modifier for customizing the appearance and behavior of the Composable.
- * @param token A callback to asynchronously retrieve the wallet token.
- * @param isReadyToPayRequest The JSON object defining the request to check if the user is ready to pay.
- * @param paymentRequest The JSON object containing the payment request details.
+ * @param config The configuration for the Google Pay widget.
+ * @param appearance The appearance configuration for the Google Pay widget, including button theme,
+ * type, corner radius, and loader appearance. Defaults to [GooglePayAppearanceDefaults.appearance].
+ * @param token A callback to asynchronously retrieve the wallet token. This callback should call
+ * the provided `onTokenReceived` lambda with the retrieved token.
  * @param loadingDelegate An optional delegate to manage loading indicators externally.
+ * If provided, the widget will not display its internal loader.
  * @param completion A callback to handle the result of the Google Pay operation, either success or failure.
  */
 @Composable
 fun GooglePayWidget(
     modifier: Modifier = Modifier,
+    config: GooglePayWidgetConfig,
+    appearance: GooglePayWidgetAppearance = GooglePayAppearanceDefaults.appearance(),
     token: (onTokenReceived: (String) -> Unit) -> Unit,
-    isReadyToPayRequest: JSONObject,
-    paymentRequest: JSONObject,
     loadingDelegate: WidgetLoadingDelegate? = null,
     completion: (Result<ChargeResponse>) -> Unit
 ) {
     // Retrieve the GooglePayViewModel using Koin
-    val viewModel: GooglePayViewModel =
-        koinViewModel(parameters = { parametersOf(isReadyToPayRequest) })
+    val viewModel: GooglePayViewModel = koinViewModel(parameters = { parametersOf(config) })
 
     val scope = rememberCoroutineScope()
 
     // Collect the UI state from the ViewModel
     val uiState by viewModel.uiState.collectAsState()
     val googlePayAvailable by viewModel.googlePayAvailable.collectAsState()
-    val allowedPaymentMethods = viewModel.extractAllowedPaymentMethods(paymentRequest)
+    val allowedPaymentMethods = viewModel.extractAllowedPaymentMethods()
 
     val resolvablePaymentForResult = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
@@ -101,46 +105,100 @@ fun GooglePayWidget(
         )
     }
 
-    Box(contentAlignment = Alignment.Center) {
-        Column(
-            modifier = modifier,
-            verticalArrangement = Arrangement.spacedBy(WidgetDefaults.Spacing, Alignment.Top),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if (!allowedPaymentMethods.isNullOrBlank()) {
-                // Show the Google Pay button when it's available
-                AnimatedVisibility(
-                    visible = googlePayAvailable,
-                    enter = fadeIn(animationSpec = tween(MobileSDKConstants.General.DEFAULT_ANIMATION_DURATION)),
-                    exit = fadeOut(animationSpec = tween(MobileSDKConstants.General.DEFAULT_ANIMATION_DURATION))
-                ) {
-                    // Google Pay Button - https://developers.google.com/pay/api/android/reference/request-objects#ButtonOptions
-                    PayButton(
-                        modifier = Modifier
-                            .testTag("payButton")
-                            .fillMaxWidth(),
-                        theme = if (isSystemInDarkTheme()) ButtonTheme.Dark else ButtonTheme.Light,
-                        type = ButtonType.Pay,
-                        onClick = {
-                            // Use the callback to obtain the token asynchronously
-                            token { obtainedToken ->
-                                scope.launch {
-                                    viewModel.setWalletToken(obtainedToken)
-                                    val task = viewModel.getLoadPaymentDataTask(paymentRequest)
-                                    task.addOnCompleteListener(paymentDataTaskResult::launch)
-                                }
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        if (!allowedPaymentMethods.isNullOrBlank()) {
+            // Show the Google Pay button when it's available
+            AnimatedVisibility(
+                visible = googlePayAvailable,
+                enter = fadeIn(animationSpec = tween(MobileSDKConstants.General.DEFAULT_ANIMATION_DURATION)),
+                exit = fadeOut(animationSpec = tween(MobileSDKConstants.General.DEFAULT_ANIMATION_DURATION))
+            ) {
+                // Google Pay Button - https://developers.google.com/pay/api/android/reference/request-objects#ButtonOptions
+                PayButton(
+                    modifier = Modifier
+                        .testTag("payButton")
+                        .fillMaxWidth(),
+                    theme = appearance.theme, type = appearance.type,
+                    onClick = {
+                        // Use the callback to obtain the token asynchronously
+                        token { obtainedToken ->
+                            scope.launch {
+                                viewModel.setWalletToken(obtainedToken)
+                                val task = viewModel.getLoadPaymentDataTask()
+                                task.addOnCompleteListener(paymentDataTaskResult::launch)
                             }
-                        },
-                        radius = ButtonAppearanceDefaults.ButtonCornerRadius,
-                        allowedPaymentMethods = allowedPaymentMethods
-                    )
-                }
+                        }
+                    }, radius = appearance.cornerRadius,
+                    allowedPaymentMethods = allowedPaymentMethods
+                )
             }
         }
         if (loadingDelegate == null && uiState is GooglePayUIState.Loading) {
-            SdkLoader()
+            SdkLoader(appearance = appearance.loader)
         }
     }
+}
+
+/**
+ * Represents the appearance configuration for the Google Pay widget.
+ *
+ * @property cornerRadius The corner radius of the Google Pay button.
+ * @property theme The theme of the Google Pay button.
+ * @property type The type of the Google Pay button.
+ * @property loader The appearance configuration for the loader displayed during processing.
+ */
+@Immutable
+class GooglePayWidgetAppearance(
+    val cornerRadius: Dp,
+    val theme: ButtonTheme,
+    val type: ButtonType,
+    val loader: LoaderAppearance
+) {
+    /**
+     * Creates a copy of this [GooglePayWidgetAppearance] with optionally updated values.
+     *
+     * @param cornerRadius The corner radius for the copied appearance, defaults to the current value.
+     * @param theme The button theme for the copied appearance, defaults to the current value.
+     * @param type The button type for the copied appearance, defaults to the current value.
+     * @param loader The loader appearance for the copied appearance, defaults to the current value.
+     * @return A new [GooglePayWidgetAppearance] with the specified or default values.
+     */
+    fun copy(
+        cornerRadius: Dp = this.cornerRadius,
+        theme: ButtonTheme = this.theme,
+        type: ButtonType = this.type,
+        loader: LoaderAppearance = this.loader
+    ): GooglePayWidgetAppearance = GooglePayWidgetAppearance(
+        cornerRadius = cornerRadius.takeOrElse { this.cornerRadius }, theme = theme, type = type, loader = loader.copy()
+    )
+}
+
+/**
+ * Provides default values for the appearance configuration of the Google Pay widget.
+ * These defaults can be used to quickly set up the visual style of the Google Pay button
+ * and associated loader, aligning with Material Design principles and considering
+ * the system's dark theme setting.
+ */
+object GooglePayAppearanceDefaults {
+
+    /**
+     * Provides a default appearance for the Google Pay widget.
+     *
+     * This Composable function creates a [GooglePayWidgetAppearance] with default values:
+     * - Uses [ButtonAppearanceDefaults.ButtonCornerRadius] for the corner radius.
+     * - Sets the theme based on the system's dark mode setting (Dark if in dark theme, Light otherwise).
+     * - Sets the button type to [ButtonType.Pay].
+     * - Uses [LoaderAppearanceDefaults.appearance] for the loader appearance.
+     *
+     * @return The default [GooglePayWidgetAppearance].
+     */
+    @Composable
+    fun appearance(): GooglePayWidgetAppearance = GooglePayWidgetAppearance(
+        cornerRadius = ButtonAppearanceDefaults.ButtonCornerRadius,
+        theme = if (isSystemInDarkTheme()) ButtonTheme.Dark else ButtonTheme.Light,
+        type = ButtonType.Pay,
+        loader = LoaderAppearanceDefaults.appearance()
+    )
 }
 
 /**

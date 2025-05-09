@@ -13,6 +13,7 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.GooglePayException
 import com.paydock.core.domain.error.extensions.mapApiException
+import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.wallet.data.dto.CaptureWalletChargeRequest
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
@@ -30,16 +31,21 @@ import org.json.JSONObject
 /**
  * ViewModel to manage the Google Pay payment flow and UI state.
  *
- * @property paymentsClient The Google Pay [PaymentsClient] instance for initiating payment requests.
- * @property isReadyToPayRequest The JSON object representing the "Ready to Pay" request.
- * @property captureWalletChargeUseCase Use case for capturing wallet charges.
- * @property declineWalletChargeUseCase Use case for declining wallet charges.
- * @property getWalletCallbackUseCase Use case for retrieving wallet callback information.
- * @property dispatchers The dispatchers for coroutine context switching.
+ * This ViewModel extends [WalletViewModel] and specifically handles the
+ * UI state and payment interactions related to Google Pay. It is responsible
+ * for checking Google Pay availability, initiating payment requests,
+ * processing payment results, and handling potential errors during the flow.
+ *
+ * @param paymentsClient The Google Pay [PaymentsClient] instance for initiating payment requests.
+ * @param config The [GooglePayWidgetConfig] containing configuration details for the Google Pay widget.
+ * @param captureWalletChargeUseCase Use case for capturing wallet charges.
+ * @param declineWalletChargeUseCase Use case for declining wallet charges.
+ * @param getWalletCallbackUseCase Use case for retrieving wallet callback information.
+ * @param dispatchers The dispatchers for coroutine context switching.
  */
 internal class GooglePayViewModel(
     private val paymentsClient: PaymentsClient,
-    isReadyToPayRequest: JSONObject,
+    private val config: GooglePayWidgetConfig,
     captureWalletChargeUseCase: CaptureWalletChargeUseCase,
     declineWalletChargeUseCase: DeclineWalletChargeUseCase,
     getWalletCallbackUseCase: GetWalletCallbackUseCase,
@@ -71,7 +77,7 @@ internal class GooglePayViewModel(
     val googlePayAvailable: StateFlow<Boolean> = _googlePayAvailable.asStateFlow()
 
     init {
-        fetchCanUseGooglePay(isReadyToPayRequest)
+        fetchCanUseGooglePay(config.isReadyToPayRequest)
     }
 
     //region Overridden Methods
@@ -193,12 +199,11 @@ internal class GooglePayViewModel(
     /**
      * Extracts allowed payment methods from the payment request.
      *
-     * @param paymentRequest The JSON object containing the payment request details.
      * @return A string representing the allowed payment methods, or null if extraction fails.
      */
-    fun extractAllowedPaymentMethods(paymentRequest: JSONObject): String? {
+    fun extractAllowedPaymentMethods(): String? {
         return runCatching {
-            paymentRequest.getJSONArray(MobileSDKConstants.GooglePayConfig.ALLOWED_PAYMENT_METHODS_KEY)
+            config.paymentRequest.getJSONArray(MobileSDKConstants.GooglePayConfig.ALLOWED_PAYMENT_METHODS_KEY)
                 .toString()
         }.getOrElse {
             updateUiState(
@@ -231,11 +236,10 @@ internal class GooglePayViewModel(
     /**
      * Creates a [Task] that starts the payment process with the transaction details included.
      *
-     * @param paymentRequest The JSON object containing the payment request details.
      * @return A [Task] with the payment information.
      */
-    fun getLoadPaymentDataTask(paymentRequest: JSONObject): Task<PaymentData> {
-        val request = PaymentDataRequest.fromJson(paymentRequest.toString())
+    fun getLoadPaymentDataTask(): Task<PaymentData> {
+        val request = PaymentDataRequest.fromJson(config.paymentRequest.toString())
         return paymentsClient.loadPaymentData(request)
     }
 

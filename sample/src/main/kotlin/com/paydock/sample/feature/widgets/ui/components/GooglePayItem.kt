@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
+import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.presentation.GooglePayWidget
 import com.paydock.feature.googlepay.util.PaymentsUtil
 import com.paydock.feature.wallet.domain.model.integration.WalletType
@@ -42,18 +43,20 @@ fun GooglePayItem(context: Context, walletViewModel: WalletViewModel = hiltViewM
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
+        config = GooglePayWidgetConfig(
+            isReadyToPayRequest = PaymentsUtil.createIsReadyToPayRequest(),
+            paymentRequest = PaymentsUtil.createGooglePayRequest(
+                amount = BigDecimal(AMOUNT),
+                amountLabel = "Goodies",
+                currencyCode = AU_CURRENCY_CODE,
+                countryCode = AU_COUNTRY_CODE,
+                merchantName = MERCHANT_NAME,
+                merchantIdentifier = BuildConfig.MERCHANT_IDENTIFIER,
+                shippingAddressRequired = true,
+                shippingAddressParameters = shippingAddressParameters
+            )
+        ),
         token = walletViewModel.getWalletToken(WalletType.GOOGLE),
-        isReadyToPayRequest = PaymentsUtil.createIsReadyToPayRequest(),
-        paymentRequest = PaymentsUtil.createGooglePayRequest(
-            amount = BigDecimal(AMOUNT),
-            amountLabel = "Goodies",
-            currencyCode = AU_CURRENCY_CODE,
-            countryCode = AU_COUNTRY_CODE,
-            merchantName = MERCHANT_NAME,
-            merchantIdentifier = BuildConfig.MERCHANT_IDENTIFIER,
-            shippingAddressRequired = true,
-            shippingAddressParameters = shippingAddressParameters
-        )
     ) { result ->
         result.onSuccess {
             Log.d("[GooglePayWidget]", "Success: $it")

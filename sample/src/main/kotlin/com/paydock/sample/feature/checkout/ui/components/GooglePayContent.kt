@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.presentation.GooglePayWidget
 import com.paydock.feature.googlepay.util.PaymentsUtil
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
@@ -30,16 +31,18 @@ fun GooglePayContent(
     GooglePayWidget(
         modifier = Modifier.fillMaxWidth(),
         token = tokenHandler,
-        isReadyToPayRequest = PaymentsUtil.createIsReadyToPayRequest(),
-        paymentRequest = PaymentsUtil.createGooglePayRequest(
-            amount = BigDecimal(AMOUNT),
-            amountLabel = "Goodies",
-            currencyCode = AU_CURRENCY_CODE,
-            countryCode = AU_COUNTRY_CODE,
-            merchantName = MERCHANT_NAME,
-            merchantIdentifier = BuildConfig.MERCHANT_IDENTIFIER,
-            shippingAddressRequired = true,
-            shippingAddressParameters = shippingAddressParameters
+        config = GooglePayWidgetConfig(
+            isReadyToPayRequest = PaymentsUtil.createIsReadyToPayRequest(),
+            paymentRequest = PaymentsUtil.createGooglePayRequest(
+                amount = BigDecimal(AMOUNT),
+                amountLabel = "Goodies",
+                currencyCode = AU_CURRENCY_CODE,
+                countryCode = AU_COUNTRY_CODE,
+                merchantName = MERCHANT_NAME,
+                merchantIdentifier = BuildConfig.MERCHANT_IDENTIFIER,
+                shippingAddressRequired = true,
+                shippingAddressParameters = shippingAddressParameters
+            )
         ),
         completion = resultHandler
     )
