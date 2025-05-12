@@ -8,7 +8,9 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,6 +25,8 @@ import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.designsystems.components.button.ButtonAppearance
+import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.button.SdkOutlineButton
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultResult
@@ -47,6 +51,7 @@ import org.koin.core.parameter.parametersOf
  * @param enabled Controls the enabled state of this Widget. When false,
  * this component will not respond to user input, and it will appear visually disabled.
  * @param config The configuration for PayPal vault, including the access token and gateway ID.
+ * @param appearance The appearance configuration for the widget, allowing customization of elements like the action button.
  * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
  * @param completion The callback invoked when the PayPal linking process completes, either with a success
  *                   containing a [PayPalVaultResult] or a failure containing a [PayPalVaultException].
@@ -56,6 +61,7 @@ fun PayPalSavePaymentSourceWidget(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     config: PayPalVaultConfig,
+    appearance: PayPalPaymentSourceWidgetAppearance = PayPalPaymentSourceAppearanceDefaults.appearance(),
     loadingDelegate: WidgetLoadingDelegate? = null,
     completion: (Result<PayPalVaultResult>) -> Unit,
 ) {
@@ -91,16 +97,67 @@ fun PayPalSavePaymentSourceWidget(
         // Display a button to link the PayPal account
         SdkOutlineButton(
             modifier = Modifier
+                .fillMaxWidth()
                 .testTag("linkPayPalAccount"),
             buttonIcon = config.icon,
             text = config.actionText
                 ?: stringResource(id = R.string.button_link_paypal_account),
             enabled = uiState !is PayPalVaultUIState.Loading && enabled,
+            appearance = appearance.actionButton,
             isLoading = loadingDelegate == null && uiState is PayPalVaultUIState.Loading
         ) {
             viewModel.createPayPalSetupToken()
         }
     }
+}
+
+/**
+ * Represents the appearance configuration for the [PayPalSavePaymentSourceWidget].
+ *
+ * This class allows customization of the visual elements within the widget.
+ *
+ * @property actionButton A composable function that defines the appearance of the action button.
+ *                        It takes a boolean [isEnabled] parameter to indicate whether the button is enabled.
+ *                        The function should return an instance of [ButtonAppearance.OutlineButtonAppearance].
+ */
+@Immutable
+class PayPalPaymentSourceWidgetAppearance(
+    val actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance.OutlineButtonAppearance
+) {
+    /**
+     * Creates a copy of this [PayPalPaymentSourceWidgetAppearance].
+     *
+     * @param actionButton A composable lambda that defines the appearance of the action button.
+     *                     Defaults to using the existing action button appearance.
+     * @return A new [PayPalPaymentSourceWidgetAppearance] instance with the specified parameters.
+     */
+    fun copy(
+        actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance.OutlineButtonAppearance = { isEnabled ->
+            this.actionButton(isEnabled)
+        }
+    ): PayPalPaymentSourceWidgetAppearance =
+        PayPalPaymentSourceWidgetAppearance(actionButton = { isEnabled ->
+            actionButton(isEnabled).copy()
+        })
+}
+
+/**
+ * Default values and configurations for [PayPalPaymentSourceWidgetAppearance].
+ */
+object PayPalPaymentSourceAppearanceDefaults {
+
+    /**
+     * Provides the default appearance for the PayPal payment source widget.
+     *
+     * This appearance includes a default outline button for the action.
+     *
+     * @return The default [PayPalPaymentSourceWidgetAppearance].
+     */
+    @Composable
+    fun appearance(): PayPalPaymentSourceWidgetAppearance = PayPalPaymentSourceWidgetAppearance(
+        actionButton = { isEnabled -> ButtonAppearanceDefaults.outlineButtonAppearance(isEnabled) }
+    )
+
 }
 
 /**
