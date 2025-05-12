@@ -8,13 +8,16 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
@@ -23,6 +26,10 @@ import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
+import com.paydock.designsystems.components.loader.LoaderAppearance
+import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
+import com.paydock.feature.flypay.domain.model.integration.FlyPayWidgetConfig
 import com.paydock.feature.flypay.presentation.components.FlyPayButton
 import com.paydock.feature.flypay.presentation.state.FlyPayUIState
 import com.paydock.feature.flypay.presentation.utils.CancellationStatus
@@ -41,7 +48,8 @@ import org.koin.core.parameter.parametersOf
  * @param modifier Modifier for customizing the appearance and behavior of the Composable.
  * @param enabled Controls the enabled state of this Widget. When false,
  * this component will not respond to user input, and it will appear visually disabled.
- * @param clientId FlyPay Merchant clientId.
+ * @param config The configuration details required for the FlyPay widget.
+ * @param appearance The visual appearance customization for the FlyPay widget.
  * @param token A callback to obtain the wallet token asynchronously.
  * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
  * @param completion A callback to handle the result of the FlyPay operation.
@@ -50,7 +58,8 @@ import org.koin.core.parameter.parametersOf
 fun FlyPayWidget(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    clientId: String,
+    config: FlyPayWidgetConfig,
+    appearance: FlyPayWidgetAppearance = FlyPayAppearanceDefaults.appearance(),
     token: (onTokenReceived: (String) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
     completion: (Result<String>) -> Unit
@@ -58,7 +67,7 @@ fun FlyPayWidget(
     val context = LocalContext.current
     // Obtain instances of view models
     val viewModel: FlyPayViewModel = koinViewModel(parameters = {
-        parametersOf(clientId)
+        parametersOf(config)
     })
 
     // Collect states for FlyPay and Wallet view models
@@ -89,6 +98,8 @@ fun FlyPayWidget(
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         // Button to initiate FlyPay transaction
         FlyPayButton(
+            shape = appearance.shape,
+            loaderAppearance = appearance.loader,
             onClick = {
                 // Use the callback to obtain the token asynchronously
                 token { obtainedToken ->
@@ -104,6 +115,59 @@ fun FlyPayWidget(
             isLoading = loadingDelegate == null && uiState is FlyPayUIState.Loading
         )
     }
+}
+
+/**
+ * Defines the appearance customization for the [FlyPayWidget].
+ *
+ * @property shape The shape of the FlyPay button.
+ * @property loader The appearance customization for the loader shown on the FlyPay button.
+ */
+@Immutable
+class FlyPayWidgetAppearance(
+    val shape: Shape,
+    val loader: LoaderAppearance
+) {
+    /**
+     * Creates a copy of the [FlyPayWidgetAppearance] with optional modifications.
+     *
+     * @param shape The new shape for the FlyPay button. Defaults to the current shape.
+     * @param loader The new appearance customization for the loader. Defaults to the current loader.
+     * @return A new instance of [FlyPayWidgetAppearance] with the specified or default values.
+     */
+    fun copy(
+        shape: Shape = this.shape,
+        loader: LoaderAppearance = this.loader
+    ): FlyPayWidgetAppearance =
+        FlyPayWidgetAppearance(
+            shape = shape,
+            loader = loader.copy()
+        )
+}
+
+/**
+ * Defaults for the appearance of the [FlyPayWidget].
+ *
+ * This object provides a default [FlyPayWidgetAppearance] that can be used to customize the visual
+ * style of the widget.
+ */
+object FlyPayAppearanceDefaults {
+
+    /**
+     * Provides a default appearance for the [FlyPayWidget].
+     *
+     * This function creates a [FlyPayWidgetAppearance] with a default shape based on the
+     * MaterialTheme and a default loader appearance with a specific stroke width suitable
+     * for buttons.
+     *
+     * @return The default [FlyPayWidgetAppearance].
+     */
+    @Composable
+    fun appearance(): FlyPayWidgetAppearance = FlyPayWidgetAppearance(
+        shape = MaterialTheme.shapes.small,
+        loader = LoaderAppearanceDefaults.appearance()
+            .copy(strokeWidth = ButtonAppearanceDefaults.ButtonLoaderWidth)
+    )
 }
 
 /**
@@ -208,7 +272,7 @@ private fun handleUiState(
             callbackData.callbackId?.let { flyPayOrderId ->
                 val intent = Intent(context, FlyPayWebActivity::class.java)
                     .putOrderIdExtra(flyPayOrderId) // Adds the FlyPay order ID to the intent.
-                    .putClientIdExtra(viewModel.clientId) // Adds the client ID to the intent.
+                    .putClientIdExtra(viewModel.config.clientId) // Adds the client ID to the intent.
                 resolvePaymentForResult.launch(intent) // Launches the FlyPay web activity.
             }
         }
@@ -234,5 +298,5 @@ private fun handleUiState(
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewFlyPayWidget() {
-    FlyPayWidget(clientId = "", token = {}, completion = {})
+    FlyPayWidget(config = FlyPayWidgetConfig(clientId = ""), token = {}, completion = {})
 }

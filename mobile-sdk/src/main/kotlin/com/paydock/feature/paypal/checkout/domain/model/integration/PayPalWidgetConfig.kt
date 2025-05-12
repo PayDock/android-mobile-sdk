@@ -1,4 +1,4 @@
-package com.paydock.feature.paypal.checkout.domain.integration
+package com.paydock.feature.paypal.checkout.domain.model.integration
 
 /**
  * Configuration for the PayPal widget integration.

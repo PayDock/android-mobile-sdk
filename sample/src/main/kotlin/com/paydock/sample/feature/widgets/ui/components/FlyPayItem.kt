@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
+import com.paydock.feature.flypay.domain.model.integration.FlyPayWidgetConfig
 import com.paydock.feature.flypay.presentation.FlyPayWidget
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.BuildConfig
@@ -30,7 +31,7 @@ fun FlyPayItem(context: Context, walletViewModel: WalletViewModel = hiltViewMode
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        clientId = BuildConfig.FLY_PAY_CLIENT_ID,
+        config = FlyPayWidgetConfig(clientId = BuildConfig.FLY_PAY_CLIENT_ID),
         token = walletViewModel.getWalletToken(WalletType.FLY_PAY)
     ) { result ->
         result.onSuccess {

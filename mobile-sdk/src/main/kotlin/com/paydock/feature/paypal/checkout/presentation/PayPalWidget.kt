@@ -40,7 +40,7 @@ import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.PayPal
-import com.paydock.feature.paypal.checkout.domain.integration.PayPalWidgetConfig
+import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
 import com.paydock.feature.paypal.checkout.presentation.components.PayPalButton
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
 import com.paydock.feature.paypal.checkout.presentation.utils.CancellationStatus

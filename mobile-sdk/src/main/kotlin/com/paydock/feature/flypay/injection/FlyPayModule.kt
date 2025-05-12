@@ -1,5 +1,6 @@
 package com.paydock.feature.flypay.injection
 
+import com.paydock.feature.flypay.domain.model.integration.FlyPayWidgetConfig
 import com.paydock.feature.flypay.presentation.viewmodels.FlyPayViewModel
 import com.paydock.feature.wallet.injection.walletModule
 import org.koin.core.module.dsl.viewModel
@@ -11,7 +12,7 @@ import org.koin.dsl.module
 internal val flyPayModule = module {
     includes(walletModule)
 
-    viewModel { (clientId: String) ->
-        FlyPayViewModel(clientId, get(), get(), get(), get())
+    viewModel { (config: FlyPayWidgetConfig) ->
+        FlyPayViewModel(config, get(), get(), get(), get())
     }
 }

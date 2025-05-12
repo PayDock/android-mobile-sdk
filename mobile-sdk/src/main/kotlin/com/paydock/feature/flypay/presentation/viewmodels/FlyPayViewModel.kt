@@ -4,6 +4,7 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.FlyPayException
 import com.paydock.core.domain.error.extensions.mapApiException
+import com.paydock.feature.flypay.domain.model.integration.FlyPayWidgetConfig
 import com.paydock.feature.flypay.presentation.state.FlyPayUIState
 import com.paydock.feature.wallet.data.dto.WalletCallbackRequest
 import com.paydock.feature.wallet.domain.model.integration.WalletType
@@ -20,14 +21,14 @@ import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
  * wallet callback data, processing transactions, and managing UI states. It extends
  * `WalletViewModel` and leverages specific use cases for interacting with FlyPay-related services.
  *
- * @property clientId The client ID used for authenticating or identifying the FlyPay transaction.
+ * @property config The client ID used for authenticating or identifying the FlyPay transaction.
  * @param captureWalletChargeUseCase Use case for capturing charges associated with FlyPay wallets.
  * @param declineWalletChargeUseCase Use case for declining charges associated with FlyPay wallets.
  * @param getWalletCallbackUseCase Use case for fetching callback data from the FlyPay wallet service.
  * @param dispatchers Dispatcher provider to manage coroutine contexts for background operations.
  */
 internal class FlyPayViewModel(
-    val clientId: String,
+    val config: FlyPayWidgetConfig,
     captureWalletChargeUseCase: CaptureWalletChargeUseCase,
     declineWalletChargeUseCase: DeclineWalletChargeUseCase,
     getWalletCallbackUseCase: GetWalletCallbackUseCase,

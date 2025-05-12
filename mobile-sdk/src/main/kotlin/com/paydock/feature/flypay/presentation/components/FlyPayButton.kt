@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -26,6 +27,7 @@ import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.core.presentation.extensions.scaled
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
+import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.components.text.SdkText
@@ -36,17 +38,21 @@ import com.paydock.designsystems.theme.FlyPayBlue
 /**
  * A composable function that displays a customizable FlyPay button.
  *
- * This button can be used to initiate a FlyPay transaction. It includes text, an icon, and an optional
- * loading state. The button is enabled or disabled based on the provided parameters and handles the
- * click event via the `onClick` lambda.
+ * This button is designed to initiate a FlyPay transaction. It includes text, an icon, and an optional
+ * loading state. The button's state (enabled/disabled) is controlled by the provided parameters,
+ * and click events are handled by the `onClick` lambda.
  *
+ * @param shape The shape of the button. Defaults to [MaterialTheme.shapes.small].
+ * @param loaderAppearance The appearance of the loader when the button is in a loading state.
+ * Defaults to [LoaderAppearanceDefaults.appearance()].
+ * @param isEnabled Controls whether the button is enabled or disabled. Defaults to `true`.
+ * @param isLoading Determines whether to show a loading spinner inside the button. Defaults to `false`.
  * @param onClick The callback to be invoked when the button is clicked.
- * @param isEnabled Controls whether the button is enabled or disabled.
- * @param isLoading Determines whether to show a loading spinner inside the button, indicating that
- * a FlyPay transaction is in progress.
  */
 @Composable
 internal fun FlyPayButton(
+    shape: Shape = MaterialTheme.shapes.small,
+    loaderAppearance: LoaderAppearance = LoaderAppearanceDefaults.appearance(),
     isEnabled: Boolean = true,
     isLoading: Boolean = false,
     onClick: () -> Unit
@@ -61,6 +67,7 @@ internal fun FlyPayButton(
     val adjustedImageSize = baseImageSize.value.scaled(fontScale).dp
     // Button to initiate FlyPay transaction
     Button(
+
         onClick = onClick,
         modifier = Modifier
             .testTag("flypayButton")
@@ -71,7 +78,7 @@ internal fun FlyPayButton(
             containerColor = FlyPayBlue,
             disabledContainerColor = FlyPayBlue.alpha40
         ),
-        shape = MaterialTheme.shapes.small
+        shape = shape
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(
@@ -82,10 +89,7 @@ internal fun FlyPayButton(
         ) {
             // Show a progress indicator if the FlyPay wallet is loading
             if (isLoading) {
-                SdkButtonLoader(
-                    appearance = LoaderAppearanceDefaults.appearance()
-                        .copy(strokeWidth = ButtonAppearanceDefaults.ButtonLoaderWidth)
-                )
+                SdkButtonLoader(appearance = loaderAppearance)
             } else {
                 // Display button text
                 SdkText(

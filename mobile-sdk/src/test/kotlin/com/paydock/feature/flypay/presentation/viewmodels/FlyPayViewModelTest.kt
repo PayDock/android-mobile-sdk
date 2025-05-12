@@ -10,6 +10,7 @@ import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.utils.MainDispatcherRule
+import com.paydock.feature.flypay.domain.model.integration.FlyPayWidgetConfig
 import com.paydock.feature.flypay.presentation.state.FlyPayUIState
 import com.paydock.feature.wallet.data.dto.WalletCallbackResponse
 import com.paydock.feature.wallet.data.mapper.asEntity
@@ -52,7 +53,7 @@ internal class FlyPayViewModelTest : BaseKoinUnitTest() {
         declineWalletChargeUseCase = mockk()
         getWalletCallbackUseCase = mockk()
         viewModel = FlyPayViewModel(
-            MobileSDKTestConstants.FlyPay.MOCK_CLIENT_ID,
+            config = FlyPayWidgetConfig(MobileSDKTestConstants.FlyPay.MOCK_CLIENT_ID),
             captureWalletChargeUseCase,
             declineWalletChargeUseCase,
             getWalletCallbackUseCase,
