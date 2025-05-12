@@ -16,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,6 +24,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import com.paydock.R
@@ -34,9 +36,11 @@ import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
+import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.PayPal
+import com.paydock.feature.paypal.checkout.domain.integration.PayPalWidgetConfig
 import com.paydock.feature.paypal.checkout.presentation.components.PayPalButton
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
 import com.paydock.feature.paypal.checkout.presentation.utils.CancellationStatus
@@ -54,8 +58,9 @@ import org.koin.androidx.compose.koinViewModel
  * @param modifier Modifier for customizing the appearance and behavior of the Composable.
  * @param enabled Controls the enabled state of this Widget. When false,
  * this component will not respond to user input, and it will appear visually disabled.
+ * @param config Configuration for the PayPal Widget.
+ * @param appearance Configuration for the visual appearance of the PayPal Widget.
  * @param token A callback to obtain the wallet token asynchronously.
- * @param requestShipping Flag passed to determine if PayPal will ask the user for their shipping address.
  * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
  * @param completion A callback to handle the Wallet Charge result.
  */
@@ -63,8 +68,9 @@ import org.koin.androidx.compose.koinViewModel
 fun PayPalWidget(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    config: PayPalWidgetConfig = PayPalWidgetConfig(),
+    appearance: PayPalWidgetAppearance = PayPalAppearanceDefaults.appearance(),
     token: (onTokenReceived: (String) -> Unit) -> Unit,
-    requestShipping: Boolean = true,
     loadingDelegate: WidgetLoadingDelegate? = null,
     completion: (Result<ChargeResponse>) -> Unit,
 ) {
@@ -108,7 +114,7 @@ fun PayPalWidget(
                     containerColor = PayPal,
                     disabledContainerColor = PayPal.alpha40
                 ),
-                shape = MaterialTheme.shapes.small
+                shape = appearance.shape
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(
@@ -117,15 +123,14 @@ fun PayPalWidget(
                     ),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    SdkButtonLoader(
-                        appearance = LoaderAppearanceDefaults.appearance()
-                            .copy(strokeWidth = ButtonAppearanceDefaults.ButtonLoaderWidth, color = Color.Black)
-                    )
+                    SdkButtonLoader(appearance = appearance.loader)
                 }
             }
         } else {
             // Button to initiate PayPal transaction
             PayPalButton(
+                shape = appearance.shape,
+                loaderAppearance = appearance.loader,
                 isEnabled = uiState !is PayPalCheckoutUIState.Loading && enabled,
                 isLoading = loadingDelegate == null && uiState is PayPalCheckoutUIState.Loading
             ) {
@@ -135,13 +140,65 @@ fun PayPalWidget(
                         viewModel.setWalletToken(obtainedToken)
                         viewModel.getWalletCallback(
                             walletToken = obtainedToken,
-                            requestShipping = requestShipping
+                            requestShipping = config.requestShipping
                         )
                     }
                 }
             }
         }
     }
+}
+
+/**
+ * Defines the appearance configuration for the PayPal Widget.
+ *
+ * This class holds properties that customize the visual aspects of the PayPal Widget,
+ * specifically focusing on the components displayed within it, such as the loader.
+ *
+ * @property shape The shape of the PayPal Widget button.
+ * @property loader The appearance configuration for the loader component displayed within the PayPal Widget.
+ */
+@Immutable
+class PayPalWidgetAppearance(val shape: Shape, val loader: LoaderAppearance) {
+    /**
+     * Creates a copy of the current [PayPalWidgetAppearance], allowing for modification of
+     * specific properties while retaining others.
+     *
+     * @param shape The shape of the PayPal Widget button.
+     * @param loader The new [LoaderAppearance] to use for the copied appearance. Defaults to the
+     * current [loader] if not provided. The provided [LoaderAppearance] will also be copied to
+     * ensure immutability.
+     * @return A new [PayPalWidgetAppearance] instance with the specified modifications.
+     */
+    fun copy(
+        shape: Shape = this.shape,
+        loader: LoaderAppearance = this.loader
+    ): PayPalWidgetAppearance =
+        PayPalWidgetAppearance(shape = shape, loader = loader.copy())
+}
+
+/**
+ * Default values for the appearance of the PayPal Widget.
+ * This object provides a default [PayPalWidgetAppearance] configuration, specifically setting
+ * the appearance of the loader shown during the PayPal checkout process.
+ */
+object PayPalAppearanceDefaults {
+
+    /**
+     * Returns the default appearance for the PayPal Widget.
+     * This composable function provides a pre-configured [PayPalWidgetAppearance],
+     * specifically designed for the loader component displayed within the widget.
+     * The loader is configured with a default stroke width and a black color.
+     *
+     * @return The default [PayPalWidgetAppearance] with pre-set loader configuration.
+     */
+    @Composable
+    fun appearance(): PayPalWidgetAppearance = PayPalWidgetAppearance(
+        shape = MaterialTheme.shapes.small,
+        loader = LoaderAppearanceDefaults.appearance()
+            .copy(strokeWidth = ButtonAppearanceDefaults.ButtonLoaderWidth, color = Color.Black)
+    )
+
 }
 
 /**

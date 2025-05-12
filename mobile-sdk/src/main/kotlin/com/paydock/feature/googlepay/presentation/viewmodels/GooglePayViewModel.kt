@@ -201,9 +201,9 @@ internal class GooglePayViewModel(
      *
      * @return A string representing the allowed payment methods, or null if extraction fails.
      */
-    fun extractAllowedPaymentMethods(): String? {
+    fun extractAllowedPaymentMethods(request: JSONObject = config.paymentRequest): String? {
         return runCatching {
-            config.paymentRequest.getJSONArray(MobileSDKConstants.GooglePayConfig.ALLOWED_PAYMENT_METHODS_KEY)
+            request.getJSONArray(MobileSDKConstants.GooglePayConfig.ALLOWED_PAYMENT_METHODS_KEY)
                 .toString()
         }.getOrElse {
             updateUiState(

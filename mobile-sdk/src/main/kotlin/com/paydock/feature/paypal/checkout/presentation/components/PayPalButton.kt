@@ -11,6 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -18,6 +19,8 @@ import com.paydock.R
 import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
+import com.paydock.designsystems.components.loader.LoaderAppearance
+import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.PayPal
 
@@ -35,6 +38,8 @@ import com.paydock.designsystems.theme.PayPal
  */
 @Composable
 internal fun PayPalButton(
+    shape: Shape = MaterialTheme.shapes.small,
+    loaderAppearance: LoaderAppearance = LoaderAppearanceDefaults.appearance(),
     isEnabled: Boolean = true,
     isLoading: Boolean = false,
     onClick: () -> Unit
@@ -50,7 +55,7 @@ internal fun PayPalButton(
             containerColor = PayPal,
             disabledContainerColor = PayPal.alpha40
         ),
-        shape = MaterialTheme.shapes.small
+        shape = shape
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(
@@ -66,7 +71,7 @@ internal fun PayPalButton(
             )
             // Show a progress indicator if the PayPal wallet is loading
             if (isLoading) {
-                SdkButtonLoader()
+                SdkButtonLoader(loaderAppearance)
             }
         }
     }

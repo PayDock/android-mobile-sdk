@@ -39,7 +39,7 @@ internal fun SdkLinkButton(
         SdkTextButton(
             modifier = modifier.wrapContentSize(Alignment.Center),
             text = linkText,
-            appearance = appearance.buttonAppearance
+            appearance = appearance.actionButton
         ) {
             onClick()
         }
@@ -52,21 +52,27 @@ internal fun SdkLinkButton(
  * This class encapsulates the [ButtonAppearance.TextButtonAppearance] specifically used for a link button,
  * allowing customization of properties like height, padding, and text appearance.
  *
- * @property buttonAppearance The underlying [ButtonAppearance.TextButtonAppearance] for the link button.
+ * @property actionButton The underlying [ButtonAppearance.TextButtonAppearance] for the link button.
  */
 @Immutable
 class LinkButtonAppearance(
-    val buttonAppearance: ButtonAppearance.TextButtonAppearance
+    val actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance.TextButtonAppearance
 ) {
     /**
      * Creates a copy of the current [LinkButtonAppearance] with optionally overridden button appearance.
      *
-     * @param buttonAppearance The [ButtonAppearance.TextButtonAppearance] to use for the copied instance.
+     * @param actionButton The [ButtonAppearance.TextButtonAppearance] to use for the copied instance.
      *                         Defaults to the current button appearance.
      * @return A new [LinkButtonAppearance] instance with the specified or default button appearance.
      */
-    fun copy(buttonAppearance: ButtonAppearance.TextButtonAppearance = this.buttonAppearance) =
-        LinkButtonAppearance(buttonAppearance.copy())
+    fun copy(
+        actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance.TextButtonAppearance = { isEnabled ->
+            this.actionButton(isEnabled)
+        }
+    ) =
+        LinkButtonAppearance(actionButton = { isEnabled ->
+            actionButton(isEnabled).copy()
+        })
 }
 
 /**
@@ -88,17 +94,19 @@ object LinkButtonAppearanceDefaults {
      */
     @Composable
     fun appearance() = LinkButtonAppearance(
-        buttonAppearance = (ButtonAppearanceDefaults.textButtonAppearance() as ButtonAppearance.TextButtonAppearance).copy(
-            height = LinkButtonHeight,
-            contentPadding = PaddingValues(0.dp),
-            textAppearance = TextAppearanceDefaults.appearance().copy(
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.primary,
-                    fontSize = (MaterialTheme.typography.bodyMedium.fontSize.value + 1).sp
+        actionButton = { isEnabled ->
+            ButtonAppearanceDefaults.textButtonAppearance(isEnabled).copy(
+                height = LinkButtonHeight,
+                contentPadding = PaddingValues(0.dp),
+                textAppearance = TextAppearanceDefaults.appearance().copy(
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = (MaterialTheme.typography.bodyMedium.fontSize.value + 1).sp
 
+                    )
                 )
             )
-        )
+        }
     )
 }
 

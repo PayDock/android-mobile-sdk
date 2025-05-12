@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.feature.paypal.checkout.domain.integration.PayPalWidgetConfig
 import com.paydock.feature.paypal.checkout.presentation.PayPalWidget
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import com.paydock.sample.designsystems.theme.SampleTheme
@@ -18,9 +19,11 @@ fun PayPalContent(
 ) {
     PayPalWidget(
         modifier = Modifier.fillMaxWidth(),
+        config = PayPalWidgetConfig(
+            requestShipping = false
+        ),
         enabled = enabled,
         token = tokenHandler,
-        requestShipping = false,
         loadingDelegate = loadingDelegate,
         completion = resultHandler
     )
