@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
+import com.paydock.feature.threeDS.common.domain.integration.ThreeDSConfig
 import com.paydock.feature.threeDS.standalone.presentation.Standalone3DSWidget
 import com.paydock.sample.core.THREE_DS_CARD_ERROR
 import com.paydock.sample.feature.card.CardViewModel
@@ -40,7 +41,7 @@ fun StandaloneThreeDSItem(
     val threeDSToken = threeDSUIState.token
     when {
         !threeDSToken.isNullOrBlank() -> {
-            Standalone3DSWidget(token = threeDSToken) { result ->
+            Standalone3DSWidget(config = ThreeDSConfig(token = threeDSToken)) { result ->
                 result.onSuccess {
                     Log.d("[Standalone3DSWidget]", "Success: $it")
                     Toast.makeText(context, "3DS Result returned [$it]", Toast.LENGTH_SHORT).show()

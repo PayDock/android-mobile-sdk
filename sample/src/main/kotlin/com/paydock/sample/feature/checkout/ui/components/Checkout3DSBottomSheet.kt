@@ -5,6 +5,7 @@ import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.paydock.designsystems.components.sheet.SdkBottomSheet
+import com.paydock.feature.threeDS.common.domain.integration.ThreeDSConfig
 import com.paydock.feature.threeDS.integrated.presentation.Integrated3DSWidget
 import com.paydock.feature.threeDS.standalone.presentation.Standalone3DSWidget
 import com.paydock.sample.feature.checkout.StandaloneCheckoutViewModel
@@ -29,7 +30,7 @@ fun Checkout3DSBottomSheet(
             when (type) {
                 ThreeDSType.INTEGRATED -> {
                     // Integrated 3DS Flow
-                    Integrated3DSWidget(token = threeDSToken) { result ->
+                    Integrated3DSWidget(config = ThreeDSConfig(token = threeDSToken)) { result ->
                         viewModel.handleIntegrated3DSResult(
                             result
                         )
@@ -38,7 +39,7 @@ fun Checkout3DSBottomSheet(
 
                 ThreeDSType.STANDALONE -> {
                     // Standalone 3DS Flow
-                    Standalone3DSWidget(token = threeDSToken) { result ->
+                    Standalone3DSWidget(config = ThreeDSConfig(token = threeDSToken)) { result ->
                         viewModel.handleStandalone3DSResult(
                             result
                         )

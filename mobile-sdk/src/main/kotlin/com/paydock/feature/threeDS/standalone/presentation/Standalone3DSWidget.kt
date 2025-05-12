@@ -10,8 +10,11 @@ import com.paydock.core.domain.error.exceptions.Standalone3DSException
 import com.paydock.designsystems.components.web.SdkWebView
 import com.paydock.designsystems.components.web.config.WidgetConfig
 import com.paydock.designsystems.components.web.utils.HtmlWidgetBuilder
+import com.paydock.feature.threeDS.common.domain.integration.ThreeDSConfig
 import com.paydock.feature.threeDS.common.domain.model.ui.enums.TokenFormat
-import com.paydock.feature.threeDS.common.domain.presentation.utils.ThreeDSTokenUtils
+import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSAppearanceDefaults
+import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSWidgetAppearance
+import com.paydock.feature.threeDS.common.presentation.utils.ThreeDSTokenUtils
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
 import com.paydock.feature.threeDS.standalone.presentation.state.Standalone3DSUIState
 import com.paydock.feature.threeDS.standalone.presentation.utils.Standalone3DSJSBridge
@@ -24,16 +27,17 @@ import org.koin.androidx.compose.koinViewModel
  * This widget displays a WebView for the 3DS authentication process and manages UI state changes
  * using a `ThreeDSViewModel`. It supports theming, back button handling, and error reporting.
  *
- * @param token The 3DS token required for authentication.
+ * @param config The configuration for the Integrated 3DS process, including the token.
  * @param completion A callback invoked with the result of the 3DS process, either success or failure.
  */
 @Composable
 fun Standalone3DSWidget(
-    token: String,
+    config: ThreeDSConfig,
+    appearance: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance(),
     completion: (Result<Standalone3DSResult>) -> Unit,
 ) {
     val context = LocalContext.current
-    val parsedToken = ThreeDSTokenUtils.extractToken(token)
+    val parsedToken = ThreeDSTokenUtils.extractToken(config.token)
 
     if (parsedToken == null) {
         // Handle the case where the token is invalid
@@ -73,7 +77,7 @@ fun Standalone3DSWidget(
     // Apply the SdkTheme for consistent styling
     // Display the 3DS WebView within the bottom sheet
     val htmlString = HtmlWidgetBuilder.createHtml(
-        config = WidgetConfig.ThreeDSConfigBase.Standalone3DSConfig(token = token)
+        config = WidgetConfig.ThreeDSConfigBase.Standalone3DSConfig(token = config.token)
     )
     val jsBridge = remember {
         Standalone3DSJSBridge { eventResult ->
@@ -84,7 +88,8 @@ fun Standalone3DSWidget(
     SdkWebView(
         webUrl = MobileSDKConstants.DEFAULT_WEB_URL,
         data = htmlString,
-        jsBridge = jsBridge
+        jsBridge = jsBridge,
+        loaderAppearance = appearance.loader
     ) { status, message ->
         // Invoke the onWebViewError callback with the WebView ThreeDSException exception
         completion(Result.failure(Standalone3DSException.WebViewException(status, message)))

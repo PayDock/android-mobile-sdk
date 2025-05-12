@@ -1,4 +1,4 @@
-package com.paydock.feature.threeDS.common.domain.presentation.utils
+package com.paydock.feature.threeDS.common.presentation.utils
 
 import android.util.Base64
 import com.paydock.core.extensions.multiCatch
