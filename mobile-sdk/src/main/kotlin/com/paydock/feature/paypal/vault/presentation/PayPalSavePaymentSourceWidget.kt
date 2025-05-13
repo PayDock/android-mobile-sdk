@@ -13,7 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -27,7 +29,7 @@ import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
-import com.paydock.designsystems.components.button.SdkOutlineButton
+import com.paydock.designsystems.components.button.RenderButton
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultResult
 import com.paydock.feature.paypal.vault.presentation.state.PayPalVaultUIState
@@ -92,19 +94,23 @@ fun PayPalSavePaymentSourceWidget(
         )
     }
 
+    val isEnabled by remember(uiState) { derivedStateOf { uiState !is PayPalVaultUIState.Loading && enabled } }
+    val isLoading by remember(uiState) {
+        derivedStateOf { loadingDelegate == null && uiState is PayPalVaultUIState.Loading }
+    }
+
     // Apply the SDK's theme to the widget
     Box(modifier = modifier) {
         // Display a button to link the PayPal account
-        SdkOutlineButton(
+        appearance.actionButton(isEnabled).RenderButton(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("linkPayPalAccount"),
             buttonIcon = config.icon,
             text = config.actionText
                 ?: stringResource(id = R.string.button_link_paypal_account),
-            enabled = uiState !is PayPalVaultUIState.Loading && enabled,
-            appearance = appearance.actionButton,
-            isLoading = loadingDelegate == null && uiState is PayPalVaultUIState.Loading
+            enabled = isEnabled,
+            isLoading = isLoading,
         ) {
             viewModel.createPayPalSetupToken()
         }

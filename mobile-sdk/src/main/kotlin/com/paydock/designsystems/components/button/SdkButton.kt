@@ -2,12 +2,17 @@
 
 package com.paydock.designsystems.components.button
 
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -30,6 +35,7 @@ import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
+import com.paydock.R
 import com.paydock.core.presentation.extensions.scaled
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.icon.IconAppearance
@@ -42,6 +48,85 @@ import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
 import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
+
+/**
+ * Renders a button based on the provided [ButtonAppearance].
+ *
+ * This function acts as a factory for different button types (Filled, Outline, Text, Image)
+ * based on the specific implementation of the [ButtonAppearance] sealed class.
+ *
+ * @param modifier Modifier to be applied to the button.
+ * @param text The text content of the button. Required for Filled, Outline, and Text appearances.
+ * @param buttonIcon The icon to display on the button. Required for Image appearances, optional otherwise.
+ * @param contentDescription The content description for the button icon, primarily for accessibility.
+ * @param enabled Controls the enabled state of the button. Defaults to `true`.
+ * @param isLoading Indicates if the button is in a loading state. If true, a loader is shown and
+ * the button is disabled. Defaults to `false`.
+ * @param onClick The action to perform when the button is clicked.
+ * @throws IllegalArgumentException if the required content (text or icon) is missing for a specific button type.
+ */
+@Composable
+internal fun ButtonAppearance.RenderButton(
+    modifier: Modifier = Modifier,
+    text: String? = null,
+    buttonIcon: ButtonIcon? = null,
+    contentDescription: String? = null,
+    enabled: Boolean = true,
+    isLoading: Boolean = false,
+    onClick: () -> Unit
+) {
+    when (this) {
+        is ButtonAppearance.FilledButtonAppearance -> {
+            require(text != null) { "FilledButtonAppearance requires a text" }
+            SdkButton(
+                modifier = modifier,
+                text = text,
+                buttonIcon = buttonIcon,
+                enabled = enabled,
+                isLoading = isLoading,
+                appearance = this,
+                onClick = onClick
+            )
+        }
+        // Apply similar logic for Outline and Text buttons
+        is ButtonAppearance.OutlineButtonAppearance -> {
+            require(text != null) { "OutlineButtonAppearance requires a text" }
+            SdkOutlineButton(
+                modifier = modifier,
+                text = text,
+                buttonIcon = buttonIcon,
+                enabled = enabled,
+                isLoading = isLoading,
+                appearance = this,
+                onClick = onClick
+            )
+        }
+        is ButtonAppearance.TextButtonAppearance -> {
+            require(text != null) { "TextButtonAppearance requires a text" }
+            SdkTextButton(
+                modifier = modifier,
+                text = text,
+                buttonIcon = buttonIcon,
+                enabled = enabled,
+                isLoading = isLoading,
+                appearance = this,
+                onClick = onClick
+            )
+        }
+        is ButtonAppearance.ImageButtonAppearance -> {
+            require(buttonIcon != null) { "ImageButtonAppearance requires a text" }
+            SdkImageButton(
+                modifier = modifier,
+                enabled = enabled,
+                isLoading = isLoading,
+                appearance = this,
+                buttonIcon = buttonIcon,
+                contentDescription = contentDescription,
+                onClick = onClick
+            )
+        }
+    }
+}
 
 /**
  * Represents the visual appearance of a button.
@@ -73,8 +158,8 @@ sealed class ButtonAppearance(
     open val border: BorderStroke?,
     open val contentPadding: PaddingValues,
     // Content Appearance
-    open val iconAppearance: IconAppearance,
-    open val textAppearance: TextAppearance,
+    open val iconAppearance: IconAppearance?,
+    open val textAppearance: TextAppearance?,
     open val loaderAppearance: LoaderAppearance,
 ) {
 
@@ -278,6 +363,80 @@ sealed class ButtonAppearance(
             loaderAppearance = loaderAppearance.copy()
         )
     }
+
+    /**
+     * Represents the visual appearance configuration for an image button.
+     *
+     * This data class defines the properties that control the look and feel of a button
+     * that primarily displays an image (icon). It extends [ButtonAppearance] and provides
+     * values for attributes such as height, spacing, shape, colors, elevation, border,
+     * content padding, and the appearance of an optional loader. Note that for an
+     * ImageButtonAppearance, the `iconAppearance` and `textAppearance` are typically null
+     * as the main content is the image itself, though a loader is still supported.
+     *
+     * @property height The default height of the image button.
+     * @property contentSpacing The spacing within the button. This is typically not relevant
+     *   for a single-image button but is included for consistency with the base class.
+     * @property shape The shape of the image button's container.
+     * @property colors The colors used to render the button's background and content.
+     * @property elevation The elevation of the button, used to create a shadow effect.
+     * @property border The border stroke applied to the button.
+     * @property contentPadding The padding around the button's content (the image).
+     * @property iconAppearance This property is usually null for [ImageButtonAppearance] as
+     *   the main content is the button's image itself, not an icon within other content.
+     * @property textAppearance This property is usually null for [ImageButtonAppearance] as
+     *   the button does not typically display text.
+     * @property loaderAppearance The appearance configuration for a loader (e.g., a spinner)
+     *   displayed on the button when it is in a loading state.
+     *
+     * This class is immutable, ensuring that once an instance is created, its properties cannot be changed.
+     * This is beneficial for performance and thread safety in Compose.
+     */
+    @Immutable
+    data class ImageButtonAppearance(
+        override val height: Dp,
+        override val contentSpacing: Dp,
+        override val shape: Shape,
+        override val colors: ButtonColors,
+        override val elevation: ButtonElevation?,
+        override val border: BorderStroke?,
+        override val contentPadding: PaddingValues,
+        override val iconAppearance: IconAppearance?,
+        override val textAppearance: TextAppearance?,
+        override val loaderAppearance: LoaderAppearance,
+    ) : ButtonAppearance(
+        height,
+        contentSpacing,
+        shape,
+        colors,
+        elevation,
+        border,
+        contentPadding,
+        iconAppearance,
+        textAppearance,
+        loaderAppearance
+    ) {
+        fun copy(
+            height: Dp = this.height,
+            contentSpacing: Dp = this.contentSpacing,
+            shape: Shape = this.shape,
+            colors: ButtonColors = this.colors,
+            elevation: ButtonElevation? = this.elevation,
+            border: BorderStroke? = this.border,
+            contentPadding: PaddingValues = this.contentPadding
+        ): ImageButtonAppearance = ImageButtonAppearance(
+            height = height.takeOrElse { this.height },
+            contentSpacing = contentSpacing.takeOrElse { this.contentSpacing },
+            shape = shape,
+            colors = colors.copy(),
+            elevation = elevation,
+            border = border,
+            contentPadding = contentPadding,
+            iconAppearance = iconAppearance?.copy(),
+            textAppearance = textAppearance?.copy(),
+            loaderAppearance = loaderAppearance.copy()
+        )
+    }
 }
 
 /**
@@ -416,6 +575,24 @@ object ButtonAppearanceDefaults {
                 strokeWidth = ButtonLoaderWidth
             )
         )
+
+    @Composable
+    fun imageButtonAppearance(enabled: Boolean = true): ButtonAppearance.ImageButtonAppearance =
+        ButtonAppearance.ImageButtonAppearance(
+            height = ButtonHeight,
+            contentSpacing = ButtonSpacing,
+            shape = ButtonDefaults.textShape,
+            colors = ButtonDefaults.textButtonColors(),
+            elevation = null,
+            border = null,
+            contentPadding = ButtonDefaults.ContentPadding,
+            iconAppearance = null,
+            textAppearance = null,
+            loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
+                color = if (enabled) ButtonDefaults.buttonColors().containerColor else ButtonDefaults.buttonColors().disabledContentColor,
+                strokeWidth = ButtonLoaderWidth
+            )
+        )
 }
 
 /**
@@ -438,23 +615,19 @@ object ButtonAppearanceDefaults {
 @Composable
 internal fun SdkButton(
     modifier: Modifier = Modifier,
-    text: String,
+    text: String?,
     enabled: Boolean = true,
     isLoading: Boolean = false,
     buttonIcon: ButtonIcon? = null,
-    appearance: @Composable (isEnabledForAppearance: Boolean) -> ButtonAppearance =
-        { isEnabled -> ButtonAppearanceDefaults.filledButtonAppearance(isEnabled) },
+    appearance: ButtonAppearance.FilledButtonAppearance = ButtonAppearanceDefaults.filledButtonAppearance(enabled),
     onClick: () -> Unit,
 ) {
     // The actual enabled state for the underlying Button composable and for styling
     val isEnabled = enabled && !isLoading
-    // Get the appearance by invoking the provider with the current effective enabled state
-    val actualAppearance = appearance(isEnabled)
-
     val configuration = LocalConfiguration.current
     val fontScale = configuration.fontScale
     // Calculate adjusted height with a scaling factor
-    val adjustedButtonHeight = actualAppearance.height.scaled(fontScale)
+    val adjustedButtonHeight = appearance.height.scaled(fontScale)
 
     Button(
         onClick = onClick,
@@ -462,20 +635,20 @@ internal fun SdkButton(
         enabled = isEnabled,
         content = {
             ButtonContent(
-                text = text,
+                text = text ?: "",
                 buttonIcon = buttonIcon,
                 isLoading = isLoading,
-                horizontalSpacing = actualAppearance.contentSpacing,
-                iconAppearance = actualAppearance.iconAppearance,
-                textAppearance = actualAppearance.textAppearance,
-                loaderAppearance = actualAppearance.loaderAppearance
+                horizontalSpacing = appearance.contentSpacing,
+                iconAppearance = appearance.iconAppearance,
+                textAppearance = appearance.textAppearance,
+                loaderAppearance = appearance.loaderAppearance
             )
         },
-        colors = actualAppearance.colors,
-        shape = actualAppearance.shape,
-        elevation = actualAppearance.elevation,
-        border = actualAppearance.border,
-        contentPadding = if (buttonIcon != null) ButtonDefaults.ButtonWithIconContentPadding else actualAppearance.contentPadding
+        colors = appearance.colors,
+        shape = appearance.shape,
+        elevation = appearance.elevation,
+        border = appearance.border,
+        contentPadding = if (buttonIcon != null && isLoading) ButtonDefaults.ButtonWithIconContentPadding else appearance.contentPadding
     )
 }
 
@@ -506,22 +679,19 @@ internal fun SdkButton(
 @Composable
 internal fun SdkOutlineButton(
     modifier: Modifier = Modifier,
-    text: String,
+    text: String?,
     enabled: Boolean = true,
     isLoading: Boolean = false,
     buttonIcon: ButtonIcon? = null,
-    appearance: @Composable (isEnabledForAppearance: Boolean) -> ButtonAppearance.OutlineButtonAppearance =
-        { isEnabled -> ButtonAppearanceDefaults.outlineButtonAppearance(isEnabled) },
+    appearance: ButtonAppearance.OutlineButtonAppearance = ButtonAppearanceDefaults.outlineButtonAppearance(enabled),
     onClick: () -> Unit,
 ) {
     // The actual enabled state for the underlying Button composable and for styling
     val isEnabled = enabled && !isLoading
-    // Get the appearance by invoking the provider with the current effective enabled state
-    val actualAppearance = appearance(isEnabled)
     val configuration = LocalConfiguration.current
     val fontScale = configuration.fontScale
     // Calculate adjusted height with a scaling factor
-    val adjustedButtonHeight = actualAppearance.height.scaled(fontScale)
+    val adjustedButtonHeight = appearance.height.scaled(fontScale)
 
     OutlinedButton(
         onClick = onClick,
@@ -529,20 +699,20 @@ internal fun SdkOutlineButton(
         enabled = isEnabled,
         content = {
             ButtonContent(
-                text = text,
+                text = text ?: "",
                 buttonIcon = buttonIcon,
                 isLoading = isLoading,
-                horizontalSpacing = actualAppearance.contentSpacing,
-                iconAppearance = actualAppearance.iconAppearance,
-                textAppearance = actualAppearance.textAppearance,
-                loaderAppearance = actualAppearance.loaderAppearance
+                horizontalSpacing = appearance.contentSpacing,
+                iconAppearance = appearance.iconAppearance,
+                textAppearance = appearance.textAppearance,
+                loaderAppearance = appearance.loaderAppearance
             )
         },
-        colors = actualAppearance.colors,
-        shape = actualAppearance.shape,
-        elevation = actualAppearance.elevation,
-        border = actualAppearance.border,
-        contentPadding = if (buttonIcon != null) ButtonDefaults.ButtonWithIconContentPadding else actualAppearance.contentPadding
+        colors = appearance.colors,
+        shape = appearance.shape,
+        elevation = appearance.elevation,
+        border = appearance.border,
+        contentPadding = if (buttonIcon != null && isLoading) ButtonDefaults.ButtonWithIconContentPadding else appearance.contentPadding
     )
 }
 
@@ -572,42 +742,94 @@ internal fun SdkOutlineButton(
 @Composable
 internal fun SdkTextButton(
     modifier: Modifier = Modifier,
-    text: String,
+    text: String?,
     enabled: Boolean = true,
     isLoading: Boolean = false,
     buttonIcon: ButtonIcon? = null,
-    appearance: @Composable (isEnabledForAppearance: Boolean) -> ButtonAppearance.TextButtonAppearance =
-        { isEnabled -> ButtonAppearanceDefaults.textButtonAppearance(isEnabled) },
+    appearance: ButtonAppearance.TextButtonAppearance = ButtonAppearanceDefaults.textButtonAppearance(enabled),
     onClick: () -> Unit,
 ) {
     // The actual enabled state for the underlying Button composable and for styling
     val isEnabled = enabled && !isLoading
     // Get the appearance by invoking the provider with the current effective enabled state
-    val actualAppearance = appearance(isEnabled)
     val configuration = LocalConfiguration.current
     val fontScale = configuration.fontScale
     // Calculate adjusted height with a scaling factor
-    val adjustedButtonHeight = actualAppearance.height.scaled(fontScale)
+    val adjustedButtonHeight = appearance.height.scaled(fontScale)
     TextButton(
         onClick = onClick,
         modifier = modifier.height(adjustedButtonHeight),
         enabled = isEnabled,
         content = {
             ButtonContent(
-                text = text,
+                text = text ?: "",
                 buttonIcon = buttonIcon,
                 isLoading = isLoading,
-                horizontalSpacing = actualAppearance.contentSpacing,
-                iconAppearance = actualAppearance.iconAppearance,
-                textAppearance = actualAppearance.textAppearance,
-                loaderAppearance = actualAppearance.loaderAppearance
+                horizontalSpacing = appearance.contentSpacing,
+                iconAppearance = appearance.iconAppearance,
+                textAppearance = appearance.textAppearance,
+                loaderAppearance = appearance.loaderAppearance
             )
         },
-        colors = actualAppearance.colors,
-        elevation = actualAppearance.elevation,
-        border = actualAppearance.border,
-        contentPadding = if (buttonIcon != null) ButtonDefaults.TextButtonWithIconContentPadding else actualAppearance.contentPadding
+        colors = appearance.colors,
+        elevation = appearance.elevation,
+        border = appearance.border,
+        contentPadding = if (buttonIcon != null && isLoading) ButtonDefaults.ButtonWithIconContentPadding else appearance.contentPadding
     )
+}
+
+@Composable
+internal fun SdkImageButton(
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    isLoading: Boolean = false,
+    appearance: ButtonAppearance.ImageButtonAppearance = ButtonAppearanceDefaults.imageButtonAppearance(enabled),
+    buttonIcon: ButtonIcon,
+    contentDescription: String? = null,
+    onClick: () -> Unit
+) {
+    // The actual enabled state for the underlying Button composable and for styling
+    val isEnabled = enabled && !isLoading
+    // Get the appearance by invoking the provider with the current effective enabled state
+    Button(
+        modifier = modifier.heightIn(min = ButtonAppearanceDefaults.ButtonHeight),
+        onClick = onClick,
+        enabled = isEnabled,
+        colors = appearance.colors,
+        shape = appearance.shape,
+        elevation = appearance.elevation,
+        border = appearance.border,
+        contentPadding = appearance.contentPadding
+    ) {
+        // Animate visibility of the loader
+        AnimatedVisibility(
+            visible = isLoading,
+            enter = fadeIn() + expandIn(expandFrom = Alignment.Center),
+            exit = fadeOut() + shrinkOut(shrinkTowards = Alignment.Center),
+            label = "loaderVisibilityAnimation"
+        ) {
+            SdkButtonLoader(appearance = appearance.loaderAppearance)
+        }
+
+        // Animate visibility of the icon
+        AnimatedVisibility(
+            visible = !isLoading,
+            enter = fadeIn() + expandIn(expandFrom = Alignment.Center),
+            exit = fadeOut() + shrinkOut(shrinkTowards = Alignment.Center),
+            label = "iconVisibilityAnimation"
+        ) {
+            when (buttonIcon) {
+                is ButtonIcon.Vector -> SdkIcon(
+                    imageVector = buttonIcon.icon,
+                    contentDescription = contentDescription
+                )
+                is ButtonIcon.DrawableRes -> SdkIcon(
+                    painter = painterResource(buttonIcon.drawable),
+                    contentDescription = contentDescription
+                )
+            }
+        }
+    }
 }
 
 /**
@@ -628,18 +850,35 @@ private fun ButtonContent(
     textAppearance: TextAppearance,
     loaderAppearance: LoaderAppearance
 ) {
-    Crossfade(targetState = isLoading, label = "buttonCrossFade") { loadingState ->
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(
-                horizontalSpacing,
-                Alignment.CenterHorizontally
-            ),
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        // Animate visibility of the loader
+        AnimatedVisibility(
+            visible = isLoading,
+            enter = fadeIn() + expandIn(expandFrom = Alignment.Center),
+            exit = fadeOut() + shrinkOut(shrinkTowards = Alignment.Center),
+            label = "loaderVisibilityAnimation"
         ) {
-            if (loadingState) {
-                SdkButtonLoader(appearance = loaderAppearance)
-            } else {
-                // Display the icon (if any) and text in a consistent layout
+            SdkButtonLoader(appearance = loaderAppearance)
+        }
+
+        // Animate visibility of the icon and text when not loading
+        AnimatedVisibility(
+            visible = !isLoading,
+            enter = fadeIn() + expandIn(expandFrom = Alignment.Center),
+            exit = fadeOut() + shrinkOut(shrinkTowards = Alignment.Center),
+            label = "iconAndTextVisibilityAnimation"
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(
+                    horizontalSpacing,
+                    Alignment.CenterHorizontally
+                )
+            ) {
+                // Display the icon (if any)
                 when (buttonIcon) {
                     is ButtonIcon.Vector -> SdkIcon(
                         imageVector = buttonIcon.icon,
@@ -654,12 +893,14 @@ private fun ButtonContent(
 
                     else -> Unit
                 }
+
+                // Display the text
+                SdkText(
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    text = text,
+                    appearance = textAppearance,
+                )
             }
-            SdkText(
-                modifier = Modifier.align(Alignment.CenterVertically),
-                text = text,
-                appearance = textAppearance,
-            )
         }
     }
 }
@@ -789,6 +1030,38 @@ internal fun PreviewSdkTextButtonWithIcon() {
         text = "Text With Icon",
         onClick = {},
         buttonIcon = ButtonIcon.Vector(Icons.Filled.Add),
+        modifier = Modifier.padding(8.dp)
+    )
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewSdkImageButtonEnabled() {
+    SdkImageButton(
+        buttonIcon = ButtonIcon.DrawableRes(R.drawable.ic_paypal_button),
+        onClick = {},
+        modifier = Modifier.padding(8.dp)
+    )
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewSdkImageButtonDisabled() {
+    SdkImageButton(
+        buttonIcon = ButtonIcon.DrawableRes(R.drawable.ic_paypal_button),
+        enabled = false,
+        onClick = {},
+        modifier = Modifier.padding(8.dp)
+    )
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewSdkImageButtonLoading() {
+    SdkImageButton(
+        buttonIcon = ButtonIcon.DrawableRes(R.drawable.ic_paypal_button),
+        isLoading = true,
+        onClick = {},
         modifier = Modifier.padding(8.dp)
     )
 }

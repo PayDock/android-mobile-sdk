@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.takeOrElse
 import com.paydock.R
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
-import com.paydock.designsystems.components.button.SdkButton
+import com.paydock.designsystems.components.button.RenderButton
 import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.designsystems.components.link.LinkButtonAppearance
@@ -108,13 +108,12 @@ fun AddressDetailsWidget(
         }
 
         // Save Address button
-        SdkButton(
+        appearance.actionButton(isDataValid).RenderButton(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("saveAddress"),
-            appearance = appearance.actionButton,
             text = stringResource(R.string.button_save_address),
-            enabled = isDataValid
+            enabled = isDataValid,
         ) {
             completion(uiState.billingAddress)
         }
@@ -139,7 +138,6 @@ class AddressDetailsWidgetAppearance(
     val textField: TextFieldAppearance,
     val actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance,
     val linkButton: LinkButtonAppearance,
-//    val linkText: LinkTextAppearance,
     val searchDropdown: SearchDropdownAppearance
 ) {
     /**
@@ -161,7 +159,6 @@ class AddressDetailsWidgetAppearance(
             this.actionButton(isEnabled)
         },
         linkButton: LinkButtonAppearance = this.linkButton,
-//        linkText: LinkTextAppearance = this.linkText,
         searchDropdown: SearchDropdownAppearance = this.searchDropdown
     ): AddressDetailsWidgetAppearance = AddressDetailsWidgetAppearance(
         verticalSpacing = verticalSpacing.takeOrElse { this.verticalSpacing },
@@ -171,7 +168,6 @@ class AddressDetailsWidgetAppearance(
             actionButton(isEnabled)
         },
         linkButton = linkButton.copy(),
-//        linkText = linkText.copy(),
         searchDropdown = searchDropdown.copy()
     )
 }

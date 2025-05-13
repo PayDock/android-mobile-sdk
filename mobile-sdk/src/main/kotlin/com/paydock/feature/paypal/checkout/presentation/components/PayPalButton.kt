@@ -1,28 +1,22 @@
 package com.paydock.feature.paypal.checkout.presentation.components
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.paydock.R
 import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
+import com.paydock.designsystems.components.button.SdkImageButton
 import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
-import com.paydock.designsystems.components.loader.SdkButtonLoader
 import com.paydock.designsystems.theme.PayPal
+import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 
 /**
  * A composable function that displays a customizable PayPal button.
@@ -44,37 +38,24 @@ internal fun PayPalButton(
     isLoading: Boolean = false,
     onClick: () -> Unit
 ) {
-    Button(
-        onClick = onClick,
+    SdkImageButton(
         modifier = Modifier
-            .testTag("payPalButton")
             .fillMaxWidth()
-            .height(ButtonAppearanceDefaults.ButtonHeight),
-        enabled = isEnabled,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = PayPal,
-            disabledContainerColor = PayPal.alpha40
-        ),
-        shape = shape
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(
-                ButtonAppearanceDefaults.ButtonSpacing,
-                Alignment.CenterHorizontally
+            .testTag("payPalButton"),
+        buttonIcon = ButtonIcon.DrawableRes(R.drawable.ic_paypal_button),
+        contentDescription = stringResource(id = R.string.content_desc_paypal_button_icon),
+        appearance = ButtonAppearanceDefaults.imageButtonAppearance().copy(
+            colors = ButtonDefaults.buttonColors(
+                containerColor = PayPal,
+                disabledContainerColor = PayPal.alpha40
             ),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // Display PayPal icon
-            Image(
-                painter = painterResource(id = R.drawable.ic_paypal_button),
-                contentDescription = stringResource(id = R.string.content_desc_paypal_button_icon)
-            )
-            // Show a progress indicator if the PayPal wallet is loading
-            if (isLoading) {
-                SdkButtonLoader(loaderAppearance)
-            }
-        }
-    }
+            shape = shape,
+            loaderAppearance = loaderAppearance
+        ),
+        enabled = isEnabled,
+        isLoading = isLoading,
+        onClick = onClick
+    )
 }
 
 @SdkLightDarkPreviews

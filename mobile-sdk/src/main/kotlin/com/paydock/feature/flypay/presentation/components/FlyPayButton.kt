@@ -67,7 +67,6 @@ internal fun FlyPayButton(
     val adjustedImageSize = baseImageSize.value.scaled(fontScale).dp
     // Button to initiate FlyPay transaction
     Button(
-
         onClick = onClick,
         modifier = Modifier
             .testTag("flypayButton")

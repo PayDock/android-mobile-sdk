@@ -56,7 +56,7 @@ internal fun SdkLinkButton(
  */
 @Immutable
 class LinkButtonAppearance(
-    val actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance.TextButtonAppearance
+    val actionButton: ButtonAppearance.TextButtonAppearance
 ) {
     /**
      * Creates a copy of the current [LinkButtonAppearance] with optionally overridden button appearance.
@@ -66,13 +66,8 @@ class LinkButtonAppearance(
      * @return A new [LinkButtonAppearance] instance with the specified or default button appearance.
      */
     fun copy(
-        actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance.TextButtonAppearance = { isEnabled ->
-            this.actionButton(isEnabled)
-        }
-    ) =
-        LinkButtonAppearance(actionButton = { isEnabled ->
-            actionButton(isEnabled).copy()
-        })
+        actionButton: ButtonAppearance.TextButtonAppearance = this.actionButton
+    ) = LinkButtonAppearance(actionButton = actionButton.copy())
 }
 
 /**
@@ -94,19 +89,17 @@ object LinkButtonAppearanceDefaults {
      */
     @Composable
     fun appearance() = LinkButtonAppearance(
-        actionButton = { isEnabled ->
-            ButtonAppearanceDefaults.textButtonAppearance(isEnabled).copy(
-                height = LinkButtonHeight,
-                contentPadding = PaddingValues(0.dp),
-                textAppearance = TextAppearanceDefaults.appearance().copy(
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = (MaterialTheme.typography.bodyMedium.fontSize.value + 1).sp
+        actionButton = ButtonAppearanceDefaults.textButtonAppearance().copy(
+            height = LinkButtonHeight,
+            contentPadding = PaddingValues(0.dp),
+            textAppearance = TextAppearanceDefaults.appearance().copy(
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = (MaterialTheme.typography.bodyMedium.fontSize.value + 1).sp
 
-                    )
                 )
             )
-        }
+        )
     )
 }
 

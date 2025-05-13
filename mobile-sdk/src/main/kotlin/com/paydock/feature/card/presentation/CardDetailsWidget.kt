@@ -23,7 +23,7 @@ import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
-import com.paydock.designsystems.components.button.SdkButton
+import com.paydock.designsystems.components.button.RenderButton
 import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.designsystems.components.link.LinkTextAppearance
@@ -81,6 +81,13 @@ fun CardDetailsWidget(
     val inputState by viewModel.inputStateFlow.collectAsState()
     val uiState by viewModel.stateFlow.collectAsState()
     val isDataValid by remember(uiState) { derivedStateOf { inputState.isDataValid } }
+
+    val isEnabled by remember(uiState) {
+        derivedStateOf { isDataValid && uiState !is CardDetailsUIState.Loading && enabled }
+    }
+    val isLoading by remember(uiState) {
+        derivedStateOf { loadingDelegate == null && uiState is CardDetailsUIState.Loading }
+    }
 
     val focusCardNumber = FocusRequester()
     val focusExpiration = FocusRequester()
@@ -143,13 +150,13 @@ fun CardDetailsWidget(
         }
 
         // Submit button for tokenizing the card
-        SdkButton(
+        appearance.actionButton(isEnabled).RenderButton(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("submitDetails"),
             text = config.actionText,
-            enabled = isDataValid && uiState !is CardDetailsUIState.Loading && enabled,
-            isLoading = loadingDelegate == null && uiState is CardDetailsUIState.Loading
+            enabled = isEnabled,
+            isLoading = isLoading,
         ) {
             viewModel.tokeniseCard()
         }
