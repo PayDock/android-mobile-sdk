@@ -81,8 +81,8 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                     )
                 }
 
-                WalletType.FLY_PAY -> {
-                    val request = createFlyPayWalletRequest()
+                WalletType.COLES_PAY -> {
+                    val request = createColesPayWalletRequest()
                     initiateWalletTransaction(
                         manualCapture = true,
                         request = request,
@@ -113,13 +113,13 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
         )
     }
 
-    private fun createFlyPayWalletRequest(): InitiateWalletRequest {
+    private fun createColesPayWalletRequest(): InitiateWalletRequest {
         return InitiateWalletRequest(
             currency = AU_CURRENCY_CODE,
             customer = ChargesCustomerDTO(
                 paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                    gatewayId = BuildConfig.GATEWAY_ID_FLY_PAY,
-                    walletType = WalletType.FLY_PAY.type
+                    gatewayId = BuildConfig.GATEWAY_ID_COLES_PAY,
+                    walletType = WalletType.COLES_PAY.type
                 )
             )
         )
@@ -147,7 +147,6 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                 lastName = "Cameron",
                 paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
                     gatewayId = BuildConfig.GATEWAY_ID_AFTER_PAY,
-                    walletType = WalletType.AFTER_PAY.type,
                     addressLine1 = "asd1",
                     addressLine2 = "asd1",
                     addressLine3 = "asd1",
@@ -155,7 +154,8 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                     state = "state",
                     countryCode = "US",
                     postalCode = "12345",
-                )
+                    walletType = WalletType.AFTER_PAY.type
+                ),
             ),
             meta = InitiateWalletRequest.MetaDTO(
                 storeId = "1234",
@@ -164,7 +164,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                 errorUrl = "https://paydock-integration.netlify.app/error"
             ),
             shippingDTO = InitiateWalletRequest.ShippingDTO(),
-            itemDTOS = listOf(InitiateWalletRequest.ItemDTO())
+            itemDTOS = listOf(InitiateWalletRequest.ItemDTO()),
         )
     }
 }

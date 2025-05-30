@@ -14,6 +14,12 @@ internal class CardPinValidatorTest {
     }
 
     @Test
+    fun testIsValidPinFormatValid_FailMinLength() {
+        // Anything < 4
+        assertFalse(CardPinValidator.isCardPinValid("123"))
+    }
+
+    @Test
     fun testIsValidPin_Format_BlankNumber() {
         assertFalse(CardPinValidator.isCardPinValid(""))
         assertFalse(CardPinValidator.isCardPinValid("  "))

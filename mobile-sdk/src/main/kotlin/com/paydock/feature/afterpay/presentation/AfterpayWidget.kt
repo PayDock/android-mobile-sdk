@@ -4,10 +4,13 @@ import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -32,7 +35,6 @@ import com.paydock.feature.afterpay.domain.mapper.integration.mapFromShippingOpt
 import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOptionUpdate
-import com.paydock.feature.afterpay.presentation.components.AfterpayPaymentButtonView
 import com.paydock.feature.afterpay.presentation.state.AfterpayUIState
 import com.paydock.feature.afterpay.presentation.utils.CheckoutHandler
 import com.paydock.feature.afterpay.presentation.viewmodels.AfterpayViewModel
@@ -103,20 +105,30 @@ fun AfterpayWidget(
     Afterpay.setCheckoutV2Handler(checkoutHandler)
 
     // Observe and handle UI state changes
-    LaunchedEffect(uiState) {
-        handleUIState(uiState, viewModel, loadingDelegate, checkoutHandler, completion)
+    LaunchedEffect(uiState::class) {
+        handleUIState(uiState, viewModel, resolvePaymentForResult, loadingDelegate, checkoutHandler, completion)
     }
 
     // Render the Afterpay widget UI
     SdkTheme {
         Box(modifier = modifier.background(Theme.colors.background), contentAlignment = Alignment.Center) {
             if (isConfigured) {
-                AfterpayPaymentButtonView(
-                    config = config,
-                    enabled = enabled,
-                    onObtainToken = token,
-                    viewModel = viewModel,
-                    resolvePaymentForResult = resolvePaymentForResult
+                AndroidView(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(Theme.dimensions.buttonHeight),
+                    factory = { context ->
+                        AfterpayPaymentButton(context).apply {
+                            this.buttonText = config.buttonTheme.buttonText
+                            this.colorScheme = config.buttonTheme.colorScheme
+                            this.isEnabled = enabled
+
+                            // Set up click listener to initiate the checkout process
+                            setOnClickListener {
+                                viewModel.startAfterpayFlow(token, context, config)
+                            }
+                        }
+                    }
                 )
             }
             if (uiState is AfterpayUIState.Loading && loadingDelegate == null) {
@@ -205,10 +217,12 @@ private fun handleInvalidError(
 
 /**
  * Processes the current UI state of the widget and performs the necessary actions
- * such as showing loading states, completing the transaction, or handling errors.
+ * such as showing loading states, launching the Afterpay checkout,
+ * completing the transaction, or handling errors.
  *
  * @param uiState The current UI state of the widget.
  * @param viewModel The `AfterpayViewModel` managing the widget's state.
+ * @param resolvePaymentForResult The `ActivityResultLauncher` used to launch the Afterpay checkout intent.
  * @param loadingDelegate An optional delegate for managing loading state transitions.
  * @param checkoutHandler The `CheckoutHandler` for managing Afterpay SDK interactions.
  * @param completion A callback to handle the final result of the payment process.
@@ -216,6 +230,7 @@ private fun handleInvalidError(
 private fun handleUIState(
     uiState: AfterpayUIState,
     viewModel: AfterpayViewModel,
+    resolvePaymentForResult: ActivityResultLauncher<Intent>,
     loadingDelegate: WidgetLoadingDelegate?,
     checkoutHandler: CheckoutHandler,
     completion: (Result<ChargeResponse>) -> Unit,
@@ -223,6 +238,9 @@ private fun handleUIState(
     when (uiState) {
         is AfterpayUIState.Idle -> Unit
         is AfterpayUIState.Loading -> loadingDelegate?.widgetLoadingDidStart()
+        is AfterpayUIState.LaunchIntent -> {
+            resolvePaymentForResult.launch(uiState.checkoutIntent)
+        }
         is AfterpayUIState.Success -> {
             loadingDelegate?.widgetLoadingDidFinish()
             completion(Result.success(uiState.chargeData))

@@ -67,7 +67,7 @@ fun GiftCardWidget(
     val focusCardPin = FocusRequester()
 
     // React to changes in the UI state
-    LaunchedEffect(uiState) {
+    LaunchedEffect(uiState::class) {
         handleUIState(uiState, viewModel, loadingDelegate, completion)
     }
 

@@ -1,5 +1,7 @@
 package com.paydock.feature.afterpay.presentation.viewmodels
 
+import android.content.Context
+import android.content.Intent
 import com.afterpay.android.Afterpay
 import com.afterpay.android.CancellationStatus
 import com.paydock.MobileSDK
@@ -10,6 +12,7 @@ import com.paydock.core.domain.error.extensions.mapApiException
 import com.paydock.core.domain.mapper.mapToAfterpayEnv
 import com.paydock.core.utils.jwt.JwtHelper
 import com.paydock.feature.afterpay.domain.mapper.integration.mapMessage
+import com.paydock.feature.afterpay.domain.mapper.integration.mapToAfterpayV2Options
 import com.paydock.feature.afterpay.domain.mapper.integration.mapToSDKShippingOptionResult
 import com.paydock.feature.afterpay.domain.mapper.integration.mapToSDKShippingOptionUpdateResult
 import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
@@ -21,7 +24,6 @@ import com.paydock.feature.wallet.data.dto.CustomerData
 import com.paydock.feature.wallet.data.dto.PaymentSourceData
 import com.paydock.feature.wallet.data.dto.WalletCallbackRequest
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
-import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.feature.wallet.domain.model.ui.WalletCallback
 import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
@@ -154,6 +156,44 @@ internal class AfterpayViewModel(
     //endregion
 
     //region Public Methods
+
+    /**
+     * Starts the Afterpay payment flow by requesting a token and launching the Afterpay checkout intent.
+     *
+     * This function coordinates the Afterpay payment process by first obtaining a wallet token
+     * via the provided `tokenProvider`. Once the token is received, it updates the internal
+     * wallet token and then transitions the UI state to launch the Afterpay checkout intent,
+     * which is created using the provided `context` and `config`.
+     *
+     * @param tokenProvider A suspend function that takes a callback `(String) -> Unit` and provides the wallet token to it.
+     * This allows for asynchronous fetching of the token.
+     * @param context The Android [Context] required to create the Afterpay checkout intent.
+     * @param config The [AfterpaySDKConfig] containing the necessary configuration for the Afterpay SDK.
+     */
+    fun startAfterpayFlow(
+        tokenProvider: (onTokenReceived: (String) -> Unit) -> Unit,
+        context: Context,
+        config: AfterpaySDKConfig
+    ) {
+        val checkoutIntent = createCheckoutIntent(context, config)
+        tokenProvider { obtainedToken ->
+            setWalletToken(obtainedToken)
+            updateUiState(AfterpayUIState.LaunchIntent(checkoutIntent))
+        }
+    }
+
+    /**
+     * Creates an intent for the Afterpay checkout process.
+     *
+     * @param context The context to create the intent.
+     * @param config The configuration for the Afterpay SDK.
+     * @return The `Intent` to launch the Afterpay checkout activity.
+     */
+    private fun createCheckoutIntent(context: Context, config: AfterpaySDKConfig): Intent =
+        config.options?.let {
+            Afterpay.createCheckoutV2Intent(context, it.mapToAfterpayV2Options())
+        } ?: Afterpay.createCheckoutV2Intent(context)
+
     /**
      * Updates the state to reflect a cancellation event with the given status.
      *
@@ -233,8 +273,7 @@ internal class AfterpayViewModel(
      */
     fun loadCheckoutToken() {
         val request = WalletCallbackRequest(
-            type = MobileSDKConstants.WalletCallbackType.TYPE_CREATE_SESSION,
-            walletType = WalletType.AFTER_PAY.type
+            type = MobileSDKConstants.WalletCallbackType.TYPE_CREATE_SESSION
         )
         walletToken?.let { getWalletCallback(it, request) }
     }

@@ -3,7 +3,7 @@ package com.paydock.core.domain.error
 import com.paydock.core.domain.error.exceptions.AfterpayException
 import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.domain.error.exceptions.ClickToPayException
-import com.paydock.core.domain.error.exceptions.FlyPayException
+import com.paydock.core.domain.error.exceptions.ColesPayException
 import com.paydock.core.domain.error.exceptions.GenericException
 import com.paydock.core.domain.error.exceptions.GiftCardException
 import com.paydock.core.domain.error.exceptions.GooglePayException
@@ -83,11 +83,11 @@ sealed interface ErrorModel {
     data class PayPalDataCollectorError(val exception: PayPalDataCollectorException) : ErrorModel
 
     /**
-     * FlyPay Error: Represents errors specific to FlyPay functionality.
+     * Coles Pay Error: Represents errors specific to Coles Pay functionality.
      *
-     * @property exception The [FlyPayException] specific to FlyPay.
+     * @property exception The [ColesPayException] specific to Coles Pay.
      */
-    data class FlyPayError(val exception: FlyPayException) : ErrorModel
+    data class ColesPayError(val exception: ColesPayException) : ErrorModel
 
     /**
      * Click to Pay Error: Represents errors specific to Click to Pay functionality.
@@ -140,7 +140,7 @@ fun Throwable.toError(): ErrorModel {
         is PayPalException -> ErrorModel.PayPalError(this)
         is PayPalVaultException -> ErrorModel.PayPalVaultError(this)
         is PayPalDataCollectorException -> ErrorModel.PayPalDataCollectorError(this)
-        is FlyPayException -> ErrorModel.FlyPayError(this)
+        is ColesPayException -> ErrorModel.ColesPayError(this)
         is ClickToPayException -> ErrorModel.ClickToPayError(this)
         is GooglePayException -> ErrorModel.GooglePayError(this)
         is AfterpayException -> ErrorModel.AfterpayError(this)

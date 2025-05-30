@@ -17,7 +17,7 @@
             android:theme="@style/SdkDialog" />
 
         <activity
-            android:name=".feature.flypay.presentation.FlyPayWebActivity"
+            android:name=".feature.colespay.presentation.ColesPayWebActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:launchMode="singleInstance"
             android:theme="@style/SdkDialog" />

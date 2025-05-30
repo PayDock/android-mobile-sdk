@@ -9,8 +9,13 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -39,46 +44,50 @@ internal fun <String : Any> SdkDropDownMenu(
     expanded: Boolean,
     itemWidth: Dp,
     items: List<String>,
+    selectedIndex: Int,
     dismissOnClickOutside: Boolean = true,
     isClickEnabled: Boolean = true,
     onItemSelected: (String) -> Unit,
     onDismissed: () -> Unit
 ) {
-    // Box composable to contain the dropdown menu
+    val dropDownFocusRequester = remember { FocusRequester() }
+
+    if (expanded) {
+        LaunchedEffect(Unit) {
+            dropDownFocusRequester.requestFocus() // Automatically focus dropdown when opened
+        }
+    }
+
     Box(
         modifier = Modifier
             .width(itemWidth)
             .wrapContentSize(Alignment.TopStart)
+            .focusRequester(dropDownFocusRequester)
     ) {
-        // Dropdown menu content
         DropdownMenu(
             modifier = modifier
                 .background(Theme.colors.primary.alpha20)
                 .testTag("sdkDropDownMenu"),
-            properties = PopupProperties(
-                dismissOnClickOutside = dismissOnClickOutside,
-            ),
+            properties = PopupProperties(dismissOnClickOutside = dismissOnClickOutside),
             expanded = expanded,
-            onDismissRequest = {
-                onDismissed()
-            },
+            onDismissRequest = { onDismissed() }
         ) {
-            // Iterate through each item in the list and create a dropdown menu item
-            items.forEach { item: String ->
+            items.forEachIndexed { index, item: String ->
+                val isSelected = index == selectedIndex
                 DropdownMenuItem(
-                    modifier = Modifier.width(itemWidth),
+                    modifier = Modifier
+                        .width(itemWidth)
+                        .background(if (isSelected) Theme.colors.primary else Color.Transparent),
                     text = {
-                        // Display the text of the dropdown menu item
                         Text(
                             modifier = Modifier.fillMaxWidth(),
                             text = AnnotatedString(text = item.toString()),
                             style = Theme.typography.body1,
-                            color = Theme.colors.onSurface
+                            color = if (isSelected) Theme.colors.onPrimary else Theme.colors.onSurface
                         )
                     },
                     enabled = isClickEnabled,
                     onClick = {
-                        // Handle item selection
                         onItemSelected(item)
                     }
                 )
@@ -100,7 +109,8 @@ internal fun PreviewSdkDropDownMenuExpanded() {
             itemWidth = 300.dp,
             items = listOf("Item 1", "Item 2", "Item 3"),
             onItemSelected = {},
-            onDismissed = {}
+            onDismissed = {},
+            selectedIndex = 0
         )
     }
 }

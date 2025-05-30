@@ -79,7 +79,7 @@ fun PayPalSavePaymentSourceWidget(
         handlePayPalVaultResult(context, result, viewModel, completion)
     }
 
-    LaunchedEffect(uiState) {
+    LaunchedEffect(uiState::class) {
         handleUIState(
             context,
             uiState,

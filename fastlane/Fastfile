@@ -4,17 +4,169 @@
 default_platform(:android) # Specifies that this Fastfile is for Android.
 
 platform :android do
+
+    # --- Linting Lanes ---
+
+    desc "Run Detekt formatting and analysis"
+    lane :code_quality do
+        # Run detekt on the entire codebase
+        gradle(task: "detektFormat")
+        gradle(task: "detektAll")
+    end
+
+    # --- Version Lanes ---
+
+    desc "Update the version name in GitLab CI variables"
+    lane :update_version_name do
+        # Get the current branch name
+        current_branch = ENV["CI_COMMIT_BRANCH"] || "main"
+
+        # Get the current version name and code from GitLab CI variables
+        current_version_name = get_gitlab_ci_variable(key: "VERSION_NAME")
+
+        # Increment the version name (patch version)
+        major, minor, patch = current_version_name.split(".").map(&:to_i)
+        next_version_name = "#{major}.#{minor}.#{patch + 1}"
+
+        # Update GitLab CI variables
+        update_gitlab_ci_variable(key: "VERSION_NAME", value: next_version_name)
+
+        # Print for debugging
+        puts "Current Version Name: #{current_version_name}"
+        puts "Next Version Name: #{next_version_name}"
+
+        # Update the versions on the build.gradle.kts
+        update_build_gradle_version_name(version_name: next_version_name)
+    end
+
+    desc "Update the version code in GitLab CI variables"
+    lane :update_version_code do
+        # Get the current branch name
+        current_branch = ENV["CI_COMMIT_BRANCH"] || "main"
+
+        # Get the current version name and code from GitLab CI variables
+        current_version_code = get_gitlab_ci_variable(key: "VERSION_CODE")
+
+        # Check if the current_version_code is an integer
+        if current_version_code.to_i.to_s != current_version_code
+            UI.user_error!("VERSION_CODE must be an integer in GitLab CI variables.")
+        end
+
+        # Increment the version code
+        next_version_code = current_version_code.to_i + 1
+
+        # Update GitLab CI variables
+        update_gitlab_ci_variable(key: "VERSION_CODE", value: next_version_code)
+
+        # Print for debugging
+        puts "Current Version Code: #{current_version_code}"
+        puts "Next Version Code: #{next_version_code}"
+
+        # Update the versions on the build.gradle.kts
+        update_build_gradle_version_code(version_code: next_version_code)
+    end
+
+    # Update a CI variable in GitLab.
+    #
+    # @param key [String] the name of the CI variable to update
+    # @param value [String, Integer] the new value for the CI variable
+    def update_gitlab_ci_variable(key:, value:)
+        gitlab_token = ENV["GITLAB_TOKEN"]
+        unless gitlab_token
+            UI.user_error!("Missing GITLAB_TOKEN environment variable")
+        end
+
+        project_id = ENV["CI_PROJECT_ID"]
+        unless project_id
+            UI.user_error!("Missing CI_PROJECT_ID environment variable")
+        end
+
+        api_endpoint = ENV["CI_API_V4_URL"]
+        unless api_endpoint
+            UI.user_error!("Missing CI_API_V4_URL environment variable")
+        end
+
+        api_url = "#{api_endpoint}/projects/#{project_id}/variables/#{key}"
+
+        # We now use -s and --show-error to remove the extra output
+        response = sh("curl -s --show-error --request PUT --header 'Content-Type: application/json' --header 'PRIVATE-TOKEN: #{gitlab_token}' \
+            --data '{\"value\":\"#{value}\", \"variable_type\":\"env_var\"}' \
+            '#{api_url}'")
+
+        # check if the command was successful.
+        parsed_response = JSON.parse(response)
+        if parsed_response["key"] != key
+            UI.user_error!("Error setting GitLab variable: #{key}")
+        end
+    end
+
+    # Get a CI variable from GitLab.
+    #
+    # @param key [String] the name of the CI variable to get
+    # @return [String] the value of the CI variable, or "" if it's not set
+    def get_gitlab_ci_variable(key:)
+        # Check if the variable is set
+        unless ENV[key]
+            UI.user_error!("Missing CI variable: #{key}")
+        end
+
+        # Return the variable value
+        return ENV[key]
+    end
+
+    # Updates the version name and version code in the build.gradle.kts file.
+    #
+    # @param version_name [String] The new version name.
+    def update_build_gradle_version_name(version_name:)
+        # Construct the path to the build.gradle.kts file.
+        build_gradle_path = "../sample/build.gradle.kts"
+
+        # Read the entire file content.
+        file_content = File.read(build_gradle_path)
+
+        # Replace the version name line.
+        file_content.gsub!(/versionName = ".*"/, "versionName = \"#{version_name}\"")
+
+        # Write the modified content back to the file.
+        File.write(build_gradle_path, file_content)
+
+        puts "Updated #{build_gradle_path} with versionName: #{version_name}"
+    end
+
+    # Updates the version name and version code in the build.gradle.kts file.
+    #
+    # @param version_code [Integer] The new version code.
+    def update_build_gradle_version_code(version_code:)
+        # Construct the path to the build.gradle.kts file.
+        build_gradle_path = "../sample/build.gradle.kts"
+
+        # Read the entire file content.
+        file_content = File.read(build_gradle_path)
+
+        # Replace the version code line.
+        file_content.gsub!(/versionCode = \d+/, "versionCode = #{version_code}")
+
+        # Write the modified content back to the file.
+        File.write(build_gradle_path, file_content)
+
+        puts "Updated #{build_gradle_path} with versionCode: #{version_code}"
+    end
+
     # --- Build Lanes ---
 
     desc "Builds the debug Android app for the specified flavor"
     lane :buildDebug do |options|
         flavor = options[:flavor] || "staging" # Default to staging if no flavor is provided
+        versionCode = get_gitlab_ci_variable(key: "VERSION_CODE")
+        update_build_gradle_version_code(version_code: versionCode)
         gradle(task: "assemble", flavor: flavor.capitalize, build_type: "Debug")
     end
 
     desc "Builds the release Android app for the specified flavor"
     lane :buildRelease do |options|
         flavor = options[:flavor] || "staging" # Default to staging if no flavor is provided
+        versionCode = get_gitlab_ci_variable(key: "VERSION_CODE")
+        update_build_gradle_version_code(version_name: versionName, version_code: versionCode)
         gradle(task: "assemble", flavor: flavor.capitalize, build_type: "Release")
     end
 

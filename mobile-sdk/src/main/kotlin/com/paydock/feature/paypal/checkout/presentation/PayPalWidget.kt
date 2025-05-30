@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -75,8 +74,6 @@ fun PayPalWidget(
     // Collect states for PayPal view models
     val uiState by viewModel.uiState.collectAsState()
 
-    val scope = rememberCoroutineScope()
-
     // ActivityResultLauncher for handling payment resolution
     val resolvePaymentForResult = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -84,7 +81,7 @@ fun PayPalWidget(
         handlePayPalResult(context, result, viewModel, completion)
     }
 
-    LaunchedEffect(uiState) {
+    LaunchedEffect(uiState::class) {
         handleUIState(
             context,
             uiState,
@@ -127,17 +124,7 @@ fun PayPalWidget(
                     isEnabled = uiState !is PayPalCheckoutUIState.Loading && enabled,
                     isLoading = loadingDelegate == null && uiState is PayPalCheckoutUIState.Loading
                 ) {
-                    // Use the callback to obtain the token asynchronously
-                    viewModel.setLoadingState()
-                    token { obtainedToken ->
-                        scope.launch {
-                            viewModel.setWalletToken(obtainedToken)
-                            viewModel.getWalletCallback(
-                                walletToken = obtainedToken,
-                                requestShipping = requestShipping
-                            )
-                        }
-                    }
+                    viewModel.startPayPalFlow(token, requestShipping)
                 }
             }
         }

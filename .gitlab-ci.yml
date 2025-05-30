@@ -30,6 +30,8 @@ variables:
 # Jobs in subsequent stages run after the previous stage has completed successfully.
 stages:
   - quality # Stage for code quality checks (e.g., linting, static analysis).
+  - code_quality # Stage for linting the codebase using detekt
+  - versioning # Stage for incrementing version code for new builds.
   - build # Stage for building the Android application.
   - test # Stage for running unit and integration tests.
   - deploy # Stage for deploying build to Firebase App Distribution.
@@ -59,6 +61,34 @@ include:
   script:
     - bundle --version # Checks the version of Bundler.
 
+# linting:
+# This job runs linting checks on the codebase using detekt.
+# It extends the '.setup_bundler' template to ensure the Ruby dependencies are set up.
+code_quality:
+  stage: code_quality # Runs in the 'code_quality' stage.
+  extends: .setup_bundler # Inherits configurations (like Bundler setup) from the '.setup_bundler' template.
+  script:
+    - bundle exec fastlane code_quality # Executes the 'formatting, style, issues' lane in Fastlane.
+
+# increment_version:
+# This job increments the version code for the build and deployment.
+increment_version:
+  stage: versioning # Specifies that this job runs in the '.pre' stage, which should be defined before other stages.
+  extends: .setup_bundler # Inherits configurations (like Bundler setup) from the '.setup_bundler' template.
+  rules: # Defines conditions for when this job should be executed.
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Checks if the current branch is the default branch (e.g., 'main').
+      when: on_success # Specifies that the job runs automatically when a pipeline successfully reaches this stage.
+      # This condition ensures the job runs only when changes are merged into the default branch.
+  script: # Defines the commands to run when the job is executed.
+    - bundle exec fastlane update_version_code # Executes the 'update_version_code' lane in Fastlane.
+      # This lane is responsible for:
+      #   1. Reading the current version number from GitLab CI variables (VERSION_NAME, VERSION_CODE).
+      #   2. Incrementing the version number and version code.
+      #   3. Updating the GitLab CI variables with the new versions.
+    #   4. Updating the version number in the 'build.gradle.kts' file.
+  needs: [] # Specifies that this job doesn't depend on any previous job, so it can run as soon as the stage starts.
+  #  Ensures this job runs first in the '.pre' stage.
+
 # pull_bin_file:
 # This job pulls a zip file from an AWS S3 bucket and extracts its contents.
 pull_bin_file:
@@ -84,44 +114,50 @@ pull_bin_file:
     paths:
       - sample/build/outputs/apk/* # Makes the APK files available as artifacts.
       - bin_schema/ # Makes the 'bin_schema/' directory available as an artifact.
-  needs: [ "pull_bin_file" ] # This job depends on the 'pull_bin_file' job.
   dependencies:
-    - pull_bin_file # Specifies the dependency on the 'pull_bin_file' job.
+    - code_quality # Specifies the dependency on the 'linting' job
+    - pull_bin_file # Specifies the dependency on the 'pull_bin_file' job
+  rules:
+    - when: on_success # Run only when the previous stage has passed
 
 # buildStaging:
 # This job builds the staging version of the Android application.
-buildStaging:
+build_staging:
   extends: .build_template # Extends the '.build_template' template.
   script:
     - bundle exec fastlane buildDebug flavor:staging # Executes the 'build' lane using staging flavor in the Fastfile.
     # Fastfile Reference: This lane is defined in the Fastfile and handles the actual build process.
   environment:
     name: staging
+  needs: [code_quality, pull_bin_file]
   rules:
     - if: $CI_COMMIT_BRANCH # Run on all branches
+      when: on_success
 
 # buildSandbox:
 # This job builds the sandbox version of the Android application.
-buildSandbox:
+build_sandbox:
   extends: .build_template # Extends the '.build_template' template.
   script:
     - bundle exec fastlane buildDebug flavor:sandbox # Executes the 'build' lane using sandbox flavor in the Fastfile.
     # Fastfile Reference: This lane is defined in the Fastfile and handles the actual build process.
   environment:
     name: sandbox
+  needs: [code_quality, pull_bin_file, increment_version]
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run automatically on merge to main
       when: on_success
 
 # buildProd:
 # This job builds the production version of the Android application.
-buildProd:
+build_prod:
   extends: .build_template # Extends the '.build_template' template.
   script:
     - bundle exec fastlane buildDebug flavor:prod # Executes the 'build' lane using prod flavor in the Fastfile.
     # Fastfile Reference: This lane is defined in the Fastfile and handles the actual build process.
   environment:
     name: production
+  needs: [code_quality, pull_bin_file, increment_version]
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run automatically on merge to main
       when: on_success
@@ -140,6 +176,8 @@ test:
     when: always # Always creates artifacts, even if the job fails.
     reports:
       junit: mobile-sdk/build/test-results/testDebugUnitTest/TEST-*.xml # Publishes the JUnit test reports.
+  rules:
+    - when: on_success # Run only when the previous stage has passed
 
 # .deploy_template:
 # This is a hidden job template for deploying the Android application to Firebase App Distribution.
@@ -163,51 +201,59 @@ test:
     - echo $FILE_LOCATION
     # Set the GOOGLE_CREDENTIALS_FILE_PATH environment variable for use by Fastlane.
     - export GOOGLE_CREDENTIALS_FILE_PATH=$FILE_LOCATION # Set the environment variable
+  rules:
+    - when: on_success # Only run when the previous job in the pipeline has succeeded.
 
 # deployStaging:
 # This job deploys the staging version of the Android application to Firebase App Distribution.
 # It extends the '.deploy_template' to inherit the necessary setup and configuration.
-deployStaging:
+deploy_staging:
   extends: .deploy_template # Inherits configuration from the .deploy_template template.
   variables:
     APP_ID: $FIREBASE_APP_ID_STAGING # Firebase App ID for the staging environment.
   environment:
     name: staging # Sets the environment name to 'staging'.
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run automatically on merge to main.
-      when: on_success # Only run when the previous job in the pipeline has succeeded.
+  needs:
+    - job: build_staging
   script:
     - bundle exec fastlane deploy flavor:staging # Executes the 'deploy' lane using staging flavor in the Fastfile.
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run automatically on merge to main
+      when: on_success
 
 # deploySandbox:
 # This job deploys the sandbox version of the Android application to Firebase App Distribution.
 # It extends the '.deploy_template' to inherit the necessary setup and configuration.
-deploySandbox:
+deploy_sandbox:
   extends: .deploy_template # Inherits configuration from the .deploy_template template.
   variables:
     APP_ID: $FIREBASE_APP_ID_SANDBOX # Firebase App ID for the sandbox environment.
   environment:
     name: sandbox # Sets the environment name to 'sandbox'.
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run automatically on merge to main.
-      when: on_success # Only run when the previous job in the pipeline has succeeded.
+  needs:
+    - job: build_sandbox
   script:
     - bundle exec fastlane deploy flavor:sandbox # Executes the 'deploy' lane using sandbox flavor in the Fastfile.
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run automatically on merge to main
+      when: on_success
 
 # deployProd:
 # This job deploys the production version of the Android application to Firebase App Distribution.
 # It extends the '.deploy_template' to inherit the necessary setup and configuration.
-deployProd:
+deploy_prod:
   extends: .deploy_template # Inherits configuration from the .deploy_template template.
   variables:
     APP_ID: $FIREBASE_APP_ID_PROD # Firebase App ID for the production environment.
   environment:
     name: production # Sets the environment name to 'production'.
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run automatically on merge to main.
-      when: on_success # Only run when the previous job in the pipeline has succeeded.
+  needs:
+    - job: build_prod
   script:
     - bundle exec fastlane deploy flavor:prod # Executes the 'deploy' lane using prod flavor in the Fastfile.
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run automatically on merge to main
+      when: on_success
 
 # tag_release:
 # This job tags a release in the repository.

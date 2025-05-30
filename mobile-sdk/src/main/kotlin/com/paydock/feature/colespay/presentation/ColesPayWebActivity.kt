@@ -1,6 +1,5 @@
-package com.paydock.feature.flypay.presentation
+package com.paydock.feature.colespay.presentation
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.ViewGroup
@@ -23,19 +22,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.paydock.MobileSDK
 import com.paydock.R
-import com.paydock.core.domain.mapper.mapToFlyPayEnv
+import com.paydock.core.domain.mapper.mapToColesPayEnv
 import com.paydock.core.presentation.extensions.putMessageExtra
 import com.paydock.core.presentation.extensions.putStatusExtra
 import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.designsystems.theme.Theme
-import com.paydock.feature.flypay.presentation.components.FlyPayWebView
-import com.paydock.feature.flypay.presentation.utils.CancellationStatus
-import com.paydock.feature.flypay.presentation.utils.getClientIdExtra
-import com.paydock.feature.flypay.presentation.utils.getOrderIdExtra
-import com.paydock.feature.flypay.presentation.utils.putCancellationStatusExtra
-import com.paydock.feature.flypay.presentation.utils.putOrderIdExtra
+import com.paydock.feature.colespay.presentation.components.ColesPayWebView
+import com.paydock.feature.colespay.presentation.utils.CancellationStatus
+import com.paydock.feature.colespay.presentation.utils.getClientIdExtra
+import com.paydock.feature.colespay.presentation.utils.getOrderIdExtra
+import com.paydock.feature.colespay.presentation.utils.putCancellationStatusExtra
+import com.paydock.feature.colespay.presentation.utils.putOrderIdExtra
 
-internal class FlyPayWebActivity : ComponentActivity() {
+internal class ColesPayWebActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,21 +66,21 @@ internal class FlyPayWebActivity : ComponentActivity() {
                 ) { innerPadding ->
                     // Apply inner padding to avoid content overlapping with the TopAppBar
                     Box(modifier = Modifier.padding(innerPadding).background(Theme.colors.background)) {
-                        val flyPayOrderId = requireNotNull(intent.getOrderIdExtra())
-                        val flyPayClientId = requireNotNull(intent.getClientIdExtra())
-                        // Stores and remembers the FlyPay URL created from the callback URL.
-                        val flyPayUrl: String by remember(flyPayOrderId, flyPayClientId) {
-                            mutableStateOf(createFlyPayUrl(flyPayOrderId, flyPayClientId))
+                        val colesPayOrderId = requireNotNull(intent.getOrderIdExtra())
+                        val colesPayClientId = requireNotNull(intent.getClientIdExtra())
+                        // Stores and remembers the Coles Pay URL created from the callback URL.
+                        val colesPayUrl: String by remember(colesPayOrderId, colesPayClientId) {
+                            mutableStateOf(createColesPayUrl(colesPayOrderId, colesPayClientId))
                         }
-                        FlyPayWebView(flyPayUrl = flyPayUrl, onSuccess = {
+                        ColesPayWebView(colesPayUrl = colesPayUrl, onSuccess = {
                             setResult(
-                                Activity.RESULT_OK,
-                                Intent().putOrderIdExtra(flyPayOrderId)
+                                RESULT_OK,
+                                Intent().putOrderIdExtra(colesPayOrderId)
                             )
                             finish()
                         }, onFailure = { status, message ->
                             setResult(
-                                Activity.RESULT_CANCELED,
+                                RESULT_CANCELED,
                                 Intent()
                                     .putStatusExtra(status)
                                     .putMessageExtra(message)
@@ -96,18 +95,18 @@ internal class FlyPayWebActivity : ComponentActivity() {
     }
 
     /**
-     * Creates the FlyPay URL for the payment process based on the callback URL.
+     * Creates the Coles Pay URL for the payment process based on the callback URL.
      *
-     * @param flyPayOrderId The FlyPay orderId.
+     * @param colesPayOrderId The Coles Pay orderId.
      * @param clientId The Merchant clientId.
-     * @return The composed URL with FlyPay parameters.
+     * @return The composed URL with Coles Pay parameters.
      */
     @Suppress("MaxLineLength")
-    private fun createFlyPayUrl(flyPayOrderId: String, clientId: String): String =
-        MobileSDK.getInstance().environment.mapToFlyPayEnv(flyPayOrderId, clientId)
+    private fun createColesPayUrl(colesPayOrderId: String, clientId: String): String =
+        MobileSDK.getInstance().environment.mapToColesPayEnv(colesPayOrderId, clientId)
 
     private fun finish(status: CancellationStatus) {
-        setResult(Activity.RESULT_CANCELED, Intent().putCancellationStatusExtra(status))
+        setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(status))
         finish()
     }
 }

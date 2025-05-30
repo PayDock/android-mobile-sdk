@@ -93,6 +93,9 @@ internal class PayPalWebActivity : ComponentActivity() {
                                 )
                                 finish()
                             },
+                            onCancel = {
+                                finish(CancellationStatus.USER_INITIATED)
+                            },
                             onFailure = { status, message ->
                                 setResult(
                                     RESULT_CANCELED,

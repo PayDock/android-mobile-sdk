@@ -78,13 +78,13 @@ internal class GetWalletCallbackUseCaseTest : BaseKoinUnitTest() {
     }
 
     @Test
-    fun `test valid FlyPay wallet callback request returns expected charge response`() = runTest {
+    fun `test valid Coles Pay wallet callback request returns expected charge response`() = runTest {
         // GIVEN
         val validAccessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
         val request =
-            readResourceFile("wallet/valid_flypay_wallet_callback_request.json").convertToDataClass<WalletCallbackRequest>()
+            readResourceFile("wallet/valid_colespay_wallet_callback_request.json").convertToDataClass<WalletCallbackRequest>()
         val response =
-            readResourceFile("wallet/success_flypay_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
+            readResourceFile("wallet/success_colespay_wallet_callback_response.json").convertToDataClass<WalletCallbackResponse>()
         val expectedResult = response.asEntity()
         coEvery {
             mockRepository.getWalletCallback(

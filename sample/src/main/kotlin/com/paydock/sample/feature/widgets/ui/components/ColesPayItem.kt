@@ -17,31 +17,31 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
-import com.paydock.feature.flypay.presentation.FlyPayWidget
+import com.paydock.feature.colespay.presentation.ColesPayWidget
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
 import com.paydock.sample.feature.wallet.presentation.WalletViewModel
 
 @Composable
-fun FlyPayItem(context: Context, walletViewModel: WalletViewModel = hiltViewModel()) {
+fun ColesPayItem(context: Context, walletViewModel: WalletViewModel = hiltViewModel()) {
     val uiState by walletViewModel.stateFlow.collectAsState()
-    FlyPayWidget(
+    ColesPayWidget(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        clientId = BuildConfig.FLY_PAY_CLIENT_ID,
-        token = walletViewModel.getWalletToken(WalletType.FLY_PAY)
+        clientId = BuildConfig.COLES_PAY_CLIENT_ID,
+        token = walletViewModel.getWalletToken(WalletType.COLES_PAY)
     ) { result ->
         result.onSuccess {
-            Log.d("[FlyPayWidget]", "Success: $it")
-            Toast.makeText(context, "FlyPay Result returned [$it]", Toast.LENGTH_SHORT).show()
+            Log.d("[ColesPayWidget]", "Success: $it")
+            Toast.makeText(context, "Coles Pay Result returned [$it]", Toast.LENGTH_SHORT).show()
         }.onFailure {
             val error = it.toError()
-            Log.d("[FlyPayWidget]", "Failure: ${error.displayableMessage}")
+            Log.d("[ColesPayWidget]", "Failure: ${error.displayableMessage}")
             Toast.makeText(
                 context,
-                "FlyPay Result failed! [${error.displayableMessage}]",
+                "Coles Pay Result failed! [${error.displayableMessage}]",
                 Toast.LENGTH_SHORT
             ).show()
         }

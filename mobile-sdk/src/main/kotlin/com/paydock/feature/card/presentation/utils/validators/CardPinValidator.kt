@@ -32,9 +32,10 @@ internal object CardPinValidator {
      */
     fun validateCardPinInput(cardPin: String, hasUserInteracted: Boolean): CardPinError {
         val isValidFormat = validateCardPinFormat(cardPin)
+        val isValidLength = validateCardPinLength(cardPin)
         return when {
             cardPin.isBlank() && hasUserInteracted -> CardPinError.Empty
-            cardPin.isNotBlank() && !isValidFormat -> CardPinError.Invalid
+            cardPin.isNotBlank() && (!isValidFormat || !isValidLength) -> CardPinError.Invalid
             else -> CardPinError.None
         }
     }
@@ -49,6 +50,18 @@ internal object CardPinValidator {
      */
     private fun validateCardPinFormat(cardPin: String): Boolean {
         return cardPin.matches(MobileSDKConstants.Regex.NUMERIC_DIGITS)
+    }
+
+    /**
+     * Validates whether the given gift card pin meets the minimum required length.
+     *
+     * This function checks if the length of the card pin is greater than or equal to the minimum allowed length.
+     *
+     * @param cardPin The gift card pin to check.
+     * @return `true` if the card pin's length is sufficient, `false` otherwise.
+     */
+    private fun validateCardPinLength(cardPin: String): Boolean {
+        return cardPin.length >= MobileSDKConstants.CardDetailsConfig.MIN_GIFT_CARD_PIN_LENGTH
     }
 
 }

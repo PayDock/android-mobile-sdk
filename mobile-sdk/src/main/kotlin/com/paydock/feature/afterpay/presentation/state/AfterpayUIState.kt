@@ -1,5 +1,6 @@
 package com.paydock.feature.afterpay.presentation.state
 
+import android.content.Intent
 import com.afterpay.android.model.ShippingOptionUpdateResult
 import com.afterpay.android.model.ShippingOptionsSuccessResult
 import com.paydock.core.domain.error.exceptions.SdkException
@@ -29,6 +30,16 @@ internal sealed class AfterpayUIState {
      * such as when communicating with the Afterpay SDK or backend services.
      */
     data object Loading : AfterpayUIState()
+
+    /**
+     * Represents the state when an Intent to launch the Afterpay checkout is available.
+     *
+     * This state is used to signal that the UI should launch the provided [checkoutIntent]
+     * to start the Afterpay checkout process.
+     *
+     * @property checkoutIntent The [Intent] to be used to launch the Afterpay checkout.
+     */
+    data class LaunchIntent(val checkoutIntent: Intent) : AfterpayUIState()
 
     /**
      * Event representing the result of providing a checkout token.

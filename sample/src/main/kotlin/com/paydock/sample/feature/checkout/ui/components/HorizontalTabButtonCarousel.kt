@@ -68,7 +68,7 @@ fun HorizontalTabButtonCarousel(
                         onTabSelected(tab)
                     }
 
-                    WidgetType.FLY_PAY -> FlyPayTabButton(isSelected = tab == selectedTab) {
+                    WidgetType.COLES_PAY -> ColesPayTabButton(isSelected = tab == selectedTab) {
                         onTabSelected(tab)
                     }
 
@@ -91,7 +91,7 @@ private fun HorizontalTabButtonCarouselPreview() {
             WidgetType.CARD_DETAILS,
             WidgetType.GOOGLE_PAY,
             WidgetType.PAY_PAL,
-            WidgetType.FLY_PAY
+            WidgetType.COLES_PAY
         )
     SampleTheme {
         HorizontalTabButtonCarousel(

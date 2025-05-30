@@ -3,14 +3,14 @@ package com.paydock.sample.feature.widgets.ui.models
 import com.paydock.sample.designsystems.components.list.DisplayableListItem
 
 enum class WidgetType : DisplayableListItem {
-    ADDRESS_DETAILS, AFTER_PAY, CARD_DETAILS, FLY_PAY, GOOGLE_PAY, GIFT_CARD, INTEGRATED_3DS, CLICK_TO_PAY, PAY_PAL, PAY_PAL_VAULT, STANDALONE_3DS;
+    ADDRESS_DETAILS, AFTER_PAY, CARD_DETAILS, COLES_PAY, GOOGLE_PAY, GIFT_CARD, INTEGRATED_3DS, CLICK_TO_PAY, PAY_PAL, PAY_PAL_VAULT, STANDALONE_3DS;
 
     override fun displayName(): String = when (this) {
         ADDRESS_DETAILS -> "Address"
         AFTER_PAY -> "Afterpay"
         CLICK_TO_PAY -> "Click to Pay"
         CARD_DETAILS -> "Card Details"
-        FLY_PAY -> "FlyPay"
+        COLES_PAY -> "Coles Pay"
         GIFT_CARD -> "Gift Card"
         GOOGLE_PAY -> "Google Pay"
         INTEGRATED_3DS -> "Integrated 3DS"
@@ -24,7 +24,7 @@ enum class WidgetType : DisplayableListItem {
         AFTER_PAY -> "Standalone Afterpay button"
         CLICK_TO_PAY -> "ClickToPay flow"
         CARD_DETAILS -> "Tokensise card details"
-        FLY_PAY -> "Standalone FlyPay button"
+        COLES_PAY -> "Standalone Coles Pay button"
         GIFT_CARD -> "Tokensise card details"
         GOOGLE_PAY -> "Standalone Google Pay button"
         INTEGRATED_3DS -> "Integrated 3DS flow"

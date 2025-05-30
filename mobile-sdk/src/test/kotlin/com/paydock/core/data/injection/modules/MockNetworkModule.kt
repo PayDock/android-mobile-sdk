@@ -187,10 +187,10 @@ private fun MockRequestHandleScope.handleSuccessRequest(request: HttpRequestData
                         )
                     }
 
-                    WalletType.FLY_PAY.type -> {
+                    WalletType.COLES_PAY.type -> {
                         // Check if the custom header indicating success is present
                         respond(
-                            content = MockResponseFileReader("wallet/success_flypay_wallet_callback_response.json").content,
+                            content = MockResponseFileReader("wallet/success_colespay_wallet_callback_response.json").content,
                             status = HttpStatusCode.OK,
                             headers = headersOf(HttpHeaders.ContentType, "application/json")
                         )

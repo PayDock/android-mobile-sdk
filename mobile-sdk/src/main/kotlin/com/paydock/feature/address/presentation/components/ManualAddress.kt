@@ -153,7 +153,7 @@ internal fun ManualAddress(
             onCountrySelected = viewModel::updateCountry
         )
         // Use a LaunchedEffect to delay the callback invocation
-        LaunchedEffect(uiState) {
+        LaunchedEffect(uiState::class) {
             delay(MobileSDKConstants.General.DEBOUNCE_DELAY) // Delay by 500 milliseconds
             onAddressUpdated(uiState)
         }

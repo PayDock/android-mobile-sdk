@@ -80,7 +80,7 @@ internal object MobileSDKTestConstants {
         const val MOCK_INVALID_CHECKOUT_TOKEN = "invalid-checkout-token"
     }
 
-    object FlyPay {
+    object ColesPay {
         const val MOCK_CLIENT_ID = "f65151700-dcfe-6474-aabf-fd55ee3986a6"
         const val MOCK_ORDER_ID = "721hnve4yh6fdf"
     }

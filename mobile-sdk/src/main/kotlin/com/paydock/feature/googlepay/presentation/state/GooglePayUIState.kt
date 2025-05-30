@@ -1,5 +1,7 @@
 package com.paydock.feature.googlepay.presentation.state
 
+import com.google.android.gms.tasks.Task
+import com.google.android.gms.wallet.PaymentData
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 
@@ -20,6 +22,13 @@ internal sealed class GooglePayUIState {
      * Represents a loading state where a Google Pay operation is in progress.
      */
     data object Loading : GooglePayUIState()
+
+    /**
+     * Represents a state where the Google Pay UI needs to be launched.
+     *
+     * @property paymentDataTask The task that will provide payment data.
+     */
+    data class LaunchGooglePayTask(val paymentDataTask: Task<PaymentData>) : GooglePayUIState()
 
     /**
      * Represents an error state where a Google Pay operation failed.

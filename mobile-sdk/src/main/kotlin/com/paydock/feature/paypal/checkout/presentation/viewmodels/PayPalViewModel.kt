@@ -1,6 +1,6 @@
 package com.paydock.feature.paypal.checkout.presentation.viewmodels
 
-import android.net.Uri
+import androidx.core.net.toUri
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.PayPalException
@@ -11,7 +11,6 @@ import com.paydock.feature.wallet.data.dto.CustomerData
 import com.paydock.feature.wallet.data.dto.PaymentSourceData
 import com.paydock.feature.wallet.data.dto.WalletCallbackRequest
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
-import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.feature.wallet.domain.model.ui.WalletCallback
 import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
@@ -121,6 +120,31 @@ internal class PayPalViewModel(
     //endregion
 
     //region Public Methods
+
+    /**
+     * Initiates the PayPal checkout flow by obtaining a wallet token and fetching wallet callback data.
+     *
+     * This function serves as the entry point for starting the PayPal checkout process.
+     * It first uses the provided [tokenProvider] to asynchronously retrieve a wallet token.
+     * Once the token is obtained, it's set using [setWalletToken] and then used to fetch
+     * the wallet callback information via [getWalletCallback].
+     *
+     * @param tokenProvider A suspend function that takes a callback `(String) -> Unit` and
+     *                      invokes it with the obtained wallet token. This allows for asynchronous
+     *                      token retrieval.
+     * @param requestShipping A boolean flag indicating whether shipping information should be
+     *                        requested during the PayPal flow.
+     */
+    fun startPayPalFlow(
+        tokenProvider: (onTokenReceived: (String) -> Unit) -> Unit,
+        requestShipping: Boolean
+    ) {
+        tokenProvider { obtainedToken ->
+            setWalletToken(obtainedToken)
+            getWalletCallback(walletToken = obtainedToken, requestShipping = requestShipping)
+        }
+    }
+
     /**
      * Fetches wallet callback data using the wallet token and additional parameters.
      *
@@ -130,8 +154,7 @@ internal class PayPalViewModel(
     fun getWalletCallback(walletToken: String, requestShipping: Boolean) {
         val request = WalletCallbackRequest(
             type = MobileSDKConstants.WalletCallbackType.TYPE_CREATE_TRANSACTION,
-            shipping = requestShipping,
-            walletType = WalletType.PAY_PAL.type
+            shipping = requestShipping
         )
         getWalletCallback(walletToken, request)
     }
@@ -160,16 +183,6 @@ internal class PayPalViewModel(
     }
 
     /**
-     * Composes the PayPal URL for payment processing based on a callback URL.
-     *
-     * @param callbackUrl The callback URL for the PayPal payment.
-     * @return The composed URL with PayPal parameters.
-     */
-    fun createPayPalUrl(callbackUrl: String): String =
-        "$callbackUrl&${MobileSDKConstants.PayPalConfig.REDIRECT_PARAM_NAME}" +
-            "=${MobileSDKConstants.PayPalConfig.PAY_PAL_REDIRECT_PARAM_VALUE}"
-
-    /**
      * Parses a PayPal URL to extract payment data such as the PayPal token and payer ID.
      *
      * Updates the state to `PayPalCheckoutUIState.Capture` if the required parameters are found.
@@ -177,12 +190,12 @@ internal class PayPalViewModel(
      * @param requestUrl The URL returned from the PayPal payment process.
      */
     fun parsePayPalUrl(requestUrl: String) {
-        val requestUri = Uri.parse(requestUrl)
-        val payPalToken = requestUri.getQueryParameter("token")
-        val payerId = if (requestUrl.contains("PayerID")) {
-            requestUri.getQueryParameter("PayerID")
+        val requestUri = requestUrl.toUri()
+        val payPalToken = requestUri.getQueryParameter(MobileSDKConstants.PayPalConfig.TOKEN_KEY)
+        val payerId = if (requestUrl.contains(MobileSDKConstants.PayPalConfig.PAYER_ID_KEY)) {
+            requestUri.getQueryParameter(MobileSDKConstants.PayPalConfig.PAYER_ID_KEY)
         } else {
-            requestUri.getQueryParameter("flowId")
+            requestUri.getQueryParameter(MobileSDKConstants.PayPalConfig.FLOW_ID_KEY)
         }
         if (payPalToken != null && payerId != null) {
             updateUiState(PayPalCheckoutUIState.Capture(payPalToken, payerId))

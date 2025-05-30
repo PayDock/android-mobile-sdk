@@ -63,7 +63,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
                 walletChargeResult = null,
                 threeDSToken = null,
                 chargeResult = null,
-                flyPayResult = null,
+                colesPayResult = null,
                 error = null
             )
         }
@@ -89,8 +89,8 @@ class StandaloneCheckoutViewModel @Inject constructor(
                     )
                 }
 
-                WalletType.FLY_PAY -> {
-                    val request = createFlyPayWalletRequest()
+                WalletType.COLES_PAY -> {
+                    val request = createColesPayWalletRequest()
                     initiateWalletTransaction(
                         manualCapture = true,
                         request = request,
@@ -113,20 +113,18 @@ class StandaloneCheckoutViewModel @Inject constructor(
             currency = AU_CURRENCY_CODE,
             customer = ChargesCustomerDTO(
                 paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                    gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL,
-                    walletType = WalletType.PAY_PAL.type
+                    gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL
                 )
             )
         )
     }
 
-    private fun createFlyPayWalletRequest(): InitiateWalletRequest {
+    private fun createColesPayWalletRequest(): InitiateWalletRequest {
         return InitiateWalletRequest(
             currency = AU_CURRENCY_CODE,
             customer = ChargesCustomerDTO(
                 paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                    gatewayId = BuildConfig.GATEWAY_ID_FLY_PAY,
-                    walletType = WalletType.FLY_PAY.type
+                    gatewayId = BuildConfig.GATEWAY_ID_COLES_PAY
                 )
             )
         )
@@ -137,8 +135,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
             currency = AU_CURRENCY_CODE,
             customer = ChargesCustomerDTO(
                 paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                    gatewayId = BuildConfig.GATEWAY_ID_GOOGLE_PAY,
-                    walletType = WalletType.GOOGLE.type
+                    gatewayId = BuildConfig.GATEWAY_ID_GOOGLE_PAY
                 )
             )
         )
@@ -398,14 +395,14 @@ class StandaloneCheckoutViewModel @Inject constructor(
         }
     }
 
-    fun handleFlyPayResult(result: Result<String>) {
+    fun handleColesPayResult(result: Result<String>) {
         val chargeId = _stateFlow.value.walletChargeResult?.chargeId
         if (chargeId != null) {
             result.onSuccess {
                 captureWalletCharge(chargeId)
                 _stateFlow.update { state ->
                     state.copy(
-                        flyPayResult = it
+                        colesPayResult = it
                     )
                 }
             }.onFailure {
@@ -521,7 +518,7 @@ data class CheckoutUIState(
     val walletChargeResult: WalletCharge? = null,
     val threeDSToken: ThreeDSToken? = null,
     val chargeResult: ChargeResponse? = null,
-    val flyPayResult: String? = null,
+    val colesPayResult: String? = null,
     val afterPayResult: String? = null,
     val error: String? = null,
 )

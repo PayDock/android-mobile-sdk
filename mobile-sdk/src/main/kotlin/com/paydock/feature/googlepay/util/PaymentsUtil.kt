@@ -174,7 +174,8 @@ object PaymentsUtil {
      *
      * @return Payment data tokenization for the CARD payment method.
      * @throws JSONException
-     * See [PaymentMethodTokenizationSpecification](https://developers.google.com/pay/api/android/reference/request-objects#PaymentMethodTokenizationSpecification)
+     * @see [PaymentMethodTokenizationSpecification](https://developers.google.com/pay/api/android/reference/request-objects#PaymentMethodTokenizationSpecification)
+     * @see [PaymentTokenProvider](https://developers.google.com/pay/api/android/guides/tutorial#tokenization)
      */
     private fun gatewayTokenizationSpecification(merchantIdentifier: String): JSONObject {
         return JSONObject().apply {
@@ -183,7 +184,7 @@ object PaymentsUtil {
                 "parameters",
                 JSONObject(
                     mapOf(
-                        "gateway" to merchantIdentifier,
+                        "gateway" to MobileSDKConstants.GooglePayConfig.GATEWAY,
                         "gatewayMerchantId" to merchantIdentifier
                     )
                 )

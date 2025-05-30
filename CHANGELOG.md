@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.0] - 2025-05-30
+
+### Changed
+- Rebranded FlyPay to Coles Pay
+- Refactored references from FlyPay to Coles Pay
+- Gift Card pin validation logic (minLength 4)
+
+### Fixed
+- Google Pay fixed merchant identifier
+- Keyboard accessibility navigation with dropdowns
+- PayPal redirect cancellation flow from web
+
 ## [4.0.0] - 2025-03-28
 
 ### Changed

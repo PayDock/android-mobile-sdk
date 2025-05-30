@@ -30,12 +30,19 @@ import org.json.JSONObject
 /**
  * ViewModel to manage the Google Pay payment flow and UI state.
  *
- * @property paymentsClient The Google Pay [PaymentsClient] instance for initiating payment requests.
- * @property isReadyToPayRequest The JSON object representing the "Ready to Pay" request.
- * @property captureWalletChargeUseCase Use case for capturing wallet charges.
- * @property declineWalletChargeUseCase Use case for declining wallet charges.
- * @property getWalletCallbackUseCase Use case for retrieving wallet callback information.
- * @property dispatchers The dispatchers for coroutine context switching.
+ * This ViewModel is responsible for handling the interactions with the Google Pay API,
+ * managing the UI state related to Google Pay availability and payment processing,
+ * and coordinating with various use cases for capturing, declining, and retrieving
+ * wallet charge information.
+ *
+ * @property paymentsClient The Google Pay [PaymentsClient] instance used for interacting with the Google Pay API.
+ *                          This client is essential for initiating payment requests and checking Google Pay readiness.
+ * @param isReadyToPayRequest The JSON object representing the "isReadyToPay" request.
+ *                             This is used during initialization to determine if the user can use Google Pay.
+ * @param captureWalletChargeUseCase Use case responsible for capturing a wallet charge after a successful Google Pay transaction.
+ * @param declineWalletChargeUseCase Use case responsible for declining a wallet charge if necessary.
+ * @param getWalletCallbackUseCase Use case responsible for retrieving wallet callback information.
+ * @param dispatchers Provides CoroutineDispatchers for managing asynchronous operations on different threads.
  */
 internal class GooglePayViewModel(
     private val paymentsClient: PaymentsClient,
@@ -179,6 +186,32 @@ internal class GooglePayViewModel(
     //endregion
 
     //region Public Methods
+
+    /**
+     * Initiates the Google Pay payment flow.
+     *
+     * This function sets the UI to a loading state and then invokes the [tokenProvider]
+     * to obtain a wallet token. Once the token is received, it proceeds to the
+     * `onTokenReceivedAndReadyToPay` method with the token and the provided [paymentRequest].
+     *
+     * @param tokenProvider A higher-order function that takes a callback `(String) -> Unit`
+     *                      and is responsible for asynchronously providing the wallet token.
+     *                      The callback should be invoked with the received token.
+     * @param paymentRequest A [JSONObject] containing the details of the Google Pay payment request.
+     *                       This object is used to configure the payment sheet presented to the user.
+     */
+    fun startGooglePayPaymentFlow(
+        tokenProvider: (onTokenReceived: (String) -> Unit) -> Unit,
+        paymentRequest: JSONObject // Pass paymentRequest here
+    ) {
+        setLoadingState()
+        tokenProvider { receivedToken ->
+            // This is where the token is received.
+            // Now we have the token and can proceed.
+            onTokenReceivedAndReadyToPay(receivedToken, paymentRequest)
+        }
+    }
+
     /**
      * Handles the cancellation result by updating the UI state to an error state.
      */
@@ -229,12 +262,41 @@ internal class GooglePayViewModel(
     }
 
     /**
+     * Handles the state after a wallet token is successfully received and prepares for payment.
+     *
+     * This function is typically called after the [tokenProvider] in [startGooglePayPaymentFlow]
+     * has successfully obtained a wallet token. It sets the received [token],
+     * updates the UI to a loading state, and then proceeds to initiate the Google Pay
+     * payment process by creating and emitting a [Task] to launch the Google Pay sheet.
+     *
+     * In a real-world scenario, this function might involve an additional API call
+     * using the `walletToken` before proceeding to get the payment task. For this
+     * implementation, it directly proceeds to fetch the payment task.
+     *
+     * @param token The wallet token received from the token provider.
+     * @param paymentRequest A [JSONObject] containing the details of the Google Pay payment request.
+     *                       This is used to configure the Google Pay payment sheet.
+     */
+    private fun onTokenReceivedAndReadyToPay(token: String, paymentRequest: JSONObject) {
+        setWalletToken(token)
+        setLoadingState()
+        // In a real scenario, you might do an API call here with the walletToken
+        // For now, let's assume we proceed directly to getting the payment task
+        launchOnIO {
+            // Potentially fetch something with the walletToken if needed first
+            // For now, directly get the payment task
+            val task = getLoadPaymentDataTask(paymentRequest)
+            updateUiState(GooglePayUIState.LaunchGooglePayTask(task))
+        }
+    }
+
+    /**
      * Creates a [Task] that starts the payment process with the transaction details included.
      *
      * @param paymentRequest The JSON object containing the payment request details.
      * @return A [Task] with the payment information.
      */
-    fun getLoadPaymentDataTask(paymentRequest: JSONObject): Task<PaymentData> {
+    private fun getLoadPaymentDataTask(paymentRequest: JSONObject): Task<PaymentData> {
         val request = PaymentDataRequest.fromJson(paymentRequest.toString())
         return paymentsClient.loadPaymentData(request)
     }

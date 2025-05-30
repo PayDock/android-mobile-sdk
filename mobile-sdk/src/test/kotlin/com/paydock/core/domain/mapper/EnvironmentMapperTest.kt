@@ -133,44 +133,44 @@ class EnvironmentMapperTest : BaseUnitTest() {
     }
 
     @Test
-    fun mapToFlyPayEnv_production_returnsProductionUrl() {
+    fun mapToColesPayEnv_production_returnsProductionUrl() {
         val environment = Environment.PRODUCTION
-        val flyPayOrderId = "testOrderId"
+        val colesPayOrderId = "testOrderId"
         val clientId = "testClientId"
-        val expectedUrl = "https://checkout.flypay.com.au/?" +
-            "orderId=$flyPayOrderId&" +
-            "redirectUrl=${MobileSDKConstants.FlyPayConfig.FLY_PAY_REDIRECT_URL}&" +
+        val expectedUrl = "https://checkout.colespay.com.au/?" +
+            "orderId=$colesPayOrderId&" +
+            "redirectUrl=${MobileSDKConstants.ColesPayConfig.COLES_PAY_REDIRECT_URL}&" +
             "mode=default&" +
             "clientId=$clientId"
-        val actualUrl = environment.mapToFlyPayEnv(flyPayOrderId, clientId)
+        val actualUrl = environment.mapToColesPayEnv(colesPayOrderId, clientId)
         assertEquals(expectedUrl, actualUrl)
     }
 
     @Test
-    fun mapToFlyPayEnv_sandbox_returnsSandboxUrl() {
+    fun mapToColesPayEnv_sandbox_returnsSandboxUrl() {
         val environment = Environment.SANDBOX
-        val flyPayOrderId = "testOrderId"
+        val colesPayOrderId = "testOrderId"
         val clientId = "testClientId"
         val expectedUrl = "https://checkout.sandbox.cxbflypay.com.au/?" +
-            "orderId=$flyPayOrderId&" +
-            "redirectUrl=${MobileSDKConstants.FlyPayConfig.FLY_PAY_REDIRECT_URL}&" +
+            "orderId=$colesPayOrderId&" +
+            "redirectUrl=${MobileSDKConstants.ColesPayConfig.COLES_PAY_REDIRECT_URL}&" +
             "mode=default&" +
             "clientId=$clientId"
-        val actualUrl = environment.mapToFlyPayEnv(flyPayOrderId, clientId)
+        val actualUrl = environment.mapToColesPayEnv(colesPayOrderId, clientId)
         assertEquals(expectedUrl, actualUrl)
     }
 
     @Test
-    fun mapToFlyPayEnv_staging_returnsSandboxUrl() {
+    fun mapToColesPayEnv_staging_returnsSandboxUrl() {
         val environment = Environment.STAGING
-        val flyPayOrderId = "testOrderId"
+        val colesPayOrderId = "testOrderId"
         val clientId = "testClientId"
         val expectedUrl = "https://checkout.sandbox.cxbflypay.com.au/?" +
-            "orderId=$flyPayOrderId&" +
-            "redirectUrl=${MobileSDKConstants.FlyPayConfig.FLY_PAY_REDIRECT_URL}&" +
+            "orderId=$colesPayOrderId&" +
+            "redirectUrl=${MobileSDKConstants.ColesPayConfig.COLES_PAY_REDIRECT_URL}&" +
             "mode=default&" +
             "clientId=$clientId"
-        val actualUrl = environment.mapToFlyPayEnv(flyPayOrderId, clientId)
+        val actualUrl = environment.mapToColesPayEnv(colesPayOrderId, clientId)
         assertEquals(expectedUrl, actualUrl)
     }
 

@@ -3,25 +3,23 @@ package com.paydock.sample.feature.checkout.ui.components
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.paydock.sample.R
-import com.paydock.sample.designsystems.theme.FlyPayBlue
 import com.paydock.sample.designsystems.theme.SampleTheme
 import com.paydock.sample.designsystems.theme.Theme
 
 @Composable
-fun FlyPayTabButton(isSelected: Boolean, onClick: () -> Unit) {
+fun ColesPayTabButton(isSelected: Boolean, onClick: () -> Unit) {
+    val selectedColor = Theme.colors.primary
     TabButton(
         isSelected = isSelected,
-        selectedBorderColor = FlyPayBlue,
-        selectedBackgroundColor = FlyPayBlue,
+        selectedBorderColor = selectedColor,
+        selectedBackgroundColor = Color.White,
         onClick = onClick
     ) {
         Image(
-            painter = painterResource(id = R.drawable.ic_flypay),
-            colorFilter = ColorFilter.tint(if (isSelected) Color.White else Theme.colors.onSurface),
+            painter = painterResource(id = R.drawable.ic_coles_pay),
             contentDescription = null
         )
     }
@@ -29,9 +27,9 @@ fun FlyPayTabButton(isSelected: Boolean, onClick: () -> Unit) {
 
 @Composable
 @Preview
-private fun FlyPayTabButtonDefault() {
+private fun ColesPayTabButtonDefault() {
     SampleTheme {
-        FlyPayTabButton(
+        ColesPayTabButton(
             isSelected = false
         ) {}
     }
@@ -39,9 +37,9 @@ private fun FlyPayTabButtonDefault() {
 
 @Composable
 @Preview
-private fun FlyPayTabButtonSelected() {
+private fun ColesPayTabButtonSelected() {
     SampleTheme {
-        FlyPayTabButton(
+        ColesPayTabButton(
             isSelected = true
         ) {}
     }

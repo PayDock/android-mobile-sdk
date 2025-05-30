@@ -48,7 +48,7 @@ fun ClickToPayWidget(
     val uiState by viewModel.stateFlow.collectAsState()
 
     // Handle result and reset state
-    LaunchedEffect(uiState) {
+    LaunchedEffect(uiState::class) {
         // Handle error flow and display
         uiState.error?.let {
             // Send error state to the completion callback

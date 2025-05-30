@@ -73,7 +73,7 @@ fun CardDetailsWidget(
     val focusCVV = FocusRequester()
 
     // Handles UI state changes (success or failure of tokenization)
-    LaunchedEffect(uiState) {
+    LaunchedEffect(uiState::class) {
         handleUIState(uiState, inputState, viewModel, loadingDelegate, completion)
     }
 

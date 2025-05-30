@@ -50,5 +50,14 @@ fun PayPalItem(context: Context, walletViewModel: WalletViewModel = hiltViewMode
             Toast.makeText(context, uiState.error ?: CHARGE_TRANSACTION_ERROR, Toast.LENGTH_SHORT)
                 .show()
         }
+
+        uiState.isLoading -> {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                CircularProgressIndicator()
+            }
+        }
     }
 }

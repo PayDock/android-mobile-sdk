@@ -22,4 +22,3 @@ internal val SdkOutlineDark = Color(0xFFE6E1E9) // Border Colours
 // Internal Colours
 internal val PayPalVault = Color(0xFF212121)
 internal val PayPal = Color(0xFFFFC43A)
-internal val FlyPayBlue = Color(0xFF007BBF)

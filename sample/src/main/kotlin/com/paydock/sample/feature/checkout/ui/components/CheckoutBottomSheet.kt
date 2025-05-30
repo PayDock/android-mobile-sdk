@@ -42,7 +42,7 @@ fun CheckoutBottomSheet(
             WidgetType.CLICK_TO_PAY,
             WidgetType.GOOGLE_PAY,
             WidgetType.PAY_PAL,
-            WidgetType.FLY_PAY,
+            WidgetType.COLES_PAY,
             WidgetType.AFTER_PAY
         )
     var selectedTab by remember { mutableStateOf(supportedPaymentMethods.first()) }
@@ -108,9 +108,10 @@ fun CheckoutBottomSheet(
                             resultHandler = viewModel::handleChargeResult
                         )
 
-                        WidgetType.FLY_PAY -> FlyPayContent(
-                            tokenHandler = viewModel.getWalletToken(WalletType.FLY_PAY),
-                            resultHandler = viewModel::handleFlyPayResult
+                        WidgetType.COLES_PAY -> ColesPayContent(
+                            tokenHandler = viewModel.getWalletToken(WalletType.COLES_PAY),
+                            loadingDelegate = viewModel,
+                            resultHandler = viewModel::handleColesPayResult
                         )
 
                         WidgetType.AFTER_PAY -> AfterpayContent(

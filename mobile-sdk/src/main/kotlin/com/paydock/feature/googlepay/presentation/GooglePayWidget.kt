@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.launch
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -21,11 +22,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import com.google.android.gms.common.api.CommonStatusCodes
+import com.google.android.gms.tasks.Task
 import com.google.android.gms.wallet.AutoResolveHelper
 import com.google.android.gms.wallet.PaymentData
 import com.google.android.gms.wallet.WalletConstants
@@ -73,8 +74,6 @@ fun GooglePayWidget(
     val viewModel: GooglePayViewModel =
         koinViewModel(parameters = { parametersOf(isReadyToPayRequest) })
 
-    val scope = rememberCoroutineScope()
-
     // Collect the UI state from the ViewModel
     val uiState by viewModel.uiState.collectAsState()
     val googlePayAvailable by viewModel.googlePayAvailable.collectAsState()
@@ -87,16 +86,17 @@ fun GooglePayWidget(
     }
 
     // Set up a launcher for handling Google Pay resolution
-    val paymentDataTaskResult = rememberLauncherForActivityResult(
+    val paymentDataLauncher = rememberLauncherForActivityResult(
         contract = TaskResultContracts.GetPaymentDataResult()
     ) { result ->
         handleGooglePayResult(result, viewModel, resolvablePaymentForResult)
     }
 
-    LaunchedEffect(uiState) {
+    LaunchedEffect(uiState::class) {
         handleUIState(
             uiState,
             viewModel,
+            paymentDataLauncher,
             loadingDelegate,
             completion
         )
@@ -121,17 +121,11 @@ fun GooglePayWidget(
                             modifier = Modifier
                                 .testTag("payButton")
                                 .fillMaxWidth(),
+                            enabled = uiState !is GooglePayUIState.Loading,
                             theme = if (isSystemInDarkTheme()) ButtonTheme.Dark else ButtonTheme.Light,
                             type = ButtonType.Pay,
                             onClick = {
-                                // Use the callback to obtain the token asynchronously
-                                token { obtainedToken ->
-                                    scope.launch {
-                                        viewModel.setWalletToken(obtainedToken)
-                                        val task = viewModel.getLoadPaymentDataTask(paymentRequest)
-                                        task.addOnCompleteListener(paymentDataTaskResult::launch)
-                                    }
-                                }
+                                viewModel.startGooglePayPaymentFlow(token, paymentRequest)
                             },
                             radius = Theme.dimensions.buttonCornerRadius,
                             allowedPaymentMethods = allowedPaymentMethods
@@ -215,17 +209,19 @@ private fun handleGooglePayResult(
 /**
  * Handles the UI state for Google Pay.
  *
- * This function processes the current UI state of Google Pay, invoking loading delegates, and
+ * This function processes the current UI state of Google Pay, invoking loading delegates, launching Google Pay tasks, and
  * completing the payment transaction with success or error results as appropriate.
  *
  * @param uiState The current UI state of the Google Pay operation.
  * @param viewModel The ViewModel managing Google Pay state and operations.
+ * @param paymentDataLauncher A launcher for the Google Pay payment data task.
  * @param loadingDelegate An optional delegate to manage loading indicators externally.
  * @param completion A callback to complete the Google Pay transaction with success or error.
  */
 private fun handleUIState(
     uiState: GooglePayUIState,
     viewModel: GooglePayViewModel,
+    paymentDataLauncher: ManagedActivityResultLauncher<Task<PaymentData>, ApiTaskResult<PaymentData>>, // Updated parameter
     loadingDelegate: WidgetLoadingDelegate?,
     completion: (Result<ChargeResponse>) -> Unit,
 ) {
@@ -233,6 +229,10 @@ private fun handleUIState(
         is GooglePayUIState.Idle -> Unit
         is GooglePayUIState.Loading -> {
             loadingDelegate?.widgetLoadingDidStart()
+        }
+        is GooglePayUIState.LaunchGooglePayTask -> {
+            loadingDelegate?.widgetLoadingDidFinish()
+            uiState.paymentDataTask.addOnCompleteListener(paymentDataLauncher::launch)
         }
         // Handle success state, notify the loading delegate, and complete the transaction with success
         is GooglePayUIState.Success -> {
