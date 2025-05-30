@@ -12,7 +12,7 @@ import com.paydock.R
 import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
-import com.paydock.designsystems.components.button.SdkImageButton
+import com.paydock.designsystems.components.button.SdkIconButton
 import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.theme.PayPal
@@ -38,7 +38,7 @@ internal fun PayPalButton(
     isLoading: Boolean = false,
     onClick: () -> Unit
 ) {
-    SdkImageButton(
+    SdkIconButton(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("payPalButton"),

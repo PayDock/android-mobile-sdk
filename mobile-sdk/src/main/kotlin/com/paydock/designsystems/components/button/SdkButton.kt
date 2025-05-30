@@ -113,9 +113,9 @@ internal fun ButtonAppearance.RenderButton(
                 onClick = onClick
             )
         }
-        is ButtonAppearance.ImageButtonAppearance -> {
+        is ButtonAppearance.IconButtonAppearance -> {
             require(buttonIcon != null) { "ImageButtonAppearance requires a text" }
-            SdkImageButton(
+            SdkIconButton(
                 modifier = modifier,
                 enabled = enabled,
                 isLoading = isLoading,
@@ -200,7 +200,7 @@ sealed class ButtonAppearance(
         shape,
         colors,
         elevation,
-        border,
+        border?.copy(),
         contentPadding,
         iconAppearance,
         textAppearance,
@@ -289,7 +289,7 @@ sealed class ButtonAppearance(
             shape = shape,
             colors = colors.copy(),
             elevation = elevation,
-            border = border,
+            border = border?.copy(),
             contentPadding = contentPadding,
             iconAppearance = iconAppearance.copy(),
             textAppearance = textAppearance.copy(),
@@ -356,7 +356,7 @@ sealed class ButtonAppearance(
             shape = shape,
             colors = colors.copy(),
             elevation = elevation,
-            border = border,
+            border = border?.copy(),
             contentPadding = contentPadding,
             iconAppearance = iconAppearance.copy(),
             textAppearance = textAppearance.copy(),
@@ -382,9 +382,9 @@ sealed class ButtonAppearance(
      * @property elevation The elevation of the button, used to create a shadow effect.
      * @property border The border stroke applied to the button.
      * @property contentPadding The padding around the button's content (the image).
-     * @property iconAppearance This property is usually null for [ImageButtonAppearance] as
+     * @property iconAppearance This property is usually null for [IconButtonAppearance] as
      *   the main content is the button's image itself, not an icon within other content.
-     * @property textAppearance This property is usually null for [ImageButtonAppearance] as
+     * @property textAppearance This property is usually null for [IconButtonAppearance] as
      *   the button does not typically display text.
      * @property loaderAppearance The appearance configuration for a loader (e.g., a spinner)
      *   displayed on the button when it is in a loading state.
@@ -393,7 +393,7 @@ sealed class ButtonAppearance(
      * This is beneficial for performance and thread safety in Compose.
      */
     @Immutable
-    data class ImageButtonAppearance(
+    data class IconButtonAppearance(
         override val height: Dp,
         override val contentSpacing: Dp,
         override val shape: Shape,
@@ -424,13 +424,13 @@ sealed class ButtonAppearance(
             elevation: ButtonElevation? = this.elevation,
             border: BorderStroke? = this.border,
             contentPadding: PaddingValues = this.contentPadding
-        ): ImageButtonAppearance = ImageButtonAppearance(
+        ): IconButtonAppearance = IconButtonAppearance(
             height = height.takeOrElse { this.height },
             contentSpacing = contentSpacing.takeOrElse { this.contentSpacing },
             shape = shape,
             colors = colors.copy(),
             elevation = elevation,
-            border = border,
+            border = border?.copy(),
             contentPadding = contentPadding,
             iconAppearance = iconAppearance?.copy(),
             textAppearance = textAppearance?.copy(),
@@ -577,8 +577,8 @@ object ButtonAppearanceDefaults {
         )
 
     @Composable
-    fun imageButtonAppearance(enabled: Boolean = true): ButtonAppearance.ImageButtonAppearance =
-        ButtonAppearance.ImageButtonAppearance(
+    fun imageButtonAppearance(enabled: Boolean = true): ButtonAppearance.IconButtonAppearance =
+        ButtonAppearance.IconButtonAppearance(
             height = ButtonHeight,
             contentSpacing = ButtonSpacing,
             shape = ButtonDefaults.textShape,
@@ -779,11 +779,11 @@ internal fun SdkTextButton(
 }
 
 @Composable
-internal fun SdkImageButton(
+internal fun SdkIconButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isLoading: Boolean = false,
-    appearance: ButtonAppearance.ImageButtonAppearance = ButtonAppearanceDefaults.imageButtonAppearance(enabled),
+    appearance: ButtonAppearance.IconButtonAppearance = ButtonAppearanceDefaults.imageButtonAppearance(enabled),
     buttonIcon: ButtonIcon,
     contentDescription: String? = null,
     onClick: () -> Unit
@@ -1036,8 +1036,8 @@ internal fun PreviewSdkTextButtonWithIcon() {
 
 @SdkLightDarkPreviews
 @Composable
-internal fun PreviewSdkImageButtonEnabled() {
-    SdkImageButton(
+internal fun PreviewSdkIconButtonEnabled() {
+    SdkIconButton(
         buttonIcon = ButtonIcon.DrawableRes(R.drawable.ic_paypal_button),
         onClick = {},
         modifier = Modifier.padding(8.dp)
@@ -1046,8 +1046,8 @@ internal fun PreviewSdkImageButtonEnabled() {
 
 @SdkLightDarkPreviews
 @Composable
-internal fun PreviewSdkImageButtonDisabled() {
-    SdkImageButton(
+internal fun PreviewSdkIconButtonDisabled() {
+    SdkIconButton(
         buttonIcon = ButtonIcon.DrawableRes(R.drawable.ic_paypal_button),
         enabled = false,
         onClick = {},
@@ -1057,8 +1057,8 @@ internal fun PreviewSdkImageButtonDisabled() {
 
 @SdkLightDarkPreviews
 @Composable
-internal fun PreviewSdkImageButtonLoading() {
-    SdkImageButton(
+internal fun PreviewSdkIconButtonLoading() {
+    SdkIconButton(
         buttonIcon = ButtonIcon.DrawableRes(R.drawable.ic_paypal_button),
         isLoading = true,
         onClick = {},

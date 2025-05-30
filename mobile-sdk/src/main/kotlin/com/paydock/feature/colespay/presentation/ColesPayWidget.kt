@@ -34,6 +34,7 @@ import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.designsystems.components.button.ImageButtonDefaults
 import com.paydock.designsystems.components.button.SdkImageButton
 import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
 import com.paydock.feature.colespay.presentation.state.ColesPayUIState
@@ -100,8 +101,10 @@ fun ColesPayWidget(
     if (!isLoading) {
         SdkImageButton(
             modifier = modifier,
-            shape = RoundedCornerShape(percent = 50), // ensures pill shape
-            rippleColor = Color.White,
+            appearance = ImageButtonDefaults.appearance().copy(
+                shape = RoundedCornerShape(percent = 50), // ensures pill shape
+                rippleColor = Color.White,
+            ),
             enabled = uiState !is ColesPayUIState.Loading && enabled,
             painter = painterResource(id = R.drawable.pay_with_coles_pay_button),
             contentDescription = LocalContext.current.getString(R.string.content_desc_coles_pay_button),

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,8 +20,11 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.takeOrElse
 import com.paydock.R
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.button.ButtonAppearanceDefaults.ButtonHeight
 
 /**
  * Composable function for creating a custom image button.
@@ -29,9 +33,9 @@ import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
  *
  * @param modifier The Modifier to be applied to the button.
  * @param enabled Whether the button is enabled or not. When disabled, the button's appearance changes
- *   (alpha is reduced) and it does not respond to clicks.
- * @param shape The shape of the button.
- * @param rippleColor The color of the ripple effect when the button is pressed.
+ *   (alpha is reduced based on `appearance.disabledImageAlpha`) and it does not respond to clicks.
+ * @param appearance Defines the visual appearance of the button, including shape, ripple color, content scale, and disabled alpha.
+ *                   See [ImageButtonDefaults.appearance] for default values.
  * @param painter The [Painter] that will draw the image for the button.
  * @param contentDescription A description of the image for accessibility purposes.
  * @param imageAspectRatio The aspect ratio of the image. If null, the aspect ratio is derived from the painter's intrinsic size.
@@ -42,8 +46,7 @@ import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 internal fun SdkImageButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    shape: Shape = ButtonDefaults.shape,
-    rippleColor: Color = Color.Transparent,
+    appearance: ImageButtonAppearance = ImageButtonDefaults.appearance(),
     painter: Painter,
     contentDescription: String? = null,
     imageAspectRatio: Float? = painter.intrinsicSize.width / painter.intrinsicSize.height.coerceAtLeast(
@@ -54,14 +57,14 @@ internal fun SdkImageButton(
     val interactionSource = remember { MutableInteractionSource() }
     Box(
         modifier = modifier
-            .clip(shape)
+            .clip(appearance.shape)
             .clickable(
                 onClick = onClick,
                 enabled = enabled,
                 interactionSource = interactionSource,
                 indication = ripple(
                     bounded = true,
-                    color = rippleColor
+                    color = appearance.rippleColor
                 )
             )
             .then(
@@ -80,12 +83,77 @@ internal fun SdkImageButton(
             painter = painter,
             contentDescription = contentDescription,
             // Scale the image to fit the parent width
-            contentScale = ContentScale.FillWidth,
+            contentScale = appearance.contentScale,
             modifier = Modifier
                 .fillMaxWidth()
                 .alpha(if (enabled) 1f else 0.5f)
         )
     }
+}
+
+/**
+ * Defines the visual appearance of an [SdkImageButton].
+ * This class is immutable, ensuring that the appearance properties cannot be changed after creation,
+ * which is beneficial for performance and predictability in Compose.
+ *
+ * @property height The height of the image button.
+ * @property shape The shape of the button's container.
+ * @property rippleColor The color of the ripple effect when the button is pressed.
+ * @property contentScale How the image should be scaled to fit the bounds of the button.
+ * @property disabledImageAlpha The alpha value applied to the image when the button is disabled.
+ *                              This value should be between 0.0f (fully transparent) and 1.0f (fully opaque).
+ */
+@Immutable
+class ImageButtonAppearance(
+    val height: Dp,
+    val shape: Shape,
+    val rippleColor: Color,
+    val contentScale: ContentScale,
+    val disabledImageAlpha: Float
+) {
+    fun copy(
+        height: Dp = this.height,
+        shape: Shape = this.shape,
+        rippleColor: Color = this.rippleColor,
+        contentScale: ContentScale = this.contentScale,
+        disabledImageAlpha: Float = this.disabledImageAlpha,
+    ): ImageButtonAppearance = ImageButtonAppearance(
+        height = height.takeOrElse { this.height },
+        shape = shape,
+        rippleColor = rippleColor.copy(),
+        contentScale = contentScale,
+        disabledImageAlpha = disabledImageAlpha
+    )
+}
+
+/**
+ * Object containing default values for [SdkIconButton].
+ *
+ * This object provides a default appearance for the image button, which can be used or customized.
+ */
+object ImageButtonDefaults {
+    /**
+     * Creates a default [ImageButtonAppearance] for an [SdkIconButton].
+     *
+     * This function provides a standard appearance configuration that can be used directly or as a
+     * base for further customization. The default values are:
+     * - `height`: [ButtonHeight] (defined in [ButtonAppearanceDefaults])
+     * - `shape`: [ButtonDefaults.shape] (the default Material Design button shape)
+     * - `rippleColor`: [Color.Transparent] (no visible ripple effect by default)
+     * - `contentScale`: [ContentScale.FillWidth] (the image will scale to fill the width of the button)
+     * - `disabledImageAlpha`: 0.5f (the image will be 50% transparent when the button is disabled)
+     *
+     * @return A default [ImageButtonAppearance] instance.
+     */
+    @Composable
+    fun appearance(): ImageButtonAppearance =
+        ImageButtonAppearance(
+            height = ButtonHeight,
+            shape = ButtonDefaults.shape,
+            rippleColor = Color.Transparent,
+            contentScale = ContentScale.FillWidth,
+            disabledImageAlpha = 0.5f
+        )
 }
 
 @SdkLightDarkPreviews
