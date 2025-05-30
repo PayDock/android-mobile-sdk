@@ -161,17 +161,17 @@ internal class WalletRepositoryTest : BaseKoinUnitTest() {
 
     @Suppress("MaxLineLength")
     @Test
-    fun `GIVEN valid FlyPay wallet callback request WHEN fetching wallet callback THEN should succeed with wallet callback response resource`() =
+    fun `GIVEN valid Coles Pay wallet callback request WHEN fetching wallet callback THEN should succeed with wallet callback response resource`() =
         testScope.runTest {
             // GIVEN
             val accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
             repository = WalletRepositoryImpl(get(), httpMockClient)
 
             val request =
-                readResourceFile("wallet/valid_flypay_wallet_callback_request.json")
+                readResourceFile("wallet/valid_colespay_wallet_callback_request.json")
                     .convertToDataClass<WalletCallbackRequest>()
             val response =
-                readResourceFile("wallet/success_flypay_wallet_callback_response.json")
+                readResourceFile("wallet/success_colespay_wallet_callback_response.json")
                     .convertToDataClass<WalletCallbackResponse>()
             val entity = response.asEntity()
             // WHEN - Call the method to be tested

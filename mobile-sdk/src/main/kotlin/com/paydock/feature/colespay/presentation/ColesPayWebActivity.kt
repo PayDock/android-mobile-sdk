@@ -1,4 +1,4 @@
-package com.paydock.feature.flypay.presentation
+package com.paydock.feature.colespay.presentation
 
 import android.content.Intent
 import android.os.Bundle
@@ -20,18 +20,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.paydock.MobileSDK
 import com.paydock.R
-import com.paydock.core.domain.mapper.mapToFlyPayEnv
+import com.paydock.core.domain.mapper.mapToColesPayEnv
 import com.paydock.core.presentation.extensions.putMessageExtra
 import com.paydock.core.presentation.extensions.putStatusExtra
 import com.paydock.designsystems.components.icon.SdkIcon
-import com.paydock.feature.flypay.presentation.components.FlyPayWebView
-import com.paydock.feature.flypay.presentation.utils.CancellationStatus
-import com.paydock.feature.flypay.presentation.utils.getClientIdExtra
-import com.paydock.feature.flypay.presentation.utils.getOrderIdExtra
-import com.paydock.feature.flypay.presentation.utils.putCancellationStatusExtra
-import com.paydock.feature.flypay.presentation.utils.putOrderIdExtra
+import com.paydock.feature.colespay.presentation.components.ColesPayWebView
+import com.paydock.feature.colespay.presentation.utils.CancellationStatus
+import com.paydock.feature.colespay.presentation.utils.getClientIdExtra
+import com.paydock.feature.colespay.presentation.utils.getOrderIdExtra
+import com.paydock.feature.colespay.presentation.utils.putCancellationStatusExtra
+import com.paydock.feature.colespay.presentation.utils.putOrderIdExtra
 
-internal class FlyPayWebActivity : ComponentActivity() {
+internal class ColesPayWebActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,7 +68,7 @@ internal class FlyPayWebActivity : ComponentActivity() {
                     val flyPayUrl: String by remember(flyPayOrderId, flyPayClientId) {
                         mutableStateOf(createFlyPayUrl(flyPayOrderId, flyPayClientId))
                     }
-                    FlyPayWebView(flyPayUrl = flyPayUrl, onSuccess = {
+                    ColesPayWebView(colesPayUrl = flyPayUrl, onSuccess = {
                         setResult(
                             RESULT_OK,
                             Intent().putOrderIdExtra(flyPayOrderId)
@@ -98,7 +98,7 @@ internal class FlyPayWebActivity : ComponentActivity() {
      */
     @Suppress("MaxLineLength")
     private fun createFlyPayUrl(flyPayOrderId: String, clientId: String): String =
-        MobileSDK.getInstance().environment.mapToFlyPayEnv(flyPayOrderId, clientId)
+        MobileSDK.getInstance().environment.mapToColesPayEnv(flyPayOrderId, clientId)
 
     private fun finish(status: CancellationStatus) {
         setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(status))

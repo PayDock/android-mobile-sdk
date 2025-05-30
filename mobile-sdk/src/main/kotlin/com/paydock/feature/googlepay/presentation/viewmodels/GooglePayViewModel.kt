@@ -185,6 +185,31 @@ internal class GooglePayViewModel(
     //endregion
 
     //region Public Methods
+
+    /**
+     * Initiates the Google Pay payment flow.
+     *
+     * This function sets the UI to a loading state and then invokes the [tokenProvider]
+     * to obtain a wallet token. Once the token is received, it proceeds to the
+     * `onTokenReceivedAndReadyToPay` method with the token and the provided [paymentRequest].
+     *
+     * @param tokenProvider A higher-order function that takes a callback `(String) -> Unit`
+     *                      and is responsible for asynchronously providing the wallet token.
+     *                      The callback should be invoked with the received token.
+     */
+    fun startGooglePayPaymentFlow(
+        tokenProvider: (onTokenReceived: (String) -> Unit) -> Unit
+    ) {
+        setLoadingState()
+        tokenProvider { receivedToken ->
+            // This is where the token is received.
+            // Now we have the token and can proceed.
+            onTokenReceivedAndReadyToPay(receivedToken)
+        }
+    }
+    //endregion
+
+    //region Public Methods
     /**
      * Handles the cancellation result by updating the UI state to an error state.
      */
@@ -234,11 +259,36 @@ internal class GooglePayViewModel(
     }
 
     /**
+     * Handles the state after a wallet token is successfully received and prepares for payment.
+     *
+     * This function is typically called after the [tokenProvider] in [startGooglePayPaymentFlow]
+     * has successfully obtained a wallet token. It sets the received [token],
+     * updates the UI to a loading state, and then proceeds to initiate the Google Pay
+     * payment process by creating and emitting a [Task] to launch the Google Pay sheet.
+     *
+     * In a real-world scenario, this function might involve an additional API call
+     * using the `walletToken` before proceeding to get the payment task. For this
+     * implementation, it directly proceeds to fetch the payment task.
+     *
+     * @param token The wallet token received from the token provider.
+     */
+    private fun onTokenReceivedAndReadyToPay(token: String) {
+        setWalletToken(token)
+        setLoadingState()
+        // In a real scenario, you might do an API call here with the walletToken
+        // For now, let's assume we proceed directly to getting the payment task
+        launchOnIO {
+            val task = getLoadPaymentDataTask()
+            updateUiState(GooglePayUIState.LaunchGooglePayTask(task))
+        }
+    }
+
+    /**
      * Creates a [Task] that starts the payment process with the transaction details included.
      *
      * @return A [Task] with the payment information.
      */
-    fun getLoadPaymentDataTask(): Task<PaymentData> {
+    private fun getLoadPaymentDataTask(): Task<PaymentData> {
         val request = PaymentDataRequest.fromJson(config.paymentRequest.toString())
         return paymentsClient.loadPaymentData(request)
     }

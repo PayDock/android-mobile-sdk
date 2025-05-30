@@ -3,7 +3,7 @@ package com.paydock.core.domain.error.extensions
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.AfterpayException
 import com.paydock.core.domain.error.exceptions.CardDetailsException
-import com.paydock.core.domain.error.exceptions.FlyPayException
+import com.paydock.core.domain.error.exceptions.ColesPayException
 import com.paydock.core.domain.error.exceptions.GenericException
 import com.paydock.core.domain.error.exceptions.GiftCardException
 import com.paydock.core.domain.error.exceptions.GooglePayException
@@ -38,7 +38,7 @@ import kotlin.reflect.KClass
  * - **[CardDetailsException]**: Delegates mapping to `mapCardDetailsApiException`.
  * - **[GiftCardException]**: Delegates mapping to `mapGiftCardDetailsApiException`.
  * - **[AfterpayException]**: Delegates mapping to `mapAfterpayApiException`.
- * - **[FlyPayException]**: Delegates mapping to `mapFlyPayApiException`.
+ * - **[ColesPayException]**: Delegates mapping to `mapColesPayApiException`.
  * - **[GooglePayException]**: Delegates mapping to `mapGooglePayApiException`.
  * - **[PayPalException]**: Delegates mapping to `mapPayPalApiException`.
  * - **[PayPalVaultException]**: Delegates mapping to `mapPayPalVaultException`.
@@ -70,8 +70,8 @@ internal fun Throwable.mapApiException(exceptionClass: KClass<out SdkException>)
         AfterpayException::class.java.isAssignableFrom(exceptionClass.java) ->
             this.mapAfterpayApiException(exceptionClass.castAs<KClass<AfterpayException>>())
 
-        FlyPayException::class.java.isAssignableFrom(exceptionClass.java) ->
-            this.mapFlyPayApiException(exceptionClass.castAs<KClass<FlyPayException>>())
+        ColesPayException::class.java.isAssignableFrom(exceptionClass.java) ->
+            this.mapColesPayApiException(exceptionClass.castAs<KClass<ColesPayException>>())
 
         GooglePayException::class.java.isAssignableFrom(exceptionClass.java) ->
             this.mapGooglePayApiException(exceptionClass.castAs<KClass<GooglePayException>>())
@@ -189,52 +189,52 @@ internal fun Throwable.mapPayPalVaultApiException(
     }
 
 /**
- * Maps a generic `Throwable` to a specific type of `FlyPayException` based on the provided reified exception type.
+ * Maps a generic `Throwable` to a specific type of `ColesPayException` based on the provided reified exception type.
  *
  * This function handles known `ApiException` and `UnknownApiException` types, converting them into
- * corresponding `FlyPayException` subclasses. For other exceptions, a default `FlyPayException.UnknownException`
+ * corresponding `ColesPayException` subclasses. For other exceptions, a default `ColesPayException.UnknownException`
  * is returned.
  *
- * @param exceptionClass The target type of `FlyPayException` to map the throwable to.
+ * @param exceptionClass The target type of `ColesPayException` to map the throwable to.
  * @receiver The throwable to map.
- * @return A `FlyPayException` instance that represents the mapped exception.
+ * @return A `ColesPayException` instance that represents the mapped exception.
  *
  * ## Behavior:
  * - **`ApiException` Handling**:
- *   - Maps to `FlyPayException.FetchingUrlException` if `E` is `FlyPayException.FetchingUrlException`.
- *   - Defaults to `FlyPayException.UnknownException` for other `ApiException` cases.
+ *   - Maps to `ColesPayException.FetchingUrlException` if `E` is `ColesPayException.FetchingUrlException`.
+ *   - Defaults to `ColesPayException.UnknownException` for other `ApiException` cases.
  * - **`UnknownApiException` Handling**:
- *   - Maps to `FlyPayException.UnknownException` with the error message from the `UnknownApiException`.
+ *   - Maps to `ColesPayException.UnknownException` with the error message from the `UnknownApiException`.
  * - **Fallback Handling**:
- *   - Maps other exception types to `FlyPayException.UnknownException` with a generic error message.
+ *   - Maps other exception types to `ColesPayException.UnknownException` with a generic error message.
  *
  * ## Example Usage:
  * ```kotlin
  * val apiException = ApiException(error = "Invalid token")
- * val mappedException: FlyPayException = apiException.mapFlyPayApiException<FlyPayException.FetchingUrlException>()
- * println(mappedException) // Output: FlyPayException.CapturingChargeException(error="Invalid token")
+ * val mappedException: ColesPayException = apiException.mapColesPayApiException<ColesPayException.FetchingUrlException>()
+ * println(mappedException) // Output: ColesPayException.CapturingChargeException(error="Invalid token")
  * ```
  *
  * ## Notes:
  * - Ensure that the type parameter `E` is a subclass of `Throwable`.
  */
-internal fun Throwable.mapFlyPayApiException(exceptionClass: KClass<out FlyPayException>): FlyPayException =
+internal fun Throwable.mapColesPayApiException(exceptionClass: KClass<out ColesPayException>): ColesPayException =
     when (this) {
         is ApiException -> {
             when (exceptionClass) {
-                FlyPayException.FetchingUrlException::class ->
-                    FlyPayException.FetchingUrlException(error = this.error)
+                ColesPayException.FetchingUrlException::class ->
+                    ColesPayException.FetchingUrlException(error = this.error)
 
-                else -> FlyPayException.UnknownException(
-                    displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+                else -> ColesPayException.UnknownException(
+                    displayableMessage = this.message ?: MobileSDKConstants.Errors.COLES_PAY_ERROR
                 )
             }
         }
 
-        is ApiParseException -> FlyPayException.ParseException(displayableMessage = this.errorMessage, errorBody = this.errorBody)
+        is ApiParseException -> ColesPayException.ParseException(displayableMessage = this.errorMessage, errorBody = this.errorBody)
 
-        else -> FlyPayException.UnknownException(
-            displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+        else -> ColesPayException.UnknownException(
+            displayableMessage = this.message ?: MobileSDKConstants.Errors.COLES_PAY_ERROR
         )
     }
 

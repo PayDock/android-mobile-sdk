@@ -2,5 +2,5 @@
   "request_type": "CREATE_SESSION",
   "request_shipping": null,
   "session_id": null,
-  "wallet_type": "flypay"
+  "wallet_type": "flypay_v2"
 }

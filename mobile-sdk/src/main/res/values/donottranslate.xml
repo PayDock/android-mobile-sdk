@@ -11,7 +11,7 @@
     <string name="content_desc_error_icon">Error</string>
     <string name="content_desc_close_icon">Close</string>
     <string name="content_desc_paypal_button_icon">PayPal</string>
-    <string name="content_desc_flypay_button_icon">FlyPay</string>
+    <string name="content_desc_coles_pay_button">Pay with Coles Pay</string>
     <string name="content_desc_afterpay_button_icon">Afterpay</string>
     <!-- endregion -->
 </resources>

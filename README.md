@@ -65,13 +65,13 @@ The sample app uses a `config.properties` file to manage environment-specific se
    *   **`WIDGET_ACCESS_TOKEN`:** The Paydock Widget/UI access token for the specified environment. This token is used by the Paydock SDK to authenticate and authorize the use of the pre-built UI widgets for payment processing.
    *   **`GATEWAY_ID_MPGS`:** Your Paydock service ID for the MPGS (Mastercard Payment Gateway Services) gateway. This ID is required to process card payments, handle 3D Secure (3DS) authentication, and manage other card-related transactions.
    *   **`GATEWAY_ID_PAY_PAL`:** Your Paydock service ID for the PayPal gateway. This ID is necessary to enable PayPal as a payment method within the sample app.
-   *   **`GATEWAY_ID_FLY_PAY`:** Your Paydock service ID for the FlyPay gateway. This ID is required to enable FlyPay as a payment method.
+   *   **`GATEWAY_ID_COLES_PAY`:** Your Paydock service ID for the Coles Pay gateway. This ID is required to enable Coles Pay as a payment method.
    *   **`GATEWAY_ID_AFTER_PAY`:** Your Paydock service ID for the Afterpay gateway. This ID is required to enable Afterpay as a payment method.
    *   **`GATEWAY_ID_CLICK_TO_PAY`:** Your Paydock service ID for the ClickToPay gateway. This ID is required to enable ClickToPay as a payment method.
    *   **`GATEWAY_ID_GOOGLE_PAY`:** Your Paydock service ID for the Google Pay gateway. This ID is required to enable Google Pay as a payment method.
    *   **`STANDALONE_3DS_SERVICE_ID`:** The Paydock service ID for Standalone 3DS (3D Secure) authentication, specifically using the GPayments service. This ID is used when you need to perform 3DS authentication outside of a regular payment flow.
    *   **`MERCHANT_IDENTIFIER`:** Your Paydock merchant identifier, which is required for Google Pay. This identifier is used to associate your transactions with your Google Pay merchant account.
-   *   **`FLY_PAY_CLIENT_ID`:** The client ID provided by FlyPay. This ID is required for authenticating and using the FlyPay service.
+   *   **`COLES_PAY_CLIENT_ID`:** The client ID provided by Coles Pay. This ID is required for authenticating and using the Coles Pay service.
 
 **Example `config.properties`:**
 ```
@@ -81,14 +81,14 @@ WIDGET_ACCESS_TOKEN=your_widget_access_token
 # Gateway keys
 GATEWAY_ID_MPGS=your_gateway_id_mpgs 
 GATEWAY_ID_PAY_PAL= your_gateway_id_pay_pal 
-GATEWAY_ID_FLY_PAY=your_gateway_id_fly_pay 
+GATEWAY_ID_COLES_PAY=your_gateway_id_coles_pay 
 GATEWAY_ID_AFTER_PAY= your_gateway_id_after_pay 
 GATEWAY_ID_CLICK_TO_PAY= your_gateway_id_click_to_pay 
 GATEWAY_ID_GOOGLE_PAY= your_gateway_id_google_pay 
 STANDALONE_3DS_SERVICE_ID= your_standalone_3ds_service_id 
 # Misc Gateway keys
 MERCHANT_IDENTIFIER= your_merchant_identifier 
-FLY_PAY_CLIENT_ID= your_fly_pay_client_id 
+COLES_PAY_CLIENT_ID= your_coles_pay_client_id 
 ```
 
 **Note:**

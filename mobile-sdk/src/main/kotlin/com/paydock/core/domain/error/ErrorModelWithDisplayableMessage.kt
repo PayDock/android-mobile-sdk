@@ -43,9 +43,9 @@ val ErrorModel?.displayableMessage: String
                 exception.message
                     ?: MobileSDKConstants.Errors.PAY_PAL_DATA_COLLECTOR_ERROR
 
-            is ErrorModel.FlyPayError ->
+            is ErrorModel.ColesPayError ->
                 exception.message
-                    ?: MobileSDKConstants.Errors.FLY_PAY_ERROR
+                    ?: MobileSDKConstants.Errors.COLES_PAY_ERROR
 
             is ErrorModel.ClickToPayError ->
                 exception.message

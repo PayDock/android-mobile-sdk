@@ -5,7 +5,7 @@ import com.paydock.core.data.injection.MobileSDKKoinContext
 import com.paydock.feature.address.injection.addressDetailsModule
 import com.paydock.feature.afterpay.injection.afterPayModule
 import com.paydock.feature.card.injection.cardDetailsModule
-import com.paydock.feature.flypay.injection.flyPayModule
+import com.paydock.feature.colespay.injection.colesPayModule
 import com.paydock.feature.googlepay.injection.googlePayModule
 import com.paydock.feature.paypal.core.injection.payPalModule
 import com.paydock.feature.src.injection.clickToPayModule
@@ -33,7 +33,7 @@ internal val presentationModule = module {
         // wallet modules
         googlePayModule,
         payPalModule,
-        flyPayModule,
+        colesPayModule,
         afterPayModule
     )
 }

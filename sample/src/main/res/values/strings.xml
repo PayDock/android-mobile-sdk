@@ -18,7 +18,7 @@
     <string name="label_font">Font</string>
     <string name="label_something_went_wrong">Something went wrong</string>
     <string name="label_card">Card</string>
-    <string name="label_flypay">FlyPay</string>
+    <string name="label_coles_pay">Coles Pay</string>
     <string name="label_click_to_pay">SRC</string>
     <string name="label_access_token">Access Token</string>
     <string name="label_saved_payment_method">Saved payment method</string>

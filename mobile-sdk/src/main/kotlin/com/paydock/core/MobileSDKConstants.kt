@@ -47,7 +47,7 @@ internal object MobileSDKConstants {
      */
     object Network {
         // sha256 hssh for paydock base urls
-        internal const val SSH_HASH = "sha256/g3M/GJUTddzhjBySoIBl4U7M+8j3KgSf1EwPpBIlsHs="
+        internal const val SSH_HASH = "sha256/kV0cxZABuhXdMFROcAZwIflgJilKOqxMBcRhzFhZMok="
     }
 
     /**
@@ -67,6 +67,7 @@ internal object MobileSDKConstants {
         internal const val MIN_CREDIT_CARD_LENGTH = 12
         internal const val MAX_CREDIT_CARD_LENGTH = 19
         internal const val MIN_GIFT_CARD_LENGTH = 14
+        internal const val MIN_GIFT_CARD_PIN_LENGTH = 4
         internal const val MAX_GIFT_CARD_LENGTH = 25
         internal const val MAX_EXPIRY_LENGTH = 4
         internal const val EXPIRY_CHUNK_SIZE = 2
@@ -148,10 +149,10 @@ internal object MobileSDKConstants {
     }
 
     /**
-     * Constants related to FlyPay configuration.
+     * Constants related to Coles Pay configuration.
      */
-    object FlyPayConfig {
-        internal const val FLY_PAY_REDIRECT_URL = DEFAULT_WEB_URL
+    object ColesPayConfig {
+        internal const val COLES_PAY_REDIRECT_URL = DEFAULT_WEB_URL
     }
 
     /**
@@ -203,8 +204,8 @@ internal object MobileSDKConstants {
             "An unexpected error occurred while processing PayPal Data Collector. Please try again later or contact support for assistance."
         const val PAY_PAL_DATA_COLLECTOR_UNKNOWN_ERROR =
             "An unknown error occurred while trying to initialise the PayPalDataCollector. Please try again later or contact support for assistance."
-        const val FLY_PAY_ERROR =
-            "An unexpected error occurred while processing FlyPay. Please try again later or contact support for assistance."
+        const val COLES_PAY_ERROR =
+            "An unexpected error occurred while processing Coles Pay. Please try again later or contact support for assistance"
         const val AFTER_PAY_ERROR =
             "An unexpected error occurred while processing Afterpay. Please try again later or contact support for assistance."
         const val AFTER_PAY_CALLBACK_ERROR =

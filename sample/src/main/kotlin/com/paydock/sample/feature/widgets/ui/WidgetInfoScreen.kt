@@ -1,12 +1,16 @@
 package com.paydock.sample.feature.widgets.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.paydock.sample.feature.widgets.ui.components.AddressDetailsItem
 import com.paydock.sample.feature.widgets.ui.components.AfterpayItem
 import com.paydock.sample.feature.widgets.ui.components.CardDetailsItem
 import com.paydock.sample.feature.widgets.ui.components.ClickToPayItem
-import com.paydock.sample.feature.widgets.ui.components.FlyPayItem
+import com.paydock.sample.feature.widgets.ui.components.ColesPayItem
 import com.paydock.sample.feature.widgets.ui.components.GiftCardItem
 import com.paydock.sample.feature.widgets.ui.components.GooglePayItem
 import com.paydock.sample.feature.widgets.ui.components.IntegratedThreeDSItem
@@ -19,6 +23,10 @@ import com.paydock.sample.feature.widgets.ui.models.WidgetType
 fun WidgetInfoScreen(
     widgetType: WidgetType
 ) {
+    Box(
+        contentAlignment = Alignment.TopCenter,
+        modifier = Modifier.fillMaxSize()
+    ) {
         val context = LocalContext.current
         when (widgetType) {
             WidgetType.ADDRESS_DETAILS -> {
@@ -37,8 +45,8 @@ fun WidgetInfoScreen(
                 ClickToPayItem(context = context)
             }
 
-            WidgetType.FLY_PAY -> {
-                FlyPayItem(context = context)
+            WidgetType.COLES_PAY -> {
+                ColesPayItem(context = context)
             }
 
             WidgetType.GIFT_CARD -> {
@@ -65,4 +73,5 @@ fun WidgetInfoScreen(
                 StandaloneThreeDSItem(context = context)
             }
         }
+    }
 }

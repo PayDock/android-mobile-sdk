@@ -22,7 +22,7 @@ enum class WalletType(val type: String) {
     AFTER_PAY("afterpay"),
 
     /**
-     * FlyPay wallet type.
+     * Coles Pay wallet type.
      */
-    FLY_PAY("flypay")
+    COLES_PAY("flypay_v2")
 }

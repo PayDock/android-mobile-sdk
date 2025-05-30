@@ -1,7 +1,7 @@
-package com.paydock.feature.flypay.presentation.utils
+package com.paydock.feature.colespay.presentation.utils
 
 /**
- * Enum representing the different types of cancellation statuses for FlyPay transactions.
+ * Enum representing the different types of cancellation statuses for Coles Pay transactions.
  */
 internal enum class CancellationStatus {
     /**
