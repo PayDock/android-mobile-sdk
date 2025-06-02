@@ -14,15 +14,15 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -34,8 +34,12 @@ import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.designsystems.components.button.ImageButtonAppearance
 import com.paydock.designsystems.components.button.ImageButtonDefaults
 import com.paydock.designsystems.components.button.SdkImageButton
+import com.paydock.designsystems.components.loader.LoaderAppearance
+import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
+import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
 import com.paydock.feature.colespay.presentation.state.ColesPayUIState
 import com.paydock.feature.colespay.presentation.utils.CancellationStatus
@@ -53,7 +57,8 @@ import org.koin.core.parameter.parametersOf
  * @param modifier Modifier for customizing the appearance and behavior of the Composable.
  * @param enabled Controls the enabled state of this Widget. When false,
  * this component will not respond to user input, and it will appear visually disabled.
- * @param config The configuration details required for the FlyPay widget.
+ * @param config The configuration details required for the Coles Pay widget.
+ * @param appearance The appearance configuration for the Coles Pay widget.
  * @param token A callback to obtain the wallet token asynchronously.
  * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
  * @param completion A callback to handle the result of the Coles Pay operation.
@@ -64,6 +69,7 @@ fun ColesPayWidget(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     config: ColesPayWidgetConfig,
+    appearance: ColesPayWidgetAppearance = ColesPayWidgetAppearanceDefaults.appearance(),
     token: (onTokenReceived: (String) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
     completion: (Result<String>) -> Unit
@@ -101,10 +107,7 @@ fun ColesPayWidget(
     if (!isLoading) {
         SdkImageButton(
             modifier = modifier,
-            appearance = ImageButtonDefaults.appearance().copy(
-                shape = RoundedCornerShape(percent = 50), // ensures pill shape
-                rippleColor = Color.White,
-            ),
+            appearance = appearance.imageButton,
             enabled = uiState !is ColesPayUIState.Loading && enabled,
             painter = painterResource(id = R.drawable.pay_with_coles_pay_button),
             contentDescription = LocalContext.current.getString(R.string.content_desc_coles_pay_button),
@@ -116,14 +119,16 @@ fun ColesPayWidget(
         val imageAspectRatio: Float =
             painter.intrinsicSize.width / painter.intrinsicSize.height.coerceAtLeast(1f)
         Box(
-            modifier = modifier.aspectRatio(imageAspectRatio),
+            modifier = modifier
+                .aspectRatio(imageAspectRatio)
+                .clip(appearance.imageButton.shape),
             contentAlignment = Alignment.Center
         ) {
             Image(
                 painter = painter,
                 contentDescription = null,
                 // Scale the image to fit the parent width
-                contentScale = ContentScale.FillWidth,
+                contentScale = appearance.imageButton.contentScale,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -135,16 +140,66 @@ fun ColesPayWidget(
                     (constraints.maxHeight * 0.6f).coerceAtMost(constraints.maxWidth * 0.6f)
                 // Convert the loader size from PIXELS to DP using LocalDensity.
                 val loaderSizeInDp = with(LocalDensity.current) { loaderSizeInPx.toDp() }
-                CircularProgressIndicator(
+                SdkLoader(
                     modifier = Modifier
                         .size(loaderSizeInDp)
                         .align(Alignment.Center),
-                    color = Color.White,
-                    strokeWidth = (loaderSizeInDp.value * 0.1f).coerceAtLeast(2f).dp
+                    appearance = appearance.loaderAppearance.copy(
+                        strokeWidth = (loaderSizeInDp.value * 0.1f).coerceAtLeast(2f).dp
+                    )
                 )
             }
         }
     }
+}
+
+/**
+ * Defines the appearance of the Coles Pay widget.
+ *
+ * @property imageButton The appearance of the Coles Pay image button.
+ * @property loaderAppearance The appearance of the loader displayed during processing.
+ */
+@Immutable
+class ColesPayWidgetAppearance(
+    val imageButton: ImageButtonAppearance,
+    val loaderAppearance: LoaderAppearance
+) {
+    fun copy(
+        imageButton: ImageButtonAppearance = this.imageButton,
+        loaderAppearance: LoaderAppearance = this.loaderAppearance
+    ): ColesPayWidgetAppearance =
+        ColesPayWidgetAppearance(
+            imageButton = imageButton.copy(),
+            loaderAppearance = loaderAppearance.copy()
+        )
+}
+
+/**
+ * Provides default appearance settings for the [ColesPayWidget].
+ *
+ * This object defines the standard visual presentation for the Coles Pay widget,
+ * including its button and loader components. These defaults can be overridden
+ * by providing a custom [ColesPayWidgetAppearance] instance to the widget.
+ */
+object ColesPayWidgetAppearanceDefaults {
+    /**
+     * Composable function that returns the default appearance settings for the ColesPayWidget.
+     * This function is intended to be used within a Composable context.
+     *
+     * @return [ColesPayWidgetAppearance] The default appearance settings for the ColesPayWidget.
+     *  - The `imageButton` is configured with a pill shape (50% rounded corners) and a white ripple color.
+     *  - The `loaderAppearance` is configured with a white color.
+     */
+    @Composable
+    fun appearance(): ColesPayWidgetAppearance = ColesPayWidgetAppearance(
+        imageButton = ImageButtonDefaults.appearance().copy(
+            shape = RoundedCornerShape(percent = 50), // ensures pill shape
+            rippleColor = Color.White,
+        ),
+        loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
+            color = Color.White
+        )
+    )
 }
 
 /**
