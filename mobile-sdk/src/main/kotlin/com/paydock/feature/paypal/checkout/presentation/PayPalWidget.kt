@@ -27,7 +27,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.PayPalException
 import com.paydock.core.presentation.extensions.alpha40
@@ -87,7 +86,7 @@ fun PayPalWidget(
     val resolvePaymentForResult = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result: ActivityResult ->
-        handlePayPalResult(context, result, viewModel, completion)
+        handlePayPalResult(result, viewModel, completion)
     }
 
     LaunchedEffect(uiState) {
@@ -213,7 +212,6 @@ object PayPalAppearanceDefaults {
  * It is invoked with a `Result` object containing either success or failure information.
  */
 private fun handlePayPalResult(
-    context: Context,
     result: ActivityResult,
     viewModel: PayPalViewModel,
     completion: (Result<ChargeResponse>) -> Unit,
@@ -235,9 +233,7 @@ private fun handlePayPalResult(
                         completion(
                             Result.failure(
                                 PayPalException.CancellationException(
-                                    displayableMessage = context.getString(
-                                        R.string.error_paypal_canceled
-                                    )
+                                    displayableMessage = MobileSDKConstants.PayPalConfig.Errors.PAY_PAL_CANCELLATION_ERROR
                                 )
                             )
                         )
@@ -248,7 +244,7 @@ private fun handlePayPalResult(
                     else -> {
                         val status = data.getStatusExtra()
                         val message =
-                            data.getMessageExtra(MobileSDKConstants.Errors.PAY_PAL_ERROR)
+                            data.getMessageExtra(MobileSDKConstants.PayPalConfig.Errors.PAY_PAL_ERROR)
                         completion(
                             Result.failure(
                                 PayPalException.WebViewException(

@@ -1,6 +1,5 @@
 package com.paydock.feature.afterpay.presentation
 
-import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
@@ -18,12 +17,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.afterpay.android.Afterpay
 import com.afterpay.android.view.AfterpayColorScheme
 import com.afterpay.android.view.AfterpayPaymentButton
-import com.paydock.R
+import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.AfterpayException
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
@@ -77,7 +75,6 @@ fun AfterpayWidget(
     completion: (Result<ChargeResponse>) -> Unit,
 ) {
     val viewModel: AfterpayViewModel = koinViewModel()
-    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val isConfigured by viewModel.isConfigured.collectAsState()
 
@@ -85,7 +82,7 @@ fun AfterpayWidget(
     val resolvePaymentForResult = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        handleAfterpayResult(context, result, viewModel, completion)
+        handleAfterpayResult(result, viewModel, completion)
     }
 
     // Configure the Afterpay SDK and set up the checkout handler
@@ -210,13 +207,11 @@ object AfterpayAppearanceDefaults {
  * Handles the result of the Afterpay checkout process, determining the next action
  * based on the result code and data.
  *
- * @param context The context of the application.
  * @param result The result from the checkout activity.
  * @param viewModel The `AfterpayViewModel` managing the widget's state.
  * @param completion A callback to handle the final result of the payment process.
  */
 private fun handleAfterpayResult(
-    context: Context,
     result: ActivityResult,
     viewModel: AfterpayViewModel,
     completion: (Result<ChargeResponse>) -> Unit,
@@ -224,7 +219,7 @@ private fun handleAfterpayResult(
     try {
         when (result.resultCode) {
             AppCompatActivity.RESULT_OK -> viewModel.captureWalletTransaction()
-            AppCompatActivity.RESULT_CANCELED -> handleCancellation(result.data, context, viewModel, completion)
+            AppCompatActivity.RESULT_CANCELED -> handleCancellation(result.data, viewModel, completion)
             else -> Unit
         }
     } catch (e: IllegalStateException) {
@@ -247,7 +242,6 @@ private fun handleAfterpayResult(
  */
 private fun handleCancellation(
     data: Intent?,
-    context: Context,
     viewModel: AfterpayViewModel,
     completion: (Result<ChargeResponse>) -> Unit
 ) {
@@ -255,10 +249,18 @@ private fun handleCancellation(
         Afterpay.parseCheckoutCancellationResponse(intent)?.let { status ->
             viewModel.updateCancellationState(status)
         } ?: run {
-            handleInvalidError(context.getString(R.string.error_afterpay_sdk_internal_status), viewModel, completion)
+            handleInvalidError(
+                MobileSDKConstants.AfterpayConfig.Errors.SDK_CANCELLATION_ERROR,
+                viewModel,
+                completion
+            )
         }
     } ?: run {
-        handleInvalidError(context.getString(R.string.error_afterpay_sdk_internal_data), viewModel, completion)
+        handleInvalidError(
+            MobileSDKConstants.AfterpayConfig.Errors.SDK_INTERNAL_ERROR,
+            viewModel,
+            completion
+        )
     }
 }
 

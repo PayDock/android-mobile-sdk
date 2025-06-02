@@ -87,7 +87,7 @@ fun ColesPayWidget(
     val resolvePaymentForResult = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result: ActivityResult ->
-        handleColesPayResult(context, result, completion, viewModel)
+        handleColesPayResult(result, completion, viewModel)
     }
 
     // Handle wallet response result and reset state
@@ -214,7 +214,6 @@ object ColesPayWidgetAppearanceDefaults {
  * @param viewModel The [ColesPayViewModel] that processes Coles Pay-related data and manages the result state.
  */
 private fun handleColesPayResult(
-    context: Context,
     result: ActivityResult,
     completion: (Result<String>) -> Unit,
     viewModel: ColesPayViewModel
@@ -235,9 +234,7 @@ private fun handleColesPayResult(
                         completion(
                             Result.failure(
                                 ColesPayException.CancellationException(
-                                    displayableMessage = context.getString(
-                                        R.string.error_coles_pay_canceled
-                                    )
+                                    displayableMessage = MobileSDKConstants.ColesPayConfig.Errors.CANCELLATION_ERROR
                                 )
                             )
                         )
@@ -248,7 +245,7 @@ private fun handleColesPayResult(
                     else -> {
                         val status = data.getStatusExtra()
                         val message =
-                            data.getMessageExtra(MobileSDKConstants.Errors.COLES_PAY_ERROR)
+                            data.getMessageExtra(MobileSDKConstants.ColesPayConfig.Errors.COLES_PAY_ERROR)
                         completion(
                             Result.failure(
                                 ColesPayException.WebViewException(

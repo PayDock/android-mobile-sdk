@@ -80,7 +80,7 @@ fun PayPalSavePaymentSourceWidget(
     val resolvePaymentForResult = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result: ActivityResult ->
-        handlePayPalVaultResult(context, result, viewModel, completion)
+        handlePayPalVaultResult(result, viewModel, completion)
     }
 
     LaunchedEffect(uiState) {
@@ -169,13 +169,11 @@ object PayPalPaymentSourceAppearanceDefaults {
 /**
  * Processes the result of a PayPal Vault activity and performs the appropriate actions based on the result code.
  *
- * @param context The current application context.
  * @param result The `ActivityResult` received from the PayPal Vault activity.
  * @param viewModel The `PayPalVaultViewModel` managing the PayPal Vault flow.
  * @param completion A callback to handle the final result of the PayPal Vault operation, either success or failure.
  */
 private fun handlePayPalVaultResult(
-    context: Context,
     result: ActivityResult,
     viewModel: PayPalVaultViewModel,
     completion: (Result<PayPalVaultResult>) -> Unit,
@@ -195,9 +193,7 @@ private fun handlePayPalVaultResult(
                         completion(
                             Result.failure(
                                 PayPalVaultException.CancellationException(
-                                    displayableMessage = context.getString(
-                                        R.string.error_paypal_vault_canceled
-                                    )
+                                    displayableMessage = MobileSDKConstants.PayPalVaultConfig.Errors.CANCELLATION_ERROR
                                 )
                             )
                         )
@@ -205,7 +201,8 @@ private fun handlePayPalVaultResult(
                     // For other cancellation reasons, handle as a PayPal SDK error.
                     else -> {
                         val status = data.getStatusExtra()
-                        val message = data.getMessageExtra(MobileSDKConstants.Errors.PAY_PAL_VAULT_ERROR)
+                        val message =
+                            data.getMessageExtra(MobileSDKConstants.PayPalVaultConfig.Errors.VAULT_ERROR)
                         completion(
                             Result.failure(
                                 PayPalVaultException.PayPalSDKException(

@@ -117,7 +117,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             awaitItem().let { state ->
                 assertIs<AfterpayUIState.Error>(state)
                 assertEquals(
-                    MobileSDKConstants.Afterpay.USER_INITIATED_ERROR_MESSAGE,
+                    MobileSDKConstants.AfterpayConfig.USER_INITIATED_ERROR_MESSAGE,
                     state.exception.message
                 )
             }
@@ -200,7 +200,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     fun `get Afterpay wallet callback should initiate ProvideCheckoutTokenResult command with failure result`() =
         runTest {
             val mockCheckoutToken = null
-            val mockExceptionMessage = MobileSDKConstants.Errors.AFTER_PAY_CALLBACK_ERROR
+            val mockExceptionMessage = MobileSDKConstants.AfterpayConfig.Errors.CALLBACK_ERROR
             val mockResult = Result.success(
                 WalletCallback(
                     callbackId = null,

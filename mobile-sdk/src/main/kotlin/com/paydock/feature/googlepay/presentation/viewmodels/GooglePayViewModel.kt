@@ -149,10 +149,10 @@ internal class GooglePayViewModel(
                 val isReadyToPay = paymentsClient.isReadyToPay(request).await()
                 _googlePayAvailable.value = isReadyToPay
                 if (!isReadyToPay) {
-                    handleGooglePayInitializationError(MobileSDKConstants.Errors.GOOGLE_PAY_ERROR)
+                    handleGooglePayInitializationError(MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_ERROR)
                 }
             } catch (exception: ApiException) {
-                handleGooglePayInitializationError(exception.message ?: MobileSDKConstants.Errors.GOOGLE_PAY_ERROR)
+                handleGooglePayInitializationError(exception.message ?: MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_ERROR)
             }
         }
     }
@@ -213,7 +213,7 @@ internal class GooglePayViewModel(
     /**
      * Handles the cancellation result by updating the UI state to an error state.
      */
-    fun handleCancellationResult(message: String = MobileSDKConstants.Errors.GOOGLE_PAY_CANCELLATION_ERROR) {
+    fun handleCancellationResult(message: String = MobileSDKConstants.GooglePayConfig.Errors.CANCELLATION_ERROR) {
         updateUiState(
             GooglePayUIState.Error(
                 GooglePayException.CancellationException(message)
@@ -308,20 +308,11 @@ internal class GooglePayViewModel(
                 .onFailure { exception ->
                     handleErrorResult(
                         exception.message
-                            ?: MobileSDKConstants.Errors.GOOGLE_PAY_TOKEN_ERROR
-                    )
-
-                    updateUiState(
-                        GooglePayUIState.Error(
-                            GooglePayException.ResultException(
-                                exception.message
-                                    ?: MobileSDKConstants.Errors.GOOGLE_PAY_TOKEN_ERROR
-                            )
-                        )
+                            ?: MobileSDKConstants.GooglePayConfig.Errors.TOKEN_ERROR
                     )
                 }
         } ?: run {
-            handleErrorResult(MobileSDKConstants.Errors.GOOGLE_PAY_ERROR)
+            handleErrorResult(MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_ERROR)
         }
     }
 
@@ -333,11 +324,11 @@ internal class GooglePayViewModel(
     fun handleGooglePayResultErrors(statusCode: Int) {
         when (statusCode) {
             CommonStatusCodes.CANCELED -> handleCancellationResult()
-            CommonStatusCodes.DEVELOPER_ERROR -> handleErrorResult(MobileSDKConstants.Errors.GOOGLE_PAY_DEV_ERROR)
+            CommonStatusCodes.DEVELOPER_ERROR -> handleErrorResult(MobileSDKConstants.GooglePayConfig.Errors.DEV_ERROR)
             else -> {
                 val statusCodeMessage = CommonStatusCodes.getStatusCodeString(statusCode)
                 val errorMessage =
-                    "[$statusCodeMessage] ${MobileSDKConstants.Errors.GOOGLE_PAY_ERROR}"
+                    "[$statusCodeMessage] ${MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_ERROR}"
                 handleErrorResult(errorMessage)
             }
         }
@@ -352,16 +343,16 @@ internal class GooglePayViewModel(
         when (status?.statusCode) {
             WalletConstants.ERROR_CODE_USER_CANCELLED ->
                 handleCancellationResult(
-                    status.statusMessage ?: MobileSDKConstants.Errors.GOOGLE_PAY_CANCELLATION_ERROR
+                    status.statusMessage ?: MobileSDKConstants.GooglePayConfig.Errors.CANCELLATION_ERROR
                 )
 
             WalletConstants.ERROR_CODE_DEVELOPER_ERROR -> handleErrorResult(
-                status.statusMessage ?: MobileSDKConstants.Errors.GOOGLE_PAY_DEV_ERROR
+                status.statusMessage ?: MobileSDKConstants.GooglePayConfig.Errors.DEV_ERROR
             )
 
             else -> {
                 val errorMessage =
-                    status?.statusMessage ?: MobileSDKConstants.Errors.GOOGLE_PAY_ERROR
+                    status?.statusMessage ?: MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_ERROR
                 handleErrorResult(errorMessage)
             }
         }

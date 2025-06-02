@@ -3,8 +3,6 @@ package com.paydock.feature.threeDS.standalone.presentation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
-import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.Standalone3DSException
 import com.paydock.designsystems.components.web.SdkWebView
@@ -36,7 +34,6 @@ fun Standalone3DSWidget(
     appearance: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance(),
     completion: (Result<Standalone3DSResult>) -> Unit,
 ) {
-    val context = LocalContext.current
     val parsedToken = ThreeDSTokenUtils.extractToken(config.token)
 
     if (parsedToken == null) {
@@ -44,7 +41,7 @@ fun Standalone3DSWidget(
         completion(
             Result.failure(
                 Standalone3DSException.InvalidTokenException(
-                    displayableMessage = context.getString(R.string.error_standalone_3ds_invalid_token)
+                    displayableMessage = MobileSDKConstants.Standalone3DSConfig.Errors.INVALID_TOKEN_ERROR
                 )
             )
         )
@@ -54,7 +51,7 @@ fun Standalone3DSWidget(
         completion(
             Result.failure(
                 Standalone3DSException.InvalidTokenException(
-                    displayableMessage = context.getString(R.string.error_standalone_3ds_invalid_token_format)
+                    displayableMessage = MobileSDKConstants.Standalone3DSConfig.Errors.INVALID_TOKEN_FORMAT_ERROR
                 )
             )
         )

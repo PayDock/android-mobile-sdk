@@ -128,7 +128,7 @@ internal class AfterpayViewModel(
                     updateUiState(AfterpayUIState.ProvideCheckoutTokenResult(tokenResult))
                 } ?: updateUiState(
                     AfterpayUIState.Error(
-                        AfterpayException.TokenException(MobileSDKConstants.Errors.AFTER_PAY_CALLBACK_ERROR)
+                        AfterpayException.TokenException(MobileSDKConstants.AfterpayConfig.Errors.CALLBACK_ERROR)
                     )
                 )
             },

@@ -101,23 +101,23 @@ internal fun Throwable.mapGenericExceptions(): SdkException? {
     return when {
         // Maps a socket timeout error to a `TimeoutException`.
         this is SocketTimeoutException -> GenericException.TimeoutException(
-            MobileSDKConstants.Errors.SOCKET_TIMEOUT_ERROR
+            MobileSDKConstants.Network.Errors.SOCKET_TIMEOUT_ERROR
         )
 
         // Maps an unknown host error to a `ConnectionException`.
         this is UnknownHostException -> GenericException.ConnectionException(
-            MobileSDKConstants.Errors.UNKNOWN_HOST_ERROR
+            MobileSDKConstants.Network.Errors.UNKNOWN_HOST_ERROR
         )
 
         // Maps a serialization error to a `DataParsingException`.
         this is SerializationException -> GenericException.DataParsingException(
-            MobileSDKConstants.Errors.SERIALIZATION_ERROR
+            MobileSDKConstants.General.Errors.SERIALIZATION_ERROR
         )
 
         // Maps non-API-related `IOException` instances to a `GeneralException`.
         !(this is ApiException || this is ApiParseException) && this is IOException ->
             GenericException.GeneralException(
-                MobileSDKConstants.Errors.IO_ERROR
+                MobileSDKConstants.Network.Errors.IO_ERROR
             )
 
         // Returns null if no mapping is available for the given exception type.
@@ -176,7 +176,7 @@ internal fun Throwable.mapPayPalVaultApiException(
                     PayPalVaultException.CreatePaymentTokenException(error = this.error)
 
                 else -> PayPalVaultException.UnknownException(
-                    displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+                    displayableMessage = this.message ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
                 )
             }
         }
@@ -184,7 +184,7 @@ internal fun Throwable.mapPayPalVaultApiException(
         is ApiParseException -> PayPalVaultException.ParseException(displayableMessage = this.errorMessage, errorBody = this.errorBody)
 
         else -> PayPalVaultException.UnknownException(
-            displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+            displayableMessage = this.message ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
         )
     }
 
@@ -226,7 +226,7 @@ internal fun Throwable.mapColesPayApiException(exceptionClass: KClass<out ColesP
                     ColesPayException.FetchingUrlException(error = this.error)
 
                 else -> ColesPayException.UnknownException(
-                    displayableMessage = this.message ?: MobileSDKConstants.Errors.COLES_PAY_ERROR
+                    displayableMessage = this.message ?: MobileSDKConstants.ColesPayConfig.Errors.COLES_PAY_ERROR
                 )
             }
         }
@@ -234,7 +234,7 @@ internal fun Throwable.mapColesPayApiException(exceptionClass: KClass<out ColesP
         is ApiParseException -> ColesPayException.ParseException(displayableMessage = this.errorMessage, errorBody = this.errorBody)
 
         else -> ColesPayException.UnknownException(
-            displayableMessage = this.message ?: MobileSDKConstants.Errors.COLES_PAY_ERROR
+            displayableMessage = this.message ?: MobileSDKConstants.ColesPayConfig.Errors.COLES_PAY_ERROR
         )
     }
 
@@ -280,14 +280,14 @@ internal fun Throwable.mapPayPalApiException(exceptionClass: KClass<out PayPalEx
                     PayPalException.FetchingUrlException(error = this.error)
 
                 else -> PayPalException.UnknownException(
-                    displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+                    displayableMessage = this.message ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
                 )
             }
         }
         is ApiParseException -> PayPalException.ParseException(displayableMessage = this.errorMessage, errorBody = this.errorBody)
 
         else -> PayPalException.UnknownException(
-            displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+            displayableMessage = this.message ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
         )
     }
 
@@ -329,7 +329,7 @@ internal fun Throwable.mapGooglePayApiException(exceptionClass: KClass<out Googl
                     GooglePayException.CapturingChargeException(error = this.error)
 
                 else -> GooglePayException.UnknownException(
-                    displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+                    displayableMessage = this.message ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
                 )
             }
         }
@@ -337,7 +337,7 @@ internal fun Throwable.mapGooglePayApiException(exceptionClass: KClass<out Googl
         is ApiParseException -> GooglePayException.ParseException(displayableMessage = this.errorMessage, errorBody = this.errorBody)
 
         else -> GooglePayException.UnknownException(
-            displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+            displayableMessage = this.message ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
         )
     }
 
@@ -387,7 +387,7 @@ internal fun Throwable.mapCardDetailsApiException(
                     CardDetailsException.TokenisingCardException(error = this.error)
 
                 else -> CardDetailsException.UnknownException(
-                    displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+                    displayableMessage = this.message ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
                 )
             }
         }
@@ -395,7 +395,7 @@ internal fun Throwable.mapCardDetailsApiException(
         is ApiParseException -> CardDetailsException.ParseException(displayableMessage = this.errorMessage, errorBody = this.errorBody)
 
         else -> CardDetailsException.UnknownException(
-            displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+            displayableMessage = this.message ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
         )
     }
 
@@ -425,7 +425,7 @@ internal fun Throwable.mapAfterpayApiException(exceptionClass: KClass<out Afterp
                     AfterpayException.FetchingUrlException(error = this.error)
 
                 else -> AfterpayException.UnknownException(
-                    displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+                    displayableMessage = this.message ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
                 )
             }
         }
@@ -461,7 +461,7 @@ internal fun Throwable.mapGiftCardDetailsApiException(
                     GiftCardException.TokenisingCardException(error = this.error)
 
                 else -> GiftCardException.UnknownException(
-                    displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+                    displayableMessage = this.message ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
                 )
             }
         }
@@ -469,6 +469,6 @@ internal fun Throwable.mapGiftCardDetailsApiException(
         is ApiParseException -> GiftCardException.ParseException(displayableMessage = this.errorMessage, errorBody = this.errorBody)
 
         else -> GiftCardException.UnknownException(
-            displayableMessage = this.message ?: MobileSDKConstants.Errors.DEFAULT_ERROR
+            displayableMessage = this.message ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
         )
     }

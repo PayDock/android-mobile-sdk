@@ -101,7 +101,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
             awaitItem().let { state ->
                 assertIs<GooglePayUIState.Error>(state)
                 assertIs<GooglePayException.CancellationException>(state.exception)
-                assertEquals(state.exception.message, MobileSDKConstants.Errors.GOOGLE_PAY_CANCELLATION_ERROR)
+                assertEquals(state.exception.message, MobileSDKConstants.GooglePayConfig.Errors.CANCELLATION_ERROR)
             }
         }
     }
@@ -113,7 +113,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
             awaitItem().let { state ->
                 assertIs<GooglePayUIState.Error>(state)
                 assertIs<GooglePayException.ResultException>(state.exception)
-                assertEquals(state.exception.message, MobileSDKConstants.Errors.GOOGLE_PAY_DEV_ERROR)
+                assertEquals(state.exception.message, MobileSDKConstants.GooglePayConfig.Errors.DEV_ERROR)
             }
         }
     }

@@ -12,7 +12,6 @@ import com.paypal.android.corepayments.CoreConfig
 import com.paypal.android.fraudprotection.PayPalDataCollector
 import com.paypal.android.fraudprotection.PayPalDataCollectorRequest
 import org.koin.mp.KoinPlatform.getKoin
-import kotlin.jvm.Throws
 
 /**
  * A utility class for collecting PayPal device data within an SDK.
@@ -80,7 +79,8 @@ class PayPalDataCollectorUtil private constructor(
             } catch (e: Exception) {
                 // This is just a fallback in the event that some other error occurs
                 throw PayPalDataCollectorException.UnknownException(
-                    e.message ?: MobileSDKConstants.Errors.PAY_PAL_DATA_COLLECTOR_UNKNOWN_ERROR
+                    e.message
+                        ?: MobileSDKConstants.PayPalVaultConfig.Errors.DATA_COLLECTOR_UNKNOWN_ERROR
                 )
             }
         }

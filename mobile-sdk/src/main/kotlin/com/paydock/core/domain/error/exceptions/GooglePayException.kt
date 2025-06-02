@@ -24,27 +24,13 @@ sealed class GooglePayException(displayableMessage: String) : SdkException(displ
     ) : GooglePayException(error.displayableMessage)
 
     /**
-     * Exception thrown when there is an error during the payment request process for Google Pay.
-     *
-     * At this stage, the user has already seen a popup informing them an error occurred.
-     * Normally, only logging is required.
-     *
-     * @property exception The underlying exception causing this error.
-     * @see WalletConstants Library [Wallet Constants Library](https://developers.google.com/android/reference/com/google/android/gms/wallet/WalletConstants.constant-summary)
-     * @constructor Creates a PaymentRequestException with the specified underlying exception.
-     *              The displayable message is derived from the exception's message or a default Google Pay error message.
-     */
-    class PaymentRequestException(val exception: Exception?) :
-        GooglePayException(exception?.message ?: MobileSDKConstants.Errors.GOOGLE_PAY_ERROR)
-
-    /**
      * Exception thrown when there is an initialization error related to Google Pay.
      *
      * @param displayableMessage A human-readable message describing the error.
      * @constructor Creates an InitialisationException with the specified displayable message.
      */
     class InitialisationException(
-        displayableMessage: String = MobileSDKConstants.Errors.GOOGLE_PAY_INITIALISATION_ERROR
+        displayableMessage: String = MobileSDKConstants.GooglePayConfig.Errors.INITIALISATION_ERROR
     ) :
         GooglePayException(displayableMessage)
 
@@ -63,7 +49,7 @@ sealed class GooglePayException(displayableMessage: String) : SdkException(displ
      * @constructor Creates a CancellationException with the specified displayable message.
      */
     class CancellationException(
-        displayableMessage: String = MobileSDKConstants.Errors.GOOGLE_PAY_CANCELLATION_ERROR
+        displayableMessage: String = MobileSDKConstants.GooglePayConfig.Errors.CANCELLATION_ERROR
     ) : GooglePayException(displayableMessage)
 
     /**
