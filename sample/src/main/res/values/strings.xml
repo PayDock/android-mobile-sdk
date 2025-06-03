@@ -23,6 +23,8 @@
     <string name="label_access_token">Access Token</string>
     <string name="label_saved_payment_method">Saved payment method</string>
     <string name="label_link_paypal_desc">Link your PayPal account to use method next time you shop</string>
+    <string name="label_select_widget">Select Widget</string>
+    <string name="label_style_screen_caption">Customise the look and feel of the widgets on the Widgets tab</string>
 
     <!-- Descriptions -->
     <string name="desc_pay_pal_customer_created">Customer account created with linked PayPal account as a payment source</string>

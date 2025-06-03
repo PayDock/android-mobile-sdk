@@ -9,16 +9,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+
 @Composable
-fun <T : DisplayableListItem> ListScreen(items: List<T>, onItemClick: (T) -> Unit) {
-    HorizontalDivider()
+fun <T : DisplayableListItem> ListScreen(
+    items: List<T>,
+    displaySubTitle: Boolean = false,
+    displayIcon: Boolean = false,
+    onItemClick: (T) -> Unit
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize()
     ) {
         items(items) { item ->
-            ListRow(
+            ListRowItem(
                 title = item.displayName(),
-                description = item.displayDescription(),
+                description = if (displaySubTitle) item.displayDescription() else null,
+                iconResource = if (displayIcon) item.displayIcon() else null,
             ) {
                 onItemClick.invoke(item)
             }

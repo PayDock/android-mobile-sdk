@@ -1,9 +1,24 @@
 package com.paydock.sample.feature.widgets.ui.models
 
+import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.list.DisplayableListItem
 
 enum class WidgetType : DisplayableListItem {
     ADDRESS_DETAILS, AFTER_PAY, CARD_DETAILS, COLES_PAY, GOOGLE_PAY, GIFT_CARD, INTEGRATED_3DS, CLICK_TO_PAY, PAY_PAL, PAY_PAL_VAULT, STANDALONE_3DS;
+
+    override fun displayIcon(): Int? = when (this) {
+        ADDRESS_DETAILS -> R.drawable.ic_address_widget
+        AFTER_PAY -> R.drawable.ic_afterpay_widget
+        CLICK_TO_PAY -> R.drawable.ic_click_to_pay_widget
+        CARD_DETAILS -> R.drawable.ic_card_widget
+        COLES_PAY -> R.drawable.ic_coles_pay_widget
+        GIFT_CARD -> R.drawable.ic_gift_card_widget
+        GOOGLE_PAY -> R.drawable.ic_google_widget
+        INTEGRATED_3DS -> R.drawable.ic_integrated_3ds_widget
+        PAY_PAL -> R.drawable.ic_paypal_widget
+        PAY_PAL_VAULT -> R.drawable.ic_paypal_widget
+        STANDALONE_3DS -> R.drawable.ic_standalone_3ds_widget
+    }
 
     override fun displayName(): String = when (this) {
         ADDRESS_DETAILS -> "Address"

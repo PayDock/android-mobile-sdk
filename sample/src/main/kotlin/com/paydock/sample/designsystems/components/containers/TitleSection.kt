@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -39,4 +40,16 @@ fun SubSectionTitle(subTitle: String) {
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+}
+
+@PreviewLightDark
+@Composable
+private fun PreviewTitleSectionWithSubtitle() {
+    TitleSection(title = "Main Title", subTitle = "This is a subtitle")
+}
+
+@PreviewLightDark
+@Composable
+private fun PreviewTitleSectionWithoutSubtitle() {
+    TitleSection(title = "Main Title Only", subTitle = null)
 }

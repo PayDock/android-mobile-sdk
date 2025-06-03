@@ -11,6 +11,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -47,7 +48,9 @@ fun CenterAppTopBar(
                         )
                     }
                 }
-            }
+            },
+            colors = TopAppBarDefaults.topAppBarColors()
+                .copy(containerColor = MaterialTheme.colorScheme.surfaceContainer)
         )
     } else {
         TopAppBar(
@@ -58,7 +61,6 @@ fun CenterAppTopBar(
                     colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface)
                 )
             },
-            modifier = modifier,
             actions = {
                 IconButton(onClick = { onActionButtonClick?.invoke() }) {
                     Icon(
@@ -78,7 +80,9 @@ fun CenterAppTopBar(
                         )
                     }
                 }
-            }
+            },
+            colors = TopAppBarDefaults.topAppBarColors()
+                .copy(containerColor = MaterialTheme.colorScheme.surfaceContainer)
         )
     }
 }

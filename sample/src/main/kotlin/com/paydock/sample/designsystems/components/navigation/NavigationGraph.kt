@@ -9,11 +9,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.paydock.sample.R
-import com.paydock.sample.designsystems.components.list.ListScreen
 import com.paydock.sample.feature.account.ui.AccountScreen
 import com.paydock.sample.feature.checkout.ui.CheckoutStandaloneScreen
 import com.paydock.sample.feature.style.ui.StyleScreen
 import com.paydock.sample.feature.widgets.ui.WidgetInfoScreen
+import com.paydock.sample.feature.widgets.ui.WidgetsScreen
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
 
 @Composable
@@ -23,7 +23,7 @@ fun NavigationGraph(navController: NavHostController) {
             CheckoutStandaloneScreen()
         }
         composable(BottomNavItem.Widgets.route) {
-            ListScreen(items = WidgetType.entries.sortedBy { it.displayName() }) { widgetType ->
+            WidgetsScreen { widgetType ->
                 navController.currentBackStackEntry?.arguments?.putString(
                     "widget_type",
                     widgetType.name
@@ -32,7 +32,13 @@ fun NavigationGraph(navController: NavHostController) {
             }
         }
         composable(BottomNavItem.Style.route) {
-            StyleScreen()
+            StyleScreen { widgetType ->
+                navController.currentBackStackEntry?.arguments?.putString(
+                    "widget_type",
+                    widgetType.name
+                )
+                // TODO - Implement navigation to style screen(s)
+            }
         }
 
         composable(
