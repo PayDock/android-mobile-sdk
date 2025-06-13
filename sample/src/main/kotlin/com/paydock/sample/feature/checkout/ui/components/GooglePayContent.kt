@@ -2,9 +2,11 @@ package com.paydock.sample.feature.checkout.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.presentation.GooglePayAppearanceDefaults
 import com.paydock.feature.googlepay.presentation.GooglePayWidget
 import com.paydock.feature.googlepay.util.PaymentsUtil
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
@@ -14,13 +16,14 @@ import com.paydock.sample.core.AU_COUNTRY_CODE
 import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.core.COUNTRY_CODE_LIST
 import com.paydock.sample.core.MERCHANT_NAME
-import com.paydock.sample.designsystems.theme.SampleTheme
+import com.paydock.sample.feature.style.StylingViewModel
 import org.json.JSONArray
 import org.json.JSONObject
 import java.math.BigDecimal
 
 @Composable
 fun GooglePayContent(
+    stylingViewModel: StylingViewModel,
     tokenHandler: (onTokenReceived: (String) -> Unit) -> Unit,
     resultHandler: (Result<ChargeResponse>) -> Unit,
 ) {
@@ -28,6 +31,8 @@ fun GooglePayContent(
         put("phoneNumberRequired", false)
         put("allowedCountryCodes", JSONArray(COUNTRY_CODE_LIST))
     }
+    val googlePayAppearance by stylingViewModel.googlePayWidgetAppearance.collectAsState()
+    val currentOrDefaultAppearance = googlePayAppearance ?: GooglePayAppearanceDefaults.appearance()
     GooglePayWidget(
         modifier = Modifier.fillMaxWidth(),
         token = tokenHandler,
@@ -44,14 +49,7 @@ fun GooglePayContent(
                 shippingAddressParameters = shippingAddressParameters
             )
         ),
+        appearance = currentOrDefaultAppearance,
         completion = resultHandler
     )
-}
-
-@Composable
-@PreviewLightDark
-private fun GooglePayContentDefault() {
-    SampleTheme {
-        GooglePayContent({}, {})
-    }
 }

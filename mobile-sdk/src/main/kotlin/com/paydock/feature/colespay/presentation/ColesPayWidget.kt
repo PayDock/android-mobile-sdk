@@ -144,7 +144,7 @@ fun ColesPayWidget(
                     modifier = Modifier
                         .size(loaderSizeInDp)
                         .align(Alignment.Center),
-                    appearance = appearance.loaderAppearance.copy(
+                    appearance = appearance.loader.copy(
                         strokeWidth = (loaderSizeInDp.value * 0.1f).coerceAtLeast(2f).dp
                     )
                 )
@@ -157,20 +157,20 @@ fun ColesPayWidget(
  * Defines the appearance of the Coles Pay widget.
  *
  * @property imageButton The appearance of the Coles Pay image button.
- * @property loaderAppearance The appearance of the loader displayed during processing.
+ * @property loader The appearance of the loader displayed during processing.
  */
 @Immutable
 class ColesPayWidgetAppearance(
     val imageButton: ImageButtonAppearance,
-    val loaderAppearance: LoaderAppearance
+    val loader: LoaderAppearance
 ) {
     fun copy(
         imageButton: ImageButtonAppearance = this.imageButton,
-        loaderAppearance: LoaderAppearance = this.loaderAppearance
+        loader: LoaderAppearance = this.loader
     ): ColesPayWidgetAppearance =
         ColesPayWidgetAppearance(
             imageButton = imageButton.copy(),
-            loaderAppearance = loaderAppearance.copy()
+            loader = loader.copy()
         )
 }
 
@@ -196,7 +196,7 @@ object ColesPayWidgetAppearanceDefaults {
             shape = RoundedCornerShape(percent = 50), // ensures pill shape
             rippleColor = Color.White,
         ),
-        loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
+        loader = LoaderAppearanceDefaults.appearance().copy(
             color = Color.White
         )
     )

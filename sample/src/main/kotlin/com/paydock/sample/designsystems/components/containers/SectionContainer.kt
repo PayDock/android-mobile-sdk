@@ -21,11 +21,9 @@ fun SectionContainer(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 24.dp)
     ) {
         TitleSection(modifier = Modifier.fillMaxWidth(), title = title, subTitle = subTitle)
         content()

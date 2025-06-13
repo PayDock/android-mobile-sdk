@@ -117,7 +117,8 @@ fun GooglePayWidget(
                     modifier = Modifier
                         .testTag("payButton")
                         .fillMaxWidth(),
-                    theme = appearance.theme, type = appearance.type,
+                    theme = if (isSystemInDarkTheme()) ButtonTheme.Dark else ButtonTheme.Light,
+                    type = appearance.type,
                     onClick = {
                         viewModel.startGooglePayPaymentFlow(token)
                     }, radius = appearance.cornerRadius,
@@ -135,14 +136,12 @@ fun GooglePayWidget(
  * Represents the appearance configuration for the Google Pay widget.
  *
  * @property cornerRadius The corner radius of the Google Pay button.
- * @property theme The theme of the Google Pay button.
  * @property type The type of the Google Pay button.
  * @property loader The appearance configuration for the loader displayed during processing.
  */
 @Immutable
 class GooglePayWidgetAppearance(
     val cornerRadius: Dp,
-    val theme: ButtonTheme,
     val type: ButtonType,
     val loader: LoaderAppearance
 ) {
@@ -150,18 +149,16 @@ class GooglePayWidgetAppearance(
      * Creates a copy of this [GooglePayWidgetAppearance] with optionally updated values.
      *
      * @param cornerRadius The corner radius for the copied appearance, defaults to the current value.
-     * @param theme The button theme for the copied appearance, defaults to the current value.
      * @param type The button type for the copied appearance, defaults to the current value.
      * @param loader The loader appearance for the copied appearance, defaults to the current value.
      * @return A new [GooglePayWidgetAppearance] with the specified or default values.
      */
     fun copy(
         cornerRadius: Dp = this.cornerRadius,
-        theme: ButtonTheme = this.theme,
         type: ButtonType = this.type,
         loader: LoaderAppearance = this.loader
     ): GooglePayWidgetAppearance = GooglePayWidgetAppearance(
-        cornerRadius = cornerRadius.takeOrElse { this.cornerRadius }, theme = theme, type = type, loader = loader.copy()
+        cornerRadius = cornerRadius.takeOrElse { this.cornerRadius }, type = type, loader = loader.copy()
     )
 }
 
@@ -178,7 +175,6 @@ object GooglePayAppearanceDefaults {
      *
      * This Composable function creates a [GooglePayWidgetAppearance] with default values:
      * - Uses [ButtonAppearanceDefaults.ButtonCornerRadius] for the corner radius.
-     * - Sets the theme based on the system's dark mode setting (Dark if in dark theme, Light otherwise).
      * - Sets the button type to [ButtonType.Pay].
      * - Uses [LoaderAppearanceDefaults.appearance] for the loader appearance.
      *
@@ -187,7 +183,6 @@ object GooglePayAppearanceDefaults {
     @Composable
     fun appearance(): GooglePayWidgetAppearance = GooglePayWidgetAppearance(
         cornerRadius = ButtonAppearanceDefaults.ButtonCornerRadius,
-        theme = if (isSystemInDarkTheme()) ButtonTheme.Dark else ButtonTheme.Light,
         type = ButtonType.Pay,
         loader = LoaderAppearanceDefaults.appearance()
     )

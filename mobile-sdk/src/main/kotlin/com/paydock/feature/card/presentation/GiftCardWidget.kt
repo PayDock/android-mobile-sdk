@@ -124,7 +124,7 @@ fun GiftCardWidget(
         }
 
         // Submit button
-        appearance.actionButton(isEnabled).RenderButton(
+        appearance.actionButton.RenderButton(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("addCard"),
@@ -168,7 +168,7 @@ class GiftCardWidgetAppearance(
     val verticalSpacing: Dp,
     val horizontalSpacing: Dp,
     val textField: TextFieldAppearance,
-    val actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance,
+    val actionButton: ButtonAppearance,
 ) {
     /**
      * Creates a new [GiftCardWidgetAppearance] instance with optional overrides.
@@ -195,16 +195,17 @@ class GiftCardWidgetAppearance(
         verticalSpacing: Dp = this.verticalSpacing,
         horizontalSpacing: Dp = this.horizontalSpacing,
         textField: TextFieldAppearance = this.textField,
-        actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance = { isEnabled ->
-            this.actionButton(isEnabled)
-        }
+        actionButton: ButtonAppearance = this.actionButton,
     ): GiftCardWidgetAppearance = GiftCardWidgetAppearance(
         verticalSpacing = verticalSpacing.takeOrElse { this.verticalSpacing },
         horizontalSpacing = horizontalSpacing.takeOrElse { this.horizontalSpacing },
         textField = textField.copy(),
-        actionButton = { isEnabled ->
-            actionButton(isEnabled)
-        }
+        actionButton = when (actionButton) {
+            is ButtonAppearance.FilledButtonAppearance -> actionButton.copy()
+            is ButtonAppearance.IconButtonAppearance -> actionButton.copy()
+            is ButtonAppearance.OutlineButtonAppearance -> actionButton.copy()
+            is ButtonAppearance.TextButtonAppearance -> actionButton.copy()
+        },
     )
 }
 
@@ -231,7 +232,7 @@ object GiftCardAppearanceDefaults {
         verticalSpacing = WidgetDefaults.Spacing,
         horizontalSpacing = WidgetDefaults.Spacing,
         textField = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
-        actionButton = { isEnabled -> ButtonAppearanceDefaults.filledButtonAppearance(isEnabled) }
+        actionButton = ButtonAppearanceDefaults.filledButtonAppearance()
     )
 
 }

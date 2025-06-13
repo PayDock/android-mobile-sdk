@@ -1,4 +1,4 @@
-package com.paydock.sample.feature.style.ui.components
+package com.paydock.sample.feature.style.ui.components.core.counter
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +41,13 @@ fun NumberCounter(
 ) {
     var currentValue by remember { mutableIntStateOf(value) }
 
+    // Synchronize internal currentValue with the value prop when the prop changes
+    LaunchedEffect(value) {
+        if (currentValue != value) {
+            currentValue = value
+        }
+    }
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
@@ -54,15 +62,15 @@ fun NumberCounter(
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextField(
-                value = currentValue.toString(),
+                value = currentValue.toString(), // Display internal state
                 onValueChange = {
-                    val newValue = it.toIntOrNull() ?: 0
-                    currentValue = newValue
-                    onValueChange(newValue)
+                    val newValueFromString = it.toIntOrNull() ?: 0 // Use a different name
+                    currentValue = newValueFromString // Update internal state
+                    onValueChange(newValueFromString) // Notify parent
                 },
-                readOnly = true,
+                readOnly = true, // Keep it true if only buttons change it
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                keyboardActions = KeyboardActions(onDone = { onValueChange(currentValue) }),
+                keyboardActions = KeyboardActions(onDone = { /* onValueChange(currentValue) - This is usually not needed if readOnly=true */ }),
                 modifier = Modifier.weight(1f),
                 shape = RectangleShape,
                 colors = TextFieldDefaults.colors(
@@ -75,16 +83,17 @@ fun NumberCounter(
             )
             Column(
                 modifier = Modifier
-                    .padding(end = 0.dp)
                     .background(MaterialTheme.colorScheme.inverseOnSurface),
-                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
-                horizontalAlignment = Alignment.Start,
+                // Removed padding(end = 0.dp) as it's often better handled by the parent layout
+                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top), // Consider Arrangement.Center if icons look too high
+                horizontalAlignment = Alignment.CenterHorizontally, // Usually icons are centered
             ) {
                 Icon(
                     modifier = Modifier
                         .clickable {
-                            currentValue += 1
-                            onValueChange(currentValue)
+                            val newValueAfterIncrement = currentValue + 1
+                            currentValue = newValueAfterIncrement // Update internal state
+                            onValueChange(newValueAfterIncrement) // Notify parent
                         },
                     imageVector = Icons.Filled.ArrowDropUp,
                     contentDescription = "Increase",
@@ -92,8 +101,9 @@ fun NumberCounter(
                 Icon(
                     modifier = Modifier
                         .clickable {
-                            currentValue = (currentValue - 1).coerceAtLeast(0)
-                            onValueChange(currentValue)
+                            val newValueAfterDecrement = (currentValue - 1).coerceAtLeast(0)
+                            currentValue = newValueAfterDecrement // Update internal state
+                            onValueChange(newValueAfterDecrement) // Notify parent
                         },
                     imageVector = Icons.Filled.ArrowDropDown,
                     contentDescription = "Decrease",
@@ -102,7 +112,6 @@ fun NumberCounter(
         }
     }
 }
-
 @PreviewLightDark
 @Composable
 internal fun PreviewNumberCounter() {

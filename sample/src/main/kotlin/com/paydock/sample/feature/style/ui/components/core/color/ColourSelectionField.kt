@@ -1,4 +1,4 @@
-package com.paydock.sample.feature.style.ui.components
+package com.paydock.sample.feature.style.ui.components.core.color
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,22 +27,30 @@ import com.paydock.sample.feature.style.models.ColourTheme
 @Composable
 fun ColourSelectionField(
     modifier: Modifier = Modifier,
-    colourTheme: ColourTheme,
-    onItemClicked: (ColourTheme) -> Unit,
+    rawColourTheme: ColourTheme,
+    onItemClicked: () -> Unit,
 ) {
+    // Resolve Unspecified to a concrete color for display purposes here
+    val displayColor = if (rawColourTheme.color == Color.Unspecified) {
+        LocalContentColor.current
+    } else {
+        rawColourTheme.color
+    }
+    val colourThemeForDisplay = rawColourTheme.copy(color = displayColor)
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.Start
     ) {
         Text(
-            text = colourTheme.themeName,
+            text = colourThemeForDisplay.themeName,
             style = MaterialTheme.typography.labelMedium
         )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(enabled = true) { onItemClicked(colourTheme) },
+                .clickable(enabled = true) { onItemClicked() },
             horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -52,14 +61,14 @@ fun ColourSelectionField(
                     .align(Alignment.CenterVertically)
                     .weight(1f)
             ) {
-                Text(text = colourTheme.color.toHexCode())
+                Text(text = colourThemeForDisplay.color.toHexCode())
             }
             Box(
                 modifier = Modifier
                     .size(20.dp)
                     .border(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     .background(
-                        color = colourTheme.color,
+                        color = colourThemeForDisplay.color,
                         shape = RectangleShape
                     )
             )
@@ -71,6 +80,6 @@ fun ColourSelectionField(
 @Composable
 internal fun PreviewColorSelectionField() {
     SampleTheme() {
-        ColourSelectionField(colourTheme = ColourTheme("Test", Color.Red), onItemClicked = {})
+        ColourSelectionField(rawColourTheme = ColourTheme("Test", Color.Red), onItemClicked = {})
     }
 }

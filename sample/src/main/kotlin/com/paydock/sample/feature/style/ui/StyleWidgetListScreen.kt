@@ -20,7 +20,7 @@ import com.paydock.sample.designsystems.theme.SampleTheme
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
 
 @Composable
-fun StyleScreen(onWidgetSelected: (WidgetType) -> Unit) {
+fun StyleWidgetListScreen(onWidgetSelected: (WidgetType) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth()) {
         HorizontalDivider()
         Text(
@@ -49,8 +49,8 @@ fun StyleScreen(onWidgetSelected: (WidgetType) -> Unit) {
 
 @PreviewLightDark
 @Composable
-internal fun PreviewStyleScreen() {
+internal fun PreviewStyleWidgetListScreen() {
     SampleTheme {
-        StyleScreen() {}
+        StyleWidgetListScreen() {}
     }
 }

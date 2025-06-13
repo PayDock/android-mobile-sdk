@@ -19,19 +19,29 @@ import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
 import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
 import com.paydock.feature.colespay.presentation.ColesPayWidget
+import com.paydock.feature.colespay.presentation.ColesPayWidgetAppearanceDefaults
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
+import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.wallet.presentation.WalletViewModel
 
 @Composable
-fun ColesPayItem(context: Context, walletViewModel: WalletViewModel = hiltViewModel()) {
+fun ColesPayItem(
+    context: Context,
+    walletViewModel: WalletViewModel = hiltViewModel(),
+    stylingViewModel: StylingViewModel
+) {
+    val colesPayAppearance by stylingViewModel.colesPayWidgetAppearance.collectAsState()
+    val currentOrDefaultAppearance =
+        colesPayAppearance ?: ColesPayWidgetAppearanceDefaults.appearance()
     val uiState by walletViewModel.stateFlow.collectAsState()
     ColesPayWidget(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
         config = ColesPayWidgetConfig(BuildConfig.COLES_PAY_CLIENT_ID),
+        appearance = currentOrDefaultAppearance,
         token = walletViewModel.getWalletToken(WalletType.COLES_PAY)
     ) { result ->
         result.onSuccess {

@@ -1,4 +1,4 @@
-package com.paydock.sample.feature.style.ui.components.picker
+package com.paydock.sample.feature.style.ui.components.core.color.picker
 
 import android.graphics.Bitmap
 import android.graphics.Canvas

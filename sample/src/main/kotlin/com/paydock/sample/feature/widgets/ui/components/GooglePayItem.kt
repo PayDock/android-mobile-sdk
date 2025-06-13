@@ -18,6 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
 import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.presentation.GooglePayAppearanceDefaults
 import com.paydock.feature.googlepay.presentation.GooglePayWidget
 import com.paydock.feature.googlepay.util.PaymentsUtil
 import com.paydock.feature.wallet.domain.model.integration.WalletType
@@ -27,18 +28,25 @@ import com.paydock.sample.core.AU_COUNTRY_CODE
 import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
 import com.paydock.sample.core.MERCHANT_NAME
+import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.wallet.presentation.WalletViewModel
 import org.json.JSONArray
 import org.json.JSONObject
 import java.math.BigDecimal
 
 @Composable
-fun GooglePayItem(context: Context, walletViewModel: WalletViewModel = hiltViewModel()) {
+fun GooglePayItem(
+    context: Context,
+    walletViewModel: WalletViewModel = hiltViewModel(),
+    stylingViewModel: StylingViewModel
+) {
     val uiState by walletViewModel.stateFlow.collectAsState()
     val shippingAddressParameters = JSONObject().apply {
         put("phoneNumberRequired", false)
         put("allowedCountryCodes", JSONArray(listOf("US", "GB", "AU")))
     }
+    val googlePayAppearance by stylingViewModel.googlePayWidgetAppearance.collectAsState()
+    val currentOrDefaultAppearance = googlePayAppearance ?: GooglePayAppearanceDefaults.appearance()
     GooglePayWidget(
         modifier = Modifier
             .fillMaxWidth()
@@ -56,6 +64,7 @@ fun GooglePayItem(context: Context, walletViewModel: WalletViewModel = hiltViewM
                 shippingAddressParameters = shippingAddressParameters
             )
         ),
+        appearance = currentOrDefaultAppearance,
         token = walletViewModel.getWalletToken(WalletType.GOOGLE),
     ) { result ->
         result.onSuccess {

@@ -26,9 +26,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
@@ -462,7 +464,6 @@ object ButtonAppearanceDefaults {
      * its dimensions, colors, shape, elevation, and content styling. It allows customization based on
      * the button's enabled state.
      *
-     * @param enabled Determines whether the button is enabled or disabled. Defaults to `true`.
      * @return A [ButtonAppearance.FilledButtonAppearance] object representing the configured appearance.
      *
      * @see ButtonAppearance
@@ -472,7 +473,7 @@ object ButtonAppearanceDefaults {
      * @see TextAppearanceDefaults
      */
     @Composable
-    fun filledButtonAppearance(enabled: Boolean = true): ButtonAppearance.FilledButtonAppearance =
+    fun filledButtonAppearance(): ButtonAppearance.FilledButtonAppearance =
         ButtonAppearance.FilledButtonAppearance(
             height = ButtonHeight,
             contentSpacing = ButtonSpacing,
@@ -484,7 +485,7 @@ object ButtonAppearanceDefaults {
             iconAppearance = IconAppearanceDefaults.appearance()
                 .copy(
                     size = ButtonIconSize,
-                    tint = if (enabled) ButtonDefaults.buttonColors().contentColor else ButtonDefaults.buttonColors().disabledContentColor
+                    tint = ButtonDefaults.buttonColors().contentColor
                 ),
             textAppearance = TextAppearanceDefaults.appearance().copy(
                 style = LocalTextStyle.current.copy(
@@ -492,7 +493,7 @@ object ButtonAppearanceDefaults {
                 )
             ),
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
-                color = if (enabled) ButtonDefaults.buttonColors().containerColor else ButtonDefaults.buttonColors().disabledContentColor,
+                color = ButtonDefaults.buttonColors().containerColor,
                 strokeWidth = ButtonLoaderWidth
             )
         )
@@ -504,12 +505,11 @@ object ButtonAppearanceDefaults {
      * content spacing, shape, colors, border, content padding, icon appearance, text appearance,
      * and loader appearance. It allows customization based on the enabled state of the button.
      *
-     * @param enabled Determines if the button is enabled or disabled. Defaults to `true`.
      * @return A [ButtonAppearance.OutlineButtonAppearance] object representing the configured
      *   appearance of an outlined button.
      */
     @Composable
-    fun outlineButtonAppearance(enabled: Boolean = true): ButtonAppearance.OutlineButtonAppearance =
+    fun outlineButtonAppearance(): ButtonAppearance.OutlineButtonAppearance =
         ButtonAppearance.OutlineButtonAppearance(
             height = ButtonHeight,
             contentSpacing = ButtonSpacing,
@@ -517,14 +517,14 @@ object ButtonAppearanceDefaults {
             colors = ButtonDefaults.outlinedButtonColors(),
             elevation = null,
             border = BorderStroke(
-                width = ButtonDefaults.outlinedButtonBorder(enabled).width,
-                color = if (enabled) ButtonDefaults.buttonColors().containerColor else ButtonDefaults.buttonColors().disabledContentColor
+                width = ButtonDefaults.outlinedButtonBorder().width,
+                color = ButtonDefaults.buttonColors().containerColor
             ),
             contentPadding = ButtonDefaults.ContentPadding,
             iconAppearance = IconAppearanceDefaults.appearance()
                 .copy(
                     size = ButtonIconSize,
-                    tint = if (enabled) ButtonDefaults.buttonColors().containerColor else ButtonDefaults.buttonColors().disabledContentColor
+                    tint = ButtonDefaults.buttonColors().containerColor
                 ),
             textAppearance = TextAppearanceDefaults.appearance().copy(
                 style = LocalTextStyle.current.copy(
@@ -532,7 +532,7 @@ object ButtonAppearanceDefaults {
                 )
             ),
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
-                color = if (enabled) ButtonDefaults.buttonColors().containerColor else ButtonDefaults.buttonColors().disabledContentColor,
+                color = ButtonDefaults.buttonColors().containerColor,
                 strokeWidth = ButtonLoaderWidth
             )
         )
@@ -544,14 +544,11 @@ object ButtonAppearanceDefaults {
      * shape, colors, padding, and the appearance of its icon, text, and loader elements.
      * It provides a consistent styling for text buttons across the application.
      *
-     * @param enabled Determines if the button is enabled or disabled. Defaults to `true`.
-     *        When `false`, the button will be visually styled to indicate that it's inactive
-     *        and will not respond to user interactions.
      * @return A [ButtonAppearance.TextButtonAppearance] object that encapsulates the styling
      *         configuration for the text button.
      */
     @Composable
-    fun textButtonAppearance(enabled: Boolean = true): ButtonAppearance.TextButtonAppearance =
+    fun textButtonAppearance(): ButtonAppearance.TextButtonAppearance =
         ButtonAppearance.TextButtonAppearance(
             height = ButtonHeight,
             contentSpacing = ButtonSpacing,
@@ -563,7 +560,7 @@ object ButtonAppearanceDefaults {
             iconAppearance = IconAppearanceDefaults.appearance()
                 .copy(
                     size = ButtonIconSize,
-                    tint = if (enabled) ButtonDefaults.buttonColors().containerColor else ButtonDefaults.buttonColors().disabledContentColor
+                    tint = ButtonDefaults.buttonColors().containerColor
                 ),
             textAppearance = TextAppearanceDefaults.appearance().copy(
                 style = LocalTextStyle.current.copy(
@@ -571,13 +568,13 @@ object ButtonAppearanceDefaults {
                 )
             ),
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
-                color = if (enabled) ButtonDefaults.buttonColors().containerColor else ButtonDefaults.buttonColors().disabledContentColor,
+                color = ButtonDefaults.buttonColors().containerColor,
                 strokeWidth = ButtonLoaderWidth
             )
         )
 
     @Composable
-    fun imageButtonAppearance(enabled: Boolean = true): ButtonAppearance.IconButtonAppearance =
+    fun imageButtonAppearance(): ButtonAppearance.IconButtonAppearance =
         ButtonAppearance.IconButtonAppearance(
             height = ButtonHeight,
             contentSpacing = ButtonSpacing,
@@ -589,7 +586,7 @@ object ButtonAppearanceDefaults {
             iconAppearance = null,
             textAppearance = null,
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
-                color = if (enabled) ButtonDefaults.buttonColors().containerColor else ButtonDefaults.buttonColors().disabledContentColor,
+                color = ButtonDefaults.buttonColors().containerColor,
                 strokeWidth = ButtonLoaderWidth
             )
         )
@@ -619,7 +616,7 @@ internal fun SdkButton(
     enabled: Boolean = true,
     isLoading: Boolean = false,
     buttonIcon: ButtonIcon? = null,
-    appearance: ButtonAppearance.FilledButtonAppearance = ButtonAppearanceDefaults.filledButtonAppearance(enabled),
+    appearance: ButtonAppearance.FilledButtonAppearance = ButtonAppearanceDefaults.filledButtonAppearance(),
     onClick: () -> Unit,
 ) {
     // The actual enabled state for the underlying Button composable and for styling
@@ -628,6 +625,22 @@ internal fun SdkButton(
     val fontScale = configuration.fontScale
     // Calculate adjusted height with a scaling factor
     val adjustedButtonHeight = appearance.height.scaled(fontScale)
+
+    val disabledIconOrLoaderTint = ButtonDefaults.buttonColors().disabledContentColor
+    val runtimeAppearance = remember(appearance, isEnabled) {
+        if (isEnabled) {
+            appearance
+        } else {
+            appearance.copy(
+                iconAppearance = appearance.iconAppearance.copy( // Assuming iconAppearance is not null
+                    tint = disabledIconOrLoaderTint
+                ),
+                loaderAppearance = appearance.loaderAppearance.copy(
+                    color = disabledIconOrLoaderTint
+                )
+            )
+        }
+    }
 
     Button(
         onClick = onClick,
@@ -638,17 +651,21 @@ internal fun SdkButton(
                 text = text ?: "",
                 buttonIcon = buttonIcon,
                 isLoading = isLoading,
-                horizontalSpacing = appearance.contentSpacing,
-                iconAppearance = appearance.iconAppearance,
-                textAppearance = appearance.textAppearance,
-                loaderAppearance = appearance.loaderAppearance
+                horizontalSpacing = runtimeAppearance.contentSpacing,
+                iconAppearance = runtimeAppearance.iconAppearance,
+                textAppearance = runtimeAppearance.textAppearance,
+                loaderAppearance = runtimeAppearance.loaderAppearance
             )
         },
-        colors = appearance.colors,
-        shape = appearance.shape,
-        elevation = appearance.elevation,
-        border = appearance.border,
-        contentPadding = if (buttonIcon != null && isLoading) ButtonDefaults.ButtonWithIconContentPadding else appearance.contentPadding
+        colors = runtimeAppearance.colors,
+        shape = runtimeAppearance.shape,
+        elevation = runtimeAppearance.elevation,
+        border = runtimeAppearance.border,
+        contentPadding = if (buttonIcon != null && isLoading) {
+            ButtonDefaults.ButtonWithIconContentPadding
+        } else {
+            runtimeAppearance.contentPadding
+        }
     )
 }
 
@@ -683,7 +700,7 @@ internal fun SdkOutlineButton(
     enabled: Boolean = true,
     isLoading: Boolean = false,
     buttonIcon: ButtonIcon? = null,
-    appearance: ButtonAppearance.OutlineButtonAppearance = ButtonAppearanceDefaults.outlineButtonAppearance(enabled),
+    appearance: ButtonAppearance.OutlineButtonAppearance = ButtonAppearanceDefaults.outlineButtonAppearance(),
     onClick: () -> Unit,
 ) {
     // The actual enabled state for the underlying Button composable and for styling
@@ -692,6 +709,28 @@ internal fun SdkOutlineButton(
     val fontScale = configuration.fontScale
     // Calculate adjusted height with a scaling factor
     val adjustedButtonHeight = appearance.height.scaled(fontScale)
+
+    val disabledBorderWidth = ButtonDefaults.outlinedButtonBorder(enabled).width
+    val disabledBorderColor = ButtonDefaults.buttonColors().disabledContentColor
+    val disabledIconOrLoaderTint = ButtonDefaults.buttonColors().disabledContentColor
+    val runtimeAppearance = remember(appearance, isEnabled) {
+        if (isEnabled) {
+            appearance
+        } else {
+            appearance.copy(
+                border = appearance.border?.copy(
+                    width = disabledBorderWidth,
+                    brush = SolidColor(disabledBorderColor)
+                ),
+                iconAppearance = appearance.iconAppearance.copy( // Assuming iconAppearance is not null
+                    tint = disabledIconOrLoaderTint
+                ),
+                loaderAppearance = appearance.loaderAppearance.copy(
+                    color = disabledIconOrLoaderTint
+                )
+            )
+        }
+    }
 
     OutlinedButton(
         onClick = onClick,
@@ -702,17 +741,21 @@ internal fun SdkOutlineButton(
                 text = text ?: "",
                 buttonIcon = buttonIcon,
                 isLoading = isLoading,
-                horizontalSpacing = appearance.contentSpacing,
-                iconAppearance = appearance.iconAppearance,
-                textAppearance = appearance.textAppearance,
-                loaderAppearance = appearance.loaderAppearance
+                horizontalSpacing = runtimeAppearance.contentSpacing,
+                iconAppearance = runtimeAppearance.iconAppearance,
+                textAppearance = runtimeAppearance.textAppearance,
+                loaderAppearance = runtimeAppearance.loaderAppearance
             )
         },
-        colors = appearance.colors,
-        shape = appearance.shape,
-        elevation = appearance.elevation,
-        border = appearance.border,
-        contentPadding = if (buttonIcon != null && isLoading) ButtonDefaults.ButtonWithIconContentPadding else appearance.contentPadding
+        colors = runtimeAppearance.colors,
+        shape = runtimeAppearance.shape,
+        elevation = runtimeAppearance.elevation,
+        border = runtimeAppearance.border,
+        contentPadding = if (buttonIcon != null && isLoading) {
+            ButtonDefaults.ButtonWithIconContentPadding
+        } else {
+            runtimeAppearance.contentPadding
+        }
     )
 }
 
@@ -746,7 +789,7 @@ internal fun SdkTextButton(
     enabled: Boolean = true,
     isLoading: Boolean = false,
     buttonIcon: ButtonIcon? = null,
-    appearance: ButtonAppearance.TextButtonAppearance = ButtonAppearanceDefaults.textButtonAppearance(enabled),
+    appearance: ButtonAppearance.TextButtonAppearance = ButtonAppearanceDefaults.textButtonAppearance(),
     onClick: () -> Unit,
 ) {
     // The actual enabled state for the underlying Button composable and for styling
@@ -756,6 +799,23 @@ internal fun SdkTextButton(
     val fontScale = configuration.fontScale
     // Calculate adjusted height with a scaling factor
     val adjustedButtonHeight = appearance.height.scaled(fontScale)
+
+    val disabledIconOrLoaderTint = ButtonDefaults.buttonColors().disabledContentColor
+    val runtimeAppearance = remember(appearance, isEnabled) {
+        if (isEnabled) {
+            appearance
+        } else {
+            appearance.copy(
+                iconAppearance = appearance.iconAppearance.copy( // Assuming iconAppearance is not null
+                    tint = disabledIconOrLoaderTint
+                ),
+                loaderAppearance = appearance.loaderAppearance.copy(
+                    color = disabledIconOrLoaderTint
+                )
+            )
+        }
+    }
+
     TextButton(
         onClick = onClick,
         modifier = modifier.height(adjustedButtonHeight),
@@ -765,16 +825,20 @@ internal fun SdkTextButton(
                 text = text ?: "",
                 buttonIcon = buttonIcon,
                 isLoading = isLoading,
-                horizontalSpacing = appearance.contentSpacing,
-                iconAppearance = appearance.iconAppearance,
-                textAppearance = appearance.textAppearance,
-                loaderAppearance = appearance.loaderAppearance
+                horizontalSpacing = runtimeAppearance.contentSpacing,
+                iconAppearance = runtimeAppearance.iconAppearance,
+                textAppearance = runtimeAppearance.textAppearance,
+                loaderAppearance = runtimeAppearance.loaderAppearance
             )
         },
-        colors = appearance.colors,
-        elevation = appearance.elevation,
-        border = appearance.border,
-        contentPadding = if (buttonIcon != null && isLoading) ButtonDefaults.ButtonWithIconContentPadding else appearance.contentPadding
+        colors = runtimeAppearance.colors,
+        elevation = runtimeAppearance.elevation,
+        border = runtimeAppearance.border,
+        contentPadding = if (buttonIcon != null && isLoading) {
+            ButtonDefaults.ButtonWithIconContentPadding
+        } else {
+            runtimeAppearance.contentPadding
+        }
     )
 }
 
@@ -783,7 +847,7 @@ internal fun SdkIconButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isLoading: Boolean = false,
-    appearance: ButtonAppearance.IconButtonAppearance = ButtonAppearanceDefaults.imageButtonAppearance(enabled),
+    appearance: ButtonAppearance.IconButtonAppearance = ButtonAppearanceDefaults.imageButtonAppearance(),
     buttonIcon: ButtonIcon,
     contentDescription: String? = null,
     onClick: () -> Unit
@@ -791,15 +855,30 @@ internal fun SdkIconButton(
     // The actual enabled state for the underlying Button composable and for styling
     val isEnabled = enabled && !isLoading
     // Get the appearance by invoking the provider with the current effective enabled state
+    val disabledIconOrLoaderTint = ButtonDefaults.buttonColors().disabledContentColor
+    val runtimeAppearance = remember(appearance, isEnabled) {
+        if (isEnabled) {
+            appearance
+        } else {
+            appearance.copy(
+                iconAppearance = appearance.iconAppearance?.copy(
+                    tint = disabledIconOrLoaderTint
+                ),
+                loaderAppearance = appearance.loaderAppearance.copy(
+                    color = disabledIconOrLoaderTint
+                )
+            )
+        }
+    }
     Button(
         modifier = modifier.heightIn(min = ButtonAppearanceDefaults.ButtonHeight),
         onClick = onClick,
         enabled = isEnabled,
-        colors = appearance.colors,
-        shape = appearance.shape,
-        elevation = appearance.elevation,
-        border = appearance.border,
-        contentPadding = appearance.contentPadding
+        colors = runtimeAppearance.colors,
+        shape = runtimeAppearance.shape,
+        elevation = runtimeAppearance.elevation,
+        border = runtimeAppearance.border,
+        contentPadding = runtimeAppearance.contentPadding
     ) {
         // Animate visibility of the loader
         AnimatedVisibility(
@@ -808,7 +887,7 @@ internal fun SdkIconButton(
             exit = fadeOut() + shrinkOut(shrinkTowards = Alignment.Center),
             label = "loaderVisibilityAnimation"
         ) {
-            SdkButtonLoader(appearance = appearance.loaderAppearance)
+            SdkButtonLoader(appearance = runtimeAppearance.loaderAppearance)
         }
 
         // Animate visibility of the icon

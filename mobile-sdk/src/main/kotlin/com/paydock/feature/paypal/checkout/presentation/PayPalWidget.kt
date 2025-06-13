@@ -204,7 +204,6 @@ object PayPalAppearanceDefaults {
  * Handles the result returned from the PayPal web activity, processing the decoded URL,
  * cancellation, or errors, and invoking the appropriate completion handler.
  *
- * @param context The context used for accessing resources and displaying error messages.
  * @param result The `ActivityResult` returned from the PayPal web activity.
  * This contains the result code and data such as the decoded URL or cancellation status.
  * @param viewModel The PayPalViewModel that processes PayPal-related data, including the parsed PayPal URL.

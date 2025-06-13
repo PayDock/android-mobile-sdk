@@ -25,9 +25,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -42,7 +40,6 @@ import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.icon.IconAppearance
 import com.paydock.designsystems.components.icon.IconAppearanceDefaults
 import com.paydock.designsystems.components.icon.SdkIcon
-import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults.appearance
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
@@ -138,11 +135,13 @@ internal fun SdkTextField(
                     }
                 },
                 leadingIcon = leadingIcon,
+                contentPadding = appearance.contentPadding,
                 container = {
                     OutlinedTextFieldDefaults.Container(
                         enabled = enabled,
                         isError = error != null,
                         interactionSource = interactionSource,
+                        colors = appearance.colors,
                         shape = appearance.shape,
                         focusedBorderThickness = appearance.focusedBorderThickness,
                         unfocusedBorderThickness = appearance.unfocusedBorderThickness
@@ -167,7 +166,6 @@ internal fun SdkTextField(
  * @property label The [TextAppearance] for the label displayed above the text field.
  * @property errorLabel The [TextAppearance] for the error label displayed below the text field when an error occurs.
  * @property validIcon The [IconAppearance] for the icon displayed when the input is valid.
- * @property cursorBrush The [Brush] to use for the text cursor.
  * @property singleLine Whether the text field should be limited to a single line of text.
  * @property colors The [TextFieldColors] to use for the different states of the text field (e.g., focused, unfocused, disabled).
  * @property contentPadding The [PaddingValues] to apply to the content within the text field.
@@ -183,7 +181,6 @@ class TextFieldAppearance(
     val label: TextAppearance,
     val errorLabel: TextAppearance,
     val validIcon: IconAppearance,
-    val cursorBrush: Brush,
     // DecorationBox
     val singleLine: Boolean,
     val colors: TextFieldColors,
@@ -204,7 +201,6 @@ class TextFieldAppearance(
      * @param label The appearance of the label text. Defaults to the label of the current [TextFieldAppearance].
      * @param error The appearance of the error label text. Defaults to the error label of the current [TextFieldAppearance].
      * @param validIcon The appearance of the valid icon. Defaults to the valid icon of the current [TextFieldAppearance].
-     * @param cursorBrush The brush used to paint the cursor. Defaults to the cursor brush of the current [TextFieldAppearance].
      * @param singleLine Whether the text field should be single-line or multi-line.
      *      Defaults to the singleLine value of the current [TextFieldAppearance].
      * @param colors The colors used for different parts of the text field. Defaults to the colors of the current [TextFieldAppearance].
@@ -224,7 +220,6 @@ class TextFieldAppearance(
         label: TextAppearance = this.label,
         error: TextAppearance = this.errorLabel,
         validIcon: IconAppearance = this.validIcon,
-        cursorBrush: Brush = this.cursorBrush,
         // DecorationBox
         singleLine: Boolean = this.singleLine,
         colors: TextFieldColors = this.colors,
@@ -239,7 +234,6 @@ class TextFieldAppearance(
         label = label.copy(),
         errorLabel = error.copy(),
         validIcon = validIcon.copy(),
-        cursorBrush = cursorBrush,
         // DecorationBox
         singleLine = singleLine,
         colors = colors.copy(),
@@ -290,7 +284,6 @@ object TextFieldAppearanceDefaults {
     fun appearance(): TextFieldAppearance = TextFieldAppearance(
         // BasicTextField
         style = MaterialTheme.typography.bodyMedium,
-        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         // DecorationBox
         singleLine = false,
         placeholder = TextAppearanceDefaults.appearance().copy(

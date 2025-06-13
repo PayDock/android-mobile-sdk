@@ -75,73 +75,73 @@ const val DEFAULT_FONT_NAME = "Acid-Grotesk*.otf"
 //
 //}
 
-fun getSelectedSystemFont(fontName: String): Font? =
-    getSystemFontFiles().find { it.name == fontName }?.let { Font(it) }
-
-@RequiresApi(Build.VERSION_CODES.Q)
-fun getSystemFonts(): List<android.graphics.fonts.Font> {
-    // Then we get any device system fonts
-    return SystemFonts.getAvailableFonts().mapNotNull { it }
-}
-
-fun getSystemFontFiles(): List<File> {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        // Then we get any device system fonts
-        SystemFonts.getAvailableFonts().mapNotNull {
-            it.file
-        }
-    } else {
-        val path = "/system/fonts"
-        val file = File(path)
-        val fontFamily: Array<out File>? = file.listFiles()
-
-        fontFamily?.map { fontFile ->
-            fontFile
-        } ?: listOf()
-    }
-}
-
-suspend fun getSystemFontNames(): List<String> = withContext(Dispatchers.Default) {
-    return@withContext getSystemFontFiles().map { it.name }.sorted().distinct()
-}
-
-fun Context.getResourceFontName(fontFamily: FontFamily): String? {
-    val fontList = (fontFamily as FontListFontFamily).fonts
-    if (fontList.isEmpty()) return null
-    val firstFont: Font = fontList[0]
-    if (firstFont !is ResourceFont) return null
-    return mapResourceToStringName(resources.getResourceEntryName(firstFont.resId))
-}
-
-@RequiresApi(Build.VERSION_CODES.Q)
-fun getSelectedSystemFontName(fontFamily: FontFamily?): String? {
-    val font = (fontFamily as FontListFontFamily).fonts.firstOrNull()
-    val filePath = extractFilePath(font.toString())
-    val systemFonts: List<android.graphics.fonts.Font> = getSystemFonts()
-    systemFonts.forEach {
-        if (it.file?.path == filePath) {
-            return it.file?.name
-        }
-    }
-    return null
-}
-
-fun extractFilePath(input: String): String? {
-    val pattern = Pattern.compile("Font\\(file=([^,]+),")
-    val matcher = pattern.matcher(input)
-
-    if (matcher.find()) {
-        // Extract and return the matched file path
-        return matcher.group(1)
-    }
-
-    return null // Return null if no match is found
-}
-
-fun mapResourceToStringName(resourceEntryName: String?): String? {
-    return if (resourceEntryName?.equals("acid_grotesk") == true) {
-        DEFAULT_FONT_NAME
-    } else {
-        null
-    }
-}
+//fun getSelectedSystemFont(fontName: String): Font? =
+//    getSystemFontFiles().find { it.name == fontName }?.let { Font(it) }
+//
+//@RequiresApi(Build.VERSION_CODES.Q)
+//fun getSystemFonts(): List<android.graphics.fonts.Font> {
+//    // Then we get any device system fonts
+//    return SystemFonts.getAvailableFonts().mapNotNull { it }
+//}
+//
+//fun getSystemFontFiles(): List<File> {
+//    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+//        // Then we get any device system fonts
+//        SystemFonts.getAvailableFonts().mapNotNull {
+//            it.file
+//        }
+//    } else {
+//        val path = "/system/fonts"
+//        val file = File(path)
+//        val fontFamily: Array<out File>? = file.listFiles()
+//
+//        fontFamily?.map { fontFile ->
+//            fontFile
+//        } ?: listOf()
+//    }
+//}
+//
+//suspend fun getSystemFontNames(): List<String> = withContext(Dispatchers.Default) {
+//    return@withContext getSystemFontFiles().map { it.name }.sorted().distinct()
+//}
+//
+//fun Context.getResourceFontName(fontFamily: FontFamily): String? {
+//    val fontList = (fontFamily as FontListFontFamily).fonts
+//    if (fontList.isEmpty()) return null
+//    val firstFont: Font = fontList[0]
+//    if (firstFont !is ResourceFont) return null
+//    return mapResourceToStringName(resources.getResourceEntryName(firstFont.resId))
+//}
+//
+//@RequiresApi(Build.VERSION_CODES.Q)
+//fun getSelectedSystemFontName(fontFamily: FontFamily?): String? {
+//    val font = (fontFamily as FontListFontFamily).fonts.firstOrNull()
+//    val filePath = extractFilePath(font.toString())
+//    val systemFonts: List<android.graphics.fonts.Font> = getSystemFonts()
+//    systemFonts.forEach {
+//        if (it.file?.path == filePath) {
+//            return it.file?.name
+//        }
+//    }
+//    return null
+//}
+//
+//fun extractFilePath(input: String): String? {
+//    val pattern = Pattern.compile("Font\\(file=([^,]+),")
+//    val matcher = pattern.matcher(input)
+//
+//    if (matcher.find()) {
+//        // Extract and return the matched file path
+//        return matcher.group(1)
+//    }
+//
+//    return null // Return null if no match is found
+//}
+//
+//fun mapResourceToStringName(resourceEntryName: String?): String? {
+//    return if (resourceEntryName?.equals("acid_grotesk") == true) {
+//        DEFAULT_FONT_NAME
+//    } else {
+//        null
+//    }
+//}
