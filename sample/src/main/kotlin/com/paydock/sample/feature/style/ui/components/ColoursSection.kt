@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.dp
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
 import com.paydock.sample.feature.style.models.ColourTheme
-import com.paydock.sample.feature.style.ui.components.picker.ColourPicker
+import com.paydock.sample.feature.style.ui.components.core.color.picker.ColourPicker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

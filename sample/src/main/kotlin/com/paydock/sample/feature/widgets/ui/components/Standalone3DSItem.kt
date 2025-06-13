@@ -16,9 +16,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
 import com.paydock.feature.threeDS.common.domain.integration.ThreeDSConfig
+import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSAppearanceDefaults
 import com.paydock.feature.threeDS.standalone.presentation.Standalone3DSWidget
 import com.paydock.sample.core.THREE_DS_CARD_ERROR
 import com.paydock.sample.feature.card.CardViewModel
+import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.threeDS.presentation.ThreeDSViewModel
 
 @Composable
@@ -26,6 +28,7 @@ fun StandaloneThreeDSItem(
     context: Context,
     cardViewModel: CardViewModel = hiltViewModel(),
     threeDSViewModel: ThreeDSViewModel = hiltViewModel(),
+    stylingViewModel: StylingViewModel,
 ) {
     val cardUIState by cardViewModel.stateFlow.collectAsState()
     val threeDSUIState by threeDSViewModel.stateFlow.collectAsState()
@@ -39,9 +42,14 @@ fun StandaloneThreeDSItem(
     }
     val vaultToken = cardUIState.token
     val threeDSToken = threeDSUIState.token
+    val threeDSAppearance by stylingViewModel.standalone3DSWidgetAppearance.collectAsState()
+    val currentOrDefaultAppearance = threeDSAppearance ?: ThreeDSAppearanceDefaults.appearance()
     when {
         !threeDSToken.isNullOrBlank() -> {
-            Standalone3DSWidget(config = ThreeDSConfig(token = threeDSToken)) { result ->
+            Standalone3DSWidget(
+                config = ThreeDSConfig(token = threeDSToken),
+                appearance = currentOrDefaultAppearance
+            ) { result ->
                 result.onSuccess {
                     Log.d("[Standalone3DSWidget]", "Success: $it")
                     Toast.makeText(context, "3DS Result returned [$it]", Toast.LENGTH_SHORT).show()

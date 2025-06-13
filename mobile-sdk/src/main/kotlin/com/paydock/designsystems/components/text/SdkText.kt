@@ -1,6 +1,5 @@
 package com.paydock.designsystems.components.text
 
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -166,7 +165,7 @@ object TextAppearanceDefaults {
      */
     @Composable
     fun appearance(): TextAppearance = TextAppearance(
-        style = LocalTextStyle.current,
+        style = MaterialTheme.typography.bodyMedium,
         overflow = TextOverflow.Clip,
         softWrap = true,
         maxLines = Int.MAX_VALUE,

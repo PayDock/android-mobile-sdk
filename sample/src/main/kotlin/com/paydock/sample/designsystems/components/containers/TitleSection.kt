@@ -12,21 +12,21 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun TitleSection(modifier: Modifier = Modifier, title: String, subTitle: String?) {
+fun TitleSection(modifier: Modifier = Modifier, title: String, subTitle: String? = null) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
     ) {
-        SectionTitle(title)
+        SectionTitle(modifier = Modifier.fillMaxWidth(), title = title)
         subTitle?.let { SubSectionTitle(it) }
     }
 }
 
 @Composable
-fun SectionTitle(title: String) {
+fun SectionTitle(modifier: Modifier = Modifier, title: String) {
     Text(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         text = title,
         style = MaterialTheme.typography.titleMedium
     )

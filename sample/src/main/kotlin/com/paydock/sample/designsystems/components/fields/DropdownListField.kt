@@ -43,6 +43,7 @@ fun DropdownListField(
     items: List<String>,
     selected: String? = items.firstOrNull(),
     onItemSelected: (String) -> Unit,
+    enabled: Boolean,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
@@ -66,6 +67,7 @@ fun DropdownListField(
                     expanded = !expanded
                 },
                 value = selected ?: "",
+                enabled = enabled,
                 onValueChange = {},
                 interactionSource = interactionSource,
                 readOnly = true,

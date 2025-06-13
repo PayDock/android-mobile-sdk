@@ -102,7 +102,7 @@ fun PayPalSavePaymentSourceWidget(
     // Apply the SDK's theme to the widget
     Box(modifier = modifier) {
         // Display a button to link the PayPal account
-        appearance.actionButton(isEnabled).RenderButton(
+        appearance.actionButton.RenderButton(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("linkPayPalAccount"),
@@ -124,11 +124,11 @@ fun PayPalSavePaymentSourceWidget(
  *
  * @property actionButton A composable function that defines the appearance of the action button.
  *                        It takes a boolean [isEnabled] parameter to indicate whether the button is enabled.
- *                        The function should return an instance of [ButtonAppearance.OutlineButtonAppearance].
+ *                        The function should return an instance of [ButtonAppearance].
  */
 @Immutable
 class PayPalPaymentSourceWidgetAppearance(
-    val actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance.OutlineButtonAppearance
+    val actionButton: ButtonAppearance
 ) {
     /**
      * Creates a copy of this [PayPalPaymentSourceWidgetAppearance].
@@ -138,13 +138,16 @@ class PayPalPaymentSourceWidgetAppearance(
      * @return A new [PayPalPaymentSourceWidgetAppearance] instance with the specified parameters.
      */
     fun copy(
-        actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance.OutlineButtonAppearance = { isEnabled ->
-            this.actionButton(isEnabled)
-        }
+        actionButton: ButtonAppearance = this.actionButton,
     ): PayPalPaymentSourceWidgetAppearance =
-        PayPalPaymentSourceWidgetAppearance(actionButton = { isEnabled ->
-            actionButton(isEnabled).copy()
-        })
+        PayPalPaymentSourceWidgetAppearance(
+            actionButton = when (actionButton) {
+                is ButtonAppearance.FilledButtonAppearance -> actionButton.copy()
+                is ButtonAppearance.IconButtonAppearance -> actionButton.copy()
+                is ButtonAppearance.OutlineButtonAppearance -> actionButton.copy()
+                is ButtonAppearance.TextButtonAppearance -> actionButton.copy()
+            },
+        )
 }
 
 /**
@@ -161,7 +164,7 @@ object PayPalPaymentSourceAppearanceDefaults {
      */
     @Composable
     fun appearance(): PayPalPaymentSourceWidgetAppearance = PayPalPaymentSourceWidgetAppearance(
-        actionButton = { isEnabled -> ButtonAppearanceDefaults.outlineButtonAppearance(isEnabled) }
+        actionButton = ButtonAppearanceDefaults.outlineButtonAppearance()
     )
 
 }

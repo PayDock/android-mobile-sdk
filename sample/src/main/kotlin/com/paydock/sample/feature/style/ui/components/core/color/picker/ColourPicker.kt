@@ -1,4 +1,4 @@
-package com.paydock.sample.feature.style.ui.components.picker
+package com.paydock.sample.feature.style.ui.components.core.color.picker
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

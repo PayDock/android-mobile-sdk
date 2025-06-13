@@ -20,11 +20,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.takeOrElse
 import com.paydock.R
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
-import com.paydock.designsystems.components.button.ButtonAppearanceDefaults.ButtonHeight
 
 /**
  * Composable function for creating a custom image button.
@@ -86,7 +83,7 @@ internal fun SdkImageButton(
             contentScale = appearance.contentScale,
             modifier = Modifier
                 .fillMaxWidth()
-                .alpha(if (enabled) 1f else 0.5f)
+                .alpha(if (enabled) 1f else appearance.disabledImageAlpha)
         )
     }
 }
@@ -96,7 +93,6 @@ internal fun SdkImageButton(
  * This class is immutable, ensuring that the appearance properties cannot be changed after creation,
  * which is beneficial for performance and predictability in Compose.
  *
- * @property height The height of the image button.
  * @property shape The shape of the button's container.
  * @property rippleColor The color of the ripple effect when the button is pressed.
  * @property contentScale How the image should be scaled to fit the bounds of the button.
@@ -105,20 +101,17 @@ internal fun SdkImageButton(
  */
 @Immutable
 class ImageButtonAppearance(
-    val height: Dp,
     val shape: Shape,
     val rippleColor: Color,
     val contentScale: ContentScale,
     val disabledImageAlpha: Float
 ) {
     fun copy(
-        height: Dp = this.height,
         shape: Shape = this.shape,
         rippleColor: Color = this.rippleColor,
         contentScale: ContentScale = this.contentScale,
         disabledImageAlpha: Float = this.disabledImageAlpha,
     ): ImageButtonAppearance = ImageButtonAppearance(
-        height = height.takeOrElse { this.height },
         shape = shape,
         rippleColor = rippleColor.copy(),
         contentScale = contentScale,
@@ -137,7 +130,6 @@ object ImageButtonDefaults {
      *
      * This function provides a standard appearance configuration that can be used directly or as a
      * base for further customization. The default values are:
-     * - `height`: [ButtonHeight] (defined in [ButtonAppearanceDefaults])
      * - `shape`: [ButtonDefaults.shape] (the default Material Design button shape)
      * - `rippleColor`: [Color.Transparent] (no visible ripple effect by default)
      * - `contentScale`: [ContentScale.FillWidth] (the image will scale to fill the width of the button)
@@ -148,7 +140,6 @@ object ImageButtonDefaults {
     @Composable
     fun appearance(): ImageButtonAppearance =
         ImageButtonAppearance(
-            height = ButtonHeight,
             shape = ButtonDefaults.shape,
             rippleColor = Color.Transparent,
             contentScale = ContentScale.FillWidth,

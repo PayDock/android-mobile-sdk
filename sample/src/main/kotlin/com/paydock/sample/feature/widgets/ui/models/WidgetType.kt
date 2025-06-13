@@ -1,5 +1,9 @@
 package com.paydock.sample.feature.widgets.ui.models
 
+import androidx.compose.runtime.Composable
+import com.paydock.designsystems.components.text.TextAppearance
+import com.paydock.designsystems.components.text.TextAppearanceDefaults
+import com.paydock.feature.address.presentation.AddressDetailsAppearanceDefaults
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.list.DisplayableListItem
 
@@ -46,5 +50,13 @@ enum class WidgetType : DisplayableListItem {
         PAY_PAL -> "Standalone PayPal button"
         PAY_PAL_VAULT -> "Link your Paypal account for faster checkout"
         STANDALONE_3DS -> "Standalone 3DS flow"
+    }
+}
+
+@Composable
+fun WidgetType.toTitleAppearance(): TextAppearance {
+    return when (this) {
+        WidgetType.ADDRESS_DETAILS -> AddressDetailsAppearanceDefaults.appearance().title
+        else -> TextAppearanceDefaults.appearance()
     }
 }

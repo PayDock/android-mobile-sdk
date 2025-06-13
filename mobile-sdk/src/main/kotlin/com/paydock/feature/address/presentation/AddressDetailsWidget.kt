@@ -108,7 +108,7 @@ fun AddressDetailsWidget(
         }
 
         // Save Address button
-        appearance.actionButton(isDataValid).RenderButton(
+        appearance.actionButton.RenderButton(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("saveAddress"),
@@ -136,10 +136,11 @@ class AddressDetailsWidgetAppearance(
     val verticalSpacing: Dp,
     val title: TextAppearance,
     val textField: TextFieldAppearance,
-    val actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance,
+    val actionButton: ButtonAppearance,
     val linkButton: LinkButtonAppearance,
     val searchDropdown: SearchDropdownAppearance
 ) {
+
     /**
      * Creates a copy of this [AddressDetailsWidgetAppearance] with the specified changes.
      *
@@ -155,17 +156,18 @@ class AddressDetailsWidgetAppearance(
         verticalSpacing: Dp = this.verticalSpacing,
         title: TextAppearance = this.title,
         textField: TextFieldAppearance = this.textField,
-        actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance = { isEnabled ->
-            this.actionButton(isEnabled)
-        },
+        actionButton: ButtonAppearance = this.actionButton,
         linkButton: LinkButtonAppearance = this.linkButton,
         searchDropdown: SearchDropdownAppearance = this.searchDropdown
     ): AddressDetailsWidgetAppearance = AddressDetailsWidgetAppearance(
         verticalSpacing = verticalSpacing.takeOrElse { this.verticalSpacing },
         title = title.copy(),
         textField = textField.copy(),
-        actionButton = { isEnabled ->
-            actionButton(isEnabled)
+        actionButton = when (actionButton) {
+            is ButtonAppearance.FilledButtonAppearance -> actionButton.copy()
+            is ButtonAppearance.IconButtonAppearance -> actionButton.copy()
+            is ButtonAppearance.OutlineButtonAppearance -> actionButton.copy()
+            is ButtonAppearance.TextButtonAppearance -> actionButton.copy()
         },
         linkButton = linkButton.copy(),
         searchDropdown = searchDropdown.copy()
@@ -197,9 +199,7 @@ object AddressDetailsAppearanceDefaults {
             style = MaterialTheme.typography.titleMedium,
         ),
         textField = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
-        actionButton = { isEnabled ->
-            ButtonAppearanceDefaults.filledButtonAppearance(isEnabled)
-        },
+        actionButton = ButtonAppearanceDefaults.filledButtonAppearance(),
         linkButton = LinkButtonAppearanceDefaults.appearance(),
         searchDropdown = SearchDropdownAppearanceDefaults.appearance()
     )

@@ -17,10 +17,14 @@ import com.paydock.sample.feature.checkout.StandaloneCheckoutViewModel
 import com.paydock.sample.feature.checkout.ui.components.Checkout3DSBottomSheet
 import com.paydock.sample.feature.checkout.ui.components.CheckoutBaseScreen
 import com.paydock.sample.feature.checkout.ui.components.CheckoutBottomSheet
+import com.paydock.sample.feature.style.StylingViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CheckoutStandaloneScreen(viewModel: StandaloneCheckoutViewModel = hiltViewModel()) {
+fun CheckoutStandaloneScreen(
+    viewModel: StandaloneCheckoutViewModel = hiltViewModel(),
+    stylingViewModel: StylingViewModel
+) {
     val context = LocalContext.current
     val uiState by viewModel.stateFlow.collectAsState()
     var openBottomSheet by rememberSaveable { mutableStateOf(false) }
@@ -84,7 +88,8 @@ fun CheckoutStandaloneScreen(viewModel: StandaloneCheckoutViewModel = hiltViewMo
             bottomSheetState = bottomSheetState,
             onDismissRequest = { openBottomSheet = false },
             uiState = uiState,
-            viewModel = viewModel
+            viewModel = viewModel,
+            stylingViewModel = stylingViewModel
         )
     }
 
@@ -96,7 +101,8 @@ fun CheckoutStandaloneScreen(viewModel: StandaloneCheckoutViewModel = hiltViewMo
             },
             vaultToken = uiState.vaultToken,
             threeDSToken = uiState.threeDSToken?.token,
-            viewModel = viewModel
+            viewModel = viewModel,
+            stylingViewModel = stylingViewModel
         )
     }
 }

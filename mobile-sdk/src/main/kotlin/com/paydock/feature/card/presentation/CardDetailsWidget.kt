@@ -145,12 +145,13 @@ fun CardDetailsWidget(
                 config = config.allowSaveCard,
                 linkTextAppearance = appearance.linkText,
                 linkToggleAppearance = appearance.toggleText,
+                toggleAppearance = appearance.toggle,
                 onToggle = viewModel::updateSaveCard
             )
         }
 
         // Submit button for tokenizing the card
-        appearance.actionButton(isEnabled).RenderButton(
+        appearance.actionButton.RenderButton(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("submitDetails"),
@@ -185,7 +186,7 @@ class CardDetailsWidgetAppearance(
     val horizontalSpacing: Dp,
     val title: TextAppearance,
     val textField: TextFieldAppearance,
-    val actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance,
+    val actionButton: ButtonAppearance,
     val toggle: ToggleAppearance,
     val toggleText: TextAppearance,
     val linkText: LinkTextAppearance
@@ -214,9 +215,7 @@ class CardDetailsWidgetAppearance(
         horizontalSpacing: Dp = this.horizontalSpacing,
         title: TextAppearance = this.title,
         textField: TextFieldAppearance = this.textField,
-        actionButton: @Composable (isEnabled: Boolean) -> ButtonAppearance = { isEnabled ->
-            this.actionButton(isEnabled)
-        },
+        actionButton: ButtonAppearance = this.actionButton,
         switch: ToggleAppearance = this.toggle,
         toggleText: TextAppearance = this.toggleText,
         linkText: LinkTextAppearance = this.linkText
@@ -226,8 +225,11 @@ class CardDetailsWidgetAppearance(
             horizontalSpacing = horizontalSpacing.takeOrElse { this.horizontalSpacing },
             title = title.copy(),
             textField = textField.copy(),
-            actionButton = { isEnabled ->
-                actionButton(isEnabled)
+            actionButton = when (actionButton) {
+                is ButtonAppearance.FilledButtonAppearance -> actionButton.copy()
+                is ButtonAppearance.IconButtonAppearance -> actionButton.copy()
+                is ButtonAppearance.OutlineButtonAppearance -> actionButton.copy()
+                is ButtonAppearance.TextButtonAppearance -> actionButton.copy()
             },
             toggle = switch.copy(),
             toggleText = toggleText.copy(),
@@ -262,7 +264,7 @@ object CardDetailsAppearanceDefaults {
             style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
         ),
         textField = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
-        actionButton = { isEnabled -> ButtonAppearanceDefaults.filledButtonAppearance(isEnabled) },
+        actionButton = ButtonAppearanceDefaults.filledButtonAppearance(),
         toggle = ToggleAppearanceDefaults.appearance(),
         toggleText = TextAppearanceDefaults.appearance().copy(
             style = MaterialTheme.typography.bodyMedium,
