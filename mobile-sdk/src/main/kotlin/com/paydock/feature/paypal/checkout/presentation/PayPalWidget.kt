@@ -20,7 +20,6 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,7 +47,7 @@ import com.paydock.feature.paypal.checkout.presentation.utils.getDecodedUrlExtra
 import com.paydock.feature.paypal.checkout.presentation.utils.putCallbackUrlExtra
 import com.paydock.feature.paypal.checkout.presentation.viewmodels.PayPalViewModel
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
-import kotlinx.coroutines.launch
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -59,7 +58,7 @@ import org.koin.androidx.compose.koinViewModel
  * this component will not respond to user input, and it will appear visually disabled.
  * @param config Configuration for the PayPal Widget.
  * @param appearance Configuration for the visual appearance of the PayPal Widget.
- * @param token A callback to obtain the wallet token asynchronously.
+ * @param tokenRequest A callback to obtain the wallet token asynchronously.
  * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
  * @param completion A callback to handle the Wallet Charge result.
  */
@@ -69,7 +68,7 @@ fun PayPalWidget(
     enabled: Boolean = true,
     config: PayPalWidgetConfig = PayPalWidgetConfig(),
     appearance: PayPalWidgetAppearance = PayPalAppearanceDefaults.appearance(),
-    token: (onTokenReceived: (String) -> Unit) -> Unit,
+    tokenRequest: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
     completion: (Result<ChargeResponse>) -> Unit,
 ) {
@@ -79,8 +78,6 @@ fun PayPalWidget(
 
     // Collect states for PayPal view models
     val uiState by viewModel.uiState.collectAsState()
-
-    val scope = rememberCoroutineScope()
 
     // ActivityResultLauncher for handling payment resolution
     val resolvePaymentForResult = rememberLauncherForActivityResult(
@@ -131,19 +128,9 @@ fun PayPalWidget(
                 shape = appearance.shape,
                 loaderAppearance = appearance.loader,
                 isEnabled = uiState !is PayPalCheckoutUIState.Loading && enabled,
-                isLoading = loadingDelegate == null && uiState is PayPalCheckoutUIState.Loading
-            ) {
-                // Use the callback to obtain the token asynchronously
-                token { obtainedToken ->
-                    scope.launch {
-                        viewModel.setWalletToken(obtainedToken)
-                        viewModel.getWalletCallback(
-                            walletToken = obtainedToken,
-                            requestShipping = config.requestShipping
-                        )
-                    }
-                }
-            }
+                // Loading is handled by a mock loader button
+                onClick = { viewModel.handlePayPalButtonClick(config, tokenRequest) }
+            )
         }
     }
 }
@@ -331,5 +318,5 @@ private fun handleUIState(
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewPayPalWidget() {
-    PayPalWidget(token = {}, completion = {})
+    PayPalWidget(tokenRequest = {}, completion = {})
 }

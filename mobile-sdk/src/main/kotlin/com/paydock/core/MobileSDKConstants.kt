@@ -205,6 +205,8 @@ internal object MobileSDKConstants {
             const val PAY_PAL_ERROR =
                 "An unexpected error occurred while processing PayPal. Please try again later or contact support for assistance."
             const val PAY_PAL_CANCELLATION_ERROR = "PayPal charge was cancelled!"
+            const val PAY_PAL_WALLET_TOKEN_ERROR =
+                "An unexpected error occurred while retrieving PayPal wallet token. Please try again later."
         }
     }
 

@@ -5,12 +5,14 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.PayPalException
 import com.paydock.core.domain.error.extensions.mapApiException
+import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
 import com.paydock.feature.wallet.data.dto.CaptureWalletChargeRequest
 import com.paydock.feature.wallet.data.dto.CustomerData
 import com.paydock.feature.wallet.data.dto.PaymentSourceData
 import com.paydock.feature.wallet.data.dto.WalletCallbackRequest
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.feature.wallet.domain.model.ui.WalletCallback
 import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
@@ -176,6 +178,39 @@ internal class PayPalViewModel(
         }
         if (payPalToken != null && payerId != null) {
             updateUiState(PayPalCheckoutUIState.Capture(payPalToken, payerId))
+        }
+    }
+
+    /**
+     * Handles the click event for the PayPal button.
+     *
+     * This function initiates the PayPal token request and then proceeds to fetch wallet callback data
+     * if the token request is successful. If the token request fails, it updates the UI state with an error.
+     *
+     * @param config The PayPal widget configuration.
+     * @param tokenRequest A lambda function that takes a callback for the token result and requests the PayPal token.
+     */
+    fun handlePayPalButtonClick(
+        config: PayPalWidgetConfig,
+        tokenRequest: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit
+    ) {
+        // Use the callback to obtain the token asynchronously
+        tokenRequest.invoke { tokenResult ->
+            tokenResult.onSuccess { result ->
+                setWalletToken(result.token)
+                getWalletCallback(
+                    walletToken = result.token,
+                    requestShipping = config.requestShipping
+                )
+            }.onFailure { throwable ->
+                updateUiState(
+                    PayPalCheckoutUIState.Error(
+                        PayPalException.InitialisationWalletTokenException(
+                            throwable.message ?: MobileSDKConstants.PayPalConfig.Errors.PAY_PAL_WALLET_TOKEN_ERROR
+                        )
+                    )
+                )
+            }
         }
     }
     //endregion

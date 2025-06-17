@@ -37,7 +37,7 @@ fun PayPalItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        token = walletViewModel.getWalletToken(WalletType.PAY_PAL),
+        tokenRequest = walletViewModel.getWalletTokenResultCallback(WalletType.PAY_PAL),
         appearance = currentOrDefaultAppearance
     ) { result ->
         result.onSuccess {

@@ -10,13 +10,14 @@ import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidget
 import com.paydock.feature.paypal.checkout.presentation.PayPalAppearanceDefaults
 import com.paydock.feature.paypal.checkout.presentation.PayPalWidget
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.sample.feature.style.StylingViewModel
 
 @Composable
 fun PayPalContent(
     stylingViewModel: StylingViewModel,
     enabled: Boolean = true,
-    tokenHandler: (onTokenReceived: (String) -> Unit) -> Unit,
+    tokenHandler: (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
     resultHandler: (Result<ChargeResponse>) -> Unit,
 ) {
@@ -29,7 +30,7 @@ fun PayPalContent(
         ),
         appearance = currentOrDefaultAppearance,
         enabled = enabled,
-        token = tokenHandler,
+        tokenRequest = tokenHandler,
         loadingDelegate = loadingDelegate,
         completion = resultHandler
     )
