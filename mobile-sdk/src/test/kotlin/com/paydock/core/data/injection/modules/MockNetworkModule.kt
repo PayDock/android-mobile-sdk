@@ -1,9 +1,6 @@
 package com.paydock.core.data.injection.modules
 
-import com.paydock.MobileSDK
-import com.paydock.core.MobileSDKConstants
 import com.paydock.core.MobileSDKTestConstants
-import com.paydock.core.domain.mapper.mapToBaseUrl
 import com.paydock.core.network.NetworkClientBuilder
 import com.paydock.core.network.addInterceptor
 import com.paydock.core.network.extensions.convertToDataClass
@@ -60,33 +57,6 @@ internal val mockFailureNetworkModule = module {
         NetworkClientBuilder.create()
             .setBaseUrl("https://example.com")
             .setMockEngine(get())
-            .build()
-    }
-}
-
-/**
- * This module defines a single `CertificatePinner` and a single `HttpClient`.
- */
-internal val sslFailNetworkTestModule = module {
-    single {
-        // Create a `HttpClient` that uses the mock HTTP engine.
-        NetworkClientBuilder.create()
-            .setBaseUrl("example.com")
-            .setSslPins(listOf("sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="))
-            .build()
-    }
-}
-
-/**
- * This module defines a single `CertificatePinner` and a single `HttpClient`.
- */
-internal val sslSuccessNetworkTestModule = module {
-
-    single {
-        // Create a `HttpClient` that uses the mock HTTP engine.
-        NetworkClientBuilder.create()
-            .setBaseUrl(MobileSDK.getInstance().environment.mapToBaseUrl())
-            .setSslPins(listOf(MobileSDKConstants.Network.SSH_HASH))
             .build()
     }
 }
