@@ -9,6 +9,7 @@ import com.paydock.feature.threeDS.integrated.domain.model.integration.enums.Int
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.StandaloneEventType
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.AU_CURRENCY_CODE
@@ -69,6 +70,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
         }
     }
 
+    @Deprecated("Use newer version")
     fun getWalletToken(walletType: WalletType): (onTokenReceived: (String) -> Unit) -> Unit =
         { onTokenReceived ->
             resetResultState()
@@ -98,13 +100,23 @@ class StandaloneCheckoutViewModel @Inject constructor(
                     )
                 }
 
+                else -> Unit
+            }
+        }
+
+    fun getWalletTokenResultCallback(walletType: WalletType): (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit =
+        { onTokenReceived ->
+            resetResultState()
+            when (walletType) {
                 WalletType.PAY_PAL -> {
                     val request = createPayPalWalletRequest()
-                    initiateWalletTransaction(
+                    initiateWalletTransactionResult(
                         request = request,
                         callback = onTokenReceived
                     )
                 }
+
+                else -> Unit
             }
         }
 
@@ -272,6 +284,37 @@ class StandaloneCheckoutViewModel @Inject constructor(
         }
     }
 
+    private fun initiateWalletTransactionResult(
+        manualCapture: Boolean = false,
+        request: InitiateWalletRequest,
+        callback: (Result<WalletTokenResult>) -> Unit,
+    ) {
+        viewModelScope.launch {
+            _stateFlow.update { state ->
+                state.copy(isLoading = true)
+            }
+            val result =
+                initiateWalletTransactionUseCase(manualCapture = manualCapture, request = request)
+            result.onSuccess { charge ->
+                charge.walletToken?.let { callback(Result.success(WalletTokenResult(token = it))) }
+                _stateFlow.update { state ->
+                    state.copy(isLoading = false, error = null, walletChargeResult = charge)
+                }
+            }
+            result.onFailure {
+                _stateFlow.update { state ->
+                    callback(Result.failure(it))
+                    state.copy(
+                        walletChargeResult = null,
+                        isLoading = false,
+                        error = it.message ?: CHARGE_TRANSACTION_ERROR
+                    )
+                }
+            }
+        }
+    }
+
+    @Deprecated("Use updated version")
     private fun initiateWalletTransaction(
         manualCapture: Boolean = false,
         request: InitiateWalletRequest,

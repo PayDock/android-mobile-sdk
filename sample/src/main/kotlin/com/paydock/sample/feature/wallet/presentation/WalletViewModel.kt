@@ -2,6 +2,7 @@ package com.paydock.sample.feature.wallet.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.AU_CURRENCY_CODE
@@ -32,6 +33,37 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
         }
     }
 
+    private fun initiateWalletTransactionResult(
+        manualCapture: Boolean = false,
+        request: InitiateWalletRequest,
+        callback: (Result<WalletTokenResult>) -> Unit,
+    ) {
+        viewModelScope.launch {
+            _stateFlow.update { state ->
+                state.copy(isLoading = true)
+            }
+            val result =
+                initiateWalletTransactionUseCase(manualCapture = manualCapture, request = request)
+            result.onSuccess { charge ->
+                charge.walletToken?.let { callback(Result.success(WalletTokenResult(token = it))) }
+                _stateFlow.update { state ->
+                    state.copy(isLoading = false, error = null, walletChargeResult = charge)
+                }
+            }
+            result.onFailure {
+                callback(Result.failure(it))
+                _stateFlow.update { state ->
+                    state.copy(
+                        walletChargeResult = null,
+                        isLoading = false,
+                        error = it.message ?: CHARGE_TRANSACTION_ERROR
+                    )
+                }
+            }
+        }
+    }
+
+    @Deprecated("Use updated version")
     private fun initiateWalletTransaction(
         manualCapture: Boolean = false,
         request: InitiateWalletRequest,
@@ -61,6 +93,23 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
         }
     }
 
+    fun getWalletTokenResultCallback(walletType: WalletType): (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit =
+        { onTokenReceived ->
+            resetResultState()
+            when (walletType) {
+                WalletType.PAY_PAL -> {
+                    val request = createPayPalWalletRequest()
+                    initiateWalletTransactionResult(
+                        request = request,
+                        callback = onTokenReceived
+                    )
+                }
+
+                else -> Unit
+            }
+        }
+
+    @Deprecated("Use updated version")
     fun getWalletToken(walletType: WalletType): (onTokenReceived: (String) -> Unit) -> Unit =
         { onTokenReceived ->
             resetResultState()
@@ -90,13 +139,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                     )
                 }
 
-                WalletType.PAY_PAL -> {
-                    val request = createPayPalWalletRequest()
-                    initiateWalletTransaction(
-                        request = request,
-                        callback = onTokenReceived
-                    )
-                }
+                else -> Unit
             }
         }
 

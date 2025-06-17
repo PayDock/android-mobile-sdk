@@ -106,7 +106,7 @@ fun CheckoutBottomSheet(
                         WidgetType.PAY_PAL -> PayPalContent(
                             stylingViewModel = stylingViewModel,
                             enabled = !uiState.isLoading,
-                            tokenHandler = viewModel.getWalletToken(WalletType.PAY_PAL),
+                            tokenHandler = viewModel.getWalletTokenResultCallback(WalletType.PAY_PAL),
                             loadingDelegate = viewModel,
                             resultHandler = viewModel::handleChargeResult
                         )
