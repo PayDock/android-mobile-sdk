@@ -24,6 +24,7 @@ import com.paydock.feature.wallet.data.dto.CustomerData
 import com.paydock.feature.wallet.data.dto.PaymentSourceData
 import com.paydock.feature.wallet.data.dto.WalletCallbackRequest
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.feature.wallet.domain.model.ui.WalletCallback
 import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
@@ -165,20 +166,31 @@ internal class AfterpayViewModel(
      * wallet token and then transitions the UI state to launch the Afterpay checkout intent,
      * which is created using the provided `context` and `config`.
      *
-     * @param tokenProvider A suspend function that takes a callback `(String) -> Unit` and provides the wallet token to it.
+     * @param tokenProvider A suspend function that takes a callback `(Result<WalletTokenResult>) -> Unit`
+     * and provides the wallet token to it.
      * This allows for asynchronous fetching of the token.
      * @param context The Android [Context] required to create the Afterpay checkout intent.
      * @param config The [AfterpaySDKConfig] containing the necessary configuration for the Afterpay SDK.
      */
     fun startAfterpayFlow(
-        tokenProvider: (onTokenReceived: (String) -> Unit) -> Unit,
+        tokenProvider: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit,
         context: Context,
         config: AfterpaySDKConfig
     ) {
         val checkoutIntent = createCheckoutIntent(context, config)
-        tokenProvider { obtainedToken ->
-            setWalletToken(obtainedToken)
-            updateUiState(AfterpayUIState.LaunchIntent(checkoutIntent))
+        tokenProvider.invoke { tokenResult ->
+            tokenResult.onSuccess { result ->
+                setWalletToken(result.token)
+                updateUiState(AfterpayUIState.LaunchIntent(checkoutIntent))
+            }.onFailure { throwable ->
+                updateUiState(
+                    AfterpayUIState.Error(
+                        AfterpayException.InitialisationWalletTokenException(
+                            throwable.message ?: MobileSDKConstants.AfterpayConfig.Errors.WALLET_TOKEN_ERROR
+                        )
+                    )
+                )
+            }
         }
     }
     //endregion

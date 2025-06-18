@@ -97,6 +97,14 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
         { onTokenReceived ->
             resetResultState()
             when (walletType) {
+                WalletType.AFTER_PAY -> {
+                    val request = createAfterpayWalletRequest()
+                    initiateWalletTransactionResult(
+                        request = request,
+                        callback = onTokenReceived
+                    )
+                }
+
                 WalletType.PAY_PAL -> {
                     val request = createPayPalWalletRequest()
                     initiateWalletTransactionResult(
@@ -114,13 +122,6 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
         { onTokenReceived ->
             resetResultState()
             when (walletType) {
-                WalletType.AFTER_PAY -> {
-                    val request = createAfterpayWalletRequest()
-                    initiateWalletTransaction(
-                        request = request,
-                        callback = onTokenReceived
-                    )
-                }
 
                 WalletType.GOOGLE -> {
                     val request = createGoogleWalletRequest()

@@ -119,7 +119,7 @@ fun CheckoutBottomSheet(
 
                         WidgetType.AFTER_PAY -> AfterpayContent(
                             stylingViewModel = stylingViewModel,
-                            tokenHandler = viewModel.getWalletToken(WalletType.AFTER_PAY),
+                            tokenHandler = viewModel.getWalletTokenResultCallback(WalletType.AFTER_PAY),
                             resultHandler = viewModel::handleChargeResult
                         )
 

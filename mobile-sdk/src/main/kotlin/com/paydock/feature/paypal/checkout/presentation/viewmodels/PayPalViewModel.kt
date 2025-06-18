@@ -206,7 +206,7 @@ internal class PayPalViewModel(
                 updateUiState(
                     PayPalCheckoutUIState.Error(
                         PayPalException.InitialisationWalletTokenException(
-                            throwable.message ?: MobileSDKConstants.PayPalConfig.Errors.PAY_PAL_WALLET_TOKEN_ERROR
+                            throwable.message ?: MobileSDKConstants.PayPalConfig.Errors.WALLET_TOKEN_ERROR
                         )
                     )
                 )

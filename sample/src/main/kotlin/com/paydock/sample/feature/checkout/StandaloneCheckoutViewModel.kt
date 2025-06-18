@@ -75,13 +75,6 @@ class StandaloneCheckoutViewModel @Inject constructor(
         { onTokenReceived ->
             resetResultState()
             when (walletType) {
-                WalletType.AFTER_PAY -> {
-                    val request = createAfterpayWalletRequest()
-                    initiateWalletTransaction(
-                        request = request,
-                        callback = onTokenReceived
-                    )
-                }
 
                 WalletType.GOOGLE -> {
                     val request = createGoogleWalletRequest()
@@ -99,7 +92,6 @@ class StandaloneCheckoutViewModel @Inject constructor(
                         callback = onTokenReceived
                     )
                 }
-
                 else -> Unit
             }
         }
@@ -108,6 +100,14 @@ class StandaloneCheckoutViewModel @Inject constructor(
         { onTokenReceived ->
             resetResultState()
             when (walletType) {
+                WalletType.AFTER_PAY -> {
+                    val request = createAfterpayWalletRequest()
+                    initiateWalletTransactionResult(
+                        request = request,
+                        callback = onTokenReceived
+                    )
+                }
+
                 WalletType.PAY_PAL -> {
                     val request = createPayPalWalletRequest()
                     initiateWalletTransactionResult(
