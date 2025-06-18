@@ -19,7 +19,7 @@ import com.paydock.core.MobileSDKConstants
  */
 internal class SdkWebViewClient(
     private val onShouldOverrideUrlLoading: ((request: WebResourceRequest?) -> Boolean)? = null,
-    private val onPageFinished: () -> Unit = {},
+    private val onPageFinished: (WebView) -> Unit = {},
     private val onWebViewError: (Int, String) -> Unit,
 ) : AccompanistWebViewClient() {
 
@@ -31,7 +31,7 @@ internal class SdkWebViewClient(
      */
     override fun onPageFinished(view: WebView, url: String?) {
         super.onPageFinished(view, url)
-        onPageFinished()
+        onPageFinished(view)
     }
 
     /**

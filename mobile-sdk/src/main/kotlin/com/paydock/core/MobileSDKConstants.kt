@@ -237,6 +237,7 @@ internal object MobileSDKConstants {
      * Constants related to Coles Pay configuration.
      */
     object ColesPayConfig {
+        internal const val COLES_PAY_SUCCESS_PATH = "/payment-confirmed"
         internal const val COLES_PAY_REDIRECT_URL = DEFAULT_WEB_URL
 
         object Errors {
