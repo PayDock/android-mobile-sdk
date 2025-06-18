@@ -9,13 +9,14 @@ import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
 import com.paydock.feature.colespay.presentation.ColesPayWidget
 import com.paydock.feature.colespay.presentation.ColesPayWidgetAppearanceDefaults
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.feature.style.StylingViewModel
 
 @Composable
 fun ColesPayContent(
     stylingViewModel: StylingViewModel,
-    tokenHandler: (onTokenReceived: (String) -> Unit) -> Unit,
+    tokenHandler: (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
     resultHandler: (Result<String>) -> Unit,
 ) {
@@ -26,7 +27,7 @@ fun ColesPayContent(
         modifier = Modifier.fillMaxWidth(),
         config = ColesPayWidgetConfig(BuildConfig.COLES_PAY_CLIENT_ID),
         appearance = currentOrDefaultAppearance,
-        token = tokenHandler,
+        tokenRequest = tokenHandler,
         loadingDelegate = loadingDelegate,
         completion = resultHandler
     )
