@@ -81,20 +81,25 @@ internal data class CardDetailsInputState(
      *
      * The validation process includes:
      * - **Cardholder Name Validation:** If `collectCardholderName` is `true`, the cardholder name is
-     *   validated using [CardHolderNameValidator.validateHolderNameInput].
+     *   validated using [CardHolderNameValidator.isCardHolderNameValid].
      *   If `collectCardholderName` is `false`, the cardholder name is considered valid regardless of its content.
-     * - **Card Number Validation:** The card number is validated using [CreditCardNumberValidator.validateCardNumberInput],
+     * - **Card Number Validation:** The card number is validated using [CreditCardNumberValidator.isCardNumberValid],
      *   which checks for emptiness, the Luhn algorithm, length, and supported card scheme.
-     * - **Expiry Date Validation:** The expiry date is validated using [CardExpiryValidator.validateExpiryInput],
+     * - **Expiry Date Validation:** The expiry date is validated using [CardExpiryValidator.isExpiryValid],
      *   which checks for the correct format and whether the date is in the future.
-     * - **Security Code Validation:** The security code is validated using [CardSecurityCodeValidator.validateSecurityCodeInput],
+     * - **Security Code Validation:** The security code is validated using [CardSecurityCodeValidator.isSecurityCodeValid],
      *   which checks for emptiness and the correct length based on the card scheme.
      *
      * @return `true` if all input fields are valid; `false` otherwise.
      */
     val isDataValid: Boolean
         get() {
-            val isCardHolderNameValid = CardHolderNameValidator.isCardHolderNameValid(cardholderName) || !collectCardholderName
+            val isCardHolderNameValid =
+                (
+                    collectCardholderName && CardHolderNameValidator.isCardHolderNameValid(
+                        cardholderName ?: ""
+                    )
+                    ) || !collectCardholderName
             val isCardNumberValid = CreditCardNumberValidator.isCardNumberValid(
                 cardNumber,
                 cardScheme,
