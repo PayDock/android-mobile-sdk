@@ -65,7 +65,7 @@ fun GooglePayItem(
             )
         ),
         appearance = currentOrDefaultAppearance,
-        token = walletViewModel.getWalletToken(WalletType.GOOGLE),
+        tokenRequest = walletViewModel.getWalletTokenResultCallback(WalletType.GOOGLE),
     ) { result ->
         result.onSuccess {
             Log.d("[GooglePayWidget]", "Success: $it")

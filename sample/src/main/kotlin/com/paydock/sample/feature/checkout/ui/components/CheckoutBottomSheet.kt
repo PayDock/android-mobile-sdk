@@ -97,9 +97,10 @@ fun CheckoutBottomSheet(
 
                         WidgetType.GOOGLE_PAY -> GooglePayContent(
                             stylingViewModel = stylingViewModel,
-                            tokenHandler = viewModel.getWalletToken(
+                            tokenHandler = viewModel.getWalletTokenResultCallback(
                                 WalletType.GOOGLE
                             ),
+                            loadingDelegate = viewModel,
                             resultHandler = viewModel::handleChargeResult
                         )
 
@@ -120,6 +121,7 @@ fun CheckoutBottomSheet(
                         WidgetType.AFTER_PAY -> AfterpayContent(
                             stylingViewModel = stylingViewModel,
                             tokenHandler = viewModel.getWalletTokenResultCallback(WalletType.AFTER_PAY),
+                            loadingDelegate = viewModel,
                             resultHandler = viewModel::handleChargeResult
                         )
 

@@ -184,6 +184,8 @@ internal object MobileSDKConstants {
             const val INITIALISATION_ERROR = "Unexpected non API exception when trying to " +
                 "retrieve [allowedPaymentMethods] parameter from PaymentRequest!"
             const val CANCELLATION_ERROR = "Google Pay charge was cancelled!"
+            const val WALLET_TOKEN_ERROR =
+                "An unexpected error occurred while retrieving Google Pay wallet token. Please try again later."
         }
     }
 

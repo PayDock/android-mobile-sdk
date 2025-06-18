@@ -17,6 +17,7 @@ import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.wallet.data.dto.CaptureWalletChargeRequest
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
@@ -191,20 +192,32 @@ internal class GooglePayViewModel(
      *
      * This function sets the UI to a loading state and then invokes the [tokenProvider]
      * to obtain a wallet token. Once the token is received, it proceeds to the
-     * `onTokenReceivedAndReadyToPay` method with the token and the provided [paymentRequest].
+     * `onTokenReceivedAndReadyToPay` method with the token.
      *
-     * @param tokenProvider A higher-order function that takes a callback `(String) -> Unit`
+     * @param tokenProvider A higher-order function that takes a callback `(Result<WalletTokenResult>) -> Unit`
      *                      and is responsible for asynchronously providing the wallet token.
-     *                      The callback should be invoked with the received token.
+     *                      The callback should be invoked with the [Result] of the token retrieval operation.
+     *                      On success, the [Result] will contain a [WalletTokenResult] with the token.
+     *                      On failure, the [Result] will contain an appropriate [Throwable].
      */
     fun startGooglePayPaymentFlow(
-        tokenProvider: (onTokenReceived: (String) -> Unit) -> Unit
+        tokenProvider: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit,
     ) {
         setLoadingState()
-        tokenProvider { receivedToken ->
-            // This is where the token is received.
-            // Now we have the token and can proceed.
-            onTokenReceivedAndReadyToPay(receivedToken)
+        tokenProvider.invoke { tokenResult ->
+            tokenResult.onSuccess { result ->
+                // This is where the token is received.
+                // Now we have the token and can proceed.
+                onTokenReceivedAndReadyToPay(result.token)
+            }.onFailure { throwable ->
+                updateUiState(
+                    GooglePayUIState.Error(
+                        GooglePayException.InitialisationWalletTokenException(
+                            throwable.message ?: MobileSDKConstants.GooglePayConfig.Errors.WALLET_TOKEN_ERROR
+                        )
+                    )
+                )
+            }
         }
     }
     //endregion
