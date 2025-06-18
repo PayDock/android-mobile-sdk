@@ -39,9 +39,10 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
         callback: (Result<WalletTokenResult>) -> Unit,
     ) {
         viewModelScope.launch {
-            _stateFlow.update { state ->
-                state.copy(isLoading = true)
-            }
+            // Loading is handled by the SDK
+//            _stateFlow.update { state ->
+//                state.copy(isLoading = true)
+//            }
             val result =
                 initiateWalletTransactionUseCase(manualCapture = manualCapture, request = request)
             result.onSuccess { charge ->
@@ -105,6 +106,14 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                     )
                 }
 
+                WalletType.GOOGLE -> {
+                    val request = createGoogleWalletRequest()
+                    initiateWalletTransactionResult(
+                        request = request,
+                        callback = onTokenReceived
+                    )
+                }
+
                 WalletType.PAY_PAL -> {
                     val request = createPayPalWalletRequest()
                     initiateWalletTransactionResult(
@@ -122,14 +131,6 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
         { onTokenReceived ->
             resetResultState()
             when (walletType) {
-
-                WalletType.GOOGLE -> {
-                    val request = createGoogleWalletRequest()
-                    initiateWalletTransaction(
-                        request = request,
-                        callback = onTokenReceived
-                    )
-                }
 
                 WalletType.COLES_PAY -> {
                     val request = createColesPayWalletRequest()

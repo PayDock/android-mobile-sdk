@@ -7,6 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOptionUpdate
@@ -23,6 +24,7 @@ import java.util.Currency
 fun AfterpayContent(
     stylingViewModel: StylingViewModel,
     tokenHandler: (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit,
+    loadingDelegate: WidgetLoadingDelegate? = null,
     resultHandler: (Result<ChargeResponse>) -> Unit,
 ) {
     val afterpayAppearance by stylingViewModel.afterpayWidgetAppearance.collectAsState()
@@ -88,6 +90,7 @@ fun AfterpayContent(
                 }
             provideShippingOptionUpdateResult(result)
         },
+        loadingDelegate = loadingDelegate,
         completion = resultHandler
     )
 }

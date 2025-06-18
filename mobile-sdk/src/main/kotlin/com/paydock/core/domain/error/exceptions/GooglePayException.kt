@@ -70,6 +70,14 @@ sealed class GooglePayException(displayableMessage: String) : SdkException(displ
     class ParseException(displayableMessage: String, val errorBody: String?) : GooglePayException(displayableMessage)
 
     /**
+     * Exception thrown when there is an error during the initialisation of the Google Pay wallet token.
+     *
+     * @param displayableMessage A human-readable message describing the error.
+     * @constructor Creates an InitialisationWalletTokenException with the specified displayable message.
+     */
+    class InitialisationWalletTokenException(displayableMessage: String) : GooglePayException(displayableMessage)
+
+    /**
      * Exception thrown when there is an unknown error related to Google Pay.
      *
      * @param displayableMessage A human-readable message describing the error.

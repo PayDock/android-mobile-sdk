@@ -5,11 +5,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.presentation.GooglePayAppearanceDefaults
 import com.paydock.feature.googlepay.presentation.GooglePayWidget
 import com.paydock.feature.googlepay.util.PaymentsUtil
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.AMOUNT
 import com.paydock.sample.core.AU_COUNTRY_CODE
@@ -24,7 +26,8 @@ import java.math.BigDecimal
 @Composable
 fun GooglePayContent(
     stylingViewModel: StylingViewModel,
-    tokenHandler: (onTokenReceived: (String) -> Unit) -> Unit,
+    tokenHandler: (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit,
+    loadingDelegate: WidgetLoadingDelegate? = null,
     resultHandler: (Result<ChargeResponse>) -> Unit,
 ) {
     val shippingAddressParameters = JSONObject().apply {
@@ -35,7 +38,7 @@ fun GooglePayContent(
     val currentOrDefaultAppearance = googlePayAppearance ?: GooglePayAppearanceDefaults.appearance()
     GooglePayWidget(
         modifier = Modifier.fillMaxWidth(),
-        token = tokenHandler,
+        tokenRequest = tokenHandler,
         config = GooglePayWidgetConfig(
             isReadyToPayRequest = PaymentsUtil.createIsReadyToPayRequest(),
             paymentRequest = PaymentsUtil.createGooglePayRequest(
@@ -49,6 +52,7 @@ fun GooglePayContent(
                 shippingAddressParameters = shippingAddressParameters
             )
         ),
+        loadingDelegate = loadingDelegate,
         appearance = currentOrDefaultAppearance,
         completion = resultHandler
     )

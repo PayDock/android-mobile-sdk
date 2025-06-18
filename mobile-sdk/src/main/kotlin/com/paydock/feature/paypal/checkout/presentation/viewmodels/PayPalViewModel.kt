@@ -194,6 +194,7 @@ internal class PayPalViewModel(
         config: PayPalWidgetConfig,
         tokenRequest: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit
     ) {
+        setLoadingState()
         // Use the callback to obtain the token asynchronously
         tokenRequest.invoke { tokenResult ->
             tokenResult.onSuccess { result ->

@@ -7,7 +7,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.launch
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -45,6 +44,7 @@ import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.presentation.viewmodels.GooglePayViewModel
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -58,7 +58,7 @@ import org.koin.core.parameter.parametersOf
  * @param config The configuration for the Google Pay widget.
  * @param appearance The appearance configuration for the Google Pay widget, including button theme,
  * type, corner radius, and loader appearance. Defaults to [GooglePayAppearanceDefaults.appearance].
- * @param token A callback to asynchronously retrieve the wallet token. This callback should call
+ * @param tokenRequest A callback to asynchronously retrieve the wallet token. This callback should call
  * the provided `onTokenReceived` lambda with the retrieved token.
  * @param loadingDelegate An optional delegate to manage loading indicators externally.
  * If provided, the widget will not display its internal loader.
@@ -69,7 +69,7 @@ fun GooglePayWidget(
     modifier: Modifier = Modifier,
     config: GooglePayWidgetConfig,
     appearance: GooglePayWidgetAppearance = GooglePayAppearanceDefaults.appearance(),
-    token: (onTokenReceived: (String) -> Unit) -> Unit,
+    tokenRequest: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
     completion: (Result<ChargeResponse>) -> Unit
 ) {
@@ -120,7 +120,7 @@ fun GooglePayWidget(
                     theme = if (isSystemInDarkTheme()) ButtonTheme.Dark else ButtonTheme.Light,
                     type = appearance.type,
                     onClick = {
-                        viewModel.startGooglePayPaymentFlow(token)
+                        viewModel.startGooglePayPaymentFlow(tokenRequest)
                     }, radius = appearance.cornerRadius,
                     allowedPaymentMethods = allowedPaymentMethods
                 )
