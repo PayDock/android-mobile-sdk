@@ -70,24 +70,6 @@ class StandaloneCheckoutViewModel @Inject constructor(
         }
     }
 
-    @Deprecated("Use newer version")
-    fun getWalletToken(walletType: WalletType): (onTokenReceived: (String) -> Unit) -> Unit =
-        { onTokenReceived ->
-            resetResultState()
-            when (walletType) {
-
-                WalletType.COLES_PAY -> {
-                    val request = createColesPayWalletRequest()
-                    initiateWalletTransaction(
-                        manualCapture = true,
-                        request = request,
-                        callback = onTokenReceived
-                    )
-                }
-                else -> Unit
-            }
-        }
-
     fun getWalletTokenResultCallback(walletType: WalletType): (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit =
         { onTokenReceived ->
             resetResultState()
@@ -103,6 +85,15 @@ class StandaloneCheckoutViewModel @Inject constructor(
                 WalletType.GOOGLE -> {
                     val request = createGoogleWalletRequest()
                     initiateWalletTransactionResult(
+                        request = request,
+                        callback = onTokenReceived
+                    )
+                }
+
+                WalletType.COLES_PAY -> {
+                    val request = createColesPayWalletRequest()
+                    initiateWalletTransactionResult(
+                        manualCapture = true,
                         request = request,
                         callback = onTokenReceived
                     )
@@ -307,31 +298,6 @@ class StandaloneCheckoutViewModel @Inject constructor(
                     state.copy(
                         walletChargeResult = null,
                         isLoading = false,
-                        error = it.message ?: CHARGE_TRANSACTION_ERROR
-                    )
-                }
-            }
-        }
-    }
-
-    @Deprecated("Use updated version")
-    private fun initiateWalletTransaction(
-        manualCapture: Boolean = false,
-        request: InitiateWalletRequest,
-        callback: (String) -> Unit,
-    ) {
-        viewModelScope.launch {
-            val result =
-                initiateWalletTransactionUseCase(manualCapture = manualCapture, request = request)
-            result.onSuccess { charge ->
-                charge.walletToken?.let { callback(it) }
-                _stateFlow.update { state ->
-                    state.copy(error = null, walletChargeResult = charge)
-                }
-            }
-            result.onFailure {
-                _stateFlow.update { state ->
-                    state.copy(
                         error = it.message ?: CHARGE_TRANSACTION_ERROR
                     )
                 }

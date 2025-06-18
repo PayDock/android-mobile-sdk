@@ -114,7 +114,7 @@ fun CheckoutBottomSheet(
 
                         WidgetType.COLES_PAY -> ColesPayContent(
                             stylingViewModel = stylingViewModel,
-                            tokenHandler = viewModel.getWalletToken(WalletType.COLES_PAY),
+                            tokenHandler = viewModel.getWalletTokenResultCallback(WalletType.COLES_PAY),
                             resultHandler = viewModel::handleColesPayResult
                         )
 

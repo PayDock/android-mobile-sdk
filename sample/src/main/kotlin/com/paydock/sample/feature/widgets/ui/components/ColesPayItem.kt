@@ -42,7 +42,7 @@ fun ColesPayItem(
             .padding(16.dp),
         config = ColesPayWidgetConfig(BuildConfig.COLES_PAY_CLIENT_ID),
         appearance = currentOrDefaultAppearance,
-        token = walletViewModel.getWalletToken(WalletType.COLES_PAY)
+        tokenRequest = walletViewModel.getWalletTokenResultCallback(WalletType.COLES_PAY)
     ) { result ->
         result.onSuccess {
             Log.d("[ColesPayWidget]", "Success: $it")

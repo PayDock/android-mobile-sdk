@@ -48,6 +48,7 @@ import com.paydock.feature.colespay.presentation.utils.getOrderIdExtra
 import com.paydock.feature.colespay.presentation.utils.putClientIdExtra
 import com.paydock.feature.colespay.presentation.utils.putOrderIdExtra
 import com.paydock.feature.colespay.presentation.viewmodels.ColesPayViewModel
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -59,7 +60,7 @@ import org.koin.core.parameter.parametersOf
  * this component will not respond to user input, and it will appear visually disabled.
  * @param config The configuration details required for the Coles Pay widget.
  * @param appearance The appearance configuration for the Coles Pay widget.
- * @param token A callback to obtain the wallet token asynchronously.
+ * @param tokenRequest A callback to obtain the wallet token asynchronously.
  * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
  * @param completion A callback to handle the result of the Coles Pay operation.
  */
@@ -70,7 +71,7 @@ fun ColesPayWidget(
     enabled: Boolean = true,
     config: ColesPayWidgetConfig,
     appearance: ColesPayWidgetAppearance = ColesPayWidgetAppearanceDefaults.appearance(),
-    token: (onTokenReceived: (String) -> Unit) -> Unit,
+    tokenRequest: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
     completion: (Result<String>) -> Unit
 ) {
@@ -112,7 +113,7 @@ fun ColesPayWidget(
             painter = painterResource(id = R.drawable.pay_with_coles_pay_button),
             contentDescription = LocalContext.current.getString(R.string.content_desc_coles_pay_button),
         ) {
-            viewModel.startColesPayFlow(token)
+            viewModel.startColesPayFlow(tokenRequest)
         }
     } else {
         val painter = painterResource(id = R.drawable.pay_with_coles_placeholder)
@@ -326,5 +327,5 @@ private fun handleUiState(
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewColesPayWidget() {
-    ColesPayWidget(config = ColesPayWidgetConfig(clientId = ""), token = {}, completion = {})
+    ColesPayWidget(config = ColesPayWidgetConfig(clientId = ""), tokenRequest = {}, completion = {})
 }
