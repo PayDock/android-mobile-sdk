@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.webkit.WebResourceRequest
+import android.webkit.WebView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -39,6 +40,7 @@ import com.paydock.designsystems.components.web.utils.SdkWebViewClient
  * @param shouldShowCustomLoader Flag to determine whether to display a custom loading indicator.
  * @param jsBridge The generic JavaScript interface for communication between WebView and Android code.
  * @param onShouldOverrideUrlLoading Custom logic for handling URL loading events.
+ * @param onPageFinished  Callback triggered when a page finishes loading in the WebView.
  * @param onWebViewError Callback to handle WebView errors.
  */
 @Composable
@@ -49,6 +51,7 @@ internal fun <T : Any?> SdkWebView(
     jsBridge: SdkJSBridge<T>? = null,
     loaderAppearance: LoaderAppearance = LoaderAppearanceDefaults.appearance(),
     onShouldOverrideUrlLoading: ((request: WebResourceRequest?) -> Boolean)? = null,
+    onPageFinished: ((WebView) -> Unit)? = null,
     onWebViewError: (Int, String) -> Unit,
 ) {
     // Get the current context
@@ -78,6 +81,11 @@ internal fun <T : Any?> SdkWebView(
             client = remember {
                 SdkWebViewClient(
                     onShouldOverrideUrlLoading = onShouldOverrideUrlLoading,
+                    onPageFinished = { webView ->
+                        onPageFinished?.let { callback ->
+                            callback(webView)
+                        }
+                    },
                     onWebViewError = onWebViewError
                 )
             },
@@ -85,7 +93,12 @@ internal fun <T : Any?> SdkWebView(
                 SdkWebChromeClient(
                     context = context,
                     onOpenWebView = { showWindowLoader = true },
-                    onPageFinished = { showWindowLoader = false },
+                    onPageFinished = { webView ->
+                        showWindowLoader = false
+                        onPageFinished?.let { callback ->
+                            callback(webView)
+                        }
+                    },
                     onWebViewError = onWebViewError,
                     openExternalLink = { open(context, it) }
                 )
