@@ -39,6 +39,7 @@ import com.paydock.feature.afterpay.presentation.state.AfterpayUIState
 import com.paydock.feature.afterpay.presentation.utils.CheckoutHandler
 import com.paydock.feature.afterpay.presentation.viewmodels.AfterpayViewModel
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -50,7 +51,7 @@ import org.koin.androidx.compose.koinViewModel
  * @param modifier The `Modifier` to be applied to the widget.
  * @param config The configuration object for the Afterpay SDK, including checkout and button options.
  * @param enabled A boolean to enable or disable the payment button.
- * @param token A lambda function to obtain a token asynchronously. Accepts a callback to provide the obtained token.
+ * @param tokenRequest A lambda function to obtain a token asynchronously. Accepts a callback to provide the obtained token.
  * @param selectAddress A lambda for selecting a billing address and providing corresponding shipping options.
  * @param selectShippingOption A lambda for selecting a shipping option and providing the updated shipping option result.
  * @param loadingDelegate An optional delegate for managing the widget's loading state.
@@ -62,7 +63,7 @@ fun AfterpayWidget(
     enabled: Boolean = true,
     config: AfterpaySDKConfig,
     appearance: AfterpayWidgetAppearance = AfterpayAppearanceDefaults.appearance(),
-    token: (onTokenReceived: (String) -> Unit) -> Unit,
+    tokenRequest: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit,
     selectAddress: (
         address: BillingAddress,
         provideShippingOptions: (List<AfterpayShippingOption>) -> Unit
@@ -124,7 +125,7 @@ fun AfterpayWidget(
 
                         // Set up click listener to initiate the checkout process
                         setOnClickListener {
-                            viewModel.startAfterpayFlow(token, context, config)
+                            viewModel.startAfterpayFlow(tokenRequest, context, config)
                         }
                     }
                 }

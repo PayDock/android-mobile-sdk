@@ -219,7 +219,7 @@ private fun handlePayPalResult(
                         completion(
                             Result.failure(
                                 PayPalException.CancellationException(
-                                    displayableMessage = MobileSDKConstants.PayPalConfig.Errors.PAY_PAL_CANCELLATION_ERROR
+                                    displayableMessage = MobileSDKConstants.PayPalConfig.Errors.CANCELLATION_ERROR
                                 )
                             )
                         )

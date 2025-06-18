@@ -55,7 +55,7 @@ fun AfterpayItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        token = walletViewModel.getWalletToken(WalletType.AFTER_PAY),
+        tokenRequest = walletViewModel.getWalletTokenResultCallback(WalletType.AFTER_PAY),
         config = configuration,
         selectAddress = { _, provideShippingOptions ->
             val currency = Currency.getInstance(configuration.config.currency)

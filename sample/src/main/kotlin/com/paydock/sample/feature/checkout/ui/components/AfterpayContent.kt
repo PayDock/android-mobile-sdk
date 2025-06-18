@@ -13,6 +13,7 @@ import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOpt
 import com.paydock.feature.afterpay.presentation.AfterpayAppearanceDefaults
 import com.paydock.feature.afterpay.presentation.AfterpayWidget
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.sample.core.AU_COUNTRY_CODE
 import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.feature.style.StylingViewModel
@@ -21,7 +22,7 @@ import java.util.Currency
 @Composable
 fun AfterpayContent(
     stylingViewModel: StylingViewModel,
-    tokenHandler: (onTokenReceived: (String) -> Unit) -> Unit,
+    tokenHandler: (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit,
     resultHandler: (Result<ChargeResponse>) -> Unit,
 ) {
     val afterpayAppearance by stylingViewModel.afterpayWidgetAppearance.collectAsState()
@@ -42,7 +43,7 @@ fun AfterpayContent(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        token = tokenHandler,
+        tokenRequest = tokenHandler,
         config = configuration,
         appearance = currentOrDefaultAppearance,
         selectAddress = { _, provideShippingOptions ->
