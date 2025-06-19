@@ -138,6 +138,30 @@ class TextAppearance(
         maxLines = maxLines,
         minLines = minLines
     )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as TextAppearance
+
+        if (softWrap != other.softWrap) return false
+        if (maxLines != other.maxLines) return false
+        if (minLines != other.minLines) return false
+        if (style != other.style) return false
+        if (overflow != other.overflow) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = softWrap.hashCode()
+        result = 31 * result + maxLines
+        result = 31 * result + minLines
+        result = 31 * result + style.hashCode()
+        result = 31 * result + overflow.hashCode()
+        return result
+    }
 }
 
 /**

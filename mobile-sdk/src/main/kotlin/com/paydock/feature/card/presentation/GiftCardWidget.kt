@@ -207,6 +207,28 @@ class GiftCardWidgetAppearance(
             is ButtonAppearance.TextButtonAppearance -> actionButton.copy()
         },
     )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as GiftCardWidgetAppearance
+
+        if (verticalSpacing != other.verticalSpacing) return false
+        if (horizontalSpacing != other.horizontalSpacing) return false
+        if (textField != other.textField) return false
+        if (actionButton != other.actionButton) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = verticalSpacing.hashCode()
+        result = 31 * result + horizontalSpacing.hashCode()
+        result = 31 * result + textField.hashCode()
+        result = 31 * result + actionButton.hashCode()
+        return result
+    }
 }
 
 /**

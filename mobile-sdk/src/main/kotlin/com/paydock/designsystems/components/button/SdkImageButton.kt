@@ -117,6 +117,28 @@ class ImageButtonAppearance(
         contentScale = contentScale,
         disabledImageAlpha = disabledImageAlpha
     )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ImageButtonAppearance
+
+        if (disabledImageAlpha != other.disabledImageAlpha) return false
+        if (shape != other.shape) return false
+        if (rippleColor != other.rippleColor) return false
+        if (contentScale != other.contentScale) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = disabledImageAlpha.hashCode()
+        result = 31 * result + shape.hashCode()
+        result = 31 * result + rippleColor.hashCode()
+        result = 31 * result + contentScale.hashCode()
+        return result
+    }
 }
 
 /**

@@ -2,33 +2,28 @@ package com.paydock.sample.core.extensions
 
 import android.os.Build
 import androidx.compose.ui.graphics.Color
+import androidx.core.graphics.toColorInt
 
 val String.color
     get() = try {
-        Color(android.graphics.Color.parseColor(this))
+        Color(this.toColorInt())
     } catch (e: Exception) {
         null
     }
 
-fun Color.toHexCode(): String {
-    val red = this.red * 255
-    val green = this.green * 255
-    val blue = this.blue * 255
-    return String.format("#%02x%02x%02x", red.toInt(), green.toInt(), blue.toInt())
-}
-
-fun Color.toHexCodeWithAlpha(): String {
-    val alpha = this.alpha * 255
-    val red = this.red * 255
-    val green = this.green * 255
-    val blue = this.blue * 255
-    return String.format(
-        "#%02x%02x%02x%02x",
-        alpha.toInt(),
-        red.toInt(),
-        green.toInt(),
-        blue.toInt()
-    )
+fun Color.toHexCode(includeAlpha: Boolean = true): String {
+    if (this == Color.Unspecified) {
+        return "Unspecified"
+    }
+    val red = (this.red * 255).toInt().coerceIn(0, 255)
+    val green = (this.green * 255).toInt().coerceIn(0, 255)
+    val blue = (this.blue * 255).toInt().coerceIn(0, 255)
+    return if (includeAlpha) {
+        val alpha = (this.alpha * 255).toInt().coerceIn(0, 255)
+        String.format("#%02X%02X%02X%02X", alpha, red, green, blue)
+    } else {
+        String.format("#%02X%02X%02X", red, green, blue)
+    }
 }
 
 // Extension function to convert hsv to Color

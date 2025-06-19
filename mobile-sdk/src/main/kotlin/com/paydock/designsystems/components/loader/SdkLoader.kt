@@ -153,6 +153,28 @@ class LoaderAppearance(
         trackColor = trackColor.takeOrElse { this.trackColor },
         strokeCap = strokeCap
     )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as LoaderAppearance
+
+        if (color != other.color) return false
+        if (strokeWidth != other.strokeWidth) return false
+        if (trackColor != other.trackColor) return false
+        if (strokeCap != other.strokeCap) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = color.hashCode()
+        result = 31 * result + strokeWidth.hashCode()
+        result = 31 * result + trackColor.hashCode()
+        result = 31 * result + strokeCap.hashCode()
+        return result
+    }
 }
 
 /**

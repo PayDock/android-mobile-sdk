@@ -176,6 +176,26 @@ class AfterpayWidgetAppearance(
         colorScheme = colorScheme,
         loader = loader.copy()
     )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as AfterpayWidgetAppearance
+
+        if (buttonText != other.buttonText) return false
+        if (colorScheme != other.colorScheme) return false
+        if (loader != other.loader) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = buttonText.hashCode()
+        result = 31 * result + colorScheme.hashCode()
+        result = 31 * result + loader.hashCode()
+        return result
+    }
 }
 
 /**

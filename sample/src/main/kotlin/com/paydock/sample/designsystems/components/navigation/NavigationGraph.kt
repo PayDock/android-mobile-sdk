@@ -3,6 +3,7 @@ package com.paydock.sample.designsystems.components.navigation
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -15,6 +16,7 @@ import com.paydock.sample.feature.account.ui.AccountScreen
 import com.paydock.sample.feature.checkout.ui.CheckoutStandaloneScreen
 import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.style.mapper.mapAppearanceComponentToSubComponents
+import com.paydock.sample.feature.style.mapper.mapWidgetTypeToAppearanceComponents
 import com.paydock.sample.feature.style.models.StyleAppearanceComponent
 import com.paydock.sample.feature.style.ui.StyleComponentListScreen
 import com.paydock.sample.feature.style.ui.StylePropertiesScreen
@@ -72,7 +74,8 @@ fun NavigationGraph(
         ) { navBackStackEntry ->
             navBackStackEntry.arguments?.getString("widgetType")?.let { type ->
                 val widgetType = WidgetType.valueOf(type)
-                StyleComponentListScreen(widgetType, onThemeSelected) { selectedItem ->
+                val styleItems = remember { widgetType.mapWidgetTypeToAppearanceComponents().sortedBy { it.displayName() } }
+                StyleComponentListScreen(styleItems, onThemeSelected) { selectedItem ->
                     if (selectedItem.hasSubComponents) {
                         navController.navigate("style_sub_components/${widgetType.name}/${selectedItem.name}") // Pass widgetType too if sub-components can vary by parent widget
                     } else {
@@ -97,7 +100,7 @@ fun NavigationGraph(
                 val styleComponent = StyleAppearanceComponent.valueOf(component)
 
                 val items: List<StyleAppearanceComponent> =
-                    styleComponent.mapAppearanceComponentToSubComponents() ?: emptyList()
+                    remember { styleComponent.mapAppearanceComponentToSubComponents()?.sortedBy { it.displayName() } ?: emptyList() }
 
                 StyleSubComponentListScreen(
                     subComponents = items,

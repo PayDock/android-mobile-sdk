@@ -148,6 +148,21 @@ class PayPalPaymentSourceWidgetAppearance(
                 is ButtonAppearance.TextButtonAppearance -> actionButton.copy()
             },
         )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as PayPalPaymentSourceWidgetAppearance
+
+        if (actionButton != other.actionButton) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return actionButton.hashCode()
+    }
 }
 
 /**

@@ -3,7 +3,7 @@ package com.paydock.sample.feature.style.models
 enum class StyleAppearanceComponent(val hasSubComponents: Boolean = false) {
     // Text
     TITLE, // TextAppearance
-    DESCRIPTION, // TextAppearance
+    TOGGLE_TEXT, // TextAppearance
     SUB_LINK_TEXT, // LinkTextAppearance.TextAppearance
     SUB_DROPDOWN_ITEM, // DropdownAppearance.TextAppearance
     SUB_BUTTON_TEXT, // ButtonAppearance.TextAppearance
@@ -23,7 +23,8 @@ enum class StyleAppearanceComponent(val hasSubComponents: Boolean = false) {
     SEARCH(hasSubComponents = true),  // SearchDropDownAppearance
 
     // Buttons
-    ACTION_BUTTON(hasSubComponents = true), // ButtonAppearance
+    DEFAULT_ACTION_BUTTON(hasSubComponents = true), // ButtonAppearance
+    COMPLETE_ACTION_BUTTON(hasSubComponents = true), // ButtonAppearance
 
     // ImageButtonAppearance
     IMAGE_BUTTON,
@@ -62,11 +63,11 @@ enum class StyleAppearanceComponent(val hasSubComponents: Boolean = false) {
 
     fun displayName(): String = when (this) {
         TITLE -> "Title"
-        DESCRIPTION -> "Description"
+        TOGGLE_TEXT -> "Toggle Text"
         SUB_SEARCH_TEXT_FIELD_PLACEHOLDER,
-        SUB_TEXT_FIELD_PLACEHOLDER -> "Placeholder"
+        SUB_TEXT_FIELD_PLACEHOLDER -> "Placeholder Label"
         SUB_SEARCH_TEXT_FIELD_LABEL,
-        SUB_TEXT_FIELD_LABEL -> "Label"
+        SUB_TEXT_FIELD_LABEL -> "Floating Label"
         SUB_SEARCH_TEXT_FIELD_ERROR_LABEL,
         SUB_TEXT_FIELD_ERROR_LABEL -> "Error Label"
         SUB_DROPDOWN_ITEM -> "Dropdown Item"
@@ -76,10 +77,12 @@ enum class StyleAppearanceComponent(val hasSubComponents: Boolean = false) {
         DROP_DOWN -> "Dropdown"
         SUB_SEARCH_TEXT_FIELD,
         TEXT_FIELD -> "Text Field"
-        SEARCH -> "Search"
-        ACTION_BUTTON -> "Action Button"
+        SEARCH -> "Search Dropdown"
+        DEFAULT_ACTION_BUTTON,
+        COMPLETE_ACTION_BUTTON -> "Action Button"
         IMAGE_BUTTON -> "Image Button"
         SUB_LINK_BUTTON_LOADER,
+        SUB_BUTTON_LOADER,
         LOADER -> "Loader"
         TOGGLE -> "Toggle"
         LINK_TEXT -> "Link Text"
@@ -88,13 +91,12 @@ enum class StyleAppearanceComponent(val hasSubComponents: Boolean = false) {
         ICON -> "Icon"
         SUB_SEARCH_TEXT_FIELD_VALID_ICON,
         SUB_TEXT_FIELD_VALID_ICON -> "Valid Icon"
-        SUB_BUTTON_LOADER,
         SUB_BUTTON_ICON -> "Button Icon"
         SUB_DROP_DOWN_PROPERTIES,
         SUB_SEARCH_TEXT_FIELD_PROPERTIES,
         SUB_TEXT_FIELD_PROPERTIES,
         SUB_ACTION_BUTTON_PROPERTIES,
         SUB_TEXT_BUTTON_PROPERTIES,
-        PROPERTIES -> "Properties"
+        PROPERTIES -> "Default Properties"
     }
 }

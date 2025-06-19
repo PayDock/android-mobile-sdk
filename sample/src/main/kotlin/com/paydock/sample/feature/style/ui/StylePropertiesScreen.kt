@@ -1,5 +1,6 @@
 package com.paydock.sample.feature.style.ui
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -44,7 +45,6 @@ import com.paydock.sample.feature.style.ui.components.section.StyleGooglePayMisc
 import com.paydock.sample.feature.style.ui.components.section.StyleIconSection
 import com.paydock.sample.feature.style.ui.components.section.StyleImageButtonSection
 import com.paydock.sample.feature.style.ui.components.section.StyleLoaderSection
-import com.paydock.sample.feature.style.ui.components.section.StylePayPalMiscSection
 import com.paydock.sample.feature.style.ui.components.section.StyleTextFieldSection
 import com.paydock.sample.feature.style.ui.components.section.StyleTextSection
 import com.paydock.sample.feature.style.ui.components.section.StyleToggleSection
@@ -78,7 +78,7 @@ fun StylePropertiesScreen(
         } else {
             when (styleItemName) {
                 StyleAppearanceComponent.TITLE,
-                StyleAppearanceComponent.DESCRIPTION,
+                StyleAppearanceComponent.TOGGLE_TEXT,
                 StyleAppearanceComponent.SUB_LINK_TEXT,
                 StyleAppearanceComponent.SUB_DROPDOWN_ITEM,
                 StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD_PLACEHOLDER,
@@ -193,22 +193,6 @@ fun StylePropertiesScreen(
                                 StyleGooglePayMiscSection(
                                     currentAppearance = currentAppearance,
                                     onAppearanceChange = { newAppearance: GooglePayWidgetAppearance ->
-                                        stylingViewModel.updateWidgetComponentAppearance(
-                                            widgetContext,
-                                            styleItemName,
-                                            newAppearance
-                                        )
-                                    }
-                                )
-                            }
-                                ?: Text("$styleItemName appearance not available for $widgetContext")
-                        }
-
-                        WidgetType.PAY_PAL -> {
-                            (componentAppearance as? PayPalWidgetAppearance)?.let { currentAppearance ->
-                                StylePayPalMiscSection(
-                                    currentAppearance = currentAppearance,
-                                    onAppearanceChange = { newAppearance: PayPalWidgetAppearance ->
                                         stylingViewModel.updateWidgetComponentAppearance(
                                             widgetContext,
                                             styleItemName,
@@ -357,7 +341,7 @@ fun StylePropertiesScreen(
                         stylingViewModel.updateWidgetComponentAppearance(
                             widgetContext,
                             styleItemName,
-                            it
+                            it // Pass the original, structurally distinct object
                         )
                     }
                 }
@@ -414,7 +398,7 @@ fun getAppearanceForWidgetComponent(
                     when (styleItemName) {
                         StyleAppearanceComponent.PROPERTIES -> cardAppearance
                         StyleAppearanceComponent.TITLE -> cardAppearance?.title
-                        StyleAppearanceComponent.DESCRIPTION -> cardAppearance?.toggleText
+                        StyleAppearanceComponent.TOGGLE_TEXT -> cardAppearance?.toggleText
                         StyleAppearanceComponent.SUB_ACTION_BUTTON_PROPERTIES -> cardAppearance?.actionButton
                         StyleAppearanceComponent.SUB_BUTTON_ICON -> cardAppearance?.actionButton?.iconAppearance
                         StyleAppearanceComponent.SUB_BUTTON_TEXT -> cardAppearance?.actionButton?.textAppearance
@@ -522,7 +506,6 @@ fun getAppearanceForWidgetComponent(
             remember(paypalAppearance, styleItemName) {
                 derivedStateOf {
                     when (styleItemName) {
-                        StyleAppearanceComponent.PROPERTIES -> paypalAppearance
                         StyleAppearanceComponent.LOADER -> paypalAppearance?.loader
                         else -> null
                     }

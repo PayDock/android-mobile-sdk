@@ -22,8 +22,8 @@ import com.paydock.sample.designsystems.components.containers.SectionContainer
 import com.paydock.sample.designsystems.theme.appFontFamily
 import com.paydock.sample.feature.style.ui.components.core.color.ColorPickerField
 import com.paydock.sample.feature.style.ui.components.core.counter.NumberCounter
-import com.paydock.sample.feature.style.ui.components.properties.font.FontFamilyDropdown
 import com.paydock.sample.feature.style.ui.components.core.toggle.StyleableToggleRow
+import com.paydock.sample.feature.style.ui.components.properties.font.FontFamilyDropdown
 import com.paydock.sample.feature.style.ui.components.properties.text.TextOverflowDropdown
 import com.paydock.sample.feature.style.utils.FontHelper
 import com.paydock.sample.feature.style.utils.LocalFontHelper

@@ -96,6 +96,24 @@ class IconAppearance(
         size = size.takeOrElse { this.size },
         tint = tint.takeOrElse { this.tint }
     )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as IconAppearance
+
+        if (size != other.size) return false
+        if (tint != other.tint) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = size.hashCode()
+        result = 31 * result + tint.hashCode()
+        return result
+    }
 }
 
 /**

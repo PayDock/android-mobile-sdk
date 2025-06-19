@@ -9,7 +9,7 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
             StyleAppearanceComponent.PROPERTIES,
             StyleAppearanceComponent.TITLE,
             StyleAppearanceComponent.TEXT_FIELD,
-            StyleAppearanceComponent.ACTION_BUTTON,
+            StyleAppearanceComponent.DEFAULT_ACTION_BUTTON,
             StyleAppearanceComponent.LINK_BUTTON,
             StyleAppearanceComponent.SEARCH,
         )
@@ -23,9 +23,9 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
             StyleAppearanceComponent.PROPERTIES,
             StyleAppearanceComponent.TITLE,
             StyleAppearanceComponent.TEXT_FIELD,
-            StyleAppearanceComponent.ACTION_BUTTON,
+            StyleAppearanceComponent.DEFAULT_ACTION_BUTTON,
             StyleAppearanceComponent.TOGGLE,
-            StyleAppearanceComponent.DESCRIPTION, // Used for toggle text
+            StyleAppearanceComponent.TOGGLE_TEXT, // Used for toggle text
             StyleAppearanceComponent.LINK_TEXT
         )
 
@@ -41,7 +41,7 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
         WidgetType.GIFT_CARD -> listOf(
             StyleAppearanceComponent.PROPERTIES,
             StyleAppearanceComponent.TEXT_FIELD,
-            StyleAppearanceComponent.ACTION_BUTTON,
+            StyleAppearanceComponent.DEFAULT_ACTION_BUTTON,
         )
 
         WidgetType.GOOGLE_PAY -> listOf(
@@ -54,12 +54,11 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
         )
 
         WidgetType.PAY_PAL -> listOf(
-            StyleAppearanceComponent.PROPERTIES,
             StyleAppearanceComponent.LOADER
         )
 
         WidgetType.PAY_PAL_VAULT -> listOf(
-            StyleAppearanceComponent.ACTION_BUTTON,
+            StyleAppearanceComponent.COMPLETE_ACTION_BUTTON,
         )
 
         WidgetType.STANDALONE_3DS -> listOf(
@@ -83,14 +82,17 @@ fun StyleAppearanceComponent.mapAppearanceComponentToSubComponents(): List<Style
         )
         StyleAppearanceComponent.LINK_BUTTON -> listOf(
             StyleAppearanceComponent.SUB_TEXT_BUTTON_PROPERTIES,
-            StyleAppearanceComponent.SUB_LINK_BUTTON_TEXT,
-            StyleAppearanceComponent.SUB_LINK_BUTTON_LOADER,
-            StyleAppearanceComponent.SUB_LINK_BUTTON_ICON
+            StyleAppearanceComponent.SUB_LINK_BUTTON_TEXT
         )
         StyleAppearanceComponent.LINK_TEXT -> listOf(
             StyleAppearanceComponent.SUB_LINK_TEXT
         )
-        StyleAppearanceComponent.ACTION_BUTTON -> listOf(
+        StyleAppearanceComponent.DEFAULT_ACTION_BUTTON -> listOf(
+            StyleAppearanceComponent.SUB_ACTION_BUTTON_PROPERTIES,
+            StyleAppearanceComponent.SUB_BUTTON_TEXT,
+            StyleAppearanceComponent.SUB_BUTTON_LOADER
+        )
+        StyleAppearanceComponent.COMPLETE_ACTION_BUTTON -> listOf(
             StyleAppearanceComponent.SUB_ACTION_BUTTON_PROPERTIES,
             StyleAppearanceComponent.SUB_BUTTON_TEXT,
             StyleAppearanceComponent.SUB_BUTTON_LOADER,
