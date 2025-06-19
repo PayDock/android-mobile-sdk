@@ -194,6 +194,24 @@ class SearchDropdownAppearance(
         textField.copy(),
         dropdown.copy()
     )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SearchDropdownAppearance
+
+        if (textField != other.textField) return false
+        if (dropdown != other.dropdown) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = textField.hashCode()
+        result = 31 * result + dropdown.hashCode()
+        return result
+    }
 }
 
 /**
@@ -241,6 +259,28 @@ class DropdownAppearance(
         itemHeight = itemHeight.takeOrElse { this.itemHeight },
         item = item.copy()
     )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as DropdownAppearance
+
+        if (shape != other.shape) return false
+        if (itemPadding != other.itemPadding) return false
+        if (itemHeight != other.itemHeight) return false
+        if (item != other.item) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = shape.hashCode()
+        result = 31 * result + itemPadding.hashCode()
+        result = 31 * result + itemHeight.hashCode()
+        result = 31 * result + item.hashCode()
+        return result
+    }
 }
 
 /**

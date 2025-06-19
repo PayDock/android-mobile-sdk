@@ -25,6 +25,8 @@ fun StyleLoaderSection(
     val currentStrokeWidth = currentAppearance.strokeWidth.value.toInt()
     val currentStrokeCap = currentAppearance.strokeCap
 
+    println(">>> Track Color: $currentTrackColor")
+
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally,

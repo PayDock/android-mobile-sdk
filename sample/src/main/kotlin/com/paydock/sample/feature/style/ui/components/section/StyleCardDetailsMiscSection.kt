@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.paydock.feature.card.presentation.CardDetailsWidgetAppearance
-import com.paydock.feature.card.presentation.GiftCardWidgetAppearance
 import com.paydock.sample.R
 import com.paydock.sample.feature.style.ui.components.core.counter.NumberCounter
 

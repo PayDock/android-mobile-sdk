@@ -13,7 +13,6 @@ import com.paydock.designsystems.components.button.ImageButtonAppearance
 import com.paydock.sample.R
 import com.paydock.sample.feature.style.ui.components.core.color.ColorPickerField
 import com.paydock.sample.feature.style.ui.components.core.counter.FloatCounter
-import com.paydock.sample.feature.style.ui.components.core.counter.NumberCounter
 import com.paydock.sample.feature.style.ui.components.properties.image.ContentScaleDropdown
 import com.paydock.sample.feature.style.ui.components.properties.shape.CornerUnit
 import com.paydock.sample.feature.style.ui.components.properties.shape.ShapeDropdown

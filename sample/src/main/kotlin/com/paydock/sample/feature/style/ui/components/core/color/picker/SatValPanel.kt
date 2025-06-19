@@ -8,6 +8,7 @@ import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.RectF
 import android.graphics.Shader
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -74,7 +75,12 @@ fun SatValPanel(
         val cornerRadius = 12.dp.toPx()
         val satValSize = size
 
-        val bitmap = createBitmap(size.width.toInt(), size.height.toInt())
+        if (satValSize.width <= 0 || satValSize.height <= 0) {
+            Log.e("ColorPickerCrash", "SatValPanel: Invalid size for Bitmap creation. Width: ${satValSize.width}, Height: ${satValSize.height}")
+            return@Canvas
+        }
+
+        val bitmap = createBitmap(satValSize.width.toInt(), satValSize.height.toInt())
         val canvas = Canvas(bitmap)
         val satValPanel = RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat())
 

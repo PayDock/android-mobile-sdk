@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -38,6 +39,7 @@ import com.paydock.sample.designsystems.theme.SampleTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import android.graphics.Color as AndroidColor
+import androidx.core.graphics.createBitmap
 
 @Composable
 fun HueBar(
@@ -68,8 +70,13 @@ fun HueBar(
             .emitDragGesture(interactionSource)
     ) {
         val drawScopeSize = size
-        val bitmap =
-            Bitmap.createBitmap(size.width.toInt(), size.height.toInt(), Bitmap.Config.ARGB_8888)
+
+        if (drawScopeSize.width <= 0 || drawScopeSize.height <= 0) {
+            Log.e("ColorPickerCrash", "HueBar: Invalid size for Bitmap creation. Width: ${drawScopeSize.width}, Height: ${drawScopeSize.height}")
+            return@Canvas
+        }
+
+        val bitmap = createBitmap(drawScopeSize.width.toInt(), drawScopeSize.height.toInt())
         val hueCanvas = Canvas(bitmap)
 
         val huePanel = RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat())

@@ -160,6 +160,26 @@ class GooglePayWidgetAppearance(
     ): GooglePayWidgetAppearance = GooglePayWidgetAppearance(
         cornerRadius = cornerRadius.takeOrElse { this.cornerRadius }, type = type, loader = loader.copy()
     )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as GooglePayWidgetAppearance
+
+        if (cornerRadius != other.cornerRadius) return false
+        if (type != other.type) return false
+        if (loader != other.loader) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = cornerRadius.hashCode()
+        result = 31 * result + type.hashCode()
+        result = 31 * result + loader.hashCode()
+        return result
+    }
 }
 
 /**

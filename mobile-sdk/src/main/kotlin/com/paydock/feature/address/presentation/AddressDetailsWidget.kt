@@ -172,6 +172,32 @@ class AddressDetailsWidgetAppearance(
         linkButton = linkButton.copy(),
         searchDropdown = searchDropdown.copy()
     )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as AddressDetailsWidgetAppearance
+
+        if (verticalSpacing != other.verticalSpacing) return false
+        if (title != other.title) return false
+        if (textField != other.textField) return false
+        if (actionButton != other.actionButton) return false
+        if (linkButton != other.linkButton) return false
+        if (searchDropdown != other.searchDropdown) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = verticalSpacing.hashCode()
+        result = 31 * result + title.hashCode()
+        result = 31 * result + textField.hashCode()
+        result = 31 * result + actionButton.hashCode()
+        result = 31 * result + linkButton.hashCode()
+        result = 31 * result + searchDropdown.hashCode()
+        return result
+    }
 }
 
 /**

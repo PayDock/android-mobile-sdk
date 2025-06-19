@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -34,22 +35,30 @@ fun ColourPicker(color: Color, onColourUpdated: (Color) -> Unit, onCanceled: () 
             .padding(vertical = 24.dp, horizontal = 16.dp)
     ) {
         // HSV (Hue, Saturation, Value)
+        val initialHsv = remember(color) { color.toHSV() }
         val hsv = remember {
-            val hsv = color.toHSV()
+            mutableStateOf(Triple(initialHsv[0], initialHsv[1], initialHsv[2]))
+        }
+
+        val alpha =
+            remember(color) { mutableFloatStateOf(color.alpha) } // Initialize with incoming color's alpha
+
+        // Calculate the result color from the updated hsv components
+        val resultColor = remember(hsv.value, alpha.floatValue) { // Add alpha.value as a key
             mutableStateOf(
-                Triple(hsv[0], hsv[1], hsv[2])
+                // Use the updated Color constructor that takes alpha
+                Color(
+                    red = hsv.value.toColor().red, // Get RGB from HSV-derived color
+                    green = hsv.value.toColor().green,
+                    blue = hsv.value.toColor().blue,
+                    alpha = alpha.floatValue // Apply the current alpha state
+                )
             )
         }
 
-        // Calculate the result color from the updated hsv components
-        val resultColor = remember(hsv.value) {
-            mutableStateOf(hsv.value.toColor())
-        }
-
-        val (hexValue, setValue) = remember { mutableStateOf(color.toHexCode()) }
-
-        LaunchedEffect(hsv.value) {
-            setValue(hsv.value.toColor().toHexCode())
+        val (hexValue, setHexValue) = remember { mutableStateOf("") }
+        LaunchedEffect(resultColor.value) { // Update hex based on the final resultColor (which includes alpha)
+            setHexValue(resultColor.value.toHexCode())
         }
 
         ColorInputField(
@@ -61,7 +70,7 @@ fun ColourPicker(color: Color, onColourUpdated: (Color) -> Unit, onCanceled: () 
                 hsv.value = Triple(tempHSV[0], tempHSV[1], tempHSV[2])
             },
             onTextColorChanged = {
-                setValue(it)
+                setHexValue(it)
             }
         )
 
@@ -72,6 +81,15 @@ fun ColourPicker(color: Color, onColourUpdated: (Color) -> Unit, onCanceled: () 
         HueBar(defaultHue = hsv.value.first) { hue ->
             hsv.value = Triple(hue, hsv.value.second, hsv.value.third)
         }
+
+        AlphaSlider(
+            currentAlpha = alpha.floatValue,
+            onAlphaChanged = { newAlpha ->
+                alpha.floatValue = newAlpha
+            },
+            // Pass the current HSV-derived color to show gradient against
+            hsvBaseColor = hsv.value.toColor()
+        )
 
         Row(
             modifier = Modifier

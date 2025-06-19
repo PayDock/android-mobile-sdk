@@ -68,6 +68,19 @@ class LinkButtonAppearance(
     fun copy(
         actionButton: ButtonAppearance.TextButtonAppearance = this.actionButton
     ) = LinkButtonAppearance(actionButton = actionButton.copy())
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as LinkButtonAppearance
+
+        return actionButton == other.actionButton
+    }
+
+    override fun hashCode(): Int {
+        return actionButton.hashCode()
+    }
 }
 
 /**

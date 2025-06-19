@@ -68,6 +68,18 @@ class LinkTextAppearance(
      * @return A new [LinkTextAppearance] instance with the specified parameters.
      */
     fun copy(textAppearance: TextAppearance = this.textAppearance) = LinkTextAppearance(textAppearance)
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as LinkTextAppearance
+
+        return textAppearance == other.textAppearance
+    }
+
+    override fun hashCode(): Int {
+        return textAppearance.hashCode()
+    }
 }
 
 /**

@@ -33,7 +33,7 @@ import com.paydock.sample.feature.widgets.ui.models.WidgetType
 
 @Composable
 fun StyleComponentListScreen(
-    widgetType: WidgetType,
+    styleItems: List<StyleAppearanceComponent>,
     onThemeSelected: (AppTheme) -> Unit,
     onStyleComponentClicked: (StyleAppearanceComponent) -> Unit
 ) {
@@ -81,8 +81,6 @@ fun StyleComponentListScreen(
         )
 
         Spacer(modifier = Modifier.height(18.dp))
-
-        val styleItems = remember { widgetType.mapWidgetTypeToAppearanceComponents().sortedBy { it.name } }
 
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
             items(styleItems) { item ->

@@ -235,6 +235,36 @@ class CardDetailsWidgetAppearance(
             toggleText = toggleText.copy(),
             linkText = linkText.copy()
         )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as CardDetailsWidgetAppearance
+
+        if (verticalSpacing != other.verticalSpacing) return false
+        if (horizontalSpacing != other.horizontalSpacing) return false
+        if (title != other.title) return false
+        if (textField != other.textField) return false
+        if (actionButton != other.actionButton) return false
+        if (toggle != other.toggle) return false
+        if (toggleText != other.toggleText) return false
+        if (linkText != other.linkText) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = verticalSpacing.hashCode()
+        result = 31 * result + horizontalSpacing.hashCode()
+        result = 31 * result + title.hashCode()
+        result = 31 * result + textField.hashCode()
+        result = 31 * result + actionButton.hashCode()
+        result = 31 * result + toggle.hashCode()
+        result = 31 * result + toggleText.hashCode()
+        result = 31 * result + linkText.hashCode()
+        return result
+    }
 }
 
 /**

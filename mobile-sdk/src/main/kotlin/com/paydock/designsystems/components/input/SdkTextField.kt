@@ -242,6 +242,42 @@ class TextFieldAppearance(
         focusedBorderThickness = focusedBorderThickness,
         unfocusedBorderThickness = unfocusedBorderThickness,
     )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as TextFieldAppearance
+
+        if (singleLine != other.singleLine) return false
+        if (style != other.style) return false
+        if (placeholder != other.placeholder) return false
+        if (label != other.label) return false
+        if (errorLabel != other.errorLabel) return false
+        if (validIcon != other.validIcon) return false
+        if (colors != other.colors) return false
+        if (contentPadding != other.contentPadding) return false
+        if (shape != other.shape) return false
+        if (focusedBorderThickness != other.focusedBorderThickness) return false
+        if (unfocusedBorderThickness != other.unfocusedBorderThickness) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = singleLine.hashCode()
+        result = 31 * result + style.hashCode()
+        result = 31 * result + placeholder.hashCode()
+        result = 31 * result + label.hashCode()
+        result = 31 * result + errorLabel.hashCode()
+        result = 31 * result + validIcon.hashCode()
+        result = 31 * result + colors.hashCode()
+        result = 31 * result + contentPadding.hashCode()
+        result = 31 * result + shape.hashCode()
+        result = 31 * result + focusedBorderThickness.hashCode()
+        result = 31 * result + unfocusedBorderThickness.hashCode()
+        return result
+    }
 }
 
 /**

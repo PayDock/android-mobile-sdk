@@ -173,6 +173,24 @@ class ColesPayWidgetAppearance(
             imageButton = imageButton.copy(),
             loader = loader.copy()
         )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ColesPayWidgetAppearance
+
+        if (imageButton != other.imageButton) return false
+        if (loader != other.loader) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = imageButton.hashCode()
+        result = 31 * result + loader.hashCode()
+        return result
+    }
 }
 
 /**

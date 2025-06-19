@@ -23,7 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import com.paydock.core.MobileSDKConstants
@@ -110,7 +109,7 @@ fun PayPalWidget(
                     containerColor = PayPal,
                     disabledContainerColor = PayPal.alpha40
                 ),
-                shape = appearance.shape
+                shape = MaterialTheme.shapes.small
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(
@@ -125,7 +124,7 @@ fun PayPalWidget(
         } else {
             // Button to initiate PayPal transaction
             PayPalButton(
-                shape = appearance.shape,
+                shape = MaterialTheme.shapes.small,
                 loaderAppearance = appearance.loader,
                 isEnabled = uiState !is PayPalCheckoutUIState.Loading && enabled,
                 // Loading is handled by a mock loader button
@@ -141,26 +140,36 @@ fun PayPalWidget(
  * This class holds properties that customize the visual aspects of the PayPal Widget,
  * specifically focusing on the components displayed within it, such as the loader.
  *
- * @property shape The shape of the PayPal Widget button.
  * @property loader The appearance configuration for the loader component displayed within the PayPal Widget.
  */
 @Immutable
-class PayPalWidgetAppearance(val shape: Shape, val loader: LoaderAppearance) {
+class PayPalWidgetAppearance(val loader: LoaderAppearance) {
     /**
      * Creates a copy of the current [PayPalWidgetAppearance], allowing for modification of
      * specific properties while retaining others.
      *
-     * @param shape The shape of the PayPal Widget button.
      * @param loader The new [LoaderAppearance] to use for the copied appearance. Defaults to the
      * current [loader] if not provided. The provided [LoaderAppearance] will also be copied to
      * ensure immutability.
      * @return A new [PayPalWidgetAppearance] instance with the specified modifications.
      */
     fun copy(
-        shape: Shape = this.shape,
         loader: LoaderAppearance = this.loader
     ): PayPalWidgetAppearance =
-        PayPalWidgetAppearance(shape = shape, loader = loader.copy())
+        PayPalWidgetAppearance(loader = loader.copy())
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as PayPalWidgetAppearance
+
+        return loader == other.loader
+    }
+
+    override fun hashCode(): Int {
+        return loader.hashCode()
+    }
 }
 
 /**
@@ -180,7 +189,6 @@ object PayPalAppearanceDefaults {
      */
     @Composable
     fun appearance(): PayPalWidgetAppearance = PayPalWidgetAppearance(
-        shape = MaterialTheme.shapes.small,
         loader = LoaderAppearanceDefaults.appearance()
             .copy(strokeWidth = ButtonAppearanceDefaults.ButtonLoaderWidth, color = Color.Black)
     )

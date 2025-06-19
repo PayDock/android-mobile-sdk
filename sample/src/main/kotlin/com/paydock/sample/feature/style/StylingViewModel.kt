@@ -270,7 +270,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                             )
                         }
                         StyleAppearanceComponent.TITLE -> current.copy(title = newComponentAppearance as TextAppearance)
-                        StyleAppearanceComponent.DESCRIPTION -> current.copy(toggleText = newComponentAppearance as TextAppearance)
+                        StyleAppearanceComponent.TOGGLE_TEXT -> current.copy(toggleText = newComponentAppearance as TextAppearance)
                         StyleAppearanceComponent.SUB_TEXT_FIELD_PROPERTIES -> (newComponentAppearance as TextFieldAppearance).let {
                             current.copy(
                                 textField = current.textField.copy(
@@ -470,11 +470,6 @@ class StylingViewModel @Inject constructor() : ViewModel() {
             WidgetType.PAY_PAL -> {
                 _paypalWidgetAppearance.value?.let { current ->
                     val updatedAppearance = when (component) {
-                        StyleAppearanceComponent.PROPERTIES -> (newComponentAppearance as PayPalWidgetAppearance).let {
-                            current.copy(
-                                shape = newComponentAppearance.shape
-                            )
-                        }
                         StyleAppearanceComponent.LOADER -> current.copy(loader = newComponentAppearance as LoaderAppearance)
                         else -> current
                     }
