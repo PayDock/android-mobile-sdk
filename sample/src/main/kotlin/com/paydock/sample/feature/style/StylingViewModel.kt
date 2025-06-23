@@ -25,6 +25,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
@@ -74,60 +75,38 @@ class StylingViewModel @Inject constructor() : ViewModel() {
         _standalone3DSWidgetAppearance.asStateFlow()
 
     // --- Initialization ---
-    fun setInitialAddressDefaults(defaults: AddressDetailsWidgetAppearance) {
-        if (_addressWidgetAppearance.value == null) {
-            _addressWidgetAppearance.value = defaults
-        }
+    fun updateInitialAddressDefaults(updatedDefaults: AddressDetailsWidgetAppearance) {
+        _addressWidgetAppearance.update { updatedDefaults }
     }
-    fun setInitialCardDetailsDefaults(defaults: CardDetailsWidgetAppearance) {
-        if (_cardDetailsWidgetAppearance.value == null) {
-            _cardDetailsWidgetAppearance.value = defaults
-        }
+    fun updateInitialCardDetailsDefaults(updatedDefaults: CardDetailsWidgetAppearance) {
+        _cardDetailsWidgetAppearance.update { updatedDefaults }
     }
-    fun setInitialGiftCardDetailsDefaults(defaults: GiftCardWidgetAppearance) {
-        if (_giftCardWidgetAppearance.value == null) {
-            _giftCardWidgetAppearance.value = defaults
-        }
+    fun updateInitialGiftCardDetailsDefaults(updatedDefaults: GiftCardWidgetAppearance) {
+        _giftCardWidgetAppearance.update { updatedDefaults }
     }
-    fun setInitialPayPalDefaults(defaults: PayPalWidgetAppearance) {
-        if (_paypalWidgetAppearance.value == null) {
-            _paypalWidgetAppearance.value = defaults
-        }
+    fun updateInitialPayPalDefaults(updatedDefaults: PayPalWidgetAppearance) {
+        _paypalWidgetAppearance.update { updatedDefaults }
     }
-    fun setInitialPayPalVaultDefaults(defaults: PayPalPaymentSourceWidgetAppearance) {
-        if (_paypalVaultWidgetAppearance.value == null) {
-            _paypalVaultWidgetAppearance.value = defaults
-        }
+    fun updateInitialPayPalVaultDefaults(updatedDefaults: PayPalPaymentSourceWidgetAppearance) {
+        _paypalVaultWidgetAppearance.update { updatedDefaults }
     }
-    fun setInitialAfterpayDefaults(defaults: AfterpayWidgetAppearance) {
-        if (_afterpayWidgetAppearance.value == null) {
-            _afterpayWidgetAppearance.value = defaults
-        }
+    fun updateInitialAfterpayDefaults(updatedDefaults: AfterpayWidgetAppearance) {
+        _afterpayWidgetAppearance.update { updatedDefaults }
     }
-    fun setInitialGooglePayDefaults(defaults: GooglePayWidgetAppearance) {
-        if (_googlePayWidgetAppearance.value == null) {
-            _googlePayWidgetAppearance.value = defaults
-        }
+    fun updateInitialGooglePayDefaults(updatedDefaults: GooglePayWidgetAppearance) {
+        _googlePayWidgetAppearance.update { updatedDefaults }
     }
-    fun setInitialColesPayDefaults(defaults: ColesPayWidgetAppearance) {
-        if (_colesPayWidgetAppearance.value == null) {
-            _colesPayWidgetAppearance.value = defaults
-        }
+    fun updateInitialColesPayDefaults(updatedDefaults: ColesPayWidgetAppearance) {
+        _colesPayWidgetAppearance.update { updatedDefaults }
     }
-    fun setInitialClickToPayDefaults(defaults: ClickToPayWidgetAppearance) {
-        if (_clickToPayWidgetAppearance.value == null) {
-            _clickToPayWidgetAppearance.value = defaults
-        }
+    fun updateInitialClickToPayDefaults(updatedDefaults: ClickToPayWidgetAppearance) {
+        _clickToPayWidgetAppearance.update { updatedDefaults }
     }
-    fun setInitialIntegrated3DSDefaults(defaults: ThreeDSWidgetAppearance) {
-        if (_integrated3DSWidgetAppearance.value == null) {
-            _integrated3DSWidgetAppearance.value = defaults
-        }
+    fun updateInitialIntegrated3DSDefaults(updatedDefaults: ThreeDSWidgetAppearance) {
+        _integrated3DSWidgetAppearance.update { updatedDefaults }
     }
-    fun setInitialStandalone3DSDefaults(defaults: ThreeDSWidgetAppearance) {
-        if (_standalone3DSWidgetAppearance.value == null) {
-            _standalone3DSWidgetAppearance.value = defaults
-        }
+    fun updateInitialStandalone3DSDefaults(updatedDefaults: ThreeDSWidgetAppearance) {
+        _standalone3DSWidgetAppearance.update { updatedDefaults }
     }
 
     // --- Update methods for specific appearances ---

@@ -18,7 +18,6 @@ import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -44,25 +43,15 @@ import android.graphics.Color as AndroidColor
 
 @Composable
 fun SatValPanel(
-    defaultHSV: Triple<Float, Float, Float>,
+    currentHSV: Triple<Float, Float, Float>,
     setSatVal: (Float, Float) -> Unit,
 ) {
     val interactionSource = remember {
         MutableInteractionSource()
     }
     val scope = rememberCoroutineScope()
-    var sat: Float
-    var value: Float
-
     val pressOffset = remember {
         mutableStateOf(Offset.Zero)
-    }
-
-    LaunchedEffect(defaultHSV) {
-        val defaultSat = defaultHSV.second
-        val defaultValue = defaultHSV.third
-        sat = defaultSat
-        value = defaultValue
     }
 
     Canvas(
@@ -73,92 +62,65 @@ fun SatValPanel(
             .clip(MaterialTheme.shapes.medium)
     ) {
         val cornerRadius = 12.dp.toPx()
-        val satValSize = size
+        val panelSize = size // Size of the Compose Canvas
 
-        if (satValSize.width <= 0 || satValSize.height <= 0) {
-            Log.e("ColorPickerCrash", "SatValPanel: Invalid size for Bitmap creation. Width: ${satValSize.width}, Height: ${satValSize.height}")
+        if (panelSize.width <= 0 || panelSize.height <= 0) {
             return@Canvas
         }
 
-        val bitmap = createBitmap(satValSize.width.toInt(), satValSize.height.toInt())
-        val canvas = Canvas(bitmap)
-        val satValPanel = RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat())
+        val bitmap = createBitmap(panelSize.width.toInt(), panelSize.height.toInt())
+        val bitmapCanvas = Canvas(bitmap) // Canvas to draw onto the bitmap
+        val panelRect = RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat())
 
-        val rgb = AndroidColor.HSVToColor(
+        // Use the pure hue (full saturation, full value) for the saturation shader's colored endpoint
+        val pureHueForSatShaderEndpoint = AndroidColor.HSVToColor(
             floatArrayOf(
-                defaultHSV.first,
-                defaultHSV.second,
-                defaultHSV.third
+                currentHSV.first, // Current Hue
+                1f,               // Full Saturation
+                1f                // Full Value
             )
         )
 
         val satShader = LinearGradient(
-            satValPanel.left, satValPanel.top, satValPanel.right, satValPanel.top,
-            -0x1, rgb, Shader.TileMode.CLAMP
-        )
-        val valShader = LinearGradient(
-            satValPanel.left, satValPanel.top, satValPanel.left, satValPanel.bottom,
-            -0x1, -0x1000000, Shader.TileMode.CLAMP
+            panelRect.left, panelRect.top, panelRect.right, panelRect.top,
+            AndroidColor.WHITE, // Explicit white for 0% saturation
+            pureHueForSatShaderEndpoint,
+            Shader.TileMode.CLAMP
         )
 
-        canvas.drawRoundRect(
-            satValPanel,
-            cornerRadius,
-            cornerRadius,
-            Paint().apply {
-                shader = ComposeShader(
-                    valShader,
-                    satShader,
-                    PorterDuff.Mode.MULTIPLY
-                )
-            }
+        val topColorForValShader = AndroidColor.WHITE
+
+        val valShader = LinearGradient(
+            panelRect.left, panelRect.top, panelRect.left, panelRect.bottom,
+            topColorForValShader,
+            AndroidColor.BLACK,
+            Shader.TileMode.CLAMP
         )
+        val combinedShader = ComposeShader(valShader, satShader, PorterDuff.Mode.MULTIPLY)
+        val paint = Paint().apply { shader = combinedShader }
+        bitmapCanvas.drawRoundRect(panelRect, cornerRadius, cornerRadius, paint)
 
         drawBitmap(
             bitmap = bitmap,
-            panel = satValPanel
+            panel = panelRect
         )
 
-        fun pointToSatVal(pointX: Float, pointY: Float): Pair<Float, Float> {
-            val width = satValPanel.width()
-            val height = satValPanel.height()
+        // --- Selector Circle Logic ---
+        // Calculate pixel position of the selector based on current Saturation and Value
+        val selectorX = (panelSize.width * currentHSV.second).coerceIn(0f, panelSize.width)
+        val selectorY = (panelSize.height * (1f - currentHSV.third)).coerceIn(0f, panelSize.height)
+        pressOffset.value = Offset(selectorX, selectorY) // Update selector position
 
-            val x = when {
-                pointX < satValPanel.left -> 0f
-                pointX > satValPanel.right -> width
-                else -> pointX - satValPanel.left
-            }
-
-            val y = when {
-                pointY < satValPanel.top -> 0f
-                pointY > satValPanel.bottom -> height
-                else -> pointY - satValPanel.top
-            }
-
-            val satPoint = 1f / width * x
-            val valuePoint = 1f - 1f / height * y
-
-            return satPoint to valuePoint
-        }
-
+        // Handle user interaction (drag/click) to update Saturation and Value
         scope.collectForPress(interactionSource) { pressPosition ->
-            val pressPositionOffset = Offset(
-                pressPosition.x.coerceIn(0f..satValSize.width),
-                pressPosition.y.coerceIn(0f..satValSize.height)
-            )
+            val clampedX = pressPosition.x.coerceIn(0f, panelSize.width)
+            val clampedY = pressPosition.y.coerceIn(0f, panelSize.height)
 
-            pressOffset.value = pressPositionOffset
-            val (satPoint, valuePoint) = pointToSatVal(pressPositionOffset.x, pressPositionOffset.y)
-            sat = satPoint
-            value = valuePoint
+            pressOffset.value = Offset(clampedX, clampedY) // Update visual immediately
 
-            setSatVal(sat, value)
+            val (newSat, newVal) = pointToSatVal(clampedX, clampedY, panelRect)
+            setSatVal(newSat, newVal)
         }
-
-        // Calculate the initial x and y positions within the satValPanel
-        val initialX = satValPanel.width() * defaultHSV.second
-        val initialY = satValPanel.height() * (1 - defaultHSV.third)
-        pressOffset.value = Offset(initialX, initialY)
 
         drawCircle(
             color = Color.White,
@@ -175,6 +137,28 @@ fun SatValPanel(
             center = pressOffset.value,
         )
     }
+}
+
+private fun pointToSatVal(pointX: Float, pointY: Float, panelRect: RectF): Pair<Float, Float> {
+    val width = panelRect.width()
+    val height = panelRect.height()
+
+    val x = when {
+        pointX < panelRect.left -> 0f
+        pointX > panelRect.right -> width
+        else -> pointX - panelRect.left
+    }
+
+    val y = when {
+        pointY < panelRect.top -> 0f
+        pointY > panelRect.bottom -> height
+        else -> pointY - panelRect.top
+    }
+
+    val satPoint = 1f / width * x
+    val valuePoint = 1f - 1f / height * y
+
+    return satPoint to valuePoint
 }
 
 private fun Modifier.emitDragGesture(
@@ -197,6 +181,7 @@ private fun DrawScope.drawBitmap(
     bitmap: Bitmap,
     panel: RectF,
 ) {
+    Log.d("SatValPanel_Test", "drawBitmap")
     drawIntoCanvas {
         it.nativeCanvas.drawBitmap(
             bitmap,
@@ -214,7 +199,7 @@ internal fun PreviewSatValPanel() {
     val hsv = floatArrayOf(0f, 0f, 0f)
     AndroidColor.colorToHSV(color!!.toArgb(), hsv)
     SampleTheme {
-        SatValPanel(defaultHSV = Triple(hsv[0], hsv[1], hsv[2])) { _, _ ->
+        SatValPanel(currentHSV = Triple(hsv[0], hsv[1], hsv[2])) { _, _ ->
 
         }
     }

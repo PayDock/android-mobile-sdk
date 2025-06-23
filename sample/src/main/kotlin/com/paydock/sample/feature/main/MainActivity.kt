@@ -82,6 +82,7 @@ class MainActivity : ComponentActivity() {
 
             SampleTheme(isActuallyDark) {
                 MainScreenView(
+                    isActuallyDark = isActuallyDark,
                     onThemeSelected = { newTheme -> currentAppTheme = newTheme }
                 )
             }
@@ -102,78 +103,49 @@ private fun getSystemBarStyle(): SystemBarStyle = SystemBarStyle.run {
 @Composable
 fun MainScreenView(
     stylingViewModel: StylingViewModel = hiltViewModel(),
+    isActuallyDark: Boolean,
     onThemeSelected: (AppTheme) -> Unit
 ) {
     val context = LocalContext.current
     val navController = rememberNavController()// Hoist these states outside the composable function
     val actionBarDetails = rememberActionBarDetails(navController, context)
 
-    // Address Details
-    val addressSdkDefaults: AddressDetailsWidgetAppearance =
-        AddressDetailsAppearanceDefaults.appearance()
-    LaunchedEffect(addressSdkDefaults) {
-        stylingViewModel.setInitialAddressDefaults(addressSdkDefaults)
-    }
-
-    // Card Details
-     val cardSdkDefaults: CardDetailsWidgetAppearance = CardDetailsAppearanceDefaults.appearance()
-     LaunchedEffect(cardSdkDefaults) {
-        stylingViewModel.setInitialCardDetailsDefaults(cardSdkDefaults)
-     }
-
-    // Gift Card Details
+    // *** Call @Composable defaults here, in the Composable scope ***
+    // These will re-evaluate if MainScreenView recomposes due to isActuallyDark changing
+    val addressSdkDefaults: AddressDetailsWidgetAppearance = AddressDetailsAppearanceDefaults.appearance()
+    val cardSdkDefaults: CardDetailsWidgetAppearance = CardDetailsAppearanceDefaults.appearance()
     val giftCardSdkDefaults: GiftCardWidgetAppearance = GiftCardAppearanceDefaults.appearance()
-    LaunchedEffect(giftCardSdkDefaults) {
-        stylingViewModel.setInitialGiftCardDetailsDefaults(giftCardSdkDefaults)
-    }
-
-    // Click To Pay Details
-    val clickToPaySdkDefaults: ClickToPayWidgetAppearance =
-        ClickToPayAppearanceDefaults.appearance()
-    LaunchedEffect(clickToPaySdkDefaults) {
-        stylingViewModel.setInitialClickToPayDefaults(clickToPaySdkDefaults)
-    }
-
-    // Afterpay Details
+    val clickToPaySdkDefaults: ClickToPayWidgetAppearance = ClickToPayAppearanceDefaults.appearance()
     val afterpaySdkDefaults: AfterpayWidgetAppearance = AfterpayAppearanceDefaults.appearance()
-    LaunchedEffect(afterpaySdkDefaults) {
-        stylingViewModel.setInitialAfterpayDefaults(afterpaySdkDefaults)
-    }
-
-    // PayPal Details
     val payPalSdkDefaults: PayPalWidgetAppearance = PayPalAppearanceDefaults.appearance()
-    LaunchedEffect(payPalSdkDefaults) {
-        stylingViewModel.setInitialPayPalDefaults(payPalSdkDefaults)
-    }
-
-    // PayPal Vault Details
     val payPalVaultSdkDefaults: PayPalPaymentSourceWidgetAppearance = PayPalPaymentSourceAppearanceDefaults.appearance()
-    LaunchedEffect(payPalVaultSdkDefaults) {
-        stylingViewModel.setInitialPayPalVaultDefaults(payPalVaultSdkDefaults)
-    }
-
-    // Google Pay Details
     val googlePaySdkDefaults: GooglePayWidgetAppearance = GooglePayAppearanceDefaults.appearance()
-    LaunchedEffect(googlePaySdkDefaults) {
-        stylingViewModel.setInitialGooglePayDefaults(googlePaySdkDefaults)
-    }
-
-    // Coles Pay Details
     val colesPaySdkDefaults: ColesPayWidgetAppearance = ColesPayWidgetAppearanceDefaults.appearance()
-    LaunchedEffect(colesPaySdkDefaults) {
-        stylingViewModel.setInitialColesPayDefaults(colesPaySdkDefaults)
-    }
-
-    // Integrated 3DS Details
+    // For 3DS, ensure ThreeDSAppearanceDefaults.appearance() is also @Composable if its internals depend on theme
     val integrated3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
-    LaunchedEffect(integrated3DSSdkDefaults) {
-        stylingViewModel.setInitialIntegrated3DSDefaults(integrated3DSSdkDefaults)
-    }
-
-    // Standalone 3DS Details
     val standalone3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
-    LaunchedEffect(standalone3DSSdkDefaults) {
-        stylingViewModel.setInitialStandalone3DSDefaults(standalone3DSSdkDefaults)
+
+
+    // Effect to update ViewModel when the theme (isActuallyDark) or any of the defaults change
+    // The defaults themselves will change instance if isActuallyDark causes them to re-evaluate with different theme values
+    LaunchedEffect(
+        isActuallyDark, // Primary key for theme change
+        addressSdkDefaults, cardSdkDefaults, giftCardSdkDefaults, clickToPaySdkDefaults,
+        afterpaySdkDefaults, payPalSdkDefaults, payPalVaultSdkDefaults, googlePaySdkDefaults,
+        colesPaySdkDefaults, integrated3DSSdkDefaults, standalone3DSSdkDefaults
+    ) {
+        // Now use the results of the @Composable calls
+        stylingViewModel.updateInitialAddressDefaults(addressSdkDefaults)
+        stylingViewModel.updateInitialCardDetailsDefaults(cardSdkDefaults)
+        stylingViewModel.updateInitialGiftCardDetailsDefaults(giftCardSdkDefaults)
+        stylingViewModel.updateInitialClickToPayDefaults(clickToPaySdkDefaults)
+        stylingViewModel.updateInitialAfterpayDefaults(afterpaySdkDefaults)
+        stylingViewModel.updateInitialPayPalDefaults(payPalSdkDefaults)
+        stylingViewModel.updateInitialPayPalVaultDefaults(payPalVaultSdkDefaults)
+        stylingViewModel.updateInitialGooglePayDefaults(googlePaySdkDefaults)
+        stylingViewModel.updateInitialColesPayDefaults(colesPaySdkDefaults)
+        stylingViewModel.updateInitialIntegrated3DSDefaults(integrated3DSSdkDefaults)
+        stylingViewModel.updateInitialStandalone3DSDefaults(standalone3DSSdkDefaults)
     }
 
     // Observe a combined state or a specific one to gate the UI
@@ -270,6 +242,6 @@ fun rememberActionBarDetails(navController: NavHostController, context: Context)
 @Composable
 internal fun PreviewMainScreen() {
     SampleTheme {
-        MainScreenView() {}
+        MainScreenView(isActuallyDark = isSystemInDarkTheme()) {}
     }
 }
