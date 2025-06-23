@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.unit.dp
+import com.paydock.sample.core.extensions.toHexCode
 import com.paydock.sample.feature.style.models.ColourTheme
 import com.paydock.sample.feature.style.ui.components.core.color.picker.ColourPicker
 import kotlinx.coroutines.launch
@@ -57,32 +58,6 @@ fun ColorPickerField(
         // This is fine and ensures its display is consistent.
         rawColourTheme = ColourTheme(label, currentColor),
         onItemClicked = {
-            // *** Determine the picker's starting point when the button is clicked ***
-            // This logic now correctly uses the 'localContentColor' value captured above.
-            val pickerStartingColor = if (currentColor.isUnspecified) {
-                localContentColor // Use the resolved local content color
-            } else if (currentColor.alpha == 0f && currentColor != Color.Transparent) {
-                // If the original was transparent non-black (e.g. transparent red),
-                // start picker with an opaque version for better UX, but retain hue.
-                currentColor.copy(alpha = 1f)
-            } else if (currentColor == Color.Transparent) {
-                // If specifically Color.Transparent (transparent black).
-                // If the original was Color.Unspecified, localContentColor is used.
-                // If original was Color.Transparent, then we want to make it opaque.
-                // If localContentColor itself happened to be transparent (rare), make it opaque black.
-                val baseForTransparent =
-                    if (currentColor.isUnspecified) localContentColor else currentColor
-
-                if (baseForTransparent.alpha == 0f) {
-                    baseForTransparent.copy(alpha = 1f).takeOrElse { Color.Black }
-                } else {
-                    baseForTransparent // Should already be opaque if derived from localContentColor
-                }
-            } else {
-                currentColor // Use the original color if it's not Unspecified and not fully transparent
-            }
-
-            colorBeingPicked = pickerStartingColor // Set the state for the picker
             showBottomSheet = true
         }
     )

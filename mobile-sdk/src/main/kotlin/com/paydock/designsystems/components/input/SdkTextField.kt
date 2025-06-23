@@ -5,15 +5,15 @@ package com.paydock.designsystems.components.input
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -31,7 +31,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.core.presentation.extensions.autofill
@@ -59,7 +58,7 @@ import com.paydock.designsystems.theme.Success
  * @param onValueChange Callback that is triggered when the text value changes. Provides the new text value.
  * @param placeholder The placeholder text to display when the text field is empty.
  */
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun SdkTextField(
     modifier: Modifier = Modifier,
@@ -83,7 +82,7 @@ internal fun SdkTextField(
     var isFocused by remember { mutableStateOf(false) }
 
     Column(modifier = modifier) {
-        BasicTextField(
+        OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier
@@ -93,63 +92,43 @@ internal fun SdkTextField(
                 }
                 .testTag("sdkInput")
                 .autofillModifier(autofillType, onValueChange),
-            enabled = enabled, // Use the parameter value
+            enabled = enabled,
             textStyle = appearance.style,
             keyboardActions = keyboardActions,
             keyboardOptions = keyboardOptions,
             visualTransformation = visualTransformation,
-            interactionSource = interactionSource
-        ) { innerTextField ->
-            OutlinedTextFieldDefaults.DecorationBox(
-                value = value,
-                innerTextField = innerTextField,
-                enabled = enabled, // Use the parameter value
-                singleLine = appearance.singleLine,
-                visualTransformation = VisualTransformation.None,
-                interactionSource = interactionSource,
-                isError = error != null,
-                label = {
-                    // State to track whether the label should be displayed based on focus and text input
-                    val shouldShowLabel = isFocused || value.isNotEmpty()
+            interactionSource = interactionSource,
+            label = {
+                // State to track whether the label should be displayed based on focus and text input
+                val shouldShowLabel = isFocused || value.isNotEmpty()
 
-                    // Set the current label text style based on the focused state and whether there's text
-                    val labelTextAppearance = if (shouldShowLabel) {
-                        appearance.label
-                    } else {
-                        appearance.label.copy(
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontSize = MaterialTheme.typography.bodyMedium.fontSize
-                            )
+                // Set the current label text style based on the focused state and whether there's text
+                val labelTextAppearance = if (shouldShowLabel) {
+                    appearance.label
+                } else {
+                    appearance.label.copy(
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontSize = MaterialTheme.typography.bodyMedium.fontSize
                         )
-                    }
-                    TextFieldLabel(label, labelTextAppearance)
-                },
-                placeholder = {
-                    TextFieldPlaceholder(placeholder, appearance.placeholder)
-                },
-                trailingIcon = {
-                    when {
-                        error != null -> TextFieldErrorIcon()
-                        showValidIcon && value.isNotEmpty() -> TextFieldValidIcon(appearance.validIcon)
-                        else -> trailingIcon?.invoke()
-                    }
-                },
-                leadingIcon = leadingIcon,
-                contentPadding = appearance.contentPadding,
-                container = {
-                    OutlinedTextFieldDefaults.Container(
-                        enabled = enabled,
-                        isError = error != null,
-                        interactionSource = interactionSource,
-                        colors = appearance.colors,
-                        shape = appearance.shape,
-                        focusedBorderThickness = appearance.focusedBorderThickness,
-                        unfocusedBorderThickness = appearance.unfocusedBorderThickness
                     )
                 }
-            )
-        }
-
+                TextFieldLabel(label, labelTextAppearance)
+            },
+            placeholder = {
+                TextFieldPlaceholder(placeholder, appearance.placeholder)
+            },
+            trailingIcon = {
+                when {
+                    error != null -> TextFieldErrorIcon()
+                    showValidIcon && value.isNotEmpty() -> TextFieldValidIcon(appearance.validIcon)
+                    else -> trailingIcon?.invoke()
+                }
+            },
+            leadingIcon = leadingIcon,
+            isError = error != null,
+            colors = appearance.colors,
+            shape = appearance.shape,
+        )
         TextFieldErrorLabel(error, appearance.errorLabel)
     }
 }
@@ -168,10 +147,7 @@ internal fun SdkTextField(
  * @property validIcon The [IconAppearance] for the icon displayed when the input is valid.
  * @property singleLine Whether the text field should be limited to a single line of text.
  * @property colors The [TextFieldColors] to use for the different states of the text field (e.g., focused, unfocused, disabled).
- * @property contentPadding The [PaddingValues] to apply to the content within the text field.
  * @property shape The [Shape] to use for the background of the text field.
- * @property focusedBorderThickness The thickness of the border when the text field is focused.
- * @property unfocusedBorderThickness The thickness of the border when the text field is unfocused.
  */
 @Immutable
 class TextFieldAppearance(
@@ -184,10 +160,7 @@ class TextFieldAppearance(
     // DecorationBox
     val singleLine: Boolean,
     val colors: TextFieldColors,
-    val contentPadding: PaddingValues,
-    val shape: Shape,
-    val focusedBorderThickness: Dp,
-    val unfocusedBorderThickness: Dp
+    val shape: Shape
 ) {
     /**
      * Creates a copy of this [TextFieldAppearance], optionally overriding some of the values.
@@ -204,13 +177,7 @@ class TextFieldAppearance(
      * @param singleLine Whether the text field should be single-line or multi-line.
      *      Defaults to the singleLine value of the current [TextFieldAppearance].
      * @param colors The colors used for different parts of the text field. Defaults to the colors of the current [TextFieldAppearance].
-     * @param contentPadding The padding around the content of the text field.
-     *      Defaults to the content padding of the current [TextFieldAppearance].
      * @param shape The shape of the text field's background. Defaults to the shape of the current [TextFieldAppearance].
-     * @param focusedBorderThickness The thickness of the border when the text field is focused.
-     *      Defaults to the focused border thickness of the current [TextFieldAppearance].
-     * @param unfocusedBorderThickness The thickness of the border when the text field is unfocused.
-     *      Defaults to the unfocused border thickness of the current [TextFieldAppearance].
      * @return A new [TextFieldAppearance] instance with the specified properties.
      */
     fun copy(
@@ -223,10 +190,7 @@ class TextFieldAppearance(
         // DecorationBox
         singleLine: Boolean = this.singleLine,
         colors: TextFieldColors = this.colors,
-        contentPadding: PaddingValues = this.contentPadding,
         shape: Shape = this.shape,
-        focusedBorderThickness: Dp = this.focusedBorderThickness,
-        unfocusedBorderThickness: Dp = this.unfocusedBorderThickness,
     ): TextFieldAppearance = TextFieldAppearance(
         // BasicTextField
         style = style.copy(),
@@ -237,10 +201,7 @@ class TextFieldAppearance(
         // DecorationBox
         singleLine = singleLine,
         colors = colors.copy(),
-        contentPadding = contentPadding,
         shape = shape,
-        focusedBorderThickness = focusedBorderThickness,
-        unfocusedBorderThickness = unfocusedBorderThickness,
     )
 
     override fun equals(other: Any?): Boolean {
@@ -256,10 +217,7 @@ class TextFieldAppearance(
         if (errorLabel != other.errorLabel) return false
         if (validIcon != other.validIcon) return false
         if (colors != other.colors) return false
-        if (contentPadding != other.contentPadding) return false
         if (shape != other.shape) return false
-        if (focusedBorderThickness != other.focusedBorderThickness) return false
-        if (unfocusedBorderThickness != other.unfocusedBorderThickness) return false
 
         return true
     }
@@ -272,10 +230,7 @@ class TextFieldAppearance(
         result = 31 * result + errorLabel.hashCode()
         result = 31 * result + validIcon.hashCode()
         result = 31 * result + colors.hashCode()
-        result = 31 * result + contentPadding.hashCode()
         result = 31 * result + shape.hashCode()
-        result = 31 * result + focusedBorderThickness.hashCode()
-        result = 31 * result + unfocusedBorderThickness.hashCode()
         return result
     }
 }
@@ -335,10 +290,7 @@ object TextFieldAppearanceDefaults {
         ),
         validIcon = IconAppearanceDefaults.appearance().copy(tint = Success),
         colors = OutlinedTextFieldDefaults.colors(),
-        contentPadding = OutlinedTextFieldDefaults.contentPadding(),
         shape = OutlinedTextFieldDefaults.shape,
-        focusedBorderThickness = OutlinedTextFieldDefaults.FocusedBorderThickness,
-        unfocusedBorderThickness = OutlinedTextFieldDefaults.UnfocusedBorderThickness,
     )
 }
 
