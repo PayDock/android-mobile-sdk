@@ -277,10 +277,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                                     style = newComponentAppearance.style,
                                     singleLine = newComponentAppearance.singleLine,
                                     colors = newComponentAppearance.colors,
-                                    contentPadding = newComponentAppearance.contentPadding,
-                                    shape = newComponentAppearance.shape,
-                                    focusedBorderThickness = newComponentAppearance.focusedBorderThickness,
-                                    unfocusedBorderThickness = newComponentAppearance.unfocusedBorderThickness
+                                    shape = newComponentAppearance.shape
                                 )
                             )
                         }
@@ -358,10 +355,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                                     style = newComponentAppearance.style,
                                     singleLine = newComponentAppearance.singleLine,
                                     colors = newComponentAppearance.colors,
-                                    contentPadding = newComponentAppearance.contentPadding,
-                                    shape = newComponentAppearance.shape,
-                                    focusedBorderThickness = newComponentAppearance.focusedBorderThickness,
-                                    unfocusedBorderThickness = newComponentAppearance.unfocusedBorderThickness
+                                    shape = newComponentAppearance.shape
                                 )
                             )
                         }

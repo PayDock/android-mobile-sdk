@@ -24,7 +24,6 @@ import com.paydock.sample.feature.style.ui.components.core.color.ColorPickerFiel
 import com.paydock.sample.feature.style.ui.components.core.counter.NumberCounter
 import com.paydock.sample.feature.style.ui.components.core.toggle.StyleableToggleRow
 import com.paydock.sample.feature.style.ui.components.properties.font.FontFamilyDropdown
-import com.paydock.sample.feature.style.ui.components.properties.padding.PaddingEditor
 import com.paydock.sample.feature.style.ui.components.properties.shape.ShapeDropdown
 import com.paydock.sample.feature.style.utils.FontHelper
 import com.paydock.sample.feature.style.utils.LocalFontHelper
@@ -51,10 +50,7 @@ fun StyleTextFieldSection(
     val currentFocusedPlaceholderColor = currentAppearance.colors.focusedPlaceholderColor
     val currentUnfocusedPlaceholderColor = currentAppearance.colors.unfocusedPlaceholderColor
     val currentErrorTextColor = currentAppearance.colors.errorTextColor
-    val currentContentPadding = currentAppearance.contentPadding
     val currentShape = currentAppearance.shape
-    val currentFocusedBorderThickness = currentAppearance.focusedBorderThickness
-    val currentUnfocusedBorderThickness = currentAppearance.unfocusedBorderThickness
 
     // State for available font names for the dropdown
     val systemFontDetailsList = remember { mutableStateListOf<FontHelper.FontInfo>() }
@@ -282,44 +278,12 @@ fun StyleTextFieldSection(
 
         HorizontalDivider()
 
-        PaddingEditor(
-            title = stringResource(R.string.label_item_padding),
-            currentPaddingValues = currentContentPadding,
-            onPaddingChange = { newPaddingValues ->
-                onAppearanceChange(
-                    currentAppearance.copy(contentPadding = newPaddingValues)
-                )
-            }
-        )
-
-        HorizontalDivider()
-
         ShapeDropdown(
             modifier = Modifier.fillMaxWidth(),
             currentShape = currentShape,
             onShapeChange = { newShape ->
                 onAppearanceChange(currentAppearance.copy(shape = newShape))
             },
-        )
-
-        HorizontalDivider()
-
-        NumberCounter(
-            title = stringResource(R.string.label_focused_border_thickness),
-            value = currentFocusedBorderThickness.value.toInt(),
-            onValueChange = { newValue ->
-                onAppearanceChange(currentAppearance.copy(focusedBorderThickness = newValue.dp))
-            }
-        )
-
-        HorizontalDivider()
-
-        NumberCounter(
-            title = stringResource(R.string.label_unfocused_border_thickness),
-            value = currentUnfocusedBorderThickness.value.toInt(),
-            onValueChange = { newValue ->
-                onAppearanceChange(currentAppearance.copy(unfocusedBorderThickness = newValue.dp))
-            }
         )
     }
 }
