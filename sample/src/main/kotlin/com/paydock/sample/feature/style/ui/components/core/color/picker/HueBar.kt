@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -43,8 +44,8 @@ import androidx.core.graphics.createBitmap
 
 @Composable
 fun HueBar(
-    defaultHue: Float,
-    setColor: (Float) -> Unit,
+    currentHue: Float,
+    onHueChanged: (Float) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val interactionSource = remember {
@@ -55,11 +56,11 @@ fun HueBar(
     }
 
     // Add a new state variable to store the selected hue
-    var selectedHue by remember { mutableStateOf(defaultHue) }
+    var selectedHue by remember { mutableFloatStateOf(currentHue) }
 
     // Update the selectedHue when the default color changes
-    LaunchedEffect(defaultHue) {
-        selectedHue = defaultHue
+    LaunchedEffect(currentHue) {
+        selectedHue = currentHue
     }
 
     Canvas(
@@ -115,10 +116,10 @@ fun HueBar(
             pressOffset.value = Offset(pressPos, 0f)
             // Update the selectedHue when the user selects a new hue
             selectedHue = pointToHue(pressPos)
-            setColor(selectedHue)
+            onHueChanged(selectedHue)
         }
 
-        val defaultHuePosition = defaultHue * huePanel.width() / 360f
+        val defaultHuePosition = currentHue * huePanel.width() / 360f
         drawCircle(
             Color.White,
             radius = size.height / 2,
@@ -179,7 +180,7 @@ internal fun PreviewHueBar() {
     val color = Color.Blue
     val hue = color.toHSV()[0]
     SampleTheme {
-        HueBar(defaultHue = hue) {
+        HueBar(currentHue = hue) {
 
         }
     }

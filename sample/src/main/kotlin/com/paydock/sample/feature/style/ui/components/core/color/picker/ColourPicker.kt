@@ -1,5 +1,6 @@
 package com.paydock.sample.feature.style.ui.components.core.color.picker
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,7 +8,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,7 +20,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -30,7 +31,11 @@ import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.theme.SampleTheme
 
 @Composable
-fun ColourPicker(color: Color, onColourUpdated: (Color) -> Unit, onCanceled: () -> Unit) {
+fun ColourPicker(
+    initialColor: Color, // Renamed for clarity, this is the starting point
+    onColourUpdated: (Color) -> Unit,
+    onCanceled: () -> Unit
+) {
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -38,61 +43,67 @@ fun ColourPicker(color: Color, onColourUpdated: (Color) -> Unit, onCanceled: () 
             .fillMaxWidth()
             .padding(vertical = 24.dp, horizontal = 16.dp)
     ) {
-        // HSV (Hue, Saturation, Value)
-        val initialHsv = remember(color) { color.toHSV() }
-        val hsv = remember {
-            mutableStateOf(Triple(initialHsv[0], initialHsv[1], initialHsv[2]))
+        // Main state holders for Hue, Saturation, Value, and Alpha
+        // These are reset if `initialColor` changes.
+        var hsv by remember(initialColor) {
+            val hsvArray = initialColor.toHSV() // Assuming Color.toHSV() returns FloatArray(3)
+            mutableStateOf(Triple(hsvArray[0], hsvArray[1], hsvArray[2]))
+        }
+        var alpha by remember(initialColor) { mutableFloatStateOf(initialColor.alpha) }
+
+        // Derived color based on the current HSV and Alpha state
+        val currentColor = remember(hsv, alpha) {
+            Color.hsv(hsv.first, hsv.second, hsv.third, alpha)
         }
 
-        val alpha =
-            remember(color) { mutableFloatStateOf(color.alpha) } // Initialize with incoming color's alpha
+        // State for the Hex input field
+        var hexInput by remember { mutableStateOf("") }
 
-        // Calculate the result color from the updated hsv components
-        val resultColor = remember(hsv.value, alpha.floatValue) { // Add alpha.value as a key
-            mutableStateOf(
-                // Use the updated Color constructor that takes alpha
-                Color(
-                    red = hsv.value.toColor().red, // Get RGB from HSV-derived color
-                    green = hsv.value.toColor().green,
-                    blue = hsv.value.toColor().blue,
-                    alpha = alpha.floatValue // Apply the current alpha state
-                )
-            )
-        }
-
-        val (hexValue, setHexValue) = remember { mutableStateOf("") }
-        LaunchedEffect(resultColor.value) { // Update hex based on the final resultColor (which includes alpha)
-            setHexValue(resultColor.value.toHexCode(includeAlpha = false))
+        // Effect to update hexInput when currentColor changes (e.g., from sliders)
+        // This also sets the initial hex value.
+        LaunchedEffect(currentColor) {
+            hexInput = currentColor.toHexCode(includeAlpha = false) // Or true, if your hex field supports it
         }
 
         ColorInputField(
-            color = hexValue,
-            readOnly = false,
-            onResultColorChanged = {
-                val tempHSV = floatArrayOf(0f, 0f, 0f)
-                android.graphics.Color.colorToHSV(it.toArgb(), tempHSV)
-                hsv.value = Triple(tempHSV[0], tempHSV[1], tempHSV[2])
+            color = hexInput, // Driven by hexInput state
+            readOnly = false, // Or based on some other logic if needed
+            onResultColorChanged = { colorFromHexInput ->
+                // When hex input results in a valid color
+                val newHsvArray = colorFromHexInput.toHSV()
+                hsv = Triple(newHsvArray[0], newHsvArray[1], newHsvArray[2])
+                // Optionally, if hex input can define alpha (e.g., #AARRGGBB):
+                // alpha = colorFromHexInput.alpha
+                // If hex input does NOT define alpha, don't change the current alpha here.
             },
-            onTextColorChanged = {
-                setHexValue(it)
+            onTextColorChanged = { currentTextInput ->
+                hexInput = currentTextInput // Update hexInput as user types
             }
         )
 
-        SatValPanel(defaultHSV = hsv.value) { sat, value ->
-            hsv.value = Triple(hsv.value.first, sat, value)
-        }
+        SatValPanel(
+            currentHSV = hsv, // Pass the full HSV triple
+            setSatVal = { saturation, value ->
+                hsv = Triple(hsv.first, saturation, value)
+            }
+        )
 
-        HueBar(defaultHue = hsv.value.first) { hue ->
-            hsv.value = Triple(hue, hsv.value.second, hsv.value.third)
-        }
+        HueBar(
+            currentHue = hsv.first,
+            onHueChanged = { newHue ->
+                Log.d("ColourPicker", "Hue changed to: $newHue. Current hsv: $hsv")
+                hsv = Triple(newHue, hsv.second, hsv.third) // Creates a NEW Triple instance
+                Log.d("ColourPicker", "NEW hsv: $hsv")
+            }
+        )
 
         AlphaSlider(
-            currentAlpha = alpha.floatValue,
+            currentAlpha = alpha,
+            // The base color for the alpha slider's gradient (fully opaque version of current color)
+            hsvBaseColor = Color.hsv(hsv.first, hsv.second, hsv.third, 1f),
             onAlphaChanged = { newAlpha ->
-                alpha.floatValue = newAlpha
-            },
-            // Pass the current HSV-derived color to show gradient against
-            hsvBaseColor = hsv.value.toColor()
+                alpha = newAlpha
+            }
         )
 
         Row(
@@ -102,20 +113,23 @@ fun ColourPicker(color: Color, onColourUpdated: (Color) -> Unit, onCanceled: () 
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AppButton(
+            // Assuming AppButton is a standard Composable Button
+            Button( // Using Material3 Button as a placeholder
                 modifier = Modifier.weight(1f),
-                text = "Cancel"
+                onClick = onCanceled
             ) {
-                onCanceled()
+                Text("Cancel")
             }
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            AppButton(
+            Button( // Using Material3 Button as a placeholder
                 modifier = Modifier.weight(1f),
-                text = "OK"
+                onClick = {
+                    onColourUpdated(currentColor) // Pass the final derived color
+                }
             ) {
-                onColourUpdated(resultColor.value)
+                Text("OK")
             }
         }
     }

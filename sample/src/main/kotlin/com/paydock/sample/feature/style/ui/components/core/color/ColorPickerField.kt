@@ -69,10 +69,10 @@ fun ColorPickerField(
             contentWindowInsets = { WindowInsets(bottom = 30.dp) }
         ) {
             ColourPicker(
-                color = colorBeingPicked, // Picker now gets a concrete, sensible starting color
+                initialColor = colorBeingPicked,
                 onColourUpdated = { newColor ->
-                    colorBeingPicked = newColor // Update the state being picked
-                    onColorChange(newColor)   // Propagate the change up
+                    colorBeingPicked = newColor
+                    onColorChange(newColor)
                     scope.launch { sheetState.hide() }.invokeOnCompletion {
                         if (!sheetState.isVisible) showBottomSheet = false
                     }
