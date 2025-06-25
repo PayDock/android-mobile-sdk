@@ -48,14 +48,12 @@ fun NavigationGraph(
             }
         }
         composable(BottomNavItem.Style.route) {
-            StyleWidgetListScreen { widgetType ->
+            StyleWidgetListScreen(onThemeSelected) { widgetType ->
                 navController.currentBackStackEntry?.arguments?.putString(
                     "widgetType",
                     widgetType.name
                 )
                 navController.navigate("style_components/${widgetType.name}")
-
-                // TODO - Complete
             }
         }
         composable(
@@ -75,7 +73,7 @@ fun NavigationGraph(
             navBackStackEntry.arguments?.getString("widgetType")?.let { type ->
                 val widgetType = WidgetType.valueOf(type)
                 val styleItems = remember { widgetType.mapWidgetTypeToAppearanceComponents().sortedBy { it.displayName() } }
-                StyleComponentListScreen(styleItems, onThemeSelected) { selectedItem ->
+                StyleComponentListScreen(styleItems) { selectedItem ->
                     if (selectedItem.hasSubComponents) {
                         navController.navigate("style_sub_components/${widgetType.name}/${selectedItem.name}") // Pass widgetType too if sub-components can vary by parent widget
                     } else {
