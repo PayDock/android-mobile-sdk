@@ -1,6 +1,7 @@
 package com.paydock.sample.feature.style.ui
 
 import android.util.Log
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -17,7 +19,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ImageButtonAppearance
@@ -32,7 +37,7 @@ import com.paydock.feature.afterpay.presentation.AfterpayWidgetAppearance
 import com.paydock.feature.card.presentation.CardDetailsWidgetAppearance
 import com.paydock.feature.card.presentation.GiftCardWidgetAppearance
 import com.paydock.feature.googlepay.presentation.GooglePayWidgetAppearance
-import com.paydock.feature.paypal.checkout.presentation.PayPalWidgetAppearance
+import com.paydock.sample.R
 import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.style.models.StyleAppearanceComponent
 import com.paydock.sample.feature.style.ui.components.section.ButtonAppearanceStyleEditor
@@ -322,14 +327,25 @@ fun StylePropertiesScreen(
                 else -> {
                     Text("No specific styling defined for $styleItemName in context $widgetContext")
                 }
-                }
             }
+        }
 
-        Box(
+        HorizontalDivider(modifier = Modifier.padding(top = 12.dp))
+
+        Column (
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 32.dp, top = 20.dp)
+                .padding(bottom = 32.dp, top = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text(
+                textAlign = TextAlign.Justify,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = stringResource(R.string.disclaimer_reset_button),
+            )
+
             OutlinedButton(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -346,7 +362,7 @@ fun StylePropertiesScreen(
                     }
                 }
             ) {
-                Text(style = MaterialTheme.typography.bodyMedium, text = "Reset to Defaults")
+                Text(style = MaterialTheme.typography.bodyMedium, text = stringResource(R.string.button_reset))
             }
         }
     }
