@@ -22,8 +22,7 @@
     <string name="label_link_paypal_desc">Link your PayPal account to use method next time you shop</string>
     <string name="label_select_widget">Select Widget</string>
     <!-- Style Screen Labels -->
-    <string name="label_style_screen_caption">Customise the look and feel of the widgets on the Widgets tab</string>
-    <string name="label_style_components_screen_caption">These styles apply to the widget screen based on your phone\'s dark or light mode setting. Settings</string>
+    <string name="label_style_screen_caption">Customise the look and feel of the widgets. These styles apply to the widgets based on your phone\'s dark or light mode setting.</string>
     <string name="label_text_style">Text Style</string>
     <string name="label_text_colour">Text Colour</string>
     <string name="label_font_family">Font Family</string>
