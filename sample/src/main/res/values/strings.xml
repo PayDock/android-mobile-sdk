@@ -97,9 +97,11 @@
 
     <string name="disclaimer_rounded_shape_defaults">Note: Initial radius/percentage values are component defaults, not necessarily reflecting the current shape\'s exact creation parameters. Please adjust to define the desired corners.</string>
     <string name="disclaimer_elevation_defaults">Note: These are predefined elevation styles for demonstration purposes. Granular elevation control is not enabled in this demo.</string>
+    <string name="disclaimer_reset_button"><b>Note:</b> The reset button restores the component\'s style properties to their last saved state.</string>
     <!-- Descriptions -->
     <string name="desc_pay_pal_customer_created">Customer account created with linked PayPal account as a payment source</string>
 
     <!-- Buttons -->
     <string name="button_ok">OK</string>
+    <string name="button_reset">Reset</string>
 </resources>
