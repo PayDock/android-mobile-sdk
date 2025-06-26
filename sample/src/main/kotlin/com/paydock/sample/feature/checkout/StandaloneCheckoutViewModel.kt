@@ -116,7 +116,8 @@ class StandaloneCheckoutViewModel @Inject constructor(
             currency = AU_CURRENCY_CODE,
             customer = ChargesCustomerDTO(
                 paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                    gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL
+                    gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL,
+                    walletType = WalletType.PAY_PAL.type
                 )
             )
         )
@@ -127,7 +128,8 @@ class StandaloneCheckoutViewModel @Inject constructor(
             currency = AU_CURRENCY_CODE,
             customer = ChargesCustomerDTO(
                 paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                    gatewayId = BuildConfig.GATEWAY_ID_COLES_PAY
+                    gatewayId = BuildConfig.GATEWAY_ID_COLES_PAY,
+                    walletType = WalletType.COLES_PAY.type
                 )
             )
         )
@@ -138,7 +140,8 @@ class StandaloneCheckoutViewModel @Inject constructor(
             currency = AU_CURRENCY_CODE,
             customer = ChargesCustomerDTO(
                 paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                    gatewayId = BuildConfig.GATEWAY_ID_GOOGLE_PAY
+                    gatewayId = BuildConfig.GATEWAY_ID_GOOGLE_PAY,
+                    walletType = WalletType.GOOGLE.type
                 )
             )
         )
