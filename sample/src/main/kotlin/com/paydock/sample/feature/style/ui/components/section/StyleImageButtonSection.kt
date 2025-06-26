@@ -13,7 +13,6 @@ import com.paydock.designsystems.components.button.ImageButtonAppearance
 import com.paydock.sample.R
 import com.paydock.sample.feature.style.ui.components.core.color.ColorPickerField
 import com.paydock.sample.feature.style.ui.components.core.counter.FloatCounter
-import com.paydock.sample.feature.style.ui.components.properties.image.ContentScaleDropdown
 import com.paydock.sample.feature.style.ui.components.properties.shape.CornerUnit
 import com.paydock.sample.feature.style.ui.components.properties.shape.ShapeDropdown
 
@@ -26,7 +25,6 @@ fun StyleImageButtonSection(
     val currentRippleColor = currentAppearance.rippleColor
     val currentShape = currentAppearance.shape
     val currentDisabledAlpha = currentAppearance.disabledImageAlpha
-    val currentContentScale = currentAppearance.contentScale
 
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
@@ -55,17 +53,6 @@ fun StyleImageButtonSection(
                 )
             }
         )
-
-        HorizontalDivider()
-
-        ContentScaleDropdown(
-            modifier = Modifier.fillMaxWidth(),
-            currentContentScale = currentContentScale,
-        ) { newValue ->
-            onAppearanceChange(
-                currentAppearance.copy(contentScale = newValue)
-            )
-        }
 
         HorizontalDivider()
 
