@@ -34,8 +34,10 @@ import com.paydock.sample.feature.wallet.data.model.WalletCharge
 import com.paydock.sample.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.sample.feature.wallet.domain.usecase.InitiateWalletTransactionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -53,6 +55,9 @@ class StandaloneCheckoutViewModel @Inject constructor(
 
     private val _stateFlow: MutableStateFlow<CheckoutUIState> = MutableStateFlow(CheckoutUIState())
     val stateFlow: StateFlow<CheckoutUIState> = _stateFlow
+
+    private val _toastEvents = Channel<String>()
+    val toastEvents = _toastEvents.receiveAsFlow()
 
     val threeDSType: ThreeDSType = ThreeDSType.INTEGRATED
 
@@ -390,19 +395,23 @@ class StandaloneCheckoutViewModel @Inject constructor(
     }
 
     fun handleChargeResult(result: Result<ChargeResponse>) {
-        result.onSuccess {
-            _stateFlow.update { state ->
-                state.copy(
-                    isLoading = false,
-                    chargeResult = it,
-                    threeDSToken = null,
-                    vaultToken = null,
-                    cardToken = null
-                )
-            }
-        }.onFailure {
-            _stateFlow.update { state ->
-                state.copy(isLoading = false, error = CHARGE_TRANSACTION_ERROR)
+        viewModelScope.launch {
+            result.onSuccess {
+                _stateFlow.update { state ->
+                    state.copy(
+                        isLoading = false,
+                        chargeResult = it,
+                        threeDSToken = null,
+                        vaultToken = null,
+                        cardToken = null
+                    )
+                }
+                _toastEvents.send("Transaction Successful")
+            }.onFailure {
+                _stateFlow.update { state ->
+                    state.copy(isLoading = false, error = CHARGE_TRANSACTION_ERROR)
+                }
+                _toastEvents.send("Transaction Failed")
             }
         }
     }
@@ -449,10 +458,12 @@ class StandaloneCheckoutViewModel @Inject constructor(
                         walletChargeResult = state.walletChargeResult?.copy(status = data.status),
                     )
                 }
+                _toastEvents.send("Transaction Successful")
             }.onFailure {
                 _stateFlow.update { state ->
                     state.copy(isLoading = false, error = CHARGE_TRANSACTION_ERROR)
                 }
+                _toastEvents.send("Transaction Failed")
             }
         }
     }
