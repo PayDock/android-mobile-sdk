@@ -80,7 +80,7 @@ internal fun SdkImageButton(
             painter = painter,
             contentDescription = contentDescription,
             // Scale the image to fit the parent width
-            contentScale = appearance.contentScale,
+            contentScale = ContentScale.FillWidth,
             modifier = Modifier
                 .fillMaxWidth()
                 .alpha(if (enabled) 1f else appearance.disabledImageAlpha)
@@ -95,7 +95,6 @@ internal fun SdkImageButton(
  *
  * @property shape The shape of the button's container.
  * @property rippleColor The color of the ripple effect when the button is pressed.
- * @property contentScale How the image should be scaled to fit the bounds of the button.
  * @property disabledImageAlpha The alpha value applied to the image when the button is disabled.
  *                              This value should be between 0.0f (fully transparent) and 1.0f (fully opaque).
  */
@@ -103,18 +102,15 @@ internal fun SdkImageButton(
 class ImageButtonAppearance(
     val shape: Shape,
     val rippleColor: Color,
-    val contentScale: ContentScale,
     val disabledImageAlpha: Float
 ) {
     fun copy(
         shape: Shape = this.shape,
         rippleColor: Color = this.rippleColor,
-        contentScale: ContentScale = this.contentScale,
         disabledImageAlpha: Float = this.disabledImageAlpha,
     ): ImageButtonAppearance = ImageButtonAppearance(
         shape = shape,
         rippleColor = rippleColor.copy(),
-        contentScale = contentScale,
         disabledImageAlpha = disabledImageAlpha
     )
 
@@ -127,7 +123,6 @@ class ImageButtonAppearance(
         if (disabledImageAlpha != other.disabledImageAlpha) return false
         if (shape != other.shape) return false
         if (rippleColor != other.rippleColor) return false
-        if (contentScale != other.contentScale) return false
 
         return true
     }
@@ -136,7 +131,6 @@ class ImageButtonAppearance(
         var result = disabledImageAlpha.hashCode()
         result = 31 * result + shape.hashCode()
         result = 31 * result + rippleColor.hashCode()
-        result = 31 * result + contentScale.hashCode()
         return result
     }
 }
@@ -164,7 +158,6 @@ object ImageButtonDefaults {
         ImageButtonAppearance(
             shape = ButtonDefaults.shape,
             rippleColor = Color.Transparent,
-            contentScale = ContentScale.FillWidth,
             disabledImageAlpha = 0.5f
         )
 }
