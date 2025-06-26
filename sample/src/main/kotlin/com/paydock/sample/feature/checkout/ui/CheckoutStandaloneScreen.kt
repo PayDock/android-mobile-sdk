@@ -39,27 +39,11 @@ fun CheckoutStandaloneScreen(
         skipPartiallyExpanded = true
     )
 
-    LaunchedEffect(uiState.chargeResult) {
-        uiState.chargeResult?.let { result ->
-            if (result.resource.data?.status == "complete") {
-                // TODO - Implement a success screen state
-                Toast.makeText(context, "Transaction Successful", Toast.LENGTH_SHORT).show()
-                openBottomSheet = false
-            } else {
-                // TODO - Implement a failure screen state
-                Toast.makeText(context, "Transaction Failed", Toast.LENGTH_SHORT).show()
-                openBottomSheet = false
-            }
-        }
-    }
-
-    LaunchedEffect(uiState.walletChargeResult) {
-        uiState.walletChargeResult?.let { charge ->
-            if (charge.status == "complete") {
-                // TODO - Implement a success screen state
-                Toast.makeText(context, "Transaction Successful", Toast.LENGTH_SHORT).show()
-                openBottomSheet = false
-            }
+    // Listen for one-time toast events
+    LaunchedEffect(Unit) { // Or a key that changes when the screen is entered
+        viewModel.toastEvents.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            openBottomSheet = false // Close bottom sheet after toast
         }
     }
 
