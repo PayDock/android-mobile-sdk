@@ -2,6 +2,7 @@ package com.paydock.sample.feature.checkout.ui
 
 import android.widget.Toast
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,15 +29,25 @@ fun CheckoutStandaloneScreen(
     val context = LocalContext.current
     val uiState by viewModel.stateFlow.collectAsState()
     var openBottomSheet by rememberSaveable { mutableStateOf(false) }
-    val bottomSheetState = rememberModalBottomSheetState(
-        // This will expand the modal fully based on the size
-        skipPartiallyExpanded = true
-    )
+
+    val bottomSheetState =
+        rememberModalBottomSheetState(
+            // This will expand the modal fully based on the size
+            skipPartiallyExpanded = true,
+            // Prevents dismissing sheet from hiding on outside press and when dragging
+            confirmValueChange = { newState ->
+                newState != SheetValue.Hidden //  Stop bottom sheet from hiding on outside press
+            }
+        )
 
     var open3DSBottomSheet by rememberSaveable { mutableStateOf(false) }
     val bottom3DSSheetState = rememberModalBottomSheetState(
         // This will expand the modal fully based on the size
-        skipPartiallyExpanded = true
+        skipPartiallyExpanded = true,
+        // Prevents dismissing sheet when dragging
+        confirmValueChange = { newState ->
+            newState != SheetValue.Hidden //  Stop bottom sheet from hiding on outside press
+        }
     )
 
     // Listen for one-time toast events
@@ -82,9 +93,12 @@ fun CheckoutStandaloneScreen(
             bottom3DSSheetState = bottom3DSSheetState,
             onDismissRequest = {
                 open3DSBottomSheet = false
+                // Technically this should not happen as it would break the charge flow
+                openBottomSheet = false
             },
             vaultToken = uiState.vaultToken,
             threeDSToken = uiState.threeDSToken?.token,
+            showCloseButton = !uiState.isLoading,
             viewModel = viewModel,
             stylingViewModel = stylingViewModel
         )
