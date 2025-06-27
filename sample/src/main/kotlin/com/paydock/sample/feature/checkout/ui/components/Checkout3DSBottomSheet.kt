@@ -1,10 +1,14 @@
 package com.paydock.sample.feature.checkout.ui.components
 
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.paydock.designsystems.components.sheet.SdkBottomSheet
 import com.paydock.feature.threeDS.common.domain.integration.ThreeDSConfig
@@ -22,6 +26,7 @@ fun Checkout3DSBottomSheet(
     onDismissRequest: () -> Unit,
     vaultToken: String?,
     threeDSToken: String?,
+    showCloseButton: Boolean = true,
     viewModel: StandaloneCheckoutViewModel,
     stylingViewModel: StylingViewModel
 ) {
@@ -29,7 +34,8 @@ fun Checkout3DSBottomSheet(
         SdkBottomSheet(
             containerColor = Color.White,
             bottomSheetState = bottom3DSSheetState,
-            onDismissRequest = onDismissRequest
+            onDismissRequest = onDismissRequest,
+            enableClose = showCloseButton
         ) {
             val type = viewModel.threeDSType
             when (type) {

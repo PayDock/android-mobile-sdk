@@ -7,10 +7,12 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.core.view.WindowCompat
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
 import com.paydock.feature.src.domain.model.integration.ClickToPayWidgetConfig
@@ -60,7 +62,7 @@ fun ClickToPayScreen(stylingViewModel: StylingViewModel, resultHandler: (Result<
     val currentOrDefaultAppearance =
         clickToPayAppearance ?: ClickToPayAppearanceDefaults.appearance()
     ClickToPayWidget(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().safeDrawingPadding(),
         config = ClickToPayWidgetConfig(
             accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
             serviceId = BuildConfig.GATEWAY_ID_CLICK_TO_PAY,

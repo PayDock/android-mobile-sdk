@@ -49,7 +49,8 @@ fun CheckoutBottomSheet(
     var selectedTab by remember { mutableStateOf(supportedPaymentMethods.first()) }
     SdkBottomSheet(
         bottomSheetState = bottomSheetState,
-        onDismissRequest = onDismissRequest
+        onDismissRequest = onDismissRequest,
+        enableClose = !uiState.isLoading
     ) {
         Box(
             contentAlignment = Alignment.Center,
