@@ -93,4 +93,15 @@ internal sealed class AfterpayUIState {
      * @property exception The exception containing details about the failure.
      */
     data class Error(val exception: SdkException) : AfterpayUIState()
+
+    /**
+     * Represents a state where an error occurred and the Afterpay transaction is pending decline.
+     *
+     * This state is used when an error is encountered during the Afterpay flow, and the transaction
+     * needs to be explicitly declined. It holds the [SdkException] that caused the error.
+     * The UI should typically display an error message and potentially offer a way to retry or cancel.
+     *
+     * @property exception The [SdkException] that led to the pending decline state.
+     */
+    data class PendingDeclineOnError(val exception: SdkException) : AfterpayUIState()
 }
