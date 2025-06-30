@@ -25,7 +25,7 @@ import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.threeDS.presentation.ThreeDSViewModel
 
 @Composable
-fun IntegratedThreeDSItem(
+fun Integrated3DSItem(
     context: Context,
     cardViewModel: CardViewModel = hiltViewModel(),
     threeDSViewModel: ThreeDSViewModel = hiltViewModel(),

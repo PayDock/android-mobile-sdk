@@ -13,7 +13,7 @@
     <string name="label_button_update_styles">Update styles</string>
     <string name="label_spacing">Spacing</string>
     <string name="label_font">Font</string>
-    <string name="label_something_went_wrong">Something went wrong</string>
+    <string name="label_transaction_failed">Transaction Failed</string>
     <string name="label_card">Card</string>
     <string name="label_coles_pay">Coles Pay</string>
     <string name="label_click_to_pay">SRC</string>
