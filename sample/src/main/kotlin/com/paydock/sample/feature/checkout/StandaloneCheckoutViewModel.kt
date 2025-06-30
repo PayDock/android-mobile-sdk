@@ -14,9 +14,14 @@ import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
+import com.paydock.sample.core.COLES_PAY_CHARGE_TRANSACTION_ERROR
 import com.paydock.sample.core.THREE_DS_CARD_ERROR
+import com.paydock.sample.core.THREE_DS_CHARGE_TRANSACTION_ERROR
 import com.paydock.sample.core.THREE_DS_STATUS_ERROR
 import com.paydock.sample.core.TOKENISE_CARD_ERROR
+import com.paydock.sample.core.TOKENISE_CLICK_TO_PAY_ERROR
+import com.paydock.sample.core.WALLET_CHARGE_TRANSACTION_ERROR
+import com.paydock.sample.core.WALLET_INITIALISE_ERROR
 import com.paydock.sample.feature.card.data.api.dto.CaptureCardChargeRequest
 import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
 import com.paydock.sample.feature.card.domain.usecase.CaptureCardChargeTokenUseCase
@@ -112,7 +117,6 @@ class StandaloneCheckoutViewModel @Inject constructor(
                     )
                 }
 
-                else -> Unit
             }
         }
 
@@ -306,7 +310,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
                     state.copy(
                         walletChargeResult = null,
                         isLoading = false,
-                        error = it.message ?: CHARGE_TRANSACTION_ERROR
+                        error = it.message ?: WALLET_INITIALISE_ERROR
                     )
                 }
             }
@@ -330,7 +334,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
             createSessionVaultToken(cardToken = it)
         }.onFailure {
             _stateFlow.update { state ->
-                state.copy(error = TOKENISE_CARD_ERROR)
+                state.copy(error = TOKENISE_CLICK_TO_PAY_ERROR)
             }
         }
     }
@@ -349,7 +353,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
                     _stateFlow.update { state ->
                         state.copy(
                             isLoading = false,
-                            error = CHARGE_TRANSACTION_ERROR,
+                            error = THREE_DS_CHARGE_TRANSACTION_ERROR,
                             threeDSToken = null
                         )
                     }
@@ -359,7 +363,11 @@ class StandaloneCheckoutViewModel @Inject constructor(
             }
         }.onFailure {
             _stateFlow.update { state ->
-                state.copy(isLoading = false, error = CHARGE_TRANSACTION_ERROR, threeDSToken = null)
+                state.copy(
+                    isLoading = false,
+                    error = it.message ?: THREE_DS_CHARGE_TRANSACTION_ERROR,
+                    threeDSToken = null
+                )
             }
         }
     }
@@ -379,7 +387,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
                     _stateFlow.update { state ->
                         state.copy(
                             isLoading = false,
-                            error = CHARGE_TRANSACTION_ERROR,
+                            error = THREE_DS_CHARGE_TRANSACTION_ERROR,
                             threeDSToken = null
                         )
                     }
@@ -389,29 +397,32 @@ class StandaloneCheckoutViewModel @Inject constructor(
             }
         }.onFailure {
             _stateFlow.update { state ->
-                state.copy(isLoading = false, error = CHARGE_TRANSACTION_ERROR, threeDSToken = null)
+                state.copy(
+                    isLoading = false,
+                    error = it.message ?: THREE_DS_CHARGE_TRANSACTION_ERROR,
+                    threeDSToken = null
+                )
             }
         }
     }
 
     fun handleChargeResult(result: Result<ChargeResponse>) {
         viewModelScope.launch {
-            result.onSuccess {
+            result.onSuccess { charge ->
                 _stateFlow.update { state ->
                     state.copy(
                         isLoading = false,
-                        chargeResult = it,
+                        chargeResult = charge,
                         threeDSToken = null,
                         vaultToken = null,
                         cardToken = null
                     )
                 }
-                _toastEvents.send("Transaction Successful")
+                _toastEvents.send("Transaction Complete📋: \nStatus ⏳: [${charge.resource.data?.status}]")
             }.onFailure {
                 _stateFlow.update { state ->
-                    state.copy(isLoading = false, error = CHARGE_TRANSACTION_ERROR)
+                    state.copy(isLoading = false, error = it.message ?: CHARGE_TRANSACTION_ERROR)
                 }
-                _toastEvents.send("Transaction Failed")
             }
         }
     }
@@ -428,12 +439,15 @@ class StandaloneCheckoutViewModel @Inject constructor(
                 }
             }.onFailure {
                 _stateFlow.update { state ->
-                    state.copy(isLoading = false, error = CHARGE_TRANSACTION_ERROR)
+                    state.copy(
+                        isLoading = false,
+                        error = it.message ?: COLES_PAY_CHARGE_TRANSACTION_ERROR
+                    )
                 }
             }
         } else {
             _stateFlow.update { state ->
-                state.copy(isLoading = false, error = CHARGE_TRANSACTION_ERROR)
+                state.copy(isLoading = false, error = COLES_PAY_CHARGE_TRANSACTION_ERROR)
             }
         }
     }
@@ -451,19 +465,21 @@ class StandaloneCheckoutViewModel @Inject constructor(
                 state.copy(isLoading = true)
             }
             val result = captureWalletChargeUseCase(chargeId)
-            result.onSuccess { data ->
+            result.onSuccess { charge ->
                 _stateFlow.update { state ->
                     state.copy(
                         isLoading = false,
-                        walletChargeResult = state.walletChargeResult?.copy(status = data.status),
+                        walletChargeResult = state.walletChargeResult?.copy(status = charge.status),
                     )
                 }
-                _toastEvents.send("Transaction Successful")
+                _toastEvents.send("Wallet Transaction Complete📋: \nStatus ⏳: [${charge.status}] ")
             }.onFailure {
                 _stateFlow.update { state ->
-                    state.copy(isLoading = false, error = CHARGE_TRANSACTION_ERROR)
+                    state.copy(
+                        isLoading = false,
+                        error = it.message ?: WALLET_CHARGE_TRANSACTION_ERROR
+                    )
                 }
-                _toastEvents.send("Transaction Failed")
             }
         }
     }

@@ -256,7 +256,6 @@ private fun handleAfterpayResult(
  * If the cancellation data is invalid or missing, it triggers an error completion and resets the result state.
  *
  * @param data The intent containing the cancellation data, or `null` if no data is provided.
- * @param context The context used to access application resources for error messages.
  * @param viewModel The ViewModel responsible for handling the Afterpay checkout state.
  * @param completion A callback function that returns the result of the Afterpay operation.
  *                   It is invoked with a failure result if the cancellation data is invalid.
@@ -337,11 +336,14 @@ private fun handleUIState(
             completion(Result.success(uiState.chargeData))
             viewModel.resetResultState()
         }
+        is AfterpayUIState.PendingDeclineOnError -> {
+            // If we do receive an error, we should decline the charge
+            viewModel.declineWalletTransaction(uiState.exception)
+        }
         is AfterpayUIState.Error -> {
             loadingDelegate?.widgetLoadingDidFinish()
+            // This will mark the end of the charge
             completion(Result.failure(uiState.exception))
-            // If we do receive an error, we should cancel the charge
-            viewModel.declineWalletTransaction()
             viewModel.resetResultState()
         }
         is AfterpayUIState.ProvideCheckoutTokenResult -> checkoutHandler.provideTokenResult(
