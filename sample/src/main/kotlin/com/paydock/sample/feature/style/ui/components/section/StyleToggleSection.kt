@@ -95,8 +95,6 @@ fun StyleToggleSection(
                 }
             )
 
-            ////////
-
             ColorPickerField(
                 modifier = Modifier.fillMaxWidth(),
                 label = stringResource(R.string.label_unchecked_thumb_colour),

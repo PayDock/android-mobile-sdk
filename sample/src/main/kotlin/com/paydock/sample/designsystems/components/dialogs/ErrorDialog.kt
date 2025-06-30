@@ -17,7 +17,7 @@ fun ErrorDialog(
 ) {
     AlertDialog(
         title = {
-            Text(text = stringResource(R.string.label_something_went_wrong))
+            Text(text = stringResource(R.string.label_transaction_failed))
         },
         text = {
             Text(text = dialogText)
