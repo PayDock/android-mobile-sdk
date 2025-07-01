@@ -21,7 +21,7 @@ import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
  * wallet callback data, processing transactions, and managing UI states. It extends
  * `WalletViewModel` and leverages specific use cases for interacting with Coles Pay-related services.
  *
- * @property config The client ID used for authenticating or identifying the FlyPay transaction.
+ * @property config The client ID used for authenticating or identifying the Coles Pay transaction.
  * @param captureWalletChargeUseCase Use case for capturing charges associated with Coles Pay wallets.
  * @param declineWalletChargeUseCase Use case for declining charges associated with Coles Pay wallets.
  * @param getWalletCallbackUseCase Use case for fetching callback data from the Coles Pay wallet service.
