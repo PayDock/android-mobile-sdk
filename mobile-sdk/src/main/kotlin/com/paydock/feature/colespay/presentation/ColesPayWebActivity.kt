@@ -62,16 +62,16 @@ internal class ColesPayWebActivity : ComponentActivity() {
             ) { innerPadding ->
                 // Apply inner padding to avoid content overlapping with the TopAppBar
                 Box(modifier = Modifier.padding(innerPadding)) {
-                    val flyPayOrderId = requireNotNull(intent.getOrderIdExtra())
-                    val flyPayClientId = requireNotNull(intent.getClientIdExtra())
-                    // Stores and remembers the FlyPay URL created from the callback URL.
-                    val flyPayUrl: String by remember(flyPayOrderId, flyPayClientId) {
-                        mutableStateOf(createFlyPayUrl(flyPayOrderId, flyPayClientId))
+                    val colesPayOrderId = requireNotNull(intent.getOrderIdExtra())
+                    val colesPayClientId = requireNotNull(intent.getClientIdExtra())
+                    // Stores and remembers the ColesPay URL created from the callback URL.
+                    val colesPayUrl: String by remember(colesPayOrderId, colesPayClientId) {
+                        mutableStateOf(createColesPayUrl(colesPayOrderId, colesPayClientId))
                     }
-                    ColesPayWebView(colesPayUrl = flyPayUrl, onSuccess = {
+                    ColesPayWebView(colesPayUrl = colesPayUrl, onSuccess = {
                         setResult(
                             RESULT_OK,
-                            Intent().putOrderIdExtra(flyPayOrderId)
+                            Intent().putOrderIdExtra(colesPayOrderId)
                         )
                         finish()
                     }, onFailure = { status, message ->
@@ -90,15 +90,15 @@ internal class ColesPayWebActivity : ComponentActivity() {
     }
 
     /**
-     * Creates the FlyPay URL for the payment process based on the callback URL.
+     * Creates the Coles Pay URL for the payment process based on the callback URL.
      *
-     * @param flyPayOrderId The FlyPay orderId.
+     * @param colesPayOrderId The Coles Pay orderId.
      * @param clientId The Merchant clientId.
-     * @return The composed URL with FlyPay parameters.
+     * @return The composed URL with Coles Pay parameters.
      */
     @Suppress("MaxLineLength")
-    private fun createFlyPayUrl(flyPayOrderId: String, clientId: String): String =
-        MobileSDK.getInstance().environment.mapToColesPayEnv(flyPayOrderId, clientId)
+    private fun createColesPayUrl(colesPayOrderId: String, clientId: String): String =
+        MobileSDK.getInstance().environment.mapToColesPayEnv(colesPayOrderId, clientId)
 
     private fun finish(status: CancellationStatus) {
         setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(status))

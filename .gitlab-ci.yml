@@ -32,8 +32,8 @@ stages:
   - quality # Stage for code quality checks (e.g., linting, static analysis).
   - code_quality # Stage for linting the codebase using detekt
   - versioning # Stage for incrementing version code for new builds.
-  - build # Stage for building the Android application.
   - test # Stage for running unit and integration tests.
+  - build # Stage for building the Android application.
   - deploy # Stage for deploying build to Firebase App Distribution.
   - tag # Stage for tagging a release.
   - gitlab_release # Stage for creating a release in GitLab.
@@ -74,6 +74,23 @@ code_quality:
       when: on_success
     - if: $CI_MERGE_REQUEST_IID # Run on merge (Merge Results)
       when: on_success
+
+## test: (All flavors are the same)
+## This job runs the unit tests for the various flavors of the Android application.
+test:
+  stage: test # Runs in the 'test' stage.
+  extends: .setup_bundler # Extends the '.setup_bundler' template.
+  script:
+    - bundle exec fastlane test flavor:staging build_type:Debug
+  environment:
+    name: staging # Sets the environment name to 'staging'.
+  artifacts:
+    expire_in: 7 days
+    when: always # Always creates artifacts, even if the job fails.
+    reports:
+      junit: mobile-sdk/build/test-results/testDebugUnitTest/TEST-*.xml # Publishes the JUnit test reports.
+  rules:
+    - when: on_success # Only run when the previous job in the pipeline has succeeded.
 
 # increment_version:
 # This job increments the version code for the build and deployment.
@@ -172,23 +189,6 @@ build_prod:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
       when: on_success
-
-## test: (All flavors are the same)
-## This job runs the unit tests for the various flavors of the Android application.
-test:
-  stage: test # Runs in the 'test' stage.
-  extends: .setup_bundler # Extends the '.setup_bundler' template.
-  script:
-    - bundle exec fastlane test flavor:staging build_type:Debug
-  environment:
-    name: staging # Sets the environment name to 'staging'.
-  artifacts:
-    expire_in: 7 days
-    when: always # Always creates artifacts, even if the job fails.
-    reports:
-      junit: mobile-sdk/build/test-results/testDebugUnitTest/TEST-*.xml # Publishes the JUnit test reports.
-  rules:
-    - when: on_success # Only run when the previous job in the pipeline has succeeded.
 
 # .deploy_template:
 # This is a hidden job template for deploying the Android application to Firebase App Distribution.
