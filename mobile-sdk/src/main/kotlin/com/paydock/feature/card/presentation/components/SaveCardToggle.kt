@@ -1,6 +1,7 @@
 package com.paydock.feature.card.presentation.components
 
 import android.content.Intent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,7 +9,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.invisibleToUser
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.core.net.toUri
+import com.paydock.R
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.link.LinkTextAppearance
 import com.paydock.designsystems.components.link.LinkTextAppearanceDefaults
@@ -43,12 +51,36 @@ internal fun SaveCardToggle(
     onToggle: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
+
+    val descriptionText = config.consentText
+    val currentToggleState = if (saveCard) {
+        stringResource(id = R.string.content_desc_toggle_state_on)
+    } else {
+        stringResource(id = R.string.content_desc_toggle_state_off)
+    }
+
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) {
+                contentDescription = "$descriptionText. $currentToggleState"
+                role = Role.Switch
+            }
+            .clickable(
+                enabled = enabled,
+                onClickLabel = stringResource(id = R.string.content_desc_save_card_toggle_action)
+            ) {
+                onToggle(!saveCard)
+            },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .semantics {
+                    // Hides from accessibility tree, content is in parent
+                    this.invisibleToUser()
+                },
             horizontalAlignment = Alignment.Start
         ) {
             // Consent Label
@@ -73,11 +105,16 @@ internal fun SaveCardToggle(
         }
 
         SdkToggle(
-            modifier = Modifier.align(Alignment.CenterVertically),
+            modifier = Modifier
+                .align(Alignment.CenterVertically)
+                .semantics {
+                    // Hides from accessibility tree, content is in parent
+                    this.invisibleToUser()
+                },
             enabled = enabled,
             isChecked = saveCard,
             appearance = toggleAppearance,
-            onCheckedChange = onToggle
+            onCheckedChange = null
         )
     }
 }

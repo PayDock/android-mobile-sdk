@@ -13,7 +13,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -375,7 +374,7 @@ private fun TextFieldValidIcon(appearance: IconAppearance = TextFieldAppearanceD
     SdkIcon(
         modifier = Modifier.testTag("successIcon"),
         painter = painterResource(id = R.drawable.ic_success),
-        contentDescription = stringResource(id = R.string.content_desc_success_icon),
+        contentDescription = stringResource(id = R.string.content_desc_valid_icon),
         appearance = appearance
     )
 }
@@ -397,7 +396,7 @@ private fun TextFieldErrorIcon() {
     SdkIcon(
         modifier = Modifier.testTag("errorIcon"),
         painter = painterResource(id = R.drawable.ic_error),
-        contentDescription = stringResource(id = R.string.content_desc_error_icon),
+        contentDescription = null,
         appearance = IconAppearanceDefaults.appearance()
             .copy(tint = MaterialTheme.colorScheme.error)
     )

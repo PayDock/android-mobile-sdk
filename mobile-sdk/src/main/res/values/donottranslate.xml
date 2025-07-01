@@ -7,11 +7,15 @@
     <string name="placeholder_expiry">MM/YY</string>
     <!-- endregion -->
     <!-- region Content Descriptions -->
-    <string name="content_desc_success_icon">Success</string>
+    <string name="content_desc_valid_icon">Valid</string>
     <string name="content_desc_error_icon">Error</string>
     <string name="content_desc_close_icon">Close</string>
     <string name="content_desc_paypal_button_icon">PayPal</string>
     <string name="content_desc_coles_pay_button">Pay with Coles Pay</string>
     <string name="content_desc_afterpay_button_icon">Afterpay</string>
+    <string name="content_desc_save_card_toggle_action">Toggle save card</string>
+    <string name="content_desc_save_card_consent_with_state">Remember this card for next time. Currently %1$s.</string>
+    <string name="content_desc_toggle_state_on">On</string>
+    <string name="content_desc_toggle_state_off">Off</string>
     <!-- endregion -->
 </resources>

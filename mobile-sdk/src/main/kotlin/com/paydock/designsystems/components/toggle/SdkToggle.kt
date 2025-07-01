@@ -32,7 +32,7 @@ internal fun SdkToggle(
     enabled: Boolean = true,
     isChecked: Boolean = false,
     appearance: ToggleAppearance = ToggleAppearanceDefaults.appearance(),
-    onCheckedChange: (Boolean) -> Unit = {}
+    onCheckedChange: ((Boolean) -> Unit)? = null
 ) {
     Switch(
         modifier = modifier,
