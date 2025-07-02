@@ -40,6 +40,7 @@ import com.paydock.sample.feature.wallet.domain.usecase.CaptureWalletChargeUseCa
 import com.paydock.sample.feature.wallet.domain.usecase.InitiateWalletTransactionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -431,7 +432,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
         val chargeId = _stateFlow.value.walletChargeResult?.chargeId
         if (chargeId != null) {
             result.onSuccess {
-                captureWalletCharge(chargeId)
+                captureWalletCharge(chargeId, true)
                 _stateFlow.update { state ->
                     state.copy(
                         colesPayResult = it
@@ -458,11 +459,17 @@ class StandaloneCheckoutViewModel @Inject constructor(
         }
     }
 
-    private fun captureWalletCharge(chargeId: String) {
+    private fun captureWalletCharge(chargeId: String, addDelay: Boolean = true) {
         // This is an optional capture charge logic if "?capture=false"
         viewModelScope.launch {
             _stateFlow.update { state ->
                 state.copy(isLoading = true)
+            }
+            if (addDelay) {
+                // For Coles Pay - a delay is needed as order is still processing with hook that needs to be fired to finish payment setup
+                // If this hook has not completed, this charge will fail with error "Charge in invalid state for capture". Improvement to add polling of
+                // charge state and when in correct state then finish the charge.
+                delay(2000L)
             }
             val result = captureWalletChargeUseCase(chargeId)
             result.onSuccess { charge ->
