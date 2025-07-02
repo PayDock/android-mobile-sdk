@@ -28,11 +28,14 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.error
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.core.presentation.extensions.autofill
+import com.paydock.core.presentation.extensions.defaultErrorSemantics
 import com.paydock.core.presentation.ui.previews.SdkFontScalePreviews
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.icon.IconAppearance
@@ -79,6 +82,7 @@ internal fun SdkTextField(
 ) {
     // State to track whether the text input field is focused
     var isFocused by remember { mutableStateOf(false) }
+    val isError = error != null
 
     Column(modifier = modifier) {
         OutlinedTextField(
@@ -90,7 +94,8 @@ internal fun SdkTextField(
                     isFocused = it.isFocused
                 }
                 .testTag("sdkInput")
-                .autofillModifier(autofillType, onValueChange),
+                .autofillModifier(autofillType, onValueChange)
+                .defaultErrorSemantics(isError, error ?: stringResource(R.string.error_input_default)),
             enabled = enabled,
             textStyle = appearance.style,
             keyboardActions = keyboardActions,
@@ -118,13 +123,13 @@ internal fun SdkTextField(
             },
             trailingIcon = {
                 when {
-                    error != null -> TextFieldErrorIcon()
+                    isError -> TextFieldErrorIcon()
                     showValidIcon && value.isNotEmpty() -> TextFieldValidIcon(appearance.validIcon)
                     else -> trailingIcon?.invoke()
                 }
             },
             leadingIcon = leadingIcon,
-            isError = error != null,
+            isError = isError,
             colors = appearance.colors,
             shape = appearance.shape,
         )
@@ -431,6 +436,7 @@ private fun TextFieldErrorLabel(
         SdkText(
             modifier = Modifier
                 .padding(start = 15.dp, top = 6.dp)
+//                .semantics { this.invisibleToUser() }
                 .testTag("errorLabel"),
             text = error ?: "",
             appearance = appearance

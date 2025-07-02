@@ -5,6 +5,8 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import kotlin.math.PI
 import kotlin.math.cos
@@ -61,7 +63,7 @@ internal fun Modifier.gradientBackground(colors: List<Color>, angle: Float) = th
  * @param fontScale The font scale factor from LocalConfiguration.
  * @return The scaled size as Dp.
  */
-fun Dp.scaled(fontScale: Float): Dp {
+internal fun Dp.scaled(fontScale: Float): Dp {
     return (this * (1 + (fontScale - 1) * 0.5f))
 }
 
@@ -72,6 +74,19 @@ fun Dp.scaled(fontScale: Float): Dp {
  * @param fontScale The font scale factor from LocalConfiguration.
  * @return The scaled size as Float.
  */
-fun Float.scaled(fontScale: Float): Float {
+internal fun Float.scaled(fontScale: Float): Float {
     return this * (1 + (fontScale - 1) * 0.5f)
 }
+
+/**
+ * Applies error semantics to a Modifier if the `isError` flag is true.
+ * This is useful for accessibility, allowing screen readers to announce errors.
+ *
+ * @param isError A boolean flag indicating whether there is an error.
+ * @param defaultErrorMessage The default message to be announced if there is an error.
+ * @return The original Modifier if `isError` is false, or a new Modifier with error semantics if `isError` is true.
+ */
+internal fun Modifier.defaultErrorSemantics(
+    isError: Boolean,
+    defaultErrorMessage: String,
+): Modifier = if (isError) semantics { error(defaultErrorMessage) } else this
