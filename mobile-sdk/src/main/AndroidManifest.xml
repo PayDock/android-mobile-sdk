@@ -13,11 +13,13 @@
         <activity
             android:name=".feature.paypal.checkout.presentation.PayPalWebActivity"
             android:launchMode="singleInstance"
-            android:windowSoftInputMode="adjustResize"/>
+            android:theme="@style/SdkDialog"
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".feature.colespay.presentation.ColesPayWebActivity"
             android:launchMode="singleInstance"
+            android:theme="@style/SdkDialog"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
