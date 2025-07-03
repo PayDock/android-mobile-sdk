@@ -6,7 +6,10 @@ import android.view.ViewGroup
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
@@ -58,6 +61,7 @@ internal class PayPalWebActivity : ComponentActivity() {
         val callbackUrl = requireNotNull(intent.getCallbackUrlExtra())
 
         setContent {
+            enableEdgeToEdge()
             // Applies the SDK theme.
             Scaffold(
                 topBar = {
@@ -75,7 +79,13 @@ internal class PayPalWebActivity : ComponentActivity() {
                 }
             ) { innerPadding ->
                 // Apply inner padding to avoid content overlapping with the TopAppBar
-                Box(modifier = Modifier.padding(innerPadding)) {
+                Box(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        // This caters for keyboard changes within compose
+                        .consumeWindowInsets(paddingValues = innerPadding)
+                        .imePadding()
+                ) {
                     // Stores and remembers the PayPal URL created from the callback URL.
                     val payPalUrl: String by remember(callbackUrl) {
                         mutableStateOf(createPayPalUrl(callbackUrl))

@@ -1,13 +1,25 @@
 package com.paydock.core.presentation.extensions
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.findRootCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
@@ -90,3 +102,31 @@ internal fun Modifier.defaultErrorSemantics(
     isError: Boolean,
     defaultErrorMessage: String,
 ): Modifier = if (isError) semantics { error(defaultErrorMessage) } else this
+
+/**
+ * A custom Modifier that dynamically adjusts bottom padding so the Composable
+ * stays above the on-screen keyboard (IME), even when default insets fail.
+ *
+ * Combines dynamic position-based padding with [Modifier.imePadding] for robustness.
+ */
+fun Modifier.positionAwareImePadding(): Modifier = composed {
+    // Tracks the amount of padding (in pixels) to apply at the bottom
+    var consumePadding by remember { mutableIntStateOf(0) }
+
+    this
+        // Gets the current position and size of the Composable on the screen
+        .onGloballyPositioned { coordinates ->
+            val root = coordinates.findRootCoordinates()
+
+            // Calculates the bottom position of the Composable in the window
+            val bottom = coordinates.positionInWindow().y + coordinates.size.height
+
+            // Computes how much space is between the Composable's bottom and the screen's bottom
+            // This value is then used as padding to keep it above the keyboard
+            consumePadding = (root.size.height - bottom).toInt().coerceAtLeast(0)
+        }
+        // Consumes the calculated padding (converted to dp) to shift the Composable upward
+        .consumeWindowInsets(PaddingValues(bottom = consumePadding.dp))
+        // Adds Compose’s built-in imePadding as a fallback for any remaining adjustments
+        .imePadding()
+}
