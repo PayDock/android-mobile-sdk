@@ -1,5 +1,16 @@
 # Changelog
 
+## [5.0.0] - 2025-07-04
+
+### Added
+- New customisations for all Widgets with `Appearance` added to all Widget contracts
+- Material Theming inheritance
+
+### Changed
+- `Config` param standardised to all Widget contracts
+- Handling of token callback results for Wallets now within SDK processing
+- Coles Pay redirects to success without showing success landing page
+
 ## [4.1.0] - 2025-05-30
 
 ### Changed
