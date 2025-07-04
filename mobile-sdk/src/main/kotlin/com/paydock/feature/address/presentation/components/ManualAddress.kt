@@ -16,11 +16,15 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.Dp
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.input.TextFieldAppearance
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
+import com.paydock.designsystems.components.search.SearchDropdownAppearance
+import com.paydock.designsystems.components.search.SearchDropdownAppearanceDefaults
+import com.paydock.designsystems.core.WidgetDefaults
 import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.address.presentation.state.AddressDetailsInputState
 import com.paydock.feature.address.presentation.viewmodels.ManualAddressViewModel
@@ -44,16 +48,6 @@ import org.koin.androidx.compose.koinViewModel
  * - Keyboard navigation between fields using [FocusRequester].
  * - A debounce mechanism to reduce frequent updates to the `onAddressUpdated` callback.
  *
- * Example:
- * ```
- * ManualAddress(
- *     savedAddress = existingBillingAddress,
- *     onAddressUpdated = { updatedState ->
- *         println("Updated Address Details: $updatedState")
- *     }
- * )
- * ```
- *
  * Notes:
  * - The `uiState` is collected from the [ManualAddressViewModel]'s `stateFlow` to reflect user inputs.
  * - Autofill types are configured for each input field to match their specific purpose (e.g., street, locality).
@@ -65,6 +59,9 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 internal fun ManualAddress(
     modifier: Modifier = Modifier,
+    verticalSpacing: Dp = WidgetDefaults.Spacing,
+    textFieldAppearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
+    searchAppearance: SearchDropdownAppearance = SearchDropdownAppearanceDefaults.appearance(),
     viewModel: ManualAddressViewModel = koinViewModel(),
     savedAddress: BillingAddress? = null,
     onAddressUpdated: (AddressDetailsInputState) -> Unit
@@ -81,7 +78,7 @@ internal fun ManualAddress(
     // Create a vertical column layout for address input fields
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.Top),
+        verticalArrangement = Arrangement.spacedBy(verticalSpacing, Alignment.Top),
         horizontalAlignment = Alignment.Start
     ) {
         // Focus requesters for managing keyboard navigation
@@ -95,6 +92,7 @@ internal fun ManualAddress(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("addressLine1Input"),
+            appearance = textFieldAppearance,
             value = uiState.addressLine1,
             label = stringResource(R.string.label_address_line_1),
             nextFocus = focusAddressLine2,
@@ -106,6 +104,7 @@ internal fun ManualAddress(
                 .fillMaxWidth()
                 .focusRequester(focusAddressLine2)
                 .testTag("addressLine2Input"),
+            appearance = textFieldAppearance,
             value = uiState.addressLine2,
             label = stringResource(R.string.label_address_line_2),
             nextFocus = focusCity,
@@ -116,6 +115,7 @@ internal fun ManualAddress(
                 .fillMaxWidth()
                 .focusRequester(focusCity)
                 .testTag("cityInput"),
+            appearance = textFieldAppearance,
             value = uiState.city,
             label = stringResource(R.string.label_city),
             nextFocus = focusState,
@@ -127,6 +127,7 @@ internal fun ManualAddress(
                 .fillMaxWidth()
                 .focusRequester(focusState)
                 .testTag("stateInput"),
+            appearance = textFieldAppearance,
             value = uiState.state,
             label = stringResource(R.string.label_state),
             nextFocus = focusPostalCode,
@@ -138,6 +139,7 @@ internal fun ManualAddress(
                 .fillMaxWidth()
                 .focusRequester(focusPostalCode)
                 .testTag("postalCodeInput"),
+            appearance = textFieldAppearance,
             value = uiState.postalCode,
             label = stringResource(R.string.label_postal_code),
             autofillType = AutofillType.PostalCode,
@@ -148,27 +150,26 @@ internal fun ManualAddress(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("countryInput"),
+            appearance = searchAppearance,
             selectedItem = uiState.country,
             autofillType = AutofillType.AddressCountry,
             onCountrySelected = viewModel::updateCountry
         )
         // Use a LaunchedEffect to delay the callback invocation
-        LaunchedEffect(uiState::class) {
+        LaunchedEffect(uiState) {
             delay(MobileSDKConstants.General.DEBOUNCE_DELAY) // Delay by 500 milliseconds
             onAddressUpdated(uiState)
         }
     }
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewManualAddress() {
-    SdkTheme {
-        ManualAddress(onAddressUpdated = {})
-    }
+    ManualAddress(onAddressUpdated = {})
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewManualAddressWithDefault() {
     val address = BillingAddress(
@@ -178,7 +179,5 @@ internal fun PreviewManualAddressWithDefault() {
         postalCode = "M11 5MW",
         country = "United Kingdom"
     )
-    SdkTheme {
-        ManualAddress(savedAddress = address, onAddressUpdated = {})
-    }
+    ManualAddress(savedAddress = address, onAddressUpdated = {})
 }

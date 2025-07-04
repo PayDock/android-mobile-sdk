@@ -6,11 +6,12 @@ import android.view.ViewGroup
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
@@ -24,8 +25,7 @@ import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.extensions.putMessageExtra
 import com.paydock.core.presentation.extensions.putStatusExtra
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.components.icon.SdkIcon
 import com.paydock.feature.paypal.checkout.presentation.components.PayPalWebView
 import com.paydock.feature.paypal.checkout.presentation.utils.CancellationStatus
 import com.paydock.feature.paypal.checkout.presentation.utils.getCallbackUrlExtra
@@ -61,52 +61,57 @@ internal class PayPalWebActivity : ComponentActivity() {
         val callbackUrl = requireNotNull(intent.getCallbackUrlExtra())
 
         setContent {
+            enableEdgeToEdge()
             // Applies the SDK theme.
-            SdkTheme {
-                Scaffold(
-                    topBar = {
-                        TopAppBar(
-                            title = {},
-                            actions = {
-                                IconButton(onClick = { finish(CancellationStatus.USER_INITIATED) }) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_close_circle),
-                                        contentDescription = stringResource(id = R.string.content_desc_close_icon)
-                                    )
-                                }
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = {},
+                        actions = {
+                            IconButton(onClick = { finish(CancellationStatus.USER_INITIATED) }) {
+                                SdkIcon(
+                                    painter = painterResource(id = R.drawable.ic_close_circle),
+                                    contentDescription = stringResource(id = R.string.content_desc_close_icon)
+                                )
                             }
-                        )
-                    }
-                ) { innerPadding ->
-                    // Apply inner padding to avoid content overlapping with the TopAppBar
-                    Box(modifier = Modifier.padding(innerPadding).background(Theme.colors.background)) {
-                        // Stores and remembers the PayPal URL created from the callback URL.
-                        val payPalUrl: String by remember(callbackUrl) {
-                            mutableStateOf(createPayPalUrl(callbackUrl))
                         }
-                        PayPalWebView(
-                            payPayUrl = payPalUrl,
-                            onSuccess = { decodedUrl ->
-                                setResult(
-                                    RESULT_OK,
-                                    Intent().putDecodedUrlExtra(decodedUrl)
-                                )
-                                finish()
-                            },
-                            onCancel = {
-                                finish(CancellationStatus.USER_INITIATED)
-                            },
-                            onFailure = { status, message ->
-                                setResult(
-                                    RESULT_CANCELED,
-                                    Intent()
-                                        .putStatusExtra(status)
-                                        .putMessageExtra(message)
-                                )
-                                finish()
-                            }
-                        )
+                    )
+                }
+            ) { innerPadding ->
+                // Apply inner padding to avoid content overlapping with the TopAppBar
+                Box(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        // This caters for keyboard changes within compose
+                        .consumeWindowInsets(paddingValues = innerPadding)
+                        .imePadding()
+                ) {
+                    // Stores and remembers the PayPal URL created from the callback URL.
+                    val payPalUrl: String by remember(callbackUrl) {
+                        mutableStateOf(createPayPalUrl(callbackUrl))
                     }
+                    PayPalWebView(
+                        payPayUrl = payPalUrl,
+                        onSuccess = { decodedUrl ->
+                            setResult(
+                                RESULT_OK,
+                                Intent().putDecodedUrlExtra(decodedUrl)
+                            )
+                            finish()
+                        },
+                        onCancel = {
+                            finish(CancellationStatus.USER_INITIATED)
+                        },
+                        onFailure = { status, message ->
+                            setResult(
+                                RESULT_CANCELED,
+                                Intent()
+                                    .putStatusExtra(status)
+                                    .putMessageExtra(message)
+                            )
+                            finish()
+                        }
+                    )
                 }
             }
         }

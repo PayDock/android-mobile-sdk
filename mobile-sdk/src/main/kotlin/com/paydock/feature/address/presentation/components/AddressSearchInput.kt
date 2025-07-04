@@ -9,10 +9,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
+import com.paydock.designsystems.components.search.SearchDropdownAppearance
+import com.paydock.designsystems.components.search.SearchDropdownAppearanceDefaults
 import com.paydock.designsystems.components.search.SearchTextField
-import com.paydock.designsystems.theme.SdkTheme
 import com.paydock.feature.address.presentation.viewmodels.AddressSearchViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -27,6 +27,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 internal fun AddressSearchInput(
     modifier: Modifier = Modifier,
+    appearance: SearchDropdownAppearance = SearchDropdownAppearanceDefaults.appearance(),
     viewModel: AddressSearchViewModel = koinViewModel(),
     onAddressSelected: (Address) -> Unit
 ) {
@@ -34,6 +35,7 @@ internal fun AddressSearchInput(
 
     SearchTextField(
         modifier = modifier.testTag("addressSearch"),
+        appearance = appearance,
         label = stringResource(R.string.label_search_for_your_address),
         autofillType = AutofillType.AddressStreet,
         noResultsFoundLabel = stringResource(R.string.label_no_address_found),
@@ -43,12 +45,4 @@ internal fun AddressSearchInput(
             address?.let { onAddressSelected(it) }
         }
     )
-}
-
-@PreviewLightDark
-@Composable
-internal fun PreviewAddressSearchInput() {
-    SdkTheme {
-        AddressSearchInput(onAddressSelected = {})
-    }
 }

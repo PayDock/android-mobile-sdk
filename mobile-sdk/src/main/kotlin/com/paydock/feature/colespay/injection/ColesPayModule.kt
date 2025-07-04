@@ -1,5 +1,6 @@
 package com.paydock.feature.colespay.injection
 
+import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
 import com.paydock.feature.colespay.presentation.viewmodels.ColesPayViewModel
 import com.paydock.feature.wallet.injection.walletModule
 import org.koin.core.module.dsl.viewModel
@@ -11,7 +12,7 @@ import org.koin.dsl.module
 internal val colesPayModule = module {
     includes(walletModule)
 
-    viewModel { (clientId: String) ->
-        ColesPayViewModel(clientId, get(), get(), get(), get())
+    viewModel { (config: ColesPayWidgetConfig) ->
+        ColesPayViewModel(config, get(), get(), get(), get())
     }
 }

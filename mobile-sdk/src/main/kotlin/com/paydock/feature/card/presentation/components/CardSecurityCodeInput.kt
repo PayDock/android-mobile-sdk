@@ -2,6 +2,7 @@ package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,13 +17,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
-import com.paydock.designsystems.components.input.InputValidIcon
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.SdkTextField
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.components.input.TextFieldAppearance
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.domain.model.ui.CardCode
 import com.paydock.feature.card.domain.model.ui.enums.CodeType
 import com.paydock.feature.card.presentation.utils.errors.SecurityCodeError
@@ -49,6 +49,7 @@ import kotlinx.coroutines.delay
 @Composable
 internal fun CardSecurityCodeInput(
     modifier: Modifier = Modifier,
+    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     value: String = "",
     cardCode: CardCode? = null,
     enabled: Boolean = true,
@@ -94,6 +95,7 @@ internal fun CardSecurityCodeInput(
     // Render the security code input field with appropriate properties
     SdkTextField(
         modifier = modifier,
+        appearance = appearance,
         value = value,
         onValueChange = {
             hasUserInteracted = true
@@ -112,12 +114,6 @@ internal fun CardSecurityCodeInput(
         enabled = enabled,
         error = errorMessage,
         autofillType = AutofillType.CreditCardSecurityCode,
-        // Display a success icon when the input is valid and non-blank
-        trailingIcon = {
-            if (debouncedValue.isNotBlank()) {
-                InputValidIcon()
-            }
-        },
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number,
             imeAction = if (nextFocus != null) ImeAction.Next else ImeAction.Done
@@ -131,59 +127,61 @@ internal fun CardSecurityCodeInput(
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewCardSecurityCodeInputDefault() {
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        CardSecurityCodeInput {}
+    }
+}
+
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewCardSecurityCodeCVVInput() {
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            CardSecurityCodeInput(
-                value = "123",
-                cardCode = CardCode(
-                    CodeType.CVV,
-                    MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
-                ),
-                enabled = true,
-                nextFocus = null
-            ) {
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        CardSecurityCodeInput(
+            value = "123",
+            cardCode = CardCode(
+                CodeType.CVV,
+                MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
+            ),
+            enabled = true,
+            nextFocus = null
+        ) {
 
-            }
         }
     }
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewCardSecurityCodeCVCInput() {
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            CardSecurityCodeInput(
-                value = "123",
-                cardCode = CardCode(
-                    CodeType.CVC,
-                    MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
-                ),
-                enabled = true,
-                nextFocus = null
-            ) {
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        CardSecurityCodeInput(
+            value = "123",
+            cardCode = CardCode(
+                CodeType.CVC,
+                MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
+            ),
+            enabled = true,
+            nextFocus = null
+        ) {
 
-            }
         }
     }
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewCardSecurityCodeCIDInput() {
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            CardSecurityCodeInput(
-                value = "1234",
-                cardCode = CardCode(CodeType.CID, MobileSDKConstants.CardDetailsConfig.CID_LENGTH),
-                enabled = true,
-                nextFocus = null
-            ) {
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        CardSecurityCodeInput(
+            value = "1234",
+            cardCode = CardCode(CodeType.CID, MobileSDKConstants.CardDetailsConfig.CID_LENGTH),
+            enabled = true,
+            nextFocus = null
+        ) {
 
-            }
         }
     }
 }

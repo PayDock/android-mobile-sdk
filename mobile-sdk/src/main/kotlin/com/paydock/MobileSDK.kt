@@ -3,7 +3,6 @@ package com.paydock
 import android.content.Context
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.paydock.core.data.injection.MobileSDKKoinContext
 import com.paydock.core.domain.mapper.mapToBaseUrl
@@ -17,40 +16,12 @@ import com.paydock.core.domain.model.Environment
  * @param context The Android application context used for initializing the Mobile SDK and its dependencies.
  * @param environment The environment for the Mobile SDK, which determines the API endpoint to use (e.g., production, sandbox, staging).
  * @param enableTestMode Flag to enable test mode. This is only allowed in non-production environments.
- * @param initialSdkTheme The initial theme to be applied across the Mobile SDK (colors, dimensions, and font).
  */
 class MobileSDK(
     context: Context,
     val environment: Environment,
-    internal val enableTestMode: Boolean,
-    initialSdkTheme: MobileSDKTheme
+    internal val enableTestMode: Boolean
 ) {
-
-    // Private mutable state variable for the theme
-    private var _sdkTheme by mutableStateOf(initialSdkTheme)
-
-    // Expose a read-only state variable for external use
-    val sdkTheme: MobileSDKTheme
-        get() = _sdkTheme
-
-    /**
-     * Updates the SDK theme internally.
-     *
-     * @param newTheme The new theme to be applied to the Mobile SDK.
-     */
-    private fun updateSdkTheme(newTheme: MobileSDKTheme) {
-        _sdkTheme = newTheme
-        // Logic to update any necessary components when the theme changes
-    }
-
-    /**
-     * Updates the SDK theme externally.
-     *
-     * @param newTheme The new theme to be applied to the Mobile SDK.
-     */
-    fun updateTheme(newTheme: MobileSDKTheme) {
-        updateSdkTheme(newTheme)
-    }
 
     internal var koinContext: MobileSDKKoinContext? = null
 
@@ -72,7 +43,6 @@ class MobileSDK(
      * Allows for flexible configuration of environment, test mode, and theme.
      */
     class Builder {
-        private var sdkTheme: MobileSDKTheme = MobileSDKTheme()
         private var environment: Environment = Environment.PRODUCTION
         private var enableTestMode: Boolean = false
 
@@ -95,20 +65,13 @@ class MobileSDK(
         }
 
         /**
-         * Applies a custom theme to the Mobile SDK.
-         *
-         * @param theme The theme to be applied.
-         */
-        fun applyTheme(theme: MobileSDKTheme) = apply { this.sdkTheme = theme }
-
-        /**
          * Builds and initializes the MobileSDK with the provided configuration.
          *
          * @param context The application context.
          * @return The initialized MobileSDK instance.
          */
         fun build(context: Context): MobileSDK {
-            return initialize(context, environment, enableTestMode, sdkTheme)
+            return initialize(context, environment, enableTestMode)
         }
     }
 
@@ -120,7 +83,6 @@ class MobileSDK(
          *
          * @param context The application context.
          * @param environment The environment to use (default: Environment.PRODUCTION).
-         * @param sdkTheme The theme to be applied to SDK components.
          * @param enableTestMode Flag to enable test mode. This is only allowed in non-production environments.
          * @throws IllegalStateException if MobileSDK is already initialized.
          */
@@ -130,12 +92,11 @@ class MobileSDK(
             context: Context,
             environment: Environment = Environment.PRODUCTION,
             enableTestMode: Boolean = false,
-            sdkTheme: MobileSDKTheme = MobileSDKTheme()
         ): MobileSDK {
             if (instance != null) {
                 error(IllegalStateException("MobileSDK is already initialized."))
             }
-            return MobileSDK(context, environment, enableTestMode, sdkTheme).also {
+            return MobileSDK(context, environment, enableTestMode).also {
                 instance = it
             }
         }
@@ -177,12 +138,10 @@ class MobileSDK(
  * @param environment The environment to use (default: Environment.PRODUCTION).
  * @param enableTestMode Flag to enable test mode (default: false).
  * @param enableTestMode Flag to enable test mode. This is only allowed in non-production environments.
- * @param sdkTheme The theme to be applied to SDK components (default: MobileSDKTheme()).
  * @return The initialized MobileSDK instance.
  */
 @Synchronized
 fun Context.initializeMobileSDK(
     environment: Environment = Environment.PRODUCTION,
-    enableTestMode: Boolean = false,
-    sdkTheme: MobileSDKTheme = MobileSDKTheme()
-): MobileSDK = MobileSDK.initialize(this, environment, enableTestMode, sdkTheme)
+    enableTestMode: Boolean = false
+): MobileSDK = MobileSDK.initialize(this, environment, enableTestMode)

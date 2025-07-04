@@ -15,14 +15,18 @@ internal object MobileSDKConstants {
      */
     object General {
         // UI Constants
-        internal const val SMALL_SCREEN_SIZE = 360
-        internal const val MEDIUM_SCREEN_SIZE = 600
         internal const val INPUT_DELAY = 300L
         internal const val DEBOUNCE_DELAY = 500L
 
         // Animation Constants
         internal const val DEFAULT_ANIMATION_DURATION = 300
         internal const val EXPANSION_TRANSITION_DURATION = 400
+
+        object Errors {
+            const val SERIALIZATION_ERROR =
+                "Troubles with data serialization. Please try again later or contact support for assistance."
+            const val DEFAULT_ERROR = "An unknown error occurred. Please try again later."
+        }
     }
 
     /**
@@ -48,6 +52,15 @@ internal object MobileSDKConstants {
     object Network {
         // sha256 hssh for paydock base urls
         internal const val SSH_HASH = "sha256/kV0cxZABuhXdMFROcAZwIflgJilKOqxMBcRhzFhZMok="
+
+        object Errors {
+            const val IO_ERROR =
+                "An error occurred while communicating with the server. Please check your internet connection and try again."
+            const val SOCKET_TIMEOUT_ERROR =
+                "The connection timed out. Please check your internet connection and try again."
+            const val UNKNOWN_HOST_ERROR =
+                "The server could not be found. Please check your internet connection and try again."
+        }
     }
 
     /**
@@ -80,6 +93,11 @@ internal object MobileSDKConstants {
         internal const val DEFAULT_CONSENT_TEXT = "Remember this card for next time."
         internal const val DEFAULT_POLICY_TEXT = "Read our privacy policy"
         internal const val FONT_SCALE_THRESHOLD = 2.0f
+
+        object Errors {
+            const val CARD_ERROR =
+                "An unexpected error occurred while tokenising card details. Please try again later or contact support for assistance."
+        }
     }
 
     /**
@@ -87,6 +105,38 @@ internal object MobileSDKConstants {
      */
     object AddressConfig {
         internal const val MAX_SEARCH_RESULTS = 5
+
+        object Errors
+    }
+
+    /**
+     * Constants related to 3D Secure (3DS) configuration.
+     *
+     * This object holds constants specific to the 3DS verification process.
+     */
+    object Integrated3DSConfig {
+        object Errors {
+            const val INTEGRATED_3DS_ERROR =
+                "An unexpected error occurred while processing Integrated 3DS verification. " +
+                    "Please try again later or contact support for assistance."
+            const val INVALID_TOKEN_ERROR = "Invalid Integrated 3DS token!"
+            const val INVALID_TOKEN_FORMAT_ERROR = "Invalid Integrated 3DS token format!"
+        }
+    }
+
+    /**
+     * Constants related to 3D Secure (3DS) configuration.
+     *
+     * This object holds constants specific to the 3DS verification process.
+     */
+    object Standalone3DSConfig {
+        object Errors {
+            const val STANDALONE_3DS_ERROR =
+                "An unexpected error occurred while processing Standalone 3DS verification. " +
+                    "Please try again later or contact support for assistance."
+            const val INVALID_TOKEN_ERROR = "Invalid Standalone 3DS token!"
+            const val INVALID_TOKEN_FORMAT_ERROR = "Invalid Standalone 3DS token format!"
+        }
     }
 
     /**
@@ -121,6 +171,22 @@ internal object MobileSDKConstants {
          */
         internal const val BILLING_ADDRESS_FORMAT = "FULL"
         internal const val CARD_PAYMENT_TYPE = "CARD"
+
+        object Errors {
+            const val TOKEN_ERROR =
+                "There is a problem retrieving the Google Pay token. Please try again later or " +
+                    "contact support for assistance."
+            const val DEV_ERROR =
+                "A developer error occurred. Please try again later or contact support for assistance."
+            const val GOOGLE_PAY_ERROR =
+                "An unexpected error occurred while processing Google Pay. Please try again later or " +
+                    "contact support for assistance."
+            const val INITIALISATION_ERROR = "Unexpected non API exception when trying to " +
+                "retrieve [allowedPaymentMethods] parameter from PaymentRequest!"
+            const val CANCELLATION_ERROR = "Google Pay charge was cancelled!"
+            const val WALLET_TOKEN_ERROR =
+                "An unexpected error occurred while retrieving Google Pay wallet token. Please try again later."
+        }
     }
 
     /**
@@ -136,6 +202,14 @@ internal object MobileSDKConstants {
         internal const val OP_TYPE_KEY = "opType"
         internal const val CANCEL_TYPE = "cancel"
         internal const val COMPLETE_TYPE = "payment"
+
+        object Errors {
+            const val PAY_PAL_ERROR =
+                "An unexpected error occurred while processing PayPal. Please try again later or contact support for assistance."
+            const val CANCELLATION_ERROR = "PayPal charge was cancelled!"
+            const val WALLET_TOKEN_ERROR =
+                "An unexpected error occurred while retrieving PayPal wallet token. Please try again later."
+        }
     }
 
     /**
@@ -146,74 +220,65 @@ internal object MobileSDKConstants {
         internal const val URL_SCHEME = "${BuildConfig.LIBRARY_PACKAGE_NAME}.paypal.vault"
         internal const val RETURN_URL = "$URL_SCHEME://vault/success"
         internal const val CANCEL_URL = "$URL_SCHEME://vault/cancel"
+
+        object Errors {
+            const val VAULT_ERROR =
+                "An unexpected error occurred while processing PayPal Vault. Please try again " +
+                    "later or contact support for assistance."
+            const val DATA_COLLECTOR_ERROR =
+                "An unexpected error occurred while processing PayPal Data Collector. Please try " +
+                    "again later or contact support for assistance."
+            const val DATA_COLLECTOR_UNKNOWN_ERROR =
+                "An unknown error occurred while trying to initialise the PayPalDataCollector. " +
+                    "Please try again later or contact support for assistance."
+            const val CANCELLATION_ERROR = "PayPal Vault charge was cancelled!"
+        }
     }
 
     /**
      * Constants related to Coles Pay configuration.
      */
     object ColesPayConfig {
+        internal const val COLES_PAY_SUCCESS_PATH = "/payment-confirmed"
         internal const val COLES_PAY_REDIRECT_URL = DEFAULT_WEB_URL
+
+        object Errors {
+            const val CANCELLATION_ERROR = "Coles Pay charge was cancelled!"
+            const val COLES_PAY_ERROR =
+                "An unexpected error occurred while processing Coles Pay. Please try again later or contact support for assistance"
+        }
     }
 
     /**
      * Constants related to Afterpay configuration.
      */
-    object Afterpay {
+    object AfterpayConfig {
         const val USER_INITIATED_ERROR_MESSAGE = "Afterpay: User cancelled the charge"
         const val NO_CHECKOUT_URL_ERROR_MESSAGE = "Afterpay: No checkout URL"
         const val INVALID_CHECKOUT_URL_ERROR_MESSAGE = "Afterpay: Invalid checkout URL"
         const val NO_CHECKOUT_HANDLER_ERROR_MESSAGE = "Afterpay: No checkout handler supplied"
         const val NO_CONFIGURATION_ERROR_MESSAGE = "Afterpay: No configuration supplied"
         const val LANGUAGE_NOT_SUPPORTED_ERROR_MESSAGE = "Afterpay: Language not supported"
+
+        object Errors {
+            const val AFTER_PAY_ERROR =
+                "An unexpected error occurred while processing Afterpay. Please try again later or contact support for assistance."
+            const val CALLBACK_ERROR =
+                "An unexpected error occurred while retrieving checkout token. Please try again later or contact support for assistance."
+            const val SDK_INTERNAL_ERROR = "Intent should always be populated by the SDK!"
+            const val SDK_CANCELLATION_ERROR = "A wallet token is always associated with a wallet transaction!"
+            const val WALLET_TOKEN_ERROR =
+                "An unexpected error occurred while retrieving PayPal wallet token. Please try again later."
+        }
     }
 
     /**
-     * Error messages.
+     * Constants related to ClickToPay configuration.
      */
-    @Suppress("MaxLineLength")
-    object Errors {
-        const val SOCKET_TIMEOUT_ERROR =
-            "The connection timed out. Please check your internet connection and try again."
-        const val UNKNOWN_HOST_ERROR =
-            "The server could not be found. Please check your internet connection and try again."
-        const val IO_ERROR =
-            "An error occurred while communicating with the server. Please check your internet connection and try again."
-        const val CONNECTION_ERROR =
-            "A network error occurred. Please check your internet connection and try again."
-        const val SERIALIZATION_ERROR =
-            "Troubles with data serialization. Please try again later or contact support for assistance."
-        const val CARD_ERROR =
-            "An unexpected error occurred while tokenising card details. Please try again later or contact support for assistance."
-        const val GOOGLE_PAY_TOKEN_ERROR =
-            "There is a problem retrieving the Google Pay token. Please try again later or contact support for assistance."
-        const val GOOGLE_PAY_DEV_ERROR =
-            "A developer error occurred. Please try again later or contact support for assistance."
-        const val GOOGLE_PAY_ERROR =
-            "An unexpected error occurred while processing Google Pay. Please try again later or contact support for assistance."
-        const val GOOGLE_PAY_INITIALISATION_ERROR = "Unexpected non API exception when trying to retrieve [allowedPaymentMethods] parameter from PaymentRequest!"
-        const val GOOGLE_PAY_CANCELLATION_ERROR = "Google Pay charge was cancelled!"
-        const val STANDALONE_3DS_ERROR =
-            "An unexpected error occurred while processing Standalone 3DS verification. Please try again later or contact support for assistance."
-        const val INTEGRATED_3DS_ERROR =
-            "An unexpected error occurred while processing Integrated 3DS verification. Please try again later or contact support for assistance."
-        const val PAY_PAL_ERROR =
-            "An unexpected error occurred while processing PayPal. Please try again later or contact support for assistance."
-        const val PAY_PAL_VAULT_ERROR =
-            "An unexpected error occurred while processing PayPal Vault. Please try again later or contact support for assistance."
-        const val PAY_PAL_DATA_COLLECTOR_ERROR =
-            "An unexpected error occurred while processing PayPal Data Collector. Please try again later or contact support for assistance."
-        const val PAY_PAL_DATA_COLLECTOR_UNKNOWN_ERROR =
-            "An unknown error occurred while trying to initialise the PayPalDataCollector. Please try again later or contact support for assistance."
-        const val COLES_PAY_ERROR =
-            "An unexpected error occurred while processing Coles Pay. Please try again later or contact support for assistance"
-        const val AFTER_PAY_ERROR =
-            "An unexpected error occurred while processing Afterpay. Please try again later or contact support for assistance."
-        const val AFTER_PAY_CALLBACK_ERROR =
-            "An unexpected error occurred while retrieving checkout token. Please try again later or contact support for assistance."
-        const val CLICK_TO_PAY_ERROR =
-            "An unexpected error occurred while processing ClickToPay. Please try again later or contact support for assistance."
-        const val UNKNOWN_WEB_ERROR =
-            "An unexpected error occurred in the web view. Please try again later or contact support for assistance."
-        const val DEFAULT_ERROR = "An unknown error occurred. Please try again later."
+    object ClickToPayConfig {
+        object Errors {
+            const val CLICK_TO_PAY_ERROR =
+                "An unexpected error occurred while processing ClickToPay. Please try again later or contact support for assistance."
+        }
     }
 }

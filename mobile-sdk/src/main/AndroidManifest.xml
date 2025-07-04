@@ -12,21 +12,21 @@
 
         <activity
             android:name=".feature.paypal.checkout.presentation.PayPalWebActivity"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:launchMode="singleInstance"
-            android:theme="@style/SdkDialog" />
+            android:theme="@style/SdkDialog"
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".feature.colespay.presentation.ColesPayWebActivity"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:launchMode="singleInstance"
-            android:theme="@style/SdkDialog" />
+            android:theme="@style/SdkDialog"
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".feature.paypal.vault.presentation.PayPalVaultActivity"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:exported="true"
             android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize"
             android:theme="@style/SdkNoActionBarTheme" >
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>

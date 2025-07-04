@@ -8,7 +8,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Dp
 import com.paydock.core.MobileSDKConstants
+import com.paydock.designsystems.components.input.TextFieldAppearance
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
+import com.paydock.designsystems.components.search.SearchDropdownAppearance
+import com.paydock.designsystems.components.search.SearchDropdownAppearanceDefaults
+import com.paydock.designsystems.core.WidgetDefaults
 import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.address.presentation.state.AddressDetailsInputState
 
@@ -26,23 +32,15 @@ import com.paydock.feature.address.presentation.state.AddressDetailsInputState
  * - Slide-down effect from the top ([expandVertically]).
  * - Fade-in effect ([fadeIn]) with an initial alpha of 0.3.
  *
- * Example:
- * ```
- * ManualAddressEntry(
- *     isManualAddressVisible = true,
- *     address = currentAddress,
- *     onAddressUpdated = { updatedAddress ->
- *         println("Updated Address: $updatedAddress")
- *     }
- * )
- * ```
- *
  * Note:
  * - The animation duration is determined by [MobileSDKConstants.General.EXPANSION_TRANSITION_DURATION].
  * - The [ManualAddress] composable handles the input fields for address entry and passes updates via the callback.
  */
 @Composable
 internal fun ManualAddressEntry(
+    verticalSpacing: Dp = WidgetDefaults.Spacing,
+    textFieldAppearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
+    searchAppearance: SearchDropdownAppearance = SearchDropdownAppearanceDefaults.appearance(),
     isManualAddressVisible: Boolean,
     address: BillingAddress,
     onAddressUpdated: (AddressDetailsInputState) -> Unit,
@@ -60,6 +58,9 @@ internal fun ManualAddressEntry(
     ) {
         ManualAddress(
             modifier = Modifier.testTag("manualAddress"),
+            verticalSpacing = verticalSpacing,
+            textFieldAppearance = textFieldAppearance,
+            searchAppearance = searchAppearance,
             savedAddress = address,
             onAddressUpdated = onAddressUpdated
         )

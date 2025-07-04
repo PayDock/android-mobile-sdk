@@ -3,15 +3,11 @@ package com.paydock.sample.feature.checkout.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.paydock.sample.designsystems.theme.Theme
-import com.paydock.sample.designsystems.theme.typography.FontFamily
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
 
 @Composable
@@ -27,14 +23,8 @@ fun PaymentMethodContainer(
     ) {
         Text(
             modifier = Modifier.fillMaxWidth(),
-            style = TextStyle(
-                fontSize = 18.sp,
-                lineHeight = 22.sp,
-                fontFamily = FontFamily,
-                fontWeight = FontWeight(500)
-            ),
-            text = "Payment Method",
-            color = Theme.colors.onPrimary
+            style = MaterialTheme.typography.titleLarge,
+            text = "Payment Method"
         )
         HorizontalTabButtonCarousel(
             modifier = Modifier.fillMaxWidth(),

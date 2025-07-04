@@ -69,6 +69,14 @@ sealed class PayPalException(displayableMessage: String) : SdkException(displaya
     class ParseException(displayableMessage: String, val errorBody: String?) : PayPalException(displayableMessage)
 
     /**
+     * Exception thrown when there is an error during the initialisation of the PayPal wallet token.
+     *
+     * @param displayableMessage A human-readable message describing the error.
+     * @constructor Creates an InitialisationWalletTokenException with the specified displayable message.
+     */
+    class InitialisationWalletTokenException(displayableMessage: String) : PayPalException(displayableMessage)
+
+    /**
      * Exception thrown when there is an unknown error related to PayPal.
      *
      * @param displayableMessage A human-readable message describing the error.

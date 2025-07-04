@@ -20,16 +20,22 @@ import com.paydock.core.domain.error.toError
 import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOptionUpdate
+import com.paydock.feature.afterpay.presentation.AfterpayAppearanceDefaults
 import com.paydock.feature.afterpay.presentation.AfterpayWidget
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.core.AU_COUNTRY_CODE
 import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
+import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.wallet.presentation.WalletViewModel
 import java.util.Currency
 
 @Composable
-fun AfterpayItem(context: Context, walletViewModel: WalletViewModel = hiltViewModel()) {
+fun AfterpayItem(
+    context: Context,
+    walletViewModel: WalletViewModel = hiltViewModel(),
+    stylingViewModel: StylingViewModel
+) {
     val uiState by walletViewModel.stateFlow.collectAsState()
     val configuration = AfterpaySDKConfig(
         config = AfterpaySDKConfig.AfterpayConfiguration(
@@ -43,11 +49,13 @@ fun AfterpayItem(context: Context, walletViewModel: WalletViewModel = hiltViewMo
             enableSingleShippingOptionUpdate = true
         )
     )
+    val afterpayAppearance by stylingViewModel.afterpayWidgetAppearance.collectAsState()
+    val currentOrDefaultAppearance = afterpayAppearance ?: AfterpayAppearanceDefaults.appearance()
     AfterpayWidget(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        token = walletViewModel.getWalletToken(WalletType.AFTER_PAY),
+        tokenRequest = walletViewModel.getWalletTokenResultCallback(WalletType.AFTER_PAY),
         config = configuration,
         selectAddress = { _, provideShippingOptions ->
             val currency = Currency.getInstance(configuration.config.currency)
@@ -90,7 +98,8 @@ fun AfterpayItem(context: Context, walletViewModel: WalletViewModel = hiltViewMo
                     null
                 }
             provideShippingOptionUpdateResult(result)
-        }
+        },
+        appearance = currentOrDefaultAppearance
     ) { result ->
         result.onSuccess {
             Log.d("[AfterpayWidget]", "Success: $it")

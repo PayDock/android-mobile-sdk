@@ -11,58 +11,58 @@ val ErrorModel?.displayableMessage: String
         return when (this) {
             is ErrorModel.ConnectionError -> {
                 when (this) {
-                    ErrorModel.ConnectionError.IOError -> MobileSDKConstants.Errors.IO_ERROR
-                    ErrorModel.ConnectionError.Timeout -> MobileSDKConstants.Errors.SOCKET_TIMEOUT_ERROR
-                    ErrorModel.ConnectionError.UnknownHost -> MobileSDKConstants.Errors.UNKNOWN_HOST_ERROR
+                    ErrorModel.ConnectionError.IOError -> MobileSDKConstants.Network.Errors.IO_ERROR
+                    ErrorModel.ConnectionError.Timeout -> MobileSDKConstants.Network.Errors.SOCKET_TIMEOUT_ERROR
+                    ErrorModel.ConnectionError.UnknownHost -> MobileSDKConstants.Network.Errors.UNKNOWN_HOST_ERROR
                 }
             }
 
-            is ErrorModel.SerializationError -> MobileSDKConstants.Errors.SERIALIZATION_ERROR
+            is ErrorModel.SerializationError -> MobileSDKConstants.General.Errors.SERIALIZATION_ERROR
             is ErrorModel.CardDetailsError ->
                 exception.message
-                    ?: MobileSDKConstants.Errors.CARD_ERROR
+                    ?: MobileSDKConstants.CardDetailsConfig.Errors.CARD_ERROR
 
-            is ErrorModel.GiftCardError -> exception.message ?: MobileSDKConstants.Errors.CARD_ERROR
+            is ErrorModel.GiftCardError -> exception.message ?: MobileSDKConstants.CardDetailsConfig.Errors.CARD_ERROR
             is ErrorModel.Standalone3DSError ->
                 exception.message
-                    ?: MobileSDKConstants.Errors.STANDALONE_3DS_ERROR
+                    ?: MobileSDKConstants.Standalone3DSConfig.Errors.STANDALONE_3DS_ERROR
 
             is ErrorModel.Integrated3DSError ->
                 exception.message
-                    ?: MobileSDKConstants.Errors.INTEGRATED_3DS_ERROR
+                    ?: MobileSDKConstants.Integrated3DSConfig.Errors.INTEGRATED_3DS_ERROR
 
             is ErrorModel.PayPalError ->
                 exception.message
-                    ?: MobileSDKConstants.Errors.PAY_PAL_ERROR
+                    ?: MobileSDKConstants.PayPalConfig.Errors.PAY_PAL_ERROR
 
             is ErrorModel.PayPalVaultError ->
                 exception.message
-                    ?: MobileSDKConstants.Errors.PAY_PAL_VAULT_ERROR
+                    ?: MobileSDKConstants.PayPalVaultConfig.Errors.VAULT_ERROR
 
             is ErrorModel.PayPalDataCollectorError ->
                 exception.message
-                    ?: MobileSDKConstants.Errors.PAY_PAL_DATA_COLLECTOR_ERROR
+                    ?: MobileSDKConstants.PayPalVaultConfig.Errors.DATA_COLLECTOR_ERROR
 
             is ErrorModel.ColesPayError ->
                 exception.message
-                    ?: MobileSDKConstants.Errors.COLES_PAY_ERROR
+                    ?: MobileSDKConstants.ColesPayConfig.Errors.COLES_PAY_ERROR
 
             is ErrorModel.ClickToPayError ->
                 exception.message
-                    ?: MobileSDKConstants.Errors.CLICK_TO_PAY_ERROR
+                    ?: MobileSDKConstants.ClickToPayConfig.Errors.CLICK_TO_PAY_ERROR
 
             is ErrorModel.GooglePayError ->
                 exception.message
-                    ?: MobileSDKConstants.Errors.GOOGLE_PAY_ERROR
+                    ?: MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_ERROR
 
             is ErrorModel.AfterpayError ->
                 exception.message
-                    ?: MobileSDKConstants.Errors.AFTER_PAY_ERROR
+                    ?: MobileSDKConstants.AfterpayConfig.Errors.AFTER_PAY_ERROR
 
             is ErrorModel.UnknownError ->
                 throwable.message
-                    ?: MobileSDKConstants.Errors.AFTER_PAY_ERROR
+                    ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
 
-            else -> MobileSDKConstants.Errors.DEFAULT_ERROR
+            else -> MobileSDKConstants.General.Errors.DEFAULT_ERROR
         }
     }

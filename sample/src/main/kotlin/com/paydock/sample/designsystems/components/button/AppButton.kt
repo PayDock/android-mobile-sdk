@@ -1,22 +1,19 @@
 package com.paydock.sample.designsystems.components.button
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.designsystems.theme.SampleTheme
-import com.paydock.sample.designsystems.theme.Theme
 
 @Composable
 internal fun AppButton(
@@ -41,41 +38,33 @@ private fun PrimaryButton(
     enabled: Boolean = false,
     content: @Composable RowScope.() -> Unit,
 ) {
-    val colors = ButtonDefaults.buttonColors(
-        disabledContainerColor = Theme.colors.primary.copy(alpha = 0.4f),
-        disabledContentColor = Theme.colors.onSurface
-    )
     Button(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
         content = content,
-        colors = colors,
-        shape = RoundedCornerShape(4.dp),
-        contentPadding = PaddingValues(vertical = Theme.dimensions.medium2)
+        shape = MaterialTheme.shapes.extraSmall,
     )
 }
 
 @Composable
-private fun RowScope.ButtonContent(text: String, isLoading: Boolean) {
+private fun ButtonContent(text: String, isLoading: Boolean) {
     Crossfade(targetState = isLoading, label = "coss_fade") {
         if (it) {
             CircularProgressIndicator(
-                color = Theme.colors.onSurface,
                 modifier = Modifier.size(24.dp),
                 strokeWidth = 1.dp
             )
         } else {
             Text(
-                text = text,
-                style = Theme.typography.button
+                text = text
             )
         }
     }
 }
 
 @Composable
-@Preview
+@PreviewLightDark
 internal fun PreviewButtonPrimary() {
     SampleTheme {
         AppButton(
@@ -87,7 +76,7 @@ internal fun PreviewButtonPrimary() {
 }
 
 @Composable
-@Preview
+@PreviewLightDark
 internal fun PreviewButtonPrimaryWithLoading() {
     SampleTheme() {
         AppButton(

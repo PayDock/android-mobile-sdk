@@ -4,8 +4,10 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.ColesPayException
 import com.paydock.core.domain.error.extensions.mapApiException
+import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
 import com.paydock.feature.colespay.presentation.state.ColesPayUIState
 import com.paydock.feature.wallet.data.dto.WalletCallbackRequest
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.feature.wallet.domain.model.ui.WalletCallback
 import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
@@ -19,14 +21,14 @@ import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
  * wallet callback data, processing transactions, and managing UI states. It extends
  * `WalletViewModel` and leverages specific use cases for interacting with Coles Pay-related services.
  *
- * @property clientId The client ID used for authenticating or identifying the Coles Pay transaction.
+ * @property config The client ID used for authenticating or identifying the Coles Pay transaction.
  * @param captureWalletChargeUseCase Use case for capturing charges associated with Coles Pay wallets.
  * @param declineWalletChargeUseCase Use case for declining charges associated with Coles Pay wallets.
  * @param getWalletCallbackUseCase Use case for fetching callback data from the Coles Pay wallet service.
  * @param dispatchers Dispatcher provider to manage coroutine contexts for background operations.
  */
 internal class ColesPayViewModel(
-    val clientId: String,
+    val config: ColesPayWidgetConfig,
     captureWalletChargeUseCase: CaptureWalletChargeUseCase,
     declineWalletChargeUseCase: DeclineWalletChargeUseCase,
     getWalletCallbackUseCase: GetWalletCallbackUseCase,
@@ -115,19 +117,39 @@ internal class ColesPayViewModel(
     /**
      * Initiates the Coles Pay flow by first obtaining a token and then fetching wallet callback data.
      *
-     * This function serves as the entry point for starting a Coles Pay transaction. It uses the provided
-     * `tokenProvider` to asynchronously fetch a wallet token. Once the token is received, it is stored
-     * using `setWalletToken` and then used to trigger `getWalletCallback` to retrieve the necessary
-     * session or callback information for the Coles Pay wallet.
+     * This function serves as the entry point for starting a Coles Pay transaction. It sets the UI to a loading state,
+     * then uses the provided `tokenProvider` to asynchronously fetch a wallet token.
      *
-     * @param tokenProvider A higher-order function that takes a callback `(String) -> Unit` as an argument.
+     * If the token fetch is successful:
+     * - The received token is stored using `setWalletToken`.
+     * - `getWalletCallback` is triggered with the obtained token to retrieve the necessary
+     *   session or callback information for the Coles Pay wallet.
+     *
+     * If the token fetch fails:
+     * - The UI state is updated to reflect an error, specifically `ColesPayException.InitialisationWalletTokenException`.
+     *   The error message will be the message from the throwable or a default wallet token error message.
+     *
+     * @param tokenProvider A higher-order function that takes a callback `(Result<WalletTokenResult>) -> Unit` as an argument.
      *                      This provider is responsible for asynchronously fetching the wallet token and
-     *                      invoking the `onTokenReceived` callback with the obtained token.
+     *                      invoking the `tokenResult` callback with the result of the token fetching operation.
+     *                      The result will be either a `Success` containing `WalletTokenResult` or a `Failure`
+     *                      containing a `Throwable`.
      */
-    fun startColesPayFlow(tokenProvider: (onTokenReceived: (String) -> Unit) -> Unit) {
-        tokenProvider { obtainedToken ->
-            setWalletToken(obtainedToken)
-            getWalletCallback(walletToken = obtainedToken)
+    fun startColesPayFlow(tokenProvider: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit) {
+        setLoadingState()
+        tokenProvider.invoke { tokenResult ->
+            tokenResult.onSuccess { result ->
+                setWalletToken(result.token)
+                getWalletCallback(walletToken = result.token)
+            }.onFailure { throwable ->
+                updateUiState(
+                    ColesPayUIState.Error(
+                        ColesPayException.InitialisationWalletTokenException(
+                            throwable.message ?: MobileSDKConstants.GooglePayConfig.Errors.WALLET_TOKEN_ERROR
+                        )
+                    )
+                )
+            }
         }
     }
 

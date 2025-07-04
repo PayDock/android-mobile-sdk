@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
@@ -19,7 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.paydock.R
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.components.icon.IconAppearanceDefaults
+import com.paydock.designsystems.components.icon.SdkIcon
 
 /**
  * Composable function to display a modal bottom sheet with customizable content.
@@ -36,9 +39,10 @@ import com.paydock.designsystems.theme.Theme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SdkBottomSheet(
-    containerColor: Color = Theme.colors.background,
+    containerColor: Color = MaterialTheme.colorScheme.background,
     allowFullScreen: Boolean = false,
     bottomSheetState: SheetState,
+    enableClose: Boolean = true,
     onDismissRequest: () -> Unit,
     content: @Composable () -> Unit
 ) {
@@ -58,7 +62,7 @@ fun SdkBottomSheet(
 
     // Display a modal bottom sheet with customizable content
     ModalBottomSheet(
-        modifier = modifier,
+        modifier = modifier.statusBarsPadding(),
         containerColor = containerColor,
         contentWindowInsets = { windowInsets },
         dragHandle = null,
@@ -74,10 +78,23 @@ fun SdkBottomSheet(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Close button at the top-right corner
-            IconButton(modifier = Modifier.align(Alignment.End), onClick = onDismissRequest) {
-                Icon(
+            IconButton(
+                modifier = Modifier.align(Alignment.End),
+                onClick = onDismissRequest,
+                enabled = enableClose
+            ) {
+                SdkIcon(
                     painter = painterResource(id = R.drawable.ic_close_circle),
-                    contentDescription = stringResource(id = R.string.content_desc_close_icon)
+                    contentDescription = stringResource(id = R.string.content_desc_close_icon),
+                    appearance = IconAppearanceDefaults.appearance().copy(
+                        tint = if (enableClose) {
+                            LocalContentColor.current
+                        } else {
+                            LocalContentColor.current.copy(
+                                alpha = 0.2f
+                            )
+                        }
+                    )
                 )
             }
             // Content provided by the caller

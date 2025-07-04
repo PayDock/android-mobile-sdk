@@ -1,9 +1,28 @@
 package com.paydock.sample.feature.widgets.ui.models
 
+import androidx.compose.runtime.Composable
+import com.paydock.designsystems.components.text.TextAppearance
+import com.paydock.designsystems.components.text.TextAppearanceDefaults
+import com.paydock.feature.address.presentation.AddressDetailsAppearanceDefaults
+import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.list.DisplayableListItem
 
 enum class WidgetType : DisplayableListItem {
     ADDRESS_DETAILS, AFTER_PAY, CARD_DETAILS, COLES_PAY, GOOGLE_PAY, GIFT_CARD, INTEGRATED_3DS, CLICK_TO_PAY, PAY_PAL, PAY_PAL_VAULT, STANDALONE_3DS;
+
+    override fun displayIcon(): Int? = when (this) {
+        ADDRESS_DETAILS -> R.drawable.ic_address_widget
+        AFTER_PAY -> R.drawable.ic_afterpay_widget
+        CLICK_TO_PAY -> R.drawable.ic_click_to_pay_widget
+        CARD_DETAILS -> R.drawable.ic_card_widget
+        COLES_PAY -> R.drawable.ic_coles_pay_widget
+        GIFT_CARD -> R.drawable.ic_gift_card_widget
+        GOOGLE_PAY -> R.drawable.ic_google_widget
+        INTEGRATED_3DS -> R.drawable.ic_integrated_3ds_widget
+        PAY_PAL -> R.drawable.ic_paypal_widget
+        PAY_PAL_VAULT -> R.drawable.ic_paypal_widget
+        STANDALONE_3DS -> R.drawable.ic_standalone_3ds_widget
+    }
 
     override fun displayName(): String = when (this) {
         ADDRESS_DETAILS -> "Address"
@@ -31,5 +50,13 @@ enum class WidgetType : DisplayableListItem {
         PAY_PAL -> "Standalone PayPal button"
         PAY_PAL_VAULT -> "Link your Paypal account for faster checkout"
         STANDALONE_3DS -> "Standalone 3DS flow"
+    }
+}
+
+@Composable
+fun WidgetType.toTitleAppearance(): TextAppearance {
+    return when (this) {
+        WidgetType.ADDRESS_DETAILS -> AddressDetailsAppearanceDefaults.appearance().title
+        else -> TextAppearanceDefaults.appearance()
     }
 }

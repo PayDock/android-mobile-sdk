@@ -14,28 +14,34 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.ColesPayException
 import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.designsystems.components.button.ImageButtonAppearance
+import com.paydock.designsystems.components.button.ImageButtonDefaults
 import com.paydock.designsystems.components.button.SdkImageButton
-import com.paydock.designsystems.theme.SdkTheme
+import com.paydock.designsystems.components.loader.LoaderAppearance
+import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
+import com.paydock.designsystems.components.loader.SdkLoader
+import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
 import com.paydock.feature.colespay.presentation.state.ColesPayUIState
 import com.paydock.feature.colespay.presentation.utils.CancellationStatus
 import com.paydock.feature.colespay.presentation.utils.getCancellationStatusExtra
@@ -43,6 +49,7 @@ import com.paydock.feature.colespay.presentation.utils.getOrderIdExtra
 import com.paydock.feature.colespay.presentation.utils.putClientIdExtra
 import com.paydock.feature.colespay.presentation.utils.putOrderIdExtra
 import com.paydock.feature.colespay.presentation.viewmodels.ColesPayViewModel
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -52,8 +59,9 @@ import org.koin.core.parameter.parametersOf
  * @param modifier Modifier for customizing the appearance and behavior of the Composable.
  * @param enabled Controls the enabled state of this Widget. When false,
  * this component will not respond to user input, and it will appear visually disabled.
- * @param clientId Coles Pay Merchant clientId.
- * @param token A callback to obtain the wallet token asynchronously.
+ * @param config The configuration details required for the Coles Pay widget.
+ * @param appearance The appearance configuration for the Coles Pay widget.
+ * @param tokenRequest A callback to obtain the wallet token asynchronously.
  * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
  * @param completion A callback to handle the result of the Coles Pay operation.
  */
@@ -62,15 +70,16 @@ import org.koin.core.parameter.parametersOf
 fun ColesPayWidget(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    clientId: String,
-    token: (onTokenReceived: (String) -> Unit) -> Unit,
+    config: ColesPayWidgetConfig,
+    appearance: ColesPayWidgetAppearance = ColesPayWidgetAppearanceDefaults.appearance(),
+    tokenRequest: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
     completion: (Result<String>) -> Unit
 ) {
     val context = LocalContext.current
     // Obtain instances of view models
     val viewModel: ColesPayViewModel = koinViewModel(parameters = {
-        parametersOf(clientId)
+        parametersOf(config)
     })
 
     // Collect states for Coles Pay and Wallet view models
@@ -80,7 +89,7 @@ fun ColesPayWidget(
     val resolvePaymentForResult = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result: ActivityResult ->
-        handleColesPayResult(context, result, completion, viewModel)
+        handleColesPayResult(result, completion, viewModel)
     }
 
     // Handle wallet response result and reset state
@@ -96,54 +105,121 @@ fun ColesPayWidget(
     }
 
     // Composable content rendering
-    SdkTheme {
-        val isLoading = loadingDelegate == null && uiState is ColesPayUIState.Loading
-        if (!isLoading) {
-            SdkImageButton(
-                modifier = modifier,
-                shape = RoundedCornerShape(percent = 50), // ensures pill shape
-                rippleColor = Color.White,
-                enabled = uiState !is ColesPayUIState.Loading && enabled,
-                painter = painterResource(id = R.drawable.pay_with_coles_pay_button),
-                contentDescription = LocalContext.current.getString(R.string.content_desc_coles_pay_button),
-            ) {
-                viewModel.startColesPayFlow(token)
-            }
-        } else {
-            val painter = painterResource(id = R.drawable.pay_with_coles_placeholder)
-            val imageAspectRatio: Float =
-                painter.intrinsicSize.width / painter.intrinsicSize.height.coerceAtLeast(1f)
-            Box(
-                modifier = modifier.aspectRatio(imageAspectRatio),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painter,
-                    contentDescription = null,
-                    // Scale the image to fit the parent width
-                    contentScale = ContentScale.FillWidth,
-                    modifier = Modifier.fillMaxWidth()
-                )
+    val isLoading = loadingDelegate == null && uiState is ColesPayUIState.Loading
+    if (!isLoading) {
+        SdkImageButton(
+            modifier = modifier,
+            appearance = appearance.imageButton,
+            enabled = uiState !is ColesPayUIState.Loading && enabled,
+            painter = painterResource(id = R.drawable.pay_with_coles_pay_button),
+            contentDescription = LocalContext.current.getString(R.string.content_desc_coles_pay_button),
+        ) {
+            viewModel.startColesPayFlow(tokenRequest)
+        }
+    } else {
+        val painter = painterResource(id = R.drawable.pay_with_coles_placeholder)
+        val imageAspectRatio: Float =
+            painter.intrinsicSize.width / painter.intrinsicSize.height.coerceAtLeast(1f)
+        Box(
+            modifier = modifier
+                .aspectRatio(imageAspectRatio)
+                .clip(appearance.imageButton.shape),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painter,
+                contentDescription = null,
+                // Scale the image to fit the parent width
+                contentScale = ContentScale.FillWidth,
+                modifier = Modifier.fillMaxWidth()
+            )
 
-                // Because the Box now has a defined aspect ratio (matching the image),
-                // we can use BoxWithConstraints to get its height reliably for the loader.
-                BoxWithConstraints(modifier = Modifier.matchParentSize()) {
-                    // Calculate the desired loader size in PIXELS first. (don't let it exceed 60% of the width)
-                    val loaderSizeInPx =
-                        (constraints.maxHeight * 0.6f).coerceAtMost(constraints.maxWidth * 0.6f)
-                    // Convert the loader size from PIXELS to DP using LocalDensity.
-                    val loaderSizeInDp = with(LocalDensity.current) { loaderSizeInPx.toDp() }
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .size(loaderSizeInDp)
-                            .align(Alignment.Center),
-                        color = Color.White,
+            // Because the Box now has a defined aspect ratio (matching the image),
+            // we can use BoxWithConstraints to get its height reliably for the loader.
+            BoxWithConstraints(modifier = Modifier.matchParentSize()) {
+                // Calculate the desired loader size in PIXELS first. (don't let it exceed 60% of the width)
+                val loaderSizeInPx =
+                    (constraints.maxHeight * 0.6f).coerceAtMost(constraints.maxWidth * 0.6f)
+                // Convert the loader size from PIXELS to DP using LocalDensity.
+                val loaderSizeInDp = with(LocalDensity.current) { loaderSizeInPx.toDp() }
+                SdkLoader(
+                    modifier = Modifier
+                        .size(loaderSizeInDp)
+                        .align(Alignment.Center),
+                    appearance = appearance.loader.copy(
                         strokeWidth = (loaderSizeInDp.value * 0.1f).coerceAtLeast(2f).dp
                     )
-                }
+                )
             }
         }
     }
+}
+
+/**
+ * Defines the appearance of the Coles Pay widget.
+ *
+ * @property imageButton The appearance of the Coles Pay image button.
+ * @property loader The appearance of the loader displayed during processing.
+ */
+@Immutable
+class ColesPayWidgetAppearance(
+    val imageButton: ImageButtonAppearance,
+    val loader: LoaderAppearance
+) {
+    fun copy(
+        imageButton: ImageButtonAppearance = this.imageButton,
+        loader: LoaderAppearance = this.loader
+    ): ColesPayWidgetAppearance =
+        ColesPayWidgetAppearance(
+            imageButton = imageButton.copy(),
+            loader = loader.copy()
+        )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ColesPayWidgetAppearance
+
+        if (imageButton != other.imageButton) return false
+        if (loader != other.loader) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = imageButton.hashCode()
+        result = 31 * result + loader.hashCode()
+        return result
+    }
+}
+
+/**
+ * Provides default appearance settings for the [ColesPayWidget].
+ *
+ * This object defines the standard visual presentation for the Coles Pay widget,
+ * including its button and loader components. These defaults can be overridden
+ * by providing a custom [ColesPayWidgetAppearance] instance to the widget.
+ */
+object ColesPayWidgetAppearanceDefaults {
+    /**
+     * Composable function that returns the default appearance settings for the ColesPayWidget.
+     * This function is intended to be used within a Composable context.
+     *
+     * @return [ColesPayWidgetAppearance] The default appearance settings for the ColesPayWidget.
+     *  - The `imageButton` is configured with a pill shape (50% rounded corners) and a white ripple color.
+     *  - The `loaderAppearance` is configured with a white color.
+     */
+    @Composable
+    fun appearance(): ColesPayWidgetAppearance = ColesPayWidgetAppearance(
+        imageButton = ImageButtonDefaults.appearance().copy(
+            shape = RoundedCornerShape(percent = 50), // ensures pill shape
+            rippleColor = Color.White,
+        ),
+        loader = LoaderAppearanceDefaults.appearance().copy(
+            color = Color.White
+        )
+    )
 }
 
 /**
@@ -158,7 +234,6 @@ fun ColesPayWidget(
  * @param viewModel The [ColesPayViewModel] that processes Coles Pay-related data and manages the result state.
  */
 private fun handleColesPayResult(
-    context: Context,
     result: ActivityResult,
     completion: (Result<String>) -> Unit,
     viewModel: ColesPayViewModel
@@ -179,9 +254,7 @@ private fun handleColesPayResult(
                         completion(
                             Result.failure(
                                 ColesPayException.CancellationException(
-                                    displayableMessage = context.getString(
-                                        R.string.error_coles_pay_canceled
-                                    )
+                                    displayableMessage = MobileSDKConstants.ColesPayConfig.Errors.CANCELLATION_ERROR
                                 )
                             )
                         )
@@ -192,7 +265,7 @@ private fun handleColesPayResult(
                     else -> {
                         val status = data.getStatusExtra()
                         val message =
-                            data.getMessageExtra(MobileSDKConstants.Errors.COLES_PAY_ERROR)
+                            data.getMessageExtra(MobileSDKConstants.ColesPayConfig.Errors.COLES_PAY_ERROR)
                         completion(
                             Result.failure(
                                 ColesPayException.WebViewException(
@@ -247,7 +320,7 @@ private fun handleUiState(
             uiState.callbackData.callbackId?.let { colesPayOrderId ->
                 val intent = Intent(context, ColesPayWebActivity::class.java)
                     .putOrderIdExtra(colesPayOrderId) // Adds the Coles Pay order ID to the intent.
-                    .putClientIdExtra(viewModel.clientId) // Adds the client ID to the intent.
+                    .putClientIdExtra(viewModel.config.clientId) // Adds the client ID to the intent.
                 resolvePaymentForResult.launch(intent) // Launches the Coles Pay web activity.
             }
         }
@@ -270,10 +343,8 @@ private fun handleUiState(
     }
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewColesPayWidget() {
-    SdkTheme {
-        ColesPayWidget(clientId = "", token = {}, completion = {})
-    }
+    ColesPayWidget(config = ColesPayWidgetConfig(clientId = ""), tokenRequest = {}, completion = {})
 }

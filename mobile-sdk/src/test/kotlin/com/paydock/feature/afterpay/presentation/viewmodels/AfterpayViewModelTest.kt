@@ -115,9 +115,9 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             assertIs<AfterpayUIState.Idle>(awaitItem())
             // Result state - failure
             awaitItem().let { state ->
-                assertIs<AfterpayUIState.Error>(state)
+                assertIs<AfterpayUIState.PendingDeclineOnError>(state)
                 assertEquals(
-                    MobileSDKConstants.Afterpay.USER_INITIATED_ERROR_MESSAGE,
+                    MobileSDKConstants.AfterpayConfig.USER_INITIATED_ERROR_MESSAGE,
                     state.exception.message
                 )
             }
@@ -163,7 +163,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             assertIs<AfterpayUIState.Idle>(awaitItem())
             // Result state - failure
             awaitItem().let { state ->
-                assertIs<AfterpayUIState.Error>(state)
+                assertIs<AfterpayUIState.PendingDeclineOnError>(state)
                 assertEquals(mockError, state.exception.message)
             }
         }
@@ -200,7 +200,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     fun `get Afterpay wallet callback should initiate ProvideCheckoutTokenResult command with failure result`() =
         runTest {
             val mockCheckoutToken = null
-            val mockExceptionMessage = MobileSDKConstants.Errors.AFTER_PAY_CALLBACK_ERROR
+            val mockExceptionMessage = MobileSDKConstants.AfterpayConfig.Errors.CALLBACK_ERROR
             val mockResult = Result.success(
                 WalletCallback(
                     callbackId = null,
@@ -254,7 +254,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
                 coVerify { getWalletCallbackUseCase(any(), any()) }
                 // Result state - failure
                 awaitItem().let { state ->
-                    assertIs<AfterpayUIState.Error>(state)
+                    assertIs<AfterpayUIState.PendingDeclineOnError>(state)
                     assertEquals(MobileSDKTestConstants.Errors.MOCK_GENERAL_ERROR, state.exception.message)
                 }
             }
@@ -387,22 +387,23 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
             val response =
                 readResourceFile("wallet/success_afterpay_decline_wallet_charge_response.json").convertToDataClass<ChargeDeclineResponse>()
             val mockResult = Result.success(response.asEntity())
+            val pendingException = AfterpayException.CancellationException(MobileSDKConstants.AfterpayConfig.USER_INITIATED_ERROR_MESSAGE)
             coEvery { declineWalletChargeUseCase(any(), any()) } returns mockResult
             // Allows for testing flow state
             viewModel.uiState.test {
                 // ACTION
-                viewModel.declineWalletTransaction()
+                viewModel.declineWalletTransaction(pendingException)
                 // CHECK
                 // Initial state
                 assertIs<AfterpayUIState.Idle>(awaitItem())
                 // Loading state - before execution
                 assertIs<AfterpayUIState.Loading>(awaitItem())
                 coVerify { declineWalletChargeUseCase(any(), any()) }
-                // Result state - success
+                // Result state - error
                 awaitItem().let { state ->
-                    assertIs<AfterpayUIState.Success>(state)
-                    assertEquals(mockResult.getOrNull(), state.chargeData)
-                    assertEquals("failed", state.chargeData.resource.data?.status)
+                    assertIs<AfterpayUIState.Error>(state)
+                    assertIs<AfterpayException.CancellationException>(state.exception)
+                    assertEquals(MobileSDKConstants.AfterpayConfig.USER_INITIATED_ERROR_MESSAGE, state.exception.message)
                 }
             }
         }

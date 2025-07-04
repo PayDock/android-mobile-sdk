@@ -2,6 +2,7 @@ package com.paydock.sample.feature.wallet.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.AU_CURRENCY_CODE
@@ -32,24 +33,26 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
         }
     }
 
-    private fun initiateWalletTransaction(
+    private fun initiateWalletTransactionResult(
         manualCapture: Boolean = false,
         request: InitiateWalletRequest,
-        callback: (String) -> Unit,
+        callback: (Result<WalletTokenResult>) -> Unit,
     ) {
         viewModelScope.launch {
-            _stateFlow.update { state ->
-                state.copy(isLoading = true)
-            }
+            // Loading is handled by the SDK
+//            _stateFlow.update { state ->
+//                state.copy(isLoading = true)
+//            }
             val result =
                 initiateWalletTransactionUseCase(manualCapture = manualCapture, request = request)
             result.onSuccess { charge ->
-                charge.walletToken?.let { callback(it) }
+                charge.walletToken?.let { callback(Result.success(WalletTokenResult(token = it))) }
                 _stateFlow.update { state ->
                     state.copy(isLoading = false, error = null, walletChargeResult = charge)
                 }
             }
             result.onFailure {
+                callback(Result.failure(it))
                 _stateFlow.update { state ->
                     state.copy(
                         walletChargeResult = null,
@@ -61,13 +64,13 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
         }
     }
 
-    fun getWalletToken(walletType: WalletType): (onTokenReceived: (String) -> Unit) -> Unit =
+    fun getWalletTokenResultCallback(walletType: WalletType): (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit =
         { onTokenReceived ->
             resetResultState()
             when (walletType) {
                 WalletType.AFTER_PAY -> {
                     val request = createAfterpayWalletRequest()
-                    initiateWalletTransaction(
+                    initiateWalletTransactionResult(
                         request = request,
                         callback = onTokenReceived
                     )
@@ -75,7 +78,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
 
                 WalletType.GOOGLE -> {
                     val request = createGoogleWalletRequest()
-                    initiateWalletTransaction(
+                    initiateWalletTransactionResult(
                         request = request,
                         callback = onTokenReceived
                     )
@@ -83,7 +86,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
 
                 WalletType.COLES_PAY -> {
                     val request = createColesPayWalletRequest()
-                    initiateWalletTransaction(
+                    initiateWalletTransactionResult(
                         manualCapture = true,
                         request = request,
                         callback = onTokenReceived
@@ -92,11 +95,13 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
 
                 WalletType.PAY_PAL -> {
                     val request = createPayPalWalletRequest()
-                    initiateWalletTransaction(
+                    initiateWalletTransactionResult(
                         request = request,
                         callback = onTokenReceived
                     )
                 }
+
+                else -> Unit
             }
         }
 

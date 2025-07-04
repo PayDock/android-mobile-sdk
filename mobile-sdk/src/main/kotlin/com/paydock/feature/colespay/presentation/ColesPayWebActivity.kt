@@ -6,11 +6,12 @@ import android.view.ViewGroup
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
@@ -25,8 +26,7 @@ import com.paydock.R
 import com.paydock.core.domain.mapper.mapToColesPayEnv
 import com.paydock.core.presentation.extensions.putMessageExtra
 import com.paydock.core.presentation.extensions.putStatusExtra
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.components.icon.SdkIcon
 import com.paydock.feature.colespay.presentation.components.ColesPayWebView
 import com.paydock.feature.colespay.presentation.utils.CancellationStatus
 import com.paydock.feature.colespay.presentation.utils.getClientIdExtra
@@ -47,47 +47,52 @@ internal class ColesPayWebActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
 
         setContent {
+            enableEdgeToEdge()
             // Applies the SDK theme.
-            SdkTheme {
-                Scaffold(
-                    topBar = {
-                        TopAppBar(
-                            title = {},
-                            actions = {
-                                IconButton(onClick = { finish(CancellationStatus.USER_INITIATED) }) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_close_circle),
-                                        contentDescription = stringResource(id = R.string.content_desc_close_icon)
-                                    )
-                                }
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = {},
+                        actions = {
+                            IconButton(onClick = { finish(CancellationStatus.USER_INITIATED) }) {
+                                SdkIcon(
+                                    painter = painterResource(id = R.drawable.ic_close_circle),
+                                    contentDescription = stringResource(id = R.string.content_desc_close_icon)
+                                )
                             }
-                        )
-                    }
-                ) { innerPadding ->
-                    // Apply inner padding to avoid content overlapping with the TopAppBar
-                    Box(modifier = Modifier.padding(innerPadding).background(Theme.colors.background)) {
-                        val colesPayOrderId = requireNotNull(intent.getOrderIdExtra())
-                        val colesPayClientId = requireNotNull(intent.getClientIdExtra())
-                        // Stores and remembers the Coles Pay URL created from the callback URL.
-                        val colesPayUrl: String by remember(colesPayOrderId, colesPayClientId) {
-                            mutableStateOf(createColesPayUrl(colesPayOrderId, colesPayClientId))
                         }
-                        ColesPayWebView(colesPayUrl = colesPayUrl, onSuccess = {
-                            setResult(
-                                RESULT_OK,
-                                Intent().putOrderIdExtra(colesPayOrderId)
-                            )
-                            finish()
-                        }, onFailure = { status, message ->
-                            setResult(
-                                RESULT_CANCELED,
-                                Intent()
-                                    .putStatusExtra(status)
-                                    .putMessageExtra(message)
-                            )
-                            finish()
-                        })
+                    )
+                }
+            ) { innerPadding ->
+                // Apply inner padding to avoid content overlapping with the TopAppBar
+                Box(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        // This caters for keyboard changes within compose
+                        .consumeWindowInsets(paddingValues = innerPadding)
+                        .imePadding()
+                ) {
+                    val colesPayOrderId = requireNotNull(intent.getOrderIdExtra())
+                    val colesPayClientId = requireNotNull(intent.getClientIdExtra())
+                    // Stores and remembers the ColesPay URL created from the callback URL.
+                    val colesPayUrl: String by remember(colesPayOrderId, colesPayClientId) {
+                        mutableStateOf(createColesPayUrl(colesPayOrderId, colesPayClientId))
                     }
+                    ColesPayWebView(colesPayUrl = colesPayUrl, onSuccess = {
+                        setResult(
+                            RESULT_OK,
+                            Intent().putOrderIdExtra(colesPayOrderId)
+                        )
+                        finish()
+                    }, onFailure = { status, message ->
+                        setResult(
+                            RESULT_CANCELED,
+                            Intent()
+                                .putStatusExtra(status)
+                                .putMessageExtra(message)
+                        )
+                        finish()
+                    })
                 }
             }
         }
