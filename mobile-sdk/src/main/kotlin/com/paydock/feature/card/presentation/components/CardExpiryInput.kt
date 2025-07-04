@@ -2,7 +2,6 @@ package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -16,13 +15,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
-import com.paydock.designsystems.components.input.InputValidIcon
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.SdkTextField
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.components.input.TextFieldAppearance
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.presentation.utils.errors.CardExpiryError
 import com.paydock.feature.card.presentation.utils.transformations.ExpiryInputTransformation
 import com.paydock.feature.card.presentation.utils.validators.CardExpiryValidator
@@ -46,6 +44,7 @@ import kotlinx.coroutines.delay
 @Composable
 internal fun CardExpiryInput(
     modifier: Modifier = Modifier,
+    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     value: String = "",
     enabled: Boolean = true,
     nextFocus: FocusRequester? = null,
@@ -77,6 +76,7 @@ internal fun CardExpiryInput(
     // Input field configuration
     SdkTextField(
         modifier = modifier,
+        appearance = appearance,
         value = value,
         onValueChange = {
             hasUserInteracted = true
@@ -92,12 +92,6 @@ internal fun CardExpiryInput(
         error = errorMessage, // Dynamically show error messages if validation fails
         autofillType = AutofillType.CreditCardExpirationDate,
         visualTransformation = ExpiryInputTransformation(), // Format input as MM/YY
-        trailingIcon = {
-            // Display a success icon when the expiry input is valid and non-blank
-            if (!expiry.isNullOrBlank()) {
-                InputValidIcon()
-            }
-        },
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number, // Input limited to numbers
             imeAction = if (nextFocus != null) ImeAction.Next else ImeAction.Done
@@ -110,14 +104,18 @@ internal fun CardExpiryInput(
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
-internal fun PreviewCardExpiryInput() {
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            CardExpiryInput(value = "0823", enabled = true, nextFocus = null) {
+internal fun PreviewCardExpiryInputDefault() {
+    CardExpiryInput(nextFocus = null, onValueChange = {
 
-            }
-        }
-    }
+    })
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewCardExpiryInputValue() {
+    CardExpiryInput(value = "0823", nextFocus = null, onValueChange = {
+
+    })
 }

@@ -22,9 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.paydock.designsystems.components.sheet.SdkBottomSheet
 import com.paydock.feature.wallet.domain.model.integration.WalletType
-import com.paydock.sample.designsystems.theme.Theme
 import com.paydock.sample.feature.checkout.CheckoutUIState
 import com.paydock.sample.feature.checkout.StandaloneCheckoutViewModel
+import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,6 +34,7 @@ fun CheckoutBottomSheet(
     onDismissRequest: () -> Unit,
     uiState: CheckoutUIState,
     viewModel: StandaloneCheckoutViewModel,
+    stylingViewModel: StylingViewModel
 ) {
     val scrollState = rememberScrollState()
     val supportedPaymentMethods =
@@ -47,9 +48,9 @@ fun CheckoutBottomSheet(
         )
     var selectedTab by remember { mutableStateOf(supportedPaymentMethods.first()) }
     SdkBottomSheet(
-        containerColor = Theme.colors.surface,
         bottomSheetState = bottomSheetState,
-        onDismissRequest = onDismissRequest
+        onDismissRequest = onDismissRequest,
+        enableClose = !uiState.isLoading
     ) {
         Box(
             contentAlignment = Alignment.Center,
@@ -83,6 +84,7 @@ fun CheckoutBottomSheet(
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 CardContent(
+                                    stylingViewModel = stylingViewModel,
                                     enabled = !uiState.isLoading,
                                     loadingDelegate = viewModel,
                                     resultHandler = viewModel::handleCardResult
@@ -95,27 +97,33 @@ fun CheckoutBottomSheet(
                         )
 
                         WidgetType.GOOGLE_PAY -> GooglePayContent(
-                            tokenHandler = viewModel.getWalletToken(
+                            stylingViewModel = stylingViewModel,
+                            tokenHandler = viewModel.getWalletTokenResultCallback(
                                 WalletType.GOOGLE
                             ),
+                            loadingDelegate = viewModel,
                             resultHandler = viewModel::handleChargeResult
                         )
 
                         WidgetType.PAY_PAL -> PayPalContent(
+                            stylingViewModel = stylingViewModel,
                             enabled = !uiState.isLoading,
-                            tokenHandler = viewModel.getWalletToken(WalletType.PAY_PAL),
+                            tokenHandler = viewModel.getWalletTokenResultCallback(WalletType.PAY_PAL),
                             loadingDelegate = viewModel,
                             resultHandler = viewModel::handleChargeResult
                         )
 
                         WidgetType.COLES_PAY -> ColesPayContent(
-                            tokenHandler = viewModel.getWalletToken(WalletType.COLES_PAY),
+                            stylingViewModel = stylingViewModel,
+                            tokenHandler = viewModel.getWalletTokenResultCallback(WalletType.COLES_PAY),
                             loadingDelegate = viewModel,
                             resultHandler = viewModel::handleColesPayResult
                         )
 
                         WidgetType.AFTER_PAY -> AfterpayContent(
-                            tokenHandler = viewModel.getWalletToken(WalletType.AFTER_PAY),
+                            stylingViewModel = stylingViewModel,
+                            tokenHandler = viewModel.getWalletTokenResultCallback(WalletType.AFTER_PAY),
+                            loadingDelegate = viewModel,
                             resultHandler = viewModel::handleChargeResult
                         )
 

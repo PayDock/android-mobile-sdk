@@ -1,7 +1,7 @@
 package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -9,7 +9,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.paydock.R
-import com.paydock.designsystems.theme.Theme
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.icon.IconAppearanceDefaults
+import com.paydock.designsystems.components.icon.SdkIcon
 import com.paydock.feature.card.domain.model.integration.enums.CardType
 import com.paydock.feature.card.domain.model.integration.enums.CardType.Companion.displayLabel
 
@@ -25,18 +27,20 @@ import com.paydock.feature.card.domain.model.integration.enums.CardType.Companio
  * This affects the tint applied to the icon when the card scheme type is `OTHER`.
  */
 @Composable
-internal fun CardSchemeIcon(cardType: CardType?, focused: Boolean) {
-    Icon(
+internal fun CardSchemeIcon(cardType: CardType?, focused: Boolean = false) {
+    SdkIcon(
         modifier = Modifier
             .testTag("cardIcon")
             .width(24.dp),
         painter = painterResource(id = mapSchemeToDrawable(cardType)),
         contentDescription = cardType?.displayLabel(),
-        tint = if (cardType == null) {
-            if (focused) Theme.colors.onSurface else Theme.colors.onSurfaceVariant
-        } else {
-            Color.Unspecified
-        }
+        appearance = IconAppearanceDefaults.appearance().copy(
+            tint = if (cardType == null) {
+                if (focused) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+            } else {
+                Color.Unspecified
+            }
+        ),
     )
 }
 
@@ -61,4 +65,22 @@ private fun mapSchemeToDrawable(scheme: CardType?): Int = when (scheme) {
     CardType.SOLO -> R.drawable.ic_solo
     CardType.VISA -> R.drawable.ic_visa
     else -> R.drawable.ic_credit_card
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewCardSchemeIconUnknownFocused() {
+    CardSchemeIcon(null, true)
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewCardSchemeIconUnknownUnfocused() {
+    CardSchemeIcon(null, false)
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewCardSchemeIconVisa() {
+    CardSchemeIcon(CardType.VISA, false)
 }

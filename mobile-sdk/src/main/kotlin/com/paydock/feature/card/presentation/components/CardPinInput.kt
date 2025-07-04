@@ -2,7 +2,6 @@ package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -15,13 +14,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
-import com.paydock.designsystems.components.input.InputValidIcon
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.SdkTextField
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.components.input.TextFieldAppearance
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.presentation.utils.errors.CardPinError
 import com.paydock.feature.card.presentation.utils.validators.CardPinValidator
 import com.paydock.feature.card.presentation.utils.validators.GiftCardInputParser
@@ -40,6 +38,7 @@ import kotlinx.coroutines.delay
 @Composable
 internal fun CardPinInput(
     modifier: Modifier = Modifier,
+    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     value: String = "",
     enabled: Boolean = true,
     nextFocus: FocusRequester? = null,
@@ -52,7 +51,6 @@ internal fun CardPinInput(
         debouncedValue = value
     }
     // Parse the card pin
-    val cardPin = GiftCardInputParser.parseCardPin(debouncedValue)
     val cardPinError = CardPinValidator.validateCardPinInput(debouncedValue, hasUserInteracted)
 
     // Determine the error message to display
@@ -65,6 +63,7 @@ internal fun CardPinInput(
     // Create the visual representation of the security code input field
     SdkTextField(
         modifier = modifier,
+        appearance = appearance,
         value = value,
         onValueChange = {
             hasUserInteracted = true
@@ -77,14 +76,6 @@ internal fun CardPinInput(
         placeholder = stringResource(id = R.string.placeholder_card_pin),
         enabled = enabled,
         error = errorMessage,
-        // Show a success icon when the security code is valid and not blank
-        trailingIcon = {
-            if (!cardPin.isNullOrBlank()) {
-                InputValidIcon()
-            }
-        },
-        singleLine = true,
-        maxLines = 1,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number,
             imeAction = if (nextFocus != null) ImeAction.Next else ImeAction.Done
@@ -98,14 +89,16 @@ internal fun CardPinInput(
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
-internal fun PreviewCardPinInput() {
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            CardPinInput(value = "1234") {
+internal fun PreviewCardPinInputDefault() {
+    CardPinInput {}
+}
 
-            }
-        }
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewCardPinInputValue() {
+    CardPinInput(value = "1234") {
+
     }
 }

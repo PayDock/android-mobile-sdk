@@ -115,10 +115,10 @@ fun AfterpaySDKConfig.CheckoutOptions.mapToAfterpayV2Options(): AfterpayCheckout
 
 fun CancellationStatus.mapMessage(): String =
     when (this) {
-        CancellationStatus.USER_INITIATED -> MobileSDKConstants.Afterpay.USER_INITIATED_ERROR_MESSAGE
-        CancellationStatus.NO_CHECKOUT_URL -> MobileSDKConstants.Afterpay.NO_CHECKOUT_URL_ERROR_MESSAGE
-        CancellationStatus.INVALID_CHECKOUT_URL -> MobileSDKConstants.Afterpay.INVALID_CHECKOUT_URL_ERROR_MESSAGE
-        CancellationStatus.NO_CHECKOUT_HANDLER -> MobileSDKConstants.Afterpay.NO_CHECKOUT_HANDLER_ERROR_MESSAGE
-        CancellationStatus.NO_CONFIGURATION -> MobileSDKConstants.Afterpay.NO_CONFIGURATION_ERROR_MESSAGE
-        CancellationStatus.LANGUAGE_NOT_SUPPORTED -> MobileSDKConstants.Afterpay.LANGUAGE_NOT_SUPPORTED_ERROR_MESSAGE
+        CancellationStatus.USER_INITIATED -> MobileSDKConstants.AfterpayConfig.USER_INITIATED_ERROR_MESSAGE
+        CancellationStatus.NO_CHECKOUT_URL -> MobileSDKConstants.AfterpayConfig.NO_CHECKOUT_URL_ERROR_MESSAGE
+        CancellationStatus.INVALID_CHECKOUT_URL -> MobileSDKConstants.AfterpayConfig.INVALID_CHECKOUT_URL_ERROR_MESSAGE
+        CancellationStatus.NO_CHECKOUT_HANDLER -> MobileSDKConstants.AfterpayConfig.NO_CHECKOUT_HANDLER_ERROR_MESSAGE
+        CancellationStatus.NO_CONFIGURATION -> MobileSDKConstants.AfterpayConfig.NO_CONFIGURATION_ERROR_MESSAGE
+        CancellationStatus.LANGUAGE_NOT_SUPPORTED -> MobileSDKConstants.AfterpayConfig.LANGUAGE_NOT_SUPPORTED_ERROR_MESSAGE
     }

@@ -7,7 +7,7 @@ import android.webkit.WebView
 import com.paydock.MobileSDK
 
 /**
- * Extension function to set up the WebView with the necessary configurations for Coles Pay's web-based operations.
+ * Extension function to set up the WebView with the necessary configurations for SDK's web-based operations.
  * This method applies various settings to ensure the WebView supports JavaScript, multiple windows,
  * and enables debugging for development builds. Additionally, it allows third-party cookies to support faster
  * checkout for returning users.

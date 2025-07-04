@@ -29,7 +29,8 @@
         <activity
             android:name=".feature.checkout.ClickToPayActivity"
             android:exported="true"
-            android:launchMode="singleInstance" />
+            android:launchMode="singleInstance"
+            android:windowSoftInputMode="adjustResize" />
     </application>
 
 </manifest>

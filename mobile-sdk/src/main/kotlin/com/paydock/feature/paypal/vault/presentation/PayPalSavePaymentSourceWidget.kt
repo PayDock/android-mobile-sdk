@@ -7,12 +7,15 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -22,12 +25,11 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
-import com.paydock.designsystems.components.button.AppButtonType
-import com.paydock.designsystems.components.button.SdkButton
-import com.paydock.designsystems.theme.PayPalVault
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.components.button.ButtonAppearance
+import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
+import com.paydock.designsystems.components.button.RenderButton
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultResult
 import com.paydock.feature.paypal.vault.presentation.state.PayPalVaultUIState
@@ -51,6 +53,7 @@ import org.koin.core.parameter.parametersOf
  * @param enabled Controls the enabled state of this Widget. When false,
  * this component will not respond to user input, and it will appear visually disabled.
  * @param config The configuration for PayPal vault, including the access token and gateway ID.
+ * @param appearance The appearance configuration for the widget, allowing customization of elements like the action button.
  * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
  * @param completion The callback invoked when the PayPal linking process completes, either with a success
  *                   containing a [PayPalVaultResult] or a failure containing a [PayPalVaultException].
@@ -60,6 +63,7 @@ fun PayPalSavePaymentSourceWidget(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     config: PayPalVaultConfig,
+    appearance: PayPalPaymentSourceWidgetAppearance = PayPalPaymentSourceAppearanceDefaults.appearance(),
     loadingDelegate: WidgetLoadingDelegate? = null,
     completion: (Result<PayPalVaultResult>) -> Unit,
 ) {
@@ -76,10 +80,10 @@ fun PayPalSavePaymentSourceWidget(
     val resolvePaymentForResult = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result: ActivityResult ->
-        handlePayPalVaultResult(context, result, viewModel, completion)
+        handlePayPalVaultResult(result, viewModel, completion)
     }
 
-    LaunchedEffect(uiState::class) {
+    LaunchedEffect(uiState) {
         handleUIState(
             context,
             uiState,
@@ -90,38 +94,104 @@ fun PayPalSavePaymentSourceWidget(
         )
     }
 
+    val isEnabled by remember(uiState) { derivedStateOf { uiState !is PayPalVaultUIState.Loading && enabled } }
+    val isLoading by remember(uiState) {
+        derivedStateOf { loadingDelegate == null && uiState is PayPalVaultUIState.Loading }
+    }
+
     // Apply the SDK's theme to the widget
-    SdkTheme {
-        Box(modifier = modifier) {
-            // Display a button to link the PayPal account
-            SdkButton(
-                modifier = Modifier
-                    .background(Theme.colors.background)
-                    .testTag("linkPayPalAccount"),
-                buttonColor = PayPalVault,
-                buttonIcon = config.icon,
-                text = config.actionText
-                    ?: stringResource(id = R.string.button_link_paypal_account),
-                type = AppButtonType.Outlined,
-                enabled = uiState !is PayPalVaultUIState.Loading && enabled,
-                isLoading = loadingDelegate == null && uiState is PayPalVaultUIState.Loading
-            ) {
-                viewModel.createPayPalSetupToken()
-            }
+    Box(modifier = modifier) {
+        // Display a button to link the PayPal account
+        appearance.actionButton.RenderButton(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("linkPayPalAccount"),
+            buttonIcon = config.icon,
+            text = config.actionText
+                ?: stringResource(id = R.string.button_link_paypal_account),
+            enabled = isEnabled,
+            isLoading = isLoading,
+        ) {
+            viewModel.createPayPalSetupToken()
         }
     }
 }
 
 /**
+ * Represents the appearance configuration for the [PayPalSavePaymentSourceWidget].
+ *
+ * This class allows customization of the visual elements within the widget.
+ *
+ * @property actionButton A composable function that defines the appearance of the action button.
+ *                        It takes a boolean [isEnabled] parameter to indicate whether the button is enabled.
+ *                        The function should return an instance of [ButtonAppearance].
+ */
+@Immutable
+class PayPalPaymentSourceWidgetAppearance(
+    val actionButton: ButtonAppearance
+) {
+    /**
+     * Creates a copy of this [PayPalPaymentSourceWidgetAppearance].
+     *
+     * @param actionButton A composable lambda that defines the appearance of the action button.
+     *                     Defaults to using the existing action button appearance.
+     * @return A new [PayPalPaymentSourceWidgetAppearance] instance with the specified parameters.
+     */
+    fun copy(
+        actionButton: ButtonAppearance = this.actionButton,
+    ): PayPalPaymentSourceWidgetAppearance =
+        PayPalPaymentSourceWidgetAppearance(
+            actionButton = when (actionButton) {
+                is ButtonAppearance.FilledButtonAppearance -> actionButton.copy()
+                is ButtonAppearance.IconButtonAppearance -> actionButton.copy()
+                is ButtonAppearance.OutlineButtonAppearance -> actionButton.copy()
+                is ButtonAppearance.TextButtonAppearance -> actionButton.copy()
+            },
+        )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as PayPalPaymentSourceWidgetAppearance
+
+        if (actionButton != other.actionButton) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return actionButton.hashCode()
+    }
+}
+
+/**
+ * Default values and configurations for [PayPalPaymentSourceWidgetAppearance].
+ */
+object PayPalPaymentSourceAppearanceDefaults {
+
+    /**
+     * Provides the default appearance for the PayPal payment source widget.
+     *
+     * This appearance includes a default outline button for the action.
+     *
+     * @return The default [PayPalPaymentSourceWidgetAppearance].
+     */
+    @Composable
+    fun appearance(): PayPalPaymentSourceWidgetAppearance = PayPalPaymentSourceWidgetAppearance(
+        actionButton = ButtonAppearanceDefaults.outlineButtonAppearance()
+    )
+
+}
+
+/**
  * Processes the result of a PayPal Vault activity and performs the appropriate actions based on the result code.
  *
- * @param context The current application context.
  * @param result The `ActivityResult` received from the PayPal Vault activity.
  * @param viewModel The `PayPalVaultViewModel` managing the PayPal Vault flow.
  * @param completion A callback to handle the final result of the PayPal Vault operation, either success or failure.
  */
 private fun handlePayPalVaultResult(
-    context: Context,
     result: ActivityResult,
     viewModel: PayPalVaultViewModel,
     completion: (Result<PayPalVaultResult>) -> Unit,
@@ -141,9 +211,7 @@ private fun handlePayPalVaultResult(
                         completion(
                             Result.failure(
                                 PayPalVaultException.CancellationException(
-                                    displayableMessage = context.getString(
-                                        R.string.error_paypal_vault_canceled
-                                    )
+                                    displayableMessage = MobileSDKConstants.PayPalVaultConfig.Errors.CANCELLATION_ERROR
                                 )
                             )
                         )
@@ -151,7 +219,8 @@ private fun handlePayPalVaultResult(
                     // For other cancellation reasons, handle as a PayPal SDK error.
                     else -> {
                         val status = data.getStatusExtra()
-                        val message = data.getMessageExtra(MobileSDKConstants.Errors.PAY_PAL_VAULT_ERROR)
+                        val message =
+                            data.getMessageExtra(MobileSDKConstants.PayPalVaultConfig.Errors.VAULT_ERROR)
                         completion(
                             Result.failure(
                                 PayPalVaultException.PayPalSDKException(
@@ -231,4 +300,15 @@ private fun handleUIState(
             viewModel.resetResultState()
         }
     }
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewPayPalWidget() {
+    PayPalSavePaymentSourceWidget(
+        config = PayPalVaultConfig(
+            accessToken = "xxx",
+            gatewayId = "xxx"
+        )
+    ) { }
 }

@@ -8,17 +8,17 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.theme.SampleTheme
-import com.paydock.sample.designsystems.theme.Theme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,48 +34,39 @@ fun CenterAppTopBar(
             title = {
                 Text(
                     modifier = modifier,
-                    text = title,
-                    style = Theme.typography.navTitle,
-                    color = Theme.colors.onPrimaryContainer,
-                    fontWeight = FontWeight(590)
+                    text = title
                 )
             },
             modifier = modifier,
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = Theme.colors.primaryContainer,
-                titleContentColor = Theme.colors.onPrimaryContainer
-            ),
             navigationIcon = {
                 onBackButtonClick?.let { clickListener ->
                     IconButton(onClick = { clickListener.invoke() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Default.ArrowBack,
                             contentDescription = "back",
-                            tint = Theme.colors.onPrimaryContainer
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
-            }
+            },
+            colors = TopAppBarDefaults.topAppBarColors()
+                .copy(containerColor = MaterialTheme.colorScheme.surfaceContainer)
         )
     } else {
         TopAppBar(
             title = {
                 Image(
                     painter = painterResource(id = R.drawable.demo_icon),
-                    contentDescription = null
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface)
                 )
             },
-            modifier = modifier,
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = Theme.colors.primaryContainer,
-                titleContentColor = Theme.colors.onPrimaryContainer
-            ),
             actions = {
                 IconButton(onClick = { onActionButtonClick?.invoke() }) {
                     Icon(
                         imageVector = Icons.Default.Person,
                         contentDescription = "Profile",
-                        tint = Theme.colors.onPrimaryContainer
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
             },
@@ -85,17 +76,19 @@ fun CenterAppTopBar(
                         Icon(
                             imageVector = Icons.AutoMirrored.Default.ArrowBack,
                             contentDescription = "back",
-                            tint = Theme.colors.onPrimaryContainer
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
-            }
+            },
+            colors = TopAppBarDefaults.topAppBarColors()
+                .copy(containerColor = MaterialTheme.colorScheme.surfaceContainer)
         )
     }
 }
 
 @Composable
-@Preview
+@PreviewLightDark
 internal fun PreviewCenterAppTopBar() {
     SampleTheme {
         CenterAppTopBar(title = "Center Top Bar", showTitle = true)
@@ -103,7 +96,7 @@ internal fun PreviewCenterAppTopBar() {
 }
 
 @Composable
-@Preview
+@PreviewLightDark
 internal fun PreviewCenterAppTopBarWithoutTitle() {
     SampleTheme {
         CenterAppTopBar(title = "Center Top Bar", showTitle = false)
@@ -111,7 +104,7 @@ internal fun PreviewCenterAppTopBarWithoutTitle() {
 }
 
 @Composable
-@Preview
+@PreviewLightDark
 internal fun PreviewCenterAppTopBarWithBackButton() {
     SampleTheme {
         CenterAppTopBar(
@@ -123,7 +116,7 @@ internal fun PreviewCenterAppTopBarWithBackButton() {
 }
 
 @Composable
-@Preview
+@PreviewLightDark
 internal fun PreviewCenterAppTopBarWithoutTitleWithBackButton() {
     SampleTheme {
         CenterAppTopBar(

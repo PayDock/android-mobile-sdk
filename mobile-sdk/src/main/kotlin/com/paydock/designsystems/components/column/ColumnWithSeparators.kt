@@ -2,11 +2,11 @@ package com.paydock.designsystems.components.column
 
 import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.text.SdkText
 
 /**
  * A composable that arranges its children in a column with separators between them.
@@ -24,23 +24,23 @@ internal fun ColumnWithSeparators(
     // Use SubcomposeLayout to handle the custom layout logic
     SubcomposeLayout(modifier) { constraints ->
         // Subcompose the content and separators
-        val contentsMeasurebles = subcompose("content", content)
-        val separators = contentsMeasurebles.map { subcompose("separator$it", separator).first() }
-        val separatorsPlaceables = separators.map { it.measure(constraints) }
-        val contentPlaceables = contentsMeasurebles.map { it.measure(constraints) }
+        val contentsMeasurable = subcompose("content", content)
+        val separators = contentsMeasurable.map { subcompose("separator$it", separator).first() }
+        val separatorsPlaceable = separators.map { it.measure(constraints) }
+        val contentPlaceable = contentsMeasurable.map { it.measure(constraints) }
 
         // Calculate the total height of the layout
         val totalHeight =
-            listOf(separatorsPlaceables, contentPlaceables).flatten().sumOf { it.height }
+            listOf(separatorsPlaceable, contentPlaceable).flatten().sumOf { it.height }
 
         // Perform the layout
         layout(constraints.maxWidth, totalHeight) {
             // Determine the height of the dividers
-            val dividerHeight = separatorsPlaceables.maxOfOrNull { it.height } ?: 0
+            val dividerHeight = separatorsPlaceable.maxOfOrNull { it.height } ?: 0
             var y = 0
 
             // Place the content and calculate the heights of each item
-            val itemHeights = contentPlaceables.mapIndexed { index, placeable ->
+            val itemHeights = contentPlaceable.mapIndexed { index, placeable ->
                 if (index != 0) y += dividerHeight
 
                 placeable.place(x = 0, y = y)
@@ -49,8 +49,8 @@ internal fun ColumnWithSeparators(
             }
 
             // Place the separators at the appropriate positions
-            separatorsPlaceables.forEachIndexed { index, placeable ->
-                if (index != contentPlaceables.size - 1) {
+            separatorsPlaceable.forEachIndexed { index, placeable ->
+                if (index != contentPlaceable.size - 1) {
                     placeable.place(x = 0, y = itemHeights[index].height)
                 }
             }
@@ -65,10 +65,10 @@ internal fun ColumnWithSeparators(
  */
 private data class ContentChild(val height: Int)
 
-@PreviewLightDark
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewColumnWithSeparators() {
     ColumnWithSeparators {
-        repeat(times = 10) { Text(text = "Hello $it") }
+        repeat(times = 10) { SdkText(text = "Hello $it") }
     }
 }

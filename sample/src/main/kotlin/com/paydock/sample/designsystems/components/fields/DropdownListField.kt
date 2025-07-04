@@ -2,6 +2,7 @@ package com.paydock.sample.designsystems.components.fields
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Box
@@ -11,12 +12,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -29,8 +31,6 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.paydock.sample.designsystems.theme.Theme
-import kotlinx.coroutines.flow.filter
 
 /**
  * A basic implementation of the Exposed Dropdown Menu component
@@ -43,37 +43,44 @@ fun DropdownListField(
     items: List<String>,
     selected: String? = items.firstOrNull(),
     onItemSelected: (String) -> Unit,
+    enabled: Boolean,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
+    // New logic to avoid filter
     LaunchedEffect(interactionSource) {
         interactionSource.interactions
-            .filter { it is PressInteraction.Press }
-            .collect {
-                expanded = !expanded
+            .collect { interaction ->
+                if (interaction is PressInteraction.Press) {
+                    expanded = !expanded
+                }
             }
     }
+
     DropdownListFieldStack(
         textField = {
             TextField(
-                modifier = modifier,
+                modifier = modifier.clickable(
+                    interactionSource = interactionSource,
+                    indication = null
+                ) {
+                    expanded = !expanded
+                },
                 value = selected ?: "",
+                enabled = enabled,
                 onValueChange = {},
                 interactionSource = interactionSource,
                 readOnly = true,
-                textStyle = Theme.typography.body,
                 colors = TextFieldDefaults.colors(
-                    focusedTextColor = Theme.colors.onBackground,
-                    unfocusedTextColor = Theme.colors.onBackground,
                     disabledTextColor = Color.Transparent,
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent
                 ),
                 trailingIcon = {
-                    val rotation by animateFloatAsState(if (expanded) 180F else 0F)
+                    val rotation by animateFloatAsState(if (expanded) 180F else 0F, label = "")
                     Icon(
                         rememberVectorPainter(Icons.Default.ArrowDropDown),
                         contentDescription = "Dropdown Arrow",
@@ -89,7 +96,6 @@ fun DropdownListField(
                     .wrapContentSize(Alignment.TopStart)
             ) {
                 DropdownMenu(
-                    modifier = Modifier.background(Color.White),
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
@@ -98,23 +104,19 @@ fun DropdownListField(
                     Box(
                         modifier = Modifier.size(
                             width = boxWidth,
-                            height = if (menuHeight < 300.dp) menuHeight else 300.dp
+                            height = if (menuHeight < 300.dp) menuHeight else 250.dp
                         )
                     ) {
                         LazyColumn {
                             items(items) { item ->
                                 DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            text = item,
-                                            style = Theme.typography.body,
-                                            color = Theme.colors.onPrimary
-                                        )
-                                    },
+                                    text = { Text(text = item) },
                                     modifier = Modifier
                                         .height(itemHeight)
                                         .width(boxWidth)
-                                        .background(if (item == selected) Theme.colors.primary else Color.White),
+                                        .background(if (item == selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer),
+                                    colors = MenuDefaults.itemColors()
+                                        .copy(textColor = if (item == selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface),
                                     onClick = {
                                         expanded = false
                                         onItemSelected(item)

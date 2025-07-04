@@ -5,6 +5,7 @@ import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
 import com.paydock.feature.card.data.dto.CreateCardPaymentTokenRequest
+import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
 import com.paydock.feature.card.domain.usecase.CreateGiftCardPaymentTokenUseCase
 import com.paydock.feature.card.presentation.state.GiftCardInputState
 import com.paydock.feature.card.presentation.state.GiftCardUIState
@@ -20,12 +21,12 @@ import kotlinx.coroutines.flow.update
  * including input state management, tokenization requests, and state transitions for
  * the associated UI.
  *
- * @property accessToken The access token used for authenticated API requests.
+ * @property config
  * @property createCardPaymentTokenUseCase Use case for creating a gift card payment token.
- * @property dispatchers Provider for coroutine dispatchers to handle threading concerns.
+ * @param dispatchers Provider for coroutine dispatchers to handle threading concerns.
  */
 internal class GiftCardViewModel(
-    private val accessToken: String,
+    private val config: GiftCardWidgetConfig,
     private val createCardPaymentTokenUseCase: CreateGiftCardPaymentTokenUseCase,
     dispatchers: DispatchersProvider,
 ) : BaseViewModel(dispatchers) {
@@ -48,6 +49,10 @@ internal class GiftCardViewModel(
      */
     val stateFlow: StateFlow<GiftCardUIState> = _stateFlow.asStateFlow()
 
+    init {
+        setStorePin(config.storePin)
+    }
+
     /**
      * Resets the UI state to the idle state.
      *
@@ -63,7 +68,7 @@ internal class GiftCardViewModel(
      *
      * @param storePin Boolean indicating whether the PIN should be stored for future use.
      */
-    fun setStorePin(storePin: Boolean) {
+    private fun setStorePin(storePin: Boolean) {
         _inputStateFlow.update { state ->
             state.copy(storePin = storePin)
         }
@@ -120,7 +125,7 @@ internal class GiftCardViewModel(
                 cardPin = state.pin,
                 storePin = state.storePin
             )
-            createCardPaymentTokenUseCase(accessToken, request)
+            createCardPaymentTokenUseCase(config.accessToken, request)
                 .onSuccess { details ->
                     updateState(GiftCardUIState.Success(details.token!!))
                 }

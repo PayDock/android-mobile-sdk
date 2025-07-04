@@ -2,7 +2,6 @@ package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,13 +16,12 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
-import com.paydock.designsystems.components.input.InputValidIcon
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.SdkTextField
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.components.input.TextFieldAppearance
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.integration.enums.CardType
 import com.paydock.feature.card.domain.model.ui.CardCode
@@ -43,7 +41,8 @@ import kotlinx.coroutines.delay
  * focus handling, and dynamic input validation.
  *
  * @param modifier Modifier to customize the layout or styling of the input field.
- * @param schemeConfig The configuration defining the supported card schemes and validation settings.
+ * @param appearance Defines the visual appearance of the text field, including colors, typography, etc.
+ * @param schemeConfig The configuration defining the supported card schemes and validation settings.]
  * @param value The current value of the input field, representing the credit card number.
  * @param cardScheme The detected [CardScheme] based on the card number input.
  * @param enabled Flag to enable or disable user interaction with the input field.
@@ -57,6 +56,7 @@ import kotlinx.coroutines.delay
 @Composable
 internal fun CreditCardNumberInput(
     modifier: Modifier = Modifier,
+    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     schemeConfig: SupportedSchemeConfig,
     value: String = "",
     cardScheme: CardScheme? = null,
@@ -95,6 +95,7 @@ internal fun CreditCardNumberInput(
         modifier = modifier.onFocusChanged {
             focusedState = it.isFocused
         },
+        appearance = appearance,
         value = value,
         onValueChange = {
             hasUserInteracted = true
@@ -116,12 +117,6 @@ internal fun CreditCardNumberInput(
                 subSectionSizes = it.gaps
             )
         } ?: CardNumberInputTransformation(),
-        // Show a success icon when the card number is valid and not blank
-        trailingIcon = {
-            if (debouncedValue.isNotBlank()) {
-                InputValidIcon()
-            }
-        },
         // Use keyboard options and actions for a more user-friendly input experience
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number,
@@ -138,25 +133,30 @@ internal fun CreditCardNumberInput(
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewCreditCardNumberInputDefault() {
+    CreditCardNumberInput(
+        schemeConfig = SupportedSchemeConfig(),
+        onValueChange = {}
+    )
+}
+
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewCreditCardNumberInput() {
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            CreditCardNumberInput(
-                value = "4242424242424242",
-                cardScheme = CardScheme(
-                    type = CardType.VISA,
-                    code = CardCode(
-                        CodeType.CVV,
-                        MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
-                    )
-                ),
-                enabled = true,
-                nextFocus = null,
-                onValueChange = {},
-                schemeConfig = SupportedSchemeConfig()
+    CreditCardNumberInput(
+        schemeConfig = SupportedSchemeConfig(),
+        value = "4242424242424242",
+        cardScheme = CardScheme(
+            type = CardType.VISA,
+            code = CardCode(
+                CodeType.CVV,
+                MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
             )
-        }
-    }
+        ),
+        enabled = true,
+        nextFocus = null,
+        onValueChange = {}
+    )
 }

@@ -1,7 +1,6 @@
 package com.paydock
 
 import android.content.Context
-import androidx.compose.ui.graphics.Color
 import com.paydock.core.BaseUnitTest
 import com.paydock.core.domain.model.Environment
 import io.mockk.every
@@ -13,7 +12,6 @@ import org.koin.core.context.stopKoin
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
-import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -80,14 +78,12 @@ internal class MobileSDKTest : BaseUnitTest() {
     @Test
     fun `initialize should initialize MobileSDK with provided configuration`() {
         val environment = Environment.SANDBOX
-        val theme = MobileSDKTheme()
 
-        MobileSDK.initialize(context, environment, false, theme)
+        MobileSDK.initialize(context, environment, false)
 
         val sdk = MobileSDK.getInstance()
         assertNotNull(sdk)
         assertEquals(environment, sdk.environment)
-        assertEquals(theme, sdk.sdkTheme)
     }
 
     @Test
@@ -98,7 +94,6 @@ internal class MobileSDKTest : BaseUnitTest() {
         val sdk = MobileSDK.getInstance()
         assertNotNull(sdk)
         assertEquals(Environment.PRODUCTION, sdk.environment)
-        assertNotNull(sdk.sdkTheme)
     }
 
     @Test
@@ -113,16 +108,13 @@ internal class MobileSDKTest : BaseUnitTest() {
     @Test
     fun `MobileSDK Builder should build and initialize MobileSDK with provided configuration`() {
         val environment = Environment.STAGING
-        val theme = MobileSDKTheme()
 
         val sdk = MobileSDK.Builder()
             .environment(environment)
-            .applyTheme(theme)
             .build(context)
 
         assertNotNull(sdk)
         assertEquals(environment, sdk.environment)
-        assertEquals(theme, sdk.sdkTheme)
     }
 
     @Test
@@ -133,30 +125,6 @@ internal class MobileSDKTest : BaseUnitTest() {
 
         assertNotNull(sdk)
         assertEquals(Environment.PRODUCTION, sdk.environment)
-    }
-
-    @Test
-    fun `MobileSDK update sdk theme should update SDK default configuration`() {
-        val customTheme = MobileSDKTheme(
-            colours = MobileSDKTheme.Colours.themeColours(
-                light = MobileSDKTheme.Colours.lightThemeColors(
-                    primary = Color.Blue
-                ),
-                dark = MobileSDKTheme.Colours.darkThemeColors(
-                    primary = Color.Red
-                ),
-            )
-        )
-        val sdk = MobileSDK.Builder()
-            .build(context)
-
-        assertNotNull(sdk)
-        assertNotEquals(sdk.sdkTheme, customTheme)
-
-        sdk.updateTheme(customTheme)
-
-        assertEquals(sdk.sdkTheme, customTheme)
-
     }
 
     @Test

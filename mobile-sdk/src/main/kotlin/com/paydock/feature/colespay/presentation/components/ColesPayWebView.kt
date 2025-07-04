@@ -3,6 +3,7 @@ package com.paydock.feature.colespay.presentation.components
 import androidx.compose.runtime.Composable
 import com.paydock.core.MobileSDKConstants
 import com.paydock.designsystems.components.web.SdkWebView
+import com.paydock.feature.colespay.presentation.utils.ColesPayJSBridge
 
 /**
  * A composable function that displays a WebView for processing Coles Pay transactions.
@@ -24,8 +25,13 @@ internal fun ColesPayWebView(
     onFailure: (Int, String) -> Unit
 ) {
     // WebView for displaying the Coles Pay URL
-    SdkWebView<Unit>(
+    SdkWebView(
         webUrl = colesPayUrl,
+        jsBridge = ColesPayJSBridge {
+            if (it.contains(MobileSDKConstants.ColesPayConfig.COLES_PAY_SUCCESS_PATH)) {
+                onSuccess()
+            }
+        },
         shouldShowCustomLoader = false,
         // This is required for Coles Pay Web to work
         onShouldOverrideUrlLoading = { request ->
@@ -37,9 +43,40 @@ internal fun ColesPayWebView(
             } else {
                 false
             }
+        },
+        onPageFinished = { webView ->
+            // Listens for navigation in the History APU which is a usual method of React apps changing their pages
+            val reactHistoryAPIScript = """
+            (function() {
+                function notifyAndroid() {
+                    ${MobileSDKConstants.JS_BRIDGE_NAME}.postMessage(window.location.href);
+                }
+
+                history.pushState = (function(f) {
+                    return function pushState() {
+                        var result = f.apply(this, arguments);
+                        notifyAndroid();
+                        return result;
+                    };
+                })(history.pushState);
+
+                history.replaceState = (function(f) {
+                    return function replaceState() {
+                        var result = f.apply(this, arguments);
+                        notifyAndroid();
+                        return result;
+                    };
+                })(history.replaceState);
+
+                window.addEventListener('popstate', notifyAndroid);
+                notifyAndroid();
+            })();
+            """.trimIndent()
+            webView.evaluateJavascript(reactHistoryAPIScript, null)
+        },
+        onWebViewError = { status, message ->
+            // Invoke the failure callback if loading fails or an error occurs
+            onFailure(status, message)
         }
-    ) { status, message ->
-        // Invoke the failure callback if loading fails or an error occurs
-        onFailure(status, message)
-    }
+    )
 }

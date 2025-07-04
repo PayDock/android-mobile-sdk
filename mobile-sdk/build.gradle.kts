@@ -108,8 +108,10 @@ dependencies {
     testImplementation(libs.okhttp3.mockwebserver)
     // Google Services
     implementation(libs.bundles.google.pay.services)
+    // Google Pay SDK
+    api(libs.google.compose.pay.button)
     // Afterpay SDK
-    implementation(libs.afterpay.android)
+    api(libs.afterpay.android)
     // PayPal SDK
     implementation(libs.bundles.paypal)
     // Mocking

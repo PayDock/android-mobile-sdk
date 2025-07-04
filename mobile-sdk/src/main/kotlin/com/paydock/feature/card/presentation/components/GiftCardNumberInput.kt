@@ -2,8 +2,6 @@ package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,13 +17,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
-import com.paydock.designsystems.components.input.InputValidIcon
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.icon.SdkIcon
 import com.paydock.designsystems.components.input.SdkTextField
-import com.paydock.designsystems.theme.SdkTheme
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.components.input.TextFieldAppearance
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.presentation.utils.errors.GiftCardNumberError
 import com.paydock.feature.card.presentation.utils.transformations.CardNumberInputTransformation
 import com.paydock.feature.card.presentation.utils.validators.GiftCardInputParser
@@ -46,6 +44,7 @@ import kotlinx.coroutines.delay
 @Composable
 internal fun GiftCardNumberInput(
     modifier: Modifier = Modifier,
+    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     value: String = "",
     enabled: Boolean = true,
     nextFocus: FocusRequester? = null,
@@ -61,9 +60,6 @@ internal fun GiftCardNumberInput(
         debouncedValue = value
     }
 
-    // Parse the card number to determine its type and validity
-    val cardNumber = GiftCardInputParser.parseNumber(debouncedValue)
-
     // Check if the card number is valid
     val cardNumberError = GiftCardNumberValidator.validateCardNumberInput(debouncedValue, hasUserInteracted)
 
@@ -78,6 +74,7 @@ internal fun GiftCardNumberInput(
         modifier = modifier.onFocusChanged {
             focusedState.value = it.isFocused
         },
+        appearance = appearance,
         value = value,
         onValueChange = {
             hasUserInteracted = true
@@ -93,27 +90,14 @@ internal fun GiftCardNumberInput(
         label = stringResource(id = R.string.label_card_number),
         leadingIcon = {
             // Display the card scheme icon as a leading icon in the input field
-            Icon(
+            SdkIcon(
                 modifier = Modifier.testTag("cardIcon"),
                 painter = painterResource(id = R.drawable.ic_credit_card),
-                contentDescription = null,
-                tint = if (focusedState.value) {
-                    Theme.colors.onSurface // Use primary color when focused
-                } else {
-                    Theme.colors.onSurfaceVariant // Use secondary color when not focused
-                }
+                contentDescription = null
             )
         },
         error = errorMessage,
         visualTransformation = CardNumberInputTransformation(),
-        // Show a success icon when the card number is valid and not blank
-        trailingIcon = {
-            if (!cardNumber.isNullOrBlank()) {
-                InputValidIcon()
-            }
-        },
-        singleLine = true,
-        maxLines = 1,
         // Use keyboard options and actions for a more user-friendly input experience
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number,
@@ -127,14 +111,16 @@ internal fun GiftCardNumberInput(
     )
 }
 
-@PreviewLightDark
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewGiftCardNumberInputDefault() {
+    GiftCardNumberInput {}
+}
+
+@SdkLightDarkPreviews
 @Composable
 internal fun PreviewGiftCardNumberInput() {
-    SdkTheme {
-        Surface(color = Theme.colors.surface) {
-            GiftCardNumberInput(value = "4242424242424242") {
+    GiftCardNumberInput(value = "4242424242424242") {
 
-            }
-        }
     }
 }

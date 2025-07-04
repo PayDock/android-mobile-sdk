@@ -11,8 +11,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Dp
 import com.paydock.core.MobileSDKConstants
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.components.input.TextFieldAppearance
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
+import com.paydock.designsystems.core.WidgetDefaults
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.ui.CardScheme
 
@@ -29,6 +32,11 @@ import com.paydock.feature.card.domain.model.ui.CardScheme
  *
  * @param shouldCollectCardholderName Determines whether the cardholder's name field is displayed.
  * @param schemeConfig Defines the supported card schemes and validation settings.
+ * @param verticalSpacing The spacing between the expiry and security code input fields
+ * when laid out in a column. Defaults to [WidgetDefaults.Spacing].
+ * @param horizontalSpacing The spacing between the expiry and security code input fields
+ * when laid out in a row. Defaults to [WidgetDefaults.Spacing].
+ * @param textFieldAppearance The appearance configuration for the text fields. Defaults to [TextFieldAppearanceDefaults.appearance].
  * @param focusCardNumber A [FocusRequester] to manage focus for the card number input.
  * @param focusExpiry A [FocusRequester] to manage focus for the expiry date input.
  * @param focusCode A [FocusRequester] to manage focus for the security code input.
@@ -45,14 +53,16 @@ import com.paydock.feature.card.domain.model.ui.CardScheme
  *
  * UI Behavior:
  * - If `shouldCollectCardholderName` is `true`, the cardholder name input field is shown.
- * - When the system's font scale exceeds a predefined threshold, expiry and security code fields are displayed in a column layout.
- * - Otherwise, expiry and security code fields are displayed in a row layout for better alignment.
+ * - When the system's font scale exceeds a predefined threshold ([MobileSDKConstants.CardDetailsConfig.FONT_SCALE_THRESHOLD]),
  */
 @Suppress("LongParameterList")
 @Composable
 internal fun CardInputFields(
     shouldCollectCardholderName: Boolean,
     schemeConfig: SupportedSchemeConfig,
+    verticalSpacing: Dp = WidgetDefaults.Spacing,
+    horizontalSpacing: Dp = WidgetDefaults.Spacing,
+    textFieldAppearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     focusCardNumber: FocusRequester,
     focusExpiry: FocusRequester,
     focusCode: FocusRequester,
@@ -72,13 +82,17 @@ internal fun CardInputFields(
     // Define threshold for large font scale
     val largeFontScaleThreshold = MobileSDKConstants.CardDetailsConfig.FONT_SCALE_THRESHOLD
 
-    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing)) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(verticalSpacing)
+    ) {
         // Cardholder Name Input
         if (shouldCollectCardholderName) {
             CardHolderNameInput(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("cardHolderInput"),
+                appearance = textFieldAppearance,
                 value = cardHolderName,
                 enabled = enabled,
                 nextFocus = focusCardNumber,
@@ -92,6 +106,7 @@ internal fun CardInputFields(
                 .fillMaxWidth()
                 .focusRequester(focusCardNumber)
                 .testTag("cardNumberInput"),
+            appearance = textFieldAppearance,
             schemeConfig = schemeConfig,
             value = cardNumber,
             cardScheme = cardScheme,
@@ -103,6 +118,8 @@ internal fun CardInputFields(
         // Expiry and Security Code Inputs
         if (fontScale >= largeFontScaleThreshold) {
             ExpiryAndCodeColumn(
+                verticalSpacing = verticalSpacing,
+                appearance = textFieldAppearance,
                 expiry = expiry,
                 code = code,
                 focusExpiry = focusExpiry,
@@ -114,6 +131,8 @@ internal fun CardInputFields(
             )
         } else {
             ExpiryAndCodeRow(
+                horizontalSpacing = horizontalSpacing,
+                appearance = textFieldAppearance,
                 expiry = expiry,
                 code = code,
                 focusExpiry = focusExpiry,
@@ -130,6 +149,8 @@ internal fun CardInputFields(
 /**
  * Composable function to display the expiry and security code input fields in a column layout.
  *
+ * @param verticalSpacing The spacing between the expiry and security code input fields. Defaults to [WidgetDefaults.Spacing].
+ * @param appearance The appearance configuration for the text fields. Defaults to [TextFieldAppearanceDefaults.appearance].
  * @param expiry The expiry date value to be displayed in the input field.
  * @param code The security code value to be displayed in the input field.
  * @param focusExpiry The [FocusRequester] used to manage focus for the expiry date input.
@@ -139,9 +160,10 @@ internal fun CardInputFields(
  * @param onExpiryChange Callback function to handle changes to the expiry date input value.
  * @param onSecurityCodeChange Callback function to handle changes to the security code input value.
  */
-@Suppress("LongParameterList")
 @Composable
 private fun ExpiryAndCodeColumn(
+    verticalSpacing: Dp = WidgetDefaults.Spacing,
+    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     expiry: String,
     code: String,
     focusExpiry: FocusRequester,
@@ -153,22 +175,24 @@ private fun ExpiryAndCodeColumn(
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing),
+        verticalArrangement = Arrangement.spacedBy(verticalSpacing),
         horizontalAlignment = Alignment.Start
     ) {
         CardExpiryInput(
             modifier = Modifier
                 .focusRequester(focusExpiry)
                 .testTag("cardExpiryInput"),
+            appearance = appearance,
             value = expiry,
             enabled = enabled,
+            nextFocus = focusCode,
             onValueChange = onExpiryChange,
-            nextFocus = focusCode
         )
         CardSecurityCodeInput(
             modifier = Modifier
                 .focusRequester(focusCode)
                 .testTag("cardSecurityCodeInput"),
+            appearance = appearance,
             value = code,
             enabled = enabled,
             cardCode = cardScheme?.code,
@@ -181,18 +205,22 @@ private fun ExpiryAndCodeColumn(
 /**
  * Composable function to display the expiry and security code input fields in a row layout.
  *
+ * @param horizontalSpacing The spacing between the expiry and security code input fields. Defaults to [WidgetDefaults.Spacing].
+ * @param appearance The appearance configuration for the text fields. Defaults to [TextFieldAppearanceDefaults.appearance].
  * @param expiry The expiry date value to be displayed in the input field.
  * @param code The security code value to be displayed in the input field.
  * @param focusExpiry The [FocusRequester] used to manage focus for the expiry date input.
  * @param focusCode The [FocusRequester] used to manage focus for the security code input.
  * @param enabled A flag indicating whether the input fields should be enabled or disabled.
- * @param cardScheme The detected [CardScheme] based on the card number input.
+ * @param cardScheme The detected [CardScheme] based on the card number input. Used to determine
+ * the appropriate security code label and format.
  * @param onExpiryChange Callback function to handle changes to the expiry date input value.
  * @param onSecurityCodeChange Callback function to handle changes to the security code input value.
  */
-@Suppress("LongParameterList")
 @Composable
 private fun ExpiryAndCodeRow(
+    horizontalSpacing: Dp = WidgetDefaults.Spacing,
+    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     expiry: String,
     code: String,
     focusExpiry: FocusRequester,
@@ -200,11 +228,11 @@ private fun ExpiryAndCodeRow(
     enabled: Boolean,
     cardScheme: CardScheme?,
     onExpiryChange: (String) -> Unit,
-    onSecurityCodeChange: (String) -> Unit
+    onSecurityCodeChange: (String) -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Theme.dimensions.spacing, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.spacedBy(horizontalSpacing, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.Top
     ) {
         CardExpiryInput(
@@ -212,6 +240,7 @@ private fun ExpiryAndCodeRow(
                 .weight(0.5f)
                 .focusRequester(focusExpiry)
                 .testTag("cardExpiryInput"),
+            appearance = appearance,
             value = expiry,
             enabled = enabled,
             onValueChange = onExpiryChange,

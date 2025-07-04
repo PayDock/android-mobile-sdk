@@ -28,26 +28,7 @@
     <string name="error_expiry_expired">Card expired</string>
     <string name="error_security_code">Invalid security code</string>
     <string name="error_pin">Invalid PIN number</string>
-    <string name="error_web_client_error">Client Error: There was an issue with your request.</string>
-    <string name="error_web_server_error">Server Error: The server encountered an issue.</string>
-    <string name="error_web_unknown_error">An unexpected error occurred</string>
-    <string name="error_web_display_error">Sorry, there was an issue loading the page: %s</string>
-    <string name="error_googlepay_cancelled">Google Pay transaction was cancelled!</string>
-    <string name="error_googlepay_unexpected">An unexpected error has occurred trying to use Google Pay!</string>
-    <string name="error_paypal_canceled">PayPal transaction was cancelled!</string>
-    <string name="error_paypal_vault_canceled">PayPal Vault process was cancelled!</string>
-    <string name="error_coles_pay_canceled">Coles Pay transaction was cancelled!</string>
-    <string name="error_wallet_canceled">A wallet token is always associated with a wallet transaction!</string>
-    <string name="error_afterpay_canceled">Afterpay transaction was cancelled!</string>
-    <string name="error_afterpay_sdk_internal_data">Intent should always be populated by the SDK!</string>
-    <string name="error_afterpay_sdk_internal_token">A token is always associated with a successful Afterpay transaction!</string>
-    <string name="error_afterpay_sdk_internal_status">A cancelled Afterpay transaction always contains a status!</string>
-    <string name="error_click_to_pay_cancelled">Click to Pay transaction was cancelled!</string>
-    <string name="error_3ds_cancelled_error">3DS transaction was cancelled!</string>
-    <string name="error_standalone_3ds_invalid_token">Invalid Standalone 3DS token!</string>
-    <string name="error_standalone_3ds_invalid_token_format">Invalid Standalone 3DS token format!</string>
-    <string name="error_integrated_3ds_invalid_token">Invalid Integrated 3DS token!</string>
-    <string name="error_integrated_3ds_invalid_token_format">Invalid Integrated 3DS token format!</string>
+    <string name="error_input_default">Input invalid</string>
     <!-- endregion -->
     <!-- region Buttons -->
     <string name="button_enter_address_manually">Or enter address manually</string>

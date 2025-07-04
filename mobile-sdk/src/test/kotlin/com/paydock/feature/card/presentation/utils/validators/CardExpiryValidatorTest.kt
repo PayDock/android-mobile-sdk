@@ -10,9 +10,9 @@ internal class CardExpiryValidatorTest {
 
     @Test
     fun testIsCardExpired_NotExpired() {
-        assertFalse(CardExpiryValidator.isCardExpired("1225"))
+        assertFalse(CardExpiryValidator.isCardExpired("1229"))
         assertFalse(CardExpiryValidator.isCardExpired("0127"))
-        assertFalse(CardExpiryValidator.isCardExpired("0625"))
+        assertFalse(CardExpiryValidator.isCardExpired("0637"))
     }
 
     @Test

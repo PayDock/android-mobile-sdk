@@ -17,19 +17,28 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
+import com.paydock.feature.paypal.checkout.presentation.PayPalAppearanceDefaults
 import com.paydock.feature.paypal.checkout.presentation.PayPalWidget
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
+import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.wallet.presentation.WalletViewModel
 
 @Composable
-fun PayPalItem(context: Context, walletViewModel: WalletViewModel = hiltViewModel()) {
+fun PayPalItem(
+    context: Context,
+    walletViewModel: WalletViewModel = hiltViewModel(),
+    stylingViewModel: StylingViewModel
+) {
     val uiState by walletViewModel.stateFlow.collectAsState()
+    val paypalAppearance by stylingViewModel.paypalWidgetAppearance.collectAsState()
+    val currentOrDefaultAppearance = paypalAppearance ?: PayPalAppearanceDefaults.appearance()
     PayPalWidget(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        token = walletViewModel.getWalletToken(WalletType.PAY_PAL),
+        tokenRequest = walletViewModel.getWalletTokenResultCallback(WalletType.PAY_PAL),
+        appearance = currentOrDefaultAppearance
     ) { result ->
         result.onSuccess {
             Log.d("[PayPalWidget]", "Success: $it")

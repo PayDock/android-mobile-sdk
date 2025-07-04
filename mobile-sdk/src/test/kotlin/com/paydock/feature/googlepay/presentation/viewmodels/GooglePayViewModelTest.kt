@@ -16,6 +16,7 @@ import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.utils.MainDispatcherRule
+import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.util.PaymentsUtil
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
@@ -67,7 +68,10 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
         val isReadyToPayRequestJson = PaymentsUtil.createIsReadyToPayRequest()
         viewModel = GooglePayViewModel(
             paymentsClient,
-            isReadyToPayRequestJson,
+            GooglePayWidgetConfig(
+                isReadyToPayRequestJson,
+                JSONObject()
+            ),
             captureWalletChargeUseCase,
             declineWalletChargeUseCase,
             getWalletCallbackUseCase,
@@ -97,7 +101,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
             awaitItem().let { state ->
                 assertIs<GooglePayUIState.Error>(state)
                 assertIs<GooglePayException.CancellationException>(state.exception)
-                assertEquals(state.exception.message, MobileSDKConstants.Errors.GOOGLE_PAY_CANCELLATION_ERROR)
+                assertEquals(state.exception.message, MobileSDKConstants.GooglePayConfig.Errors.CANCELLATION_ERROR)
             }
         }
     }
@@ -109,7 +113,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
             awaitItem().let { state ->
                 assertIs<GooglePayUIState.Error>(state)
                 assertIs<GooglePayException.ResultException>(state.exception)
-                assertEquals(state.exception.message, MobileSDKConstants.Errors.GOOGLE_PAY_DEV_ERROR)
+                assertEquals(state.exception.message, MobileSDKConstants.GooglePayConfig.Errors.DEV_ERROR)
             }
         }
     }

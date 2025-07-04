@@ -222,36 +222,36 @@ internal class MapperTest : BaseUnitTest() {
     @Test
     fun testUserInitiatedCancellationMappingToString() {
         val message = CancellationStatus.USER_INITIATED.mapMessage()
-        assertEquals(MobileSDKConstants.Afterpay.USER_INITIATED_ERROR_MESSAGE, message)
+        assertEquals(MobileSDKConstants.AfterpayConfig.USER_INITIATED_ERROR_MESSAGE, message)
     }
 
     @Test
     fun testNoCheckoutUrlCancellationMappingToString() {
         val message = CancellationStatus.NO_CHECKOUT_URL.mapMessage()
-        assertEquals(MobileSDKConstants.Afterpay.NO_CHECKOUT_URL_ERROR_MESSAGE, message)
+        assertEquals(MobileSDKConstants.AfterpayConfig.NO_CHECKOUT_URL_ERROR_MESSAGE, message)
     }
 
     @Test
     fun testInvalidCheckoutUrlCancellationMappingToString() {
         val message = CancellationStatus.INVALID_CHECKOUT_URL.mapMessage()
-        assertEquals(MobileSDKConstants.Afterpay.INVALID_CHECKOUT_URL_ERROR_MESSAGE, message)
+        assertEquals(MobileSDKConstants.AfterpayConfig.INVALID_CHECKOUT_URL_ERROR_MESSAGE, message)
     }
 
     @Test
     fun testNoCheckoutHandlerCancellationMappingToString() {
         val message = CancellationStatus.NO_CHECKOUT_HANDLER.mapMessage()
-        assertEquals(MobileSDKConstants.Afterpay.NO_CHECKOUT_HANDLER_ERROR_MESSAGE, message)
+        assertEquals(MobileSDKConstants.AfterpayConfig.NO_CHECKOUT_HANDLER_ERROR_MESSAGE, message)
     }
 
     @Test
     fun testNoConfigurationCancellationMappingToString() {
         val message = CancellationStatus.NO_CONFIGURATION.mapMessage()
-        assertEquals(MobileSDKConstants.Afterpay.NO_CONFIGURATION_ERROR_MESSAGE, message)
+        assertEquals(MobileSDKConstants.AfterpayConfig.NO_CONFIGURATION_ERROR_MESSAGE, message)
     }
 
     @Test
     fun testLanguageNotSupportedCancellationMappingToString() {
         val message = CancellationStatus.LANGUAGE_NOT_SUPPORTED.mapMessage()
-        assertEquals(MobileSDKConstants.Afterpay.LANGUAGE_NOT_SUPPORTED_ERROR_MESSAGE, message)
+        assertEquals(MobileSDKConstants.AfterpayConfig.LANGUAGE_NOT_SUPPORTED_ERROR_MESSAGE, message)
     }
 }

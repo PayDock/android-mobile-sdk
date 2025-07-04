@@ -13,9 +13,11 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.GooglePayException
 import com.paydock.core.domain.error.extensions.mapApiException
+import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.wallet.data.dto.CaptureWalletChargeRequest
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
@@ -30,23 +32,21 @@ import org.json.JSONObject
 /**
  * ViewModel to manage the Google Pay payment flow and UI state.
  *
- * This ViewModel is responsible for handling the interactions with the Google Pay API,
- * managing the UI state related to Google Pay availability and payment processing,
- * and coordinating with various use cases for capturing, declining, and retrieving
- * wallet charge information.
+ * This ViewModel extends [WalletViewModel] and specifically handles the
+ * UI state and payment interactions related to Google Pay. It is responsible
+ * for checking Google Pay availability, initiating payment requests,
+ * processing payment results, and handling potential errors during the flow.
  *
- * @property paymentsClient The Google Pay [PaymentsClient] instance used for interacting with the Google Pay API.
- *                          This client is essential for initiating payment requests and checking Google Pay readiness.
- * @param isReadyToPayRequest The JSON object representing the "isReadyToPay" request.
- *                             This is used during initialization to determine if the user can use Google Pay.
- * @param captureWalletChargeUseCase Use case responsible for capturing a wallet charge after a successful Google Pay transaction.
- * @param declineWalletChargeUseCase Use case responsible for declining a wallet charge if necessary.
- * @param getWalletCallbackUseCase Use case responsible for retrieving wallet callback information.
- * @param dispatchers Provides CoroutineDispatchers for managing asynchronous operations on different threads.
+ * @param paymentsClient The Google Pay [PaymentsClient] instance for initiating payment requests.
+ * @param config The [GooglePayWidgetConfig] containing configuration details for the Google Pay widget.
+ * @param captureWalletChargeUseCase Use case for capturing wallet charges.
+ * @param declineWalletChargeUseCase Use case for declining wallet charges.
+ * @param getWalletCallbackUseCase Use case for retrieving wallet callback information.
+ * @param dispatchers The dispatchers for coroutine context switching.
  */
 internal class GooglePayViewModel(
     private val paymentsClient: PaymentsClient,
-    isReadyToPayRequest: JSONObject,
+    private val config: GooglePayWidgetConfig,
     captureWalletChargeUseCase: CaptureWalletChargeUseCase,
     declineWalletChargeUseCase: DeclineWalletChargeUseCase,
     getWalletCallbackUseCase: GetWalletCallbackUseCase,
@@ -78,7 +78,7 @@ internal class GooglePayViewModel(
     val googlePayAvailable: StateFlow<Boolean> = _googlePayAvailable.asStateFlow()
 
     init {
-        fetchCanUseGooglePay(isReadyToPayRequest)
+        fetchCanUseGooglePay(config.isReadyToPayRequest)
     }
 
     //region Overridden Methods
@@ -150,10 +150,10 @@ internal class GooglePayViewModel(
                 val isReadyToPay = paymentsClient.isReadyToPay(request).await()
                 _googlePayAvailable.value = isReadyToPay
                 if (!isReadyToPay) {
-                    handleGooglePayInitializationError(MobileSDKConstants.Errors.GOOGLE_PAY_ERROR)
+                    handleGooglePayInitializationError(MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_ERROR)
                 }
             } catch (exception: ApiException) {
-                handleGooglePayInitializationError(exception.message ?: MobileSDKConstants.Errors.GOOGLE_PAY_ERROR)
+                handleGooglePayInitializationError(exception.message ?: MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_ERROR)
             }
         }
     }
@@ -192,30 +192,41 @@ internal class GooglePayViewModel(
      *
      * This function sets the UI to a loading state and then invokes the [tokenProvider]
      * to obtain a wallet token. Once the token is received, it proceeds to the
-     * `onTokenReceivedAndReadyToPay` method with the token and the provided [paymentRequest].
+     * `onTokenReceivedAndReadyToPay` method with the token.
      *
-     * @param tokenProvider A higher-order function that takes a callback `(String) -> Unit`
+     * @param tokenProvider A higher-order function that takes a callback `(Result<WalletTokenResult>) -> Unit`
      *                      and is responsible for asynchronously providing the wallet token.
-     *                      The callback should be invoked with the received token.
-     * @param paymentRequest A [JSONObject] containing the details of the Google Pay payment request.
-     *                       This object is used to configure the payment sheet presented to the user.
+     *                      The callback should be invoked with the [Result] of the token retrieval operation.
+     *                      On success, the [Result] will contain a [WalletTokenResult] with the token.
+     *                      On failure, the [Result] will contain an appropriate [Throwable].
      */
     fun startGooglePayPaymentFlow(
-        tokenProvider: (onTokenReceived: (String) -> Unit) -> Unit,
-        paymentRequest: JSONObject // Pass paymentRequest here
+        tokenProvider: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit,
     ) {
         setLoadingState()
-        tokenProvider { receivedToken ->
-            // This is where the token is received.
-            // Now we have the token and can proceed.
-            onTokenReceivedAndReadyToPay(receivedToken, paymentRequest)
+        tokenProvider.invoke { tokenResult ->
+            tokenResult.onSuccess { result ->
+                // This is where the token is received.
+                // Now we have the token and can proceed.
+                onTokenReceivedAndReadyToPay(result.token)
+            }.onFailure { throwable ->
+                updateUiState(
+                    GooglePayUIState.Error(
+                        GooglePayException.InitialisationWalletTokenException(
+                            throwable.message ?: MobileSDKConstants.GooglePayConfig.Errors.WALLET_TOKEN_ERROR
+                        )
+                    )
+                )
+            }
         }
     }
+    //endregion
 
+    //region Public Methods
     /**
      * Handles the cancellation result by updating the UI state to an error state.
      */
-    fun handleCancellationResult(message: String = MobileSDKConstants.Errors.GOOGLE_PAY_CANCELLATION_ERROR) {
+    fun handleCancellationResult(message: String = MobileSDKConstants.GooglePayConfig.Errors.CANCELLATION_ERROR) {
         updateUiState(
             GooglePayUIState.Error(
                 GooglePayException.CancellationException(message)
@@ -226,12 +237,11 @@ internal class GooglePayViewModel(
     /**
      * Extracts allowed payment methods from the payment request.
      *
-     * @param paymentRequest The JSON object containing the payment request details.
      * @return A string representing the allowed payment methods, or null if extraction fails.
      */
-    fun extractAllowedPaymentMethods(paymentRequest: JSONObject): String? {
+    fun extractAllowedPaymentMethods(request: JSONObject = config.paymentRequest): String? {
         return runCatching {
-            paymentRequest.getJSONArray(MobileSDKConstants.GooglePayConfig.ALLOWED_PAYMENT_METHODS_KEY)
+            request.getJSONArray(MobileSDKConstants.GooglePayConfig.ALLOWED_PAYMENT_METHODS_KEY)
                 .toString()
         }.getOrElse {
             updateUiState(
@@ -274,18 +284,14 @@ internal class GooglePayViewModel(
      * implementation, it directly proceeds to fetch the payment task.
      *
      * @param token The wallet token received from the token provider.
-     * @param paymentRequest A [JSONObject] containing the details of the Google Pay payment request.
-     *                       This is used to configure the Google Pay payment sheet.
      */
-    private fun onTokenReceivedAndReadyToPay(token: String, paymentRequest: JSONObject) {
+    private fun onTokenReceivedAndReadyToPay(token: String) {
         setWalletToken(token)
         setLoadingState()
         // In a real scenario, you might do an API call here with the walletToken
         // For now, let's assume we proceed directly to getting the payment task
         launchOnIO {
-            // Potentially fetch something with the walletToken if needed first
-            // For now, directly get the payment task
-            val task = getLoadPaymentDataTask(paymentRequest)
+            val task = getLoadPaymentDataTask()
             updateUiState(GooglePayUIState.LaunchGooglePayTask(task))
         }
     }
@@ -293,11 +299,10 @@ internal class GooglePayViewModel(
     /**
      * Creates a [Task] that starts the payment process with the transaction details included.
      *
-     * @param paymentRequest The JSON object containing the payment request details.
      * @return A [Task] with the payment information.
      */
-    private fun getLoadPaymentDataTask(paymentRequest: JSONObject): Task<PaymentData> {
-        val request = PaymentDataRequest.fromJson(paymentRequest.toString())
+    private fun getLoadPaymentDataTask(): Task<PaymentData> {
+        val request = PaymentDataRequest.fromJson(config.paymentRequest.toString())
         return paymentsClient.loadPaymentData(request)
     }
 
@@ -316,20 +321,11 @@ internal class GooglePayViewModel(
                 .onFailure { exception ->
                     handleErrorResult(
                         exception.message
-                            ?: MobileSDKConstants.Errors.GOOGLE_PAY_TOKEN_ERROR
-                    )
-
-                    updateUiState(
-                        GooglePayUIState.Error(
-                            GooglePayException.ResultException(
-                                exception.message
-                                    ?: MobileSDKConstants.Errors.GOOGLE_PAY_TOKEN_ERROR
-                            )
-                        )
+                            ?: MobileSDKConstants.GooglePayConfig.Errors.TOKEN_ERROR
                     )
                 }
         } ?: run {
-            handleErrorResult(MobileSDKConstants.Errors.GOOGLE_PAY_ERROR)
+            handleErrorResult(MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_ERROR)
         }
     }
 
@@ -341,11 +337,11 @@ internal class GooglePayViewModel(
     fun handleGooglePayResultErrors(statusCode: Int) {
         when (statusCode) {
             CommonStatusCodes.CANCELED -> handleCancellationResult()
-            CommonStatusCodes.DEVELOPER_ERROR -> handleErrorResult(MobileSDKConstants.Errors.GOOGLE_PAY_DEV_ERROR)
+            CommonStatusCodes.DEVELOPER_ERROR -> handleErrorResult(MobileSDKConstants.GooglePayConfig.Errors.DEV_ERROR)
             else -> {
                 val statusCodeMessage = CommonStatusCodes.getStatusCodeString(statusCode)
                 val errorMessage =
-                    "[$statusCodeMessage] ${MobileSDKConstants.Errors.GOOGLE_PAY_ERROR}"
+                    "[$statusCodeMessage] ${MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_ERROR}"
                 handleErrorResult(errorMessage)
             }
         }
@@ -360,16 +356,16 @@ internal class GooglePayViewModel(
         when (status?.statusCode) {
             WalletConstants.ERROR_CODE_USER_CANCELLED ->
                 handleCancellationResult(
-                    status.statusMessage ?: MobileSDKConstants.Errors.GOOGLE_PAY_CANCELLATION_ERROR
+                    status.statusMessage ?: MobileSDKConstants.GooglePayConfig.Errors.CANCELLATION_ERROR
                 )
 
             WalletConstants.ERROR_CODE_DEVELOPER_ERROR -> handleErrorResult(
-                status.statusMessage ?: MobileSDKConstants.Errors.GOOGLE_PAY_DEV_ERROR
+                status.statusMessage ?: MobileSDKConstants.GooglePayConfig.Errors.DEV_ERROR
             )
 
             else -> {
                 val errorMessage =
-                    status?.statusMessage ?: MobileSDKConstants.Errors.GOOGLE_PAY_ERROR
+                    status?.statusMessage ?: MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_ERROR
                 handleErrorResult(errorMessage)
             }
         }

@@ -75,6 +75,14 @@ sealed class AfterpayException(displayableMessage: String) : SdkException(displa
     class ParseException(displayableMessage: String, val errorBody: String?) : AfterpayException(displayableMessage)
 
     /**
+     * Exception thrown when there is an error during the initialisation of the Afterpay wallet token.
+     *
+     * @param displayableMessage A human-readable message describing the error.
+     * @constructor Creates an InitialisationWalletTokenException with the specified displayable message.
+     */
+    class InitialisationWalletTokenException(displayableMessage: String) : AfterpayException(displayableMessage)
+
+    /**
      * Exception thrown when there is an unknown error related to Afterpay.
      *
      * @param displayableMessage A human-readable message describing the error.

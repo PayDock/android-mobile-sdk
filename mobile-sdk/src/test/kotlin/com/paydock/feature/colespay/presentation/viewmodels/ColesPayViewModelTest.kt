@@ -10,6 +10,7 @@ import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.utils.MainDispatcherRule
+import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
 import com.paydock.feature.colespay.presentation.state.ColesPayUIState
 import com.paydock.feature.wallet.data.dto.WalletCallbackResponse
 import com.paydock.feature.wallet.data.mapper.asEntity
@@ -52,7 +53,7 @@ internal class ColesPayViewModelTest : BaseKoinUnitTest() {
         declineWalletChargeUseCase = mockk()
         getWalletCallbackUseCase = mockk()
         viewModel = ColesPayViewModel(
-            MobileSDKTestConstants.ColesPay.MOCK_CLIENT_ID,
+            ColesPayWidgetConfig(MobileSDKTestConstants.ColesPay.MOCK_CLIENT_ID),
             captureWalletChargeUseCase,
             declineWalletChargeUseCase,
             getWalletCallbackUseCase,

@@ -3,7 +3,7 @@ package com.paydock.feature.threeDS.common.utils
 import com.paydock.core.BaseUnitTest
 import com.paydock.feature.threeDS.common.domain.model.ui.Token
 import com.paydock.feature.threeDS.common.domain.model.ui.enums.TokenFormat
-import com.paydock.feature.threeDS.common.domain.presentation.utils.ThreeDSTokenUtils
+import com.paydock.feature.threeDS.common.presentation.utils.ThreeDSTokenUtils
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

@@ -3,12 +3,12 @@ package com.paydock.sample.feature.widgets.ui.components
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.paydock.core.domain.error.displayableMessage
@@ -20,13 +20,20 @@ import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.SaveCardConfig
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.integration.enums.CardType
+import com.paydock.feature.card.presentation.CardDetailsAppearanceDefaults
 import com.paydock.feature.card.presentation.CardDetailsWidget
 import com.paydock.sample.BuildConfig
+import com.paydock.sample.feature.style.StylingViewModel
 
 @Composable
-fun CardDetailsItem(context: Context) {
-        CardDetailsWidget(
-            modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState()),
+fun CardDetailsItem(context: Context, stylingViewModel: StylingViewModel) {
+    val cardDetailsAppearance by stylingViewModel.cardDetailsWidgetAppearance.collectAsState()
+    val currentOrDefaultAppearance =
+        cardDetailsAppearance ?: CardDetailsAppearanceDefaults.appearance()
+    CardDetailsWidget(
+        modifier = Modifier
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
             config = CardDetailsWidgetConfig(
                 accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
                 gatewayId = BuildConfig.GATEWAY_ID_MPGS,
@@ -49,6 +56,7 @@ fun CardDetailsItem(context: Context) {
                     enableValidation = true
                 )
             ),
+        appearance = currentOrDefaultAppearance,
             completion = { result ->
                 // This breaks down 3 ways to retrieve and handle the result
                 // Option 1: Default Result Handler

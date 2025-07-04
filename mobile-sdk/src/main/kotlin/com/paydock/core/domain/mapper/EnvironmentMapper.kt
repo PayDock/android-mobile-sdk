@@ -26,8 +26,8 @@ internal fun Environment.mapToBaseUrl(): String = when (this) {
  */
 internal fun Environment.mapToClientSDKLibrary(): String = when (this) {
     Environment.PRODUCTION -> ClientSDKConstants.Library.PROD
-    Environment.SANDBOX,
-    Environment.STAGING -> ClientSDKConstants.Library.STAGING_SANDBOX
+    Environment.SANDBOX -> ClientSDKConstants.Library.SANDBOX
+    Environment.STAGING -> ClientSDKConstants.Library.STAGING
 }
 
 /**

@@ -34,7 +34,7 @@ internal class ClickToPayJSBridge(
                 ClickToPayEvent.CheckoutErrorEvent(
                     data = ErrorData.CriticalErrorData(
                         type = EventDataType.CRITICAL_ERROR,
-                        data = e.message ?: MobileSDKConstants.Errors.SERIALIZATION_ERROR
+                        data = e.message ?: MobileSDKConstants.General.Errors.SERIALIZATION_ERROR
                     )
                 )
             )
@@ -44,7 +44,7 @@ internal class ClickToPayJSBridge(
                 ClickToPayEvent.CheckoutErrorEvent(
                     data = ErrorData.CriticalErrorData(
                         type = EventDataType.CRITICAL_ERROR,
-                        data = e.message ?: MobileSDKConstants.Errors.CLICK_TO_PAY_ERROR
+                        data = e.message ?: MobileSDKConstants.ClickToPayConfig.Errors.CLICK_TO_PAY_ERROR
                     )
                 )
             )

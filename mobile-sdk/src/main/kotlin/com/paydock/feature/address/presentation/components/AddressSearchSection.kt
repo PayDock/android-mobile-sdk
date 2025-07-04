@@ -2,13 +2,16 @@ package com.paydock.feature.address.presentation.components
 
 import android.location.Address
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.paydock.R
-import com.paydock.designsystems.theme.Theme
+import com.paydock.designsystems.components.search.SearchDropdownAppearance
+import com.paydock.designsystems.components.search.SearchDropdownAppearanceDefaults
+import com.paydock.designsystems.components.text.SdkText
+import com.paydock.designsystems.components.text.TextAppearance
+import com.paydock.designsystems.components.text.TextAppearanceDefaults
 
 /**
  * A composable that displays an address search section with a header and an input field
@@ -33,18 +36,22 @@ import com.paydock.designsystems.theme.Theme
  * - The input field is tagged with `"addressSearch"` for UI testing.
  */
 @Composable
-fun AddressSearchSection(onAddressSelected: (Address) -> Unit) {
+fun AddressSearchSection(
+    titleAppearance: TextAppearance = TextAppearanceDefaults.appearance(),
+    searchAppearance: SearchDropdownAppearance = SearchDropdownAppearanceDefaults.appearance(),
+    onAddressSelected: (Address) -> Unit
+) {
     // Header text
-    Text(
+    SdkText(
         modifier = Modifier.fillMaxWidth(),
-        style = Theme.typography.body1,
+        appearance = titleAppearance,
         text = stringResource(R.string.label_find_an_address),
-        color = Theme.colors.onSurface
     )
 
     // Address search input
     AddressSearchInput(
         modifier = Modifier.testTag("addressSearch"),
+        appearance = searchAppearance,
         onAddressSelected = onAddressSelected
     )
 }

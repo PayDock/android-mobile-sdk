@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.feature.card.domain.model.integration.enums.CardType
 
 /**
@@ -39,4 +40,10 @@ internal fun SupportedCardBanner(supportedSchemes: Set<CardType>) {
             }
         }
     }
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewSupportedCardBanner() {
+    SupportedCardBanner(CardType.entries.toSet())
 }

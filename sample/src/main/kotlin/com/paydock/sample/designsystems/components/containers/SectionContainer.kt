@@ -9,7 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.designsystems.theme.SampleTheme
 
@@ -21,18 +21,16 @@ fun SectionContainer(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 24.dp)
     ) {
         TitleSection(modifier = Modifier.fillMaxWidth(), title = title, subTitle = subTitle)
         content()
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 internal fun PreviewSectionContainer() {
     SampleTheme {
@@ -42,7 +40,7 @@ internal fun PreviewSectionContainer() {
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 internal fun PreviewSectionContainerWithSubTitle() {
     SampleTheme {

@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.asStateFlow
  * @param createPayPalVaultPaymentTokenUseCase Use case to create a payment token for the PayPal vault.
  * @param dispatchers Provides dispatcher context for coroutine operations.
  */
-@Suppress("LongParameterList")
 internal class PayPalVaultViewModel(
     private val config: PayPalVaultConfig,
     private val createSetupTokenUseCase: CreateSetupTokenUseCase,
