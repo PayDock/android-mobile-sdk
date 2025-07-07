@@ -26,6 +26,7 @@ import java.math.BigDecimal
 @Composable
 fun GooglePayContent(
     stylingViewModel: StylingViewModel,
+    enabled: Boolean = true,
     tokenHandler: (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
     resultHandler: (Result<ChargeResponse>) -> Unit,
@@ -38,6 +39,7 @@ fun GooglePayContent(
     val currentOrDefaultAppearance = googlePayAppearance ?: GooglePayAppearanceDefaults.appearance()
     GooglePayWidget(
         modifier = Modifier.fillMaxWidth(),
+        enabled = enabled,
         tokenRequest = tokenHandler,
         config = GooglePayWidgetConfig(
             isReadyToPayRequest = PaymentsUtil.createIsReadyToPayRequest(),

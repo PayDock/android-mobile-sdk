@@ -23,6 +23,7 @@ import java.util.Currency
 @Composable
 fun AfterpayContent(
     stylingViewModel: StylingViewModel,
+    enabled: Boolean = true,
     tokenHandler: (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
     resultHandler: (Result<ChargeResponse>) -> Unit,
@@ -45,6 +46,7 @@ fun AfterpayContent(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
+        enabled = enabled,
         tokenRequest = tokenHandler,
         config = configuration,
         appearance = currentOrDefaultAppearance,
