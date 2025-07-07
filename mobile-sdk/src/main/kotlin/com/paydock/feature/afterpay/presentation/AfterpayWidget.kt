@@ -109,7 +109,6 @@ fun AfterpayWidget(
     LaunchedEffect(uiState::class) {
         handleUIState(uiState, viewModel, resolvePaymentForResult, loadingDelegate, checkoutHandler, completion)
     }
-
     // Render the Afterpay widget UI
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         if (isConfigured) {
@@ -119,15 +118,25 @@ fun AfterpayWidget(
                     .height(ButtonAppearanceDefaults.ButtonHeight),
                 factory = { context ->
                     AfterpayPaymentButton(context).apply {
+                        // Initial properties
+                        this.buttonText = appearance.buttonText
+                        this.colorScheme = appearance.colorScheme
+
                         this.buttonText = appearance.buttonText
                         this.colorScheme = appearance.colorScheme
                         this.isEnabled = enabled
 
-                        // Set up click listener to initiate the checkout process
+                        // The button's own isEnabled state should be the source of truth here,
+                        // which is updated by Compose's 'finalButtonEnabled' via the update lambda.
                         setOnClickListener {
                             viewModel.startAfterpayFlow(tokenRequest, context, config)
                         }
                     }
+                },
+                update = { view ->
+                    view.buttonText = appearance.buttonText
+                    view.colorScheme = appearance.colorScheme
+                    view.isEnabled = uiState !is AfterpayUIState.Loading && enabled
                 }
             )
         }

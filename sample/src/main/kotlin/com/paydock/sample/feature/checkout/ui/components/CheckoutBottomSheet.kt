@@ -98,6 +98,7 @@ fun CheckoutBottomSheet(
 
                         WidgetType.GOOGLE_PAY -> GooglePayContent(
                             stylingViewModel = stylingViewModel,
+                            enabled = !uiState.isLoading,
                             tokenHandler = viewModel.getWalletTokenResultCallback(
                                 WalletType.GOOGLE
                             ),
@@ -115,6 +116,7 @@ fun CheckoutBottomSheet(
 
                         WidgetType.COLES_PAY -> ColesPayContent(
                             stylingViewModel = stylingViewModel,
+                            enabled = !uiState.isLoading,
                             tokenHandler = viewModel.getWalletTokenResultCallback(WalletType.COLES_PAY),
                             loadingDelegate = viewModel,
                             resultHandler = viewModel::handleColesPayResult
@@ -122,6 +124,7 @@ fun CheckoutBottomSheet(
 
                         WidgetType.AFTER_PAY -> AfterpayContent(
                             stylingViewModel = stylingViewModel,
+                            enabled = !uiState.isLoading,
                             tokenHandler = viewModel.getWalletTokenResultCallback(WalletType.AFTER_PAY),
                             loadingDelegate = viewModel,
                             resultHandler = viewModel::handleChargeResult

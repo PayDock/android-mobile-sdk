@@ -16,6 +16,7 @@ import com.paydock.sample.feature.style.StylingViewModel
 @Composable
 fun ColesPayContent(
     stylingViewModel: StylingViewModel,
+    enabled: Boolean = true,
     tokenHandler: (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
     resultHandler: (Result<String>) -> Unit,
@@ -25,6 +26,7 @@ fun ColesPayContent(
         colesPayAppearance ?: ColesPayWidgetAppearanceDefaults.appearance()
     ColesPayWidget(
         modifier = Modifier.fillMaxWidth(),
+        enabled = enabled,
         config = ColesPayWidgetConfig(BuildConfig.COLES_PAY_CLIENT_ID),
         appearance = currentOrDefaultAppearance,
         tokenRequest = tokenHandler,
