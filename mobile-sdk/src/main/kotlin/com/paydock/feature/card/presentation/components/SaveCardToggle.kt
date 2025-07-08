@@ -1,6 +1,5 @@
 package com.paydock.feature.card.presentation.components
 
-import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,8 +14,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.core.net.toUri
 import com.paydock.R
+import com.paydock.core.presentation.extensions.openBrowser
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.link.LinkTextAppearance
 import com.paydock.designsystems.components.link.LinkTextAppearanceDefaults
@@ -96,9 +95,7 @@ internal fun SaveCardToggle(
                     appearance = linkTextAppearance
                 ) {
                     if (enabled) {
-                        val uri = config.privacyPolicyConfig.privacyPolicyURL.toUri()
-                        val intent = Intent(Intent.ACTION_VIEW, uri)
-                        context.startActivity(intent)
+                        context.openBrowser(config.privacyPolicyConfig.privacyPolicyURL)
                     }
                 }
             }
