@@ -155,11 +155,12 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
                 ) {
                     items(dropdownContent.sorted()) { item ->
                         DropdownItem(item, appearance.dropdown) { selection ->
-                            if (selection != selectedItemValue) {
+                            if (selection != selectedItemValue && filteredResults.isNotEmpty()) {
                                 viewModel.setSelectedValue(item)
                                 onItemSelected(selection)
+                                // Only clear focus if an actual item is selected
+                                focusManager.clearFocus()
                             }
-                            focusManager.clearFocus()
                         }
                     }
                 }
