@@ -34,8 +34,7 @@ internal class CardHolderNameInputTest : BaseUITest() {
                 value = cardHolderName,
                 onValueChange = {
                     cardHolderName = it
-                },
-                appearance = textFieldAppearance
+                }
             )
         }
 
@@ -67,8 +66,7 @@ internal class CardHolderNameInputTest : BaseUITest() {
                 value = cardHolderName,
                 onValueChange = {
                     cardHolderName = it
-                },
-                appearance = textFieldAppearance
+                }
             )
         }
 
