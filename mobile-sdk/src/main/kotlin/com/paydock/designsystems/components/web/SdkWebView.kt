@@ -1,9 +1,5 @@
 package com.paydock.designsystems.components.web
 
-import android.content.ActivityNotFoundException
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import androidx.compose.foundation.layout.Box
@@ -23,6 +19,7 @@ import com.kevinnzou.web.rememberWebViewState
 import com.kevinnzou.web.rememberWebViewStateWithHTMLData
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.extensions.safeCastAs
+import com.paydock.core.presentation.extensions.openBrowser
 import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkLoader
@@ -31,6 +28,7 @@ import com.paydock.designsystems.components.web.extensions.setup
 import com.paydock.designsystems.components.web.utils.SdkJSBridge
 import com.paydock.designsystems.components.web.utils.SdkWebChromeClient
 import com.paydock.designsystems.components.web.utils.SdkWebViewClient
+import java.net.HttpURLConnection
 
 /**
  * Composable function to display a WebView with customizable settings and event handling.
@@ -100,7 +98,14 @@ internal fun <T : Any?> SdkWebView(
                         }
                     },
                     onWebViewError = onWebViewError,
-                    openExternalLink = { open(context, it) }
+                    openExternalLink = { url ->
+                        context.openBrowser(uri = url, onError = { failedUrl ->
+                            onWebViewError(
+                                HttpURLConnection.HTTP_UNAVAILABLE,
+                                "No application found to open URL: $failedUrl"
+                            )
+                        })
+                    }
                 )
             },
             onCreated = { webView ->
@@ -122,21 +127,5 @@ internal fun <T : Any?> SdkWebView(
                 SdkProgressLoader(appearance = loaderAppearance, progress = { (state.loadingState as LoadingState.Loading).progress })
             } ?: SdkLoader(appearance = loaderAppearance)
         }
-    }
-}
-
-/**
- * Opens a given URL in the user's default web browser or an appropriate app that can handle the intent.
- * If no app is found to handle the intent, the method silently catches the exception.
- *
- * @param context The context from which the intent is launched.
- * @param url The URL to be opened in the web browser.
- */
-private fun open(context: Context, url: Uri) {
-    val intent = Intent(Intent.ACTION_VIEW, url)
-    try {
-        context.startActivity(intent) // Attempt to open the URL
-    } catch (_: ActivityNotFoundException) {
-        // Silently catch the exception if no activity can handle the intent
     }
 }

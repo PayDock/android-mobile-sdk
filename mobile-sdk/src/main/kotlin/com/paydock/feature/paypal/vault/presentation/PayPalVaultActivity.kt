@@ -1,6 +1,5 @@
 package com.paydock.feature.paypal.vault.presentation
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -17,11 +16,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.paydock.core.presentation.extensions.positionAwareImePadding
+import com.paydock.core.presentation.extensions.putMessageExtra
+import com.paydock.core.presentation.extensions.putStatusExtra
 import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.feature.paypal.vault.presentation.state.PayPalWebVaultState
 import com.paydock.feature.paypal.vault.presentation.utils.CancellationStatus
 import com.paydock.feature.paypal.vault.presentation.utils.getClientIdExtra
 import com.paydock.feature.paypal.vault.presentation.utils.getSetupTokenExtra
+import com.paydock.feature.paypal.vault.presentation.utils.putApprovalSessionIdExtra
 import com.paydock.feature.paypal.vault.presentation.utils.putCancellationStatusExtra
 import com.paydock.feature.paypal.vault.presentation.viewmodel.PayPalWebVaultViewModel
 import org.koin.android.ext.android.inject
@@ -88,10 +90,10 @@ internal class PayPalVaultActivity : AppCompatActivity() {
                     is PayPalWebVaultState.Failure -> {
                         val error = (vaultResult as PayPalWebVaultState.Failure).error
                         setResult(
-                            Activity.RESULT_CANCELED,
+                            RESULT_CANCELED,
                             Intent().apply {
-                                putExtra("STATUS", error.code)
-                                putExtra("DESCRIPTION", error.errorDescription)
+                                putStatusExtra(error.code)
+                                putMessageExtra(error.errorDescription)
                             }
                         )
                         finish()
@@ -103,7 +105,7 @@ internal class PayPalVaultActivity : AppCompatActivity() {
                             (vaultResult as PayPalWebVaultState.Success).approvalSessionId
                         setResult(
                             RESULT_OK,
-                            Intent().putExtra("PAYPAL_APPROVAL_SESSION_ID", approvalSessionId)
+                            Intent().putApprovalSessionIdExtra(approvalSessionId)
                         )
                         finish()
                     }
