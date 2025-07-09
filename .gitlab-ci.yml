@@ -121,8 +121,8 @@ pull_bin_file:
     paths:
       - bin_schema/ # Makes the 'bin_schema/' directory available as an artifact for subsequent jobs.
   rules:
-#    - if: $CI_COMMIT_BRANCH  # Run on all branch pushes
-#      when: on_success
+#  - if: $CI_COMMIT_BRANCH  # Run on all branch pushes
+#    when: on_success
   - if: $CI_MERGE_REQUEST_IID # Run on merge (Merge Results)
     when: on_success
   - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
@@ -227,6 +227,8 @@ deploy_staging:
   script:
     - bundle exec fastlane deploy flavor:staging # Executes the 'deploy' lane using staging flavor in the Fastfile.
   rules:
+#    - if: $CI_COMMIT_BRANCH  # Run on all branch pushes
+#      when: on_success
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
       when: on_success
 
