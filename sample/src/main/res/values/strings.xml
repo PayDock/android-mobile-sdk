@@ -21,6 +21,7 @@
     <string name="label_saved_payment_method">Saved payment method</string>
     <string name="label_link_paypal_desc">Link your PayPal account to use method next time you shop</string>
     <string name="label_select_widget">Select Widget</string>
+    <string name="label_checkout_with_click_to_pay">Checkout with Click To Pay</string>
     <!-- Style Screen Labels -->
     <string name="label_style_screen_caption">Customise the look and feel of the widgets. These styles apply to the widgets based on your phone\'s dark or light mode setting.</string>
     <string name="label_text_style">Text Style</string>
