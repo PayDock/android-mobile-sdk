@@ -224,7 +224,7 @@ platform :android do
             apk_path: apk_path,
             release_notes: "#{release_note}",
     #              firebase_cli_token: ENV["FIREBASE_TOKEN"],
-            groups: "Testers",
+            groups: "Android Testers",
             service_credentials_file: ENV["GOOGLE_CREDENTIALS_FILE_PATH"],
             debug: true
         )
