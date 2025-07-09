@@ -5,6 +5,7 @@ import android.webkit.WebView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -14,9 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.kevinnzou.web.LoadingState
 import com.kevinnzou.web.WebView
+import com.kevinnzou.web.rememberSaveableWebViewState
 import com.kevinnzou.web.rememberWebViewNavigator
-import com.kevinnzou.web.rememberWebViewState
-import com.kevinnzou.web.rememberWebViewStateWithHTMLData
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.extensions.openBrowser
@@ -56,17 +56,33 @@ internal fun <T : Any?> SdkWebView(
     val context = LocalContext.current
 
     // Remember the state of the WebView
-    val state = if (!data.isNullOrBlank()) {
-        rememberWebViewStateWithHTMLData(baseUrl = webUrl, data = data, mimeType = "text/html")
-    } else {
-        rememberWebViewState(url = webUrl)
+    val state = rememberSaveableWebViewState()
+    val navigator = rememberWebViewNavigator()
+
+    // Load the initial URL (or HTML data) using LaunchedEffect.
+    // This ensures the URL is loaded only when `webUrl` or `data` changes,
+    // or on initial composition if not already loaded by the restored state.
+    // `state.lastLoadedUrl` helps determine if it's truly an initial load vs. restoration.
+    LaunchedEffect(state, navigator, webUrl, data) {
+        // Only load if the state doesn't already have a lastLoadedUrl (i.e., it's a fresh state, not restored)
+        // OR if the webUrl/data prop has changed and it's different from what was last loaded.
+        // The library's state restoration should handle keeping the current page on configuration change.
+        // This effect is more for the *initial* setup or if the input `webUrl`/`data` prop changes.
+        val currentLoadedUrl = state.lastLoadedUrl
+        if (currentLoadedUrl == null || (data == null && currentLoadedUrl != webUrl)) {
+            if (!data.isNullOrBlank()) {
+                // Ensure a base URL is provided for HTML data if it needs to resolve relative paths
+                navigator.loadHtml(data, baseUrl = webUrl, mimeType = "text/html")
+            } else {
+                navigator.loadUrl(webUrl)
+            }
+        }
     }
 
     // Additional loader to show if we are showing additional popup window
     var showWindowLoader: Boolean by remember {
         mutableStateOf(false)
     }
-
     // Display a WebView in a Box composable
     Box(
         contentAlignment = Alignment.Center,
@@ -75,7 +91,7 @@ internal fun <T : Any?> SdkWebView(
             state = state,
             modifier = Modifier
                 .fillMaxSize(),
-            navigator = rememberWebViewNavigator(),
+            navigator = navigator,
             client = remember {
                 SdkWebViewClient(
                     onShouldOverrideUrlLoading = onShouldOverrideUrlLoading,
@@ -121,7 +137,7 @@ internal fun <T : Any?> SdkWebView(
             }
         )
 
-        // Display a loading indicator if the WebView is still loading content
+        // Display a loading indicator if the WebView is still loading co
         if (shouldShowCustomLoader && (state.isLoading || showWindowLoader)) {
             state.safeCastAs<LoadingState.Loading>()?.let {
                 SdkProgressLoader(appearance = loaderAppearance, progress = { (state.loadingState as LoadingState.Loading).progress })
