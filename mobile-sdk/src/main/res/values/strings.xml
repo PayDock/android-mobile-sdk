@@ -18,6 +18,7 @@
     <string name="label_search_for_your_address">Search for your address</string>
     <string name="label_searching">Searching…</string>
     <string name="label_state">State</string>
+    <string name="label_supported_card_schemes">Supported card schemes: %1$s</string>
     <!-- endregion -->
     <!-- region Errors -->
     <string name="error_luhn_card_holder_name">Card number is in the wrong field!</string>
