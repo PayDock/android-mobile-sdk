@@ -100,8 +100,6 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                         callback = onTokenReceived
                     )
                 }
-
-                else -> Unit
             }
         }
 
