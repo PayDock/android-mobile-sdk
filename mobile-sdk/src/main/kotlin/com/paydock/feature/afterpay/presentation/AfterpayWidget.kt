@@ -121,13 +121,7 @@ fun AfterpayWidget(
                         // Initial properties
                         this.buttonText = appearance.buttonText
                         this.colorScheme = appearance.colorScheme
-
-                        this.buttonText = appearance.buttonText
-                        this.colorScheme = appearance.colorScheme
                         this.isEnabled = enabled
-
-                        // The button's own isEnabled state should be the source of truth here,
-                        // which is updated by Compose's 'finalButtonEnabled' via the update lambda.
                         setOnClickListener {
                             viewModel.startAfterpayFlow(tokenRequest, context, config)
                         }
@@ -136,7 +130,8 @@ fun AfterpayWidget(
                 update = { view ->
                     view.buttonText = appearance.buttonText
                     view.colorScheme = appearance.colorScheme
-                    view.isEnabled = uiState !is AfterpayUIState.Loading && enabled
+                    // Disable button if loading AND launching Intent flow already AND is not enabled (from parent)
+                    view.isEnabled = uiState !is AfterpayUIState.Loading && uiState !is AfterpayUIState.LaunchIntent && enabled
                 }
             )
         }
