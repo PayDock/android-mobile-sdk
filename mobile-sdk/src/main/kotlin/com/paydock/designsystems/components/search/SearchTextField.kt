@@ -52,11 +52,15 @@ import com.paydock.designsystems.components.text.TextAppearanceDefaults
  * A composable function that creates a search text field with a dropdown for suggestions.
  *
  * @param modifier The modifier to be applied to the search text field.
+ * @param appearance The visual appearance configuration for the search dropdown.
  * @param label The label to be displayed on the search text field.
  * @param autofillType The autofill type for the search text field (optional).
+ * @param trailingIcon An optional composable to be displayed as a trailing icon in the text field when not focused and not searching.
  * @param noResultsFoundLabel The label to be displayed when no results are found (defaults to "No results found").
  * @param selectedItem The currently selected item in the dropdown (optional).
  * @param viewModel The [SearchViewModel] instance responsible for managing search operations.
+ * @param onItemSelected A callback function invoked when an item is selected from the dropdown.
+ * It receives the selected item as an [Any] type.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable

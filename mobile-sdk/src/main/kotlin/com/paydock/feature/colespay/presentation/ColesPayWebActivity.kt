@@ -1,6 +1,8 @@
 package com.paydock.feature.colespay.presentation
 
+import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.view.ViewGroup
 import androidx.activity.ComponentActivity
@@ -35,9 +37,17 @@ import com.paydock.feature.colespay.presentation.utils.putCancellationStatusExtr
 import com.paydock.feature.colespay.presentation.utils.putOrderIdExtra
 
 internal class ColesPayWebActivity : ComponentActivity() {
+
+    private var originalOrientation: Int = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+
+    @SuppressLint("SourceLockedOrientationActivity")
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Store original orientation and lock to portrait
+        originalOrientation = requestedOrientation
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         val onBackPressedCallback: OnBackPressedCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -112,6 +122,21 @@ internal class ColesPayWebActivity : ComponentActivity() {
 
     private fun finish(status: CancellationStatus) {
         setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(status))
-        finish()
+        super.finish()
+    }
+
+    // Override finish to ensure custom logic is also called when back button from TopAppBar is used
+    override fun finish() {
+        // This ensures that if finish() is called by other means (e.g., system),
+        // we still use our custom status if not already set.
+        // However, the primary paths (onBackPressed, explicit button clicks) already call the status version.
+        // For simplicity, just call super.finish() and rely on onDestroy for orientation.
+        super.finish()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Reset to original orientation when Activity is destroyed
+        requestedOrientation = originalOrientation
     }
 }

@@ -38,15 +38,25 @@ import com.paydock.feature.address.domain.mapper.integration.asEntity
 import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.address.presentation.components.AddressSearchSection
 import com.paydock.feature.address.presentation.components.ManualAddressEntry
+import com.paydock.feature.address.presentation.components.NameSectionEntry
 import com.paydock.feature.address.presentation.viewmodels.AddressDetailsViewModel
 import org.koin.androidx.compose.koinViewModel
 
 /**
  * Composable for displaying address details input UI.
  *
+ * This widget provides a form for users to enter their address details. It includes fields for
+ * first name, last name, address lines, city, state, postal code, and country.
+ * It also features an address search functionality to pre-fill the form and an option to
+ * enter the address manually.
+ *
+ * The appearance of the widget can be customized using the `appearance` parameter.
+ *
  * @param modifier Modifier to apply to the composable.
- * @param address The preset address to pre-fill the input fields.
- * @param completion Callback function to execute when the address is saved.
+ * @param appearance Customization options for the widget's appearance. See [AddressDetailsWidgetAppearance].
+ * @param address An optional [BillingAddress] to pre-fill the input fields. If provided, the form will be populated with this address.
+ * @param completion A callback function that is invoked when the user saves the address.
+ * It receives the entered [BillingAddress] as a parameter.
  */
 @Composable
 fun AddressDetailsWidget(
@@ -55,22 +65,23 @@ fun AddressDetailsWidget(
     address: BillingAddress? = null,
     completion: (BillingAddress) -> Unit,
 ) {
-    // Get the ViewModel using Koin dependency injection
     val viewModel: AddressDetailsViewModel = koinViewModel()
-
-    // Collect the UI state from the ViewModel
     val uiState by viewModel.stateFlow.collectAsState()
 
     // Control whether the manual address section is shown
     var isManualAddressVisible by rememberSaveable(key = "isManualAddressVisible_${address?.hashCode()}") {
-        mutableStateOf(address != null)
+        // Initialize based on whether an initial address is provided,
+        // or if any part of the uiState.billingAddress (from ViewModel) suggests it should be visible.
+        mutableStateOf(address != null || !uiState.billingAddress.isEmpty())
     }
     // Control whether the manual address input is valid (improve recompositions)
     val isDataValid by remember(uiState) { derivedStateOf { uiState.isDataValid } }
 
     // Remember the preset address value to avoid recomposition on every change
     LaunchedEffect(address) {
-        address?.let(viewModel::updateDefaultAddress)
+        address?.let {
+            viewModel.populateFormWithBillingAddress(it)
+        }
     }
 
     Column(
@@ -78,12 +89,23 @@ fun AddressDetailsWidget(
         verticalArrangement = Arrangement.spacedBy(appearance.verticalSpacing, Alignment.Top),
         horizontalAlignment = Alignment.Start
     ) {
+        NameSectionEntry(
+            firstName = uiState.billingAddress.firstName,
+            lastName = uiState.billingAddress.lastName,
+            onFirstNameChange = viewModel::updateFirstName,
+            onLastNameChange = viewModel::updateLastName,
+            verticalSpacing = appearance.verticalSpacing,
+            horizontalSpacing = appearance.horizontalSpacing,
+            titleAppearance = appearance.title,
+            textFieldAppearance = appearance.textField
+        )
+
         AddressSearchSection(
             titleAppearance = appearance.title,
             searchAppearance = appearance.searchDropdown
-        ) { address ->
+        ) { searchResultAddress ->
             isManualAddressVisible = true
-            viewModel.updateDefaultAddress(address.asEntity())
+            viewModel.populateFormWithBillingAddress(searchResultAddress.asEntity())
         }
 
         // Show the "Enter Address Manually" text
@@ -98,14 +120,18 @@ fun AddressDetailsWidget(
         }
 
         ManualAddressEntry(
+            isManualAddressVisible = isManualAddressVisible,
+            addressInputState = uiState.billingAddress,
+            onAddressLine1Change = viewModel::updateAddressLine1,
+            onAddressLine2Change = viewModel::updateAddressLine2,
+            onCityChange = viewModel::updateCity,
+            onStateChange = viewModel::updateState,
+            onPostalCodeChange = viewModel::updatePostalCode,
+            onCountryChange = viewModel::updateCountry,
             verticalSpacing = appearance.verticalSpacing,
             textFieldAppearance = appearance.textField,
-            searchAppearance = appearance.searchDropdown,
-            isManualAddressVisible = isManualAddressVisible,
-            address = uiState.billingAddress,
-        ) { addressState ->
-            viewModel.updateManualAddress(addressState)
-        }
+            searchAppearance = appearance.searchDropdown
+        )
 
         // Save Address button
         appearance.actionButton.RenderButton(
@@ -115,7 +141,7 @@ fun AddressDetailsWidget(
             text = stringResource(R.string.button_save_address),
             enabled = isDataValid,
         ) {
-            completion(uiState.billingAddress)
+            completion(viewModel.getBillingAddress())
         }
     }
 }
@@ -123,16 +149,17 @@ fun AddressDetailsWidget(
 /**
  * Represents the appearance configuration for the [AddressDetailsWidget].
  *
+ * @property horizontalSpacing The horizontal spacing between the elements in the widget.
  * @property verticalSpacing The vertical spacing between the elements in the widget.
  * @property title The appearance configuration for the title text.
  * @property textField The appearance configuration for the text fields.
- * @property actionButton The appearance configuration for the action button. This is a composable
- *  function that takes a boolean indicating if the button is enabled and returns a [ButtonAppearance].
+ * @property actionButton The appearance configuration for the action button.
  * @property linkButton The appearance configuration for the link button.
  * @property searchDropdown The appearance configuration for the search dropdown.
  */
 @Immutable
 class AddressDetailsWidgetAppearance(
+    val horizontalSpacing: Dp,
     val verticalSpacing: Dp,
     val title: TextAppearance,
     val textField: TextFieldAppearance,
@@ -144,6 +171,7 @@ class AddressDetailsWidgetAppearance(
     /**
      * Creates a copy of this [AddressDetailsWidgetAppearance] with the specified changes.
      *
+     * @param horizontalSpacing The horizontal spacing between elements.
      * @param verticalSpacing The vertical spacing between elements.
      * @param title The appearance for the title text.
      * @param textField The appearance for the text input fields.
@@ -153,6 +181,7 @@ class AddressDetailsWidgetAppearance(
      * @return A new [AddressDetailsWidgetAppearance] with the updated values.
      */
     fun copy(
+        horizontalSpacing: Dp = this.horizontalSpacing,
         verticalSpacing: Dp = this.verticalSpacing,
         title: TextAppearance = this.title,
         textField: TextFieldAppearance = this.textField,
@@ -160,6 +189,7 @@ class AddressDetailsWidgetAppearance(
         linkButton: LinkButtonAppearance = this.linkButton,
         searchDropdown: SearchDropdownAppearance = this.searchDropdown
     ): AddressDetailsWidgetAppearance = AddressDetailsWidgetAppearance(
+        horizontalSpacing = horizontalSpacing.takeOrElse { this.horizontalSpacing },
         verticalSpacing = verticalSpacing.takeOrElse { this.verticalSpacing },
         title = title.copy(),
         textField = textField.copy(),
@@ -179,6 +209,7 @@ class AddressDetailsWidgetAppearance(
 
         other as AddressDetailsWidgetAppearance
 
+        if (horizontalSpacing != other.horizontalSpacing) return false
         if (verticalSpacing != other.verticalSpacing) return false
         if (title != other.title) return false
         if (textField != other.textField) return false
@@ -191,6 +222,7 @@ class AddressDetailsWidgetAppearance(
 
     override fun hashCode(): Int {
         var result = verticalSpacing.hashCode()
+        result = 31 * result + horizontalSpacing.hashCode()
         result = 31 * result + title.hashCode()
         result = 31 * result + textField.hashCode()
         result = 31 * result + actionButton.hashCode()
@@ -220,6 +252,7 @@ object AddressDetailsAppearanceDefaults {
      */
     @Composable
     fun appearance(): AddressDetailsWidgetAppearance = AddressDetailsWidgetAppearance(
+        horizontalSpacing = WidgetDefaults.Spacing,
         verticalSpacing = WidgetDefaults.Spacing,
         title = TextAppearanceDefaults.appearance().copy(
             style = MaterialTheme.typography.titleMedium,
