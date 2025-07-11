@@ -21,7 +21,6 @@ import com.paydock.sample.core.THREE_DS_STATUS_ERROR
 import com.paydock.sample.core.TOKENISE_CARD_ERROR
 import com.paydock.sample.core.TOKENISE_CLICK_TO_PAY_ERROR
 import com.paydock.sample.core.WALLET_CHARGE_TRANSACTION_ERROR
-import com.paydock.sample.core.WALLET_INITIALISE_ERROR
 import com.paydock.sample.feature.card.data.api.dto.CaptureCardChargeRequest
 import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
 import com.paydock.sample.feature.card.domain.usecase.CaptureCardChargeTokenUseCase
@@ -306,14 +305,8 @@ class StandaloneCheckoutViewModel @Inject constructor(
                 }
             }
             result.onFailure {
-                _stateFlow.update { state ->
-                    callback(Result.failure(it))
-                    state.copy(
-                        walletChargeResult = null,
-                        isLoading = false,
-                        error = it.message ?: WALLET_INITIALISE_ERROR
-                    )
-                }
+                // Failure is pushed to the SDK and returned
+                callback(Result.failure(it))
             }
         }
     }

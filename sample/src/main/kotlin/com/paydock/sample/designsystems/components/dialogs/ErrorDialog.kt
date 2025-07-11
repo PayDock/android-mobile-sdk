@@ -13,11 +13,12 @@ import com.paydock.sample.designsystems.theme.SampleTheme
 fun ErrorDialog(
     onDismissRequest: () -> Unit,
     onConfirmation: () -> Unit,
+    dialogTitle: String = stringResource(R.string.label_transaction_failed),
     dialogText: String,
 ) {
     AlertDialog(
         title = {
-            Text(text = stringResource(R.string.label_transaction_failed))
+            Text(text = dialogTitle)
         },
         text = {
             Text(text = dialogText)

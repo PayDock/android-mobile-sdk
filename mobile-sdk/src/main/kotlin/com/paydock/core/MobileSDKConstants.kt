@@ -50,9 +50,6 @@ internal object MobileSDKConstants {
      * Constants related to the Network.
      */
     object Network {
-        // sha256 hssh for paydock base urls
-        internal const val SSH_HASH = "sha256/kV0cxZABuhXdMFROcAZwIflgJilKOqxMBcRhzFhZMok="
-
         object Errors {
             const val IO_ERROR =
                 "An error occurred while communicating with the server. Please check your internet connection and try again."
