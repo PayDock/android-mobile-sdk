@@ -81,7 +81,7 @@ test:
   stage: test # Runs in the 'test' stage.
   extends: .setup_bundler # Extends the '.setup_bundler' template.
   script:
-    - bundle exec fastlane test flavor:staging build_type:Debug
+    - bundle exec fastlane test build_type:Debug
   environment:
     name: staging # Sets the environment name to 'staging'.
   artifacts:

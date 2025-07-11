@@ -172,14 +172,13 @@ platform :android do
 
     # --- Test Lane ---
 
-    desc "Runs all unit tests for specified flavor"
+    desc "Runs all unit tests for SDK"
     lane :test do |options|
-         flavor = options[:flavor] || "staging" # Default to staging if no flavor is provided
          build_type = options[:build_type] || "Debug" # Default to Debug if no build type is provided
 
         # This lane runs all the unit tests for the Android application.
         # It uses the 'gradle' action to execute the 'test' Gradle task.
-        gradle(task: "test#{flavor.capitalize}#{build_type.capitalize}UnitTest")
+        gradle(task: ":mobile-sdk:test#{build_type.capitalize}UnitTest")
     end
 
     # -- Deploy Lane --
