@@ -1,5 +1,6 @@
 package com.paydock.sample.core.extensions
 
+import java.net.UnknownHostException
 import java.util.concurrent.CancellationException
 
 /**
@@ -11,10 +12,21 @@ import java.util.concurrent.CancellationException
  * or the exception thrown during execution in [Result.failure].
  */
 suspend fun <T> suspendRunCatching(block: suspend () -> T): kotlin.Result<T> = try {
-    // Execute the provided suspend block and wrap the result in Result.Success
     Result.success(block())
 } catch (cancellationException: CancellationException) {
+    // Re-throw cancellation exceptions to ensure coroutines are properly cancelled
     throw cancellationException
+} catch (unknownHostException: UnknownHostException) {
+    Result.failure(
+        NoInternetException(
+            message = "No Internet Connection. Please check your network settings and try again.",
+            cause = unknownHostException
+        )
+    )
 } catch (@Suppress("TooGenericExceptionCaught") exception: Exception) {
+    // Catch any other exceptions
     Result.failure(exception)
 }
+
+// Custom Exception handling
+class NoInternetException(message: String, cause: Throwable? = null) : Exception(message, cause)
