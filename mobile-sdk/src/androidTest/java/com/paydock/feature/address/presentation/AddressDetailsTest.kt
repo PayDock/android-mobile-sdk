@@ -23,7 +23,6 @@ import com.paydock.feature.address.injection.addressDetailsModule
 import com.paydock.feature.address.presentation.viewmodels.AddressDetailsViewModel
 import com.paydock.feature.address.presentation.viewmodels.AddressSearchViewModel
 import com.paydock.feature.address.presentation.viewmodels.CountryAutoCompleteViewModel
-import com.paydock.feature.address.presentation.viewmodels.ManualAddressViewModel
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.every

@@ -15,6 +15,8 @@ import java.util.Locale
  * @property phoneNumber The phone number associated with the billing address (optional).
  */
 data class BillingAddress(
+    val firstName: String? = null,
+    val lastName: String? = null,
     val name: String? = null,
     val addressLine1: String? = null,
     val addressLine2: String? = null,

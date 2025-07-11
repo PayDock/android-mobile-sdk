@@ -20,6 +20,7 @@ import org.koin.androidx.compose.koinViewModel
  * A composable that provides an address search input field with a dropdown menu for selecting addresses.
  *
  * @param modifier The modifier to apply to the composable.
+ * @param appearance The appearance configuration for the search dropdown.
  * @param viewModel The ViewModel responsible for managing address search.
  * @param onAddressSelected Callback function to handle the selected address.
  */
@@ -43,6 +44,8 @@ internal fun AddressSearchInput(
         onItemSelected = { item ->
             val address = searchResults.find { it.getAddressLine(0) == item }
             address?.let { onAddressSelected(it) }
+            // Clear search field after selection
+            viewModel.setSelectedValue("")
         }
     )
 }

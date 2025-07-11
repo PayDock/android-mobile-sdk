@@ -4,9 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -18,74 +15,70 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import com.paydock.R
-import com.paydock.core.MobileSDKConstants
-import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.designsystems.components.search.SearchDropdownAppearance
 import com.paydock.designsystems.components.search.SearchDropdownAppearanceDefaults
 import com.paydock.designsystems.core.WidgetDefaults
-import com.paydock.feature.address.domain.model.integration.BillingAddress
-import com.paydock.feature.address.presentation.state.AddressDetailsInputState
-import com.paydock.feature.address.presentation.viewmodels.ManualAddressViewModel
-import kotlinx.coroutines.delay
-import org.koin.androidx.compose.koinViewModel
+import com.paydock.feature.address.presentation.state.AddressDetailsFormState
 
 /**
  * Displays a manual address entry form with input fields for the user to update their address.
  *
  * @param modifier [Modifier] to apply customizations to the layout of this component.
- * @param viewModel The [ManualAddressViewModel] responsible for managing the address input state.
- * Defaults to a Koin-injected instance via [koinViewModel()].
- * @param savedAddress The optional [BillingAddress] to populate the input fields initially.
- * If provided, it is used to prefill the address fields.
- * @param onAddressUpdated A callback invoked whenever the address input state is updated.
- * The updated state is passed as an [AddressDetailsInputState] after a debounce delay.
+ * @param addressInputState The current state of the address input fields, represented by [AddressDetailsFormState].
+ * This state includes values for address line 1, address line 2, city, state, postal code, and country.
+ * @param onAddressLine1Change A callback invoked when the value of the Address Line 1 input field changes.
+ * The new value is passed as a [String].
+ * @param onAddressLine2Change A callback invoked when the value of the Address Line 2 input field changes.
+ * The new value is passed as a [String].
+ * @param onCityChange A callback invoked when the value of the City input field changes.
+ * The new value is passed as a [String].
+ * @param onStateChange A callback invoked when the value of the State input field changes.
+ * The new value is passed as a [String].
+ * @param onPostalCodeChange A callback invoked when the value of the Postal Code input field changes.
+ * The new value is passed as a [String].
+ * @param onCountryChange A callback invoked when the value of the Country input field changes.
+ * The new value is passed as a [String].
+ * @param verticalSpacing The vertical spacing between input fields. Defaults to [WidgetDefaults.Spacing].
+ * @param textFieldAppearance The appearance style for the text input fields. Defaults to [TextFieldAppearanceDefaults.appearance].
+ * @param searchAppearance The appearance style for the search dropdown (country selection).
+ * Defaults to [SearchDropdownAppearanceDefaults.appearance].
  *
  * This function provides:
  * - Input fields for address components such as Address Line 1, Address Line 2, City, State, Postal Code, and Country.
  * - Autofill support for each field to enhance user experience.
  * - Keyboard navigation between fields using [FocusRequester].
- * - A debounce mechanism to reduce frequent updates to the `onAddressUpdated` callback.
  *
  * Notes:
- * - The `uiState` is collected from the [ManualAddressViewModel]'s `stateFlow` to reflect user inputs.
  * - Autofill types are configured for each input field to match their specific purpose (e.g., street, locality).
  * - A [CountryInputAutoComplete] is used for country selection with a dropdown.
- * - The callback invocation is delayed using [LaunchedEffect] to avoid excessive calls during rapid user input.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Suppress("LongMethod")
 @Composable
 internal fun ManualAddress(
     modifier: Modifier = Modifier,
+    addressInputState: AddressDetailsFormState,
+    onAddressLine1Change: (String) -> Unit,
+    onAddressLine2Change: (String) -> Unit,
+    onCityChange: (String) -> Unit,
+    onStateChange: (String) -> Unit,
+    onPostalCodeChange: (String) -> Unit,
+    onCountryChange: (String) -> Unit,
     verticalSpacing: Dp = WidgetDefaults.Spacing,
     textFieldAppearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     searchAppearance: SearchDropdownAppearance = SearchDropdownAppearanceDefaults.appearance(),
-    viewModel: ManualAddressViewModel = koinViewModel(),
-    savedAddress: BillingAddress? = null,
-    onAddressUpdated: (AddressDetailsInputState) -> Unit
 ) {
-    // Remember the selected item value to avoid recomposition on every change
-    remember(savedAddress) {
-        savedAddress?.let { viewModel.setSavedAddress(it) }
-        savedAddress
-    }
-
-    // Collect the state from the view model
-    val uiState by viewModel.stateFlow.collectAsState()
-
-    // Create a vertical column layout for address input fields
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(verticalSpacing, Alignment.Top),
         horizontalAlignment = Alignment.Start
     ) {
-        // Focus requesters for managing keyboard navigation
-        val focusAddressLine2 = FocusRequester()
-        val focusCity = FocusRequester()
-        val focusState = FocusRequester()
-        val focusPostalCode = FocusRequester()
+        val focusAddressLine2 = remember { FocusRequester() }
+        val focusCity = remember { FocusRequester() }
+        val focusState = remember { FocusRequester() }
+        val focusPostalCode = remember { FocusRequester() }
 
         // Address input fields
         AddressInputField(
@@ -93,11 +86,11 @@ internal fun ManualAddress(
                 .fillMaxWidth()
                 .testTag("addressLine1Input"),
             appearance = textFieldAppearance,
-            value = uiState.addressLine1,
+            value = addressInputState.addressLine1,
             label = stringResource(R.string.label_address_line_1),
             nextFocus = focusAddressLine2,
             autofillType = AutofillType.AddressStreet,
-            onValueUpdated = viewModel::updateAddressLine1
+            onValueUpdated = onAddressLine1Change
         )
         AddressInputField(
             modifier = Modifier
@@ -105,10 +98,10 @@ internal fun ManualAddress(
                 .focusRequester(focusAddressLine2)
                 .testTag("addressLine2Input"),
             appearance = textFieldAppearance,
-            value = uiState.addressLine2,
+            value = addressInputState.addressLine2,
             label = stringResource(R.string.label_address_line_2),
             nextFocus = focusCity,
-            onValueUpdated = viewModel::updateAddressLine2
+            onValueUpdated = onAddressLine2Change
         )
         AddressInputField(
             modifier = Modifier
@@ -116,11 +109,11 @@ internal fun ManualAddress(
                 .focusRequester(focusCity)
                 .testTag("cityInput"),
             appearance = textFieldAppearance,
-            value = uiState.city,
+            value = addressInputState.city,
             label = stringResource(R.string.label_city),
             nextFocus = focusState,
             autofillType = AutofillType.AddressLocality,
-            onValueUpdated = viewModel::updateCity
+            onValueUpdated = onCityChange
         )
         AddressInputField(
             modifier = Modifier
@@ -128,11 +121,11 @@ internal fun ManualAddress(
                 .focusRequester(focusState)
                 .testTag("stateInput"),
             appearance = textFieldAppearance,
-            value = uiState.state,
+            value = addressInputState.state,
             label = stringResource(R.string.label_state),
             nextFocus = focusPostalCode,
             autofillType = AutofillType.AddressRegion,
-            onValueUpdated = viewModel::updateState
+            onValueUpdated = onStateChange
         )
         AddressInputField(
             modifier = Modifier
@@ -140,10 +133,10 @@ internal fun ManualAddress(
                 .focusRequester(focusPostalCode)
                 .testTag("postalCodeInput"),
             appearance = textFieldAppearance,
-            value = uiState.postalCode,
+            value = addressInputState.postalCode,
             label = stringResource(R.string.label_postal_code),
             autofillType = AutofillType.PostalCode,
-            onValueUpdated = viewModel::updatePostalCode
+            onValueUpdated = onPostalCodeChange
         )
         // Country auto-complete dropdown selection
         CountryInputAutoComplete(
@@ -151,33 +144,9 @@ internal fun ManualAddress(
                 .fillMaxWidth()
                 .testTag("countryInput"),
             appearance = searchAppearance,
-            selectedItem = uiState.country,
+            selectedItem = addressInputState.country,
             autofillType = AutofillType.AddressCountry,
-            onCountrySelected = viewModel::updateCountry
+            onCountrySelected = onCountryChange
         )
-        // Use a LaunchedEffect to delay the callback invocation
-        LaunchedEffect(uiState) {
-            delay(MobileSDKConstants.General.DEBOUNCE_DELAY) // Delay by 500 milliseconds
-            onAddressUpdated(uiState)
-        }
     }
-}
-
-@SdkLightDarkPreviews
-@Composable
-internal fun PreviewManualAddress() {
-    ManualAddress(onAddressUpdated = {})
-}
-
-@SdkLightDarkPreviews
-@Composable
-internal fun PreviewManualAddressWithDefault() {
-    val address = BillingAddress(
-        addressLine1 = "1 Park Avenue",
-        city = "Manchester",
-        state = "Greater Manchester",
-        postalCode = "M11 5MW",
-        country = "United Kingdom"
-    )
-    ManualAddress(savedAddress = address, onAddressUpdated = {})
 }

@@ -37,7 +37,7 @@ internal class AddressSearchViewModel(
             try {
                 // Use suspendCoroutine to bridge between callback-based and coroutine-based APIs
                 val addresses = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    suspendCoroutine<List<Address>> { continuation ->
+                    suspendCoroutine { continuation ->
                         // Call the geocoder with a custom GeocodeListener
                         geocoder.getFromLocationName(
                             query,

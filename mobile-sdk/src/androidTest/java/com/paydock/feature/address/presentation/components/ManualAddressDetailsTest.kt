@@ -18,7 +18,6 @@ import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.address.injection.addressDetailsModule
 import com.paydock.feature.address.presentation.state.AddressDetailsInputState
 import com.paydock.feature.address.presentation.viewmodels.CountryAutoCompleteViewModel
-import com.paydock.feature.address.presentation.viewmodels.ManualAddressViewModel
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just

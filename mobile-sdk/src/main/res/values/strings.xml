@@ -2,6 +2,9 @@
 
 <resources>
     <!-- region Labels -->
+    <string name="label_name">Name</string>
+    <string name="label_first_name">First name</string>
+    <string name="label_last_name">Last name</string>
     <string name="label_address_line_1">Address Line 1</string>
     <string name="label_address_line_2">Address Line 2 (Optional)</string>
     <string name="label_card_information">"Card information"</string>
