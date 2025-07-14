@@ -2,9 +2,7 @@ package com.paydock.feature.colespay.presentation
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.os.Bundle
-import android.view.ViewGroup
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
@@ -36,18 +34,30 @@ import com.paydock.feature.colespay.presentation.utils.getOrderIdExtra
 import com.paydock.feature.colespay.presentation.utils.putCancellationStatusExtra
 import com.paydock.feature.colespay.presentation.utils.putOrderIdExtra
 
+/**
+ * An activity that handles the Coles Pay web payment flow.
+ *
+ * This activity launches a WebView to display the Coles Pay payment page and handles the
+ * interaction between the user and the payment provider. It manages the lifecycle of the
+ * payment process, including handling success, failure, and cancellation scenarios.
+ *
+ * Key responsibilities:
+ * - Displays the Coles Pay payment page in a WebView.
+ * - Handles navigation and user interactions within the WebView.
+ * - Communicates the payment status (success, failure, cancellation) back to the calling activity.
+ * - Manages the back press behavior to allow users to cancel the payment process.
+ *
+ * This activity is designed to be launched using an Intent and expects specific extras
+ * (`colesPayOrderId` and `colesPayClientId`) to be provided for initiating the payment.
+ * Upon completion, it returns a result (RESULT_OK or RESULT_CANCELED) along with
+ * relevant data (e.g., order ID, error status, error message) to the calling activity.
+ */
 internal class ColesPayWebActivity : ComponentActivity() {
-
-    private var originalOrientation: Int = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
     @SuppressLint("SourceLockedOrientationActivity")
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Store original orientation and lock to portrait
-        originalOrientation = requestedOrientation
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         val onBackPressedCallback: OnBackPressedCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -106,7 +116,6 @@ internal class ColesPayWebActivity : ComponentActivity() {
                 }
             }
         }
-        window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
     }
 
     /**
@@ -123,20 +132,5 @@ internal class ColesPayWebActivity : ComponentActivity() {
     private fun finish(status: CancellationStatus) {
         setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(status))
         super.finish()
-    }
-
-    // Override finish to ensure custom logic is also called when back button from TopAppBar is used
-    override fun finish() {
-        // This ensures that if finish() is called by other means (e.g., system),
-        // we still use our custom status if not already set.
-        // However, the primary paths (onBackPressed, explicit button clicks) already call the status version.
-        // For simplicity, just call super.finish() and rely on onDestroy for orientation.
-        super.finish()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        // Reset to original orientation when Activity is destroyed
-        requestedOrientation = originalOrientation
     }
 }

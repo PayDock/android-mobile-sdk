@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.core.view.WindowCompat
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
 import com.paydock.feature.src.domain.model.integration.ClickToPayWidgetConfig
@@ -43,13 +42,18 @@ class ClickToPayActivity : ComponentActivity() {
             ClickToPayScreen(stylingViewModel) { result ->
                 val intent = Intent().putExtra("isSuccess", result.isSuccess)
                 result.onSuccess {
-                    intent.putExtra("token", it)
-                    setResult(RESULT_OK, intent)
+                    setResult(
+                        RESULT_OK,
+                        intent.putExtra("token", it)
+                    )
                     finish()
                 }.onFailure {
                     val error = it.toError()
-                    intent.putExtra("message", error.displayableMessage)
-                    setResult(RESULT_OK, intent)
+                    setResult(
+                        RESULT_OK,
+                        intent.putExtra("message", error.displayableMessage)
+                    )
+                    finish()
                 }
             }
         }
