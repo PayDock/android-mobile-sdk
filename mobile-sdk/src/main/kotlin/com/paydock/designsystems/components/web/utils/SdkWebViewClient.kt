@@ -69,14 +69,29 @@ internal class SdkWebViewClient(
         if (error != null) {
             // Get a user-friendly error message based on the WebView error code.
             val errorMessage = getWebViewErrorMessage(error.errorCode)
+            val errorCode = error.errorCode
 
-            // If the error occurred on the main frame, consider it critical and trigger the error callback.
-            if (request?.isForMainFrame == true) {
-                Log.d(MobileSDKConstants.MOBILE_SDK_TAG, "Fatal error: $errorMessage")
-                onWebViewError(error.errorCode, errorMessage)
+            val isCriticalNetworkError = when (errorCode) {
+                ERROR_HOST_LOOKUP,
+                ERROR_CONNECT,
+                ERROR_TIMEOUT,
+                ERROR_UNKNOWN, // Can sometimes indicate network issues before a more specific code
+                ERROR_IO -> true
+                else -> false
+            }
+            // If it's a critical network error OR an error on the main frame, consider it fatal.
+            if (isCriticalNetworkError || request?.isForMainFrame == true) {
+                Log.d(
+                    MobileSDKConstants.MOBILE_SDK_TAG,
+                    "Fatal error (code $errorCode, mainFrame: ${request?.isForMainFrame}): $errorMessage"
+                )
+                onWebViewError(errorCode, errorMessage)
             } else {
-                // Log non-fatal errors without triggering the error callback.
-                Log.d(MobileSDKConstants.MOBILE_SDK_TAG, "Non-Fatal error: $errorMessage")
+                // Log other non-fatal errors without triggering the main error callback.
+                Log.d(
+                    MobileSDKConstants.MOBILE_SDK_TAG,
+                    "Non-Fatal error (code $errorCode): $errorMessage"
+                )
             }
         }
     }

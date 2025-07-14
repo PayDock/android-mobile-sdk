@@ -316,7 +316,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
             createSessionVaultToken(it.token)
         }.onFailure {
             _stateFlow.update { state ->
-                state.copy(error = TOKENISE_CARD_ERROR)
+                state.copy(error = it.message ?: TOKENISE_CARD_ERROR)
             }
         }
     }
@@ -328,7 +328,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
             createSessionVaultToken(cardToken = it)
         }.onFailure {
             _stateFlow.update { state ->
-                state.copy(error = TOKENISE_CLICK_TO_PAY_ERROR)
+                state.copy(error = it.message ?: TOKENISE_CLICK_TO_PAY_ERROR)
             }
         }
     }
@@ -422,14 +422,22 @@ class StandaloneCheckoutViewModel @Inject constructor(
     }
 
     fun handleColesPayResult(result: Result<String>) {
-        val chargeId = _stateFlow.value.walletChargeResult?.chargeId
-        if (chargeId != null) {
             result.onSuccess {
-                captureWalletCharge(chargeId, true)
-                _stateFlow.update { state ->
-                    state.copy(
-                        colesPayResult = it
-                    )
+                val chargeId = _stateFlow.value.walletChargeResult?.chargeId
+                if (chargeId != null) {
+                    captureWalletCharge(chargeId, true)
+                    _stateFlow.update { state ->
+                        state.copy(
+                            colesPayResult = it
+                        )
+                    }
+                } else {
+                    _stateFlow.update { state ->
+                        state.copy(
+                            isLoading = false,
+                            error = COLES_PAY_CHARGE_TRANSACTION_ERROR
+                        )
+                    }
                 }
             }.onFailure {
                 _stateFlow.update { state ->
@@ -439,11 +447,6 @@ class StandaloneCheckoutViewModel @Inject constructor(
                     )
                 }
             }
-        } else {
-            _stateFlow.update { state ->
-                state.copy(isLoading = false, error = COLES_PAY_CHARGE_TRANSACTION_ERROR)
-            }
-        }
     }
 
     private fun handleTokenResult(token: String) {

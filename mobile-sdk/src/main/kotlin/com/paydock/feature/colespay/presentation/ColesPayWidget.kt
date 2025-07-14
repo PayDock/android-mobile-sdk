@@ -226,7 +226,6 @@ object ColesPayWidgetAppearanceDefaults {
  * Handles the result returned from the Coles Pay web activity, processing the order ID,
  * cancellation, or errors, and invoking the appropriate completion handler.
  *
- * @param context The context used for accessing resources and displaying error messages.
  * @param result The `ActivityResult` returned from the Coles Pay web activity.
  * This contains the result code and data such as the order ID or cancellation status.
  * @param completion A callback function to handle the result of the Coles Pay transaction.
