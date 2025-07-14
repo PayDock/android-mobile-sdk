@@ -77,7 +77,7 @@ internal object MobileSDKConstants {
         internal const val MIN_CREDIT_CARD_LENGTH = 12
         internal const val MAX_CREDIT_CARD_LENGTH = 19
         internal const val MIN_GIFT_CARD_LENGTH = 14
-        internal const val MIN_GIFT_CARD_PIN_LENGTH = 4
+        internal const val GIFT_CARD_PIN_LENGTH = 4
         internal const val MAX_GIFT_CARD_LENGTH = 25
         internal const val MAX_EXPIRY_LENGTH = 4
         internal const val EXPIRY_CHUNK_SIZE = 2

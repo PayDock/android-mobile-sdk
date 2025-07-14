@@ -130,6 +130,7 @@ internal fun SdkTextField(
             },
             leadingIcon = leadingIcon,
             isError = isError,
+            singleLine = appearance.singleLine,
             colors = appearance.colors,
             shape = appearance.shape,
         )

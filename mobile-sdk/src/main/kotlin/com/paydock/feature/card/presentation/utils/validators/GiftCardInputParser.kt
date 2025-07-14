@@ -57,7 +57,8 @@ internal object GiftCardInputParser {
      * @return The parsed and validated card pin if valid, an empty string if input is empty, or null if invalid.
      */
     fun parseCardPin(pin: String): String? = when {
-        isValidPinFormat(pin) -> pin
+        isValidPinFormat(pin) &&
+            pin.length <= MobileSDKConstants.CardDetailsConfig.GIFT_CARD_PIN_LENGTH -> pin
         pin.isEmpty() -> ""
         else -> null
     }
