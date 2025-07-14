@@ -44,6 +44,21 @@ internal object MobileSDKConstants {
          * - Invalid: "123a", "12 34", "!123"
          */
         internal val NUMERIC_DIGITS = Regex("^[0-9]+$")
+
+        /**
+         * Regex for validating the structure and allowed characters in a cardholder name.
+         *
+         * This regex ensures the name:
+         * - Is not empty.
+         * - Starts with a Unicode letter (`\\p{L}`).
+         * - Can contain Unicode letters, spaces (`\\s`), apostrophes (`'`), hyphens (`-`), and dots (`.`).
+         * - The main part aims to end with a Unicode letter, apostrophe, or dot.
+         * - Alternatively, it can be a single Unicode letter.
+         *
+         * Examples of valid names: "John Doe", "Jane D'Souza-Doe", "李明", "J. Doe", "Élodie"
+         * Examples of invalid names (by this regex): "", " ", "123 Name", "Name-", " Name" (if not trimmed)
+         */
+        internal val CARD_HOLDER_NAME = Regex("^\\p{L}[\\p{L}'.\\s-]*[\\p{L}'.]$|^\\p{L}$")
     }
 
     /**

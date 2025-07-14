@@ -58,7 +58,7 @@ internal fun CardHolderNameInput(
     var debouncedValue by remember { mutableStateOf("") }
     LaunchedEffect(value) {
         delay(MobileSDKConstants.General.INPUT_DELAY)
-        debouncedValue = value.trim()
+        debouncedValue = value
     }
 
     // Validate possible cardholder errors
@@ -67,8 +67,7 @@ internal fun CardHolderNameInput(
     // Define the error message to be shown if the cardholder name is invalid
     val errorMessage = when (cardHolderError) {
         CardHolderNameError.InvalidLuhn -> stringResource(id = R.string.error_luhn_card_holder_name)
-        CardHolderNameError.ContainsInvalidCharacters,
-        CardHolderNameError.NoAlphaCharacters,
+        CardHolderNameError.InvalidFormat,
         CardHolderNameError.Empty -> stringResource(id = R.string.error_card_holder_name)
         CardHolderNameError.None -> null
     }
