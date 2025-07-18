@@ -84,27 +84,88 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
     }
 
     @Test
-    fun `ViewModel initialization triggers fetchCanUseGooglePay and updates state`() = runTest {
-        // Assert the state changes in googlePayAvailable
-        viewModel.googlePayAvailable.test {
-            assertEquals(true, awaitItem()) // Updated value after fetchCanUseGooglePay
+    fun `ViewModel initialization when isReadyToPay returns false updates googlePayAvailable`() =
+        runTest {
+            // Re-initialize ViewModel with specific mock behavior for this test
+            coEvery { paymentsClient.isReadyToPay(any()) } returns Tasks.forResult(false)
+            viewModel = GooglePayViewModel( // Recreate to trigger init with new mock
+                paymentsClient,
+                GooglePayWidgetConfig(PaymentsUtil.createIsReadyToPayRequest(), JSONObject()),
+                captureWalletChargeUseCase,
+                declineWalletChargeUseCase,
+                getWalletCallbackUseCase,
+                dispatchersProvider
+            ).apply { setWalletToken(MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN) }
+
+            viewModel.googlePayAvailable.test {
+                assertEquals(false, awaitItem())
+            }
+            viewModel.uiState.test {
+                // Assuming no specific error state is set, just availability changes
+                assertIs<GooglePayUIState.Idle>(awaitItem())
+            }
         }
+
+    @Test
+    fun `handleGooglePayResultErrors sets timeout state on TIMEOUT`() = runTest {
+        viewModel.handleGooglePayResultErrors(CommonStatusCodes.TIMEOUT)
         viewModel.uiState.test {
-            assertIs<GooglePayUIState.Idle>(awaitItem())
+            awaitItem().let { state ->
+                assertIs<GooglePayUIState.Error>(state)
+                val actualException = state.exception
+                assertIs<GooglePayException.SDKException.Timeout>(actualException)
+                assertEquals(
+                    MobileSDKConstants.GooglePayConfig.Errors.TIMEOUT_ERROR,
+                    actualException.message
+                )
+                assertEquals(
+                    CommonStatusCodes.getStatusCodeString(CommonStatusCodes.TIMEOUT),
+                    actualException.statusCodeString
+                )
+
+            }
         }
     }
 
     @Test
-    fun `handleGooglePayResultErrors sets cancellation state on CANCELED`() = runTest {
-        viewModel.handleGooglePayResultErrors(CommonStatusCodes.CANCELED)
-        viewModel.uiState.test {
-            awaitItem().let { state ->
-                assertIs<GooglePayUIState.Error>(state)
-                assertIs<GooglePayException.CancellationException>(state.exception)
-                assertEquals(state.exception.message, MobileSDKConstants.GooglePayConfig.Errors.CANCELLATION_ERROR)
+    fun `handleGooglePayResultErrors sets play services error state on SIGN_IN_REQUIRED`() =
+        runTest {
+            viewModel.handleGooglePayResultErrors(CommonStatusCodes.SIGN_IN_REQUIRED)
+            viewModel.uiState.test {
+                awaitItem().let { state ->
+                    assertIs<GooglePayUIState.Error>(state)
+                    val actualException = state.exception
+                    assertIs<GooglePayException.SDKException.PlayServicesError>(actualException)
+                    assertEquals(
+                        MobileSDKConstants.GooglePayConfig.Errors.PLAY_SERVICES_ERROR,
+                        actualException.message
+                    )
+                    assertEquals(
+                        CommonStatusCodes.getStatusCodeString(CommonStatusCodes.SIGN_IN_REQUIRED),
+                        actualException.statusCodeString
+                    )
+                }
             }
         }
-    }
+
+    @Test
+    fun `handleGooglePayResultErrors sets unknown SDK exception for unhandled status code`() =
+        runTest {
+            val unknownStatusCode = 999 // A code not explicitly handled
+            val expectedStatusString = "unknown status code: $unknownStatusCode"
+            val expectedError =
+                "[$expectedStatusString] An unexpected error occurred while processing Google Pay. Please try again later."
+            viewModel.handleGooglePayResultErrors(unknownStatusCode)
+            viewModel.uiState.test {
+                awaitItem().let { state ->
+                    assertIs<GooglePayUIState.Error>(state)
+                    val actualException = state.exception
+                    assertIs<GooglePayException.SDKException.UnknownSdkException>(actualException)
+                    assertEquals(expectedError, actualException.message)
+                    assertEquals(expectedStatusString, actualException.statusCodeString)
+                }
+            }
+        }
 
     @Test
     fun `handleGooglePayResultErrors sets result state on DEVELOPER_ERROR`() = runTest {
@@ -112,21 +173,32 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
         viewModel.uiState.test {
             awaitItem().let { state ->
                 assertIs<GooglePayUIState.Error>(state)
-                assertIs<GooglePayException.ResultException>(state.exception)
-                assertEquals(state.exception.message, MobileSDKConstants.GooglePayConfig.Errors.DEV_ERROR)
+                val actualException = state.exception
+                assertIs<GooglePayException.SDKException.DeveloperError>(actualException)
+                assertEquals(
+                    actualException.message,
+                    MobileSDKConstants.GooglePayConfig.Errors.DEV_ERROR
+                )
+                assertEquals(
+                    CommonStatusCodes.getStatusCodeString(CommonStatusCodes.DEVELOPER_ERROR),
+                    actualException.statusCodeString
+                )
+
             }
         }
     }
 
     @Test
     fun `handleGooglePayResultErrors sets result state on ERROR`() = runTest {
-        val resultError = "[ERROR] An unexpected error occurred while processing Google Pay. Please try again later or contact support for assistance."
         viewModel.handleGooglePayResultErrors(CommonStatusCodes.ERROR)
         viewModel.uiState.test {
             awaitItem().let { state ->
                 assertIs<GooglePayUIState.Error>(state)
-                assertIs<GooglePayException.ResultException>(state.exception)
-                assertEquals(state.exception.message, resultError)
+                assertIs<GooglePayException.SDKException.ServiceError>(state.exception)
+                assertEquals(
+                    state.exception.message,
+                    MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_SERVICE_ERROR
+                )
             }
         }
     }

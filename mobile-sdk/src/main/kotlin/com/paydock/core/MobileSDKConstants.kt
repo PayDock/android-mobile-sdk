@@ -186,18 +186,25 @@ internal object MobileSDKConstants {
 
         object Errors {
             const val TOKEN_ERROR =
-                "There is a problem retrieving the Google Pay token. Please try again later or " +
-                    "contact support for assistance."
-            const val DEV_ERROR =
-                "A developer error occurred. Please try again later or contact support for assistance."
+                "There is a problem retrieving the Google Pay token. Please try again."
             const val GOOGLE_PAY_ERROR =
-                "An unexpected error occurred while processing Google Pay. Please try again later or " +
-                    "contact support for assistance."
+                "An unexpected error occurred while processing Google Pay. Please try again later."
             const val INITIALISATION_ERROR = "Unexpected non API exception when trying to " +
                 "retrieve [allowedPaymentMethods] parameter from PaymentRequest!"
             const val CANCELLATION_ERROR = "Google Pay charge was cancelled!"
             const val WALLET_TOKEN_ERROR =
                 "An unexpected error occurred while retrieving Google Pay wallet token. Please try again later."
+
+            // SDK status codes
+            const val FLOW_NOT_COMPLETED_ERROR = "Unable to complete Google Pay transaction. Please check your connection and try again."
+            const val NETWORK_ERROR = "A network error occurred with Google Pay. Please check your internet connection and try again."
+            const val TIMEOUT_ERROR = "The Google Pay request timed out. Please check your connection and try again."
+            const val DEV_ERROR = "There was a problem with the payment setup. Please try again later."
+            const val GOOGLE_PAY_SERVICE_ERROR = "An error occurred with Google Pay. Please try again."
+            const val PLAY_SERVICES_ERROR = "Google Pay requires attention. Please ensure Google Play Services is up to date, " +
+                "enabled, and you are signed in."
+            const val RESOLUTION_FAILED_ERROR = "Google Pay requires additional setup which could not be completed. Please try again."
+            const val UNEXPECTED_ERROR = "An unexpected error occurred. Please try again."
         }
     }
 
