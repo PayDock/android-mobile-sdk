@@ -17,7 +17,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -87,7 +87,7 @@ internal class PayPalWebActivity : ComponentActivity() {
                         .imePadding()
                 ) {
                     // Stores and remembers the PayPal URL created from the callback URL.
-                    val payPalUrl: String by remember(callbackUrl) {
+                    val payPalUrl: String by rememberSaveable(callbackUrl) {
                         mutableStateOf(createPayPalUrl(callbackUrl))
                     }
                     PayPalWebView(
