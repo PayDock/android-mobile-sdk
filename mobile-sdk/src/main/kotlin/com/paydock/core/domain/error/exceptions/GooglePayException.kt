@@ -31,11 +31,10 @@ sealed class GooglePayException(displayableMessage: String) : SdkException(displ
      */
     class InitialisationException(
         displayableMessage: String = MobileSDKConstants.GooglePayConfig.Errors.INITIALISATION_ERROR
-    ) :
-        GooglePayException(displayableMessage)
+    ) : GooglePayException(displayableMessage)
 
     /**
-     * Exception thrown when there is a result error related to Google Pay.
+     * Exception thrown when there is a result error related to Google Pay from Paydock's side after Google Pay.
      *
      * @param displayableMessage A human-readable message describing the error.
      * @constructor Creates a ResultException with the specified displayable message.
@@ -43,7 +42,8 @@ sealed class GooglePayException(displayableMessage: String) : SdkException(displ
     class ResultException(displayableMessage: String) : GooglePayException(displayableMessage)
 
     /**
-     * Exception thrown when there is a cancellation error related to Google Pay.
+     * Exception thrown when there is a user-initiated cancellation from Paydock's UI (e.g. close button).
+     * This is distinct from GooglePaySDKException.CancelledBySdk where the SDK itself returns a CANCELED status.
      *
      * @param displayableMessage A human-readable message describing the error.
      * @constructor Creates a CancellationException with the specified displayable message.
@@ -78,7 +78,94 @@ sealed class GooglePayException(displayableMessage: String) : SdkException(displ
     class InitialisationWalletTokenException(displayableMessage: String) : GooglePayException(displayableMessage)
 
     /**
-     * Exception thrown when there is an unknown error related to Google Pay.
+     * Represents exceptions that originate directly from the Google Pay SDK's status codes.
+     * Each specific exception within this sealed class maps to a CommonStatusCode.
+     *
+     * @param displayableMessage A user-friendly message describing the SDK error.
+     * @property statusCodeString The Google Pay SDK CommonStatusCode string representation that triggered this exception.
+     */
+    sealed class SDKException(
+        displayableMessage: String,
+        val statusCodeString: String
+    ) : GooglePayException(displayableMessage) {
+
+        /**
+         * Corresponds to `CommonStatusCodes.CANCELED`.
+         * The Google Pay flow was not completed successfully. This could be due to various reasons,
+         * not necessarily an explicit user cancellation.
+         */
+        class CancelledBySdk(
+            displayableMessage: String = MobileSDKConstants.GooglePayConfig.Errors.FLOW_NOT_COMPLETED_ERROR,
+            statusCodeString: String
+        ) : SDKException(displayableMessage, statusCodeString)
+
+        /**
+         * Corresponds to `CommonStatusCodes.NETWORK_ERROR`.
+         * A network issue prevented the Google Pay operation from completing.
+         */
+        class NetworkError(
+            displayableMessage: String = MobileSDKConstants.GooglePayConfig.Errors.NETWORK_ERROR,
+            statusCodeString: String
+        ) : SDKException(displayableMessage, statusCodeString)
+
+        /**
+         * Corresponds to `CommonStatusCodes.TIMEOUT`.
+         * The Google Pay operation timed out.
+         */
+        class Timeout(
+            displayableMessage: String = MobileSDKConstants.GooglePayConfig.Errors.TIMEOUT_ERROR,
+            statusCodeString: String
+        ) : SDKException(displayableMessage, statusCodeString)
+
+        /**
+         * Corresponds to `CommonStatusCodes.DEVELOPER_ERROR`.
+         * An issue with the integration configuration or parameters.
+         * The displayable message should be user-friendly, not exposing "developer error".
+         */
+        class DeveloperError(
+            displayableMessage: String = MobileSDKConstants.GooglePayConfig.Errors.DEV_ERROR, // User-friendly version
+            statusCodeString: String
+        ) : SDKException(displayableMessage, statusCodeString)
+
+        /**
+         * Corresponds to generic errors like `CommonStatusCodes.INTERNAL_ERROR`, `CommonStatusCodes.ERROR`, `CommonStatusCodes.INTERRUPTED`.
+         * An unexpected or internal error occurred within the Google Pay services.
+         */
+        class ServiceError(
+            displayableMessage: String = MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_SERVICE_ERROR,
+            statusCodeString: String
+        ) : SDKException(displayableMessage, statusCodeString)
+
+        /**
+         * Corresponds to errors related to Google Play Services availability or account issues,
+         * such as `SERVICE_VERSION_UPDATE_REQUIRED`, `SERVICE_DISABLED`, `SIGN_IN_REQUIRED`,
+         * `INVALID_ACCOUNT`, `API_NOT_CONNECTED`.
+         */
+        class PlayServicesError(
+            displayableMessage: String = MobileSDKConstants.GooglePayConfig.Errors.PLAY_SERVICES_ERROR,
+            statusCodeString: String
+        ) : SDKException(displayableMessage, statusCodeString)
+
+        /**
+         * Corresponds to `CommonStatusCodes.RESOLUTION_REQUIRED` when the resolution fails or cannot be launched.
+         */
+        class ResolutionFailed(
+            displayableMessage: String = MobileSDKConstants.GooglePayConfig.Errors.RESOLUTION_FAILED_ERROR,
+            statusCodeString: String
+        ) : SDKException(displayableMessage, statusCodeString)
+
+        /**
+         * For any other unhandled or unknown status codes from the Google Pay SDK.
+         */
+        class UnknownSdkException(
+            displayableMessage: String,
+            statusCodeString: String
+        ) : SDKException(displayableMessage, statusCodeString)
+    }
+
+    /**
+     * Exception thrown when there is an unknown error related to Google Pay
+     * that doesn't fit into other more specific categories.
      *
      * @param displayableMessage A human-readable message describing the error.
      * @constructor Creates an UnknownException with the specified displayable message.

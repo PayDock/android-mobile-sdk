@@ -2,6 +2,7 @@ package com.paydock.sample.feature.checkout
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.paydock.core.domain.error.exceptions.GooglePayException
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.card.domain.model.integration.CardResult
 import com.paydock.feature.threeDS.integrated.domain.model.integration.Integrated3DSResult
@@ -412,10 +413,18 @@ class StandaloneCheckoutViewModel @Inject constructor(
                         cardToken = null
                     )
                 }
-                _toastEvents.send("Transaction Complete📋: \nStatus ⏳: [${charge.resource.data?.status}]")
+                _toastEvents.send("Transaction Complete📋: \nSuccess ✅: [${charge.resource.data?.status}]")
             }.onFailure {
-                _stateFlow.update { state ->
-                    state.copy(isLoading = false, error = it.message ?: CHARGE_TRANSACTION_ERROR)
+                if (it is GooglePayException.SDKException) {
+                    // This just allows us to dismiss the bottom sheet
+                    _toastEvents.send("Transaction Complete📋: \nError ❌: [${it.statusCodeString} ${it.message} ]")
+                } else {
+                    _stateFlow.update { state ->
+                        state.copy(
+                            isLoading = false,
+                            error = it.message ?: CHARGE_TRANSACTION_ERROR
+                        )
+                    }
                 }
             }
         }
