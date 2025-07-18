@@ -3,6 +3,7 @@ package com.paydock.feature.colespay.presentation
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.view.ViewGroup
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
@@ -17,7 +18,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -95,7 +96,7 @@ internal class ColesPayWebActivity : ComponentActivity() {
                     val colesPayOrderId = requireNotNull(intent.getOrderIdExtra())
                     val colesPayClientId = requireNotNull(intent.getClientIdExtra())
                     // Stores and remembers the ColesPay URL created from the callback URL.
-                    val colesPayUrl: String by remember(colesPayOrderId, colesPayClientId) {
+                    val colesPayUrl: String by rememberSaveable(colesPayOrderId, colesPayClientId) {
                         mutableStateOf(createColesPayUrl(colesPayOrderId, colesPayClientId))
                     }
                     ColesPayWebView(colesPayUrl = colesPayUrl, onSuccess = {
@@ -116,6 +117,8 @@ internal class ColesPayWebActivity : ComponentActivity() {
                 }
             }
         }
+        // Sets the window layout to match the parent dimensions.
+        window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
     }
 
     /**

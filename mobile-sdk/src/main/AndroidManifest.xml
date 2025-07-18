@@ -14,12 +14,14 @@
             android:name=".feature.paypal.checkout.presentation.PayPalWebActivity"
             android:launchMode="singleTop"
             android:theme="@style/SdkDialog"
+            android:configChanges="orientation|screenSize"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".feature.colespay.presentation.ColesPayWebActivity"
             android:launchMode="singleTop"
             android:theme="@style/SdkDialog"
+            android:configChanges="orientation|screenSize"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
@@ -27,6 +29,7 @@
             android:exported="true"
             android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize"
             android:theme="@style/SdkNoActionBarTheme" >
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
