@@ -4,9 +4,21 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.AutofillType
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.search.SearchDropdownAppearance
@@ -35,8 +47,8 @@ import com.paydock.feature.address.presentation.state.AddressDetailsFormState
  *
  * Note:
  * - The animation duration is determined by [MobileSDKConstants.General.EXPANSION_TRANSITION_DURATION].
- * - The [ManualAddress] composable handles the input fields for address entry and passes updates via the respective callbacks.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun ManualAddressEntry(
     isManualAddressVisible: Boolean,
@@ -46,7 +58,7 @@ internal fun ManualAddressEntry(
     onCityChange: (String) -> Unit,
     onStateChange: (String) -> Unit,
     onPostalCodeChange: (String) -> Unit,
-    onCountryChange: (String) -> Unit,
+    onCountryChange: (String?) -> Unit,
     verticalSpacing: Dp,
     textFieldAppearance: TextFieldAppearance,
     searchAppearance: SearchDropdownAppearance,
@@ -62,17 +74,84 @@ internal fun ManualAddressEntry(
             animationSpec = tween(MobileSDKConstants.General.EXPANSION_TRANSITION_DURATION)
         )
     ) {
-        ManualAddress(
-            addressInputState = addressInputState,
-            onAddressLine1Change = onAddressLine1Change,
-            onAddressLine2Change = onAddressLine2Change,
-            onCityChange = onCityChange,
-            onStateChange = onStateChange,
-            onPostalCodeChange = onPostalCodeChange,
-            onCountryChange = onCountryChange,
-            verticalSpacing = verticalSpacing,
-            textFieldAppearance = textFieldAppearance,
-            searchAppearance = searchAppearance
-        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(verticalSpacing, Alignment.Top),
+            horizontalAlignment = Alignment.Start
+        ) {
+            val focusAddressLine2 = remember { FocusRequester() }
+            val focusCity = remember { FocusRequester() }
+            val focusState = remember { FocusRequester() }
+            val focusPostalCode = remember { FocusRequester() }
+
+            // Address input fields
+            AddressInputField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("addressLine1Input"),
+                appearance = textFieldAppearance,
+                value = addressInputState.addressLine1,
+                label = stringResource(R.string.label_address_line_1),
+                nextFocus = focusAddressLine2,
+                autofillType = AutofillType.AddressStreet,
+                onValueUpdated = onAddressLine1Change,
+            )
+            AddressInputField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusAddressLine2)
+                    .testTag("addressLine2Input"),
+                appearance = textFieldAppearance,
+                value = addressInputState.addressLine2,
+                label = stringResource(R.string.label_address_line_2),
+                nextFocus = focusCity,
+                onValueUpdated = onAddressLine2Change,
+                isMandatory = false
+            )
+            AddressInputField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusCity)
+                    .testTag("cityInput"),
+                appearance = textFieldAppearance,
+                value = addressInputState.city,
+                label = stringResource(R.string.label_city),
+                nextFocus = focusState,
+                autofillType = AutofillType.AddressLocality,
+                onValueUpdated = onCityChange
+            )
+            AddressInputField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusState)
+                    .testTag("stateInput"),
+                appearance = textFieldAppearance,
+                value = addressInputState.state,
+                label = stringResource(R.string.label_state),
+                nextFocus = focusPostalCode,
+                autofillType = AutofillType.AddressRegion,
+                onValueUpdated = onStateChange
+            )
+            AddressInputField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusPostalCode)
+                    .testTag("postalCodeInput"),
+                appearance = textFieldAppearance,
+                value = addressInputState.postalCode,
+                label = stringResource(R.string.label_postal_code),
+                autofillType = AutofillType.PostalCode,
+                onValueUpdated = onPostalCodeChange
+            )
+            // Country auto-complete dropdown selection
+            CountryInputAutoComplete(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("countryInput"),
+                appearance = searchAppearance,
+                currentCountryValue = addressInputState.country,
+                autofillType = AutofillType.AddressCountry,
+                onCountryConfirmed = onCountryChange
+            )
+        }
     }
 }

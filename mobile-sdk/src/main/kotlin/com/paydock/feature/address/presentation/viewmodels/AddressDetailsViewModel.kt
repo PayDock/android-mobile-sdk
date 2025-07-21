@@ -81,8 +81,8 @@ internal class AddressDetailsViewModel(
         _formState.value = _formState.value.copy(postalCode = postalCode)
     }
 
-    fun updateCountry(country: String) {
-        _formState.value = _formState.value.copy(country = country)
+    fun updateCountry(country: String?) {
+        _formState.value = _formState.value.copy(country = country ?: "")
     }
 
     /**

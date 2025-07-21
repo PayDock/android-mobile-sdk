@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,7 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.AutofillType
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
@@ -41,27 +41,47 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
 import com.paydock.R
+import com.paydock.core.MobileSDKConstants
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
+import kotlinx.coroutines.delay
 
 /**
  * A composable function that creates a search text field with a dropdown for suggestions.
  *
- * @param modifier The modifier to be applied to the search text field.
- * @param appearance The visual appearance configuration for the search dropdown.
+ * This component integrates a text input field for search queries with a dropdown list
+ * that displays matching suggestions. It utilizes a [SearchViewModel] to handle the
+ * search logic, including fetching and filtering results. The appearance of the text field
+ * and the dropdown can be customized.
+ *
+ * @param modifier The modifier to be applied to the root `Column` of the search text field.
+ * @param appearance The visual appearance configuration for the search dropdown, including
+ *                   styles for the text field and the dropdown list. Defaults to [SearchDropdownAppearanceDefaults.appearance].
  * @param label The label to be displayed on the search text field.
- * @param autofillType The autofill type for the search text field (optional).
- * @param trailingIcon An optional composable to be displayed as a trailing icon in the text field when not focused and not searching.
- * @param noResultsFoundLabel The label to be displayed when no results are found (defaults to "No results found").
- * @param selectedItem The currently selected item in the dropdown (optional).
- * @param viewModel The [SearchViewModel] instance responsible for managing search operations.
- * @param onItemSelected A callback function invoked when an item is selected from the dropdown.
- * It receives the selected item as an [Any] type.
+ * @param autofillType The autofill type for the search text field (optional). This helps
+ *                     the system provide appropriate autofill suggestions.
+ * @param trailingIcon An optional composable function to be displayed as a trailing icon
+ *                     in the text field when it is not focused and not in a searching state.
+ * @param noResultsFoundLabel The text to be displayed in the dropdown when no search results
+ *                            are found. Defaults to a predefined string resource.
+ * @param selectedItemProp A string representation of the currently selected item, typically
+ *                         provided by the parent composable. This is used to synchronize the
+ *                         text field's content with an external selection. If `null`, no item
+ *                         is pre-selected.
+ * @param viewModel The [SearchViewModel] instance responsible for managing search operations,
+ *                  such as updating search text, fetching results, and tracking search state.
+ *                  The type `T` must be a subclass of `SearchViewModel<*>`.
+ * @param onSelectionChanged A callback function invoked when an item is selected from the
+ *                           dropdown, or when the selection is cleared (e.g., due to text
+ *                           input not matching any item or the user clearing the input).
+ *                           It receives the selected item object (of type `Any?`) as a parameter.
+ *                           A `null` value indicates that the selection has been cleared.
  */
+@Suppress("LongParameterList", "LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun <T : SearchViewModel<*>> SearchTextField(
@@ -71,100 +91,157 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
     autofillType: AutofillType? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     noResultsFoundLabel: String = stringResource(R.string.label_no_results_found),
-    selectedItem: String? = null,
+    selectedItemProp: String?,
+    isMandatory: Boolean = true,
     viewModel: T,
-    onItemSelected: (Any) -> Unit
+    onSelectionChanged: (selectedObject: Any?) -> Unit
 ) {
-    // Collect the current search text, search results, and search status from the ViewModel
+    var hasUserInteracted by remember { mutableStateOf(false) }
+
+    var debouncedValue by remember { mutableStateOf("") }
+    LaunchedEffect(selectedItemProp) {
+        delay(MobileSDKConstants.General.INPUT_DELAY)
+        debouncedValue = selectedItemProp ?: ""
+    }
+
+    val errorMessage = if (isMandatory) {
+        if (selectedItemProp.isNullOrBlank() && hasUserInteracted) {
+            stringResource(id = R.string.error_mandatory_field)
+        } else {
+            null
+        }
+    } else {
+        null
+    }
+
     val searchText by viewModel.searchText.collectAsState()
-    val searchResults by viewModel.searchResult.collectAsState()
+    val searchResultsObjects by viewModel.searchResult.collectAsState() // List of actual T objects
+    val currentSearchResultsAsStrings by remember(searchResultsObjects) {
+        derivedStateOf { viewModel.stringResults() } // List of strings for display/matching
+    }
     val isSearching by viewModel.isSearching.collectAsState()
 
-    // Collect and remember the filtered search results
-    var filteredResults by remember { mutableStateOf<List<String>>(emptyList()) }
+    var isFocused by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current // Obtain FocusManager in the Composable scope
 
-    // Update the filteredResults when searchResults changes
-    LaunchedEffect(searchResults) {
-        filteredResults = viewModel.stringResults()
-    }
-
-    // Remember the selected item value to avoid recomposition on every change
-    val selectedItemValue = remember(selectedItem) {
-        selectedItem?.let { viewModel.setSelectedValue(it) }
-        selectedItem
-    }
-
-    val focusManager: FocusManager = LocalFocusManager.current
-    var isTextFieldFocused by remember { mutableStateOf(false) }
-    var isDropdownFocused by remember { mutableStateOf(false) }
-
-    // Use a derived state
-    val isDropdownExpanded by remember(isTextFieldFocused, isDropdownFocused, searchText) {
-        mutableStateOf((isTextFieldFocused || isDropdownFocused) && searchText.isNotBlank())
+    // Effect to synchronize searchText with an externally provided valid selectedItemProp.
+    LaunchedEffect(selectedItemProp) {
+        if (selectedItemProp != null && selectedItemProp != searchText) {
+            // If parent provides a valid selection string, update our ViewModel's searchText.
+            viewModel.onSearchTextChange(selectedItemProp) // Or setSelectedValue if that's more appropriate
+        }
     }
 
     Column(modifier = modifier) {
         SdkTextField(
             modifier = Modifier.onFocusChanged { focusState ->
-                isTextFieldFocused = focusState.isFocused
+                isFocused = focusState.isFocused
+                if (!focusState.isFocused) { // ON BLUR
+                    // If the text field is not empty, and it doesn't match the parent's
+                    // confirmed selection (selectedItemProp), then we need to check if
+                    // the current text is a valid selectable item from the dropdown.
+                    if (searchText.isNotEmpty() && searchText != selectedItemProp) {
+                        val matchedIndex = currentSearchResultsAsStrings.indexOf(searchText)
+                        if (matchedIndex != -1 && matchedIndex < searchResultsObjects.size) {
+                            // Text matches a dropdown item, so make it the selection
+                            onSelectionChanged(searchResultsObjects[matchedIndex])
+                        } else {
+                            // Text does not match any dropdown item.
+                            // If there was a previous valid selection (selectedItemProp != null),
+                            // it's now invalid because searchText changed to something not in the list.
+                            if (selectedItemProp != null) {
+                                onSelectionChanged(null)
+                            }
+                            // If selectedItemProp was already null, and searchText is some random text,
+                            // the selection state remains null (no change needed from onSelectionChanged).
+                        }
+                    }
+                }
             },
             appearance = appearance.textField,
             value = searchText,
             label = label,
-            showValidIcon = !selectedItem.isNullOrBlank(),
+            showValidIcon = !selectedItemProp.isNullOrBlank(),
+            error = errorMessage,
             trailingIcon = {
                 // Show progress indicator if searching and focused
-                if (isTextFieldFocused && isSearching) {
+                if (isFocused && isSearching) {
                     CircularProgressIndicator(modifier = Modifier.size(25.dp))
-                } else if (!isTextFieldFocused && trailingIcon != null) {
+                } else if (!isFocused && trailingIcon != null) {
                     trailingIcon()
                 }
             },
-            onValueChange = { value ->
-                // Update the search text in the ViewModel
-                viewModel.onSearchTextChange(value)
+            onValueChange = { newText ->
+                hasUserInteracted = true
+                viewModel.onSearchTextChange(newText)
+                if (selectedItemProp != null && newText != selectedItemProp) {
+                    onSelectionChanged(null)
+                }
             },
             autofillType = autofillType,
-            // Use keyboard options and actions for a user-friendly input experience
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Search
-            ),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(
                 onSearch = {
-                    if (searchResults.isNotEmpty()) {
-                        searchResults.first()?.let { onItemSelected(it) } // Handle non-null better
-                        focusManager.clearFocus()
+                    focusManager.clearFocus()
+                    if (searchText.isNotEmpty()) {
+                        val matchedIndex = currentSearchResultsAsStrings.indexOf(searchText)
+                        if (matchedIndex != -1 && matchedIndex < searchResultsObjects.size) {
+                            onSelectionChanged(searchResultsObjects[matchedIndex])
+                        } else {
+                            if (selectedItemProp != null) {
+                                onSelectionChanged(null)
+                            }
+                        }
+                    } else {
+                        if (selectedItemProp != null) {
+                            onSelectionChanged(null)
+                        }
                     }
                 }
             )
         )
 
-        // Refactor the logic in a val to make the code more readable
-        val dropdownContent =
-            getDropdownContent(isSearching, noResultsFoundLabel, searchText, filteredResults)
+        val isDropdownVisible = isFocused && searchText.isNotBlank()
+        val itemsToShow = getDropdownContent(
+            isSearching = isSearching,
+            noResultsFoundLabel = noResultsFoundLabel,
+            searchText = searchText,
+            results = currentSearchResultsAsStrings
+        )
 
-        AnimatedVisibility(visible = isDropdownExpanded) {
+        AnimatedVisibility(visible = isDropdownVisible) {
             Card(
                 shape = appearance.dropdown.shape,
                 elevation = CardDefaults.elevatedCardElevation()
             ) {
                 // Calculate the height based on items.
-                val dropdownHeight = appearance.dropdown.itemHeight * dropdownContent.size
+                val dropdownHeight = appearance.dropdown.itemHeight * itemsToShow.size
                 LazyColumn(
                     modifier = Modifier
-                        .heightIn(max = dropdownHeight)
-                        .onFocusChanged {
-                            isDropdownFocused = it.hasFocus
-                        },
+                        .fillMaxWidth() // Make dropdown take available width
+                        .heightIn(max = dropdownHeight) // Max height example
                 ) {
-                    items(dropdownContent.sorted()) { item ->
-                        DropdownItem(item, appearance.dropdown) { selection ->
-                            if (selection != selectedItemValue && filteredResults.isNotEmpty()) {
-                                viewModel.setSelectedValue(item)
-                                onItemSelected(selection)
-                                // Only clear focus if an actual item is selected
-                                focusManager.clearFocus()
-                            }
+                    items(itemsToShow, key = { it }) { itemString ->
+                        if (itemString == noResultsFoundLabel && currentSearchResultsAsStrings.isEmpty() && !isSearching) {
+                            DropdownItem( // Your composable DropdownItem
+                                item = AnnotatedString(itemString),
+                                appearance = appearance.dropdown,
+                                onItemSelected = { /* No action */ },
+                            )
+                        } else if (itemString != noResultsFoundLabel) {
+                            DropdownItem( // Your composable DropdownItem
+                                item = AnnotatedString(itemString),
+                                appearance = appearance.dropdown,
+                                onItemSelected = {
+                                    val originalObjectIndex = currentSearchResultsAsStrings.indexOf(itemString)
+                                    if (originalObjectIndex != -1 && originalObjectIndex < searchResultsObjects.size) {
+                                        val selectedActualObject = searchResultsObjects[originalObjectIndex]
+                                        viewModel.onSearchTextChange(itemString)
+                                        onSelectionChanged(selectedActualObject)
+                                        focusManager.clearFocus()
+                                    }
+                                }
+                            )
                         }
                     }
                 }
@@ -388,12 +465,12 @@ private fun getDropdownContent(
     isSearching: Boolean,
     noResultsFoundLabel: String,
     searchText: String,
-    filteredResults: List<String>
+    results: List<String>
 ): List<String> {
-    return if (searchText.isNotBlank() && filteredResults.isEmpty()) {
+    return if (searchText.isNotBlank() && results.isEmpty()) {
         listOf(if (isSearching) stringResource(R.string.label_searching) else noResultsFoundLabel)
     } else {
-        filteredResults
+        results
     }
 }
 
@@ -409,9 +486,9 @@ private fun getDropdownContent(
  */
 @Composable
 private fun DropdownItem(
-    item: String,
+    item: AnnotatedString,
     appearance: DropdownAppearance = DropdownAppearanceDefaults.appearance(),
-    onItemSelected: (Any) -> Unit
+    onItemSelected: (Any) -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -424,7 +501,7 @@ private fun DropdownItem(
     ) {
         SdkText(
             modifier = Modifier.fillMaxWidth(),
-            text = AnnotatedString(text = item),
+            text = item,
             appearance = appearance.item
         )
     }

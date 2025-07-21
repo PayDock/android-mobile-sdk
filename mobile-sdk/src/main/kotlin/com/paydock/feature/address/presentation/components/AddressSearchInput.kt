@@ -2,8 +2,6 @@ package com.paydock.feature.address.presentation.components
 
 import android.location.Address
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.AutofillType
@@ -32,8 +30,6 @@ internal fun AddressSearchInput(
     viewModel: AddressSearchViewModel = koinViewModel(),
     onAddressSelected: (Address) -> Unit
 ) {
-    val searchResults by viewModel.searchResult.collectAsState()
-
     SearchTextField(
         modifier = modifier.testTag("addressSearch"),
         appearance = appearance,
@@ -41,11 +37,16 @@ internal fun AddressSearchInput(
         autofillType = AutofillType.AddressStreet,
         noResultsFoundLabel = stringResource(R.string.label_no_address_found),
         viewModel = viewModel,
-        onItemSelected = { item ->
-            val address = searchResults.find { it.getAddressLine(0) == item }
-            address?.let { onAddressSelected(it) }
-            // Clear search field after selection
-            viewModel.setSelectedValue("")
+        selectedItemProp = null,
+        isMandatory = false,
+        onSelectionChanged = { selectedObject ->
+            if (selectedObject is Address) {
+                // A valid Address object was selected from the SearchTextField's dropdown
+                onAddressSelected(selectedObject)
+                // Clear the search text field in the ViewModel after selection.
+                // This will make the searchText in SearchTextField empty.
+                viewModel.onSearchTextChange("")
+            }
         }
     )
 }
