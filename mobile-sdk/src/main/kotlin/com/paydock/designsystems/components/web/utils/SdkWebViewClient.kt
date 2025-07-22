@@ -1,5 +1,6 @@
 package com.paydock.designsystems.components.web.utils
 
+import android.graphics.Bitmap
 import android.util.Log
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -22,6 +23,35 @@ internal class SdkWebViewClient(
     private val onPageFinished: (WebView) -> Unit = {},
     private val onWebViewError: (Int, String) -> Unit,
 ) : AccompanistWebViewClient() {
+
+    @Volatile
+    private var criticalErrorOccurredInSession: Boolean = false
+    private var currentMainUrl: String? = null
+
+    /**
+     * Called when a page starts loading. This method resets the critical error flag if the main URL
+     * changes or if it's the first page load.
+     *
+     * @param view The WebView that is loading the content.
+     * @param url The URL of the page that is starting to load.
+     * @param favicon The favicon for the page, or null if there isn't one.
+     */
+    override fun onPageStarted(
+        view: WebView,
+        url: String?,
+        favicon: Bitmap?
+    ) {
+        super.onPageStarted(view, url, favicon)
+        // If the main URL changes or it's the first load, reset the error flag.
+        if (currentMainUrl != url) {
+            Log.d(
+                MobileSDKConstants.MOBILE_SDK_TAG,
+                "New page loading ($url), resetting critical error flag."
+            )
+            criticalErrorOccurredInSession = false
+            currentMainUrl = url
+        }
+    }
 
     /**
      * Called when a page has finished loading. Invokes the provided [onPageFinished] callback.
@@ -79,18 +109,29 @@ internal class SdkWebViewClient(
                 ERROR_IO -> true
                 else -> false
             }
-            // If it's a critical network error OR an error on the main frame, consider it fatal.
-            if (isCriticalNetworkError || request?.isForMainFrame == true) {
-                Log.d(
-                    MobileSDKConstants.MOBILE_SDK_TAG,
-                    "Fatal error (code $errorCode, mainFrame: ${request?.isForMainFrame}): $errorMessage"
-                )
-                onWebViewError(errorCode, errorMessage)
+            val isErrorFatalForSession = isCriticalNetworkError || request?.isForMainFrame == true
+
+            if (isErrorFatalForSession) {
+                if (!criticalErrorOccurredInSession) {
+                    criticalErrorOccurredInSession = true
+                    Log.d(
+                        MobileSDKConstants.MOBILE_SDK_TAG,
+                        "First critical error in session (code $errorCode, " +
+                            "mainFrame: ${request?.isForMainFrame}, " +
+                            "url: ${request?.url}): $errorMessage"
+                    )
+                    onWebViewError(errorCode, errorMessage)
+                } else {
+                    Log.d(
+                        MobileSDKConstants.MOBILE_SDK_TAG,
+                        "Subsequent critical error in session ignored (code $errorCode, url: ${request?.url}): $errorMessage"
+                    )
+                }
             } else {
-                // Log other non-fatal errors without triggering the main error callback.
+                // Log non-fatal errors (e.g., error loading a sub-frame image) without triggering the main error callback.
                 Log.d(
                     MobileSDKConstants.MOBILE_SDK_TAG,
-                    "Non-Fatal error (code $errorCode): $errorMessage"
+                    "Non-Fatal sub-resource error (code $errorCode, url: ${request?.url}): $errorMessage"
                 )
             }
         }
