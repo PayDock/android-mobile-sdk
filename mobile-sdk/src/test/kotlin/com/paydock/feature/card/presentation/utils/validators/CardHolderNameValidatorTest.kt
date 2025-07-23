@@ -155,9 +155,18 @@ internal class CardHolderNameValidatorTest {
         // aims to not end on a hyphen.
         val name = "John-"
         val hasUserInteracted = true
-        val expected = CardHolderNameError.InvalidFormat
+        val expected = CardHolderNameError.None
         val actual = CardHolderNameValidator.validateHolderNameInput(name, hasUserInteracted)
         assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `validateHolderNameInput given name with only backtick returns InvalidFormat error`() {
+        val nameInput = "`" // The cardholder name consisting only of a backtick
+        val userHasInteracted = true // Assume the user has interacted with the field
+        val expectedErrorType = CardHolderNameError.InvalidFormat // Expected validation result
+        val actualErrorType = CardHolderNameValidator.validateHolderNameInput(nameInput, userHasInteracted)
+        assertEquals(expectedErrorType, actualErrorType)
     }
 
     @Test
