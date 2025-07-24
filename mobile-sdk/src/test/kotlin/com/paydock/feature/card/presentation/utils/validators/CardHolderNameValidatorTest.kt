@@ -210,6 +210,15 @@ internal class CardHolderNameValidatorTest {
     }
 
     @Test
+    fun `validateHolderNameInput given valid name with backtick returns None error`() {
+        val name = "O`Malley"
+        val hasUserInteracted = true
+        val expected = CardHolderNameError.None
+        val actual = CardHolderNameValidator.validateHolderNameInput(name, hasUserInteracted)
+        assertEquals(expected, actual)
+    }
+
+    @Test
     fun `validateHolderNameInput given valid name with period returns None error`() {
         val name = "John H. Doe"
         val hasUserInteracted = true

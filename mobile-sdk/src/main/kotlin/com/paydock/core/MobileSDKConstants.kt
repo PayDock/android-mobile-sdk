@@ -51,7 +51,7 @@ internal object MobileSDKConstants {
          * This regex ensures the name (after trimming):
          * - Is not empty (this should be checked separately, e.g., by `String.isNotBlank()`).
          * - Starts with a Unicode letter (`\\p{L}`).
-         * - Can contain Unicode letters, spaces (`\\s`), apostrophes (`'`), hyphens (`-`), and dots (`.`).
+         * - Can contain Unicode letters, spaces (`\\s`), apostrophes (`'`), backticks(`\``) hyphens (`-`), and dots (`.`).
          * - If the name is longer than one character, it must end with a Unicode letter, apostrophe, hyphen, or dot.
          * - Alternatively, the name can be a single Unicode letter.
          *
@@ -63,7 +63,7 @@ internal object MobileSDKConstants {
          * **Note:** This regex does not explicitly check for empty strings. It's recommended to validate for non-blank input
          * before applying this regex.
          */
-        internal val CARD_HOLDER_NAME = Regex("^\\p{L}[\\p{L}'.\\s-]*[\\p{L}'.\\-]$|^\\p{L}$")
+        internal val CARD_HOLDER_NAME = Regex("^\\p{L}[\\p{L}'`.\\s-]*[\\p{L}'.\\-]$|^\\p{L}$")
     }
 
     /**
