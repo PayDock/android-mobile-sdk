@@ -61,14 +61,25 @@ include:
   script:
     - bundle --version # Checks the version of Bundler.
 
-# linting:
-# This job runs linting checks on the codebase using detekt.
+# code_quality:
+# This job runs code quality checks on the codebase using detekt.
 # It extends the '.setup_bundler' template to ensure the Ruby dependencies are set up.
+# Generates reports that are displayed in GitLab's Code Quality tab.
 code_quality:
   stage: code_quality # Runs in the 'code_quality' stage.
   extends: .setup_bundler # Inherits configurations (like Bundler setup) from the '.setup_bundler' template.
   script:
-    - bundle exec fastlane code_quality # Executes the 'formatting, style, issues' lane in Fastlane.
+    - bundle exec fastlane code_quality # Executes the 'code_quality' lane in Fastlane.
+  artifacts:
+    expire_in: 1 week
+    when: always # Always collect artifacts, even if the job fails
+    paths:
+      - reports/code-quality/ # Make all code quality reports available
+      - mobile-sdk/build/reports/ # Include original detekt reports for debugging
+    reports:
+      # GitLab Code Quality report (custom format for better integration)
+      codequality: reports/code-quality/gl-code-quality-report.json
+    expose_as: 'Code Quality Reports'
   rules:
     - if: $CI_COMMIT_BRANCH  # Run on all branch pushes
       when: on_success
