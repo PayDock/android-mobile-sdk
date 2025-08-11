@@ -15,6 +15,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.designsystems.components.input.SdkTextField
@@ -102,6 +103,7 @@ internal fun AddressInputField(
         enabled = enabled,
         autofillType = autofillType,
         keyboardOptions = keyboardOptions.copy(
+            capitalization = KeyboardCapitalization.Words,
             imeAction = if (keyboardOptions.imeAction == ImeAction.Default && nextFocus != null) {
                 ImeAction.Next
             } else {
