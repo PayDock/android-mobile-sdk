@@ -73,3 +73,5 @@ vcs.xml
 
 # MacOS
 .DS_Store
+# Code quality reports (generated at runtime)
+reports/
