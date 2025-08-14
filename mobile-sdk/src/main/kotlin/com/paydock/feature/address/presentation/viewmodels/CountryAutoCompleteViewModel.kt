@@ -31,13 +31,19 @@ internal class CountryAutoCompleteViewModel(
      */
     override fun searchItems(query: String): Flow<List<String>> = flow {
         if (query.isNotBlank()) {
-            val result = allCountries.filter { country ->
-                country.contains(query, ignoreCase = true)
+            val normalizedQuery = query.trim()
+            // Prioritize exact matches, then startsWith, then contains, to ensure exact text
+            // entries are included even when the list is truncated by MAX_SEARCH_RESULTS.
+            val (exactMatches, remaining) = allCountries.partition {
+                it.equals(normalizedQuery, ignoreCase = true)
             }
-            // This is to improve performance on the large list
-            emit(result.take(MobileSDKConstants.AddressConfig.MAX_SEARCH_RESULTS))
+            val startsWithMatches = remaining.filter { it.startsWith(normalizedQuery, ignoreCase = true) }
+            val containsMatches = remaining.filter {
+                it.contains(normalizedQuery, ignoreCase = true) && !it.startsWith(normalizedQuery, ignoreCase = true)
+            }
+            val ordered = exactMatches + startsWithMatches + containsMatches
+            emit(ordered.take(MobileSDKConstants.AddressConfig.MAX_SEARCH_RESULTS))
         } else {
-            // This is to improve performance on the large list
             emit(allCountries.take(MobileSDKConstants.AddressConfig.MAX_SEARCH_RESULTS))
         }
     }

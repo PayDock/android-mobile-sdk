@@ -41,14 +41,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
 import com.paydock.R
-import com.paydock.core.MobileSDKConstants
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
-import kotlinx.coroutines.delay
 
 /**
  * A composable function that creates a search text field with a dropdown for suggestions.
@@ -98,27 +96,21 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
 ) {
     var hasUserInteracted by remember { mutableStateOf(false) }
 
-    var debouncedValue by remember { mutableStateOf("") }
-    LaunchedEffect(selectedItemProp) {
-        delay(MobileSDKConstants.General.INPUT_DELAY)
-        debouncedValue = selectedItemProp ?: ""
-    }
-
-    val errorMessage = if (isMandatory) {
-        if (selectedItemProp.isNullOrBlank() && hasUserInteracted) {
-            stringResource(id = R.string.error_mandatory_field)
-        } else {
-            null
-        }
-    } else {
-        null
-    }
-
     val searchText by viewModel.searchText.collectAsState()
     val searchResultsObjects by viewModel.searchResult.collectAsState() // List of actual T objects
     val currentSearchResultsAsStrings by remember(searchResultsObjects) {
         derivedStateOf { viewModel.stringResults() } // List of strings for display/matching
     }
+    val isExactTextMatch = remember(searchText, currentSearchResultsAsStrings) {
+        searchText.isNotBlank() && currentSearchResultsAsStrings.contains(searchText)
+    }
+    val errorMessage = if (isMandatory) {
+        val isValid = !selectedItemProp.isNullOrBlank() || isExactTextMatch
+        if (!isValid && hasUserInteracted) stringResource(id = R.string.error_mandatory_field) else null
+    } else {
+        null
+    }
+
     val isSearching by viewModel.isSearching.collectAsState()
 
     var isFocused by remember { mutableStateOf(false) }
@@ -129,6 +121,21 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
         if (selectedItemProp != null && selectedItemProp != searchText) {
             // If parent provides a valid selection string, update our ViewModel's searchText.
             viewModel.onSearchTextChange(selectedItemProp) // Or setSelectedValue if that's more appropriate
+        }
+    }
+
+    // Auto-select when the typed text becomes an exact match for an available result.
+    // This ensures parent selection stays in sync even if the user doesn't click the dropdown
+    // or move focus away before proceeding.
+    LaunchedEffect(searchText, currentSearchResultsAsStrings) {
+        if (searchText.isNotBlank() && currentSearchResultsAsStrings.contains(searchText)) {
+            val matchedIndex = currentSearchResultsAsStrings.indexOf(searchText)
+            if (matchedIndex != -1 && matchedIndex < searchResultsObjects.size) {
+                // Only notify parent if the confirmed selection string differs
+                if (selectedItemProp != searchText) {
+                    onSelectionChanged(searchResultsObjects[matchedIndex])
+                }
+            }
         }
     }
 
@@ -161,7 +168,7 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
             appearance = appearance.textField,
             value = searchText,
             label = label,
-            showValidIcon = !selectedItemProp.isNullOrBlank(),
+            showValidIcon = !selectedItemProp.isNullOrBlank() || isExactTextMatch,
             error = errorMessage,
             trailingIcon = {
                 // Show progress indicator if searching and focused
