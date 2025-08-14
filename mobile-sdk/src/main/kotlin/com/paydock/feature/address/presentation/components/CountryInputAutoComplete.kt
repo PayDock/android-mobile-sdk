@@ -36,7 +36,7 @@ import org.koin.androidx.compose.koinViewModel
 internal fun CountryInputAutoComplete(
     modifier: Modifier = Modifier,
     appearance: SearchDropdownAppearance = SearchDropdownAppearanceDefaults.appearance(),
-    viewModel: CountryAutoCompleteViewModel = koinViewModel(), // This is SearchViewModel<String>
+    viewModel: CountryAutoCompleteViewModel = koinViewModel(),
     autofillType: AutofillType? = null,
     currentCountryValue: String,
     onCountryConfirmed: (String?) -> Unit
