@@ -22,7 +22,34 @@ internal class SdkWebViewClient(
     private val onShouldOverrideUrlLoading: ((request: WebResourceRequest?) -> Boolean)? = null,
     private val onPageFinished: (WebView) -> Unit = {},
     private val onWebViewError: (Int, String) -> Unit,
+    /**
+     * When true, delegates lifecycle callbacks to the base AccompanistWebViewClient.
+     * Must be false when this client is used with a raw Android WebView (not the Compose WebView),
+     * because the base class relies on an internal state that is only initialized by the Compose wrapper.
+     */
+    private val delegateToAccompanist: Boolean = true,
 ) : AccompanistWebViewClient() {
+
+    companion object {
+        fun mapWebViewErrorMessage(errorCode: Int): String = when (errorCode) {
+            ERROR_AUTHENTICATION -> "User authentication failed. Please check your credentials and try again."
+            ERROR_TIMEOUT -> "The server is taking too much time to respond. Please try again later."
+            ERROR_TOO_MANY_REQUESTS -> "Too many requests. Please try again later."
+            ERROR_UNKNOWN -> "An unknown error occurred. Please try again later."
+            ERROR_BAD_URL -> "The URL you entered is not valid. Please check the URL and try again."
+            ERROR_CONNECT -> "Failed to connect to the server. Please check your internet connection and try again."
+            ERROR_FAILED_SSL_HANDSHAKE -> "Failed to establish a secure connection to the server."
+            ERROR_HOST_LOOKUP -> "Failed to lookup server hostname. Please check your internet connection and try again."
+            ERROR_PROXY_AUTHENTICATION -> "Proxy authentication failed. Please check your proxy credentials and try again."
+            ERROR_REDIRECT_LOOP -> "Too many redirects. Please try again later."
+            ERROR_UNSUPPORTED_AUTH_SCHEME -> "Unsupported authentication scheme. Please try again later."
+            ERROR_UNSUPPORTED_SCHEME -> "Unsupported URL scheme. Please try again later."
+            ERROR_FILE -> "File-related error. Please try again later."
+            ERROR_FILE_NOT_FOUND -> "File not found. Please try again later."
+            ERROR_IO -> "The server failed to communicate. Please try again later."
+            else -> "An unknown error occurred. Please try again later."
+        }
+    }
 
     @Volatile
     private var criticalErrorOccurredInSession: Boolean = false
@@ -41,7 +68,9 @@ internal class SdkWebViewClient(
         url: String?,
         favicon: Bitmap?
     ) {
-        super.onPageStarted(view, url, favicon)
+        if (delegateToAccompanist) {
+            super.onPageStarted(view, url, favicon)
+        }
         // If the main URL changes or it's the first load, reset the error flag.
         if (currentMainUrl != url) {
             Log.d(
@@ -60,7 +89,9 @@ internal class SdkWebViewClient(
      * @param url The URL of the loaded page.
      */
     override fun onPageFinished(view: WebView, url: String?) {
-        super.onPageFinished(view, url)
+        if (delegateToAccompanist) {
+            super.onPageFinished(view, url)
+        }
         onPageFinished(view)
     }
 
@@ -77,9 +108,14 @@ internal class SdkWebViewClient(
         view: WebView,
         request: WebResourceRequest?
     ): Boolean {
-        return onShouldOverrideUrlLoading?.let {
-            it(request)
-        } ?: super.shouldOverrideUrlLoading(view, request)
+        return onShouldOverrideUrlLoading?.let { callback ->
+            callback(request)
+        } ?: if (delegateToAccompanist) {
+            super.shouldOverrideUrlLoading(view, request)
+        } else {
+            // Default WebView behavior: do not override
+            false
+        }
     }
 
     /**
@@ -146,22 +182,5 @@ internal class SdkWebViewClient(
      * @return A user-friendly error message corresponding to the given error code.
      */
     @Suppress("CyclomaticComplexMethod")
-    private fun getWebViewErrorMessage(errorCode: Int): String = when (errorCode) {
-        ERROR_AUTHENTICATION -> "User authentication failed. Please check your credentials and try again."
-        ERROR_TIMEOUT -> "The server is taking too much time to respond. Please try again later."
-        ERROR_TOO_MANY_REQUESTS -> "Too many requests. Please try again later."
-        ERROR_UNKNOWN -> "An unknown error occurred. Please try again later."
-        ERROR_BAD_URL -> "The URL you entered is not valid. Please check the URL and try again."
-        ERROR_CONNECT -> "Failed to connect to the server. Please check your internet connection and try again."
-        ERROR_FAILED_SSL_HANDSHAKE -> "Failed to establish a secure connection to the server."
-        ERROR_HOST_LOOKUP -> "Failed to lookup server hostname. Please check your internet connection and try again."
-        ERROR_PROXY_AUTHENTICATION -> "Proxy authentication failed. Please check your proxy credentials and try again."
-        ERROR_REDIRECT_LOOP -> "Too many redirects. Please try again later."
-        ERROR_UNSUPPORTED_AUTH_SCHEME -> "Unsupported authentication scheme. Please try again later."
-        ERROR_UNSUPPORTED_SCHEME -> "Unsupported URL scheme. Please try again later."
-        ERROR_FILE -> "File-related error. Please try again later."
-        ERROR_FILE_NOT_FOUND -> "File not found. Please try again later."
-        ERROR_IO -> "The server failed to communicate. Please try again later."
-        else -> "An unknown error occurred. Please try again later."
-    }
+    private fun getWebViewErrorMessage(errorCode: Int): String = mapWebViewErrorMessage(errorCode)
 }
