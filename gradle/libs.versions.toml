@@ -43,6 +43,7 @@ paypalWebPayments = "1.7.1"
 retrofit = "2.11.0"
 turbine = "1.2.0"
 slf4jJdk14 = "2.0.16"
+jreleaser = "1.19.0"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -53,8 +54,11 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp-devtools = { id = "com.google.devtools.ksp", version.ref = "kspDevTools" }
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+jreleaser = { id = "org.jreleaser", version.ref = "jreleaser" }
 
 [libraries]
+# Android
+android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 # AndroidX
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core" }
 androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "androidx-fragment" }
@@ -125,6 +129,8 @@ afterpay-android = { module = "com.afterpay:afterpay-android", version.ref = "af
 # PayPal SDK
 paypal-web-payments = { module = "com.paypal.android:paypal-web-payments", version.ref = "paypalWebPayments" }
 paypal-fraud-protection = { module = "com.paypal.android:fraud-protection", version.ref = "paypalWebPayments" }
+# JReleaser
+org-jreleaser-gradle-plugin = { module = "org.jreleaser:org.jreleaser.gradle.plugin", version.ref = "jreleaser" }
 
 #General Testing (Mocking, State Management)
 junit = { module = "junit:junit", version.ref = "junit" }

@@ -7,6 +7,7 @@ plugins {
     id("detekt-convention")
     // publishing
     id("github-publish-convention")
+    id("maven-central-publish-convention")
 }
 
 android {
