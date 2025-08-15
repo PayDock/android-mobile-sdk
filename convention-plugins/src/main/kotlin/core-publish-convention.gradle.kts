@@ -47,7 +47,10 @@ afterEvaluate {
                     from(components["release"])
 
                     // Include the -javadoc.jar files that we defined earlier.
-                    artifact(javadocJar)
+                    // Only add for non-Android libraries since Android plugin handles its own jars
+                    if (!plugins.hasPlugin("com.android.library")) {
+                        artifact(javadocJar)
+                    }
 
                     // Here we configure some properties of the publication (these are
                     // automatically applied to the pom file).
