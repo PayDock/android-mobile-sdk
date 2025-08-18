@@ -22,7 +22,6 @@ build/
 local.properties
 github.properties
 gitlab.properties
-sonatype.properties
 config.properties
 private-key.json
 

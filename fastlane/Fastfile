@@ -359,19 +359,10 @@ platform :android do
     desc "Creates and pushes a tag on GitLab"
     lane :tag_release do
         # This lane automates the process of creating and pushing a tag to the GitLab repository.
-        # It extracts the version number from the Gradle output, creates a Git tag, and pushes it to the remote repository.
+        # It extracts the version number from the unified helper function.
 
-        # Get the version name from the Gradle output.
-        result = gradle(task: "-q :mobile-sdk:printVersionName", print_command: false, print_command_output: true)
-        # The 'gradle' action is used to execute a Gradle task.
-        #   - '-q' flag: Runs Gradle in quiet mode.
-        #   - ':mobile-sdk:printVersionName': The specific Gradle task to run, which prints the version name.
-        #   - 'print_command: false': Prevents the Gradle command from being printed to the console.
-        #   - 'print_command_output: true': Prints the output of the Gradle command to the console.
-
-        # Extract version number using a regular expression.
-        version_match = result.match(/(\d+\.\d+\.\d+)/) # Match a pattern like "1.0.0"
-        version_name = version_match[1] if version_match # Extracts the version number from the match.
+        # Get the version name using the unified helper function
+        version_tag = get_version_tag()
 
         # Configure Git user (if needed).
         sh("git config --global user.email \"ricardo.dasilva@paydock.com\"") # Sets the Git user email.
@@ -379,9 +370,9 @@ platform :android do
         # The 'sh' action is used to execute shell commands.
 
         # Create and push the tag.
-        sh("git tag -a #{version_name} -m \"Release version #{version_name}\"") # Creates an annotated Git tag.
+        sh("git tag -a #{version_tag} -m \"Release version #{version_tag}\"") # Creates an annotated Git tag.
         #   - '-a': Creates an annotated tag.
-        #   - '#{version_name}': The tag name (e.g., "1.0.0").
+        #   - '#{version_tag}': The tag name (e.g., "1.0.0").
         #   - '-m': Specifies the tag message.
 
         # Use the GITLAB_TOKEN environment variable for authentication.
@@ -390,7 +381,7 @@ platform :android do
         #   - 'ENV['GITLAB_TOKEN']': Accesses the 'GITLAB_TOKEN' environment variable.
 
         # Push the tag to the remote repository.
-        sh("git push origin #{version_name}") # Pushes the tag to the remote repository.
+        sh("git push origin #{version_tag}") # Pushes the tag to the remote repository.
     end
 
     desc "Creates a release on GitLab"
@@ -398,16 +389,12 @@ platform :android do
         # This lane automates the process of creating a release on GitLab.
         # It is designed to be triggered when a new tag is pushed to the 'release' branch.
 
-        # Extract the version tag from the options, environment variables, or Git tags.
-        # If 'version' is passed as an option, it's used; otherwise, CI_COMMIT_TAG is checked.
-        # If neither is available, it falls back to the latest Git tag.
-        version_tag = options[:version] || ENV["CI_COMMIT_TAG"] || sh("git describe --tags --abbrev=0").strip
-        # Remove the leading 'v' from the version tag if present.
-        version_tag = version_tag.gsub(/^v/, '')
+        # Get the version tag using the unified helper function
+        version_tag = get_version_tag(options)
 
         # Ensure a version tag is available; otherwise, raise an error.
-        unless version_tag
-            UI.user_error!("No version tag provided. Ensure you pass 'version' as an option or set CI_COMMIT_TAG.")
+        if version_tag == "unknown"
+            UI.user_error!("No version tag could be determined. Ensure you pass 'version' as an option, set CI_COMMIT_TAG, or have git tags available.")
         end
 
         # Extract information from environment variables.
@@ -476,11 +463,8 @@ platform :android do
         # This lane automates the process of creating a release on GitHub.
         # It extracts the version name from the Git tag, authenticates with GitHub, and creates a new release.
 
-        # Extract version name from tag (assuming tags are in the format "v1.0.0").
-        version_tag = options[:version] || ENV["CI_COMMIT_TAG"] || sh("git describe --tags --abbrev=0").strip
-        # The 'sh' action is used to execute shell commands.
-        #   - 'git describe --tags --abbrev=0': Gets the latest tag name.
-        #   - '.strip': Removes leading/trailing whitespace.
+        # Get the version tag using the unified helper function
+        version_tag = get_version_tag(options)
 
         require 'octokit' # Loads the Octokit library for interacting with the GitHub API.
 
@@ -508,6 +492,50 @@ platform :android do
           make_latest: 'true' # Marks the release as the latest.
         })
         # The 'client.create_release' method is used to create the release.
+    end
+
+    # Gets the version tag using multiple fallback strategies.
+    #
+    # This function provides a unified way to determine the version across all lanes.
+    # It tries multiple sources in order of preference and handles errors gracefully.
+    #
+    # @param options [Hash] Lane options that may contain a :version key
+    # @return [String] The version tag (without 'v' prefix), or "unknown" if none found
+    def get_version_tag(options = {})
+        begin
+            # 1. Check if version was passed as a lane option
+            version_tag = options[:version]
+            return version_tag.gsub(/^v/, '') if version_tag && !version_tag.empty?
+
+            # 2. Check CI environment variable (set on release branch with tags)
+            version_tag = ENV["CI_COMMIT_TAG"]
+            return version_tag.gsub(/^v/, '') if version_tag && !version_tag.empty?
+
+            # 3. Try to get latest git tag (works if tags exist)
+            begin
+                git_tag = sh("git describe --tags --abbrev=0", log: false).strip
+                return git_tag.gsub(/^v/, '') if git_tag && !git_tag.empty?
+            rescue => git_ex
+                UI.message("⚠️ No git tags found: #{git_ex.message}")
+            end
+
+            # 4. Fallback to gradle project version (always works)
+            begin
+                result = gradle(task: "-q :mobile-sdk:printVersionName", print_command: false, print_command_output: true)
+                version_match = result.match(/(\d+\.\d+\.\d+)/)
+                return version_match[1] if version_match
+            rescue => gradle_ex
+                UI.message("⚠️ Could not get gradle version: #{gradle_ex.message}")
+            end
+
+            # 5. Final fallback
+            UI.message("⚠️ Could not determine version from any source, using 'unknown'")
+            return "unknown"
+
+        rescue => ex
+            UI.message("⚠️ Error in get_version_tag: #{ex.message}")
+            return "unknown"
+        end
     end
 
     # Extracts the release notes for a specific version from the CHANGELOG.md file.
@@ -552,5 +580,105 @@ platform :android do
         # This lane publishes the built SDK to GitHub Packages.
         # It uses the 'gradle' action to execute the 'publishAllPublicationsToGitHubPackagesRepository' Gradle task.
         gradle(task: ":mobile-sdk:publishAllPublicationsToGitHubPackagesRepository")
+    end
+end
+
+desc "Publishes the SDK to Maven Central using JReleaser"
+lane :publish_to_maven_central do
+    # This lane publishes the built SDK to Maven Central using JReleaser.
+
+    UI.message("🚀 Starting Maven Central publishing process...")
+
+    # Pre-flight checks for debugging
+    version_tag = get_version_tag()
+    UI.message("📋 Publishing version: #{version_tag}")
+    UI.message("🔧 Environment: #{ENV['CI'] ? 'CI' : 'Local'}")
+    UI.message("🏷️ Branch: #{ENV['CI_COMMIT_REF_NAME'] || 'unknown'}")
+    UI.message("📝 Commit: #{ENV['CI_COMMIT_SHA'] ? ENV['CI_COMMIT_SHA'][0..7] : 'unknown'}")
+
+    # Validate required environment variables
+    required_vars = [
+        "JRELEASER_GITLAB_TOKEN",
+        "JRELEASER_GPG_PUBLIC_KEY",
+        "JRELEASER_GPG_SECRET_KEY",
+        "JRELEASER_GPG_PASSPHRASE",
+        "JRELEASER_MAVENCENTRAL_SONATYPE_USERNAME",
+        "JRELEASER_MAVENCENTRAL_SONATYPE_TOKEN"
+    ]
+
+    missing_vars = []
+    required_vars.each do |var_name|
+        if ENV[var_name].nil? || ENV[var_name].empty?
+            missing_vars << var_name
+        else
+            UI.success("✅ #{var_name} is configured")
+
+            # Basic GPG key validation (avoid security scanner false positives)
+            if var_name.include?("GPG") && var_name.include?("KEY")
+                key_value = ENV[var_name]
+                pgp_begin = "-----BEGIN PGP"
+                pgp_end = "-----END PGP"
+
+                if var_name.include?("PUBLIC_KEY")
+                    if key_value.include?("#{pgp_begin} PUBLIC KEY BLOCK-----") && key_value.include?("#{pgp_end} PUBLIC KEY BLOCK-----")
+                        UI.success("✅ Public key format appears valid")
+                    else
+                        UI.error("❌ Public key format appears invalid")
+                    end
+                elsif var_name.include?("SECRET_KEY")
+                    if key_value.include?("#{pgp_begin} PRIVATE KEY BLOCK-----") && key_value.include?("#{pgp_end} PRIVATE KEY BLOCK-----")
+                        UI.success("✅ Private key format appears valid")
+                    else
+                        UI.error("❌ Private key format appears invalid")
+                    end
+                end
+            end
+        end
+    end
+
+    unless missing_vars.empty?
+        UI.error("❌ Missing required environment variables:")
+        missing_vars.each { |var| UI.error("   - #{var}") }
+        UI.user_error!("Cannot proceed without required environment variables")
+    end
+
+    UI.message("✅ All environment variables validated")
+
+    begin
+        # Step 1: Publish artifacts to staging repository
+        UI.message("📦 Publishing artifacts to staging repository...")
+        gradle(task: ":mobile-sdk:publishToStaging", properties: { "org.gradle.logging.level" => "info" })
+        UI.success("✅ Staging repository populated successfully")
+
+        # Step 2: Validate JReleaser configuration
+        UI.message("🔍 Validating JReleaser configuration...")
+        begin
+            gradle(task: ":mobile-sdk:jreleaserConfig")
+            UI.success("✅ JReleaser configuration is valid")
+        rescue => config_ex
+            UI.error("⚠️ JReleaser config validation failed: #{config_ex.message}")
+            UI.message("🔄 Continuing with release process...")
+        end
+
+        # Step 3: Run JReleaser full release process
+        UI.message("🔄 Running JReleaser full release process...")
+        gradle(task: ":mobile-sdk:jreleaserFullRelease", properties: { "org.gradle.logging.level" => "info" })
+
+        # Step 4: Success notification
+        UI.success("✅ Maven Central release completed successfully for version #{version_tag}")
+        UI.success("🔗 Check Maven Central: https://central.sonatype.com/search?q=com.paydock")
+        UI.success("📊 Monitor deployment: https://central.sonatype.com/publishing/deployments")
+
+    rescue => ex
+        # Enhanced error handling with context
+        UI.error("❌ Maven Central publishing failed: #{ex.message}")
+        UI.message("📋 Error details:")
+        UI.message("   - Version: #{version_tag}")
+        UI.message("   - Stage: #{ex.message.include?('publishToStaging') ? 'Staging' : ex.message.include?('jreleaser') ? 'JReleaser' : 'Unknown'}")
+        UI.message("   - JReleaser logs available in build artifacts")
+        UI.message("   - Check mobile-sdk/build/jreleaser/ for detailed logs")
+
+        # Re-raise the exception to mark the job as failed
+        raise ex
     end
 end

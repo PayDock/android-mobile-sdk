@@ -39,6 +39,7 @@ stages:
   - gitlab_release # Stage for creating a release in GitLab.
   - github_release # Stage for creating a release in GitHub.
   - publish # Stage for publishing the SDK to GitHub.
+  - maven_central # Stage for publishing to Maven Central.
 
 # Include:
 # Includes an external template for security checks from another project.
@@ -339,3 +340,28 @@ publish_to_github:
   rules:
     - if: $CI_COMMIT_BRANCH == "release" # Run on commit is made to the 'release' branch.
       when: on_success
+
+# publish_to_maven_central:
+# This job publishes the SDK to Maven Central using JReleaser.
+# It runs after the tag has been created and uses JReleaser for complete automation.
+publish_to_maven_central:
+  stage: maven_central # Runs in the 'maven_central' stage.
+  extends: .setup_bundler # Extends the '.setup_bundler' template to set up the Ruby environment.
+  dependencies:
+    - tag_release
+  only:
+    - release # Only runs when a commit is made to the 'release' branch.
+  script:
+    - bundle exec fastlane publish_to_maven_central
+  # This job handles:
+  #   - Publishing artifacts to staging repository
+  #   - Running JReleaser full release process
+  #   - Creating Maven Central deployment
+  #   - Updating GitLab release with Maven Central information
+  artifacts:
+    when: always
+    reports:
+    # JReleaser output for debugging
+    paths:
+      - mobile-sdk/build/jreleaser/
+  allow_failure: false

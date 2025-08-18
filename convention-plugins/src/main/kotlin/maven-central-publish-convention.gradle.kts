@@ -1,7 +1,6 @@
 import org.jreleaser.model.Active
 import com.android.build.gradle.LibraryExtension
 
-
 plugins {
     id("core-publish-convention")
     id("signing")
@@ -14,6 +13,12 @@ val projectGithubUrl: String by project
 val projectDescription: String by project
 val developerName: String by project
 val versionName: String by project
+
+// Create a custom javadoc task for multiplatform
+val javadocJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("javadoc")
+    // Create an empty javadoc jar for now (common practice for KMP)
+}
 
 // Configure Android publishing if Android plugin is applied
 plugins.withId("com.android.library") {
@@ -32,6 +37,9 @@ plugins.withId("com.android.library") {
 afterEvaluate {
     publishing {
         publications.withType<MavenPublication> {
+            // Add javadoc JAR to all publications (Maven Central requirement)
+            artifact(javadocJar.get())
+
             // Override license for Maven Central compatibility
             pom {
                 withXml {
@@ -77,19 +85,15 @@ jreleaser {
         active = Active.ALWAYS
         armored = true
         verify = true
-        publicKey = "{{JRELEASER_GPG_PUBLIC_KEY}}"
-        secretKey = "{{JRELEASER_GPG_SECRET_KEY}}"
-        passphrase = "{{JRELEASER_GPG_PASSPHRASE}}"
+        publicKey = providers.environmentVariable("JRELEASER_GPG_PUBLIC_KEY").getOrElse("")
+        secretKey = providers.environmentVariable("JRELEASER_GPG_SECRET_KEY").getOrElse("")
+        passphrase = providers.environmentVariable("JRELEASER_GPG_PASSPHRASE").getOrElse("")
     }
 
     release {
         gitlab {
-            skipTag = true // Let existing pipeline handle tagging
-            skipRelease = true // Let existing pipeline handle GitLab releases
-            sign = true
-            branch = "release"
-            branchPush = "release"
-            overwrite = true
+            skipTag = true
+            skipRelease = true
         }
     }
 
@@ -99,15 +103,15 @@ jreleaser {
                 active = Active.ALWAYS
                 url = "https://central.sonatype.com/api/v1/publisher"
                 stagingRepository(layout.buildDirectory.dir("staging-deploy").get().toString())
-                username = "{{JRELEASER_MAVENCENTRAL_SONATYPE_USERNAME}}"
-                password = "{{JRELEASER_MAVENCENTRAL_SONATYPE_TOKEN}}"
+                username = providers.environmentVariable("JRELEASER_MAVENCENTRAL_SONATYPE_USERNAME").getOrElse("")
+                password = providers.environmentVariable("JRELEASER_MAVENCENTRAL_SONATYPE_TOKEN").getOrElse("")
                 applyMavenCentralRules = false // Wait for fix: https://github.com/kordamp/pomchecker/issues/21
                 sign = true
                 checksums = true
                 sourceJar = true
-                javadocJar = false  // Temporarily disabled due to ASM compatibility issue
+                javadocJar = true
                 retryDelay = 60
-                dryrun = false // Production mode - ready for real publishing
+                dryrun = false
             }
         }
     }

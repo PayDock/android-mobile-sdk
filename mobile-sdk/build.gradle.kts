@@ -6,7 +6,7 @@ plugins {
     // linting
     id("detekt-convention")
     // publishing
-    id("github-publish-convention")
+//    id("github-publish-convention")
     id("maven-central-publish-convention")
 }
 
