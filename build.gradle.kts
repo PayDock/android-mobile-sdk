@@ -10,6 +10,21 @@ plugins {
     alias(libs.plugins.ksp.devtools) apply false
 }
 
+buildscript {
+    configurations.configureEach {
+        resolutionStrategy {
+            force("org.apache.commons:commons-compress:1.27.1")
+        }
+    }
+}
+
+// Force commons-compress version for JReleaser 1.19.0 compatibility
+configurations.all {
+    resolutionStrategy {
+        force("org.apache.commons:commons-compress:1.27.1")
+    }
+}
+
 tasks.register("clean").configure {
     delete("build")
 }
@@ -19,6 +34,16 @@ tasks.register("copyGitHooks", Copy::class.java) {
     group = "git hooks"
     from("$rootDir/scripts/pre-commit")
     into("$rootDir/.git/hooks/")
+}
+
+// Diagnostic: print which commons-compress jar Gradle/JVM loads at runtime
+tasks.register("printCompressClasspath") {
+    doLast {
+        val clazz = Class.forName("org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream")
+        val location = clazz.protectionDomain.codeSource.location
+        val version = clazz.`package`?.implementationVersion
+        println("commons-compress loaded from: $location (version=$version)")
+    }
 }
 
 tasks.register("installGitHooks", Exec::class.java) {
