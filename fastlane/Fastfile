@@ -281,7 +281,7 @@ platform :android do
 
     desc "Builds the debug Android app for the specified flavor"
     lane :buildDebug do |options|
-        flavor = options[:flavor] || "staging" # Default to staging if no flavor is provided
+        flavor = options[:flavor] || "sandbox" # Default to sandbox if no flavor is provided
         versionCode = get_gitlab_ci_variable(key: "VERSION_CODE")
         update_build_gradle_version_code(version_code: versionCode)
         gradle(task: "assemble", flavor: flavor.capitalize, build_type: "Debug")
@@ -289,7 +289,7 @@ platform :android do
 
     desc "Builds the release Android app for the specified flavor"
     lane :buildRelease do |options|
-        flavor = options[:flavor] || "staging" # Default to staging if no flavor is provided
+        flavor = options[:flavor] || "sandbox" # Default to sandbox if no flavor is provided
         versionCode = get_gitlab_ci_variable(key: "VERSION_CODE")
         update_build_gradle_version_code(version_name: versionName, version_code: versionCode)
         gradle(task: "assemble", flavor: flavor.capitalize, build_type: "Release")
@@ -297,13 +297,17 @@ platform :android do
 
     # --- Test Lane ---
 
-    desc "Runs all unit tests for SDK"
+    desc "Runs all unit tests for specified flavor"
     lane :test do |options|
+         flavor = options[:flavor] || "sandbox" # Default to sandbox if no flavor is provided
          build_type = options[:build_type] || "Debug" # Default to Debug if no build type is provided
 
-        # This lane runs all the unit tests for the Android application.
-        # It uses the 'gradle' action to execute the 'test' Gradle task.
-        gradle(task: ":mobile-sdk:test#{build_type.capitalize}UnitTest")
+        # Run unit tests for the library module only
+        library_task = ":mobile-sdk:test#{build_type.capitalize}UnitTest"
+        gradle(
+            task: library_task,
+            flags: "--console=plain"
+        )
     end
 
     # -- Deploy Lane --
@@ -311,7 +315,7 @@ platform :android do
     desc "Deploys the Build to Firebase App Distribution for the specified flavor"
     lane :deploy do |options|
         # find apk path
-        flavor = options[:flavor] || "staging" # Default to staging if no flavor is provided
+        flavor = options[:flavor] || "sandbox" # Default to sandbox if no flavor is provided
 
         output_path = "./sample/build/outputs/apk/#{flavor}/debug/"
         output_json_path = output_path + "output-metadata.json"
