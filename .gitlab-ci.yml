@@ -100,7 +100,8 @@ test:
     expire_in: 7 days
     when: always # Always creates artifacts, even if the job fails.
     reports:
-      junit: mobile-sdk/build/test-results/testDebugUnitTest/TEST-*.xml # Publishes the JUnit test reports.
+      junit:
+        - mobile-sdk/build/test-results/**/TEST-*.xml # Library module unit test results
   rules:
     - when: on_success # Only run when the previous job in the pipeline has succeeded.
 
