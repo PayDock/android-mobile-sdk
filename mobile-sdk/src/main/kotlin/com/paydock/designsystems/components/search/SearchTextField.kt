@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
@@ -97,12 +98,15 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
     var hasUserInteracted by remember { mutableStateOf(false) }
 
     val searchText by viewModel.searchText.collectAsState()
+    val normalizedSearchText by remember(searchText) { derivedStateOf { searchText.trim() } }
     val searchResultsObjects by viewModel.searchResult.collectAsState() // List of actual T objects
     val currentSearchResultsAsStrings by remember(searchResultsObjects) {
         derivedStateOf { viewModel.stringResults() } // List of strings for display/matching
     }
     val isExactTextMatch = remember(searchText, currentSearchResultsAsStrings) {
-        searchText.isNotBlank() && currentSearchResultsAsStrings.contains(searchText)
+        normalizedSearchText.isNotBlank() && currentSearchResultsAsStrings.any {
+            it.equals(normalizedSearchText, ignoreCase = true)
+        }
     }
     val errorMessage = if (isMandatory) {
         val isValid = !selectedItemProp.isNullOrBlank() || isExactTextMatch
@@ -128,11 +132,10 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
     // This ensures parent selection stays in sync even if the user doesn't click the dropdown
     // or move focus away before proceeding.
     LaunchedEffect(searchText, currentSearchResultsAsStrings) {
-        if (searchText.isNotBlank() && currentSearchResultsAsStrings.contains(searchText)) {
-            val matchedIndex = currentSearchResultsAsStrings.indexOf(searchText)
+        if (normalizedSearchText.isNotBlank()) {
+            val matchedIndex = currentSearchResultsAsStrings.indexOfFirst { it.equals(normalizedSearchText, ignoreCase = true) }
             if (matchedIndex != -1 && matchedIndex < searchResultsObjects.size) {
-                // Only notify parent if the confirmed selection string differs
-                if (selectedItemProp != searchText) {
+                if (selectedItemProp?.equals(currentSearchResultsAsStrings[matchedIndex], ignoreCase = true) != true) {
                     onSelectionChanged(searchResultsObjects[matchedIndex])
                 }
             }
@@ -144,11 +147,15 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
             modifier = Modifier.onFocusChanged { focusState ->
                 isFocused = focusState.isFocused
                 if (!focusState.isFocused) { // ON BLUR
+                    // Trim trailing/leading spaces when focus is removed
+                    if (searchText != normalizedSearchText) {
+                        viewModel.onSearchTextChange(normalizedSearchText)
+                    }
                     // If the text field is not empty, and it doesn't match the parent's
                     // confirmed selection (selectedItemProp), then we need to check if
                     // the current text is a valid selectable item from the dropdown.
-                    if (searchText.isNotEmpty() && searchText != selectedItemProp) {
-                        val matchedIndex = currentSearchResultsAsStrings.indexOf(searchText)
+                    if (normalizedSearchText.isNotEmpty() && normalizedSearchText != selectedItemProp) {
+                        val matchedIndex = currentSearchResultsAsStrings.indexOfFirst { it.equals(normalizedSearchText, ignoreCase = true) }
                         if (matchedIndex != -1 && matchedIndex < searchResultsObjects.size) {
                             // Text matches a dropdown item, so make it the selection
                             onSelectionChanged(searchResultsObjects[matchedIndex])
@@ -186,12 +193,19 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
                 }
             },
             autofillType = autofillType,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Search,
+                capitalization = KeyboardCapitalization.Words
+            ),
             keyboardActions = KeyboardActions(
                 onSearch = {
                     focusManager.clearFocus()
-                    if (searchText.isNotEmpty()) {
-                        val matchedIndex = currentSearchResultsAsStrings.indexOf(searchText)
+                    // Trim before validating on keyboard action
+                    if (searchText != normalizedSearchText) {
+                        viewModel.onSearchTextChange(normalizedSearchText)
+                    }
+                    if (normalizedSearchText.isNotEmpty()) {
+                        val matchedIndex = currentSearchResultsAsStrings.indexOfFirst { it.equals(normalizedSearchText, ignoreCase = true) }
                         if (matchedIndex != -1 && matchedIndex < searchResultsObjects.size) {
                             onSelectionChanged(searchResultsObjects[matchedIndex])
                         } else {
