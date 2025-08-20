@@ -33,7 +33,11 @@ internal class SdkDropDownMenuTest {
                 onItemSelected = {
                     selectedItem = it
                 },
-                onDismissed = { }
+                onDismissed = { },
+                modifier = TODO(),
+                selectedIndex = TODO(),
+                dismissOnClickOutside = TODO(),
+                isClickEnabled = TODO()
             )
         }
 

@@ -48,8 +48,7 @@ internal class CreditCardNumberInputTest : BaseUITest() {
                 ),
                 onValueChange = {
                     cardNumber = it
-                },
-                appearance = textFieldAppearance
+                }
             )
         }
 
@@ -82,8 +81,7 @@ internal class CreditCardNumberInputTest : BaseUITest() {
                 value = cardNumber,
                 onValueChange = {
                     cardNumber = it
-                },
-                appearance = textFieldAppearance
+                }
             )
         }
 

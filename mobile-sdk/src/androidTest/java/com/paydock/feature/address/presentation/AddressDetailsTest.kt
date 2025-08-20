@@ -53,7 +53,7 @@ internal class AddressDetailsTest : BaseViewModelKoinTest<AddressDetailsViewMode
     private val testModule: Module = module {
         viewModel { AddressSearchViewModel(geocoder, dispatchersProvider) }
         viewModel { CountryAutoCompleteViewModel(dispatchersProvider) }
-        viewModel { ManualAddressViewModel(dispatchersProvider) }
+        viewModel { AddressDetailsViewModel(dispatchersProvider) }
         viewModel { viewModel }
     }
 
