@@ -35,8 +35,7 @@ internal class CardExpiryInputTest : BaseUITest() {
                 value = expiry,
                 onValueChange = {
                     expiry = it
-                },
-                appearance = appearance
+                }
             )
         }
 
@@ -67,8 +66,7 @@ internal class CardExpiryInputTest : BaseUITest() {
                 value = cardExpiry,
                 onValueChange = {
                     cardExpiry = it
-                },
-                appearance = appearance
+                }
             )
         }
         // Invalid expiry expired
@@ -91,8 +89,7 @@ internal class CardExpiryInputTest : BaseUITest() {
                 value = cardExpiry,
                 onValueChange = {
                     cardExpiry = it
-                },
-                appearance = appearance
+                }
             )
         }
         // Invalid expiry entry (too short)

@@ -71,7 +71,12 @@ internal class CountryInputAutoCompleteTest :
                 LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
             ) {
                 CountryInputAutoComplete(
-                    onCountrySelected = {}
+                    onCountryConfirmed = {},
+                    modifier = TODO(),
+                    appearance = TODO(),
+                    viewModel = TODO(),
+                    autofillType = TODO(),
+                    currentCountryValue = TODO()
                 )
             }
         }
@@ -92,9 +97,14 @@ internal class CountryInputAutoCompleteTest :
                 LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
             ) {
                 CountryInputAutoComplete(
-                    onCountrySelected = {
+                    onCountryConfirmed = {
                         selectedItem = it
-                    }
+                    },
+                    modifier = TODO(),
+                    appearance = TODO(),
+                    viewModel = TODO(),
+                    autofillType = TODO(),
+                    currentCountryValue = TODO()
                 )
 
             }
@@ -128,7 +138,7 @@ internal class CountryInputAutoCompleteTest :
 
     @Test
     fun testCountryInputAutoCompleteReturnsSelectedAddressIsReturned() {
-        val onCountrySelected: (String) -> Unit = mockk()
+        val onCountrySelected: (String?) -> Unit = mockk()
 
         composeTestRule.setContent {
             // This shouldn't be needed, but allows robolectric tests to run successfully
@@ -139,7 +149,12 @@ internal class CountryInputAutoCompleteTest :
                 LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
             ) {
                 CountryInputAutoComplete(
-                    onCountrySelected = onCountrySelected
+                    onCountryConfirmed = onCountrySelected,
+                    modifier = TODO(),
+                    appearance = TODO(),
+                    viewModel = TODO(),
+                    autofillType = TODO(),
+                    currentCountryValue = TODO()
                 )
 
             }
