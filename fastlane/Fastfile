@@ -299,15 +299,33 @@ platform :android do
 
     desc "Runs all unit tests for specified flavor"
     lane :test do |options|
-         flavor = options[:flavor] || "sandbox" # Default to sandbox if no flavor is provided
+         flavor = options[:flavor] || "staging" # Default to staging if no flavor is provided
          build_type = options[:build_type] || "Debug" # Default to Debug if no build type is provided
 
-        # Run unit tests for the library module only
-        library_task = ":mobile-sdk:test#{build_type.capitalize}UnitTest"
+        # Run unit tests and generate JaCoCo XML report for the library module
+        unit_test_task = ":mobile-sdk:test#{build_type.capitalize}UnitTest"
+        coverage_task = ":mobile-sdk:jacoco#{build_type.capitalize}UnitTestReport"
         gradle(
-            task: library_task,
-            flags: "--console=plain"
+            task: "#{unit_test_task} #{coverage_task}",
+            flags: "--console=plain --continue"
         )
+
+        # Emit a single-line total coverage percentage for GitLab 'coverage' parsing
+        coverage_xml_path = File.expand_path("../mobile-sdk/build/reports/jacoco/jacoco#{build_type.capitalize}UnitTestReport/jacoco#{build_type.capitalize}UnitTestReport.xml", __dir__)
+        if File.exist?(coverage_xml_path)
+          xml = File.read(coverage_xml_path)
+          # Look for the report-level LINE counter (last occurrence in XML)
+          line_counters = xml.scan(/<counter type=\"LINE\" missed=\"(\d+)\" covered=\"(\d+)\"/)
+          if line_counters.any?
+            # Use the last LINE counter which should be the total for the entire report
+            missed, covered = line_counters.last.map(&:to_i)
+            total = missed + covered
+            if total > 0
+              pct = (covered * 100) / total
+              UI.message("Total: #{pct}%")
+            end
+          end
+        end
     end
 
     # -- Deploy Lane --
@@ -585,6 +603,7 @@ platform :android do
         # It uses the 'gradle' action to execute the 'publishAllPublicationsToGitHubPackagesRepository' Gradle task.
         gradle(task: ":mobile-sdk:publishAllPublicationsToGitHubPackagesRepository")
     end
+
 end
 
 desc "Publishes the SDK to Maven Central using JReleaser"

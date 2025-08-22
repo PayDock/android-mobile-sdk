@@ -93,17 +93,49 @@ test:
   stage: test # Runs in the 'test' stage.
   extends: .setup_bundler # Extends the '.setup_bundler' template.
   script:
-    - bundle exec fastlane test build_type:Debug
+    - bundle exec fastlane test flavor:staging build_type:Debug
   environment:
     name: staging # Sets the environment name to 'staging'.
   artifacts:
     expire_in: 7 days
     when: always # Always creates artifacts, even if the job fails.
+    paths:
+      - mobile-sdk/build/reports/jacoco/jacocoDebugUnitTestReport/html/ # HTML coverage report for GitLab Pages
+      - mobile-sdk/build/reports/jacoco/jacocoDebugUnitTestReport/jacocoDebugUnitTestReport.xml # XML coverage report
+      - mobile-sdk/build/test-results/ # Unit test results
     reports:
       junit:
         - mobile-sdk/build/test-results/**/TEST-*.xml # Library module unit test results
+      coverage_report:
+        coverage_format: jacoco
+        path: mobile-sdk/build/reports/jacoco/jacocoDebugUnitTestReport/jacocoDebugUnitTestReport.xml
+  coverage: '/Total.*?([0-9]{1,3})%/'
   rules:
     - when: on_success # Only run when the previous job in the pipeline has succeeded.
+
+# GitLab Pages job to publish HTML coverage reports
+# This makes the coverage report accessible via GitLab Pages URL
+pages:
+  stage: deploy
+  dependencies:
+    - test
+  needs:
+    - job: test
+      artifacts: true
+  script:
+    - echo "Publishing coverage report to GitLab Pages"
+    - mkdir public
+    - ls -la mobile-sdk/build/reports/jacoco/ || echo "No jacoco directory"
+    - find mobile-sdk/build -name "*.html" -path "*/jacoco*" || echo "No HTML files found"
+    - cp -r mobile-sdk/build/reports/jacoco/jacocoDebugUnitTestReport/html/* public/ 2>/dev/null || echo "No coverage HTML report found, creating placeholder"
+    - test -f public/index.html || echo "<html><body><h1>Coverage Report Not Available</h1></body></html>" > public/index.html
+    - ls -la public/
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == "release"
+      when: on_success
 
 # increment_version:
 # This job increments the version code for the build and deployment.
