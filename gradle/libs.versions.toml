@@ -124,7 +124,7 @@ google-pay-services = { group = "com.google.android.gms", name = "play-services-
 google-wallet-services = { group = "com.google.android.gms", name = "play-services-wallet", version.ref = "googlePayWalletServices" }
 google-compose-pay-button = { group = "com.google.pay.button", name = "compose-pay-button", version.ref = "googlePayComposeButton" }
 # Paydock SDK (Internal)
-paydock-core-networking = { module = "com.github.PayDock:android-core-networking", version.ref = "paydockCoreNetworking" }
+paydock-core-networking = { module = "com.paydock.core:network", version.ref = "paydockCoreNetworking" }
 # Afterpay SDK
 afterpay-android = { module = "com.afterpay:afterpay-android", version.ref = "afterpayAndroid" }
 # PayPal SDK
