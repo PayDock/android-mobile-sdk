@@ -1,5 +1,10 @@
+[![GitLab Pipeline Status](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/badges/main/pipeline.svg)](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/-/pipelines?scope=branches&ref=main)
+[![Coverage](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/badges/main/coverage.svg?job=test)](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/-/pipelines?scope=branches&ref=main)
 ![GitHub Release](https://img.shields.io/github/v/release/PayDock/android-mobile-sdk)
-[![](https://www.jitpack.io/v/PayDock/android-mobile-sdk.svg)](https://www.jitpack.io/#PayDock/android-mobile-sdk)
+[![Maven Central](https://img.shields.io/maven-central/v/com.paydock/mobile-sdk.svg)](https://central.sonatype.com/artifact/com.paydock/mobile-sdk)
+![Kotlin](https://img.shields.io/badge/kotlin-2.1.10-7F52FF?logo=kotlin&logoColor=white)
+![Android Min SDK](https://img.shields.io/badge/minSdk-24-3DDC84?logo=android&logoColor=white)
+![Compile SDK](https://img.shields.io/badge/compileSdk-35-3DDC84?logo=android&logoColor=white)
 
 # Project Description
 
@@ -22,7 +27,7 @@ details.
    signup for a sandbox account, and then following
    our [integration guide](https://docs.paydock.com/#getting-started) .
 2. [Setup](https://github.com/PayDock/mobile-sdk-doc/blob/main/setup/installation.md#setup-the-paydock-android-sdk)
-   the iOS or Android SDK.
+   the Android SDK.
 3. [Configure](https://github.com/PayDock/mobile-sdk-doc/blob/main/setup/installation.md#step-1-configure-repository-access-1)
    repository access.
 4. [Add](https://github.com/PayDock/mobile-sdk-doc/blob/main/setup/installation.md#step-2-add-sdk-dependency-1)
