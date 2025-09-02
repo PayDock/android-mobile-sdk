@@ -1,5 +1,6 @@
 package com.paydock.feature.paypal.vault.presentation.viewmodel
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import com.paydock.MobileSDK
 import com.paydock.core.MobileSDKConstants
@@ -8,11 +9,10 @@ import com.paydock.core.domain.mapper.mapToPayPalEnv
 import com.paydock.core.presentation.viewmodels.BaseViewModel
 import com.paydock.feature.paypal.vault.presentation.state.PayPalWebVaultState
 import com.paypal.android.corepayments.CoreConfig
-import com.paypal.android.corepayments.PayPalSDKError
+import com.paypal.android.paypalwebpayments.PayPalPresentAuthChallengeResult
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutClient
-import com.paypal.android.paypalwebpayments.PayPalWebVaultListener
+import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFinishVaultResult
 import com.paypal.android.paypalwebpayments.PayPalWebVaultRequest
-import com.paypal.android.paypalwebpayments.PayPalWebVaultResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 internal class PayPalWebVaultViewModel(
     dispatchers: DispatchersProvider
-) : BaseViewModel(dispatchers), PayPalWebVaultListener {
+) : BaseViewModel(dispatchers) {
 
     // Mutable state flow to hold the vault result state
     private val _vaultResult = MutableStateFlow<PayPalWebVaultState>(PayPalWebVaultState.Idle)
@@ -39,6 +39,9 @@ internal class PayPalWebVaultViewModel(
 
     // Client instance for interacting with PayPal Web Checkout
     private var paypalClient: PayPalWebCheckoutClient? = null
+
+    // Auth state returned after presenting the auth challenge; required to finish the flow
+    private var authState: String? = null
 
     /**
      * Initiates the PayPal vault process by configuring the [PayPalWebCheckoutClient] with the
@@ -55,45 +58,70 @@ internal class PayPalWebVaultViewModel(
                 clientId = clientId,
                 environment = MobileSDK.getInstance().environment.mapToPayPalEnv()
             )
-            // Initialize PayPal client and set the vault listener
-            paypalClient = PayPalWebCheckoutClient(activity, coreConfig, MobileSDKConstants.PayPalVaultConfig.URL_SCHEME).apply {
-                vaultListener = this@PayPalWebVaultViewModel
-                vault(request)
+            // Initialize PayPal client and start vault flow
+            paypalClient = PayPalWebCheckoutClient(activity, coreConfig, MobileSDKConstants.PayPalVaultConfig.URL_SCHEME)
+            val presentResult = paypalClient?.vault(activity, request)
+            when (presentResult) {
+                is PayPalPresentAuthChallengeResult.Success -> {
+                    // Save auth state to complete later
+                    authState = presentResult.authState
+                }
+                is PayPalPresentAuthChallengeResult.Failure -> {
+                    _vaultResult.value = PayPalWebVaultState.Failure(
+                        presentResult.error
+                    )
+                }
+
+                else -> {
+                    _vaultResult.value = PayPalWebVaultState.Canceled
+                }
             }
         }
     }
 
     /**
-     * Called when the PayPal vault process is canceled by the user.
+     * Handles the result from the PayPal redirect or deeplink Intent.
      *
-     * This updates the [vaultResult] state to [PayPalWebVaultState.Canceled].
+     * This method should be called from the hosting Activity when the app receives the
+     * PayPal redirect or deeplink Intent. It completes the vault flow and updates the
+     * UI state accordingly based on the result.
+     *
+     * @param intent The Intent received from the PayPal redirect or deeplink.
      */
-    override fun onPayPalWebVaultCanceled() {
-        _vaultResult.value = PayPalWebVaultState.Canceled
-    }
+    fun handleDeeplinkResult(intent: Intent) {
+        val state = authState
+        if (state == null) return
 
-    /**
-     * Called when the PayPal vault process fails due to an error.
-     *
-     * This updates the [vaultResult] state to [PayPalWebVaultState.Failure] with the
-     * provided [PayPalSDKError].
-     *
-     * @param error The error that caused the vault process to fail.
-     */
-    override fun onPayPalWebVaultFailure(error: PayPalSDKError) {
-        _vaultResult.value = PayPalWebVaultState.Failure(error)
-    }
-
-    /**
-     * Called when the PayPal vault process succeeds.
-     *
-     * This updates the [vaultResult] state to [PayPalWebVaultState.Success] with the
-     * approval session ID provided in the [PayPalWebVaultResult].
-     *
-     * @param result The result of the successful PayPal vault process.
-     */
-    override fun onPayPalWebVaultSuccess(result: PayPalWebVaultResult) {
-        _vaultResult.value = PayPalWebVaultState.Success(result.approvalSessionId)
+        kotlin.runCatching {
+            paypalClient?.finishVault(intent, state)
+        }.onSuccess { finishResult ->
+            when (finishResult) {
+                is PayPalWebCheckoutFinishVaultResult.Canceled -> {
+                    authState = null
+                    _vaultResult.value = PayPalWebVaultState.Canceled
+                }
+                is PayPalWebCheckoutFinishVaultResult.Failure -> {
+                    authState = null
+                    _vaultResult.value = PayPalWebVaultState.Failure(finishResult.error)
+                }
+                is PayPalWebCheckoutFinishVaultResult.Success -> {
+                    val approvalSessionId = finishResult.approvalSessionId
+                    authState = null
+                    _vaultResult.value = PayPalWebVaultState.Success(approvalSessionId)
+                }
+                is PayPalWebCheckoutFinishVaultResult.NoResult -> {
+                    // Treat as cancellation so the Activity can close cleanly
+                    _vaultResult.value = PayPalWebVaultState.Canceled
+                }
+                else -> {
+                    // Fallback in case of unknown result type
+                    _vaultResult.value = PayPalWebVaultState.Canceled
+                }
+            }
+        }.onFailure {
+            // Fallback in case of unknown result type
+            _vaultResult.value = PayPalWebVaultState.Canceled
+        }
     }
 
     /**
@@ -103,6 +131,7 @@ internal class PayPalWebVaultViewModel(
      */
     override fun onCleared() {
         super.onCleared()
-        paypalClient?.removeObservers()
+        authState = null
+        paypalClient = null
     }
 }
