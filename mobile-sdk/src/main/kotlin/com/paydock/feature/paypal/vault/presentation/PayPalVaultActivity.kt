@@ -29,35 +29,41 @@ import com.paydock.feature.paypal.vault.presentation.viewmodel.PayPalWebVaultVie
 import org.koin.android.ext.android.inject
 
 /**
- * Placeholder Activity responsible for handling the PayPal Vault process.
+ * An internal [AppCompatActivity] that handles the PayPal vaulting process.
  *
- * This activity initializes the PayPal vault flow by using the provided client ID and setup token,
- * monitors the vault result via the [PayPalWebVaultViewModel], and manages the result accordingly (success, failure, or cancellation).
+ * This activity is responsible for initiating the PayPal vaulting flow,
+ * handling deep links from the PayPal authentication process, and returning the result
+ * to the calling activity.
+ *
+ * It observes the [PayPalWebVaultViewModel] to manage the state of the vaulting process
+ * and updates the UI accordingly.
+ *
+ * The activity expects the following extras in its launch intent:
+ * - `EXTRA_CLIENT_ID`: The PayPal client ID.
+ * - `EXTRA_SETUP_TOKEN`: The PayPal setup token.
+ *
+ * Upon completion, the activity will finish with a result code:
+ * - [android.app.Activity.RESULT_OK]: If the vaulting was successful. The result [Intent] will contain
+ *   the `EXTRA_APPROVAL_SESSION_ID`.
+ * - [android.app.Activity.RESULT_CANCELED]: If the vaulting was canceled or failed.
+ *   - If canceled by the user, the result [Intent] will contain `EXTRA_CANCELLATION_STATUS` set to [CancellationStatus.USER_INITIATED].
+ *   - If an error occurred, the result [Intent] will contain `EXTRA_STATUS` (error code) and `EXTRA_MESSAGE` (error description).
  */
 internal class PayPalVaultActivity : AppCompatActivity() {
 
-    // Injects an instance of the PayPalWebVaultViewModel
     private val viewModel by inject<PayPalWebVaultViewModel>()
+    private var hasResumedOnce: Boolean = false
 
-    /**
-     * Called when the activity is starting. This is where most initialization should go, including
-     * setting up the UI and starting the PayPal vault process.
-     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             enableEdgeToEdge()
-            // Apply the SDK theme for consistent styling
-            // Collect the current vault result state from the ViewModel
             val vaultResult by viewModel.vaultResult.collectAsState()
 
-            // Tracks whether the PayPal vault flow should be initiated
             var shouldStartPayPal by remember { mutableStateOf(true) }
 
-            // SideEffect to start PayPal vault when the activity first loads
             SideEffect {
                 if (shouldStartPayPal) {
-                    // Retrieve client ID and setup token from the Intent extras
                     val clientId = intent.getClientIdExtra() ?: ""
                     val setupToken = intent.getSetupTokenExtra() ?: ""
                     viewModel.initiatePayPalVault(
@@ -69,7 +75,6 @@ internal class PayPalVaultActivity : AppCompatActivity() {
                 }
             }
 
-            // Box layout to show UI based on the current vault result state
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -77,16 +82,11 @@ internal class PayPalVaultActivity : AppCompatActivity() {
                 contentAlignment = Alignment.Center
             ) {
                 when (vaultResult) {
-                    // Show a loader during the idle state
                     is PayPalWebVaultState.Idle -> SdkLoader()
-
-                    // Handle user-initiated cancellation and finish the activity
                     is PayPalWebVaultState.Canceled -> {
                         setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(CancellationStatus.USER_INITIATED))
                         finish()
                     }
-
-                    // Handle failure state by extracting the error and returning a failure result
                     is PayPalWebVaultState.Failure -> {
                         val error = (vaultResult as PayPalWebVaultState.Failure).error
                         setResult(
@@ -98,11 +98,8 @@ internal class PayPalVaultActivity : AppCompatActivity() {
                         )
                         finish()
                     }
-
-                    // Handle success state by returning the approval session ID and finishing the activity
                     is PayPalWebVaultState.Success -> {
-                        val approvalSessionId =
-                            (vaultResult as PayPalWebVaultState.Success).approvalSessionId
+                        val approvalSessionId = (vaultResult as PayPalWebVaultState.Success).approvalSessionId
                         setResult(
                             RESULT_OK,
                             Intent().putApprovalSessionIdExtra(approvalSessionId)
@@ -115,14 +112,60 @@ internal class PayPalVaultActivity : AppCompatActivity() {
     }
 
     /**
-     * Called when new data is passed to this activity through an Intent.
-     * This is necessary to handle the PayPal vault callbacks correctly.
+     * Handles new intents received by the activity, typically from deep links.
      *
-     * @param intent The new Intent that was started for this activity.
+     * This method is called when the activity is re-launched while it's already running,
+     * such as when PayPal redirects back to the app after authentication.
+     *
+     * It checks for a specific deep link pattern (`vault/cancel`) which indicates user cancellation
+     * from the PayPal flow. If this pattern is detected, the activity finishes with a
+     * `RESULT_CANCELED` and a [CancellationStatus.USER_INITIATED] status.
+     *
+     * Otherwise, it delegates the handling of the deep link result to the [PayPalWebVaultViewModel].
+     *
+     * @param intent The new intent that was started for the activity.
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        // Update the intent with the new data to ensure PayPalVault callbacks are triggered
         this.intent = intent
+        val data = intent.data
+        val host = data?.host
+        val pathSegment = data?.pathSegments?.firstOrNull()
+        if (host == "vault" && pathSegment == "cancel") {
+            setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(CancellationStatus.USER_INITIATED))
+            finish()
+            return
+        }
+        viewModel.handleDeeplinkResult(intent)
+    }
+
+    /**
+     * Handles the activity resuming.
+     *
+     * This method checks for specific deep link scenarios (e.g., user cancellation from PayPal)
+     * and also implements a fallback mechanism to handle cases where the activity resumes
+     * without a redirect intent (e.g., if the browser was closed manually by the user)
+     * while the vaulting process is still in an Idle state. In such cases, it assumes
+     * the user initiated a cancellation.
+     */
+    override fun onResume() {
+        super.onResume()
+        val data = intent?.data
+        val host = data?.host
+        val pathSegment = data?.pathSegments?.firstOrNull()
+        if (host == "vault" && pathSegment == "cancel") {
+            setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(CancellationStatus.USER_INITIATED))
+            finish()
+            return
+        }
+
+        // Fallback: if returning without redirect intent (e.g., browser closed) and still Idle, finish as canceled
+        if (hasResumedOnce && viewModel.vaultResult.value is PayPalWebVaultState.Idle && data == null) {
+            setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(CancellationStatus.USER_INITIATED))
+            finish()
+            return
+        }
+
+        hasResumedOnce = true
     }
 }
