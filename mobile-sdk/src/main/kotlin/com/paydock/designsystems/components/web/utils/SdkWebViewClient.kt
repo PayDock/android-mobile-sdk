@@ -137,11 +137,13 @@ internal class SdkWebViewClient(
             val errorMessage = getWebViewErrorMessage(error.errorCode)
             val errorCode = error.errorCode
 
+            // Treat only concrete network failures as critical. Do NOT mark ERROR_UNKNOWN (-1)
+            // as critical on its own because it's frequently emitted for benign subresource
+            // failures (e.g., feature flag streams like LaunchDarkly) when not in the main frame.
             val isCriticalNetworkError = when (errorCode) {
                 ERROR_HOST_LOOKUP,
                 ERROR_CONNECT,
                 ERROR_TIMEOUT,
-                ERROR_UNKNOWN, // Can sometimes indicate network issues before a more specific code
                 ERROR_IO -> true
                 else -> false
             }
