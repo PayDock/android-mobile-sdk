@@ -173,6 +173,10 @@
       "schema": "amex"
     },
     {
+      "bin": "3403",
+      "schema": "amex"
+    },
+    {
       "bin": "341142",
       "schema": "amex"
     },
