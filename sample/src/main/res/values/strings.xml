@@ -51,6 +51,9 @@
     <string name="label_afterpay_button_text">Afterpay - Button Text</string>
     <string name="label_afterpay_color_scheme">Afterpay - Colour Scheme</string>
     <string name="label_googlepay_button_type">Google Pay - Button Type</string>
+    <string name="label_paypal_button_color">PayPal - Button Colour</string>
+    <string name="label_paypal_button_label">PayPal - Button Label</string>
+    <string name="label_paypal_button_shape">PayPal - Button Shape</string>
     <string name="label_vertical_spacing">Vertical Spacing</string>
     <string name="label_horizontal_spacing">Horizontal Spacing</string>
     <string name="label_tint_colour">Tint Colour</string>

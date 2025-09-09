@@ -54,6 +54,7 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
         )
 
         WidgetType.PAY_PAL -> listOf(
+            StyleAppearanceComponent.PROPERTIES,
             StyleAppearanceComponent.LOADER
         )
 
