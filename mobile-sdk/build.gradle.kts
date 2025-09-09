@@ -116,6 +116,8 @@ dependencies {
     // Afterpay SDK
     api(libs.afterpay.android)
     // PayPal SDK
+    // Expose only the button types to consumers; keep the rest internal to the SDK
+    api(libs.paypal.payment.buttons)
     implementation(libs.bundles.paypal)
     // Mocking
     implementation(libs.slf4j.jdk14)

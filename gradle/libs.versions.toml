@@ -128,6 +128,7 @@ paydock-core-networking = { module = "com.paydock.core:network", version.ref = "
 # Afterpay SDK
 afterpay-android = { module = "com.afterpay:afterpay-android", version.ref = "afterpayAndroid" }
 # PayPal SDK
+paypal-payment-buttons = { module = "com.paypal.android:payment-buttons", version.ref = "paypalWebPayments" }
 paypal-web-payments = { module = "com.paypal.android:paypal-web-payments", version.ref = "paypalWebPayments" }
 paypal-fraud-protection = { module = "com.paypal.android:fraud-protection", version.ref = "paypalWebPayments" }
 # JReleaser
