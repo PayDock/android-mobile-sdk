@@ -55,10 +55,6 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
-    composeOptions {
-        // https://developer.android.com/jetpack/androidx/releases/compose-compiler
-        kotlinCompilerExtensionVersion = libs.versions.kotlinCompilerExtension.get()
-    }
     testOptions {
         unitTests.isReturnDefaultValues = true
     }

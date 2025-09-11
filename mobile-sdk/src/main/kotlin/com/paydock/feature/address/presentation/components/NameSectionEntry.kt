@@ -9,7 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.autofill.AutofillType
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalConfiguration
@@ -126,7 +126,7 @@ private fun NameInputDetailsColumn(
             value = firstName,
             label = stringResource(R.string.label_first_name),
             nextFocus = focusLastName,
-            autofillType = AutofillType.PersonFirstName,
+            autofillType = ContentType.PersonFirstName,
             onValueUpdated = onFirstNameChange
         )
 
@@ -138,7 +138,7 @@ private fun NameInputDetailsColumn(
             appearance = appearance,
             value = lastName,
             label = stringResource(R.string.label_last_name),
-            autofillType = AutofillType.PersonLastName,
+            autofillType = ContentType.PersonLastName,
             onValueUpdated = onLastNameChange
         )
     }
@@ -183,7 +183,7 @@ private fun NameInputDetailsRow(
             value = firstName,
             label = stringResource(R.string.label_first_name),
             nextFocus = focusLastName,
-            autofillType = AutofillType.PersonFirstName,
+            autofillType = ContentType.PersonFirstName,
             onValueUpdated = onFirstNameChange
         )
 
@@ -195,7 +195,7 @@ private fun NameInputDetailsRow(
             appearance = appearance,
             value = lastName,
             label = stringResource(R.string.label_last_name),
-            autofillType = AutofillType.PersonLastName,
+            autofillType = ContentType.PersonLastName,
             onValueUpdated = onLastNameChange
         )
     }
