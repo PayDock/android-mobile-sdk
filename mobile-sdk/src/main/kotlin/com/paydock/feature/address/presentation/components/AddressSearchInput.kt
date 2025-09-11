@@ -4,7 +4,7 @@ import android.location.Address
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.autofill.AutofillType
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.paydock.R
@@ -34,7 +34,7 @@ internal fun AddressSearchInput(
         modifier = modifier.testTag("addressSearch"),
         appearance = appearance,
         label = stringResource(R.string.label_search_for_your_address),
-        autofillType = AutofillType.AddressStreet,
+        autofillType = ContentType.AddressStreet,
         noResultsFoundLabel = stringResource(R.string.label_no_address_found),
         viewModel = viewModel,
         selectedItemProp = null,

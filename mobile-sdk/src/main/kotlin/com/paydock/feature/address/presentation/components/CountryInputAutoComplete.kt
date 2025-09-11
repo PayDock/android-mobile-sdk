@@ -7,7 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.autofill.AutofillType
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.paydock.R
@@ -23,7 +23,7 @@ import org.koin.androidx.compose.koinViewModel
  * @param modifier Modifier to apply to the composable.
  * @param appearance Appearance configuration for the search dropdown.
  * @param viewModel ViewModel for country autocomplete functionality.
- * @param autofillType An optional [AutofillType] indicating the type of data that can be
+ * @param autofillType An optional [ContentType] indicating the type of data that can be
  * autofilled for this input field (e.g., address, postal code). If provided, it enables
  * autofill support.
  * @param currentCountryValue The currently selected country value. This is used to initialize
@@ -37,7 +37,7 @@ internal fun CountryInputAutoComplete(
     modifier: Modifier = Modifier,
     appearance: SearchDropdownAppearance = SearchDropdownAppearanceDefaults.appearance(),
     viewModel: CountryAutoCompleteViewModel = koinViewModel(),
-    autofillType: AutofillType? = null,
+    autofillType: ContentType? = null,
     currentCountryValue: String,
     onCountryConfirmed: (String?) -> Unit
 ) {

@@ -10,7 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.autofill.AutofillType
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -46,7 +46,7 @@ import kotlinx.coroutines.delay
  * @param nextFocus An optional [FocusRequester] to specify the next input field that should
  * receive focus when the user completes editing this field. This allows for smooth focus
  * transitions between multiple input fields.
- * @param autofillType An optional [AutofillType] indicating the type of data that can be
+ * @param autofillType An optional [ContentType] indicating the type of data that can be
  * autofilled for this input field (e.g., address, postal code). If provided, it enables
  * autofill support.
  * @param keyboardOptions Optional [KeyboardOptions] to customize the software keyboard,
@@ -66,7 +66,7 @@ internal fun AddressInputField(
     onValueUpdated: (String) -> Unit,
     isMandatory: Boolean = true,
     nextFocus: FocusRequester? = null,
-    autofillType: AutofillType? = null,
+    autofillType: ContentType? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     enabled: Boolean = true

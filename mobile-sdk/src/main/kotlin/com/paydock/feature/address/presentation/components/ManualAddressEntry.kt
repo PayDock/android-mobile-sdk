@@ -12,7 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.autofill.AutofillType
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
@@ -92,7 +92,7 @@ internal fun ManualAddressEntry(
                 value = addressInputState.addressLine1,
                 label = stringResource(R.string.label_address_line_1),
                 nextFocus = focusAddressLine2,
-                autofillType = AutofillType.AddressStreet,
+                autofillType = ContentType.AddressStreet,
                 onValueUpdated = onAddressLine1Change,
             )
             AddressInputField(
@@ -116,7 +116,7 @@ internal fun ManualAddressEntry(
                 value = addressInputState.city,
                 label = stringResource(R.string.label_city),
                 nextFocus = focusState,
-                autofillType = AutofillType.AddressLocality,
+                autofillType = ContentType.AddressLocality,
                 onValueUpdated = onCityChange
             )
             AddressInputField(
@@ -128,7 +128,7 @@ internal fun ManualAddressEntry(
                 value = addressInputState.state,
                 label = stringResource(R.string.label_state),
                 nextFocus = focusPostalCode,
-                autofillType = AutofillType.AddressRegion,
+                autofillType = ContentType.AddressRegion,
                 onValueUpdated = onStateChange
             )
             AddressInputField(
@@ -139,7 +139,7 @@ internal fun ManualAddressEntry(
                 appearance = textFieldAppearance,
                 value = addressInputState.postalCode,
                 label = stringResource(R.string.label_postal_code),
-                autofillType = AutofillType.PostalCode,
+                autofillType = ContentType.PostalCode,
                 onValueUpdated = onPostalCodeChange
             )
             // Country auto-complete dropdown selection
@@ -149,7 +149,7 @@ internal fun ManualAddressEntry(
                     .testTag("countryInput"),
                 appearance = searchAppearance,
                 currentCountryValue = addressInputState.country,
-                autofillType = AutofillType.AddressCountry,
+                autofillType = ContentType.AddressCountry,
                 onCountryConfirmed = onCountryChange
             )
         }

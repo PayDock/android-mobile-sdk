@@ -11,7 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.invisibleToUser
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import com.paydock.R
@@ -78,7 +78,7 @@ internal fun SaveCardToggle(
                 .weight(1f)
                 .semantics {
                     // Hides from accessibility tree, content is in parent
-                    this.invisibleToUser()
+                    hideFromAccessibility()
                 },
             horizontalAlignment = Alignment.Start
         ) {
@@ -106,7 +106,7 @@ internal fun SaveCardToggle(
                 .align(Alignment.CenterVertically)
                 .semantics {
                     // Hides from accessibility tree, content is in parent
-                    this.invisibleToUser()
+                    hideFromAccessibility()
                 },
             enabled = enabled,
             isChecked = saveCard,

@@ -7,8 +7,8 @@ androidx-test-espresso = "3.6.1"
 androidx-fragment = "1.8.6"
 androidx-activity-compose = "1.10.1"
 composeWebview = "0.33.6"
-# Compose BOM version is resrticeted to "2024.12.01" - Latest: Feb 2025
-composeBOM="2024.12.01" # Only update when specified!
+# Compose BOM version is resrticeted to "2025.06.01" - Latest: Sep 2025
+composeBOM="2025.06.01" # Only update when specified!
 core = "1.15.0"
 detekt = "1.23.7"
 googlePayServices="16.5.0"
@@ -25,7 +25,6 @@ kotlinxCoroutines = "1.10.1"
 kotlinxCoroutinesPlayServices = "1.10.1"
 kotlinxHtmlJvm = "0.12.0"
 kotlinxSerializationJson = "1.8.0"
-kotlinCompilerExtension = "1.5.7"
 ktor = "2.3.13" # Matches Network lib
 kspDevTools = "2.1.10-1.0.30" # https://github.com/google/ksp/releases
 lifecycle = "2.8.7"

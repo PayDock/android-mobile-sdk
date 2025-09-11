@@ -10,7 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.autofill.AutofillType
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -87,7 +87,7 @@ internal fun CardHolderNameInput(
         label = stringResource(id = R.string.label_cardholder_name),
         enabled = enabled,
         error = errorMessage,
-        autofillType = AutofillType.PersonFullName,
+        autofillType = ContentType.PersonFullName,
         // Use keyboard options and actions for a more user-friendly input experience
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.Words,
