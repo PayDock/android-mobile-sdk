@@ -10,12 +10,7 @@
             android:name="android.webkit.WebView.MetricsOptOut"
             android:value="true" />
 
-        <activity
-            android:name=".feature.paypal.checkout.presentation.PayPalWebActivity"
-            android:launchMode="singleTop"
-            android:theme="@style/SdkDialog"
-            android:configChanges="orientation|screenSize"
-            android:windowSoftInputMode="adjustResize" />
+        
 
         <activity
             android:name=".feature.colespay.presentation.ColesPayWebActivity"

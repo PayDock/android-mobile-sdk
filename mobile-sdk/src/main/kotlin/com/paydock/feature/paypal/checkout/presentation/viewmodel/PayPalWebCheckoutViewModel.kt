@@ -31,7 +31,11 @@ internal class PayPalWebCheckoutViewModel(
             environment = MobileSDK.getInstance().environment.mapToPayPalEnv()
         )
     },
-    private val clientProvider: (AppCompatActivity, CoreConfig, String) -> PayPalWebCheckoutClient = { activity, coreConfig, returnUrl ->
+    private val clientProvider: (
+        AppCompatActivity,
+        CoreConfig,
+        String
+    ) -> PayPalWebCheckoutClient = { activity, coreConfig, returnUrl ->
         PayPalWebCheckoutClient(activity, coreConfig, returnUrl)
     }
 ) : BaseViewModel(dispatchers) {
