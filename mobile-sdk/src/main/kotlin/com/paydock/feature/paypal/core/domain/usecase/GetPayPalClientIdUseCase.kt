@@ -1,7 +1,5 @@
 package com.paydock.feature.paypal.core.domain.usecase
 
-import com.paydock.core.domain.error.exceptions.PayPalVaultException
-import com.paydock.core.extensions.suspendRunCatchingMapper
 import com.paydock.feature.wallet.domain.repository.WalletRepository
 
 /**
@@ -29,7 +27,5 @@ internal class GetPayPalClientIdUseCase(private val repository: WalletRepository
         accessToken: String,
         gatewayId: String
     ): Result<String> =
-        suspendRunCatchingMapper(PayPalVaultException.GetPayPalClientIdException::class) {
-            repository.getWalletGatewayClientId(accessToken, gatewayId)
-        }
+        runCatching { repository.getWalletGatewayClientId(accessToken, gatewayId) }
 }

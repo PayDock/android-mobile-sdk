@@ -89,38 +89,27 @@ internal class PayPalWebVaultViewModel(
      * @param intent The Intent received from the PayPal redirect or deeplink.
      */
     fun handleDeeplinkResult(intent: Intent) {
-        val state = authState
-        if (state == null) return
-
-        kotlin.runCatching {
-            paypalClient?.finishVault(intent, state)
-        }.onSuccess { finishResult ->
-            when (finishResult) {
-                is PayPalWebCheckoutFinishVaultResult.Canceled -> {
-                    authState = null
-                    _vaultResult.value = PayPalWebVaultState.Canceled
-                }
-                is PayPalWebCheckoutFinishVaultResult.Failure -> {
-                    authState = null
-                    _vaultResult.value = PayPalWebVaultState.Failure(finishResult.error)
-                }
-                is PayPalWebCheckoutFinishVaultResult.Success -> {
-                    val approvalSessionId = finishResult.approvalSessionId
-                    authState = null
-                    _vaultResult.value = PayPalWebVaultState.Success(approvalSessionId)
-                }
-                is PayPalWebCheckoutFinishVaultResult.NoResult -> {
-                    // Treat as cancellation so the Activity can close cleanly
-                    _vaultResult.value = PayPalWebVaultState.Canceled
-                }
-                else -> {
-                    // Fallback in case of unknown result type
-                    _vaultResult.value = PayPalWebVaultState.Canceled
-                }
+        val state = authState ?: return
+        val result =
+            paypalClient?.finishVault(intent, state) ?: PayPalWebCheckoutFinishVaultResult.NoResult
+        when (result) {
+            is PayPalWebCheckoutFinishVaultResult.Canceled -> {
+                authState = null
+                _vaultResult.value = PayPalWebVaultState.Canceled
             }
-        }.onFailure {
-            // Fallback in case of unknown result type
-            _vaultResult.value = PayPalWebVaultState.Canceled
+            is PayPalWebCheckoutFinishVaultResult.Failure -> {
+                authState = null
+                _vaultResult.value = PayPalWebVaultState.Failure(result.error)
+            }
+            is PayPalWebCheckoutFinishVaultResult.Success -> {
+                val approvalSessionId = result.approvalSessionId
+                authState = null
+                _vaultResult.value = PayPalWebVaultState.Success(approvalSessionId)
+            }
+            is PayPalWebCheckoutFinishVaultResult.NoResult -> {
+                // Treat as cancellation so the Activity can close cleanly
+                _vaultResult.value = PayPalWebVaultState.Canceled
+            }
         }
     }
 

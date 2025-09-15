@@ -56,7 +56,7 @@ internal fun ChargeDeclineResponse.asEntity() = ChargeResponse(
  *
  * This function converts the [WalletCallbackResponse] from the data layer into a
  * [WalletCallback] object that is used in the domain or business layer. This mapping
- * includes essential fields such as the callback ID, status, callback URL, and reference token.
+ * includes essential fields such as the callback ID, status, callback URL, reference token, and ID.
  *
  * @return The mapped [WalletCallback] object.
  */
@@ -64,5 +64,6 @@ internal fun WalletCallbackResponse.asEntity() = WalletCallback(
     callbackId = resource.data?.id,
     status = resource.data?.charge?.status,
     callbackUrl = resource.data?.callbackUrl,
-    refToken = resource.data?.refToken
+    refToken = resource.data?.refToken,
+    id = resource.data?.id
 )

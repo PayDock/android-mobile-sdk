@@ -15,5 +15,6 @@ internal data class WalletCallback(
     val callbackId: String?,
     val status: String?,
     val callbackUrl: String?,
-    val refToken: String?
+    val refToken: String?,
+    val id: String? = null
 )
