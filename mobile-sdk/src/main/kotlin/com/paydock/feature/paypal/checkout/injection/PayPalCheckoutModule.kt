@@ -2,6 +2,7 @@ package com.paydock.feature.paypal.checkout.injection
 
 import com.paydock.feature.paypal.checkout.presentation.viewmodel.PayPalWebCheckoutViewModel
 import com.paydock.feature.paypal.checkout.presentation.viewmodels.PayPalViewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
@@ -11,5 +12,6 @@ import org.koin.dsl.module
 internal val payPalCheckoutModule = module {
     // Define a view model for PayPalViewModel
     viewModelOf(::PayPalViewModel)
-    viewModelOf(::PayPalWebCheckoutViewModel)
+    // Provide PayPalWebCheckoutViewModel using only DispatchersProvider; other params use defaults
+    viewModel { PayPalWebCheckoutViewModel(get()) }
 }

@@ -83,7 +83,9 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
             .convertToDataClass<WalletCallbackResponse>()
         val walletCallbackSuccess = Result.success(walletCallbackResponse.asEntity())
         coEvery { getWalletCallbackUseCase(any(), any()) } returns walletCallbackSuccess
-        coEvery { getPayPalClientIdUseCase(widgetConfig.accessToken, widgetConfig.gatewayId) } returns Result.success(MobileSDKTestConstants.PayPalVault.MOCK_CLIENT_ID)
+        coEvery {
+            getPayPalClientIdUseCase(widgetConfig.accessToken, widgetConfig.gatewayId)
+        } returns Result.success(MobileSDKTestConstants.PayPalVault.MOCK_CLIENT_ID)
 
         viewModel.uiState.test {
             // ACTION: simulate button click providing token success via callback

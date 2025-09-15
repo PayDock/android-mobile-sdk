@@ -219,16 +219,6 @@ internal object MobileSDKConstants {
     object PayPalConfig {
         internal const val URL_SCHEME = "${BuildConfig.LIBRARY_PACKAGE_NAME}.paypal.checkout"
 
-        internal const val PAY_PAL_REDIRECT_PARAM_VALUE =
-            "${DEFAULT_WEB_URL}paypal/success&native_xo=1"
-        internal const val REDIRECT_PARAM_NAME = "redirect_uri"
-        internal const val TOKEN_KEY = "token"
-        internal const val PAYER_ID_KEY = "PayerID"
-        internal const val FLOW_ID_KEY = "flowId"
-        internal const val OP_TYPE_KEY = "opType"
-        internal const val CANCEL_TYPE = "cancel"
-        internal const val COMPLETE_TYPE = "payment"
-
         object Errors {
             const val PAY_PAL_ERROR =
                 "An unexpected error occurred while processing PayPal. Please try again later or contact support for assistance."

@@ -159,7 +159,7 @@ fun PayPalWidget(
  * Defines the appearance configuration for the PayPal Widget.
  *
  * This appearance maps directly to PayPal SDK button properties and the SDK’s loader used by this
- * widget when no [loadingDelegate] is supplied.
+ * widget when no [WidgetLoadingDelegate] is supplied.
  *
  * @property loader Appearance for the overlay loader shown while `Loading` when no delegate is used.
  * @property buttonColour The PayPal button color (e.g., [PayPalButtonColor.GOLD], [PayPalButtonColor.BLUE], [PayPalButtonColor.WHITE], [PayPalButtonColor.BLACK], [PayPalButtonColor.SILVER]).
