@@ -9,6 +9,10 @@ private object PayPalIntent {
     const val CALLBACK_URL = "PAYPAL_CALLBACK_URL" // Key for the PayPal callback URL.
     const val CANCELLATION_STATUS = "PAYPAL_CANCELLATION_STATUS" // Key for the cancellation status.
     const val DECODED_URL = "PAYPAL_DECODED_URL" // Key for the decoded PayPal redirect URL.
+    const val PAYMENT_METHOD_ID = "PAYPAL_PAYMENT_METHOD_ID" // Key for the payment method id (orderId)
+    const val PAYER_ID = "PAYPAL_PAYER_ID" // Key for the payer id
+    const val CLIENT_ID = "PAYPAL_CLIENT_ID" // Key for PayPal client id used to init web checkout
+    const val ORDER_ID = "PAYPAL_ORDER_ID" // Key for PayPal order id used to start web checkout
 }
 
 /**
@@ -64,3 +68,42 @@ internal fun Intent.putDecodedUrlExtra(url: String): Intent =
  */
 internal fun Intent.getDecodedUrlExtra(): String? =
     getStringExtra(PayPalIntent.DECODED_URL)
+
+/**
+ * Extension to add the payment method id (orderId) to an Intent.
+ */
+internal fun Intent.putPaymentMethodIdExtra(paymentMethodId: String): Intent =
+    putExtra(PayPalIntent.PAYMENT_METHOD_ID, paymentMethodId)
+
+/**
+ * Extension to retrieve the payment method id (orderId) from an Intent.
+ */
+internal fun Intent.getPaymentMethodIdExtra(): String? =
+    getStringExtra(PayPalIntent.PAYMENT_METHOD_ID)
+
+/**
+ * Extension to add the payer id to an Intent.
+ */
+internal fun Intent.putPayerIdExtra(payerId: String): Intent =
+    putExtra(PayPalIntent.PAYER_ID, payerId)
+
+/**
+ * Extension to retrieve the payer id from an Intent.
+ */
+internal fun Intent.getPayerIdExtra(): String? =
+    getStringExtra(PayPalIntent.PAYER_ID)
+
+/**
+ * Extensions for client id and order id used to start the checkout flow.
+ */
+internal fun Intent.putClientIdExtra(clientId: String): Intent =
+    putExtra(PayPalIntent.CLIENT_ID, clientId)
+
+internal fun Intent.getClientIdExtra(): String? =
+    getStringExtra(PayPalIntent.CLIENT_ID)
+
+internal fun Intent.putOrderIdExtra(orderId: String): Intent =
+    putExtra(PayPalIntent.ORDER_ID, orderId)
+
+internal fun Intent.getOrderIdExtra(): String? =
+    getStringExtra(PayPalIntent.ORDER_ID)

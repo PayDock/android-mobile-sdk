@@ -2,7 +2,6 @@ package com.paydock.feature.paypal.checkout.presentation.state
 
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
-import com.paydock.feature.wallet.domain.model.ui.WalletCallback
 
 /**
  * Represents the various UI states of the PayPal Checkout flow in the SDK.
@@ -24,22 +23,12 @@ internal sealed class PayPalCheckoutUIState {
     data object Loading : PayPalCheckoutUIState()
 
     /**
-     * The state representing the need to launch a PayPal checkout intent.
+     * The state representing the need to launch the PayPal Web SDK checkout flow.
      *
-     * @property callbackData The callback data required for launching the checkout process.
+     * @property clientId The PayPal CLIENT_ID required to initialize the SDK.
+     * @property orderId The PayPal ORDER_ID to approve.
      */
-    data class LaunchIntent(val callbackData: WalletCallback) : PayPalCheckoutUIState()
-
-    /**
-     * The state representing the capture phase of the PayPal checkout process.
-     *
-     * @property payPalToken The token returned by PayPal after the authorization process.
-     * @property payerId The unique identifier of the payer, returned by PayPal.
-     */
-    data class Capture(
-        var payPalToken: String,
-        var payerId: String
-    ) : PayPalCheckoutUIState()
+    data class LaunchIntent(val clientId: String, val orderId: String) : PayPalCheckoutUIState()
 
     /**
      * The state indicating that the PayPal checkout process completed successfully.

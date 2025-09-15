@@ -34,8 +34,10 @@ import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidget
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
 import com.paydock.feature.paypal.checkout.presentation.utils.CancellationStatus
 import com.paydock.feature.paypal.checkout.presentation.utils.getCancellationStatusExtra
-import com.paydock.feature.paypal.checkout.presentation.utils.getDecodedUrlExtra
-import com.paydock.feature.paypal.checkout.presentation.utils.putCallbackUrlExtra
+import com.paydock.feature.paypal.checkout.presentation.utils.getPayerIdExtra
+import com.paydock.feature.paypal.checkout.presentation.utils.getPaymentMethodIdExtra
+import com.paydock.feature.paypal.checkout.presentation.utils.putClientIdExtra
+import com.paydock.feature.paypal.checkout.presentation.utils.putOrderIdExtra
 import com.paydock.feature.paypal.checkout.presentation.viewmodels.PayPalViewModel
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
@@ -44,6 +46,7 @@ import com.paypal.android.paymentbuttons.PayPalButtonColor
 import com.paypal.android.paymentbuttons.PayPalButtonLabel
 import com.paypal.android.paymentbuttons.PaymentButtonShape
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 /**
  * A Composable that renders the PayPal checkout button and orchestrates the PayPal payment flow.
@@ -55,6 +58,7 @@ import org.koin.androidx.compose.koinViewModel
  * Visuals can be customized through [appearance], which maps directly to PayPal SDK styling:
  * - [PayPalWidgetAppearance.buttonColour] to control the button color
  * - [PayPalWidgetAppearance.buttonLabel] to control the button label/wordmark treatment
+ * - [PayPalWidgetAppearance.buttonShape] to control the button shape (e.g. rounded, pill)
  * - [PayPalWidgetAppearance.loader] to control the overlay loader shown during `Loading` when
  *   [loadingDelegate] is not provided
  *
@@ -74,7 +78,7 @@ import org.koin.androidx.compose.koinViewModel
 fun PayPalWidget(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    config: PayPalWidgetConfig = PayPalWidgetConfig(),
+    config: PayPalWidgetConfig,
     appearance: PayPalWidgetAppearance = PayPalAppearanceDefaults.appearance(),
     tokenRequest: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
@@ -82,7 +86,7 @@ fun PayPalWidget(
 ) {
     val context = LocalContext.current
     // Obtain instances of view models
-    val viewModel: PayPalViewModel = koinViewModel()
+    val viewModel: PayPalViewModel = koinViewModel(parameters = { parametersOf(config) })
 
     // Collect states for PayPal view models
     val uiState by viewModel.uiState.collectAsState()
@@ -160,6 +164,7 @@ fun PayPalWidget(
  * @property loader Appearance for the overlay loader shown while `Loading` when no delegate is used.
  * @property buttonColour The PayPal button color (e.g., [PayPalButtonColor.GOLD], [PayPalButtonColor.BLUE], [PayPalButtonColor.WHITE], [PayPalButtonColor.BLACK], [PayPalButtonColor.SILVER]).
  * @property buttonLabel The PayPal button label style (e.g., [PayPalButtonLabel.PAYPAL], [PayPalButtonLabel.CHECKOUT], [PayPalButtonLabel.BUY_NOW], [PayPalButtonLabel.PAY]).
+ * @property buttonShape The PayPal button shape (e.g., [PaymentButtonShape.ROUNDED], [PaymentButtonShape.PILL]).
  */
 @Immutable
 class PayPalWidgetAppearance(
@@ -219,6 +224,7 @@ class PayPalWidgetAppearance(
  * - Loader: default loader with `ButtonLoaderWidth` and black stroke color
  * - Button color: [PayPalButtonColor.GOLD]
  * - Button label: [PayPalButtonLabel.PAYPAL] (wordmark-only)
+ * - Button shape: [PaymentButtonShape.ROUNDED]
  */
 object PayPalAppearanceDefaults {
 
@@ -259,17 +265,19 @@ private fun handlePayPalResult(
 ) {
     result.data?.let { data ->
         when (result.resultCode) {
-            // Handles the success case when the result code is RESULT_OK, parsing the PayPal URL.
+            // Success: directly proceed to capture using paymentMethodId and payerId
             AppCompatActivity.RESULT_OK -> {
-                data.getDecodedUrlExtra()?.let { decodedUrl ->
-                    viewModel.parsePayPalUrl(decodedUrl)
+                val paymentMethodId = data.getPaymentMethodIdExtra()
+                val payerId = data.getPayerIdExtra()
+                // On success, data should be present; call into VM to proceed
+                if (paymentMethodId != null && payerId != null) {
+                    viewModel.captureWalletTransaction(paymentMethodId, payerId)
                 }
             }
 
-            // Handles the cancellation case when the result code is RESULT_CANCELED.
+            // Cancellation handling (user or error)
             AppCompatActivity.RESULT_CANCELED -> {
                 when (data.getCancellationStatusExtra()) {
-                    // If the cancellation was user-initiated, the completion is invoked with a failure result.
                     CancellationStatus.USER_INITIATED -> {
                         completion(
                             Result.failure(
@@ -281,7 +289,6 @@ private fun handlePayPalResult(
                         viewModel.resetResultState()
                     }
 
-                    // If the cancellation was due to another reason, process the WebView error status and message.
                     else -> {
                         val status = data.getStatusExtra()
                         val message =
@@ -299,7 +306,6 @@ private fun handlePayPalResult(
                 }
             }
 
-            // If no specific result code is handled, do nothing.
             else -> Unit
         }
     }
@@ -307,10 +313,11 @@ private fun handlePayPalResult(
 
 /**
  * Reacts to [PayPalCheckoutUIState] updates and drives the PayPal flow:
- * - Loading → notifies [loadingDelegate]
- * - LaunchIntent → launches `PayPalWebActivity` with the provided callback URL
- * - Capture → delegates capture to [viewModel]
- * - Success/Error → completes and resets state (and notifies [loadingDelegate])
+ * - Idle → No action.
+ * - Loading → notifies [loadingDelegate].
+ * - LaunchIntent → launches `PayPalWebCheckoutActivity` with the provided client ID and order ID.
+ * - Success → completes with [ChargeResponse], notifies [loadingDelegate], and resets state.
+ * - Error → completes with an exception, notifies [loadingDelegate], and resets state.
  *
  * @param context Current context.
  * @param uiState Current UI state for the PayPal checkout flow.
@@ -339,20 +346,11 @@ private fun handleUIState(
         // Launch an intent to PayPal's Web Activity if the callback URL is available
         is PayPalCheckoutUIState.LaunchIntent -> {
             loadingDelegate?.widgetLoadingDidFinish()
-            val (callbackData) = uiState
-            callbackData.callbackUrl?.let { callbackUrl ->
-                if (callbackUrl.isNotBlank()) {
-                    val intent = Intent(context, PayPalWebActivity::class.java)
-                        .putCallbackUrlExtra(callbackUrl)
-                    resolvePaymentForResult.launch(intent)
-                }
-            }
-        }
-
-        // Capture the transaction by passing the payment method ID and payer ID to the ViewModel
-        is PayPalCheckoutUIState.Capture -> {
-            val (paymentMethodId, payerId) = uiState
-            viewModel.captureWalletTransaction(paymentMethodId, payerId)
+            val (clientId, orderId) = uiState
+            val intent = Intent(context, PayPalWebCheckoutActivity::class.java)
+                .putClientIdExtra(clientId)
+                .putOrderIdExtra(orderId)
+            resolvePaymentForResult.launch(intent)
         }
 
         // Handle success state, notify the loading delegate, and complete the transaction with success
@@ -376,5 +374,11 @@ private fun handleUIState(
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewPayPalWidget() {
-    PayPalWidget(tokenRequest = {}, completion = {})
+    PayPalWidget(
+        config = PayPalWidgetConfig(
+            accessToken = "xxx",
+            gatewayId = "xxx"
+        ),
+        tokenRequest = {}, completion = {}
+    )
 }

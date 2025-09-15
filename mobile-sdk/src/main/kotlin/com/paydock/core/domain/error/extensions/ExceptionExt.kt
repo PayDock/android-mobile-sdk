@@ -279,6 +279,9 @@ internal fun Throwable.mapPayPalApiException(exceptionClass: KClass<out PayPalEx
                 PayPalException.FetchingUrlException::class ->
                     PayPalException.FetchingUrlException(error = this.error)
 
+                PayPalException.GetPayPalClientIdException::class ->
+                    PayPalException.GetPayPalClientIdException(error = this.error)
+
                 else -> PayPalException.UnknownException(
                     displayableMessage = this.message ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
                 )

@@ -217,6 +217,8 @@ internal object MobileSDKConstants {
      * Constants related to PayPal configuration.
      */
     object PayPalConfig {
+        internal const val URL_SCHEME = "${BuildConfig.LIBRARY_PACKAGE_NAME}.paypal.checkout"
+
         internal const val PAY_PAL_REDIRECT_PARAM_VALUE =
             "${DEFAULT_WEB_URL}paypal/success&native_xo=1"
         internal const val REDIRECT_PARAM_NAME = "redirect_uri"

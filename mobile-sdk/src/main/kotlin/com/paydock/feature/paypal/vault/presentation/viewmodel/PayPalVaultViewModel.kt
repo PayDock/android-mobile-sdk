@@ -1,7 +1,9 @@
 package com.paydock.feature.paypal.vault.presentation.viewmodel
 
 import com.paydock.core.data.util.DispatchersProvider
+import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.domain.error.exceptions.SdkException
+import com.paydock.core.domain.error.extensions.mapApiException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
 import com.paydock.feature.paypal.core.data.dto.CreateSetupTokenRequest
@@ -102,8 +104,9 @@ internal class PayPalVaultViewModel(
                     )
                 }
                 .onFailure { error ->
-                    error.safeCastAs<SdkException>()
-                        ?.let { updateState(PayPalVaultUIState.Error(it)) }
+                    val mapped = error.safeCastAs<SdkException>()
+                        ?: error.mapApiException(PayPalVaultException.GetPayPalClientIdException::class)
+                    updateState(PayPalVaultUIState.Error(mapped))
                 }
         }
     }

@@ -1,12 +1,14 @@
 package com.paydock.feature.paypal.checkout.presentation.viewmodels
 
-import androidx.core.net.toUri
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.PayPalException
+import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.domain.error.extensions.mapApiException
+import com.paydock.core.extensions.safeCastAs
 import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
+import com.paydock.feature.paypal.core.domain.usecase.GetPayPalClientIdUseCase
 import com.paydock.feature.wallet.data.dto.CaptureWalletChargeRequest
 import com.paydock.feature.wallet.data.dto.CustomerData
 import com.paydock.feature.wallet.data.dto.PaymentSourceData
@@ -27,16 +29,20 @@ import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
  * capturing wallet transactions, managing UI states, and parsing PayPal URLs. It extends
  * `WalletViewModel` and leverages use cases for interacting with PayPal services.
  *
+ * @param config The PayPal widget configuration.
  * @param captureWalletChargeUseCase Use case for capturing wallet charges.
  * @param declineWalletChargeUseCase Use case for declining wallet charges.
  * @param getWalletCallbackUseCase Use case for retrieving wallet callback data.
  * @param dispatchers Dispatcher provider for managing coroutine contexts.
+ * @param getPayPalClientIdUseCase Use case for retrieving the PayPal Client ID.
  */
 internal class PayPalViewModel(
+    private val config: PayPalWidgetConfig,
     captureWalletChargeUseCase: CaptureWalletChargeUseCase,
     declineWalletChargeUseCase: DeclineWalletChargeUseCase,
     getWalletCallbackUseCase: GetWalletCallbackUseCase,
     dispatchers: DispatchersProvider,
+    private val getPayPalClientIdUseCase: GetPayPalClientIdUseCase,
 ) : WalletViewModel<PayPalCheckoutUIState>(
     captureWalletChargeUseCase,
     declineWalletChargeUseCase,
@@ -96,8 +102,19 @@ internal class PayPalViewModel(
      */
     override fun updateCallbackUIState(result: Result<WalletCallback>) {
         result.fold(
-            onSuccess = { chargeData ->
-                updateUiState(PayPalCheckoutUIState.LaunchIntent(chargeData))
+            onSuccess = { callback ->
+                // Continue loading while resolving clientId; then emit LaunchIntent(clientId, orderId)
+                setLoadingState()
+                val orderId = callback.id
+                if (orderId.isNullOrBlank()) {
+                    updateUiState(
+                        PayPalCheckoutUIState.Error(
+                            PayPalException.ConfigurationException("Missing PayPal ORDER_ID")
+                        )
+                    )
+                    return
+                }
+                getPayPalClientId(orderId)
             },
             onFailure = { throwable ->
                 updateUiState(PayPalCheckoutUIState.Error(throwable.mapApiException(PayPalException.FetchingUrlException::class)))
@@ -138,6 +155,25 @@ internal class PayPalViewModel(
         getWalletCallback(walletToken, request)
     }
 
+    private fun getPayPalClientId(orderId: String) {
+        launchOnIO {
+            getPayPalClientIdUseCase(config.accessToken, config.gatewayId)
+                .onSuccess { clientId ->
+                    updateUiState(
+                        PayPalCheckoutUIState.LaunchIntent(
+                            clientId = clientId,
+                            orderId = orderId
+                        )
+                    )
+                }
+                .onFailure { error ->
+                    val mapped = error.safeCastAs<SdkException>()
+                        ?: error.mapApiException(PayPalException.GetPayPalClientIdException::class)
+                    updateUiState(PayPalCheckoutUIState.Error(mapped))
+                }
+        }
+    }
+
     /**
      * Captures a PayPal wallet transaction using the provided payment method ID and payer ID.
      *
@@ -158,26 +194,6 @@ internal class PayPalViewModel(
         )
         walletToken?.let {
             captureWalletTransaction(it, request)
-        }
-    }
-
-    /**
-     * Parses a PayPal URL to extract payment data such as the PayPal token and payer ID.
-     *
-     * Updates the state to `PayPalCheckoutUIState.Capture` if the required parameters are found.
-     *
-     * @param requestUrl The URL returned from the PayPal payment process.
-     */
-    fun parsePayPalUrl(requestUrl: String) {
-        val requestUri = requestUrl.toUri()
-        val payPalToken = requestUri.getQueryParameter(MobileSDKConstants.PayPalConfig.TOKEN_KEY)
-        val payerId = if (requestUrl.contains(MobileSDKConstants.PayPalConfig.PAYER_ID_KEY)) {
-            requestUri.getQueryParameter(MobileSDKConstants.PayPalConfig.PAYER_ID_KEY)
-        } else {
-            requestUri.getQueryParameter(MobileSDKConstants.PayPalConfig.FLOW_ID_KEY)
-        }
-        if (payPalToken != null && payerId != null) {
-            updateUiState(PayPalCheckoutUIState.Capture(payPalToken, payerId))
         }
     }
 
