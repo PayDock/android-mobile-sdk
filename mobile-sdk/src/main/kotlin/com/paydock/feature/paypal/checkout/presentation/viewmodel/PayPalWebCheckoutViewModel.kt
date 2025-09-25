@@ -12,6 +12,7 @@ import com.paypal.android.corepayments.CoreConfig
 import com.paypal.android.paypalwebpayments.PayPalPresentAuthChallengeResult
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutClient
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFinishStartResult
+import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFundingSource
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,13 +53,20 @@ internal class PayPalWebCheckoutViewModel(
      * @param activity The hosting activity.
      * @param clientId PayPal client id used to configure the SDK.
      * @param orderId PayPal order id to approve.
+     * @param fundingSource PayPal funding source to use to launch PayPal.
      */
-    fun initiateCheckout(activity: AppCompatActivity, clientId: String, orderId: String) {
+    fun initiateCheckout(
+        activity: AppCompatActivity,
+        clientId: String,
+        orderId: String,
+        fundingSource: PayPalWebCheckoutFundingSource
+    ) {
         launchOnMain {
             val coreConfig = coreConfigProvider(clientId)
             val returnUrl = MobileSDKConstants.PayPalConfig.URL_SCHEME
             paypalClient = clientProvider(activity, coreConfig, returnUrl)
-            when (val present = paypalClient?.start(activity, PayPalWebCheckoutRequest(orderId))) {
+            val webCheckoutRequest = PayPalWebCheckoutRequest(orderId, fundingSource)
+            when (val present = paypalClient?.start(activity, webCheckoutRequest)) {
                 is PayPalPresentAuthChallengeResult.Success -> {
                     authState = present.authState
                 }

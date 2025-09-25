@@ -29,7 +29,8 @@ fun PayPalContent(
         config = PayPalWidgetConfig(
             accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
             gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL,
-            requestShipping = false
+            requestShipping = false,
+            fundingSource = PayPalWidgetConfig.PayPalFundingSource.PAY_LATER
         ),
         appearance = currentOrDefaultAppearance,
         enabled = enabled,

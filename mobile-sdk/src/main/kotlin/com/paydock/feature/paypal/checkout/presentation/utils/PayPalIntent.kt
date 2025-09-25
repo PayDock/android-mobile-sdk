@@ -1,6 +1,7 @@
 package com.paydock.feature.paypal.checkout.presentation.utils
 
 import android.content.Intent
+import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFundingSource
 
 /**
  * This object defines constants used as keys for PayPal-specific extras in an Intent.
@@ -11,6 +12,7 @@ private object PayPalIntent {
     const val PAYER_ID = "PAYPAL_PAYER_ID" // Key for the payer id
     const val CLIENT_ID = "PAYPAL_CLIENT_ID" // Key for PayPal client id used to init web checkout
     const val ORDER_ID = "PAYPAL_ORDER_ID" // Key for PayPal order id used to start web checkout
+    const val FUNDING_SOURCE = "PAYPAL_FUNDING_SOURCE" // Key for PayPal funding source used to start web checkout
 }
 
 /**
@@ -60,7 +62,7 @@ internal fun Intent.getPayerIdExtra(): String? =
     getStringExtra(PayPalIntent.PAYER_ID)
 
 /**
- * Extensions for client id and order id used to start the checkout flow.
+ * Extensions for client id, order id and funding source used to start the checkout flow.
  */
 internal fun Intent.putClientIdExtra(clientId: String): Intent =
     putExtra(PayPalIntent.CLIENT_ID, clientId)
@@ -73,3 +75,9 @@ internal fun Intent.putOrderIdExtra(orderId: String): Intent =
 
 internal fun Intent.getOrderIdExtra(): String? =
     getStringExtra(PayPalIntent.ORDER_ID)
+
+internal fun Intent.putFundingSourceExtra(fundingSource: PayPalWebCheckoutFundingSource): Intent =
+    putExtra(PayPalIntent.FUNDING_SOURCE, fundingSource.name)
+
+internal fun Intent.getFundingSourceExtra(): String? =
+    getStringExtra(PayPalIntent.FUNDING_SOURCE)
