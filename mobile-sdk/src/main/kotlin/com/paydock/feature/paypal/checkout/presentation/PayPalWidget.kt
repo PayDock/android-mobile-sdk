@@ -37,6 +37,7 @@ import com.paydock.feature.paypal.checkout.presentation.utils.getCancellationSta
 import com.paydock.feature.paypal.checkout.presentation.utils.getPayerIdExtra
 import com.paydock.feature.paypal.checkout.presentation.utils.getPaymentMethodIdExtra
 import com.paydock.feature.paypal.checkout.presentation.utils.putClientIdExtra
+import com.paydock.feature.paypal.checkout.presentation.utils.putFundingSourceExtra
 import com.paydock.feature.paypal.checkout.presentation.utils.putOrderIdExtra
 import com.paydock.feature.paypal.checkout.presentation.viewmodels.PayPalViewModel
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
@@ -350,6 +351,7 @@ private fun handleUIState(
             val intent = Intent(context, PayPalWebCheckoutActivity::class.java)
                 .putClientIdExtra(clientId)
                 .putOrderIdExtra(orderId)
+                .putFundingSourceExtra(viewModel.getFundingSource())
             resolvePaymentForResult.launch(intent)
         }
 

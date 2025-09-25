@@ -6,6 +6,7 @@ import com.paydock.core.domain.error.exceptions.PayPalException
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.domain.error.extensions.mapApiException
 import com.paydock.core.extensions.safeCastAs
+import com.paydock.feature.paypal.checkout.domain.mapper.integration.mapToPayPalFundingSource
 import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
 import com.paydock.feature.paypal.core.domain.usecase.GetPayPalClientIdUseCase
@@ -21,6 +22,7 @@ import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
+import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFundingSource
 
 /**
  * ViewModel for managing the PayPal checkout process in the mobile SDK.
@@ -140,6 +142,16 @@ internal class PayPalViewModel(
     //endregion
 
     //region Public Methods
+    /**
+     * Retrieves funding source from the initial config and converts
+     * to PayPal specific enum.
+     *
+     * @return PayPalFundingSource to use with PayPal initialisation
+     */
+    fun getFundingSource(): PayPalWebCheckoutFundingSource {
+        return config.fundingSource.mapToPayPalFundingSource()
+    }
+
     /**
      * Fetches wallet callback data using the wallet token and additional parameters.
      *

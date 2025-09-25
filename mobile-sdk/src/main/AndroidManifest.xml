@@ -10,8 +10,6 @@
             android:name="android.webkit.WebView.MetricsOptOut"
             android:value="true" />
 
-        
-
         <activity
             android:name=".feature.colespay.presentation.ColesPayWebActivity"
             android:launchMode="singleTop"

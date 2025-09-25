@@ -21,6 +21,7 @@ import com.paydock.feature.wallet.domain.model.ui.WalletCallback
 import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
+import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFundingSource
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -61,7 +62,8 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
         getPayPalClientIdUseCase = mockk()
         widgetConfig = PayPalWidgetConfig(
             accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN,
-            gatewayId = "GATEWAY_ID_TEST"
+            gatewayId = "GATEWAY_ID_TEST",
+            fundingSource = PayPalWidgetConfig.PayPalFundingSource.PAYPAL
         )
         viewModel = PayPalViewModel(
             widgetConfig,
@@ -339,5 +341,77 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
                 assertIs<PayPalException.GetPayPalClientIdException>(state.exception)
             }
         }
+    }
+
+    @Test
+    fun `get funding source maps to correct PayPal enum for PAYPAL`() = runTest {
+        // Given
+        widgetConfig = PayPalWidgetConfig(
+            accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN,
+            gatewayId = "GATEWAY_ID_TEST",
+            fundingSource = PayPalWidgetConfig.PayPalFundingSource.PAYPAL
+        )
+        viewModel = PayPalViewModel(
+            widgetConfig,
+            captureWalletChargeUseCase,
+            declineWalletChargeUseCase,
+            getWalletCallbackUseCase,
+            dispatchersProvider,
+            getPayPalClientIdUseCase
+        )
+
+        // When
+        val result = viewModel.getFundingSource()
+
+        // Then
+        assertEquals(result, PayPalWebCheckoutFundingSource.PAYPAL)
+    }
+
+    @Test
+    fun `get funding source maps to correct PayPal enum for PAY_LATER`() = runTest {
+        // Given
+        widgetConfig = PayPalWidgetConfig(
+            accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN,
+            gatewayId = "GATEWAY_ID_TEST",
+            fundingSource = PayPalWidgetConfig.PayPalFundingSource.PAY_LATER
+        )
+        viewModel = PayPalViewModel(
+            widgetConfig,
+            captureWalletChargeUseCase,
+            declineWalletChargeUseCase,
+            getWalletCallbackUseCase,
+            dispatchersProvider,
+            getPayPalClientIdUseCase
+        )
+
+        // When
+        val result = viewModel.getFundingSource()
+
+        // Then
+        assertEquals(result, PayPalWebCheckoutFundingSource.PAY_LATER)
+    }
+
+    @Test
+    fun `get funding source maps to correct PayPal enum for PAYPAL_CREDIT`() = runTest {
+        // Given
+        widgetConfig = PayPalWidgetConfig(
+            accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN,
+            gatewayId = "GATEWAY_ID_TEST",
+            fundingSource = PayPalWidgetConfig.PayPalFundingSource.PAYPAL_CREDIT
+        )
+        viewModel = PayPalViewModel(
+            widgetConfig,
+            captureWalletChargeUseCase,
+            declineWalletChargeUseCase,
+            getWalletCallbackUseCase,
+            dispatchersProvider,
+            getPayPalClientIdUseCase
+        )
+
+        // When
+        val result = viewModel.getFundingSource()
+
+        // Then
+        assertEquals(result, PayPalWebCheckoutFundingSource.PAYPAL_CREDIT)
     }
 }

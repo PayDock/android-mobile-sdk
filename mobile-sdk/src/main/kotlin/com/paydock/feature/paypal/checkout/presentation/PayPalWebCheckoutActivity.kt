@@ -23,11 +23,13 @@ import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalWebCheckoutState
 import com.paydock.feature.paypal.checkout.presentation.utils.CancellationStatus
 import com.paydock.feature.paypal.checkout.presentation.utils.getClientIdExtra
+import com.paydock.feature.paypal.checkout.presentation.utils.getFundingSourceExtra
 import com.paydock.feature.paypal.checkout.presentation.utils.getOrderIdExtra
 import com.paydock.feature.paypal.checkout.presentation.utils.putCancellationStatusExtra
 import com.paydock.feature.paypal.checkout.presentation.utils.putPayerIdExtra
 import com.paydock.feature.paypal.checkout.presentation.utils.putPaymentMethodIdExtra
 import com.paydock.feature.paypal.checkout.presentation.viewmodel.PayPalWebCheckoutViewModel
+import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFundingSource
 import org.koin.android.ext.android.inject
 
 /**
@@ -68,9 +70,26 @@ internal class PayPalWebCheckoutActivity : AppCompatActivity() {
                         )
                         finish()
                     } else {
-                        viewModel.initiateCheckout(this@PayPalWebCheckoutActivity, clientId, orderId)
+                        try {
+                            val fundingSourceString = intent.getFundingSourceExtra().orEmpty()
+                            val fundingSource = PayPalWebCheckoutFundingSource.valueOf(fundingSourceString)
+
+                            viewModel.initiateCheckout(
+                                this@PayPalWebCheckoutActivity,
+                                clientId, orderId, fundingSource
+                            )
+
+                            shouldStartPayPal = false
+                        } catch (e: IllegalArgumentException) {
+                            setResult(
+                                RESULT_CANCELED,
+                                Intent()
+                                    .putStatusExtra(-1)
+                                    .putMessageExtra("${intent.getFundingSourceExtra().orEmpty()} not a valid funding source.")
+                            )
+                            finish()
+                        }
                     }
-                    shouldStartPayPal = false
                 }
             }
 

@@ -10,6 +10,7 @@ import com.paydock.feature.paypal.checkout.presentation.viewmodel.PayPalWebCheck
 import com.paypal.android.corepayments.PayPalSDKError
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutClient
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFinishStartResult
+import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFundingSource
 import io.mockk.MockKAnnotations
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -139,7 +140,7 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
                 client
             }
         )
-        vm.initiateCheckout(mockActivity, "CLIENT", "ORDER")
+        vm.initiateCheckout(mockActivity, "CLIENT", "ORDER", PayPalWebCheckoutFundingSource.PAYPAL)
         advanceUntilIdle()
         // Now invoke deeplink and expect Success path to be reachable
         val finishSuccess = io.mockk.mockk<PayPalWebCheckoutFinishStartResult.Success>(relaxed = true)
@@ -167,7 +168,7 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
                 client
             }
         )
-        vm.initiateCheckout(mockActivity, "CLIENT", "ORDER")
+        vm.initiateCheckout(mockActivity, "CLIENT", "ORDER", PayPalWebCheckoutFundingSource.PAYPAL)
         advanceUntilIdle()
         assertIs<PayPalWebCheckoutState.Failure>(vm.checkoutState.first())
     }
