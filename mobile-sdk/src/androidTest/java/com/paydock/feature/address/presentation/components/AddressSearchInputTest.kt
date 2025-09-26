@@ -26,6 +26,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.compose.ComposeContextWrapper
 import org.koin.compose.LocalKoinApplication
 import org.koin.compose.LocalKoinScope
 import org.koin.core.annotation.KoinInternalApi
@@ -76,9 +77,12 @@ internal class AddressSearchInputTest : BaseViewModelKoinTest<AddressSearchViewM
             // This shouldn't be needed, but allows robolectric tests to run successfully
             // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557
             CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext()
-                    .get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
+                LocalKoinScope provides ComposeContextWrapper(
+                    KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope
+                ),
+                LocalKoinApplication provides ComposeContextWrapper(
+                    KoinPlatformTools.defaultContext().get()
+                )
             ) {
                 AddressSearchInput(
                     onAddressSelected = {}
@@ -96,9 +100,12 @@ internal class AddressSearchInputTest : BaseViewModelKoinTest<AddressSearchViewM
             // This shouldn't be needed, but allows robolectric tests to run successfully
             // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557
             CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext()
-                    .get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
+                LocalKoinScope provides ComposeContextWrapper(
+                    KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope
+                ),
+                LocalKoinApplication provides ComposeContextWrapper(
+                    KoinPlatformTools.defaultContext().get()
+                )
             ) {
                 AddressSearchInput(
                     onAddressSelected = { }
@@ -147,9 +154,12 @@ internal class AddressSearchInputTest : BaseViewModelKoinTest<AddressSearchViewM
             // This shouldn't be needed, but allows robolectric tests to run successfully
             // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557
             CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext()
-                    .get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
+                LocalKoinScope provides ComposeContextWrapper(
+                    KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope
+                ),
+                LocalKoinApplication provides ComposeContextWrapper(
+                    KoinPlatformTools.defaultContext().get()
+                )
             ) {
                 AddressSearchInput(
                     onAddressSelected = {
@@ -205,9 +215,12 @@ internal class AddressSearchInputTest : BaseViewModelKoinTest<AddressSearchViewM
             // This shouldn't be needed, but allows robolectric tests to run successfully
             // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557
             CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext()
-                    .get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
+                LocalKoinScope provides ComposeContextWrapper(
+                    KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope
+                ),
+                LocalKoinApplication provides ComposeContextWrapper(
+                    KoinPlatformTools.defaultContext().get()
+                )
             ) {
                 AddressSearchInput(
                     onAddressSelected = onAddressResult
