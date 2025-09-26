@@ -519,7 +519,14 @@ platform :android do
     # Gets the version tag using multiple fallback strategies.
     #
     # This function provides a unified way to determine the version across all lanes.
+    # It prioritizes current project version over existing tags to support tag creation.
     # It tries multiple sources in order of preference and handles errors gracefully.
+    #
+    # Priority order:
+    # 1. Lane option (:version parameter)
+    # 2. CI environment variable (CI_COMMIT_TAG - for release lanes)
+    # 3. Gradle project version (current version - for tag creation)
+    # 4. Latest git tag (existing tags - fallback for local dev)
     #
     # @param options [Hash] Lane options that may contain a :version key
     # @return [String] The version tag (without 'v' prefix), or "unknown" if none found
@@ -533,21 +540,21 @@ platform :android do
             version_tag = ENV["CI_COMMIT_TAG"]
             return version_tag.gsub(/^v/, '') if version_tag && !version_tag.empty?
 
-            # 3. Try to get latest git tag (works if tags exist)
+            # 3. Get gradle project version (current project version for new releases)
+            begin
+                result = gradle(task: "-q :network:printVersionName", print_command: false, print_command_output: false)
+                version_match = result.match(/(\d+\.\d+\.\d+)/)
+                return version_match[1] if version_match
+            rescue => gradle_ex
+                UI.message("⚠️ Could not get gradle version: #{gradle_ex.message}")
+            end
+
+            # 4. Fallback to latest git tag (for local development scenarios)
             begin
                 git_tag = sh("git describe --tags --abbrev=0", log: false).strip
                 return git_tag.gsub(/^v/, '') if git_tag && !git_tag.empty?
             rescue => git_ex
                 UI.message("⚠️ No git tags found: #{git_ex.message}")
-            end
-
-            # 4. Fallback to gradle project version (always works)
-            begin
-                result = gradle(task: "-q :mobile-sdk:printVersionName", print_command: false, print_command_output: true)
-                version_match = result.match(/(\d+\.\d+\.\d+)/)
-                return version_match[1] if version_match
-            rescue => gradle_ex
-                UI.message("⚠️ Could not get gradle version: #{gradle_ex.message}")
             end
 
             # 5. Final fallback

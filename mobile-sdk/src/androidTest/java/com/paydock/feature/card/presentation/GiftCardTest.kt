@@ -21,6 +21,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.compose.ComposeContextWrapper
 import org.koin.compose.LocalKoinApplication
 import org.koin.compose.LocalKoinScope
 import org.koin.core.annotation.KoinInternalApi
@@ -70,9 +71,12 @@ internal class GiftCardTest : BaseViewModelKoinTest<GiftCardViewModel>() {
     fun testGiftCardInitialStateInput() {
         composeTestRule.setContent {
             CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext()
-                    .get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
+                LocalKoinScope provides ComposeContextWrapper(
+                    KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope
+                ),
+                LocalKoinApplication provides ComposeContextWrapper(
+                    KoinPlatformTools.defaultContext().get()
+                )
             ) {
                 GiftCardWidget(
                     config = GiftCardWidgetConfig(
@@ -94,9 +98,12 @@ internal class GiftCardTest : BaseViewModelKoinTest<GiftCardViewModel>() {
     fun testGiftCardValidInput() {
         composeTestRule.setContent {
             CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext()
-                    .get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
+                LocalKoinScope provides ComposeContextWrapper(
+                    KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope
+                ),
+                LocalKoinApplication provides ComposeContextWrapper(
+                    KoinPlatformTools.defaultContext().get()
+                )
             ) {
                 GiftCardWidget(
                     config = GiftCardWidgetConfig(
@@ -137,9 +144,12 @@ internal class GiftCardTest : BaseViewModelKoinTest<GiftCardViewModel>() {
     fun testGiftCardInvalidInput() {
         composeTestRule.setContent {
             CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext()
-                    .get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
+                LocalKoinScope provides ComposeContextWrapper(
+                    KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope
+                ),
+                LocalKoinApplication provides ComposeContextWrapper(
+                    KoinPlatformTools.defaultContext().get()
+                )
             ) {
                 GiftCardWidget(
                     config = GiftCardWidgetConfig(
@@ -176,9 +186,12 @@ internal class GiftCardTest : BaseViewModelKoinTest<GiftCardViewModel>() {
         val onGiftCardResult: (Result<CardResult>) -> Unit = mockk()
         composeTestRule.setContent {
             CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext()
-                    .get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
+                LocalKoinScope provides ComposeContextWrapper(
+                    KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope
+                ),
+                LocalKoinApplication provides ComposeContextWrapper(
+                    KoinPlatformTools.defaultContext().get()
+                )
             ) {
                 GiftCardWidget(
                     config = GiftCardWidgetConfig(

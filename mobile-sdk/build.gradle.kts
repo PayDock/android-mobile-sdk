@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.compose.compiler)
@@ -14,7 +16,7 @@ plugins {
 
 android {
     namespace = "com.paydock"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24
@@ -52,9 +54,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
@@ -70,6 +69,12 @@ android {
         resources {
             excludes += "/META-INF/{LICENSE.md,LICENSE-notice.md}"
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -100,11 +105,6 @@ dependencies {
     implementation(libs.bundles.koin)
     testImplementation(libs.koin.test)
     androidTestImplementation(libs.koin.test)
-    // Ktor - Networking
-    implementation(libs.ktor.client.android)
-    implementation(libs.ktor.client.okhttp)
-    testImplementation(libs.ktor.client.mock)
-    testImplementation(libs.okhttp3.mockwebserver)
     // Google Services
     implementation(libs.bundles.google.pay.services)
     // Google Pay SDK
