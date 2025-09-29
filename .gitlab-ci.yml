@@ -192,15 +192,10 @@ commit_bin_file:
 .build_template:
   stage: build # Runs in the 'build' stage.
   extends: .setup_bundler # Extends the '.setup_bundler' template.
-  script:
-    - cp bin_schema/card-schemes.json ./mobile-sdk/src/main/assets/card_schemas.json # Copies the card schemes file to the assets directory.
   artifacts:
     expire_in: 7 days
     paths:
       - sample/build/outputs/apk/* # Makes the APK files available as artifacts.
-      - bin_schema/ # Makes the 'bin_schema/' directory available as an artifact.
-  dependencies:
-    - pull_bin_file # Specifies the dependency on the 'pull_bin_file' job
 
 # buildStaging:
 # This job builds the staging version of the Android application.
@@ -211,7 +206,6 @@ build_staging:
     # Fastfile Reference: This lane is defined in the Fastfile and handles the actual build process.
   environment:
     name: staging
-  needs: [pull_bin_file]
   rules:
 #    - if: $CI_COMMIT_BRANCH  # Run on all branch pushes
 #      when: on_success
@@ -229,7 +223,7 @@ build_sandbox:
     # Fastfile Reference: This lane is defined in the Fastfile and handles the actual build process.
   environment:
     name: sandbox
-  needs: [pull_bin_file, increment_version]
+  needs: [increment_version]
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
       when: on_success
@@ -243,7 +237,7 @@ build_prod:
     # Fastfile Reference: This lane is defined in the Fastfile and handles the actual build process.
   environment:
     name: production
-  needs: [pull_bin_file, increment_version]
+  needs: [increment_version]
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
       when: on_success
