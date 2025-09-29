@@ -139,6 +139,208 @@ platform :android do
         puts "   📁 Fastlane location: fastlane/reports/code-quality/"
     end
 
+    # --- Bin File Management Lanes ---
+
+    desc "Commit card schemes file to repository if it has changed"
+    lane :commit_bin_file do
+        # Check if we have the extracted file in current directory or parent directory
+        bin_file_path = nil
+        if File.exist?("bin_schema/card-schemes.json")
+            bin_file_path = "bin_schema/card-schemes.json"
+            UI.message("Found bin file in current directory: #{bin_file_path}")
+        elsif File.exist?("../bin_schema/card-schemes.json")
+            bin_file_path = "../bin_schema/card-schemes.json"
+            UI.message("Found bin file in parent directory: #{bin_file_path}")
+        else
+            UI.error("Error: card-schemes.json not found in bin_schema/ directory in current or parent directory.")
+            raise "Required file bin_schema/card-schemes.json not found"
+        end
+
+        # Context
+        UI.message("Preparing to commit card schemes if changed (branch: #{ENV['CI_COMMIT_REF_NAME']})")
+
+        # Determine the correct path for mobile-sdk assets
+        assets_file_path = nil
+        if File.exist?("mobile-sdk/src/main/assets/card_schemas.json")
+            assets_file_path = "mobile-sdk/src/main/assets/card_schemas.json"
+        elsif File.exist?("../mobile-sdk/src/main/assets/card_schemas.json")
+            assets_file_path = "../mobile-sdk/src/main/assets/card_schemas.json"
+        end
+
+        # Check if the extracted file has changed and commit via GitLab API
+        if assets_file_path && File.exist?(assets_file_path)
+            # Compare files using system command and check exit status
+            files_different = false
+            begin
+                sh("diff -q #{bin_file_path} #{assets_file_path}")
+                # If we get here, diff returned 0 (files are the same)
+                files_different = false
+            rescue => e
+                # diff returns non-zero exit code when files are different
+                if e.message.include?("differ")
+                    files_different = true
+                else
+                    # Some other error occurred
+                    raise e
+                end
+            end
+            
+            if files_different
+                UI.message("Card schemes file has changed, committing the update via GitLab API...")
+                commit_file_via_api(file_path: bin_file_path, commit_message: "Update card schemes from AWS S3 [skip ci]")
+            else
+                UI.message("Card schemes file is up to date, no changes to commit")
+            end
+        else
+            UI.message("Card schemes file not found in assets, creating it via GitLab API...")
+            commit_file_via_api(file_path: bin_file_path, commit_message: "Add card schemes file from AWS S3 [skip ci]")
+        end
+    end
+
+    private_lane :commit_file_via_api do |options|
+        file_path = options[:file_path]
+        commit_message = options[:commit_message]
+        
+        # Base64 encode the new file content
+        new_content = sh("base64 -w 0 #{file_path}").strip
+
+        # Check if assets file exists (in current or parent directory)
+        assets_exists = File.exist?("mobile-sdk/src/main/assets/card_schemas.json") || File.exist?("../mobile-sdk/src/main/assets/card_schemas.json")
+        
+        if assets_exists
+            # Update existing file
+            UI.message("Getting current file info from GitLab API...")
+            
+            # Get the current file content and SHA
+            file_path_encoded = "mobile-sdk%2Fsrc%2Fmain%2Fassets%2Fcard_schemas.json"
+            api_url = "#{ENV['CI_API_V4_URL']}/projects/#{ENV['CI_PROJECT_ID']}/repository/files/#{file_path_encoded}?ref=#{ENV['CI_COMMIT_REF_NAME']}"
+
+            # Make call
+            gitlab_token = ENV['GITLAB_TOKEN']
+            current_file_info = sh("curl -s -w '\\nHTTP_CODE:%{http_code}' --header \"PRIVATE-TOKEN: #{gitlab_token}\" '#{api_url}'").strip
+            
+            # Split response and HTTP code
+            response_parts = current_file_info.split("\nHTTP_CODE:")
+            response_body = response_parts[0]
+            http_code = response_parts[1] if response_parts.length > 1
+            
+            UI.message("GitLab API (get file) HTTP Status: #{http_code}")
+            
+            # Check for authentication errors
+            if http_code == "401"
+                UI.error("Authentication failed. Possible issues:")
+                UI.error("  1. GITLAB_TOKEN is invalid or expired")
+                UI.error("  2. Token doesn't have 'api' or 'write_repository' scope")
+                UI.error("  3. Token is for wrong project/group")
+                raise "GitLab API authentication failed (401 Unauthorized)"
+            elsif http_code == "404"
+                UI.error("File not found. This might be the first time creating the file.")
+                # Handle as new file creation instead
+                assets_exists = false
+            elsif http_code != "200"
+                UI.error("GitLab API returned HTTP #{http_code}")
+                raise "GitLab API error: HTTP #{http_code}"
+            end
+            
+            # Only proceed with update logic if we still have assets_exists = true
+            if assets_exists
+                # Parse the response to get the SHA
+                begin
+                    file_data = JSON.parse(response_body)
+                    # GitLab API returns 'last_commit_id' for the commit SHA, not 'content_sha'
+                    current_sha = file_data['last_commit_id']
+                    
+                    if current_sha.nil?
+                        UI.error("Error: Could not get current file commit SHA. Response: #{response_body}")
+                        UI.error("Available fields: #{file_data.keys.join(', ')}")
+                        raise "Failed to get file commit SHA"
+                    end
+                
+                    UI.message("Current file SHA: #{current_sha}")
+                    
+                    # Commit the file update via GitLab API
+                    UI.message("Updating file via GitLab API...")
+                    update_url = "#{ENV['CI_API_V4_URL']}/projects/#{ENV['CI_PROJECT_ID']}/repository/files/mobile-sdk%2Fsrc%2Fmain%2Fassets%2Fcard_schemas.json"
+                    
+                    update_data = {
+                        branch: ENV['CI_COMMIT_REF_NAME'],
+                        content: new_content,
+                        encoding: "base64",
+                        commit_message: commit_message,
+                        last_commit_id: current_sha
+                    }.to_json
+                    
+                    update_response = sh("curl -s --request PUT --header \"PRIVATE-TOKEN: #{gitlab_token}\" --header 'Content-Type: application/json' --data '#{update_data}' '#{update_url}'").strip
+                    
+                    # Minimal response logging retained
+                    
+                    # Check if the update was successful
+                    begin
+                        response_data = JSON.parse(update_response)
+                        if response_data['commit_id']
+                            UI.success("Card schemes file updated and committed successfully via GitLab API")
+                        else
+                            UI.error("Error: Failed to update file. Response: #{update_response}")
+                            raise "Failed to update file"
+                        end
+                    rescue JSON::ParserError
+                        UI.error("Error: Invalid JSON response. Response: #{update_response}")
+                        raise "Invalid API response"
+                    end
+                    
+                rescue JSON::ParserError
+                    UI.error("Error: Could not parse file info response. Response: #{response_body}")
+                    raise "Failed to parse API response"
+                end
+            end
+        else
+            # Create new file
+            UI.message("Creating file via GitLab API...")
+            create_url = "#{ENV['CI_API_V4_URL']}/projects/#{ENV['CI_PROJECT_ID']}/repository/files/mobile-sdk%2Fsrc%2Fmain%2Fassets%2Fcard_schemas.json"
+            
+            create_data = {
+                branch: ENV['CI_COMMIT_REF_NAME'],
+                content: new_content,
+                encoding: "base64",
+                commit_message: commit_message
+            }.to_json
+            
+            gitlab_token = ENV['GITLAB_TOKEN']
+            create_response = sh("curl -s -w '\\nHTTP_CODE:%{http_code}' --request POST --header \"PRIVATE-TOKEN: #{gitlab_token}\" --header 'Content-Type: application/json' --data '#{create_data}' '#{create_url}'").strip
+            
+            # Split response and HTTP code for create operation
+            create_parts = create_response.split("\nHTTP_CODE:")
+            create_body = create_parts[0]
+            create_http_code = create_parts[1] if create_parts.length > 1
+            
+            UI.message("Create HTTP Status Code: #{create_http_code}")
+            UI.message("Create API Response: #{create_body}")
+            
+            # Check for authentication errors in create operation
+            if create_http_code == "401"
+                UI.error("Authentication failed during file creation.")
+                raise "GitLab API authentication failed (401 Unauthorized)"
+            elsif create_http_code != "201"
+                UI.error("GitLab API returned HTTP #{create_http_code} for file creation")
+                raise "GitLab API error: HTTP #{create_http_code}"
+            end
+            
+            # Check if the creation was successful
+            begin
+                response_data = JSON.parse(create_body)
+                if response_data['commit_id']
+                    UI.success("Card schemes file created and committed successfully via GitLab API")
+                else
+                    UI.error("Error: Failed to create file. Response: #{create_body}")
+                    raise "Failed to create file"
+                end
+            rescue JSON::ParserError
+                UI.error("Error: Invalid JSON response. Response: #{create_body}")
+                raise "Invalid API response"
+            end
+        end
+    end
+
     # --- Version Lanes ---
 
     desc "Update the version name in GitLab CI variables"
