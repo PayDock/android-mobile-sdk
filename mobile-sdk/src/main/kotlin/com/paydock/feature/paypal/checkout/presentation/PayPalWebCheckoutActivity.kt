@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.paydock.core.MobileSDKConstants
 import com.paydock.core.extensions.castAs
 import com.paydock.core.presentation.extensions.positionAwareImePadding
 import com.paydock.core.presentation.extensions.putMessageExtra
@@ -42,7 +43,7 @@ import org.koin.android.ext.android.inject
 internal class PayPalWebCheckoutActivity : AppCompatActivity() {
 
     private val viewModel by inject<PayPalWebCheckoutViewModel>()
-    private var hasResumedOnce: Boolean = false
+    private var hasStartedCheckout: Boolean = false
 
     /**
      * Initializes the Compose content, validates required inputs, and triggers the SDK start.
@@ -52,10 +53,11 @@ internal class PayPalWebCheckoutActivity : AppCompatActivity() {
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        hasStartedCheckout = savedInstanceState?.getBoolean(KEY_HAS_STARTED) ?: false
         setContent {
             enableEdgeToEdge()
             val checkoutState by viewModel.checkoutState.collectAsState()
-            var shouldStartPayPal by remember { mutableStateOf(true) }
+            var shouldStartPayPal by remember { mutableStateOf(!hasStartedCheckout) }
 
             SideEffect {
                 if (shouldStartPayPal) {
@@ -80,7 +82,14 @@ internal class PayPalWebCheckoutActivity : AppCompatActivity() {
                             )
 
                             shouldStartPayPal = false
+                            hasStartedCheckout = true
                         } catch (e: IllegalArgumentException) {
+                            // Log and propagate a user-friendly error to avoid swallowing exceptions
+                            android.util.Log.w(
+                                MobileSDKConstants.MOBILE_SDK_TAG,
+                                "Invalid PayPal funding source: ${intent.getFundingSourceExtra().orEmpty()}",
+                                e
+                            )
                             setResult(
                                 RESULT_CANCELED,
                                 Intent()
@@ -133,6 +142,11 @@ internal class PayPalWebCheckoutActivity : AppCompatActivity() {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(KEY_HAS_STARTED, hasStartedCheckout)
+    }
+
     /**
      * Receives deep link intents from the PayPal flow and forwards them to the ViewModel.
      *
@@ -175,8 +189,8 @@ internal class PayPalWebCheckoutActivity : AppCompatActivity() {
             return
         }
 
-        // Fallback: if returning without redirect intent and already resumed once, treat as cancel
-        if (hasResumedOnce && data == null) {
+        // Fallback: if returning without redirect intent and flow was already started, treat as cancel
+        if (hasStartedCheckout && data == null) {
             setResult(
                 RESULT_CANCELED,
                 Intent().putCancellationStatusExtra(CancellationStatus.USER_INITIATED)
@@ -184,8 +198,9 @@ internal class PayPalWebCheckoutActivity : AppCompatActivity() {
             finish()
             return
         }
-        hasResumedOnce = true
     }
 
-    companion object {}
+    private companion object {
+        const val KEY_HAS_STARTED: String = "paypal.web_checkout.has_started"
+    }
 }
