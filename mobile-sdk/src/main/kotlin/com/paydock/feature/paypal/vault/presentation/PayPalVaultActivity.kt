@@ -52,15 +52,16 @@ import org.koin.android.ext.android.inject
 internal class PayPalVaultActivity : AppCompatActivity() {
 
     private val viewModel by inject<PayPalWebVaultViewModel>()
-    private var hasResumedOnce: Boolean = false
+    private var hasStartedVault: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        hasStartedVault = savedInstanceState?.getBoolean(KEY_HAS_STARTED) ?: false
         setContent {
             enableEdgeToEdge()
             val vaultResult by viewModel.vaultResult.collectAsState()
 
-            var shouldStartPayPal by remember { mutableStateOf(true) }
+            var shouldStartPayPal by remember { mutableStateOf(!hasStartedVault) }
 
             SideEffect {
                 if (shouldStartPayPal) {
@@ -72,6 +73,7 @@ internal class PayPalVaultActivity : AppCompatActivity() {
                         setupToken
                     )
                     shouldStartPayPal = false
+                    hasStartedVault = true
                 }
             }
 
@@ -109,6 +111,11 @@ internal class PayPalVaultActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(KEY_HAS_STARTED, hasStartedVault)
     }
 
     /**
@@ -159,13 +166,15 @@ internal class PayPalVaultActivity : AppCompatActivity() {
             return
         }
 
-        // Fallback: if returning without redirect intent (e.g., browser closed) and still Idle, finish as canceled
-        if (hasResumedOnce && viewModel.vaultResult.value is PayPalWebVaultState.Idle && data == null) {
+        // Fallback: if returning without redirect intent and vault flow was already started, finish as canceled
+        if (hasStartedVault && data == null) {
             setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(CancellationStatus.USER_INITIATED))
             finish()
             return
         }
+    }
 
-        hasResumedOnce = true
+    private companion object {
+        const val KEY_HAS_STARTED: String = "paypal.vault.has_started"
     }
 }
