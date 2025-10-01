@@ -26,7 +26,7 @@ import com.paydock.feature.paypal.vault.presentation.utils.getSetupTokenExtra
 import com.paydock.feature.paypal.vault.presentation.utils.putApprovalSessionIdExtra
 import com.paydock.feature.paypal.vault.presentation.utils.putCancellationStatusExtra
 import com.paydock.feature.paypal.vault.presentation.viewmodel.PayPalWebVaultViewModel
-import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
  * An internal [AppCompatActivity] that handles the PayPal vaulting process.
@@ -51,7 +51,7 @@ import org.koin.android.ext.android.inject
  */
 internal class PayPalVaultActivity : AppCompatActivity() {
 
-    private val viewModel by inject<PayPalWebVaultViewModel>()
+    private val viewModel: PayPalWebVaultViewModel by viewModel()
     private var hasStartedVault: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -143,7 +143,7 @@ internal class PayPalVaultActivity : AppCompatActivity() {
             finish()
             return
         }
-        viewModel.handleDeeplinkResult(intent)
+        viewModel.handleDeeplinkResult(this, intent)
     }
 
     /**

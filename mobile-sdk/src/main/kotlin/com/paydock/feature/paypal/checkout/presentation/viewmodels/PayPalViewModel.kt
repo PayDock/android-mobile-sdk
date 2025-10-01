@@ -1,5 +1,6 @@
 package com.paydock.feature.paypal.checkout.presentation.viewmodels
 
+import androidx.lifecycle.SavedStateHandle
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.PayPalException
@@ -32,6 +33,7 @@ import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFundingSource
  * `WalletViewModel` and leverages use cases for interacting with PayPal services.
  *
  * @param config The PayPal widget configuration.
+ * @param savedStateHandle Handle for persisting state across process death.
  * @param captureWalletChargeUseCase Use case for capturing wallet charges.
  * @param declineWalletChargeUseCase Use case for declining wallet charges.
  * @param getWalletCallbackUseCase Use case for retrieving wallet callback data.
@@ -40,6 +42,7 @@ import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFundingSource
  */
 internal class PayPalViewModel(
     private val config: PayPalWidgetConfig,
+    private val savedStateHandle: SavedStateHandle,
     captureWalletChargeUseCase: CaptureWalletChargeUseCase,
     declineWalletChargeUseCase: DeclineWalletChargeUseCase,
     getWalletCallbackUseCase: GetWalletCallbackUseCase,
@@ -55,10 +58,12 @@ internal class PayPalViewModel(
     //region Private Properties
     /**
      * Holds the wallet token used for PayPal operations.
+     * Persisted in SavedStateHandle to survive process death with "Don't keep activities"
      *
      * This token is essential for authenticating and managing PayPal transactions.
+     * Access via getWalletToken() / setWalletToken() methods to avoid signature clash.
      */
-    private var walletToken: String? = null
+    private fun getWalletToken(): String? = savedStateHandle[KEY_WALLET_TOKEN]
     //endregion
 
     //region Overridden Methods
@@ -71,11 +76,12 @@ internal class PayPalViewModel(
 
     /**
      * Sets the PayPal wallet token used for authentication and transaction processing.
+     * Persisted in SavedStateHandle to survive process death.
      *
      * @param token The wallet token.
      */
     override fun setWalletToken(token: String) {
-        walletToken = token
+        savedStateHandle[KEY_WALLET_TOKEN] = token
     }
 
     /**
@@ -84,7 +90,7 @@ internal class PayPalViewModel(
      * Updates the state to `PayPalCheckoutUIState.Idle`.
      */
     override fun resetResultState() {
-        walletToken = null
+        savedStateHandle[KEY_WALLET_TOKEN] = null
         updateUiState(PayPalCheckoutUIState.Idle)
     }
 
@@ -204,7 +210,7 @@ internal class PayPalViewModel(
                 )
             )
         )
-        walletToken?.let {
+        getWalletToken()?.let {
             captureWalletTransaction(it, request)
         }
     }
@@ -243,4 +249,8 @@ internal class PayPalViewModel(
         }
     }
     //endregion
+
+    private companion object {
+        const val KEY_WALLET_TOKEN: String = "paypal.checkout.wallet_token"
+    }
 }

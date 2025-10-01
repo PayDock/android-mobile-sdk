@@ -1,5 +1,6 @@
 package com.paydock.feature.paypal.vault.presentation.viewmodels
 
+import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
@@ -63,6 +64,7 @@ internal class PayPalVaultViewModelTest : BaseKoinUnitTest() {
         createPayPalVaultPaymentTokenUseCase = mockk()
         viewModel = PayPalVaultViewModel(
             config,
+            SavedStateHandle(),
             createSetupTokenUseCase,
             getPayPalClientIdUseCase,
             createPayPalVaultPaymentTokenUseCase,

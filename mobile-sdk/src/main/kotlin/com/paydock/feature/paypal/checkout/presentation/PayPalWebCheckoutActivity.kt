@@ -31,7 +31,7 @@ import com.paydock.feature.paypal.checkout.presentation.utils.putPayerIdExtra
 import com.paydock.feature.paypal.checkout.presentation.utils.putPaymentMethodIdExtra
 import com.paydock.feature.paypal.checkout.presentation.viewmodel.PayPalWebCheckoutViewModel
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFundingSource
-import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
  * Activity that hosts the PayPal Web SDK checkout flow.
@@ -42,7 +42,7 @@ import org.koin.android.ext.android.inject
  */
 internal class PayPalWebCheckoutActivity : AppCompatActivity() {
 
-    private val viewModel by inject<PayPalWebCheckoutViewModel>()
+    private val viewModel: PayPalWebCheckoutViewModel by viewModel()
     private var hasStartedCheckout: Boolean = false
 
     /**
@@ -167,7 +167,7 @@ internal class PayPalWebCheckoutActivity : AppCompatActivity() {
             return
         }
 
-        viewModel.handleDeeplinkResult(intent)
+        viewModel.handleDeeplinkResult(this, intent)
     }
 
     /**
