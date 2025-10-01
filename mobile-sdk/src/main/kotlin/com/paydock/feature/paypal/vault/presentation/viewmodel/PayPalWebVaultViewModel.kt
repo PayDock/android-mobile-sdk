@@ -2,6 +2,7 @@ package com.paydock.feature.paypal.vault.presentation.viewmodel
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.SavedStateHandle
 import com.paydock.MobileSDK
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
@@ -25,9 +26,11 @@ import kotlinx.coroutines.flow.asStateFlow
  * It maintains a state flow of [PayPalWebVaultState] that observers can use to react to changes
  * in the vault process.
  *
+ * @property savedStateHandle Handle for persisting state across process death.
  * @property dispatchers The dispatchers provider for coroutine context switching.
  */
 internal class PayPalWebVaultViewModel(
+    private val savedStateHandle: SavedStateHandle,
     dispatchers: DispatchersProvider
 ) : BaseViewModel(dispatchers) {
 
@@ -41,7 +44,19 @@ internal class PayPalWebVaultViewModel(
     private var paypalClient: PayPalWebCheckoutClient? = null
 
     // Auth state returned after presenting the auth challenge; required to finish the flow
-    private var authState: String? = null
+    // Persisted in SavedStateHandle to survive process death with "Don't keep activities"
+    private var authState: String?
+        get() = savedStateHandle[KEY_AUTH_STATE]
+        set(value) { savedStateHandle[KEY_AUTH_STATE] = value }
+
+    // Store client ID and setup token for recreating client if needed
+    private var clientId: String?
+        get() = savedStateHandle[KEY_CLIENT_ID]
+        set(value) { savedStateHandle[KEY_CLIENT_ID] = value }
+
+    private var setupToken: String?
+        get() = savedStateHandle[KEY_SETUP_TOKEN]
+        set(value) { savedStateHandle[KEY_SETUP_TOKEN] = value }
 
     /**
      * Initiates the PayPal vault process by configuring the [PayPalWebCheckoutClient] with the
@@ -53,6 +68,10 @@ internal class PayPalWebVaultViewModel(
      */
     fun initiatePayPalVault(activity: AppCompatActivity, clientId: String, setupToken: String) {
         launchOnMain {
+            // Persist for potential recreation
+            this@PayPalWebVaultViewModel.clientId = clientId
+            this@PayPalWebVaultViewModel.setupToken = setupToken
+
             val request = PayPalWebVaultRequest(setupToken)
             val coreConfig = CoreConfig(
                 clientId = clientId,
@@ -86,10 +105,35 @@ internal class PayPalWebVaultViewModel(
      * PayPal redirect or deeplink Intent. It completes the vault flow and updates the
      * UI state accordingly based on the result.
      *
+     * If the authState is null (e.g., process was killed with "Don't keep activities"),
+     * the flow is treated as canceled to allow the Activity to recover gracefully.
+     *
+     * If the paypalClient is null (process was killed), it will be recreated using persisted config.
+     *
+     * @param activity The activity handling the deep link (needed to recreate client if necessary).
      * @param intent The Intent received from the PayPal redirect or deeplink.
      */
-    fun handleDeeplinkResult(intent: Intent) {
-        val state = authState ?: return
+    fun handleDeeplinkResult(activity: AppCompatActivity, intent: Intent) {
+        val state = authState
+        if (state == null) {
+            // Process was killed and authState lost - treat as cancellation for graceful recovery
+            _vaultResult.value = PayPalWebVaultState.Canceled
+            return
+        }
+
+        // Recreate client if it was lost due to process death
+        if (paypalClient == null) {
+            val savedClientId = clientId
+            val savedSetupToken = setupToken
+            if (savedClientId != null && savedSetupToken != null) {
+                val coreConfig = CoreConfig(
+                    clientId = savedClientId,
+                    environment = MobileSDK.getInstance().environment.mapToPayPalEnv()
+                )
+                paypalClient = PayPalWebCheckoutClient(activity, coreConfig, MobileSDKConstants.PayPalVaultConfig.URL_SCHEME)
+            }
+        }
+
         val result =
             paypalClient?.finishVault(intent, state) ?: PayPalWebCheckoutFinishVaultResult.NoResult
         when (result) {
@@ -122,5 +166,11 @@ internal class PayPalWebVaultViewModel(
         super.onCleared()
         authState = null
         paypalClient = null
+    }
+
+    private companion object {
+        const val KEY_AUTH_STATE: String = "paypal.vault.auth_state"
+        const val KEY_CLIENT_ID: String = "paypal.vault.client_id"
+        const val KEY_SETUP_TOKEN: String = "paypal.vault.setup_token"
     }
 }

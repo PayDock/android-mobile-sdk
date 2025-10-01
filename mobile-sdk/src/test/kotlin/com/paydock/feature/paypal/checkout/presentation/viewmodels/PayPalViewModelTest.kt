@@ -1,5 +1,6 @@
 package com.paydock.feature.paypal.checkout.presentation.viewmodels
 
+import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
@@ -48,6 +49,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
     private val dispatchersProvider: DispatchersProvider by inject()
 
     private lateinit var viewModel: PayPalViewModel
+    private lateinit var savedStateHandle: SavedStateHandle
     private lateinit var captureWalletChargeUseCase: CaptureWalletChargeUseCase
     private lateinit var declineWalletChargeUseCase: DeclineWalletChargeUseCase
     private lateinit var getWalletCallbackUseCase: GetWalletCallbackUseCase
@@ -56,6 +58,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
 
     @Before
     fun setup() {
+        savedStateHandle = SavedStateHandle()
         captureWalletChargeUseCase = mockk()
         declineWalletChargeUseCase = mockk()
         getWalletCallbackUseCase = mockk()
@@ -67,6 +70,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
         )
         viewModel = PayPalViewModel(
             widgetConfig,
+            savedStateHandle,
             captureWalletChargeUseCase,
             declineWalletChargeUseCase,
             getWalletCallbackUseCase,
@@ -353,6 +357,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
         )
         viewModel = PayPalViewModel(
             widgetConfig,
+            savedStateHandle,
             captureWalletChargeUseCase,
             declineWalletChargeUseCase,
             getWalletCallbackUseCase,
@@ -377,6 +382,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
         )
         viewModel = PayPalViewModel(
             widgetConfig,
+            savedStateHandle,
             captureWalletChargeUseCase,
             declineWalletChargeUseCase,
             getWalletCallbackUseCase,
@@ -401,6 +407,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
         )
         viewModel = PayPalViewModel(
             widgetConfig,
+            savedStateHandle,
             captureWalletChargeUseCase,
             declineWalletChargeUseCase,
             getWalletCallbackUseCase,

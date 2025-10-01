@@ -2,6 +2,7 @@ package com.paydock.feature.paypal.checkout.presentation.viewmodels
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.SavedStateHandle
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.utils.MainDispatcherRule
@@ -45,13 +46,12 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
 
     @Test
     fun `handleDeeplinkResult emits Success on finishStart success`() = runTest {
-        val vm = spyk(PayPalWebCheckoutViewModel(dispatchers))
+        val savedStateHandle = SavedStateHandle()
+        savedStateHandle["paypal.checkout.auth_state"] = "auth"
+        val vm = spyk(PayPalWebCheckoutViewModel(savedStateHandle, dispatchers))
         val client = io.mockk.mockk<PayPalWebCheckoutClient>(relaxed = true)
-        // Set internal fields via reflection
+        // Set client via reflection
         vm.apply {
-            val authField = javaClass.getDeclaredField("authState")
-            authField.isAccessible = true
-            authField.set(this, "auth")
             val clientField = javaClass.getDeclaredField("paypalClient")
             clientField.isAccessible = true
             clientField.set(this, client)
@@ -62,19 +62,18 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
         every { success.payerId } returns "PAYER-1"
         every { client.finishStart(intent, any()) } returns success
 
-        vm.handleDeeplinkResult(intent)
+        vm.handleDeeplinkResult(mockActivity, intent)
 
         assertIs<PayPalWebCheckoutState.Success>(vm.checkoutState.first())
     }
 
     @Test
     fun `handleDeeplinkResult emits Canceled on finishStart canceled`() = runTest {
-        val vm = spyk(PayPalWebCheckoutViewModel(dispatchers))
+        val savedStateHandle = SavedStateHandle()
+        savedStateHandle["paypal.checkout.auth_state"] = "auth"
+        val vm = spyk(PayPalWebCheckoutViewModel(savedStateHandle, dispatchers))
         val client = io.mockk.mockk<PayPalWebCheckoutClient>(relaxed = true)
         vm.apply {
-            val authField = javaClass.getDeclaredField("authState")
-            authField.isAccessible = true
-            authField.set(this, "auth")
             val clientField = javaClass.getDeclaredField("paypalClient")
             clientField.isAccessible = true
             clientField.set(this, client)
@@ -83,19 +82,18 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
         val canceled = io.mockk.mockk<PayPalWebCheckoutFinishStartResult.Canceled>(relaxed = true)
         every { client.finishStart(intent, any()) } returns canceled
 
-        vm.handleDeeplinkResult(intent)
+        vm.handleDeeplinkResult(mockActivity, intent)
 
         assertIs<PayPalWebCheckoutState.Canceled>(vm.checkoutState.first())
     }
 
     @Test
     fun `handleDeeplinkResult emits Failure on finishStart failure`() = runTest {
-        val vm = spyk(PayPalWebCheckoutViewModel(dispatchers))
+        val savedStateHandle = SavedStateHandle()
+        savedStateHandle["paypal.checkout.auth_state"] = "auth"
+        val vm = spyk(PayPalWebCheckoutViewModel(savedStateHandle, dispatchers))
         val client = io.mockk.mockk<PayPalWebCheckoutClient>(relaxed = true)
         vm.apply {
-            val authField = javaClass.getDeclaredField("authState")
-            authField.isAccessible = true
-            authField.set(this, "auth")
             val clientField = javaClass.getDeclaredField("paypalClient")
             clientField.isAccessible = true
             clientField.set(this, client)
@@ -106,23 +104,20 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
         every { failure.error } returns sdkError
         every { client.finishStart(intent, any()) } returns failure
 
-        vm.handleDeeplinkResult(intent)
+        vm.handleDeeplinkResult(mockActivity, intent)
 
         assertIs<PayPalWebCheckoutState.Failure>(vm.checkoutState.first())
     }
 
     @Test
     fun `handleDeeplinkResult emits Canceled on NoResult`() = runTest {
-        val vm = spyk(PayPalWebCheckoutViewModel(dispatchers))
-        // Set authState but leave client null to trigger NoResult path via Elvis operator
-        vm.apply {
-            val authField = javaClass.getDeclaredField("authState")
-            authField.isAccessible = true
-            authField.set(this, "auth")
-        }
+        val savedStateHandle = SavedStateHandle()
+        savedStateHandle["paypal.checkout.auth_state"] = "auth"
+        val vm = spyk(PayPalWebCheckoutViewModel(savedStateHandle, dispatchers))
+        // Leave client null to trigger NoResult path via Elvis operator
         val intent = Intent("action")
 
-        vm.handleDeeplinkResult(intent)
+        vm.handleDeeplinkResult(mockActivity, intent)
 
         assertIs<PayPalWebCheckoutState.Canceled>(vm.checkoutState.first())
     }
@@ -132,6 +127,7 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
         val present = io.mockk.mockk<com.paypal.android.paypalwebpayments.PayPalPresentAuthChallengeResult.Success>(relaxed = true)
         every { present.authState } returns "auth"
         val vm = PayPalWebCheckoutViewModel(
+            SavedStateHandle(),
             dispatchers,
             coreConfigProvider = { _: String -> io.mockk.mockk(relaxed = true) },
             clientProvider = { _: AppCompatActivity, _: com.paypal.android.corepayments.CoreConfig, _: String ->
@@ -150,7 +146,7 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
         clientField.isAccessible = true
         val client = clientField.get(vm) as PayPalWebCheckoutClient
         every { client.finishStart(any(), "auth") } returns finishSuccess
-        vm.handleDeeplinkResult(Intent("action"))
+        vm.handleDeeplinkResult(mockActivity, Intent("action"))
         assertIs<PayPalWebCheckoutState.Success>(vm.checkoutState.first())
     }
 
@@ -160,6 +156,7 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
         val error = io.mockk.mockk<PayPalSDKError>(relaxed = true)
         every { failure.error } returns error
         val vm = PayPalWebCheckoutViewModel(
+            SavedStateHandle(),
             dispatchers,
             coreConfigProvider = { _: String -> io.mockk.mockk(relaxed = true) },
             clientProvider = { _: AppCompatActivity, _: com.paypal.android.corepayments.CoreConfig, _: String ->
@@ -175,12 +172,11 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
 
     @Test
     fun `onCleared resets internal state`() = runTest {
-        val vm = spyk(PayPalWebCheckoutViewModel(dispatchers))
-        // Pre-set internal fields
+        val savedStateHandle = SavedStateHandle()
+        savedStateHandle["paypal.checkout.auth_state"] = "auth"
+        val vm = spyk(PayPalWebCheckoutViewModel(savedStateHandle, dispatchers))
+        // Pre-set client
         vm.apply {
-            val authField = javaClass.getDeclaredField("authState")
-            authField.isAccessible = true
-            authField.set(this, "auth")
             val clientField = javaClass.getDeclaredField("paypalClient")
             clientField.isAccessible = true
             clientField.set(this, io.mockk.mockk<PayPalWebCheckoutClient>(relaxed = true))
@@ -190,11 +186,9 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
         method.isAccessible = true
         method.invoke(vm)
 
-        val authField = vm.javaClass.getDeclaredField("authState")
-        authField.isAccessible = true
         val clientField = vm.javaClass.getDeclaredField("paypalClient")
         clientField.isAccessible = true
-        assert(authField.get(vm) == null)
+        assert(savedStateHandle.get<String>("paypal.checkout.auth_state") == null)
         assert(clientField.get(vm) == null)
     }
 }
