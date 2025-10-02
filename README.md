@@ -2,9 +2,9 @@
 [![Coverage](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/badges/main/coverage.svg?job=test)](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/-/pipelines?scope=branches&ref=main)
 ![GitHub Release](https://img.shields.io/github/v/release/PayDock/android-mobile-sdk)
 [![Maven Central](https://img.shields.io/maven-central/v/com.paydock/mobile-sdk.svg)](https://central.sonatype.com/artifact/com.paydock/mobile-sdk)
-![Kotlin](https://img.shields.io/badge/kotlin-2.1.10-7F52FF?logo=kotlin&logoColor=white)
+![Kotlin](https://img.shields.io/badge/kotlin-2.2.20-7F52FF?logo=kotlin&logoColor=white)
 ![Android Min SDK](https://img.shields.io/badge/minSdk-24-3DDC84?logo=android&logoColor=white)
-![Compile SDK](https://img.shields.io/badge/compileSdk-35-3DDC84?logo=android&logoColor=white)
+![Compile SDK](https://img.shields.io/badge/compileSdk-36-3DDC84?logo=android&logoColor=white)
 
 # Project Description
 
