@@ -72,16 +72,13 @@ fun GooglePayItem(
             Log.d("[GooglePayWidget]", "Success: $it")
             Toast.makeText(context, "Google Pay Result returned [$it]", Toast.LENGTH_SHORT).show()
         }.onFailure {
-            // If it's a SDK exception, assume it's being handled internally
-            if (it !is GooglePayException.SDKException) {
-                val error = it.toError()
-                Log.d("[GooglePayWidget]", "Failure: ${error.displayableMessage}")
-                Toast.makeText(
-                    context,
-                    "Google Pay Result failed! [${error.displayableMessage}]",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
+            val error = it.toError()
+            Log.d("[GooglePayWidget]", "Failure: ${error.displayableMessage}")
+            Toast.makeText(
+                context,
+                "Google Pay Result failed! [${error.displayableMessage}]",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
     when {
