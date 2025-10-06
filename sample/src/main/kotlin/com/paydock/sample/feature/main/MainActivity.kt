@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,7 +75,12 @@ class MainActivity : ComponentActivity() {
                 navigationBarStyle = getSystemBarStyle()
             )
 
-            var currentAppTheme by remember { mutableStateOf(AppTheme.SYSTEM) }
+            var currentAppTheme by rememberSaveable(
+                stateSaver = Saver<AppTheme, String>(
+                    save = { it.name },
+                    restore = { AppTheme.valueOf(it) }
+                )
+            ) { mutableStateOf(AppTheme.SYSTEM) }
 
             val isActuallyDark = when (currentAppTheme) {
                 AppTheme.LIGHT -> false
