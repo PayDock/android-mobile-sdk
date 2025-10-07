@@ -676,9 +676,18 @@ platform :android do
         api_url = "#{api_endpoint}/projects/#{project_id}/releases"
 
         # Create the release using the GitLab API. https://docs.gitlab.com/api/releases/
-        response = sh("curl --silent --header 'Content-Type: application/json' --header 'PRIVATE-TOKEN: #{gitlab_token}' \
-            --data '#{release_data}' \
-            --request POST '#{api_url}'")
+        # Avoid shell quoting issues by writing JSON to a temp file and using @file syntax
+        require 'tempfile'
+        tmp = Tempfile.new(["gitlab_release_", ".json"])
+        begin
+            tmp.write(release_data)
+            tmp.flush
+            response = sh("curl --silent --header 'Content-Type: application/json' --header 'PRIVATE-TOKEN: #{gitlab_token}' \
+                --data @#{tmp.path} \
+                --request POST '#{api_url}'")
+        ensure
+            tmp.close!
+        end
 
         # Output the GitLab API response for debugging purposes.
         puts "📢 GitLab API Response: #{response}"
