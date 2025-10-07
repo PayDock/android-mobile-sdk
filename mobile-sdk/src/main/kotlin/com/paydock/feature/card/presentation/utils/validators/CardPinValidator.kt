@@ -55,13 +55,13 @@ internal object CardPinValidator {
     /**
      * Validates whether the given gift card pin meets the minimum required length.
      *
-     * This function checks if the length of the card pin is greater than or equal to the minimum allowed length.
+     * This function checks if the length of the card pin matches the expected minimum length.
      *
      * @param cardPin The gift card pin to check.
      * @return `true` if the card pin's length is sufficient, `false` otherwise.
      */
     private fun validateCardPinLength(cardPin: String): Boolean {
-        return cardPin.length >= MobileSDKConstants.CardDetailsConfig.MIN_GIFT_CARD_PIN_LENGTH
+        return cardPin.length == MobileSDKConstants.CardDetailsConfig.GIFT_CARD_PIN_LENGTH
     }
 
 }

@@ -16,7 +16,6 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.paydock.R
 import com.paydock.core.BaseUITest
-import com.paydock.designsystems.theme.SdkTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -50,10 +49,8 @@ internal class CardPinInputTest : BaseUITest() {
     @Test
     fun cardPinInput_disabledState() {
         composeTestRule.setContent {
-            SdkTheme {
-                Surface {
-                    CardPinInput(onValueChange = {}, enabled = false)
-                }
+            Surface {
+                CardPinInput(onValueChange = {}, enabled = false)
             }
         }
 

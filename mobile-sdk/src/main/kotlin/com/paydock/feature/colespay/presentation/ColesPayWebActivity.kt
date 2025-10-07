@@ -1,5 +1,6 @@
 package com.paydock.feature.colespay.presentation
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.view.ViewGroup
@@ -17,7 +18,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -34,7 +35,27 @@ import com.paydock.feature.colespay.presentation.utils.getOrderIdExtra
 import com.paydock.feature.colespay.presentation.utils.putCancellationStatusExtra
 import com.paydock.feature.colespay.presentation.utils.putOrderIdExtra
 
+/**
+ * An activity that handles the Coles Pay web payment flow.
+ *
+ * This activity launches a WebView to display the Coles Pay payment page and handles the
+ * interaction between the user and the payment provider. It manages the lifecycle of the
+ * payment process, including handling success, failure, and cancellation scenarios.
+ *
+ * Key responsibilities:
+ * - Displays the Coles Pay payment page in a WebView.
+ * - Handles navigation and user interactions within the WebView.
+ * - Communicates the payment status (success, failure, cancellation) back to the calling activity.
+ * - Manages the back press behavior to allow users to cancel the payment process.
+ *
+ * This activity is designed to be launched using an Intent and expects specific extras
+ * (`colesPayOrderId` and `colesPayClientId`) to be provided for initiating the payment.
+ * Upon completion, it returns a result (RESULT_OK or RESULT_CANCELED) along with
+ * relevant data (e.g., order ID, error status, error message) to the calling activity.
+ */
 internal class ColesPayWebActivity : ComponentActivity() {
+
+    @SuppressLint("SourceLockedOrientationActivity")
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,7 +96,7 @@ internal class ColesPayWebActivity : ComponentActivity() {
                     val colesPayOrderId = requireNotNull(intent.getOrderIdExtra())
                     val colesPayClientId = requireNotNull(intent.getClientIdExtra())
                     // Stores and remembers the ColesPay URL created from the callback URL.
-                    val colesPayUrl: String by remember(colesPayOrderId, colesPayClientId) {
+                    val colesPayUrl: String by rememberSaveable(colesPayOrderId, colesPayClientId) {
                         mutableStateOf(createColesPayUrl(colesPayOrderId, colesPayClientId))
                     }
                     ColesPayWebView(colesPayUrl = colesPayUrl, onSuccess = {
@@ -96,6 +117,7 @@ internal class ColesPayWebActivity : ComponentActivity() {
                 }
             }
         }
+        // Sets the window layout to match the parent dimensions.
         window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
     }
 
@@ -112,6 +134,6 @@ internal class ColesPayWebActivity : ComponentActivity() {
 
     private fun finish(status: CancellationStatus) {
         setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(status))
-        finish()
+        super.finish()
     }
 }

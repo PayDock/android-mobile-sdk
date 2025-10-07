@@ -21,6 +21,7 @@
     <string name="label_saved_payment_method">Saved payment method</string>
     <string name="label_link_paypal_desc">Link your PayPal account to use method next time you shop</string>
     <string name="label_select_widget">Select Widget</string>
+    <string name="label_checkout_with_click_to_pay">Checkout with Click To Pay</string>
     <!-- Style Screen Labels -->
     <string name="label_style_screen_caption">Customise the look and feel of the widgets. These styles apply to the widgets based on your phone\'s dark or light mode setting.</string>
     <string name="label_text_style">Text Style</string>
@@ -50,6 +51,9 @@
     <string name="label_afterpay_button_text">Afterpay - Button Text</string>
     <string name="label_afterpay_color_scheme">Afterpay - Colour Scheme</string>
     <string name="label_googlepay_button_type">Google Pay - Button Type</string>
+    <string name="label_paypal_button_color">PayPal - Button Colour</string>
+    <string name="label_paypal_button_label">PayPal - Button Label</string>
+    <string name="label_paypal_button_shape">PayPal - Button Shape</string>
     <string name="label_vertical_spacing">Vertical Spacing</string>
     <string name="label_horizontal_spacing">Horizontal Spacing</string>
     <string name="label_tint_colour">Tint Colour</string>

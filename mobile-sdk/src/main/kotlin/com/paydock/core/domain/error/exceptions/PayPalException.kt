@@ -77,6 +77,31 @@ sealed class PayPalException(displayableMessage: String) : SdkException(displaya
     class InitialisationWalletTokenException(displayableMessage: String) : PayPalException(displayableMessage)
 
     /**
+     * Exception thrown when there is an error retrieving the PayPal Client ID.
+     *
+     * This exception encapsulates an [ApiErrorResponse] which contains details about the specific error
+     * encountered during the retrieval process.  It extends [PayPalVaultException] to indicate that
+     * the error is related to the PayPal Vault operations.
+     *
+     * @property error The [ApiErrorResponse] object containing the details of the error. This includes
+     *                 information like error codes, descriptions, and potentially more context.
+     * @constructor Creates a new GetPayPalClientIdException with the provided [ApiErrorResponse].
+     *              The exception message is derived from the `displayableMessage` property of the
+     *              [ApiErrorResponse].
+     */
+    data class GetPayPalClientIdException(
+        val error: ApiErrorResponse
+    ) : PayPalException(error.displayableMessage)
+
+    /**
+     * Exception thrown when a required configuration is missing or invalid for the PayPal flow.
+     *
+     * This is typically used for SDK-side validation issues (e.g., missing clientId/accessToken/gatewayId),
+     * rather than API errors.
+     */
+    class ConfigurationException(displayableMessage: String) : PayPalException(displayableMessage)
+
+    /**
      * Exception thrown when there is an unknown error related to PayPal.
      *
      * @param displayableMessage A human-readable message describing the error.

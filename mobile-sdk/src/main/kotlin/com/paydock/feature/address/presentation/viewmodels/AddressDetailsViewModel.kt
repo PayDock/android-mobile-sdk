@@ -1,13 +1,16 @@
 package com.paydock.feature.address.presentation.viewmodels
 
+import androidx.lifecycle.viewModelScope
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.presentation.viewmodels.BaseViewModel
 import com.paydock.feature.address.domain.model.integration.BillingAddress
-import com.paydock.feature.address.presentation.state.AddressDetailsInputState
+import com.paydock.feature.address.presentation.state.AddressDetailsFormState
+import com.paydock.feature.address.presentation.state.AddressDetailsState
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 
 /**
  * ViewModel responsible for managing the address details input and processing.
@@ -18,57 +21,102 @@ internal class AddressDetailsViewModel(
     dispatchers: DispatchersProvider
 ) : BaseViewModel(dispatchers) {
 
-    // Mutable state flow to hold the UI state
-    private val _stateFlow: MutableStateFlow<AddressDetailsInputState> =
-        MutableStateFlow(AddressDetailsInputState())
+    private val _formState = MutableStateFlow(AddressDetailsFormState())
 
-    // Expose a read-only state flow for observing the UI state changes
-    val stateFlow: StateFlow<AddressDetailsInputState> = _stateFlow.asStateFlow()
+    // Flow to determine if the current form data is valid
+    private val _isDataValid = combine(
+        _formState
+    ) { (currentFormState) ->
+        // Basic validation: ensure required fields are not blank
+        currentFormState.firstName.isNotBlank() &&
+            currentFormState.lastName.isNotBlank() &&
+            currentFormState.addressLine1.isNotBlank() &&
+            currentFormState.city.isNotBlank() &&
+            currentFormState.state.isNotBlank() &&
+            currentFormState.postalCode.isNotBlank() &&
+            currentFormState.country.isNotBlank()
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
 
-    /**
-     * Update the ViewModel's state with the provided default address.
-     *
-     * @param address The [BillingAddress] representing the default address.
-     */
-    fun updateDefaultAddress(address: BillingAddress) {
-        updateState { state ->
-            state.copy(
-                addressLine1 = address.addressLine1 ?: "",
-                addressLine2 = address.addressLine2 ?: "",
-                city = address.city ?: "",
-                state = address.state ?: "",
-                postalCode = address.postalCode ?: "",
-                country = address.country ?: "",
-            )
-        }
+    // Combined UI State to be exposed to the Composable
+    val stateFlow: StateFlow<AddressDetailsState> =
+        combine(_formState, _isDataValid) { form, isValid ->
+            AddressDetailsState(formState = form, isDataValid = isValid)
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = AddressDetailsState()
+        )
+
+    // --- Functions to update individual fields ---
+
+    fun updateFirstName(firstName: String) {
+        _formState.value = _formState.value.copy(firstName = firstName)
+    }
+
+    fun updateLastName(lastName: String) {
+        _formState.value = _formState.value.copy(lastName = lastName)
+    }
+
+    fun updateAddressLine1(addressLine1: String) {
+        _formState.value = _formState.value.copy(addressLine1 = addressLine1)
+    }
+
+    fun updateAddressLine2(addressLine2: String) {
+        _formState.value = _formState.value.copy(addressLine2 = addressLine2)
+    }
+
+    fun updateCity(city: String) {
+        _formState.value = _formState.value.copy(city = city)
+    }
+
+    fun updateState(stateValue: String) { // Renamed from 'state' to avoid conflict
+        _formState.value = _formState.value.copy(state = stateValue)
+    }
+
+    fun updatePostalCode(postalCode: String) {
+        _formState.value = _formState.value.copy(postalCode = postalCode)
+    }
+
+    fun updateCountry(country: String?) {
+        _formState.value = _formState.value.copy(country = country ?: "")
     }
 
     /**
-     * Update the ViewModel's state with the provided manual address details.
-     *
-     * @param addressState The [AddressDetailsInputState] representing the manual address details.
+     * Populates the form fields from a BillingAddress object.
+     * This is useful for pre-filling the form with an existing address or a search result.
      */
-    fun updateManualAddress(addressState: AddressDetailsInputState) {
-        updateState { state ->
-            state.copy(
-                addressLine1 = addressState.addressLine1,
-                addressLine2 = addressState.addressLine2,
-                city = addressState.city,
-                state = addressState.state,
-                postalCode = addressState.postalCode,
-                country = addressState.country,
-            )
-        }
+    fun populateFormWithBillingAddress(address: BillingAddress) {
+        val currentForm = _formState.value
+
+        _formState.value = currentForm.copy(
+            firstName = address.firstName?.takeIf { it.isNotBlank() } ?: currentForm.firstName,
+            lastName = address.lastName?.takeIf { it.isNotBlank() } ?: currentForm.lastName,
+
+            addressLine1 = address.addressLine1 ?: currentForm.addressLine1,
+            addressLine2 = address.addressLine2 ?: currentForm.addressLine2,
+            city = address.city ?: currentForm.city,
+            state = address.state ?: currentForm.state,
+            postalCode = address.postalCode ?: currentForm.postalCode,
+            country = address.country ?: currentForm.country
+        )
     }
 
     /**
-     * Update the ViewModel's state using the provided update function.
-     *
-     * @param update The update function to modify the current state.
+     * Clears all form fields.
      */
-    private fun updateState(update: (AddressDetailsInputState) -> AddressDetailsInputState) {
-        _stateFlow.update { state ->
-            update(state)
-        }
+    fun clearForm() {
+        _formState.value = AddressDetailsFormState()
+    }
+
+    /**
+     * Returns the current form state as a BillingAddress object.
+     * This should ideally only be called when isDataValid is true.
+     */
+    fun getBillingAddress(): BillingAddress {
+        return _formState.value.toBillingAddress()
     }
 }

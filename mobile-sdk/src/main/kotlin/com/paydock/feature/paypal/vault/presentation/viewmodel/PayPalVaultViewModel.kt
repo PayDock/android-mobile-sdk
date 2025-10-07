@@ -1,7 +1,10 @@
 package com.paydock.feature.paypal.vault.presentation.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import com.paydock.core.data.util.DispatchersProvider
+import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.domain.error.exceptions.SdkException
+import com.paydock.core.domain.error.extensions.mapApiException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
 import com.paydock.feature.paypal.core.data.dto.CreateSetupTokenRequest
@@ -19,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * ViewModel responsible for handling the PayPal Vaulting process.
  *
  * @param config Configuration data for PayPal vaulting.
+ * @param savedStateHandle Handle for persisting state across process death.
  * @param createSetupTokenUseCase Use case to create a PayPal setup token.
  * @param getPayPalClientIdUseCase Use case to retrieve the PayPal client ID.
  * @param createPayPalVaultPaymentTokenUseCase Use case to create a payment token for the PayPal vault.
@@ -26,6 +30,7 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 internal class PayPalVaultViewModel(
     private val config: PayPalVaultConfig,
+    private val savedStateHandle: SavedStateHandle,
     private val createSetupTokenUseCase: CreateSetupTokenUseCase,
     private val getPayPalClientIdUseCase: GetPayPalClientIdUseCase,
     private val createPayPalVaultPaymentTokenUseCase: CreatePayPalVaultPaymentTokenUseCase,
@@ -39,8 +44,10 @@ internal class PayPalVaultViewModel(
     // Public state flow for observing the current UI state.
     val stateFlow: StateFlow<PayPalVaultUIState> = _stateFlow.asStateFlow()
 
-    // Nullable setup token, which is reset as needed during state transitions.
-    private var setupToken: String? = null
+    // Setup token persisted in SavedStateHandle to survive process death with "Don't keep activities"
+    private var setupToken: String?
+        get() = savedStateHandle[KEY_SETUP_TOKEN]
+        set(value) { savedStateHandle[KEY_SETUP_TOKEN] = value }
 
     /**
      * Resets the setup token and sets the state to [PayPalVaultUIState.Idle].
@@ -102,8 +109,9 @@ internal class PayPalVaultViewModel(
                     )
                 }
                 .onFailure { error ->
-                    error.safeCastAs<SdkException>()
-                        ?.let { updateState(PayPalVaultUIState.Error(it)) }
+                    val mapped = error.safeCastAs<SdkException>()
+                        ?: error.mapApiException(PayPalVaultException.GetPayPalClientIdException::class)
+                    updateState(PayPalVaultUIState.Error(mapped))
                 }
         }
     }
@@ -131,5 +139,9 @@ internal class PayPalVaultViewModel(
                     }
             }
         }
+    }
+
+    private companion object {
+        const val KEY_SETUP_TOKEN: String = "paypal.vault.setup_token"
     }
 }

@@ -79,4 +79,64 @@ internal class CountryAutoCompleteViewModelTest : BaseKoinUnitTest() {
         assertTrue(results.contains(mockCountry))
     }
 
+    @Test
+    fun `exact match is first and case-insensitive`() = runTest {
+        val mockCountry = MobileSDKTestConstants.Address.MOCK_COUNTRY
+        val query = MobileSDKTestConstants.Address.MOCK_COUNTRY.lowercase()
+        val results = mutableListOf<String>()
+
+        viewModel.searchItems(query).collect { countries ->
+            results.addAll(countries)
+        }
+
+        assertTrue(results.isNotEmpty())
+        assertEquals(mockCountry, results.first())
+    }
+
+    @Test
+    fun `startsWith matches are prioritised over contains`() = runTest {
+        // Query that has known countries starting with it (e.g., "South" -> South Africa, South Sudan, etc.)
+        val query = "South"
+        val results = mutableListOf<String>()
+
+        viewModel.searchItems(query).collect { countries ->
+            results.addAll(countries)
+        }
+
+        assertTrue(results.isNotEmpty())
+        // The first item should start with the query (priority for startsWith)
+        assertTrue(results.first().startsWith(query, ignoreCase = true))
+    }
+
+    @Test
+    fun `contains only queries still return items and respect limit`() = runTest {
+        // "land" should match many countries by containment (Finland, Iceland, Thailand, etc.)
+        val query = "land"
+        val results = mutableListOf<String>()
+
+        viewModel.searchItems(query).collect { countries ->
+            results.addAll(countries)
+        }
+
+        assertTrue(results.isNotEmpty())
+        assertTrue(results.size <= MobileSDKConstants.AddressConfig.MAX_SEARCH_RESULTS)
+        // All returned items should contain the query (case-insensitive)
+        assertTrue(results.all { it.contains(query, ignoreCase = true) })
+    }
+
+    @Test
+    fun `blank query returns first MAX results in sorted order`() = runTest {
+        val results = mutableListOf<String>()
+
+        viewModel.searchItems("").collect { countries ->
+            results.addAll(countries)
+        }
+
+        assertTrue(results.isNotEmpty())
+        assertEquals(MobileSDKConstants.AddressConfig.MAX_SEARCH_RESULTS, results.size)
+        // Should be in ascending order since source list is sorted before truncation
+        val sorted = results.sorted()
+        assertEquals(sorted, results)
+    }
+
 }

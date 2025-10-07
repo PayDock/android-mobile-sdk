@@ -62,7 +62,7 @@ fun CheckoutStandaloneScreen(
         open3DSBottomSheet = uiState.threeDSToken != null
     }
 
-    if (!uiState.error.isNullOrBlank()) {
+    uiState.error?.let { error ->
         ErrorDialog(
             onDismissRequest = { viewModel.resetResultState() },
             onConfirmation = {

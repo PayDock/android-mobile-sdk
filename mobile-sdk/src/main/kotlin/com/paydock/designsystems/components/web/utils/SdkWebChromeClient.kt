@@ -130,10 +130,33 @@ internal class SdkWebChromeClient(
         }
 
         // Set WebViewClient to handle page load and error events.
-        webView.webViewClient = SdkWebViewClient(onPageFinished = {
-            webView.visibility = View.VISIBLE
-            onPageFinished(webView)
-        }, onWebViewError = onWebViewError)
+        webView.webViewClient = object : android.webkit.WebViewClient() {
+            override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
+                super.onPageStarted(view, url, favicon)
+            }
+
+            override fun onPageFinished(view: WebView, url: String?) {
+                super.onPageFinished(view, url)
+                webView.visibility = View.VISIBLE
+                onPageFinished(webView)
+            }
+
+            override fun shouldOverrideUrlLoading(view: WebView, request: android.webkit.WebResourceRequest?): Boolean {
+                return false
+            }
+
+            override fun onReceivedError(
+                view: WebView,
+                request: android.webkit.WebResourceRequest?,
+                error: android.webkit.WebResourceError?
+            ) {
+                if (error != null) {
+                    val errorCode = error.errorCode
+                    val errorMessage = SdkWebViewClient.mapWebViewErrorMessage(errorCode)
+                    onWebViewError(errorCode, errorMessage)
+                }
+            }
+        }
 
         // Set WebChromeClient to manage window operations.
         webView.webChromeClient = object : WebChromeClient() {

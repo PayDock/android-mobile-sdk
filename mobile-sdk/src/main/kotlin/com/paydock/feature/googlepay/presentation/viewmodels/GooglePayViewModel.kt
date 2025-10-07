@@ -1,5 +1,6 @@
 package com.paydock.feature.googlepay.presentation.viewmodels
 
+import android.util.Log
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.common.api.Status
@@ -330,21 +331,67 @@ internal class GooglePayViewModel(
     }
 
     /**
-     * Handles errors resulting from the Google Pay result status code.
+     * Handles errors resulting from the Google Pay SDK result status code.
      *
      * @param statusCode The status code from the Google Pay result.
      */
     fun handleGooglePayResultErrors(statusCode: Int) {
-        when (statusCode) {
-            CommonStatusCodes.CANCELED -> handleCancellationResult()
-            CommonStatusCodes.DEVELOPER_ERROR -> handleErrorResult(MobileSDKConstants.GooglePayConfig.Errors.DEV_ERROR)
+        val statusCodeString = CommonStatusCodes.getStatusCodeString(statusCode)
+        val exception: GooglePayException = when (statusCode) {
+            CommonStatusCodes.SUCCESS, CommonStatusCodes.SUCCESS_CACHE -> {
+                Log.w(
+                    "GooglePayViewModel",
+                    "Success status code received in error handler: $statusCode"
+                )
+                GooglePayException.UnknownException( // Or a more specific "UnexpectedSuccessInErrorPathException"
+                    MobileSDKConstants.GooglePayConfig.Errors.UNEXPECTED_ERROR
+                )
+            }
+
+            CommonStatusCodes.CANCELED -> GooglePayException.SDKException.CancelledBySdk(
+                statusCodeString = statusCodeString
+            )
+
+            CommonStatusCodes.NETWORK_ERROR -> GooglePayException.SDKException.NetworkError(
+                statusCodeString = statusCodeString
+            )
+
+            CommonStatusCodes.TIMEOUT -> GooglePayException.SDKException.Timeout(
+                statusCodeString = statusCodeString
+            )
+
+            CommonStatusCodes.DEVELOPER_ERROR -> GooglePayException.SDKException.DeveloperError(
+                statusCodeString = statusCodeString
+            )
+
+            CommonStatusCodes.INTERNAL_ERROR,
+            CommonStatusCodes.ERROR,
+            CommonStatusCodes.INTERRUPTED -> GooglePayException.SDKException.ServiceError(
+                statusCodeString = statusCodeString
+            )
+
+            CommonStatusCodes.SERVICE_VERSION_UPDATE_REQUIRED,
+            CommonStatusCodes.SERVICE_DISABLED,
+            CommonStatusCodes.SIGN_IN_REQUIRED,
+            CommonStatusCodes.INVALID_ACCOUNT,
+            CommonStatusCodes.API_NOT_CONNECTED -> GooglePayException.SDKException.PlayServicesError(
+                statusCodeString = statusCodeString
+            )
+
+            CommonStatusCodes.RESOLUTION_REQUIRED -> {
+                GooglePayException.SDKException.ResolutionFailed(statusCodeString = statusCodeString)
+            }
+
             else -> {
-                val statusCodeMessage = CommonStatusCodes.getStatusCodeString(statusCode)
-                val errorMessage =
-                    "[$statusCodeMessage] ${MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_ERROR}"
-                handleErrorResult(errorMessage)
+                val defaultMessage =
+                    "[${CommonStatusCodes.getStatusCodeString(statusCode)}] ${MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_ERROR}"
+                GooglePayException.SDKException.UnknownSdkException(
+                    defaultMessage,
+                    statusCodeString = statusCodeString
+                )
             }
         }
+        updateUiState(GooglePayUIState.Error(exception))
     }
 
     /**

@@ -15,11 +15,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.takeOrElse
 import com.paydock.R
+import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearance
@@ -73,6 +75,11 @@ fun GiftCardWidget(
     }
     val isLoading by remember(uiState) { derivedStateOf { loadingDelegate == null && uiState is GiftCardUIState.Loading } }
 
+    val configuration = LocalConfiguration.current
+    val fontScale = configuration.fontScale
+    // Define threshold for large font scale
+    val largeFontScaleThreshold = MobileSDKConstants.CardDetailsConfig.FONT_SCALE_THRESHOLD
+
     // Focus handlers for input fields
     val focusCardNumber = FocusRequester()
     val focusCardPin = FocusRequester()
@@ -89,37 +96,29 @@ fun GiftCardWidget(
         verticalArrangement = Arrangement.spacedBy(appearance.verticalSpacing, Alignment.Top),
         horizontalAlignment = Alignment.Start
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(
-                appearance.horizontalSpacing,
-                Alignment.CenterHorizontally
-            ),
-            verticalAlignment = Alignment.Top
-        ) {
-            // Card number input field
-            GiftCardNumberInput(
-                modifier = Modifier
-                    .weight(0.7f)
-                    .focusRequester(focusCardNumber)
-                    .testTag("cardNumberInput"),
+        if (fontScale >= largeFontScaleThreshold) {
+            CardNumberPinColumn(
+                verticalSpacing = appearance.verticalSpacing,
                 appearance = appearance.textField,
-                value = inputState.cardNumber,
                 enabled = uiState !is GiftCardUIState.Loading && enabled,
-                onValueChange = { viewModel.updateCardNumber(it) },
-                nextFocus = focusCardPin
+                cardNumber = inputState.cardNumber,
+                cardPin = inputState.pin,
+                focusCardNumber = focusCardNumber,
+                focusCardPin = focusCardPin,
+                onCardNumberChange = { viewModel.updateCardNumber(it) },
+                onPinChange = { viewModel.updateCardPin(it) }
             )
-
-            // PIN input field
-            CardPinInput(
-                modifier = Modifier
-                    .weight(0.3f)
-                    .focusRequester(focusCardPin)
-                    .testTag("cardPinInput"),
+        } else {
+            CardNumberPinRow(
+                horizontalSpacing = appearance.horizontalSpacing,
                 appearance = appearance.textField,
-                value = inputState.pin,
                 enabled = uiState !is GiftCardUIState.Loading && enabled,
-                onValueChange = { viewModel.updateCardPin(it) }
+                cardNumber = inputState.cardNumber,
+                cardPin = inputState.pin,
+                focusCardNumber = focusCardNumber,
+                focusCardPin = focusCardPin,
+                onCardNumberChange = { viewModel.updateCardNumber(it) },
+                onPinChange = { viewModel.updateCardPin(it) }
             )
         }
 
@@ -134,6 +133,129 @@ fun GiftCardWidget(
         ) {
             viewModel.tokeniseCard()
         }
+    }
+}
+
+/**
+ * Displays the card number and PIN input fields in a horizontal row.
+ *
+ * This composable is used when there is enough horizontal space to display both fields side-by-side.
+ * It leverages [GiftCardNumberInput] and [CardPinInput] for the respective fields.
+ *
+ * @param horizontalSpacing The spacing between the card number and PIN input fields.
+ * @param appearance The visual appearance configuration for the text fields.
+ * @param enabled Whether the input fields are enabled for user interaction.
+ * @param cardNumber The current value of the card number input.
+ * @param cardPin The current value of the PIN input.
+ * @param focusCardNumber The [FocusRequester] for the card number input field.
+ * @param focusCardPin The [FocusRequester] for the PIN input field.
+ * @param onCardNumberChange Callback invoked when the card number input value changes.
+ * @param onPinChange Callback invoked when the PIN input value changes.
+ */
+@Composable
+fun CardNumberPinRow(
+    horizontalSpacing: Dp,
+    appearance: TextFieldAppearance,
+    enabled: Boolean,
+    cardNumber: String,
+    cardPin: String,
+    focusCardNumber: FocusRequester,
+    focusCardPin: FocusRequester,
+    onCardNumberChange: (String) -> Unit,
+    onPinChange: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(
+            horizontalSpacing,
+            Alignment.CenterHorizontally
+        ),
+        verticalAlignment = Alignment.Top
+    ) {
+        // Card number input field
+        GiftCardNumberInput(
+            modifier = Modifier
+                .weight(0.7f)
+                .focusRequester(focusCardNumber)
+                .testTag("cardNumberInput"),
+            appearance = appearance,
+            value = cardNumber,
+            enabled = enabled,
+            onValueChange = onCardNumberChange,
+            nextFocus = focusCardPin
+        )
+
+        // PIN input field
+        CardPinInput(
+            modifier = Modifier
+                .weight(0.3f)
+                .focusRequester(focusCardPin)
+                .testTag("cardPinInput"),
+            appearance = appearance,
+            value = cardPin,
+            enabled = enabled,
+            onValueChange = onPinChange
+        )
+    }
+}
+
+/**
+ * Displays the card number and PIN input fields in a vertical column.
+ *
+ * This composable is used when there isn't enough horizontal space to display both fields
+ * side-by-side, such as on smaller screens or when the font scale is large.
+ * It leverages [GiftCardNumberInput] and [CardPinInput] for the respective fields,
+ * arranging them one above the other.
+ *
+ * @param verticalSpacing The vertical spacing between the card number and PIN input fields.
+ * @param appearance The visual appearance configuration for the text fields.
+ * @param enabled Whether the input fields are enabled for user interaction.
+ * @param cardNumber The current value of the card number input.
+ * @param cardPin The current value of the PIN input.
+ * @param focusCardNumber The [FocusRequester] for the card number input field.
+ * @param focusCardPin The [FocusRequester] for the PIN input field.
+ * @param onCardNumberChange Callback invoked when the card number input value changes.
+ * @param onPinChange Callback invoked when the PIN input value changes.
+ */
+@Composable
+fun CardNumberPinColumn(
+    verticalSpacing: Dp = WidgetDefaults.Spacing,
+    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
+    enabled: Boolean,
+    cardNumber: String,
+    cardPin: String,
+    focusCardNumber: FocusRequester = FocusRequester(),
+    focusCardPin: FocusRequester = FocusRequester(),
+    onCardNumberChange: (String) -> Unit = {},
+    onPinChange: (String) -> Unit = {},
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(verticalSpacing),
+        horizontalAlignment = Alignment.Start
+    ) {
+        // Card number input field
+        GiftCardNumberInput(
+            modifier = Modifier
+                .focusRequester(focusCardNumber)
+                .testTag("cardNumberInput"),
+            appearance = appearance,
+            value = cardNumber,
+            enabled = enabled,
+            onValueChange = onCardNumberChange,
+            nextFocus = focusCardPin
+        )
+
+        // PIN input field
+        CardPinInput(
+            modifier = Modifier
+                .focusRequester(focusCardPin)
+                .testTag("cardPinInput"),
+            appearance = appearance,
+            value = cardPin,
+            enabled = enabled,
+            onValueChange = onPinChange
+        )
     }
 }
 

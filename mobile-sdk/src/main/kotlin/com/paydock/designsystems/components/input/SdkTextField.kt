@@ -20,21 +20,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.autofill.AutofillType
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.paydock.R
-import com.paydock.core.presentation.extensions.autofill
 import com.paydock.core.presentation.extensions.defaultErrorSemantics
 import com.paydock.core.presentation.ui.previews.SdkFontScalePreviews
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
@@ -60,7 +60,6 @@ import com.paydock.designsystems.theme.Success
  * @param onValueChange Callback that is triggered when the text value changes. Provides the new text value.
  * @param placeholder The placeholder text to display when the text field is empty.
  */
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun SdkTextField(
     modifier: Modifier = Modifier,
@@ -72,7 +71,7 @@ internal fun SdkTextField(
     enabled: Boolean = true,
     showValidIcon: Boolean = true,
     error: String? = null,
-    autofillType: AutofillType? = null,
+    autofillType: ContentType? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
@@ -94,7 +93,9 @@ internal fun SdkTextField(
                     isFocused = it.isFocused
                 }
                 .testTag("sdkInput")
-                .autofillModifier(autofillType, onValueChange)
+                .semantics {
+                    autofillType?.let { contentType = it }
+                }
                 .defaultErrorSemantics(isError, error ?: stringResource(R.string.error_input_default)),
             enabled = enabled,
             textStyle = appearance.style,
@@ -130,6 +131,7 @@ internal fun SdkTextField(
             },
             leadingIcon = leadingIcon,
             isError = isError,
+            singleLine = appearance.singleLine,
             colors = appearance.colors,
             shape = appearance.shape,
         )
@@ -460,27 +462,16 @@ internal fun TextFieldErrorLabelPreview() {
  * modifier without applying any autofill behavior.
  *
  * @param autofillType The type of autofill to enable for the composable element. If null, no autofill is enabled.
- *                     See [AutofillType] for available options.
+ *                     See [ContentType] for available options.
  * @param onFill A callback that is invoked when autofill is triggered and a value is filled.
  *               It receives the filled string as a parameter.
  * @return The modified [Modifier] with autofill behavior if [autofillType] is not null, otherwise the original [Modifier].
  */
-@OptIn(ExperimentalComposeUiApi::class)
-private fun Modifier.autofillModifier(autofillType: AutofillType?, onFill: (String) -> Unit): Modifier {
-    return if (autofillType != null) {
-        this.autofill(
-            autofillTypes = listOf(autofillType),
-            onFill = onFill,
-        )
-    } else {
-        this
-    }
-}
+private fun Modifier.autofillModifier(autofillType: ContentType?, onFill: (String) -> Unit): Modifier = this
 
 /**
  * Composable function to preview an empty state of the SdkTextField.
  */
-@OptIn(ExperimentalComposeUiApi::class)
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkTextFieldEmptyState() {
@@ -499,7 +490,6 @@ internal fun PreviewSdkTextFieldEmptyState() {
 /**
  * Composable function to preview the SdkTextField with input.
  */
-@OptIn(ExperimentalComposeUiApi::class)
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkTextFieldWithInput() {
@@ -517,7 +507,6 @@ internal fun PreviewSdkTextFieldWithInput() {
 /**
  * Composable function to preview the SdkTextField with an error state.
  */
-@OptIn(ExperimentalComposeUiApi::class)
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewSdkTextFieldError() {

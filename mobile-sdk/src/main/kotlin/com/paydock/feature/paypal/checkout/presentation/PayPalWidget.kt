@@ -7,14 +7,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,10 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.viewinterop.AndroidView
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.PayPalException
-import com.paydock.core.presentation.extensions.alpha40
 import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
@@ -35,37 +29,57 @@ import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
-import com.paydock.designsystems.components.loader.SdkButtonLoader
-import com.paydock.designsystems.theme.PayPal
+import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
-import com.paydock.feature.paypal.checkout.presentation.components.PayPalButton
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
 import com.paydock.feature.paypal.checkout.presentation.utils.CancellationStatus
 import com.paydock.feature.paypal.checkout.presentation.utils.getCancellationStatusExtra
-import com.paydock.feature.paypal.checkout.presentation.utils.getDecodedUrlExtra
-import com.paydock.feature.paypal.checkout.presentation.utils.putCallbackUrlExtra
-import com.paydock.feature.paypal.checkout.presentation.viewmodels.PayPalViewModel
+import com.paydock.feature.paypal.checkout.presentation.utils.getPayerIdExtra
+import com.paydock.feature.paypal.checkout.presentation.utils.getPaymentMethodIdExtra
+import com.paydock.feature.paypal.checkout.presentation.utils.putClientIdExtra
+import com.paydock.feature.paypal.checkout.presentation.utils.putFundingSourceExtra
+import com.paydock.feature.paypal.checkout.presentation.utils.putOrderIdExtra
+import com.paydock.feature.paypal.checkout.presentation.viewmodel.PayPalViewModel
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
+import com.paypal.android.paymentbuttons.PayPalButton
+import com.paypal.android.paymentbuttons.PayPalButtonColor
+import com.paypal.android.paymentbuttons.PayPalButtonLabel
+import com.paypal.android.paymentbuttons.PaymentButtonShape
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 /**
- * A Composable for handling PayPal payments and related interactions.
+ * A Composable that renders the PayPal checkout button and orchestrates the PayPal payment flow.
+ *
+ * The button is provided by the PayPal Android SDK [PayPalButton]
+ * and is hosted via `AndroidView`. All business logic (tokenization, URL parsing, capture/decline,
+ * and error handling) remains in the existing `PayPalViewModel`.
+ *
+ * Visuals can be customized through [appearance], which maps directly to PayPal SDK styling:
+ * - [PayPalWidgetAppearance.buttonColour] to control the button color
+ * - [PayPalWidgetAppearance.buttonLabel] to control the button label/wordmark treatment
+ * - [PayPalWidgetAppearance.buttonShape] to control the button shape (e.g. rounded, pill)
+ * - [PayPalWidgetAppearance.loader] to control the overlay loader shown during `Loading` when
+ *   [loadingDelegate] is not provided
+ *
+ * While processing (`Loading`) or when launching the browser intent (`LaunchIntent`), the button is
+ * automatically disabled. When [loadingDelegate] is null, an overlay loader is shown; otherwise the
+ * caller owns loader presentation via the delegate callbacks.
  *
  * @param modifier Modifier for customizing the appearance and behavior of the Composable.
- * @param enabled Controls the enabled state of this Widget. When false,
- * this component will not respond to user input, and it will appear visually disabled.
- * @param config Configuration for the PayPal Widget.
- * @param appearance Configuration for the visual appearance of the PayPal Widget.
- * @param tokenRequest A callback to obtain the wallet token asynchronously.
- * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
- * @param completion A callback to handle the Wallet Charge result.
+ * @param enabled When false, disables the PayPal button and blocks user interaction.
+ * @param config Widget configuration for initiating the PayPal flow.
+ * @param appearance Appearance configuration mapping to PayPal SDK button styling and loader.
+ * @param tokenRequest A callback to asynchronously provide a wallet token to the flow.
+ * @param loadingDelegate Optional delegate to externally control loading lifecycle.
+ * @param completion Callback invoked with the final [ChargeResponse] or an error.
  */
 @Composable
 fun PayPalWidget(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    config: PayPalWidgetConfig = PayPalWidgetConfig(),
+    config: PayPalWidgetConfig,
     appearance: PayPalWidgetAppearance = PayPalAppearanceDefaults.appearance(),
     tokenRequest: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
@@ -73,7 +87,7 @@ fun PayPalWidget(
 ) {
     val context = LocalContext.current
     // Obtain instances of view models
-    val viewModel: PayPalViewModel = koinViewModel()
+    val viewModel: PayPalViewModel = koinViewModel(parameters = { parametersOf(config) })
 
     // Collect states for PayPal view models
     val uiState by viewModel.uiState.collectAsState()
@@ -97,39 +111,47 @@ fun PayPalWidget(
     }
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        if (loadingDelegate == null && uiState is PayPalCheckoutUIState.Loading) {
-            Button(
-                onClick = {},
-                modifier = Modifier
-                    .testTag("loadingPayPalButton")
-                    .fillMaxWidth()
-                    .height(ButtonAppearanceDefaults.ButtonHeight),
-                enabled = true,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = PayPal,
-                    disabledContainerColor = PayPal.alpha40
-                ),
-                shape = MaterialTheme.shapes.small
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(
-                        ButtonAppearanceDefaults.ButtonSpacing,
-                        Alignment.CenterHorizontally
-                    ),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    SdkButtonLoader(appearance = appearance.loader)
+        AndroidView(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ButtonAppearanceDefaults.ButtonHeight),
+            factory = { context ->
+                PayPalButton(context).apply {
+                    color = appearance.buttonColour
+                    label = appearance.buttonLabel
+                    shape = appearance.buttonShape
+                    isEnabled = enabled
+                }
+            },
+            update = { view ->
+                // Compute current enabled state (external flag + internal UI state)
+                val isButtonEnabled =
+                    enabled && uiState !is PayPalCheckoutUIState.Loading && uiState !is PayPalCheckoutUIState.LaunchIntent
+
+                // Apply enable/disable and interactivity flags
+                view.isEnabled = isButtonEnabled
+                view.isClickable = isButtonEnabled
+                view.isFocusable = isButtonEnabled
+                view.isLongClickable = isButtonEnabled
+
+                // Apply style updates
+                view.color = appearance.buttonColour
+                view.label = appearance.buttonLabel
+                view.shape = appearance.buttonShape
+                view.requestLayout()
+
+                // Attach/detach click listener based on the current enabled state
+                if (isButtonEnabled) {
+                    view.setOnClickListener {
+                        viewModel.handlePayPalButtonClick(config, tokenRequest)
+                    }
+                } else {
+                    view.setOnClickListener(null)
                 }
             }
-        } else {
-            // Button to initiate PayPal transaction
-            PayPalButton(
-                shape = MaterialTheme.shapes.small,
-                loaderAppearance = appearance.loader,
-                isEnabled = uiState !is PayPalCheckoutUIState.Loading && enabled,
-                // Loading is handled by a mock loader button
-                onClick = { viewModel.handlePayPalButtonClick(config, tokenRequest) }
-            )
+        )
+        if (uiState is PayPalCheckoutUIState.Loading && loadingDelegate == null) {
+            SdkLoader(appearance = appearance.loader)
         }
     }
 }
@@ -137,13 +159,21 @@ fun PayPalWidget(
 /**
  * Defines the appearance configuration for the PayPal Widget.
  *
- * This class holds properties that customize the visual aspects of the PayPal Widget,
- * specifically focusing on the components displayed within it, such as the loader.
+ * This appearance maps directly to PayPal SDK button properties and the SDK’s loader used by this
+ * widget when no [WidgetLoadingDelegate] is supplied.
  *
- * @property loader The appearance configuration for the loader component displayed within the PayPal Widget.
+ * @property loader Appearance for the overlay loader shown while `Loading` when no delegate is used.
+ * @property buttonColour The PayPal button color (e.g., [PayPalButtonColor.GOLD], [PayPalButtonColor.BLUE], [PayPalButtonColor.WHITE], [PayPalButtonColor.BLACK], [PayPalButtonColor.SILVER]).
+ * @property buttonLabel The PayPal button label style (e.g., [PayPalButtonLabel.PAYPAL], [PayPalButtonLabel.CHECKOUT], [PayPalButtonLabel.BUY_NOW], [PayPalButtonLabel.PAY]).
+ * @property buttonShape The PayPal button shape (e.g., [PaymentButtonShape.ROUNDED], [PaymentButtonShape.PILL]).
  */
 @Immutable
-class PayPalWidgetAppearance(val loader: LoaderAppearance) {
+class PayPalWidgetAppearance(
+    val loader: LoaderAppearance,
+    val buttonColour: PayPalButtonColor,
+    val buttonLabel: PayPalButtonLabel,
+    val buttonShape: PaymentButtonShape,
+) {
     /**
      * Creates a copy of the current [PayPalWidgetAppearance], allowing for modification of
      * specific properties while retaining others.
@@ -154,9 +184,17 @@ class PayPalWidgetAppearance(val loader: LoaderAppearance) {
      * @return A new [PayPalWidgetAppearance] instance with the specified modifications.
      */
     fun copy(
-        loader: LoaderAppearance = this.loader
+        loader: LoaderAppearance = this.loader,
+        paypalColor: PayPalButtonColor = this.buttonColour,
+        paypalLabel: PayPalButtonLabel = this.buttonLabel,
+        buttonShape: PaymentButtonShape = this.buttonShape,
     ): PayPalWidgetAppearance =
-        PayPalWidgetAppearance(loader = loader.copy())
+        PayPalWidgetAppearance(
+            loader = loader.copy(),
+            buttonColour = paypalColor,
+            buttonLabel = paypalLabel,
+            buttonShape = buttonShape,
+        )
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -164,18 +202,30 @@ class PayPalWidgetAppearance(val loader: LoaderAppearance) {
 
         other as PayPalWidgetAppearance
 
-        return loader == other.loader
+        if (loader != other.loader) return false
+        if (buttonColour != other.buttonColour) return false
+        if (buttonLabel != other.buttonLabel) return false
+        if (buttonShape != other.buttonShape) return false
+        return true
     }
 
     override fun hashCode(): Int {
-        return loader.hashCode()
+        var result = loader.hashCode()
+        result = 31 * result + buttonColour.hashCode()
+        result = 31 * result + buttonLabel.hashCode()
+        result = 31 * result + buttonShape.hashCode()
+        return result
     }
 }
 
 /**
- * Default values for the appearance of the PayPal Widget.
- * This object provides a default [PayPalWidgetAppearance] configuration, specifically setting
- * the appearance of the loader shown during the PayPal checkout process.
+ * Default appearance values for the PayPal Widget.
+ *
+ * Provides a default [PayPalWidgetAppearance] configured as follows:
+ * - Loader: default loader with `ButtonLoaderWidth` and black stroke color
+ * - Button color: [PayPalButtonColor.GOLD]
+ * - Button label: [PayPalButtonLabel.PAYPAL] (wordmark-only)
+ * - Button shape: [PaymentButtonShape.ROUNDED]
  */
 object PayPalAppearanceDefaults {
 
@@ -190,20 +240,24 @@ object PayPalAppearanceDefaults {
     @Composable
     fun appearance(): PayPalWidgetAppearance = PayPalWidgetAppearance(
         loader = LoaderAppearanceDefaults.appearance()
-            .copy(strokeWidth = ButtonAppearanceDefaults.ButtonLoaderWidth, color = Color.Black)
+            .copy(strokeWidth = ButtonAppearanceDefaults.ButtonLoaderWidth, color = Color.Black),
+        buttonColour = PayPalButtonColor.GOLD,
+        buttonLabel = PayPalButtonLabel.PAYPAL,
+        buttonShape = PaymentButtonShape.ROUNDED,
     )
 
 }
 
 /**
- * Handles the result returned from the PayPal web activity, processing the decoded URL,
- * cancellation, or errors, and invoking the appropriate completion handler.
+ * Handles results from the PayPal web approval activity.
  *
- * @param result The `ActivityResult` returned from the PayPal web activity.
- * This contains the result code and data such as the decoded URL or cancellation status.
- * @param viewModel The PayPalViewModel that processes PayPal-related data, including the parsed PayPal URL.
- * @param completion A callback function to handle the result of the PayPal transaction.
- * It is invoked with a `Result` object containing either success or failure information.
+ * - RESULT_OK → extracts and forwards the decoded approval URL to the [viewModel]
+ * - RESULT_CANCELED → maps user cancellation or web errors into SDK exceptions and completes
+ * - otherwise → ignored
+ *
+ * @param result Activity result from `PayPalWebActivity`.
+ * @param viewModel ViewModel coordinating URL parsing, capture/decline and state resets.
+ * @param completion Invoked with success or failure of the PayPal charge.
  */
 private fun handlePayPalResult(
     result: ActivityResult,
@@ -212,17 +266,19 @@ private fun handlePayPalResult(
 ) {
     result.data?.let { data ->
         when (result.resultCode) {
-            // Handles the success case when the result code is RESULT_OK, parsing the PayPal URL.
+            // Success: directly proceed to capture using paymentMethodId and payerId
             AppCompatActivity.RESULT_OK -> {
-                data.getDecodedUrlExtra()?.let { decodedUrl ->
-                    viewModel.parsePayPalUrl(decodedUrl)
+                val paymentMethodId = data.getPaymentMethodIdExtra()
+                val payerId = data.getPayerIdExtra()
+                // On success, data should be present; call into VM to proceed
+                if (paymentMethodId != null && payerId != null) {
+                    viewModel.captureWalletTransaction(paymentMethodId, payerId)
                 }
             }
 
-            // Handles the cancellation case when the result code is RESULT_CANCELED.
+            // Cancellation handling (user or error)
             AppCompatActivity.RESULT_CANCELED -> {
                 when (data.getCancellationStatusExtra()) {
-                    // If the cancellation was user-initiated, the completion is invoked with a failure result.
                     CancellationStatus.USER_INITIATED -> {
                         completion(
                             Result.failure(
@@ -234,7 +290,6 @@ private fun handlePayPalResult(
                         viewModel.resetResultState()
                     }
 
-                    // If the cancellation was due to another reason, process the WebView error status and message.
                     else -> {
                         val status = data.getStatusExtra()
                         val message =
@@ -252,22 +307,25 @@ private fun handlePayPalResult(
                 }
             }
 
-            // If no specific result code is handled, do nothing.
             else -> Unit
         }
     }
 }
 
 /**
- * Processes the current UI state of the PayPal checkout widget and executes the corresponding actions
- * such as launching intents, capturing transactions, or handling success and error states.
+ * Reacts to [PayPalCheckoutUIState] updates and drives the PayPal flow:
+ * - Idle → No action.
+ * - Loading → notifies [loadingDelegate].
+ * - LaunchIntent → launches `PayPalWebCheckoutActivity` with the provided client ID and order ID.
+ * - Success → completes with [ChargeResponse], notifies [loadingDelegate], and resets state.
+ * - Error → completes with an exception, notifies [loadingDelegate], and resets state.
  *
- * @param context The current application context.
- * @param uiState The current `PayPalCheckoutUIState` representing the state of the PayPal checkout process.
- * @param viewModel The `PayPalViewModel` managing the PayPal checkout flow and its state.
- * @param loadingDelegate An optional delegate for managing the widget's loading state transitions.
- * @param resolvePaymentForResult A `ManagedActivityResultLauncher` to handle activity results for payment resolution.
- * @param completion A callback to handle the final result of the PayPal checkout process, either success or failure.
+ * @param context Current context.
+ * @param uiState Current UI state for the PayPal checkout flow.
+ * @param viewModel Coordinator for network operations and state transitions.
+ * @param loadingDelegate Optional external loader controller.
+ * @param resolvePaymentForResult Launcher to start the web approval activity for result.
+ * @param completion Final result callback for the PayPal transaction.
  */
 private fun handleUIState(
     context: Context,
@@ -289,20 +347,12 @@ private fun handleUIState(
         // Launch an intent to PayPal's Web Activity if the callback URL is available
         is PayPalCheckoutUIState.LaunchIntent -> {
             loadingDelegate?.widgetLoadingDidFinish()
-            val (callbackData) = uiState
-            callbackData.callbackUrl?.let { callbackUrl ->
-                if (callbackUrl.isNotBlank()) {
-                    val intent = Intent(context, PayPalWebActivity::class.java)
-                        .putCallbackUrlExtra(callbackUrl)
-                    resolvePaymentForResult.launch(intent)
-                }
-            }
-        }
-
-        // Capture the transaction by passing the payment method ID and payer ID to the ViewModel
-        is PayPalCheckoutUIState.Capture -> {
-            val (paymentMethodId, payerId) = uiState
-            viewModel.captureWalletTransaction(paymentMethodId, payerId)
+            val (clientId, orderId) = uiState
+            val intent = Intent(context, PayPalWebCheckoutActivity::class.java)
+                .putClientIdExtra(clientId)
+                .putOrderIdExtra(orderId)
+                .putFundingSourceExtra(viewModel.getFundingSource())
+            resolvePaymentForResult.launch(intent)
         }
 
         // Handle success state, notify the loading delegate, and complete the transaction with success
@@ -326,5 +376,11 @@ private fun handleUIState(
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewPayPalWidget() {
-    PayPalWidget(tokenRequest = {}, completion = {})
+    PayPalWidget(
+        config = PayPalWidgetConfig(
+            accessToken = "xxx",
+            gatewayId = "xxx"
+        ),
+        tokenRequest = {}, completion = {}
+    )
 }

@@ -8,9 +8,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.paydock.R
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.feature.card.domain.model.integration.enums.CardType
+import com.paydock.feature.card.domain.model.integration.enums.CardType.Companion.displayLabel
 
 /**
  * Displays a banner showing the supported card schemes as icons.
@@ -23,8 +28,13 @@ import com.paydock.feature.card.domain.model.integration.enums.CardType
  */
 @Composable
 internal fun SupportedCardBanner(supportedSchemes: Set<CardType>) {
+    val schemeDescriptions = supportedSchemes.joinToString(separator = ", ") { it.displayLabel() }
+    val fullContentDescription = stringResource(R.string.label_supported_card_schemes, schemeDescriptions)
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
+            .semantics(mergeDescendants = true) {
+                contentDescription = fullContentDescription
+            },
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.Start
     ) {

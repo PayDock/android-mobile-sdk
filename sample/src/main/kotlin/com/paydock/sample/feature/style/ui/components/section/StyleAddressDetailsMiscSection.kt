@@ -3,6 +3,7 @@ package com.paydock.sample.feature.style.ui.components.section
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,6 +20,7 @@ fun StyleAddressDetailsMiscSection(
 ) {
     // Derived states remain essential for UDF
     val currentVerticalSpacing = currentAppearance.verticalSpacing
+    val currentHorizontalSpacing = currentAppearance.horizontalSpacing
 
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
@@ -30,6 +32,16 @@ fun StyleAddressDetailsMiscSection(
             value = currentVerticalSpacing.value.toInt(),
             onValueChange = { newValue ->
                 onAppearanceChange(currentAppearance.copy(verticalSpacing = newValue.dp))
+            }
+        )
+
+        HorizontalDivider()
+
+        NumberCounter(
+            title = stringResource(R.string.label_horizontal_spacing),
+            value = currentHorizontalSpacing.value.toInt(),
+            onValueChange = { newValue ->
+                onAppearanceChange(currentAppearance.copy(horizontalSpacing = newValue.dp))
             }
         )
     }

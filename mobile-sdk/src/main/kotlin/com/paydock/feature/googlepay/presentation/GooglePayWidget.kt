@@ -35,6 +35,7 @@ import com.google.pay.button.ButtonTheme
 import com.google.pay.button.ButtonType
 import com.google.pay.button.PayButton
 import com.paydock.core.MobileSDKConstants
+import com.paydock.core.domain.error.exceptions.GooglePayException
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.loader.LoaderAppearance
@@ -55,6 +56,7 @@ import org.koin.core.parameter.parametersOf
  * handles user interactions, and manages the payment lifecycle through state management.
  *
  * @param modifier Modifier for customizing the appearance and behavior of the Composable.
+ * @param enabled A boolean indicating whether the Google Pay button is enabled. Defaults to `true`.
  * @param config The configuration for the Google Pay widget.
  * @param appearance The appearance configuration for the Google Pay widget, including button theme,
  * type, corner radius, and loader appearance. Defaults to [GooglePayAppearanceDefaults.appearance].
@@ -67,6 +69,7 @@ import org.koin.core.parameter.parametersOf
 @Composable
 fun GooglePayWidget(
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     config: GooglePayWidgetConfig,
     appearance: GooglePayWidgetAppearance = GooglePayAppearanceDefaults.appearance(),
     tokenRequest: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit,
@@ -122,7 +125,18 @@ fun GooglePayWidget(
                     onClick = {
                         viewModel.startGooglePayPaymentFlow(tokenRequest)
                     }, radius = appearance.cornerRadius,
-                    allowedPaymentMethods = allowedPaymentMethods
+                    allowedPaymentMethods = allowedPaymentMethods,
+                    onError = {
+                        completion(
+                            Result.failure(
+                                GooglePayException.InitialisationException(
+                                    it.message
+                                        ?: MobileSDKConstants.GooglePayConfig.Errors.INITIALISATION_ERROR
+                                )
+                            )
+                        )
+                    },
+                    enabled = uiState !is GooglePayUIState.Loading && enabled,
                 )
             }
         }

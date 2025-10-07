@@ -2,7 +2,6 @@ package com.paydock.feature.wallet.domain.usecase
 
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
-import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.exceptions.ApiException
@@ -84,7 +83,8 @@ internal class GetWalletConfigUseCaseTest : BaseKoinUnitTest() {
             )
         // THEN
         assertTrue(actualResult.isFailure)
-        assertIs<PayPalVaultException.GetPayPalClientIdException>(actualResult.exceptionOrNull())
+        // With generic Result behavior, the exception is surfaced directly from repository
+        assertIs<ApiException>(actualResult.exceptionOrNull())
         coVerify(exactly = 1) {
             mockRepository.getWalletGatewayClientId(
                 MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN,

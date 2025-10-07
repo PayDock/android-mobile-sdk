@@ -39,6 +39,7 @@ stages:
   - gitlab_release # Stage for creating a release in GitLab.
   - github_release # Stage for creating a release in GitHub.
   - publish # Stage for publishing the SDK to GitHub.
+  - maven_central # Stage for publishing to Maven Central.
 
 # Include:
 # Includes an external template for security checks from another project.
@@ -61,14 +62,25 @@ include:
   script:
     - bundle --version # Checks the version of Bundler.
 
-# linting:
-# This job runs linting checks on the codebase using detekt.
+# code_quality:
+# This job runs code quality checks on the codebase using detekt.
 # It extends the '.setup_bundler' template to ensure the Ruby dependencies are set up.
+# Generates reports that are displayed in GitLab's Code Quality tab.
 code_quality:
   stage: code_quality # Runs in the 'code_quality' stage.
   extends: .setup_bundler # Inherits configurations (like Bundler setup) from the '.setup_bundler' template.
   script:
-    - bundle exec fastlane code_quality # Executes the 'formatting, style, issues' lane in Fastlane.
+    - bundle exec fastlane code_quality # Executes the 'code_quality' lane in Fastlane.
+  artifacts:
+    expire_in: 1 week
+    when: always # Always collect artifacts, even if the job fails
+    paths:
+      - reports/code-quality/ # Make all code quality reports available
+      - mobile-sdk/build/reports/ # Include original detekt reports for debugging
+    reports:
+      # GitLab Code Quality report (custom format for better integration)
+      codequality: reports/code-quality/gl-code-quality-report.json
+    expose_as: 'Code Quality Reports'
   rules:
     - if: $CI_COMMIT_BRANCH  # Run on all branch pushes
       when: on_success
@@ -87,10 +99,43 @@ test:
   artifacts:
     expire_in: 7 days
     when: always # Always creates artifacts, even if the job fails.
+    paths:
+      - mobile-sdk/build/reports/jacoco/jacocoDebugUnitTestReport/html/ # HTML coverage report for GitLab Pages
+      - mobile-sdk/build/reports/jacoco/jacocoDebugUnitTestReport/jacocoDebugUnitTestReport.xml # XML coverage report
+      - mobile-sdk/build/test-results/ # Unit test results
     reports:
-      junit: mobile-sdk/build/test-results/testDebugUnitTest/TEST-*.xml # Publishes the JUnit test reports.
+      junit:
+        - mobile-sdk/build/test-results/**/TEST-*.xml # Library module unit test results
+      coverage_report:
+        coverage_format: jacoco
+        path: mobile-sdk/build/reports/jacoco/jacocoDebugUnitTestReport/jacocoDebugUnitTestReport.xml
+  coverage: '/Total.*?([0-9]{1,3})%/'
   rules:
     - when: on_success # Only run when the previous job in the pipeline has succeeded.
+
+# GitLab Pages job to publish HTML coverage reports
+# This makes the coverage report accessible via GitLab Pages URL
+pages:
+  stage: deploy
+  dependencies:
+    - test
+  needs:
+    - job: test
+      artifacts: true
+  script:
+    - echo "Publishing coverage report to GitLab Pages"
+    - mkdir public
+    - ls -la mobile-sdk/build/reports/jacoco/ || echo "No jacoco directory"
+    - find mobile-sdk/build -name "*.html" -path "*/jacoco*" || echo "No HTML files found"
+    - cp -r mobile-sdk/build/reports/jacoco/jacocoDebugUnitTestReport/html/* public/ 2>/dev/null || echo "No coverage HTML report found, creating placeholder"
+    - test -f public/index.html || echo "<html><body><h1>Coverage Report Not Available</h1></body></html>" > public/index.html
+    - ls -la public/
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
 
 # increment_version:
 # This job increments the version code for the build and deployment.
@@ -115,18 +160,31 @@ pull_bin_file:
   stage: build # Runs in the 'build' stage.
   image: 412245956714.dkr.ecr.ap-southeast-2.amazonaws.com/ci:20241212-1584910654 # Uses a specific Docker image for this job.
   script: |
-    aws s3 cp s3://pd-app-bin-management-staging-11/bins.zip bin_schema/bins.zip # Copies the zip file from S3.
-    unzip bin_schema/bins.zip -d bin_schema/ # Extracts the zip file to the 'bin_schema/' directory.
+    mkdir -p bin_schema
+    aws s3 cp s3://pd-app-bin-management-staging-11/bins.zip bin_schema/bins.zip
+    cd bin_schema && unzip -o bins.zip && cd ..
   artifacts:
     paths:
       - bin_schema/ # Makes the 'bin_schema/' directory available as an artifact for subsequent jobs.
   rules:
-#    - if: $CI_COMMIT_BRANCH  # Run on all branch pushes
-#      when: on_success
-  - if: $CI_MERGE_REQUEST_IID # Run on merge (Merge Results)
-    when: on_success
-  - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
-    when: on_success
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+      when: on_success
+
+# commit_bin_file:
+# This job commits the extracted card schemes file to the repository if it has changed.
+commit_bin_file:
+  stage: build # Runs in the 'build' stage after pull_bin_file.
+  extends: .setup_bundler # Extends the '.setup_bundler' template for Ruby/Fastlane setup
+  dependencies:
+    - pull_bin_file # Depends on the pull_bin_file job
+  needs:
+    - job: pull_bin_file
+      artifacts: true
+  script:
+    - bundle exec fastlane android commit_bin_file # Executes the 'commit_bin_file' lane in Fastlane
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+      when: on_success
 
 # .build_template:
 # This is a hidden job template for building the Android application.
@@ -134,15 +192,10 @@ pull_bin_file:
 .build_template:
   stage: build # Runs in the 'build' stage.
   extends: .setup_bundler # Extends the '.setup_bundler' template.
-  script:
-    - cp bin_schema/card-schemes.json ./mobile-sdk/src/main/assets/card_schemas.json # Copies the card schemes file to the assets directory.
   artifacts:
     expire_in: 7 days
     paths:
       - sample/build/outputs/apk/* # Makes the APK files available as artifacts.
-      - bin_schema/ # Makes the 'bin_schema/' directory available as an artifact.
-  dependencies:
-    - pull_bin_file # Specifies the dependency on the 'pull_bin_file' job
 
 # buildStaging:
 # This job builds the staging version of the Android application.
@@ -153,7 +206,6 @@ build_staging:
     # Fastfile Reference: This lane is defined in the Fastfile and handles the actual build process.
   environment:
     name: staging
-  needs: [pull_bin_file]
   rules:
 #    - if: $CI_COMMIT_BRANCH  # Run on all branch pushes
 #      when: on_success
@@ -171,7 +223,7 @@ build_sandbox:
     # Fastfile Reference: This lane is defined in the Fastfile and handles the actual build process.
   environment:
     name: sandbox
-  needs: [pull_bin_file, increment_version]
+  needs: [increment_version]
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
       when: on_success
@@ -185,7 +237,7 @@ build_prod:
     # Fastfile Reference: This lane is defined in the Fastfile and handles the actual build process.
   environment:
     name: production
-  needs: [pull_bin_file, increment_version]
+  needs: [increment_version]
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
       when: on_success
@@ -227,6 +279,8 @@ deploy_staging:
   script:
     - bundle exec fastlane deploy flavor:staging # Executes the 'deploy' lane using staging flavor in the Fastfile.
   rules:
+#    - if: $CI_COMMIT_BRANCH  # Run on all branch pushes
+#      when: on_success
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
       when: on_success
 
@@ -326,3 +380,28 @@ publish_to_github:
   rules:
     - if: $CI_COMMIT_BRANCH == "release" # Run on commit is made to the 'release' branch.
       when: on_success
+
+# publish_to_maven_central:
+# This job publishes the SDK to Maven Central using JReleaser.
+# It runs after the tag has been created and uses JReleaser for complete automation.
+publish_to_maven_central:
+  stage: maven_central # Runs in the 'maven_central' stage.
+  extends: .setup_bundler # Extends the '.setup_bundler' template to set up the Ruby environment.
+  dependencies:
+    - tag_release
+  only:
+    - release # Only runs when a commit is made to the 'release' branch.
+  script:
+    - bundle exec fastlane publish_to_maven_central
+  # This job handles:
+  #   - Publishing artifacts to staging repository
+  #   - Running JReleaser full release process
+  #   - Creating Maven Central deployment
+  #   - Updating GitLab release with Maven Central information
+  artifacts:
+    when: always
+    reports:
+    # JReleaser output for debugging
+    paths:
+      - mobile-sdk/build/jreleaser/
+  allow_failure: false

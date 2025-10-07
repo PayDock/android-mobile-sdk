@@ -19,6 +19,8 @@
         <activity
             android:name=".feature.main.MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -29,7 +31,16 @@
         <activity
             android:name=".feature.checkout.ClickToPayActivity"
             android:exported="true"
-            android:launchMode="singleInstance"
+            android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 3DS demo Activity: opt out of recreation so JS context is preserved on rotation -->
+        <activity
+            android:name=".feature.checkout.ThreeDSActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize"
             android:windowSoftInputMode="adjustResize" />
     </application>
 

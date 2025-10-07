@@ -6,7 +6,6 @@ import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.AU_CURRENCY_CODE
-import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
 import com.paydock.sample.core.MERCHANT_NAME
 import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
 import com.paydock.sample.feature.wallet.data.api.dto.InitiateWalletRequest
@@ -53,13 +52,6 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
             }
             result.onFailure {
                 callback(Result.failure(it))
-                _stateFlow.update { state ->
-                    state.copy(
-                        walletChargeResult = null,
-                        isLoading = false,
-                        error = it.message ?: CHARGE_TRANSACTION_ERROR
-                    )
-                }
             }
         }
     }
@@ -100,8 +92,6 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                         callback = onTokenReceived
                     )
                 }
-
-                else -> Unit
             }
         }
 

@@ -67,16 +67,11 @@ fun PayPalSavePaymentSourceWidget(
     loadingDelegate: WidgetLoadingDelegate? = null,
     completion: (Result<PayPalVaultResult>) -> Unit,
 ) {
-    // Obtain the current context
     val context = LocalContext.current
-
-    // Get the PayPalVaultViewModel from Koin, passing the config as a parameter
     val viewModel: PayPalVaultViewModel = koinViewModel(parameters = { parametersOf(config) })
 
-    // Collect the current state from the ViewModel's state flow
     val uiState by viewModel.stateFlow.collectAsState()
 
-    // ActivityResultLauncher for handling payment resolution
     val resolvePaymentForResult = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result: ActivityResult ->
@@ -99,9 +94,7 @@ fun PayPalSavePaymentSourceWidget(
         derivedStateOf { loadingDelegate == null && uiState is PayPalVaultUIState.Loading }
     }
 
-    // Apply the SDK's theme to the widget
     Box(modifier = modifier) {
-        // Display a button to link the PayPal account
         appearance.actionButton.RenderButton(
             modifier = Modifier
                 .fillMaxWidth()

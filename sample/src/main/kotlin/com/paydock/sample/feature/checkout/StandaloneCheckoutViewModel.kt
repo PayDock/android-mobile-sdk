@@ -2,6 +2,7 @@ package com.paydock.sample.feature.checkout
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.paydock.core.domain.error.exceptions.GooglePayException
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.card.domain.model.integration.CardResult
 import com.paydock.feature.threeDS.integrated.domain.model.integration.Integrated3DSResult
@@ -21,7 +22,6 @@ import com.paydock.sample.core.THREE_DS_STATUS_ERROR
 import com.paydock.sample.core.TOKENISE_CARD_ERROR
 import com.paydock.sample.core.TOKENISE_CLICK_TO_PAY_ERROR
 import com.paydock.sample.core.WALLET_CHARGE_TRANSACTION_ERROR
-import com.paydock.sample.core.WALLET_INITIALISE_ERROR
 import com.paydock.sample.feature.card.data.api.dto.CaptureCardChargeRequest
 import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
 import com.paydock.sample.feature.card.domain.usecase.CaptureCardChargeTokenUseCase
@@ -306,14 +306,8 @@ class StandaloneCheckoutViewModel @Inject constructor(
                 }
             }
             result.onFailure {
-                _stateFlow.update { state ->
-                    callback(Result.failure(it))
-                    state.copy(
-                        walletChargeResult = null,
-                        isLoading = false,
-                        error = it.message ?: WALLET_INITIALISE_ERROR
-                    )
-                }
+                // Failure is pushed to the SDK and returned
+                callback(Result.failure(it))
             }
         }
     }
@@ -323,7 +317,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
             createSessionVaultToken(it.token)
         }.onFailure {
             _stateFlow.update { state ->
-                state.copy(error = TOKENISE_CARD_ERROR)
+                state.copy(error = it.message ?: TOKENISE_CARD_ERROR)
             }
         }
     }
@@ -335,7 +329,7 @@ class StandaloneCheckoutViewModel @Inject constructor(
             createSessionVaultToken(cardToken = it)
         }.onFailure {
             _stateFlow.update { state ->
-                state.copy(error = TOKENISE_CLICK_TO_PAY_ERROR)
+                state.copy(error = it.message ?: TOKENISE_CLICK_TO_PAY_ERROR)
             }
         }
     }
@@ -419,24 +413,40 @@ class StandaloneCheckoutViewModel @Inject constructor(
                         cardToken = null
                     )
                 }
-                _toastEvents.send("Transaction Complete📋: \nStatus ⏳: [${charge.resource.data?.status}]")
+                _toastEvents.send("Transaction Complete📋: \nSuccess ✅: [${charge.resource.data?.status}]")
             }.onFailure {
-                _stateFlow.update { state ->
-                    state.copy(isLoading = false, error = it.message ?: CHARGE_TRANSACTION_ERROR)
+                if (it is GooglePayException.SDKException) {
+                    // This just allows us to dismiss the bottom sheet
+                    _toastEvents.send("Transaction Complete📋: \nError ❌: [${it.statusCodeString} ${it.message} ]")
+                } else {
+                    _stateFlow.update { state ->
+                        state.copy(
+                            isLoading = false,
+                            error = it.message ?: CHARGE_TRANSACTION_ERROR
+                        )
+                    }
                 }
             }
         }
     }
 
     fun handleColesPayResult(result: Result<String>) {
-        val chargeId = _stateFlow.value.walletChargeResult?.chargeId
-        if (chargeId != null) {
             result.onSuccess {
-                captureWalletCharge(chargeId, true)
-                _stateFlow.update { state ->
-                    state.copy(
-                        colesPayResult = it
-                    )
+                val chargeId = _stateFlow.value.walletChargeResult?.chargeId
+                if (chargeId != null) {
+                    captureWalletCharge(chargeId, true)
+                    _stateFlow.update { state ->
+                        state.copy(
+                            colesPayResult = it
+                        )
+                    }
+                } else {
+                    _stateFlow.update { state ->
+                        state.copy(
+                            isLoading = false,
+                            error = COLES_PAY_CHARGE_TRANSACTION_ERROR
+                        )
+                    }
                 }
             }.onFailure {
                 _stateFlow.update { state ->
@@ -446,11 +456,6 @@ class StandaloneCheckoutViewModel @Inject constructor(
                     )
                 }
             }
-        } else {
-            _stateFlow.update { state ->
-                state.copy(isLoading = false, error = COLES_PAY_CHARGE_TRANSACTION_ERROR)
-            }
-        }
     }
 
     private fun handleTokenResult(token: String) {
