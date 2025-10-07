@@ -647,6 +647,9 @@ platform :android do
             **Full Changelog:** [View on GitLab](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/-/commits/#{version_tag})
         RELEASE
 
+        # Sanitize single quotes to avoid breaking single-quoted shell strings
+        release_description_safe = release_description.gsub("'", "’")
+
         # Define the release assets.
         # These are links to external resources related to the release.
         release_assets = [
@@ -661,7 +664,7 @@ platform :android do
         release_data = {
             "name" => release_name, # The name of the release.
             "tag_name" => version_tag, # The tag name of the release.
-            "description" => release_description, # The description of the release.
+            "description" => release_description_safe, # The description of the release.
             "ref" => version_tag, # The reference (tag or branch) for the release.
             "assets" => { # The assets associated with the release.
                 "links" => release_assets # The links to the assets.
@@ -673,11 +676,6 @@ platform :android do
         api_url = "#{api_endpoint}/projects/#{project_id}/releases"
 
         # Create the release using the GitLab API. https://docs.gitlab.com/api/releases/
-        # This uses the 'curl' command to send a POST request to the GitLab API.
-        # --silent: Suppresses progress output.
-        # --header: Specifies the headers for the request (Content-Type and PRIVATE-TOKEN).
-        # --data: Specifies the data payload for the request (the release data in JSON format).
-        # --request POST: Specifies that this is a POST request.
         response = sh("curl --silent --header 'Content-Type: application/json' --header 'PRIVATE-TOKEN: #{gitlab_token}' \
             --data '#{release_data}' \
             --request POST '#{api_url}'")
