@@ -593,6 +593,14 @@ platform :android do
         sh("git config --global user.name \"Ricardo\"") # Sets the Git user name.
         # The 'sh' action is used to execute shell commands.
 
+        # Fetch tags and skip if tag already exists
+        sh("git fetch --tags --prune")
+        existing_tag = sh("git tag -l #{version_tag}", log: false).strip
+        if existing_tag == version_tag
+            UI.message("Tag #{version_tag} already exists; skipping creation and push")
+            return
+        end
+
         # Create and push the tag.
         sh("git tag -a #{version_tag} -m \"Release version #{version_tag}\"") # Creates an annotated Git tag.
         #   - '-a': Creates an annotated tag.
@@ -744,7 +752,8 @@ platform :android do
 
             # 3. Get gradle project version (current project version for new releases)
             begin
-                result = gradle(task: "-q :network:printVersionName", print_command: false, print_command_output: false)
+                # Use the Gradle wrapper to print the version name from the mobile-sdk module
+                result = sh("./gradlew -q :mobile-sdk:printVersionName", log: false).strip
                 version_match = result.match(/(\d+\.\d+\.\d+)/)
                 return version_match[1] if version_match
             rescue => gradle_ex
