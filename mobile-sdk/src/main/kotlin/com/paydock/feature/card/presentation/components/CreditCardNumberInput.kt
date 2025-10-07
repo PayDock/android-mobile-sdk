@@ -10,7 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.autofill.AutofillType
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
@@ -109,7 +109,7 @@ internal fun CreditCardNumberInput(
         placeholder = stringResource(id = R.string.placeholder_card_number),
         enabled = enabled,
         label = stringResource(id = R.string.label_card_number),
-        autofillType = AutofillType.CreditCardNumber,
+        autofillType = ContentType.CreditCardNumber,
         leadingIcon = { CardSchemeIcon(cardScheme?.type, focusedState) },
         error = errorMessage,
         visualTransformation = cardScheme?.let {

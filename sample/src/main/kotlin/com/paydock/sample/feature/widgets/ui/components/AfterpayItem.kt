@@ -99,7 +99,8 @@ fun AfterpayItem(
                 }
             provideShippingOptionUpdateResult(result)
         },
-        appearance = currentOrDefaultAppearance
+        appearance = currentOrDefaultAppearance,
+        enabled = !uiState.isLoading
     ) { result ->
         result.onSuccess {
             Log.d("[AfterpayWidget]", "Success: $it")

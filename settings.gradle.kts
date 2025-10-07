@@ -19,7 +19,5 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // Used for Paydock submodules
-        maven { setUrl("https://www.jitpack.io") }
     }
 }

@@ -1,5 +1,30 @@
 # Changelog
 
+## [5.1.0] - 2025-10-07
+
+### Changed
+- Implemented native PayPal checkout flow using the latest PayPal SDK (`2.0.0`)
+- Updated to use PayPal's native compose button; removed reliance on web views for PayPal
+- Updated Compose BOM to `2025.06.01`
+- Updated internal dependencies (AndroidX, Koin, coroutines, etc.)
+- General improvements to `AddressWidget` (input UX and defaults)
+
+### Fixed
+- Coles Pay: false positive error shown after entering OTP
+- Generic error handling for network failures across payment methods
+- Cardholder name validation issues (including hyphen handling and invalid characters)
+- Gift Card PIN length validation
+- Flows resuming correctly after app interruptions
+- Fallback behavior when no external browser is available
+- Afterpay webview stuck due to double‑tap during loading
+- Click to Pay: repeated "No Internet Connection" toasts
+- Address search: "No address found" incorrectly populating input; country name validation; keyboard casing defaults
+- Google Pay: misleading setup error messages
+- PayPal: activity state management with "Don't keep activities" enabled (prevents re-launch loops)
+
+### Removed
+- All WebView dependencies related to PayPal checkout
+
 ## [5.0.0] - 2025-07-04
 
 ### Added

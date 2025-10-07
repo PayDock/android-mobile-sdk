@@ -22,7 +22,6 @@ build/
 local.properties
 github.properties
 gitlab.properties
-sonatype.properties
 config.properties
 private-key.json
 
@@ -73,3 +72,5 @@ vcs.xml
 
 # MacOS
 .DS_Store
+# Code quality reports (generated at runtime)
+reports/

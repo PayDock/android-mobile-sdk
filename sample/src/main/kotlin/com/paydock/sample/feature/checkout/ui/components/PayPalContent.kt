@@ -11,6 +11,7 @@ import com.paydock.feature.paypal.checkout.presentation.PayPalAppearanceDefaults
 import com.paydock.feature.paypal.checkout.presentation.PayPalWidget
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
+import com.paydock.sample.BuildConfig
 import com.paydock.sample.feature.style.StylingViewModel
 
 @Composable
@@ -26,7 +27,10 @@ fun PayPalContent(
     PayPalWidget(
         modifier = Modifier.fillMaxWidth(),
         config = PayPalWidgetConfig(
-            requestShipping = false
+            accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
+            gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL,
+            requestShipping = false,
+            fundingSource = PayPalWidgetConfig.PayPalFundingSource.PAY_LATER
         ),
         appearance = currentOrDefaultAppearance,
         enabled = enabled,

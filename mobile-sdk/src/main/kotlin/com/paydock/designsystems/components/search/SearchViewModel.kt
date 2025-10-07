@@ -4,18 +4,14 @@ import androidx.lifecycle.viewModelScope
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.presentation.viewmodels.BaseViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 
 /**
  * An abstract ViewModel class for handling search functionality.
@@ -27,35 +23,15 @@ internal abstract class SearchViewModel<T>(
     dispatchers: DispatchersProvider
 ) : BaseViewModel(dispatchers) {
 
-    // MutableStateFlow for tracking search text
-    private val _searchText: MutableStateFlow<String> = MutableStateFlow("")
-
-    // Expose search text as StateFlow
+    private val _searchText = MutableStateFlow("")
     val searchText: StateFlow<String> = _searchText.asStateFlow()
 
-    // MutableStateFlow for tracking search status
-    private val _isSearching: MutableStateFlow<Boolean> = MutableStateFlow(false)
-
-    // Expose search status as StateFlow
+    private val _isSearching = MutableStateFlow(false)
     val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
 
-    // Flag to track whether initial loading is completed
-    private var initialLoadCompleted = false
-
-    /**
-     * StateFlow that emits search results.
-     */
-    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-    val searchResult: StateFlow<List<T>> = _searchText
-        .onEach { _isSearching.update { shouldSkipInitialLoading().not() } }
-        .debounce(MobileSDKConstants.General.DEBOUNCE_DELAY)
-        .flatMapLatest { query -> searchItems(query) }
-        .onEach { _isSearching.update { false } }
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    // This holds the raw results from searchItems (could be List<String> or List<YourObjectType>)
+    private val _searchResult = MutableStateFlow<List<T>>(emptyList())
+    val searchResult: StateFlow<List<T>> = _searchResult.asStateFlow()
 
     /**
      * Get a list of string-based search results.
@@ -73,33 +49,27 @@ internal abstract class SearchViewModel<T>(
     abstract fun searchItems(query: String): Flow<List<T>>
 
     /**
-     * Checks whether the initial loading should be skipped.
-     *
-     * @return True if the initial loading should be skipped, false otherwise.
-     */
-    private fun shouldSkipInitialLoading(): Boolean {
-        if (!initialLoadCompleted) {
-            initialLoadCompleted = true
-            return true
-        }
-        return false
-    }
-
-    /**
-     * Sets the selected value and updates the search text.
-     *
-     * @param selectedValue The initial value to set.
-     */
-    fun setSelectedValue(selectedValue: String) {
-        _searchText.value = selectedValue
-    }
-
-    /**
      * Called when the search text changes.
      *
      * @param text The new search text.
      */
+    @OptIn(FlowPreview::class)
     fun onSearchTextChange(text: String) {
         _searchText.value = text
+        if (text.isNotBlank()) {
+            viewModelScope.launch {
+                _isSearching.value = true
+                searchItems(text)
+                    .debounce(MobileSDKConstants.General.INPUT_DELAY)
+                    .distinctUntilChanged()
+                    .collect { results ->
+                        _searchResult.value = results
+                        _isSearching.value = false
+                    }
+            }
+        } else {
+            _searchResult.value = emptyList() // Clear results if search text is blank
+            // Or emit allCountries.take(...) if you want to show initial items on blank focused field
+        }
     }
 }

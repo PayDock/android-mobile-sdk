@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,7 +47,8 @@ fun CheckoutBottomSheet(
             WidgetType.COLES_PAY,
             WidgetType.AFTER_PAY
         )
-    var selectedTab by remember { mutableStateOf(supportedPaymentMethods.first()) }
+    // Use rememberSaveable to preserve selectedTab across configuration changes
+    var selectedTab by rememberSaveable { mutableStateOf(supportedPaymentMethods.first()) }
     SdkBottomSheet(
         bottomSheetState = bottomSheetState,
         onDismissRequest = onDismissRequest,
@@ -98,6 +100,7 @@ fun CheckoutBottomSheet(
 
                         WidgetType.GOOGLE_PAY -> GooglePayContent(
                             stylingViewModel = stylingViewModel,
+                            enabled = !uiState.isLoading,
                             tokenHandler = viewModel.getWalletTokenResultCallback(
                                 WalletType.GOOGLE
                             ),
@@ -115,6 +118,7 @@ fun CheckoutBottomSheet(
 
                         WidgetType.COLES_PAY -> ColesPayContent(
                             stylingViewModel = stylingViewModel,
+                            enabled = !uiState.isLoading,
                             tokenHandler = viewModel.getWalletTokenResultCallback(WalletType.COLES_PAY),
                             loadingDelegate = viewModel,
                             resultHandler = viewModel::handleColesPayResult
@@ -122,6 +126,7 @@ fun CheckoutBottomSheet(
 
                         WidgetType.AFTER_PAY -> AfterpayContent(
                             stylingViewModel = stylingViewModel,
+                            enabled = !uiState.isLoading,
                             tokenHandler = viewModel.getWalletTokenResultCallback(WalletType.AFTER_PAY),
                             loadingDelegate = viewModel,
                             resultHandler = viewModel::handleChargeResult

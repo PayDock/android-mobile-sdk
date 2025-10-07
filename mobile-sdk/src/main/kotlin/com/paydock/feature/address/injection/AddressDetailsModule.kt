@@ -5,7 +5,6 @@ import com.paydock.core.utils.decoder.injection.stringDecoderKoinModule
 import com.paydock.feature.address.presentation.viewmodels.AddressDetailsViewModel
 import com.paydock.feature.address.presentation.viewmodels.AddressSearchViewModel
 import com.paydock.feature.address.presentation.viewmodels.CountryAutoCompleteViewModel
-import com.paydock.feature.address.presentation.viewmodels.ManualAddressViewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 import java.util.Locale
@@ -18,7 +17,6 @@ internal val addressDetailsModule = module {
 
     single { Geocoder(get(), Locale.getDefault()) }
     viewModelOf(::AddressSearchViewModel)
-    viewModelOf(::ManualAddressViewModel)
     viewModelOf(::CountryAutoCompleteViewModel)
     viewModelOf(::AddressDetailsViewModel)
 }

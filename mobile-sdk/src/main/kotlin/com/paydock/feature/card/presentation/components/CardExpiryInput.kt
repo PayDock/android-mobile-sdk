@@ -10,7 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.autofill.AutofillType
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -90,7 +90,7 @@ internal fun CardExpiryInput(
         placeholder = stringResource(id = R.string.placeholder_expiry), // Placeholder text
         enabled = enabled,
         error = errorMessage, // Dynamically show error messages if validation fails
-        autofillType = AutofillType.CreditCardExpirationDate,
+        autofillType = ContentType.CreditCardExpirationDate,
         visualTransformation = ExpiryInputTransformation(), // Format input as MM/YY
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number, // Input limited to numbers

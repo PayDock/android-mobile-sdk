@@ -97,7 +97,7 @@ internal fun GiftCardNumberInput(
             )
         },
         error = errorMessage,
-        visualTransformation = CardNumberInputTransformation(),
+        visualTransformation = CardNumberInputTransformation(CardNumberInputTransformation.GIFT_CARD_SIZES),
         // Use keyboard options and actions for a more user-friendly input experience
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number,

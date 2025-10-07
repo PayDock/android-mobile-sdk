@@ -443,6 +443,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
             WidgetType.PAY_PAL -> {
                 _paypalWidgetAppearance.value?.let { current ->
                     val updatedAppearance = when (component) {
+                        StyleAppearanceComponent.PROPERTIES -> (newComponentAppearance as PayPalWidgetAppearance)
                         StyleAppearanceComponent.LOADER -> current.copy(loader = newComponentAppearance as LoaderAppearance)
                         else -> current
                     }

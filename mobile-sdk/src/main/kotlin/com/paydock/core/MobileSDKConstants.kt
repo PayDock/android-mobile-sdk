@@ -44,15 +44,32 @@ internal object MobileSDKConstants {
          * - Invalid: "123a", "12 34", "!123"
          */
         internal val NUMERIC_DIGITS = Regex("^[0-9]+$")
+
+        /**
+         * Regex for validating the structure and allowed characters in a cardholder name.
+         *
+         * This regex ensures the name (after trimming):
+         * - Is not empty (this should be checked separately, e.g., by `String.isNotBlank()`).
+         * - Starts with a Unicode letter (`\\p{L}`).
+         * - Can contain Unicode letters, spaces (`\\s`), apostrophes (`'`), backticks(`\``) hyphens (`-`), and dots (`.`).
+         * - If the name is longer than one character, it must end with a Unicode letter, apostrophe, hyphen, or dot.
+         * - Alternatively, the name can be a single Unicode letter.
+         *
+         * Examples of valid names (after trimming): "John Doe", "Jane D'Souza-Doe", "李明", "J. Doe",
+         * "Élodie", "John-", "J-"
+         * Examples of invalid names (by this regex, after trimming): "-John", "123 Name", "Name!",
+         * "John--", " John" (if not trimmed), "J. " (if not trimmed)
+         *
+         * **Note:** This regex does not explicitly check for empty strings. It's recommended to validate for non-blank input
+         * before applying this regex.
+         */
+        internal val CARD_HOLDER_NAME = Regex("^\\p{L}[\\p{L}'`.\\s-]*[\\p{L}'.\\-]$|^\\p{L}$")
     }
 
     /**
      * Constants related to the Network.
      */
     object Network {
-        // sha256 hssh for paydock base urls
-        internal const val SSH_HASH = "sha256/kV0cxZABuhXdMFROcAZwIflgJilKOqxMBcRhzFhZMok="
-
         object Errors {
             const val IO_ERROR =
                 "An error occurred while communicating with the server. Please check your internet connection and try again."
@@ -80,7 +97,7 @@ internal object MobileSDKConstants {
         internal const val MIN_CREDIT_CARD_LENGTH = 12
         internal const val MAX_CREDIT_CARD_LENGTH = 19
         internal const val MIN_GIFT_CARD_LENGTH = 14
-        internal const val MIN_GIFT_CARD_PIN_LENGTH = 4
+        internal const val GIFT_CARD_PIN_LENGTH = 4
         internal const val MAX_GIFT_CARD_LENGTH = 25
         internal const val MAX_EXPIRY_LENGTH = 4
         internal const val EXPIRY_CHUNK_SIZE = 2
@@ -174,18 +191,25 @@ internal object MobileSDKConstants {
 
         object Errors {
             const val TOKEN_ERROR =
-                "There is a problem retrieving the Google Pay token. Please try again later or " +
-                    "contact support for assistance."
-            const val DEV_ERROR =
-                "A developer error occurred. Please try again later or contact support for assistance."
+                "There is a problem retrieving the Google Pay token. Please try again."
             const val GOOGLE_PAY_ERROR =
-                "An unexpected error occurred while processing Google Pay. Please try again later or " +
-                    "contact support for assistance."
+                "An unexpected error occurred while processing Google Pay. Please try again later."
             const val INITIALISATION_ERROR = "Unexpected non API exception when trying to " +
                 "retrieve [allowedPaymentMethods] parameter from PaymentRequest!"
             const val CANCELLATION_ERROR = "Google Pay charge was cancelled!"
             const val WALLET_TOKEN_ERROR =
                 "An unexpected error occurred while retrieving Google Pay wallet token. Please try again later."
+
+            // SDK status codes
+            const val FLOW_NOT_COMPLETED_ERROR = "Unable to complete Google Pay transaction. Please check your connection and try again."
+            const val NETWORK_ERROR = "A network error occurred with Google Pay. Please check your internet connection and try again."
+            const val TIMEOUT_ERROR = "The Google Pay request timed out. Please check your connection and try again."
+            const val DEV_ERROR = "There was a problem with the payment setup. Please try again later."
+            const val GOOGLE_PAY_SERVICE_ERROR = "An error occurred with Google Pay. Please try again."
+            const val PLAY_SERVICES_ERROR = "Google Pay requires attention. Please ensure Google Play Services is up to date, " +
+                "enabled, and you are signed in."
+            const val RESOLUTION_FAILED_ERROR = "Google Pay requires additional setup which could not be completed. Please try again."
+            const val UNEXPECTED_ERROR = "An unexpected error occurred. Please try again."
         }
     }
 
@@ -193,15 +217,7 @@ internal object MobileSDKConstants {
      * Constants related to PayPal configuration.
      */
     object PayPalConfig {
-        internal const val PAY_PAL_REDIRECT_PARAM_VALUE =
-            "${DEFAULT_WEB_URL}paypal/success&native_xo=1"
-        internal const val REDIRECT_PARAM_NAME = "redirect_uri"
-        internal const val TOKEN_KEY = "token"
-        internal const val PAYER_ID_KEY = "PayerID"
-        internal const val FLOW_ID_KEY = "flowId"
-        internal const val OP_TYPE_KEY = "opType"
-        internal const val CANCEL_TYPE = "cancel"
-        internal const val COMPLETE_TYPE = "payment"
+        internal const val URL_SCHEME = "${BuildConfig.LIBRARY_PACKAGE_NAME}.paypal.checkout"
 
         object Errors {
             const val PAY_PAL_ERROR =

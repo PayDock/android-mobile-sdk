@@ -3,6 +3,27 @@
 
 
 echo "
+=====================
+|  Ensuring branch naming...
+=====================
+"
+
+# Ensure branch validation before running Detekt
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+ENSURE_SCRIPT="$PROJECT_ROOT/scripts/ensure-validation.sh"
+
+if [ -f "$ENSURE_SCRIPT" ]; then
+  if ! "$ENSURE_SCRIPT" --quiet; then
+    echo "==============================================="
+    echo "        branch name validation failed          "
+    echo "  Fix branch name per scripts/README.md        "
+    echo "==============================================="
+    exit 1
+  fi
+fi
+
+echo "
 ===================
 |  Formatting code with detektFormat...
 ===================

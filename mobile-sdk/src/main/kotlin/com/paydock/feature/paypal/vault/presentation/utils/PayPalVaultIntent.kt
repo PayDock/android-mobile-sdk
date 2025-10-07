@@ -9,7 +9,18 @@ private object PayPalVaultIntent {
     const val SETUP_TOKEN = "PAYPAL_SETUP_TOKEN" // Key for the PayPal setup token extra
     const val CLIENT_ID = "CLIENT_ID" // Key for the client ID extra
     const val CANCELLATION_STATUS = "CANCELLATION_STATUS" // Key for the cancellation status extra
+    const val APPROVAL_SESSION_ID = "APPROVAL_SESSION_ID" // Key for success flow session ID
 }
+
+/**
+ * Extension function to add the approval session ID to an Intent.
+ * This ID is typically returned upon successful completion of the PayPal Vault flow.
+ *
+ * @param sessionId The approval session ID to be added.
+ * @return The updated Intent with the approval session ID included.
+ */
+internal fun Intent.putApprovalSessionIdExtra(sessionId: String): Intent =
+    putExtra(PayPalVaultIntent.APPROVAL_SESSION_ID, sessionId)
 
 /**
  * Extension function to add the PayPal setup token to an Intent.

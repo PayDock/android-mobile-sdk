@@ -11,15 +11,10 @@
             android:value="true" />
 
         <activity
-            android:name=".feature.paypal.checkout.presentation.PayPalWebActivity"
-            android:launchMode="singleInstance"
-            android:theme="@style/SdkDialog"
-            android:windowSoftInputMode="adjustResize" />
-
-        <activity
             android:name=".feature.colespay.presentation.ColesPayWebActivity"
-            android:launchMode="singleInstance"
+            android:launchMode="singleTop"
             android:theme="@style/SdkDialog"
+            android:configChanges="orientation|screenSize"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
@@ -27,10 +22,26 @@
             android:exported="true"
             android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize"
             android:theme="@style/SdkNoActionBarTheme" >
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <data android:scheme="com.paydock.paypal.vault"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".feature.paypal.checkout.presentation.PayPalWebCheckoutActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize"
+            android:theme="@style/SdkNoActionBarTheme" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <data android:scheme="com.paydock.paypal.checkout"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
             </intent-filter>

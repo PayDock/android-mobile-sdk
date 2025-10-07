@@ -9,6 +9,8 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.paydock.core.MobileSDKConstants
@@ -69,14 +71,19 @@ fun ClickToPayWidget(
             verticalArrangement = Arrangement.spacedBy(WidgetDefaults.Spacing, Alignment.Top),
             horizontalAlignment = Alignment.Start
         ) {
-            // Generate HTML string for Click to Pay checkout
-            val htmlString = HtmlWidgetBuilder.createHtml(
-                config = WidgetConfig.ClickToPayConfig(
-                    accessToken = config.accessToken,
-                    serviceId = config.serviceId,
-                    meta = config.meta
+            val htmlString by rememberSaveable(
+                inputs = arrayOf(config.accessToken, config.serviceId, config.meta)
+            ) {
+                mutableStateOf(
+                    HtmlWidgetBuilder.createHtml(
+                        config = WidgetConfig.ClickToPayConfig(
+                            accessToken = config.accessToken,
+                            serviceId = config.serviceId,
+                            meta = config.meta
+                        )
+                    )
                 )
-            )
+            }
             // Render WebView for Click to Pay
             SdkWebView(
                 webUrl = MobileSDKConstants.DEFAULT_WEB_URL, // Placeholder URL

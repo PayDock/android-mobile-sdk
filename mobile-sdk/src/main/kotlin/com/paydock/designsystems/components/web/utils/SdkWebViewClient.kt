@@ -1,5 +1,6 @@
 package com.paydock.designsystems.components.web.utils
 
+import android.graphics.Bitmap
 import android.util.Log
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -21,7 +22,65 @@ internal class SdkWebViewClient(
     private val onShouldOverrideUrlLoading: ((request: WebResourceRequest?) -> Boolean)? = null,
     private val onPageFinished: (WebView) -> Unit = {},
     private val onWebViewError: (Int, String) -> Unit,
+    /**
+     * When true, delegates lifecycle callbacks to the base AccompanistWebViewClient.
+     * Must be false when this client is used with a raw Android WebView (not the Compose WebView),
+     * because the base class relies on an internal state that is only initialized by the Compose wrapper.
+     */
+    private val delegateToAccompanist: Boolean = true,
 ) : AccompanistWebViewClient() {
+
+    companion object {
+        fun mapWebViewErrorMessage(errorCode: Int): String = when (errorCode) {
+            ERROR_AUTHENTICATION -> "User authentication failed. Please check your credentials and try again."
+            ERROR_TIMEOUT -> "The server is taking too much time to respond. Please try again later."
+            ERROR_TOO_MANY_REQUESTS -> "Too many requests. Please try again later."
+            ERROR_UNKNOWN -> "An unknown error occurred. Please try again later."
+            ERROR_BAD_URL -> "The URL you entered is not valid. Please check the URL and try again."
+            ERROR_CONNECT -> "Failed to connect to the server. Please check your internet connection and try again."
+            ERROR_FAILED_SSL_HANDSHAKE -> "Failed to establish a secure connection to the server."
+            ERROR_HOST_LOOKUP -> "Failed to lookup server hostname. Please check your internet connection and try again."
+            ERROR_PROXY_AUTHENTICATION -> "Proxy authentication failed. Please check your proxy credentials and try again."
+            ERROR_REDIRECT_LOOP -> "Too many redirects. Please try again later."
+            ERROR_UNSUPPORTED_AUTH_SCHEME -> "Unsupported authentication scheme. Please try again later."
+            ERROR_UNSUPPORTED_SCHEME -> "Unsupported URL scheme. Please try again later."
+            ERROR_FILE -> "File-related error. Please try again later."
+            ERROR_FILE_NOT_FOUND -> "File not found. Please try again later."
+            ERROR_IO -> "The server failed to communicate. Please try again later."
+            else -> "An unknown error occurred. Please try again later."
+        }
+    }
+
+    @Volatile
+    private var criticalErrorOccurredInSession: Boolean = false
+    private var currentMainUrl: String? = null
+
+    /**
+     * Called when a page starts loading. This method resets the critical error flag if the main URL
+     * changes or if it's the first page load.
+     *
+     * @param view The WebView that is loading the content.
+     * @param url The URL of the page that is starting to load.
+     * @param favicon The favicon for the page, or null if there isn't one.
+     */
+    override fun onPageStarted(
+        view: WebView,
+        url: String?,
+        favicon: Bitmap?
+    ) {
+        if (delegateToAccompanist) {
+            super.onPageStarted(view, url, favicon)
+        }
+        // If the main URL changes or it's the first load, reset the error flag.
+        if (currentMainUrl != url) {
+            Log.d(
+                MobileSDKConstants.MOBILE_SDK_TAG,
+                "New page loading ($url), resetting critical error flag."
+            )
+            criticalErrorOccurredInSession = false
+            currentMainUrl = url
+        }
+    }
 
     /**
      * Called when a page has finished loading. Invokes the provided [onPageFinished] callback.
@@ -30,7 +89,9 @@ internal class SdkWebViewClient(
      * @param url The URL of the loaded page.
      */
     override fun onPageFinished(view: WebView, url: String?) {
-        super.onPageFinished(view, url)
+        if (delegateToAccompanist) {
+            super.onPageFinished(view, url)
+        }
         onPageFinished(view)
     }
 
@@ -47,9 +108,14 @@ internal class SdkWebViewClient(
         view: WebView,
         request: WebResourceRequest?
     ): Boolean {
-        return onShouldOverrideUrlLoading?.let {
-            it(request)
-        } ?: super.shouldOverrideUrlLoading(view, request)
+        return onShouldOverrideUrlLoading?.let { callback ->
+            callback(request)
+        } ?: if (delegateToAccompanist) {
+            super.shouldOverrideUrlLoading(view, request)
+        } else {
+            // Default WebView behavior: do not override
+            false
+        }
     }
 
     /**
@@ -69,14 +135,42 @@ internal class SdkWebViewClient(
         if (error != null) {
             // Get a user-friendly error message based on the WebView error code.
             val errorMessage = getWebViewErrorMessage(error.errorCode)
+            val errorCode = error.errorCode
 
-            // If the error occurred on the main frame, consider it critical and trigger the error callback.
-            if (request?.isForMainFrame == true) {
-                Log.d(MobileSDKConstants.MOBILE_SDK_TAG, "Fatal error: $errorMessage")
-                onWebViewError(error.errorCode, errorMessage)
+            // Treat only concrete network failures as critical. Do NOT mark ERROR_UNKNOWN (-1)
+            // as critical on its own because it's frequently emitted for benign subresource
+            // failures (e.g., feature flag streams like LaunchDarkly) when not in the main frame.
+            val isCriticalNetworkError = when (errorCode) {
+                ERROR_HOST_LOOKUP,
+                ERROR_CONNECT,
+                ERROR_TIMEOUT,
+                ERROR_IO -> true
+                else -> false
+            }
+            val isErrorFatalForSession = isCriticalNetworkError || request?.isForMainFrame == true
+
+            if (isErrorFatalForSession) {
+                if (!criticalErrorOccurredInSession) {
+                    criticalErrorOccurredInSession = true
+                    Log.d(
+                        MobileSDKConstants.MOBILE_SDK_TAG,
+                        "First critical error in session (code $errorCode, " +
+                            "mainFrame: ${request?.isForMainFrame}, " +
+                            "url: ${request?.url}): $errorMessage"
+                    )
+                    onWebViewError(errorCode, errorMessage)
+                } else {
+                    Log.d(
+                        MobileSDKConstants.MOBILE_SDK_TAG,
+                        "Subsequent critical error in session ignored (code $errorCode, url: ${request?.url}): $errorMessage"
+                    )
+                }
             } else {
-                // Log non-fatal errors without triggering the error callback.
-                Log.d(MobileSDKConstants.MOBILE_SDK_TAG, "Non-Fatal error: $errorMessage")
+                // Log non-fatal errors (e.g., error loading a sub-frame image) without triggering the main error callback.
+                Log.d(
+                    MobileSDKConstants.MOBILE_SDK_TAG,
+                    "Non-Fatal sub-resource error (code $errorCode, url: ${request?.url}): $errorMessage"
+                )
             }
         }
     }
@@ -90,22 +184,5 @@ internal class SdkWebViewClient(
      * @return A user-friendly error message corresponding to the given error code.
      */
     @Suppress("CyclomaticComplexMethod")
-    private fun getWebViewErrorMessage(errorCode: Int): String = when (errorCode) {
-        ERROR_AUTHENTICATION -> "User authentication failed. Please check your credentials and try again."
-        ERROR_TIMEOUT -> "The server is taking too much time to respond. Please try again later."
-        ERROR_TOO_MANY_REQUESTS -> "Too many requests. Please try again later."
-        ERROR_UNKNOWN -> "An unknown error occurred. Please try again later."
-        ERROR_BAD_URL -> "The URL you entered is not valid. Please check the URL and try again."
-        ERROR_CONNECT -> "Failed to connect to the server. Please check your internet connection and try again."
-        ERROR_FAILED_SSL_HANDSHAKE -> "Failed to establish a secure connection to the server."
-        ERROR_HOST_LOOKUP -> "Failed to lookup server hostname. Please check your internet connection and try again."
-        ERROR_PROXY_AUTHENTICATION -> "Proxy authentication failed. Please check your proxy credentials and try again."
-        ERROR_REDIRECT_LOOP -> "Too many redirects. Please try again later."
-        ERROR_UNSUPPORTED_AUTH_SCHEME -> "Unsupported authentication scheme. Please try again later."
-        ERROR_UNSUPPORTED_SCHEME -> "Unsupported URL scheme. Please try again later."
-        ERROR_FILE -> "File-related error. Please try again later."
-        ERROR_FILE_NOT_FOUND -> "File not found. Please try again later."
-        ERROR_IO -> "The server failed to communicate. Please try again later."
-        else -> "An unknown error occurred. Please try again later."
-    }
+    private fun getWebViewErrorMessage(errorCode: Int): String = mapWebViewErrorMessage(errorCode)
 }

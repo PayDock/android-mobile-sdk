@@ -17,7 +17,12 @@ internal class CardNumberInputTransformation(
     subSectionSizes: List<Int> = emptyList() // Default to emptyList
 ) : VisualTransformation {
 
-    private val subSectionSizes: List<Int> = subSectionSizes.ifEmpty { listOf(4, 8, 12, 16) }
+    companion object {
+        private val DEFAULT_SIZES: List<Int> = listOf(4, 8, 12, 16)
+        val GIFT_CARD_SIZES: List<Int> = DEFAULT_SIZES + listOf(20, 24)
+    }
+
+    private val subSectionSizes: List<Int> = subSectionSizes.ifEmpty { DEFAULT_SIZES }
 
     /**
      * Filters and formats the input text for card numbers based on the provided subsection sizes.

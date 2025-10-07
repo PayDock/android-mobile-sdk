@@ -7,6 +7,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
@@ -31,7 +33,8 @@ internal fun CardSchemeIcon(cardType: CardType?, focused: Boolean = false) {
     SdkIcon(
         modifier = Modifier
             .testTag("cardIcon")
-            .width(24.dp),
+            .width(24.dp)
+            .semantics { hideFromAccessibility() },
         painter = painterResource(id = mapSchemeToDrawable(cardType)),
         contentDescription = cardType?.displayLabel(),
         appearance = IconAppearanceDefaults.appearance().copy(

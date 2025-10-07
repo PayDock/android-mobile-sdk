@@ -43,13 +43,18 @@ class ClickToPayActivity : ComponentActivity() {
             ClickToPayScreen(stylingViewModel) { result ->
                 val intent = Intent().putExtra("isSuccess", result.isSuccess)
                 result.onSuccess {
-                    intent.putExtra("token", it)
-                    setResult(RESULT_OK, intent)
+                    setResult(
+                        RESULT_OK,
+                        intent.putExtra("token", it)
+                    )
                     finish()
                 }.onFailure {
                     val error = it.toError()
-                    intent.putExtra("message", error.displayableMessage)
-                    setResult(RESULT_OK, intent)
+                    setResult(
+                        RESULT_OK,
+                        intent.putExtra("message", error.displayableMessage)
+                    )
+                    finish()
                 }
             }
         }

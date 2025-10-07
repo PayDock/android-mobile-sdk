@@ -206,6 +206,7 @@ internal class AfterpayViewModel(
         context: Context,
         config: AfterpaySDKConfig
     ) {
+        setLoadingState()
         val checkoutIntent = createCheckoutIntent(context, config)
         tokenProvider.invoke { tokenResult ->
             tokenResult.onSuccess { result ->

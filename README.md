@@ -1,5 +1,10 @@
+[![GitLab Pipeline Status](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/badges/main/pipeline.svg)](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/-/pipelines?scope=branches&ref=main)
+[![Coverage](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/badges/main/coverage.svg?job=test)](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/-/pipelines?scope=branches&ref=main)
 ![GitHub Release](https://img.shields.io/github/v/release/PayDock/android-mobile-sdk)
-[![](https://www.jitpack.io/v/PayDock/android-mobile-sdk.svg)](https://www.jitpack.io/#PayDock/android-mobile-sdk)
+[![Maven Central](https://img.shields.io/maven-central/v/com.paydock/mobile-sdk.svg)](https://central.sonatype.com/artifact/com.paydock/mobile-sdk)
+![Kotlin](https://img.shields.io/badge/kotlin-2.2.20-7F52FF?logo=kotlin&logoColor=white)
+![Android Min SDK](https://img.shields.io/badge/minSdk-24-3DDC84?logo=android&logoColor=white)
+![Compile SDK](https://img.shields.io/badge/compileSdk-36-3DDC84?logo=android&logoColor=white)
 
 # Project Description
 
@@ -22,7 +27,7 @@ details.
    signup for a sandbox account, and then following
    our [integration guide](https://docs.paydock.com/#getting-started) .
 2. [Setup](https://github.com/PayDock/mobile-sdk-doc/blob/main/setup/installation.md#setup-the-paydock-android-sdk)
-   the iOS or Android SDK.
+   the Android SDK.
 3. [Configure](https://github.com/PayDock/mobile-sdk-doc/blob/main/setup/installation.md#step-1-configure-repository-access-1)
    repository access.
 4. [Add](https://github.com/PayDock/mobile-sdk-doc/blob/main/setup/installation.md#step-2-add-sdk-dependency-1)
@@ -103,3 +108,24 @@ COLES_PAY_CLIENT_ID= your_coles_pay_client_id
    *   `sandboxDebug`
    *   `prodDebug`
 4.  **Run the App:** Click the "Run" button (green play icon) in Android Studio to build and run the sample app on an emulator or a connected device.
+
+## Android notes: WebView-based flows and rotation
+
+For JS-driven webflows (Click to Pay, 3DS), the JS runtime inside the WebView will reinitialize if the hosting Activity is recreated (e.g., orientation change). To avoid losing in-page state:
+
+- Prefer hosting these flows in a dedicated Activity and opt out of Activity recreation for orientation/size changes:
+
+```xml
+<activity
+    android:name=".feature.WebActivity"
+    android:exported="true"
+    android:launchMode="singleTop"
+    android:configChanges="orientation|screenSize"
+    android:windowSoftInputMode="adjustResize" />
+```
+
+Apply the same to 3DS demo Activities. The SDK also:
+- Uses saveable WebView state and stable HTML generation to minimize reloads.
+- Avoids persisting sensitive card data (PAN/CVV/expiry) across process death; rely on OS Autofill to re-fill when needed.
+
+If you cannot opt out of recreation, pass a resumable session/token to the widget config so the flow can re-bootstrap after restore.
