@@ -585,8 +585,8 @@ platform :android do
         # This lane automates the process of creating and pushing a tag to the GitLab repository.
         # It extracts the version number from the unified helper function.
 
-        # Get the version name using the unified helper function
-        version_tag = get_version_tag()
+        # Get the version name using the unified helper function (require Gradle)
+        version_tag = get_version_tag(require_gradle: true)
 
         # Configure Git user (if needed).
         sh("git config --global user.email \"ricardo.dasilva@paydock.com\"") # Sets the Git user email.
@@ -598,22 +598,21 @@ platform :android do
         existing_tag = sh("git tag -l #{version_tag}", log: false).strip
         if existing_tag == version_tag
             UI.message("Tag #{version_tag} already exists; skipping creation and push")
-            return
+        else
+            # Create and push the tag.
+            sh("git tag -a #{version_tag} -m \"Release version #{version_tag}\"") # Creates an annotated Git tag.
+            #   - '-a': Creates an annotated tag.
+            #   - '#{version_tag}': The tag name (e.g., "1.0.0").
+            #   - '-m': Specifies the tag message.
+
+            # Use the GITLAB_TOKEN environment variable for authentication.
+            git_url_with_token = "https://gitlab-ci-token:#{ENV['GITLAB_TOKEN']}@gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android.git"
+            sh("git remote set-url origin #{git_url_with_token}") # Updates the remote URL to include the token.
+            #   - 'ENV['GITLAB_TOKEN']': Accesses the 'GITLAB_TOKEN' environment variable.
+
+            # Push the tag to the remote repository.
+            sh("git push origin #{version_tag}") # Pushes the tag to the remote repository.
         end
-
-        # Create and push the tag.
-        sh("git tag -a #{version_tag} -m \"Release version #{version_tag}\"") # Creates an annotated Git tag.
-        #   - '-a': Creates an annotated tag.
-        #   - '#{version_tag}': The tag name (e.g., "1.0.0").
-        #   - '-m': Specifies the tag message.
-
-        # Use the GITLAB_TOKEN environment variable for authentication.
-        git_url_with_token = "https://gitlab-ci-token:#{ENV['GITLAB_TOKEN']}@gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android.git"
-        sh("git remote set-url origin #{git_url_with_token}") # Updates the remote URL to include the token.
-        #   - 'ENV['GITLAB_TOKEN']': Accesses the 'GITLAB_TOKEN' environment variable.
-
-        # Push the tag to the remote repository.
-        sh("git push origin #{version_tag}") # Pushes the tag to the remote repository.
     end
 
     desc "Creates a release on GitLab"
@@ -739,9 +738,23 @@ platform :android do
     # 4. Latest git tag (existing tags - fallback for local dev)
     #
     # @param options [Hash] Lane options that may contain a :version key
+    #   - :require_gradle [Boolean] if true, only accept Gradle version and fail otherwise
     # @return [String] The version tag (without 'v' prefix), or "unknown" if none found
     def get_version_tag(options = {})
         begin
+            # If Gradle is strictly required (e.g., for tag creation), do that first and error if it fails
+            if options[:require_gradle]
+                begin
+                    repo_root = File.expand_path('..', __dir__)
+                    result = sh("cd #{repo_root} && ./gradlew -q :mobile-sdk:printVersionName", log: false).strip
+                    version_match = result.match(/(\d+\.\d+\.\d+)/)
+                    return version_match[1] if version_match
+                    UI.user_error!("Failed to parse version from Gradle output: '#{result}'")
+                rescue => gradle_ex
+                    UI.user_error!("Could not get Gradle version: #{gradle_ex.message}")
+                end
+            end
+
             # 1. Check if version was passed as a lane option
             version_tag = options[:version]
             return version_tag.gsub(/^v/, '') if version_tag && !version_tag.empty?
@@ -752,8 +765,9 @@ platform :android do
 
             # 3. Get gradle project version (current project version for new releases)
             begin
-                # Use the Gradle wrapper to print the version name from the mobile-sdk module
-                result = sh("./gradlew -q :mobile-sdk:printVersionName", log: false).strip
+                # Use the Gradle wrapper from repo root; compute absolute path from this Fastfile
+                repo_root = File.expand_path('..', __dir__)
+                result = sh("cd #{repo_root} && ./gradlew -q :mobile-sdk:printVersionName", log: false).strip
                 version_match = result.match(/(\d+\.\d+\.\d+)/)
                 return version_match[1] if version_match
             rescue => gradle_ex
