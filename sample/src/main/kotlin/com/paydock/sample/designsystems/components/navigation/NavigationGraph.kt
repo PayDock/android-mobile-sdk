@@ -13,7 +13,9 @@ import androidx.navigation.navArgument
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.theme.AppTheme
 import com.paydock.sample.feature.account.ui.AccountScreen
-import com.paydock.sample.feature.checkout.ui.CheckoutStandaloneScreen
+import com.paydock.sample.feature.checkout.ui.EnhancedCheckoutScreen
+import com.paydock.sample.feature.shop.ui.CartScreen
+import com.paydock.sample.feature.shop.ui.ProductListScreen
 import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.style.mapper.mapAppearanceComponentToSubComponents
 import com.paydock.sample.feature.style.mapper.mapWidgetTypeToAppearanceComponents
@@ -34,9 +36,28 @@ fun NavigationGraph(
     stylingViewModel: StylingViewModel,
     onThemeSelected: (AppTheme) -> Unit
 ) {
-    NavHost(navController, startDestination = BottomNavItem.Checkout.route) {
-        composable(BottomNavItem.Checkout.route) {
-            CheckoutStandaloneScreen(stylingViewModel = stylingViewModel)
+    NavHost(navController, startDestination = "shop") {
+        composable("shop") {
+            ProductListScreen(
+                onCartClick = { navController.navigate("cart") },
+                onProfileClick = { navController.navigate("account") }
+            )
+        }
+        composable("cart") {
+            CartScreen(
+                onCheckout = { navController.navigate("checkout") },
+                onContinueShopping = { navController.navigateUp() }
+            )
+        }
+        composable("checkout") {
+            EnhancedCheckoutScreen(
+                onDismiss = {
+                    navController.navigate("shop") {
+                        popUpTo("shop") { inclusive = false }
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
         composable(BottomNavItem.Widgets.route) {
             WidgetsScreen { widgetType ->
@@ -144,6 +165,8 @@ fun NavigationGraph(
 
 fun NavBackStackEntry.getRouteTitle(context: Context): String {
     return when (destination.route) {
+        "shop" -> "Shop"
+        "cart" -> "Cart"
         "checkout" -> context.getString(R.string.nav_checkout)
         "widgets" -> context.getString(R.string.nav_widgets)
         "style" -> context.getString(R.string.nav_style)
@@ -177,7 +200,8 @@ fun NavBackStackEntry.getRouteTitle(context: Context): String {
 
 fun NavBackStackEntry.showBackButton(): Boolean {
     return when (destination.route) {
-        BottomNavItem.Checkout.route,
+        "shop",
+        BottomNavItem.Shop.route,
         BottomNavItem.Widgets.route,
         BottomNavItem.Style.route -> false
 
@@ -187,7 +211,8 @@ fun NavBackStackEntry.showBackButton(): Boolean {
 
 fun NavBackStackEntry.showTitle(): Boolean {
     return when (destination.route) {
-        BottomNavItem.Checkout.route -> false
+        "shop" -> false
+        BottomNavItem.Shop.route -> false
         else -> true
     }
 }

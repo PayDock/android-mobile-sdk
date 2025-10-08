@@ -6,6 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,8 +16,17 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -26,11 +38,14 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.paydock.feature.address.presentation.AddressDetailsAppearanceDefaults
@@ -61,8 +76,10 @@ import com.paydock.sample.designsystems.components.navigation.showBackButton
 import com.paydock.sample.designsystems.components.navigation.showTitle
 import com.paydock.sample.designsystems.theme.AppTheme
 import com.paydock.sample.designsystems.theme.SampleTheme
+import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.style.StylingViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
 
 @AndroidEntryPoint
@@ -182,12 +199,90 @@ fun MainScreenView(
 
     Scaffold(
         topBar = {
+            // Route-aware toolbar content
             CenterAppTopBar(
                 title = actionBarDetails.title,
                 showTitle = actionBarDetails.showTitle,
+                actionContent = if (actionBarDetails.route == "shop") {
+                    {
+                        val cartManager = remember { CartManager.shared }
+                        val cartItemCount by cartManager.cartItems.collectAsState()
+                        val itemCount = cartItemCount.sumOf { it.quantity }
+
+                        var pulse by remember { mutableStateOf(false) }
+                        val badgeScale by animateFloatAsState(
+                            targetValue = if (pulse) 1.2f else 1f,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow
+                            ),
+                            label = "toolbarBadgeScale"
+                        )
+                        var lastCount by remember { mutableStateOf(itemCount) }
+                        val haptic = LocalHapticFeedback.current
+                        LaunchedEffect(itemCount) {
+                            if (itemCount > lastCount) {
+                                pulse = true
+                                delay(300)
+                                pulse = false
+                            }
+                            lastCount = itemCount
+                        }
+
+                        // Cart button with badge (uses default ripple)
+                        BadgedBox(
+                            badge = {
+                                if (itemCount > 0) {
+                                    Badge(modifier = Modifier.scale(badgeScale)) {
+                                        val countText =
+                                            if (itemCount > 99) "99+" else itemCount.toString()
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Text(
+                                                text = countText,
+                                                style = MaterialTheme.typography.labelSmall
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        ) {
+                            IconButton(onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                navController.navigate("cart")
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.ShoppingCart,
+                                    contentDescription = "Shopping Cart ($itemCount items)"
+                                )
+                            }
+                        }
+
+                        // Account/Profile button
+                        IconButton(onClick = { navController.navigate("account") }) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Account Profile"
+                            )
+                        }
+                    }
+                } else null,
+                // For checkout route, default back arrow via onBackButtonClick
+                navigationContent = null,
                 onActionButtonClick = { navController.navigate("account") },
                 onBackButtonClick = if (actionBarDetails.showBackButton) {
-                    { navController.navigateUp() }
+                    {
+                        val currentRoute = actionBarDetails.route
+                        if (currentRoute?.contains("checkout") == true) {
+                            // Let checkout handle back navigation between steps first
+                            val handled =
+                                com.paydock.sample.feature.checkout.presentation.CheckoutBackCoordinator.onToolbarBack?.invoke() == true
+                            if (!handled) {
+                                navController.popBackStack()
+                            }
+                        } else {
+                            navController.navigateUp()
+                        }
+                    }
                 } else null
             )
         },
@@ -227,6 +322,7 @@ class ActionBarDetails(
     val title: String,
     val showBackButton: Boolean,
     val showTitle: Boolean,
+    val route: String,
 )
 
 // Function to calculate action bar details, remember the result
@@ -235,17 +331,19 @@ fun rememberActionBarDetails(navController: NavHostController, context: Context)
     var actionBarTitle by rememberSaveable { mutableStateOf("") }
     var showBackButton by rememberSaveable { mutableStateOf(false) }
     var showTitle by rememberSaveable { mutableStateOf(true) }
+    var route by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(navController) {
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
             actionBarTitle = backStackEntry.getRouteTitle(context)
             showBackButton = backStackEntry.showBackButton()
             showTitle = backStackEntry.showTitle()
+            route = backStackEntry.destination.route ?: ""
         }
     }
 
-    return remember(actionBarTitle, showBackButton, showTitle) {
-        ActionBarDetails(actionBarTitle, showBackButton, showTitle)
+    return remember(actionBarTitle, showBackButton, showTitle, route) {
+        ActionBarDetails(actionBarTitle, showBackButton, showTitle, route)
     }
 }
 

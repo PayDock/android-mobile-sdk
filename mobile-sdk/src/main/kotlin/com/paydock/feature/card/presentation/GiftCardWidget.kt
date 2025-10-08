@@ -81,8 +81,8 @@ fun GiftCardWidget(
     val largeFontScaleThreshold = MobileSDKConstants.CardDetailsConfig.FONT_SCALE_THRESHOLD
 
     // Focus handlers for input fields
-    val focusCardNumber = FocusRequester()
-    val focusCardPin = FocusRequester()
+    val focusCardNumber = remember { FocusRequester() }
+    val focusCardPin = remember { FocusRequester() }
 
     // React to changes in the UI state
     LaunchedEffect(uiState) {

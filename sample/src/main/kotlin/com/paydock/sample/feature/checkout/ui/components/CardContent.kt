@@ -1,11 +1,9 @@
 package com.paydock.sample.feature.checkout.ui.components
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.CardResult
@@ -18,6 +16,7 @@ import com.paydock.sample.feature.style.StylingViewModel
 @Composable
 fun CardContent(
     stylingViewModel: StylingViewModel,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     loadingDelegate: WidgetLoadingDelegate?,
     resultHandler: (Result<CardResult>) -> Unit
@@ -26,7 +25,7 @@ fun CardContent(
     val currentOrDefaultAppearance =
         cardDetailsAppearance ?: CardDetailsAppearanceDefaults.appearance()
     CardDetailsWidget(
-        modifier = Modifier.padding(vertical = 16.dp),
+        modifier = modifier,
         enabled = enabled,
         appearance = currentOrDefaultAppearance,
         config = CardDetailsWidgetConfig(

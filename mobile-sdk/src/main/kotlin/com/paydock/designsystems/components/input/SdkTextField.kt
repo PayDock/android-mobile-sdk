@@ -27,9 +27,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.contentType
-import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
@@ -41,6 +39,7 @@ import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.icon.IconAppearance
 import com.paydock.designsystems.components.icon.IconAppearanceDefaults
 import com.paydock.designsystems.components.icon.SdkIcon
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults.appearance
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
@@ -452,8 +451,6 @@ internal fun TextFieldErrorLabelPreview() {
         TextFieldErrorLabel(error = "This is an error message")
     }
 }
-
-// Deprecated autofill node approach removed. We rely on semantics (contentType) only.
 
 /**
  * Composable function to preview an empty state of the SdkTextField.

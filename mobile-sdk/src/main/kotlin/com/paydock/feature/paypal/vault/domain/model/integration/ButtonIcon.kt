@@ -23,5 +23,5 @@ sealed class ButtonIcon {
      * @property drawable The resource ID of the drawable, annotated with `@DrawableRes` to
      * ensure type safety.
      */
-    data class DrawableRes(@androidx.annotation.DrawableRes val drawable: Int) : ButtonIcon()
+    data class DrawableRes(@param:androidx.annotation.DrawableRes val drawable: Int) : ButtonIcon()
 }

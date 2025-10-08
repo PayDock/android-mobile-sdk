@@ -26,6 +26,8 @@ fun CenterAppTopBar(
     title: String,
     showTitle: Boolean,
     modifier: Modifier = Modifier,
+    actionContent: (@Composable (() -> Unit))? = null,
+    navigationContent: (@Composable (() -> Unit))? = null,
     onActionButtonClick: (() -> Unit)? = null,
     onBackButtonClick: (() -> Unit)? = null,
 ) {
@@ -39,16 +41,21 @@ fun CenterAppTopBar(
             },
             modifier = modifier,
             navigationIcon = {
-                onBackButtonClick?.let { clickListener ->
-                    IconButton(onClick = { clickListener.invoke() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                            contentDescription = "back",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
+                if (navigationContent != null) {
+                    navigationContent()
+                } else {
+                    onBackButtonClick?.let { clickListener ->
+                        IconButton(onClick = { clickListener.invoke() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                                contentDescription = "back",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
                 }
             },
+            actions = { actionContent?.invoke() },
             colors = TopAppBarDefaults.topAppBarColors()
                 .copy(containerColor = MaterialTheme.colorScheme.surfaceContainer)
         )
@@ -62,22 +69,30 @@ fun CenterAppTopBar(
                 )
             },
             actions = {
-                IconButton(onClick = { onActionButtonClick?.invoke() }) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "Profile",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
+                if (actionContent != null) {
+                    actionContent()
+                } else {
+                    IconButton(onClick = { onActionButtonClick?.invoke() }) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Profile",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
             },
             navigationIcon = {
-                onBackButtonClick?.let { clickListener ->
-                    IconButton(onClick = { clickListener.invoke() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                            contentDescription = "back",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
+                if (navigationContent != null) {
+                    navigationContent()
+                } else {
+                    onBackButtonClick?.let { clickListener ->
+                        IconButton(onClick = { clickListener.invoke() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                                contentDescription = "back",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
                 }
             },

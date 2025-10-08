@@ -12,7 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.sample.designsystems.components.dialogs.ErrorDialog
 import com.paydock.sample.feature.checkout.StandaloneCheckoutViewModel
 import com.paydock.sample.feature.checkout.ui.components.Checkout3DSBottomSheet

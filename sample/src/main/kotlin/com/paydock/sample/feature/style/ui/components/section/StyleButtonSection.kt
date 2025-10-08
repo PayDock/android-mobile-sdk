@@ -132,7 +132,6 @@ fun ButtonAppearanceStyleEditor(
                 onAppearanceChange = onAppearanceChange
             )
 
-            else -> Text("$appearanceForEditing not implemented!")
         }
     }
 }

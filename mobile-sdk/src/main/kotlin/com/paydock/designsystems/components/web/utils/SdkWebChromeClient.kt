@@ -98,10 +98,6 @@ internal class SdkWebChromeClient(
             )
 
             ConsoleMessage.MessageLevel.TIP -> Log.i(MobileSDKConstants.MOBILE_SDK_TAG, logMessage)
-            else -> Log.v(
-                MobileSDKConstants.MOBILE_SDK_TAG,
-                logMessage
-            ) // Verbose for unknown levels
         }
     }
 

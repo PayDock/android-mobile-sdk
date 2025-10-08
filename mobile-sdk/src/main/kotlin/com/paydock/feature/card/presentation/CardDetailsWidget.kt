@@ -89,9 +89,9 @@ fun CardDetailsWidget(
         derivedStateOf { loadingDelegate == null && uiState is CardDetailsUIState.Loading }
     }
 
-    val focusCardNumber = FocusRequester()
-    val focusExpiration = FocusRequester()
-    val focusCVV = FocusRequester()
+    val focusCardNumber = remember { FocusRequester() }
+    val focusExpiration = remember { FocusRequester() }
+    val focusCVV = remember { FocusRequester() }
 
     // Handles UI state changes (success or failure of tokenization)
     LaunchedEffect(uiState) {
