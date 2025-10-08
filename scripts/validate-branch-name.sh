@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Git Branch Name Validation Script
-# Restricts branch creation to specific prefixes: bug/, task/, feature/, release/, spike/
+# Restricts branch creation to specific prefixes: bug/, task/, feature/, deploy/, spike/
 
 set -e
 
 # Define allowed branch prefixes
-ALLOWED_PREFIXES=("bug/" "task/" "feature/" "release/" "spike/")
+ALLOWED_PREFIXES=("bug/" "task/" "feature/" "deploy/" "spike/")
 
 # Colors for output
 RED='\033[0;31m'
@@ -31,7 +31,7 @@ print_warning() {
 validate_branch_name() {
     local branch_name="$1"
     
-    # Skip validation for main/master branches
+    # Skip validation for protected base branches
     if [[ "$branch_name" == "main" || "$branch_name" == "release" ]]; then
         return 0
     fi
@@ -50,9 +50,14 @@ validate_branch_name() {
                 else
                     return 1
                 fi
-            else
-                # For release/ branches, no additional validation needed
-                return 0
+            elif [[ "$prefix" == "deploy/" ]]; then
+                # For deploy/ branches, enforce semantic version: deploy/v<major>.<minor>.<patch>
+                local suffix="${branch_name#$prefix}"
+                if [[ "$suffix" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                    return 0
+                else
+                    return 1
+                fi
             fi
         fi
     done
@@ -75,7 +80,7 @@ show_usage() {
     echo "  - bug/SDK-1234-fix-login-issue"
     echo "  - task/SDK-5678-update-dependencies"
     echo "  - feature/SDK-9012-user-authentication"
-    echo "  - release/v1.2.0"
+    echo "  - deploy/v1.2.0"
     echo "  - spike/SDK-3456-investigate-performance"
     echo ""
     echo "If no branch name is provided, validates the current branch."
@@ -113,20 +118,20 @@ main() {
         echo ""
         echo "Branch naming requirements:"
         echo "  • bug/, task/, feature/, spike/ branches must include Jira ticket (SDK-####)"
-        echo "  • release/ branches can be named freely"
+        echo "  • deploy/ branches must be in the form deploy/v<major>.<minor>.<patch>"
         echo ""
         echo "Required format:"
         echo "  • bug/SDK-####-description"
         echo "  • task/SDK-####-description"  
         echo "  • feature/SDK-####-description"
         echo "  • spike/SDK-####-description"
-        echo "  • release/version-or-description"
+        echo "  • deploy/v<major>.<minor>.<patch>"
         echo ""
         echo "Examples:"
         echo "  git checkout -b bug/SDK-1234-fix-payment-issue"
         echo "  git checkout -b task/SDK-5678-update-readme"
         echo "  git checkout -b feature/SDK-9012-new-payment-method"
-        echo "  git checkout -b release/v2.1.0"
+        echo "  git checkout -b deploy/v2.1.0"
         echo "  git checkout -b spike/SDK-3456-investigate-memory-usage"
         exit 1
     fi

@@ -4,11 +4,11 @@ import androidx.appcompat.app.AppCompatActivity
 import com.paydock.MobileSDK
 import com.paydock.core.domain.mapper.mapToPayPalEnv
 import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
+import com.paydock.feature.paypal.checkout.presentation.viewmodel.PayPalViewModel
 import com.paydock.feature.paypal.checkout.presentation.viewmodel.PayPalWebCheckoutViewModel
-import com.paydock.feature.paypal.checkout.presentation.viewmodels.PayPalViewModel
 import com.paypal.android.corepayments.CoreConfig
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutClient
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**

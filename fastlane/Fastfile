@@ -585,27 +585,34 @@ platform :android do
         # This lane automates the process of creating and pushing a tag to the GitLab repository.
         # It extracts the version number from the unified helper function.
 
-        # Get the version name using the unified helper function
-        version_tag = get_version_tag()
+        # Get the version name using the unified helper function (require Gradle)
+        version_tag = get_version_tag(require_gradle: true)
 
         # Configure Git user (if needed).
         sh("git config --global user.email \"ricardo.dasilva@paydock.com\"") # Sets the Git user email.
         sh("git config --global user.name \"Ricardo\"") # Sets the Git user name.
         # The 'sh' action is used to execute shell commands.
 
-        # Create and push the tag.
-        sh("git tag -a #{version_tag} -m \"Release version #{version_tag}\"") # Creates an annotated Git tag.
-        #   - '-a': Creates an annotated tag.
-        #   - '#{version_tag}': The tag name (e.g., "1.0.0").
-        #   - '-m': Specifies the tag message.
+        # Fetch tags and skip if tag already exists
+        sh("git fetch --tags --prune")
+        existing_tag = sh("git tag -l #{version_tag}", log: false).strip
+        if existing_tag == version_tag
+            UI.message("Tag #{version_tag} already exists; skipping creation and push")
+        else
+            # Create and push the tag.
+            sh("git tag -a #{version_tag} -m \"Release version #{version_tag}\"") # Creates an annotated Git tag.
+            #   - '-a': Creates an annotated tag.
+            #   - '#{version_tag}': The tag name (e.g., "1.0.0").
+            #   - '-m': Specifies the tag message.
 
-        # Use the GITLAB_TOKEN environment variable for authentication.
-        git_url_with_token = "https://gitlab-ci-token:#{ENV['GITLAB_TOKEN']}@gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android.git"
-        sh("git remote set-url origin #{git_url_with_token}") # Updates the remote URL to include the token.
-        #   - 'ENV['GITLAB_TOKEN']': Accesses the 'GITLAB_TOKEN' environment variable.
+            # Use the GITLAB_TOKEN environment variable for authentication.
+            git_url_with_token = "https://gitlab-ci-token:#{ENV['GITLAB_TOKEN']}@gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android.git"
+            sh("git remote set-url origin #{git_url_with_token}") # Updates the remote URL to include the token.
+            #   - 'ENV['GITLAB_TOKEN']': Accesses the 'GITLAB_TOKEN' environment variable.
 
-        # Push the tag to the remote repository.
-        sh("git push origin #{version_tag}") # Pushes the tag to the remote repository.
+            # Push the tag to the remote repository.
+            sh("git push origin #{version_tag}") # Pushes the tag to the remote repository.
+        end
     end
 
     desc "Creates a release on GitLab"
@@ -640,6 +647,9 @@ platform :android do
             **Full Changelog:** [View on GitLab](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/-/commits/#{version_tag})
         RELEASE
 
+        # Sanitize single quotes to avoid breaking single-quoted shell strings
+        release_description_safe = release_description.gsub("'", "’")
+
         # Define the release assets.
         # These are links to external resources related to the release.
         release_assets = [
@@ -654,7 +664,7 @@ platform :android do
         release_data = {
             "name" => release_name, # The name of the release.
             "tag_name" => version_tag, # The tag name of the release.
-            "description" => release_description, # The description of the release.
+            "description" => release_description_safe, # The description of the release.
             "ref" => version_tag, # The reference (tag or branch) for the release.
             "assets" => { # The assets associated with the release.
                 "links" => release_assets # The links to the assets.
@@ -666,14 +676,18 @@ platform :android do
         api_url = "#{api_endpoint}/projects/#{project_id}/releases"
 
         # Create the release using the GitLab API. https://docs.gitlab.com/api/releases/
-        # This uses the 'curl' command to send a POST request to the GitLab API.
-        # --silent: Suppresses progress output.
-        # --header: Specifies the headers for the request (Content-Type and PRIVATE-TOKEN).
-        # --data: Specifies the data payload for the request (the release data in JSON format).
-        # --request POST: Specifies that this is a POST request.
-        response = sh("curl --silent --header 'Content-Type: application/json' --header 'PRIVATE-TOKEN: #{gitlab_token}' \
-            --data '#{release_data}' \
-            --request POST '#{api_url}'")
+        # Avoid shell quoting issues by writing JSON to a temp file and using @file syntax
+        require 'tempfile'
+        tmp = Tempfile.new(["gitlab_release_", ".json"])
+        begin
+            tmp.write(release_data)
+            tmp.flush
+            response = sh("curl --silent --header 'Content-Type: application/json' --header 'PRIVATE-TOKEN: #{gitlab_token}' \
+                --data @#{tmp.path} \
+                --request POST '#{api_url}'")
+        ensure
+            tmp.close!
+        end
 
         # Output the GitLab API response for debugging purposes.
         puts "📢 GitLab API Response: #{response}"
@@ -731,9 +745,23 @@ platform :android do
     # 4. Latest git tag (existing tags - fallback for local dev)
     #
     # @param options [Hash] Lane options that may contain a :version key
+    #   - :require_gradle [Boolean] if true, only accept Gradle version and fail otherwise
     # @return [String] The version tag (without 'v' prefix), or "unknown" if none found
     def get_version_tag(options = {})
         begin
+            # If Gradle is strictly required (e.g., for tag creation), do that first and error if it fails
+            if options[:require_gradle]
+                begin
+                    repo_root = File.expand_path('..', __dir__)
+                    result = sh("cd #{repo_root} && ./gradlew -q :mobile-sdk:printVersionName", log: false).strip
+                    version_match = result.match(/(\d+\.\d+\.\d+)/)
+                    return version_match[1] if version_match
+                    UI.user_error!("Failed to parse version from Gradle output: '#{result}'")
+                rescue => gradle_ex
+                    UI.user_error!("Could not get Gradle version: #{gradle_ex.message}")
+                end
+            end
+
             # 1. Check if version was passed as a lane option
             version_tag = options[:version]
             return version_tag.gsub(/^v/, '') if version_tag && !version_tag.empty?
@@ -744,7 +772,9 @@ platform :android do
 
             # 3. Get gradle project version (current project version for new releases)
             begin
-                result = gradle(task: "-q :network:printVersionName", print_command: false, print_command_output: false)
+                # Use the Gradle wrapper from repo root; compute absolute path from this Fastfile
+                repo_root = File.expand_path('..', __dir__)
+                result = sh("cd #{repo_root} && ./gradlew -q :mobile-sdk:printVersionName", log: false).strip
                 version_match = result.match(/(\d+\.\d+\.\d+)/)
                 return version_match[1] if version_match
             rescue => gradle_ex

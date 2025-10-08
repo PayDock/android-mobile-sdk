@@ -398,10 +398,4 @@ publish_to_maven_central:
   #   - Running JReleaser full release process
   #   - Creating Maven Central deployment
   #   - Updating GitLab release with Maven Central information
-  artifacts:
-    when: always
-    reports:
-    # JReleaser output for debugging
-    paths:
-      - mobile-sdk/build/jreleaser/
   allow_failure: false
