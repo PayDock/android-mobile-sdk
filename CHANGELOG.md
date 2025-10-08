@@ -1,6 +1,6 @@
 # Changelog
 
-## [5.1.0] - 2025-09-01
+## [5.1.0] - 2025-10-07
 
 ### Changed
 - Implemented native PayPal checkout flow using the latest PayPal SDK (`2.0.0`)

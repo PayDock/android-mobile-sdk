@@ -13,6 +13,7 @@ import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.utils.MainDispatcherRule
 import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
+import com.paydock.feature.paypal.checkout.presentation.viewmodel.PayPalViewModel
 import com.paydock.feature.paypal.core.domain.usecase.GetPayPalClientIdUseCase
 import com.paydock.feature.wallet.data.dto.CaptureChargeResponse
 import com.paydock.feature.wallet.data.dto.WalletCallbackResponse

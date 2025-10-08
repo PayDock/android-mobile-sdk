@@ -1,4 +1,4 @@
-package com.paydock.feature.paypal.checkout.presentation.viewmodels
+package com.paydock.feature.paypal.checkout.presentation.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import com.paydock.core.MobileSDKConstants

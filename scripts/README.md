@@ -12,7 +12,7 @@ Automatic enforcement of branch naming conventions for the Mobile SDK Android pr
 ./scripts/ensure-validation.sh --status
 ```
 
-If validation fails, rename your branch to include a Jira ticket for non-release branches (for example `task/SDK-1234-description`).
+If validation fails, rename your branch to include a Jira ticket for non-deploy branches (for example `task/SDK-1234-description`).
 
 ## Branch Naming Conventions
 
@@ -24,7 +24,7 @@ All branches must follow specific naming patterns:
 - `task/SDK-####-description` - For general tasks and maintenance (requires Jira ticket)
 - `feature/SDK-####-description` - For new features (requires Jira ticket)
 - `spike/SDK-####-description` - For research and investigation work (requires Jira ticket)
-- `release/version-or-description` - For release branches (flexible naming)
+- `deploy/v<major>.<minor>.<patch>` - For deployment/release branches (semantic version required)
 
 ### Jira Ticket Requirement
 
@@ -39,8 +39,7 @@ task/SDK-9012-update-dependencies
 task/SDK-3456-refactor-networking
 feature/SDK-7890-apple-pay-integration
 feature/SDK-2468-new-payment-method
-release/v1.2.0
-release/2024-q1
+deploy/v1.2.0
 spike/SDK-1357-investigate-memory-leaks
 spike/SDK-8642-research-new-payment-api
 ```
@@ -81,13 +80,13 @@ Your current branch name does not follow the required naming conventions.
 
 Branch naming requirements:
   • bug/, task/, feature/, spike/ branches must include Jira ticket (SDK-####)
-  • release/ branches can be named freely
+  • deploy/ branches must be named deploy/v<major>.<minor>.<patch>
 
 Examples of valid branch names:
   • bug/SDK-1234-fix-payment-issue
   • task/SDK-5678-update-dependencies
   • feature/SDK-9012-new-payment-method
-  • release/v1.2.0
+  • deploy/v1.2.0
   • spike/SDK-3456-investigate-performance
 
 To fix this:
@@ -255,7 +254,7 @@ The validation can be used in CI/CD pipelines:
 To modify allowed prefixes, edit the `ALLOWED_PREFIXES` array in `validate-branch-name.sh`:
 
 ```bash
-ALLOWED_PREFIXES=("bug/" "task/" "feature/" "release/" "spike/")
+ALLOWED_PREFIXES=("bug/" "task/" "feature/" "deploy/" "spike/")
 ```
 
 ## Pre-commit: Detekt formatting and static analysis

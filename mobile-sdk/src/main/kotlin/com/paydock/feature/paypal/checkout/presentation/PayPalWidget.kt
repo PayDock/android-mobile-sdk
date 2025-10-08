@@ -39,7 +39,7 @@ import com.paydock.feature.paypal.checkout.presentation.utils.getPaymentMethodId
 import com.paydock.feature.paypal.checkout.presentation.utils.putClientIdExtra
 import com.paydock.feature.paypal.checkout.presentation.utils.putFundingSourceExtra
 import com.paydock.feature.paypal.checkout.presentation.utils.putOrderIdExtra
-import com.paydock.feature.paypal.checkout.presentation.viewmodels.PayPalViewModel
+import com.paydock.feature.paypal.checkout.presentation.viewmodel.PayPalViewModel
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paypal.android.paymentbuttons.PayPalButton
