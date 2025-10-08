@@ -96,7 +96,7 @@ internal class ColesPayWebActivity : ComponentActivity() {
                     val colesPayOrderId = requireNotNull(intent.getOrderIdExtra())
                     val colesPayClientId = requireNotNull(intent.getClientIdExtra())
                     // Stores and remembers the ColesPay URL created from the callback URL.
-                    val colesPayUrl: String by rememberSaveable(colesPayOrderId, colesPayClientId) {
+                    val colesPayUrl: String by rememberSaveable(inputs = arrayOf(colesPayOrderId, colesPayClientId)) {
                         mutableStateOf(createColesPayUrl(colesPayOrderId, colesPayClientId))
                     }
                     ColesPayWebView(colesPayUrl = colesPayUrl, onSuccess = {

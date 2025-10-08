@@ -69,7 +69,7 @@ fun AddressDetailsWidget(
     val uiState by viewModel.stateFlow.collectAsState()
 
     // Control whether the manual address section is shown
-    var isManualAddressVisible by rememberSaveable(key = "isManualAddressVisible_${address?.hashCode()}") {
+    var isManualAddressVisible by rememberSaveable(address) {
         // Initialize based on whether an initial address is provided,
         // or if any part of the uiState.billingAddress (from ViewModel) suggests it should be visible.
         mutableStateOf(address != null || !uiState.billingAddress.isEmpty())
