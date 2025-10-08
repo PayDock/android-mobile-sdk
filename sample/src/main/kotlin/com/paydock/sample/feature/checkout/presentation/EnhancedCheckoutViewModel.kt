@@ -1,0 +1,536 @@
+package com.paydock.sample.feature.checkout.presentation
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.paydock.feature.card.domain.model.integration.CardResult
+import com.paydock.feature.threeDS.integrated.domain.model.integration.Integrated3DSResult
+import com.paydock.feature.threeDS.integrated.domain.model.integration.enums.IntegratedEventType
+import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
+import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.StandaloneEventType
+import com.paydock.sample.BuildConfig
+import com.paydock.sample.feature.account.data.UserProfileManager
+import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
+import com.paydock.sample.feature.card.domain.usecase.CreateCardSessionVaultTokenUseCase
+import com.paydock.sample.feature.checkout.ThreeDSType
+import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
+import com.paydock.sample.feature.checkout.domain.model.Address
+import com.paydock.sample.feature.checkout.domain.model.AddressType
+import com.paydock.sample.feature.checkout.domain.model.CheckoutStep
+import com.paydock.sample.feature.checkout.domain.model.ContactInfo
+import com.paydock.sample.feature.checkout.domain.model.PaymentMethod
+import com.paydock.sample.feature.checkout.domain.model.SavedAddress
+import com.paydock.sample.feature.threeDS.data.api.dto.Capture3DSChargeRequest
+import com.paydock.sample.feature.threeDS.data.api.dto.CreateIntegratedThreeDSTokenRequest
+import com.paydock.sample.feature.threeDS.data.api.dto.CreateStandaloneThreeDSTokenRequest
+import com.paydock.sample.feature.threeDS.domain.model.ThreeDSToken
+import com.paydock.sample.feature.threeDS.domain.usecase.CaptureThreeDSChargeTokenUseCase
+import com.paydock.sample.feature.threeDS.domain.usecase.CreateIntegratedThreeDSTokenUseCase
+import com.paydock.sample.feature.threeDS.domain.usecase.CreateStandaloneThreeDSTokenUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class EnhancedCheckoutViewModel @Inject constructor(
+    private val createCardSessionVaultTokenUseCase: CreateCardSessionVaultTokenUseCase,
+    private val createIntegratedThreeDSTokenUseCase: CreateIntegratedThreeDSTokenUseCase,
+    private val createStandaloneThreeDSTokenUseCase: CreateStandaloneThreeDSTokenUseCase,
+    private val captureThreeDSChargeTokenUseCase: CaptureThreeDSChargeTokenUseCase,
+) : ViewModel() {
+    
+    private val profileManager = UserProfileManager.shared
+    
+    // Current step
+    private val _currentStep = MutableStateFlow(CheckoutStep.INFORMATION)
+    val currentStep: StateFlow<CheckoutStep> = _currentStep.asStateFlow()
+    
+    // Contact Information
+    var contactInfo by mutableStateOf(ContactInfo())
+        private set
+    
+    // Addresses
+    var shippingAddress by mutableStateOf(Address())
+        private set
+    
+    var billingAddress by mutableStateOf(Address())
+        private set
+    
+    var useShippingAsBilling by mutableStateOf(true)
+        private set
+    
+    var selectedShippingAddressId by mutableStateOf<String?>(null)
+        private set
+    
+    var selectedBillingAddressId by mutableStateOf<String?>(null)
+        private set
+    
+    // Payment
+    var selectedPaymentMethod by mutableStateOf<PaymentMethod?>(null)
+        private set
+
+    var paymentToken by mutableStateOf<String?>(null)
+        private set
+
+    // 3DS state
+    var threeDSType: ThreeDSType = ThreeDSType.INTEGRATED
+        private set
+
+    var vaultToken by mutableStateOf<String?>(null)
+        private set
+
+    var threeDSToken by mutableStateOf<String?>(null)
+        private set
+    
+    // UI State
+    var showAddressWidget by mutableStateOf(false)
+        private set
+    
+    var addressWidgetType by mutableStateOf(AddressType.SHIPPING)
+        private set
+
+    var addressWidgetInitialAddress by mutableStateOf<Address?>(null)
+        private set
+    
+    var showAlert by mutableStateOf(false)
+        private set
+    
+    var alertTitle by mutableStateOf("")
+        private set
+    
+    var alertMessage by mutableStateOf("")
+        private set
+    
+    var orderCompleted by mutableStateOf(false)
+        private set
+    
+    var isLoading by mutableStateOf(false)
+        private set
+
+    // Controls visibility of payment widget sheet on Payment step
+    var showPaymentWidget by mutableStateOf(false)
+        private set
+    
+    // Get saved addresses from profile manager
+    val savedAddresses: List<SavedAddress>
+        get() = profileManager.profile.value.savedAddresses.map { profileAddress ->
+            SavedAddress(
+                id = profileAddress.id,
+                label = profileAddress.label,
+                address = Address(
+                    addressLine1 = profileAddress.addressLine1,
+                    addressLine2 = profileAddress.addressLine2,
+                    city = profileAddress.city,
+                    state = profileAddress.state,
+                    postalCode = profileAddress.postalCode,
+                    country = profileAddress.country
+                ),
+                isDefault = profileAddress.isDefault
+            )
+        }
+    
+    // Computed properties
+    val isInformationComplete: Boolean
+        get() = contactInfo.isComplete && 
+                shippingAddress.isComplete && 
+                (useShippingAsBilling || billingAddress.isComplete)
+    
+    val canProceed: Boolean
+        get() = when (_currentStep.value) {
+            CheckoutStep.INFORMATION -> isInformationComplete
+            CheckoutStep.PAYMENT -> selectedPaymentMethod != null
+            CheckoutStep.CONFIRMATION -> false
+        }
+    
+    val actionButtonTitle: String
+        get() = when (_currentStep.value) {
+            CheckoutStep.INFORMATION -> "Continue to Payment"
+            CheckoutStep.PAYMENT -> "Place Order"
+            CheckoutStep.CONFIRMATION -> "Done"
+        }
+    
+    // Actions
+    fun updateContactInfo(
+        firstName: String? = null,
+        lastName: String? = null,
+        email: String? = null,
+        phone: String? = null
+    ) {
+        contactInfo = contactInfo.copy(
+            firstName = firstName ?: contactInfo.firstName,
+            lastName = lastName ?: contactInfo.lastName,
+            email = email ?: contactInfo.email,
+            phone = phone ?: contactInfo.phone
+        )
+    }
+    
+    fun updateShippingAddress(address: Address) {
+        shippingAddress = address
+        selectedShippingAddressId = null
+        if (useShippingAsBilling) {
+            billingAddress = address
+        }
+    }
+    
+    fun updateBillingAddress(address: Address) {
+        billingAddress = address
+        selectedBillingAddressId = null
+    }
+    
+    fun setShippingAsBilling(use: Boolean) {
+        useShippingAsBilling = use
+        if (use) {
+            billingAddress = shippingAddress
+            selectedBillingAddressId = null
+        }
+    }
+    
+    fun selectSavedAddress(savedAddress: SavedAddress, type: AddressType) {
+        when (type) {
+            AddressType.SHIPPING -> {
+                selectedShippingAddressId = savedAddress.id
+                shippingAddress = savedAddress.address
+                if (useShippingAsBilling) {
+                    billingAddress = savedAddress.address
+                }
+            }
+            AddressType.BILLING -> {
+                selectedBillingAddressId = savedAddress.id
+                billingAddress = savedAddress.address
+            }
+        }
+    }
+    
+    fun clearShippingAddress() {
+        shippingAddress = Address()
+        selectedShippingAddressId = null
+    }
+    
+    fun clearBillingAddress() {
+        billingAddress = Address()
+        selectedBillingAddressId = null
+    }
+    
+    fun setPaymentMethod(method: PaymentMethod) {
+        selectedPaymentMethod = method
+    }
+
+    fun setThePaymentToken(token: String) {
+        paymentToken = token
+    }
+
+    fun setIsLoading(loading: Boolean) {
+        isLoading = loading
+    }
+    
+    fun showAlert(title: String, message: String) {
+        alertTitle = title
+        alertMessage = message
+        showAlert = true
+    }
+
+    fun routeToFailure() {
+        isLoading = false
+        orderCompleted = false
+        setCurrentStep(CheckoutStep.CONFIRMATION)
+    }
+
+    fun showAddressWidget(type: AddressType, initialAddress: Address? = null) {
+        addressWidgetType = type
+        addressWidgetInitialAddress = initialAddress
+        showAddressWidget = true
+    }
+    
+    fun hideAddressWidget() {
+        showAddressWidget = false
+        addressWidgetInitialAddress = null
+    }
+
+    fun setPaymentWidgetVisible(visible: Boolean) {
+        showPaymentWidget = visible
+    }
+    
+    fun setCurrentStep(step: CheckoutStep) {
+        _currentStep.value = step
+    }
+    
+    fun goToNextStep() {
+        val currentIndex = CheckoutStep.getAllSteps().indexOf(_currentStep.value)
+        if (currentIndex < CheckoutStep.getAllSteps().size - 1) {
+            _currentStep.value = CheckoutStep.getAllSteps()[currentIndex + 1]
+        }
+    }
+    
+    fun goToPreviousStep() {
+        val currentIndex = CheckoutStep.getAllSteps().indexOf(_currentStep.value)
+        if (currentIndex > 0) {
+            _currentStep.value = CheckoutStep.getAllSteps()[currentIndex - 1]
+        }
+    }
+    
+    fun handleActionButton() {
+        when (_currentStep.value) {
+            CheckoutStep.INFORMATION -> goToNextStep()
+            CheckoutStep.PAYMENT -> placeOrder()
+            CheckoutStep.CONFIRMATION -> { /* no-op; actions hidden */
+            }
+        }
+    }
+    
+    fun placeOrder() {
+        viewModelScope.launch {
+            isLoading = true
+            try {
+                orderCompleted = true
+                setCurrentStep(CheckoutStep.CONFIRMATION)
+                
+            } catch (e: Exception) {
+                orderCompleted = false
+                setCurrentStep(CheckoutStep.CONFIRMATION)
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    // --- Card + 3DS flow (extracted from Standalone) ---
+    fun handleCardResult(result: Result<CardResult>) {
+        result.onSuccess {
+            createSessionVaultToken(it.token)
+        }.onFailure {
+            routeToFailure()
+        }
+    }
+
+    private fun createSessionVaultToken(cardToken: String) {
+        viewModelScope.launch {
+            isLoading = true
+            val request = VaultTokenRequest.CreateCardSessionVaultTokenRequest(token = cardToken)
+            val result = createCardSessionVaultTokenUseCase(request)
+            result.onSuccess { token ->
+                vaultToken = token
+                when (threeDSType) {
+                    ThreeDSType.INTEGRATED -> createIntegrated3dsToken(token)
+                    ThreeDSType.STANDALONE -> createStandalone3dsToken(token)
+                }
+            }.onFailure {
+                routeToFailure()
+            }
+        }
+    }
+
+    private fun createIntegrated3dsToken(vaultToken: String) {
+        viewModelScope.launch {
+            val result = createIntegratedThreeDSTokenUseCase(
+                request = CreateIntegratedThreeDSTokenRequest(
+                    customer = ChargesCustomerDTO(
+                        paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
+                            gatewayId = BuildConfig.GATEWAY_ID_MPGS,
+                            vaultToken = vaultToken
+                        )
+                    )
+                )
+            )
+            handle3DSTokenResult(result)
+        }
+    }
+
+    private fun createStandalone3dsToken(vaultToken: String) {
+        viewModelScope.launch {
+            val result = createStandaloneThreeDSTokenUseCase(
+                CreateStandaloneThreeDSTokenRequest(
+                    customer = ChargesCustomerDTO(
+                        paymentSource = ChargesCustomerDTO.PaymentSourceDTO(vaultToken = vaultToken)
+                    )
+                )
+            )
+            handle3DSTokenResult(result)
+        }
+    }
+
+    private fun handle3DSTokenResult(result: Result<ThreeDSToken>) {
+        result.onSuccess { threeDSResult ->
+            val status = threeDSResult.status
+            val hasToken = !threeDSResult.token.isNullOrBlank()
+            val hasId = !threeDSResult.id.isNullOrBlank()
+
+            when {
+                // Explicit NOT_SUPPORTED: proceed to capture if we have an id
+                status == ThreeDSToken.ThreeDSStatus.NOT_SUPPORTED && hasId -> {
+                    when (threeDSType) {
+                        ThreeDSType.INTEGRATED -> captureIntegrated3DSCharge(threeDSResult.id!!)
+                        ThreeDSType.STANDALONE -> captureStandalone3DSCharge(threeDSResult.id!!)
+                    }
+                }
+
+                // Explicit PRE_AUTH_PENDING: open 3DS flow if token present
+                status == ThreeDSToken.ThreeDSStatus.PRE_AUTH_PENDING && hasToken -> {
+                    threeDSToken = threeDSResult.token
+                    isLoading = false
+                }
+
+                // Fallbacks to be resilient to backend status naming:
+                // If a token is present, open 3DS regardless of status string
+                hasToken -> {
+                    threeDSToken = threeDSResult.token
+                    isLoading = false
+                }
+
+                // If no token but an id exists, attempt capture (provider completed silently)
+                hasId -> {
+                    when (threeDSType) {
+                        ThreeDSType.INTEGRATED -> captureIntegrated3DSCharge(threeDSResult.id!!)
+                        ThreeDSType.STANDALONE -> captureStandalone3DSCharge(threeDSResult.id!!)
+                    }
+                }
+
+                // Otherwise treat as failure
+                else -> {
+                    routeToFailure()
+                }
+            }
+        }.onFailure {
+            routeToFailure()
+        }
+    }
+
+    fun handleIntegrated3DSResult(result: Result<Integrated3DSResult>) {
+        result.onSuccess {
+            if (it.event == IntegratedEventType.CHARGE_AUTH_SUCCESS) {
+                it.charge3dsId?.let { id -> captureIntegrated3DSCharge(id) }
+                threeDSToken = null
+            } else if (it.event == IntegratedEventType.CHARGE_AUTH_REJECT) {
+                isLoading = false
+                threeDSToken = null
+                orderCompleted = false
+                setCurrentStep(CheckoutStep.CONFIRMATION)
+            }
+        }.onFailure {
+            isLoading = false
+            threeDSToken = null
+            orderCompleted = false
+            setCurrentStep(CheckoutStep.CONFIRMATION)
+        }
+    }
+
+    fun handleStandalone3DSResult(result: Result<Standalone3DSResult>) {
+        result.onSuccess {
+            if (it.event == StandaloneEventType.CHARGE_AUTH_SUCCESS) {
+                it.charge3dsId?.let { id -> captureStandalone3DSCharge(id) }
+                threeDSToken = null
+            } else if (it.event == StandaloneEventType.CHARGE_AUTH_REJECT ||
+                it.event == StandaloneEventType.CHARGE_ERROR
+            ) {
+                isLoading = false
+                threeDSToken = null
+                orderCompleted = false
+                setCurrentStep(CheckoutStep.CONFIRMATION)
+            }
+        }.onFailure {
+            isLoading = false
+            threeDSToken = null
+            orderCompleted = false
+            setCurrentStep(CheckoutStep.CONFIRMATION)
+        }
+    }
+
+    private fun captureIntegrated3DSCharge(threeDSChargeId: String) {
+        viewModelScope.launch {
+            isLoading = true
+            val request = Capture3DSChargeRequest.CaptureIntegrated3DSChargeRequest(
+                threeDSData = Capture3DSChargeRequest.CaptureIntegrated3DSChargeRequest.ThreeDSChargeData(
+                    threeDSChargeId
+                )
+            )
+            val result = captureThreeDSChargeTokenUseCase(request)
+            result.onSuccess {
+                isLoading = false
+                orderCompleted = true
+                setCurrentStep(CheckoutStep.CONFIRMATION)
+            }.onFailure {
+                isLoading = false
+                orderCompleted = false
+                setCurrentStep(CheckoutStep.CONFIRMATION)
+            }
+        }
+    }
+
+    private fun captureStandalone3DSCharge(threeDSChargeId: String) {
+        viewModelScope.launch {
+            isLoading = true
+            val vault = vaultToken
+            val request = Capture3DSChargeRequest.CaptureStandalone3DSChargeRequest(
+                threeDSChargeId = threeDSChargeId,
+                customer = ChargesCustomerDTO(
+                    paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
+                        gatewayId = BuildConfig.GATEWAY_ID_MPGS,
+                        vaultToken = vault
+                    )
+                )
+            )
+            val result = captureThreeDSChargeTokenUseCase(request)
+            result.onSuccess {
+                isLoading = false
+                orderCompleted = true
+                setCurrentStep(CheckoutStep.CONFIRMATION)
+            }.onFailure {
+                isLoading = false
+                orderCompleted = false
+                setCurrentStep(CheckoutStep.CONFIRMATION)
+            }
+        }
+    }
+    
+    fun dismissAlert() {
+        showAlert = false
+        if (orderCompleted) {
+            // Reset checkout state
+            resetCheckout()
+        }
+    }
+    
+    private fun resetCheckout() {
+        _currentStep.value = CheckoutStep.INFORMATION
+        contactInfo = ContactInfo()
+        shippingAddress = Address()
+        billingAddress = Address()
+        useShippingAsBilling = true
+        selectedShippingAddressId = null
+        selectedBillingAddressId = null
+        selectedPaymentMethod = null
+        paymentToken = null
+        orderCompleted = false
+    }
+    
+    fun loadProfileData() {
+        viewModelScope.launch {
+            // Load from UserProfileManager
+            val profile = profileManager.profile.value
+            contactInfo = ContactInfo(
+                firstName = profile.firstName,
+                lastName = profile.lastName,
+                email = profile.email,
+                phone = profile.phone
+            )
+            
+            // Auto-select default address if available
+            profile.savedAddresses.find { it.isDefault }?.let { defaultAddress ->
+                val checkoutAddress = Address(
+                    addressLine1 = defaultAddress.addressLine1,
+                    addressLine2 = defaultAddress.addressLine2,
+                    city = defaultAddress.city,
+                    state = defaultAddress.state,
+                    postalCode = defaultAddress.postalCode,
+                    country = defaultAddress.country
+                )
+                shippingAddress = checkoutAddress
+                billingAddress = checkoutAddress
+            }
+        }
+    }
+}

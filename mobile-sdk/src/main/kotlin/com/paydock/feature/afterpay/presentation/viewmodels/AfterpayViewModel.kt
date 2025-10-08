@@ -312,7 +312,7 @@ internal class AfterpayViewModel(
                     minimumAmount = configuration.minimumAmount,
                     maximumAmount = configuration.maximumAmount,
                     currencyCode = configuration.currency,
-                    locale = Locale(configuration.language, configuration.country),
+                    locale = Locale.Builder().setLanguage(configuration.language).setRegion(configuration.country).build(),
                     environment = MobileSDK.getInstance().environment.mapToAfterpayEnv()
                 )
                 _isConfigured.value = true

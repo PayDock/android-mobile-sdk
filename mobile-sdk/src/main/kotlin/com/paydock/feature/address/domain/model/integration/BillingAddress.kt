@@ -33,10 +33,8 @@ data class BillingAddress(
      * Resolves the ISO country code based on the country name.
      * Returns null if the country name is not recognized.
      */
-    val countryCode: String? = Locale.getISOCountries().mapNotNull { countryCode ->
-        countryCode
-    }.sorted().find { countryCode ->
-        val locale = Locale("", countryCode)
+    val countryCode: String? = Locale.getISOCountries().sorted().find { countryCode ->
+        val locale = Locale.Builder().setRegion(countryCode).build()
         locale.displayCountry == this.country
     }
 }

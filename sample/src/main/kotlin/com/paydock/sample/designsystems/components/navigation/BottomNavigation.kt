@@ -19,7 +19,7 @@ import com.paydock.sample.designsystems.theme.SampleTheme
 @Composable
 fun BottomNavigation(navController: NavController) {
     val items = listOf(
-        BottomNavItem.Checkout,
+        BottomNavItem.Shop,
         BottomNavItem.Widgets,
         BottomNavItem.Style
     )

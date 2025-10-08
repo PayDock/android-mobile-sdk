@@ -17,7 +17,7 @@ internal class CountryAutoCompleteViewModel(
 ) : SearchViewModel<String>(dispatchers) {
     // List of all countries fetched from Locale.
     private val allCountries: List<String> = Locale.getISOCountries().mapNotNull { countryCode ->
-        val locale = Locale("", countryCode)
+        val locale = Locale.Builder().setRegion(countryCode).build()
         locale.displayCountry
     }.sorted()
 

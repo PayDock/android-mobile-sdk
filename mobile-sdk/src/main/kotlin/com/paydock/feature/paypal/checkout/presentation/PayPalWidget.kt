@@ -1,3 +1,4 @@
+@file:Suppress("MaxLineLength")
 package com.paydock.feature.paypal.checkout.presentation
 
 import android.content.Context
@@ -53,19 +54,21 @@ import org.koin.core.parameter.parametersOf
  * A Composable that renders the PayPal checkout button and orchestrates the PayPal payment flow.
  *
  * The button is provided by the PayPal Android SDK [PayPalButton]
- * and is hosted via `AndroidView`. All business logic (tokenization, URL parsing, capture/decline,
- * and error handling) remains in the existing `PayPalViewModel`.
+ * and is hosted via `AndroidView`.
+ * All business logic (tokenization, URL parsing, capture/decline, and error handling)
+ * remains in the existing `PayPalViewModel`.
  *
  * Visuals can be customized through [appearance], which maps directly to PayPal SDK styling:
  * - [PayPalWidgetAppearance.buttonColour] to control the button color
  * - [PayPalWidgetAppearance.buttonLabel] to control the button label/wordmark treatment
  * - [PayPalWidgetAppearance.buttonShape] to control the button shape (e.g. rounded, pill)
- * - [PayPalWidgetAppearance.loader] to control the overlay loader shown during `Loading` when
- *   [loadingDelegate] is not provided
+ * - [PayPalWidgetAppearance.loader] to control the overlay loader shown during `Loading`
+ *   when [loadingDelegate] is not provided
  *
  * While processing (`Loading`) or when launching the browser intent (`LaunchIntent`), the button is
- * automatically disabled. When [loadingDelegate] is null, an overlay loader is shown; otherwise the
- * caller owns loader presentation via the delegate callbacks.
+ * automatically disabled.
+ * When [loadingDelegate] is null, an overlay loader is shown; otherwise the caller owns loader
+ * presentation via the delegate callbacks.
  *
  * @param modifier Modifier for customizing the appearance and behavior of the Composable.
  * @param enabled When false, disables the PayPal button and blocks user interaction.

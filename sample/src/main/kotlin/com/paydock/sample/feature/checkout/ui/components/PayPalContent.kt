@@ -17,6 +17,7 @@ import com.paydock.sample.feature.style.StylingViewModel
 @Composable
 fun PayPalContent(
     stylingViewModel: StylingViewModel,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     tokenHandler: (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
@@ -25,7 +26,7 @@ fun PayPalContent(
     val paypalAppearance by stylingViewModel.paypalWidgetAppearance.collectAsState()
     val currentOrDefaultAppearance = paypalAppearance ?: PayPalAppearanceDefaults.appearance()
     PayPalWidget(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         config = PayPalWidgetConfig(
             accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
             gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL,

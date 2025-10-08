@@ -206,6 +206,8 @@ dependencies {
     ksp(libs.hilt.android.compiler)
     // Retrofit
     implementation(libs.bundles.retrofit)
+    // Coil (images)
+    implementation("io.coil-kt:coil-compose:2.6.0")
     // Test Libraries
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.junit)

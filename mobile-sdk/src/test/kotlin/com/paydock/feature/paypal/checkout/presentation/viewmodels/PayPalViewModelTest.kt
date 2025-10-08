@@ -19,6 +19,7 @@ import com.paydock.feature.wallet.data.dto.CaptureChargeResponse
 import com.paydock.feature.wallet.data.dto.WalletCallbackResponse
 import com.paydock.feature.wallet.data.mapper.asEntity
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.feature.wallet.domain.model.ui.WalletCallback
 import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
@@ -98,7 +99,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
             // ACTION: simulate button click providing token success via callback
             viewModel.handlePayPalButtonClick(
                 config = widgetConfig,
-                tokenRequest = { callback -> callback(Result.success(com.paydock.feature.wallet.domain.model.integration.WalletTokenResult(tokenResult))) }
+                tokenRequest = { callback -> callback(Result.success(WalletTokenResult(tokenResult))) }
             )
             // Initial Idle
             assertIs<PayPalCheckoutUIState.Idle>(awaitItem())
@@ -322,7 +323,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
             status = "CREATED",
             callbackUrl = MobileSDKTestConstants.PayPal.MOCK_CALLBACK_URL,
             refToken = null,
-            id = MobileSDKTestConstants.ColesPay.MOCK_ORDER_ID
+            id = MobileSDKTestConstants.PayPal.MOCK_ORDER_ID
         )
         val callbackSuccess = Result.success(walletCallback)
         val apiError = ApiException(

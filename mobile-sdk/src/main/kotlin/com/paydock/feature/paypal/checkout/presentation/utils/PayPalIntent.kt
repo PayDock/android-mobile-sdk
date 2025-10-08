@@ -1,3 +1,4 @@
+@file:Suppress("TooManyFunctions")
 package com.paydock.feature.paypal.checkout.presentation.utils
 
 import android.content.Intent
@@ -6,6 +7,7 @@ import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFundingSource
 /**
  * This object defines constants used as keys for PayPal-specific extras in an Intent.
  */
+@Suppress("TooManyFunctions")
 private object PayPalIntent {
     const val CANCELLATION_STATUS = "PAYPAL_CANCELLATION_STATUS" // Key for the cancellation status.
     const val PAYMENT_METHOD_ID = "PAYPAL_PAYMENT_METHOD_ID" // Key for the payment method id (orderId)
