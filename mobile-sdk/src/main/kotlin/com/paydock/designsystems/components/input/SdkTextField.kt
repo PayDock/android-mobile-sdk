@@ -438,7 +438,6 @@ private fun TextFieldErrorLabel(
         SdkText(
             modifier = Modifier
                 .padding(start = 15.dp, top = 6.dp)
-//                .semantics { this.invisibleToUser() }
                 .testTag("errorLabel"),
             text = error ?: "",
             appearance = appearance
@@ -454,20 +453,7 @@ internal fun TextFieldErrorLabelPreview() {
     }
 }
 
-/**
- * A modifier that enables autofill for a composable element when the provided [autofillType] is not null.
- *
- * This function conditionally applies the [autofill] modifier to a given [Modifier]. If [autofillType] is provided,
- * it will configure the element for autofill with the specified type. If [autofillType] is null, it returns the original
- * modifier without applying any autofill behavior.
- *
- * @param autofillType The type of autofill to enable for the composable element. If null, no autofill is enabled.
- *                     See [ContentType] for available options.
- * @param onFill A callback that is invoked when autofill is triggered and a value is filled.
- *               It receives the filled string as a parameter.
- * @return The modified [Modifier] with autofill behavior if [autofillType] is not null, otherwise the original [Modifier].
- */
-private fun Modifier.autofillModifier(autofillType: ContentType?, onFill: (String) -> Unit): Modifier = this
+// Deprecated autofill node approach removed. We rely on semantics (contentType) only.
 
 /**
  * Composable function to preview an empty state of the SdkTextField.
