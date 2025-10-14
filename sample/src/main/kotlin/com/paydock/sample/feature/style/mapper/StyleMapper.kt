@@ -59,7 +59,7 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
         )
 
         WidgetType.PAY_PAL_VAULT -> listOf(
-            StyleAppearanceComponent.COMPLETE_ACTION_BUTTON,
+            StyleAppearanceComponent.COMPLETE_ACTION_BUTTON
         )
 
         WidgetType.STANDALONE_3DS -> listOf(

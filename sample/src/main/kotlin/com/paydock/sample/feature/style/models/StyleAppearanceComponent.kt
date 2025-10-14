@@ -72,8 +72,9 @@ enum class StyleAppearanceComponent(val hasSubComponents: Boolean = false) {
         SUB_TEXT_FIELD_ERROR_LABEL -> "Error Label"
         SUB_DROPDOWN_ITEM -> "Dropdown Item"
         SUB_LINK_TEXT,
-        SUB_LINK_BUTTON_TEXT,
-        SUB_BUTTON_TEXT -> "Text"
+        SUB_LINK_BUTTON_TEXT -> "Text"
+
+        SUB_BUTTON_TEXT -> "Button Text"
         DROP_DOWN -> "Dropdown"
         SUB_SEARCH_TEXT_FIELD,
         TEXT_FIELD -> "Text Field"

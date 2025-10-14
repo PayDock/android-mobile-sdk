@@ -42,6 +42,20 @@ fun FilledButtonAppearanceStyleEditor(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
+        // Button Content Section (Text + Icon)
+        StyleButtonContentSection(
+            contentText = currentAppearance.text,
+            onContentTextChange = { newText ->
+                onAppearanceChange(currentAppearance.copy(text = newText))
+            },
+            selectedIcon = currentAppearance.icon,
+            onIconChange = { newIcon ->
+                onAppearanceChange(currentAppearance.copy(icon = newIcon))
+            },
+            defaultIcon = null // Filled buttons don't have SDK defaults
+        )
+
+        HorizontalDivider()
 
         SectionContainer(title = stringResource(R.string.label_button_colours)) {
             ColorPickerField(

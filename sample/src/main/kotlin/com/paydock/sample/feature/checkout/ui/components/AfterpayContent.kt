@@ -2,8 +2,6 @@ package com.paydock.sample.feature.checkout.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
@@ -15,20 +13,16 @@ import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.sample.core.AU_COUNTRY_CODE
 import com.paydock.sample.core.AU_CURRENCY_CODE
-import com.paydock.sample.feature.style.StylingViewModel
 import java.util.Currency
 
 @Composable
 fun AfterpayContent(
-    stylingViewModel: StylingViewModel,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     tokenHandler: (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
     resultHandler: (Result<ChargeResponse>) -> Unit,
 ) {
-    val afterpayAppearance by stylingViewModel.afterpayWidgetAppearance.collectAsState()
-    val currentOrDefaultAppearance = afterpayAppearance ?: AfterpayAppearanceDefaults.appearance()
     val configuration = AfterpaySDKConfig(
         config = AfterpaySDKConfig.AfterpayConfiguration(
             maximumAmount = "0.50",
@@ -46,7 +40,7 @@ fun AfterpayContent(
         enabled = enabled,
         tokenRequest = tokenHandler,
         config = configuration,
-        appearance = currentOrDefaultAppearance,
+        appearance = AfterpayAppearanceDefaults.appearance(),
         selectAddress = { _, provideShippingOptions ->
             val currency = Currency.getInstance(configuration.config.currency)
             val shippingOptions = listOf(

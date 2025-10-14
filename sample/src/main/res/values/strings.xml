@@ -59,6 +59,9 @@
     <string name="label_horizontal_spacing">Horizontal Spacing</string>
     <string name="label_tint_colour">Tint Colour</string>
     <string name="label_size">Size (Dp)</string>
+    <string name="label_button_icon_asset">Button Icon</string>
+    <string name="label_button_text">Button Text</string>
+    <string name="placeholder_enter_button_text">Enter button text</string>
     <string name="label_toggle_colours">Toggle Colours</string>
     <string name="label_checked_thumb_colour">Checked Thumb Colour</string>
     <string name="label_checked_icon_colour">Checked Icon Colour</string>
@@ -145,6 +148,7 @@
     <string name="button_enter_address">Enter Address</string>
     <string name="button_cancel">Cancel</string>
     <string name="button_save">Save</string>
+    <string name="button_link_account">Link Account</string>
     <string name="label_enter_your_address">Enter Your Address</string>
     <string name="label_incomplete">Incomplete</string>
     <string name="label_address_incomplete">Address incomplete</string>
