@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.paydock.feature.address.domain.model.integration.AddressDetailsWidgetConfig
 import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.address.presentation.AddressDetailsWidget
 import com.paydock.sample.R
@@ -134,7 +135,9 @@ fun AddressWidgetSheet(
                 HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
                 AddressDetailsWidget(
-                    address = addressResult,
+                    config = AddressDetailsWidgetConfig(
+                        address = addressResult
+                    ),
                 ) { billingAddress ->
                     addressResult = billingAddress
                     val result = AddressWidgetResult(
