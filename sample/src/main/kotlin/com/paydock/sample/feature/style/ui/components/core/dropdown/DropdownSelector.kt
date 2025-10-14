@@ -18,7 +18,9 @@ fun DropdownSelector(
     options: List<String>,
     enabled: Boolean = true,
     selectedOption: String,
-    onOptionSelected: (String) -> Unit
+    onOptionSelected: (String) -> Unit,
+    itemContent: (@Composable (label: String, isSelected: Boolean) -> Unit)? = null,
+    selectedContent: (@Composable () -> Unit)? = null,
 ) {
     Column(
         modifier = modifier,
@@ -28,7 +30,7 @@ fun DropdownSelector(
         ),
         horizontalAlignment = Alignment.Start
     ) {
-        if (title != null) {
+        if (!title.isNullOrBlank()) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelMedium
@@ -39,7 +41,9 @@ fun DropdownSelector(
             items = options,
             enabled = enabled,
             selected = selectedOption,
-            onItemSelected = onOptionSelected
+            onItemSelected = onOptionSelected,
+            itemContent = itemContent,
+            selectedContent = selectedContent
         )
     }
 }

@@ -16,6 +16,7 @@ import com.paydock.feature.card.presentation.GiftCardWidgetAppearance
 import com.paydock.feature.colespay.presentation.ColesPayWidgetAppearance
 import com.paydock.feature.googlepay.presentation.GooglePayWidgetAppearance
 import com.paydock.feature.paypal.checkout.presentation.PayPalWidgetAppearance
+import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 import com.paydock.feature.paypal.vault.presentation.PayPalPaymentSourceWidgetAppearance
 import com.paydock.feature.src.presentation.ClickToPayWidgetAppearance
 import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSWidgetAppearance
@@ -494,14 +495,22 @@ private fun ButtonAppearance.copyWithSubAppearance(
     return when (this) {
         is ButtonAppearance.FilledButtonAppearance -> when (component) {
             StyleAppearanceComponent.SUB_BUTTON_TEXT -> this.copy(textAppearance = subAppearance as TextAppearance)
-            StyleAppearanceComponent.SUB_BUTTON_ICON -> this.copy(iconAppearance = subAppearance as IconAppearance)
+            StyleAppearanceComponent.SUB_BUTTON_ICON -> when (subAppearance) {
+                is IconAppearance -> this.copy(iconAppearance = subAppearance)
+                is ButtonIcon? -> this.copy(icon = subAppearance as ButtonIcon?)
+                else -> this
+            }
             StyleAppearanceComponent.SUB_BUTTON_LOADER -> this.copy(loaderAppearance = subAppearance as LoaderAppearance)
             else -> this
         }
 
         is ButtonAppearance.OutlineButtonAppearance -> when (component) {
             StyleAppearanceComponent.SUB_BUTTON_TEXT -> this.copy(textAppearance = subAppearance as TextAppearance)
-            StyleAppearanceComponent.SUB_BUTTON_ICON -> this.copy(iconAppearance = subAppearance as IconAppearance)
+            StyleAppearanceComponent.SUB_BUTTON_ICON -> when (subAppearance) {
+                is IconAppearance -> this.copy(iconAppearance = subAppearance)
+                is ButtonIcon? -> this.copy(icon = subAppearance as ButtonIcon?)
+                else -> this
+            }
             StyleAppearanceComponent.SUB_BUTTON_LOADER -> this.copy(loaderAppearance = subAppearance as LoaderAppearance)
             else -> this
         }
@@ -511,7 +520,11 @@ private fun ButtonAppearance.copyWithSubAppearance(
             StyleAppearanceComponent.SUB_BUTTON_TEXT -> this.copy(textAppearance = subAppearance as TextAppearance)
 
             StyleAppearanceComponent.SUB_LINK_BUTTON_ICON,
-            StyleAppearanceComponent.SUB_BUTTON_ICON -> this.copy(iconAppearance = subAppearance as IconAppearance)
+            StyleAppearanceComponent.SUB_BUTTON_ICON -> when (subAppearance) {
+                is IconAppearance -> this.copy(iconAppearance = subAppearance)
+                is ButtonIcon? -> this.copy(icon = subAppearance as ButtonIcon?)
+                else -> this
+            }
 
             StyleAppearanceComponent.SUB_LINK_BUTTON_LOADER,
             StyleAppearanceComponent.SUB_BUTTON_LOADER -> this.copy(loaderAppearance = subAppearance as LoaderAppearance)

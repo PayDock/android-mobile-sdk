@@ -30,6 +30,7 @@ import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.button.RenderButton
+import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultResult
 import com.paydock.feature.paypal.vault.presentation.state.PayPalVaultUIState
@@ -99,9 +100,7 @@ fun PayPalSavePaymentSourceWidget(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("linkPayPalAccount"),
-            buttonIcon = config.icon,
-            text = config.actionText
-                ?: stringResource(id = R.string.button_link_paypal_account),
+            text = appearance.actionButton.text,
             enabled = isEnabled,
             isLoading = isLoading,
         ) {
@@ -148,9 +147,7 @@ class PayPalPaymentSourceWidgetAppearance(
 
         other as PayPalPaymentSourceWidgetAppearance
 
-        if (actionButton != other.actionButton) return false
-
-        return true
+        return actionButton == other.actionButton
     }
 
     override fun hashCode(): Int {
@@ -172,7 +169,12 @@ object PayPalPaymentSourceAppearanceDefaults {
      */
     @Composable
     fun appearance(): PayPalPaymentSourceWidgetAppearance = PayPalPaymentSourceWidgetAppearance(
-        actionButton = ButtonAppearanceDefaults.outlineButtonAppearance()
+        actionButton = ButtonAppearanceDefaults
+            .outlineButtonAppearance()
+            .copy(
+                text = stringResource(id = R.string.button_link_paypal_account),
+                icon = ButtonIcon.DrawableRes(R.drawable.ic_link)
+            )
     )
 
 }

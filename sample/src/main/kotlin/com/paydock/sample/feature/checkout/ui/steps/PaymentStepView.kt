@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,60 +41,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
-import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
-import com.paydock.feature.afterpay.presentation.AfterpayAppearanceDefaults
-import com.paydock.feature.afterpay.presentation.AfterpayWidget
-import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
-import com.paydock.feature.card.domain.model.integration.SaveCardConfig
-import com.paydock.feature.card.presentation.CardDetailsAppearanceDefaults
-import com.paydock.feature.card.presentation.CardDetailsWidget
 import com.paydock.feature.card.presentation.GiftCardWidget
-import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
-import com.paydock.feature.colespay.presentation.ColesPayWidget
-import com.paydock.feature.colespay.presentation.ColesPayWidgetAppearanceDefaults
-import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
-import com.paydock.feature.googlepay.presentation.GooglePayAppearanceDefaults
-import com.paydock.feature.googlepay.presentation.GooglePayWidget
-import com.paydock.feature.googlepay.util.PaymentsUtil
-import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
-import com.paydock.feature.paypal.checkout.presentation.PayPalAppearanceDefaults
-import com.paydock.feature.paypal.checkout.presentation.PayPalWidget
-import com.paydock.feature.src.domain.model.integration.ClickToPayWidgetConfig
-import com.paydock.feature.src.presentation.ClickToPayAppearanceDefaults
-import com.paydock.feature.src.presentation.ClickToPayWidget
-import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.R
-import com.paydock.sample.core.AMOUNT
-import com.paydock.sample.core.AU_COUNTRY_CODE
-import com.paydock.sample.core.AU_CURRENCY_CODE
-import com.paydock.sample.core.COUNTRY_CODE_LIST
-import com.paydock.sample.core.MERCHANT_NAME
 import com.paydock.sample.designsystems.components.button.AppTextButton
 import com.paydock.sample.designsystems.components.sheets.AppBottomSheet
 import com.paydock.sample.designsystems.theme.SampleTheme
 import com.paydock.sample.feature.checkout.domain.model.PaymentMethod
 import com.paydock.sample.feature.checkout.presentation.EnhancedCheckoutViewModel
-import com.paydock.sample.feature.checkout.ui.components.ClickToPayComponent
-import com.paydock.sample.feature.checkout.ui.components.GooglePayContent
 import com.paydock.sample.feature.checkout.ui.components.AfterpayContent
-import com.paydock.sample.feature.checkout.ui.components.ColesPayContent
-import com.paydock.sample.feature.checkout.ui.components.PayPalContent
 import com.paydock.sample.feature.checkout.ui.components.CardContent
+import com.paydock.sample.feature.checkout.ui.components.ClickToPayComponent
+import com.paydock.sample.feature.checkout.ui.components.ColesPayContent
+import com.paydock.sample.feature.checkout.ui.components.GooglePayContent
+import com.paydock.sample.feature.checkout.ui.components.PayPalContent
 import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.shop.domain.model.AppliedGiftCard
 import com.paydock.sample.feature.shop.domain.model.GiftCard
 import com.paydock.sample.feature.shop.domain.model.ShippingOption
 import com.paydock.sample.feature.wallet.presentation.WalletViewModel
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.paydock.sample.feature.style.StylingViewModel
-import com.paydock.sample.feature.checkout.ui.components.GooglePayContent
-import org.json.JSONArray
-import org.json.JSONObject
-import java.math.BigDecimal
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -564,14 +532,12 @@ fun PaymentWidgetView(
     viewModel: EnhancedCheckoutViewModel
     ) {
         val walletViewModel: WalletViewModel = hiltViewModel()
-        val stylingViewModel: StylingViewModel = hiltViewModel()
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
             when (method) {
                 PaymentMethod.CARD -> {
                     CardContent(
-                        stylingViewModel = stylingViewModel,
                         modifier = Modifier.fillMaxWidth(),
                         enabled = true,
                         loadingDelegate = object : WidgetLoadingDelegate {
@@ -584,7 +550,6 @@ fun PaymentWidgetView(
                 
                 PaymentMethod.GOOGLE_PAY -> {
                     GooglePayContent(
-                        stylingViewModel = stylingViewModel,
                         modifier = Modifier.fillMaxWidth(),
                         tokenHandler = walletViewModel.getWalletTokenResultCallback(WalletType.GOOGLE),
                         loadingDelegate = object : WidgetLoadingDelegate {
@@ -603,7 +568,6 @@ fun PaymentWidgetView(
                 
                 PaymentMethod.PAYPAL -> {
                     PayPalContent(
-                        stylingViewModel = stylingViewModel,
                         modifier = Modifier.fillMaxWidth(),
                         enabled = true,
                         tokenHandler = walletViewModel.getWalletTokenResultCallback(WalletType.PAY_PAL),
@@ -623,7 +587,6 @@ fun PaymentWidgetView(
                 
                 PaymentMethod.AFTERPAY -> {
                     AfterpayContent(
-                        stylingViewModel = stylingViewModel,
                         modifier = Modifier.fillMaxWidth(),
                         tokenHandler = walletViewModel.getWalletTokenResultCallback(WalletType.AFTER_PAY),
                         loadingDelegate = object : WidgetLoadingDelegate {
@@ -656,7 +619,6 @@ fun PaymentWidgetView(
                 
                 PaymentMethod.COLES_PAY -> {
                     ColesPayContent(
-                        stylingViewModel = stylingViewModel,
                         modifier = Modifier.fillMaxWidth(),
                         tokenHandler = walletViewModel.getWalletTokenResultCallback(WalletType.COLES_PAY),
                         loadingDelegate = object : WidgetLoadingDelegate {

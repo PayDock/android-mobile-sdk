@@ -1,5 +1,7 @@
 package com.paydock.sample.feature.account.ui
 
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -21,24 +23,18 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SheetValue
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,9 +52,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.paydock.core.domain.error.displayableMessage
+import com.paydock.core.domain.error.toError
+import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.feature.address.domain.model.integration.BillingAddress
-import com.paydock.feature.address.presentation.AddressDetailsWidget
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
+import com.paydock.feature.paypal.vault.presentation.PayPalPaymentSourceAppearanceDefaults
 import com.paydock.feature.paypal.vault.presentation.PayPalSavePaymentSourceWidget
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.R
@@ -69,18 +69,41 @@ import com.paydock.sample.designsystems.components.button.AppTextButton
 import com.paydock.sample.designsystems.components.common.DefaultBadge
 import com.paydock.sample.designsystems.components.common.SectionCard
 import com.paydock.sample.designsystems.components.common.SectionHeader
+import com.paydock.sample.designsystems.components.dialogs.ErrorDialog
 import com.paydock.sample.designsystems.components.sheets.AddressWidgetResult
 import com.paydock.sample.designsystems.components.sheets.AddressWidgetSheet
 import com.paydock.sample.designsystems.theme.SampleTheme
+import com.paydock.sample.feature.account.AccountViewModel
 import com.paydock.sample.feature.account.data.UserProfileManager
 import com.paydock.sample.feature.account.domain.model.SavedAddress
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AccountScreen() {
+fun AccountScreen(viewModel: AccountViewModel = hiltViewModel<AccountViewModel>()) {
     val profileManager = remember { UserProfileManager.shared }
     val profile by profileManager.profile.collectAsState()
     val context = LocalContext.current
+
+    val uiState by viewModel.stateFlow.collectAsState()
+    LaunchedEffect(uiState.customer) {
+        uiState.customer?.let {
+            Toast.makeText(
+                context,
+                context.getString(R.string.desc_pay_pal_customer_created),
+                Toast.LENGTH_SHORT
+            ).show()
+            viewModel.resetResultState()
+        }
+    }
+    if (!uiState.error.isNullOrBlank()) {
+        ErrorDialog(
+            onDismissRequest = { viewModel.resetResultState() },
+            onConfirmation = {
+                viewModel.resetResultState()
+            },
+            dialogText = uiState.error!!,
+        )
+    }
     
     var showAlert by remember { mutableStateOf(false) }
     var alertMessage by remember { mutableStateOf("") }
@@ -94,7 +117,7 @@ fun AccountScreen() {
     var phone by remember { mutableStateOf(profile.phone) }
     
     // Update fields when profile changes
-    androidx.compose.runtime.LaunchedEffect(profile) {
+    LaunchedEffect(profile) {
         firstName = profile.firstName
         lastName = profile.lastName
         email = profile.email
@@ -132,7 +155,7 @@ fun AccountScreen() {
             )
             
             // Saved Payment Methods Section
-            SavedPaymentMethodsSection()
+            SavedPaymentMethodsSection(viewModel, context)
             
             // Saved Addresses Section
             SavedAddressesSection(
@@ -287,7 +310,7 @@ private fun ProfileInfoSection(
 }
 
 @Composable
-private fun SavedPaymentMethodsSection() {
+private fun SavedPaymentMethodsSection(viewModel: AccountViewModel, context: Context) {
     SectionCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -332,11 +355,20 @@ private fun SavedPaymentMethodsSection() {
                             accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
                             gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL
                         ),
+                        appearance = PayPalPaymentSourceAppearanceDefaults.appearance().copy(
+                            actionButton = ButtonAppearanceDefaults
+                                .outlineButtonAppearance()
+                                .copy(
+                                    text = stringResource(id = R.string.button_link_account),
+                                )
+                        ),
                         completion = { result ->
                             result.onSuccess { vaultResult ->
-                                // Handle successful vault result
+                                viewModel.createCustomer(vaultResult.token)
                             }.onFailure { error ->
-                                // Handle error
+                                val error = error.toError()
+                                Toast.makeText(context, error.displayableMessage, Toast.LENGTH_SHORT)
+                                    .show()
                             }
                         }
                     )
@@ -542,138 +574,6 @@ private fun SavedAddressCardView(
                     )
                 }
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AddressWidgetFormView(
-    editingAddress: SavedAddress?,
-    onSave: (SavedAddress) -> Unit
-) {
-    val context = LocalContext.current
-    // Address label is no longer edited here; we'll assign a default on save
-    var isDefault by remember { mutableStateOf(editingAddress?.isDefault ?: false) }
-    val defaultType = stringResource(R.string.type_home)
-    var addressType by remember { mutableStateOf(editingAddress?.label ?: defaultType) }
-    var addressResult by remember {
-        mutableStateOf(
-            editingAddress?.let {
-                BillingAddress(
-                    addressLine1 = it.addressLine1,
-                    addressLine2 = it.addressLine2,
-                    city = it.city,
-                    state = it.state,
-                    postalCode = it.postalCode,
-                    country = it.country
-                )
-            }
-        )
-    }
-    
-    val isEditing = editingAddress != null
-
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-        confirmValueChange = { newValue -> newValue != SheetValue.Hidden }
-    )
-
-    ModalBottomSheet(
-        onDismissRequest = {},
-        sheetState = sheetState
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            Text(
-                text = if (isEditing) stringResource(R.string.label_edit_address) else stringResource(
-                    R.string.label_add_new_address
-                ),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 16.dp)
-            )
-            
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.label_address_type),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val types = remember {
-                        listOf(
-                            context.getString(R.string.type_home),
-                            context.getString(R.string.type_work),
-                            context.getString(R.string.type_other)
-                        )
-                    }
-                    types.forEach { type ->
-                        AssistChip(
-                            onClick = { addressType = type },
-                            label = {
-                                Text(
-                                    text = type, style = MaterialTheme.typography.labelSmall.copy(
-                                        platformStyle = PlatformTextStyle(includeFontPadding = true)
-                                    )
-                                )
-                            },
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = if (addressType == type) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(
-                                    alpha = 0.3f
-                                ),
-                                labelColor = if (addressType == type) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-                            )
-                        )
-                    }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(R.string.label_set_as_default_address),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Switch(
-                        checked = isDefault,
-                        onCheckedChange = { isDefault = it }
-                    )
-                }
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-
-                // Embed AddressDetailsWidget directly; it manages its own internal Save button
-                AddressDetailsWidget(
-                    address = addressResult,
-                ) { billingAddress ->
-                    addressResult = billingAddress
-                    val savedAddress = SavedAddress(
-                        id = editingAddress?.id ?: SavedAddress.generateId(),
-                        label = addressType,
-                        addressLine1 = billingAddress.addressLine1 ?: "",
-                        addressLine2 = billingAddress.addressLine2 ?: "",
-                        city = billingAddress.city ?: "",
-                        state = billingAddress.state ?: "",
-                        postalCode = billingAddress.postalCode ?: "",
-                        country = billingAddress.country ?: "",
-                        isDefault = isDefault
-                    )
-                    onSave(savedAddress)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

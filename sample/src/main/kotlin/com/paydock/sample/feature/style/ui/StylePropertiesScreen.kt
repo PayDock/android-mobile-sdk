@@ -1,8 +1,6 @@
 package com.paydock.sample.feature.style.ui
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -48,10 +46,10 @@ import com.paydock.sample.feature.style.ui.components.section.StyleCardDetailsMi
 import com.paydock.sample.feature.style.ui.components.section.StyleDropdownMiscSection
 import com.paydock.sample.feature.style.ui.components.section.StyleGiftCardMiscSection
 import com.paydock.sample.feature.style.ui.components.section.StyleGooglePayMiscSection
-import com.paydock.sample.feature.style.ui.components.section.StylePayPalMiscSection
 import com.paydock.sample.feature.style.ui.components.section.StyleIconSection
 import com.paydock.sample.feature.style.ui.components.section.StyleImageButtonSection
 import com.paydock.sample.feature.style.ui.components.section.StyleLoaderSection
+import com.paydock.sample.feature.style.ui.components.section.StylePayPalMiscSection
 import com.paydock.sample.feature.style.ui.components.section.StyleTextFieldSection
 import com.paydock.sample.feature.style.ui.components.section.StyleTextSection
 import com.paydock.sample.feature.style.ui.components.section.StyleToggleSection
@@ -537,7 +535,7 @@ fun getAppearanceForWidgetComponent(
 
         WidgetType.PAY_PAL -> {
             val paypalAppearance by stylingViewModel.paypalWidgetAppearance.collectAsState()
-            remember(paypalAppearance, styleItemName) {
+            return remember(paypalAppearance, styleItemName) {
                 derivedStateOf {
                     when (styleItemName) {
                         StyleAppearanceComponent.PROPERTIES -> paypalAppearance

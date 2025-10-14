@@ -22,7 +22,12 @@ import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -44,6 +49,8 @@ fun DropdownListField(
     selected: String? = items.firstOrNull(),
     onItemSelected: (String) -> Unit,
     enabled: Boolean,
+    itemContent: (@Composable (label: String, isSelected: Boolean) -> Unit)? = null,
+    selectedContent: (@Composable () -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
@@ -79,6 +86,7 @@ fun DropdownListField(
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent
                 ),
+                leadingIcon = selectedContent,
                 trailingIcon = {
                     val rotation by animateFloatAsState(if (expanded) 180F else 0F, label = "")
                     Icon(
@@ -110,7 +118,13 @@ fun DropdownListField(
                         LazyColumn {
                             items(items) { item ->
                                 DropdownMenuItem(
-                                    text = { Text(text = item) },
+                                    text = {
+                                        if (itemContent != null) {
+                                            itemContent(item, item == selected)
+                                        } else {
+                                            Text(text = item)
+                                        }
+                                    },
                                     modifier = Modifier
                                         .height(itemHeight)
                                         .width(boxWidth)
