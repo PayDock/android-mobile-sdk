@@ -35,6 +35,7 @@ import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
 import com.paydock.designsystems.core.WidgetDefaults
 import com.paydock.feature.address.domain.mapper.integration.asEntity
+import com.paydock.feature.address.domain.model.integration.AddressDetailsWidgetConfig
 import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.address.presentation.components.AddressSearchSection
 import com.paydock.feature.address.presentation.components.ManualAddressEntry
@@ -43,43 +44,39 @@ import com.paydock.feature.address.presentation.viewmodels.AddressDetailsViewMod
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * Composable for displaying address details input UI.
+ * A composable widget that provides a form for users to enter their address details.
  *
- * This widget provides a form for users to enter their address details. It includes fields for
- * first name, last name, address lines, city, state, postal code, and country.
+ * This widget includes fields for first name, last name, address lines, city, state, postal code, and country.
  * It also features an address search functionality to pre-fill the form and an option to
  * enter the address manually.
  *
- * The appearance of the widget can be customized using the `appearance` parameter.
- *
  * @param modifier Modifier to apply to the composable.
  * @param appearance Customization options for the widget's appearance. See [AddressDetailsWidgetAppearance].
- * @param address An optional [BillingAddress] to pre-fill the input fields. If provided, the form will be populated with this address.
- * @param completion A callback function that is invoked when the user saves the address.
- * It receives the entered [BillingAddress] as a parameter.
+ * @param config Configuration for the widget's behavior and initial data, such as pre-filling the address. See [AddressDetailsWidgetConfig].
+ * @param completion A callback function that is invoked when the user saves the address. It receives the entered [BillingAddress] as a parameter.
  */
 @Composable
 fun AddressDetailsWidget(
     modifier: Modifier = Modifier,
     appearance: AddressDetailsWidgetAppearance = AddressDetailsAppearanceDefaults.appearance(),
-    address: BillingAddress? = null,
+    config: AddressDetailsWidgetConfig = AddressDetailsWidgetConfig(),
     completion: (BillingAddress) -> Unit,
 ) {
     val viewModel: AddressDetailsViewModel = koinViewModel()
     val uiState by viewModel.stateFlow.collectAsState()
 
     // Control whether the manual address section is shown
-    var isManualAddressVisible by rememberSaveable(address) {
+    var isManualAddressVisible by rememberSaveable {
         // Initialize based on whether an initial address is provided,
         // or if any part of the uiState.billingAddress (from ViewModel) suggests it should be visible.
-        mutableStateOf(address != null || !uiState.billingAddress.isEmpty())
+        mutableStateOf(config.address != null || !uiState.billingAddress.isEmpty())
     }
     // Control whether the manual address input is valid (improve recompositions)
     val isDataValid by remember(uiState) { derivedStateOf { uiState.isDataValid } }
 
     // Remember the preset address value to avoid recomposition on every change
-    LaunchedEffect(address) {
-        address?.let {
+    LaunchedEffect(Unit) {
+        config.address?.let {
             viewModel.populateFormWithBillingAddress(it)
         }
     }

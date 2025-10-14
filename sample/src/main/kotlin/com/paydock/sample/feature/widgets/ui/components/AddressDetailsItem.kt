@@ -10,6 +10,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.paydock.feature.address.domain.model.integration.AddressDetailsWidgetConfig
 import com.paydock.feature.address.presentation.AddressDetailsAppearanceDefaults
 import com.paydock.feature.address.presentation.AddressDetailsWidget
 import com.paydock.sample.feature.style.StylingViewModel
@@ -31,7 +32,9 @@ fun AddressDetailsItem(context: Context, stylingViewModel: StylingViewModel) {
         modifier = Modifier
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
-        address = null,
+        config = AddressDetailsWidgetConfig(
+            address = null
+        ),
         appearance = currentOrDefaultAppearance
     ) { result ->
         Toast.makeText(context, "Address details returned [$result]", Toast.LENGTH_SHORT).show()
