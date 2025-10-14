@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -37,14 +38,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
+import com.paydock.feature.card.presentation.GiftCardAppearanceDefaults
 import com.paydock.feature.card.presentation.GiftCardWidget
+import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.R
@@ -72,7 +77,6 @@ fun PaymentStepView(
 ) {
     // Shared cart manager for shipping/gift card sections
     val cartManager = remember { CartManager.shared }
-    val walletViewModel: WalletViewModel = hiltViewModel()
 
     var expanded by remember { mutableStateOf(false) }
     var showGiftCardEntry by remember { mutableStateOf(false) }
@@ -368,7 +372,14 @@ private fun GiftCardEntryView(
             GiftCardWidget(
                 config = GiftCardWidgetConfig(
                     accessToken = BuildConfig.WIDGET_ACCESS_TOKEN, storePin = false
-                ), completion = { result ->
+                ),
+                appearance = GiftCardAppearanceDefaults.appearance().copy(
+                    actionButton = ButtonAppearanceDefaults.outlineButtonAppearance().copy(
+                        text = stringResource(R.string.button_add),
+                        icon = ButtonIcon.Vector(Icons.Filled.Add)
+                    )
+                ),
+                completion = { result ->
                     result.onSuccess { giftCardResult ->
                         handleGiftCardResult(giftCardResult, cartManager) { message ->
                             alertMessage = message
