@@ -154,7 +154,7 @@ internal class PayPalWebCheckoutActivity : AppCompatActivity() {
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        this.intent = intent
+        setIntent(intent)
         val data = intent.data
         val host = data?.host
         val pathSegment = data?.pathSegments?.firstOrNull()

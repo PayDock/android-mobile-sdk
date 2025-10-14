@@ -28,10 +28,12 @@ internal val googlePayModule = module {
     }
 
     // Define a view model for GooglePayViewModel
+    // SavedStateHandle is auto-injected by Koin when not in the lambda parameters
     viewModel { (config: GooglePayWidgetConfig) ->
         GooglePayViewModel(
             get(),
             config,
+            get(),
             get(),
             get(),
             get(),

@@ -1,6 +1,7 @@
 package com.paydock.feature.googlepay.presentation.viewmodels
 
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.common.api.Status
@@ -40,6 +41,7 @@ import org.json.JSONObject
  *
  * @param paymentsClient The Google Pay [PaymentsClient] instance for initiating payment requests.
  * @param config The [GooglePayWidgetConfig] containing configuration details for the Google Pay widget.
+ * @param savedStateHandle Handle for persisting state across process death.
  * @param captureWalletChargeUseCase Use case for capturing wallet charges.
  * @param declineWalletChargeUseCase Use case for declining wallet charges.
  * @param getWalletCallbackUseCase Use case for retrieving wallet callback information.
@@ -48,6 +50,7 @@ import org.json.JSONObject
 internal class GooglePayViewModel(
     private val paymentsClient: PaymentsClient,
     private val config: GooglePayWidgetConfig,
+    private val savedStateHandle: SavedStateHandle,
     captureWalletChargeUseCase: CaptureWalletChargeUseCase,
     declineWalletChargeUseCase: DeclineWalletChargeUseCase,
     getWalletCallbackUseCase: GetWalletCallbackUseCase,
@@ -62,10 +65,12 @@ internal class GooglePayViewModel(
     //region Private Properties
     /**
      * Holds the wallet token used for Google Pay operations.
+     * Persisted in SavedStateHandle to survive process death with "Don't keep activities"
      *
      * This token is essential for authenticating and managing Google Pay transactions.
+     * Access via getWalletToken() method.
      */
-    private var walletToken: String? = null
+    private fun getWalletToken(): String? = savedStateHandle[KEY_WALLET_TOKEN]
 
     /**
      * Mutable state flow to hold the UI state for Google Pay availability.
@@ -92,11 +97,12 @@ internal class GooglePayViewModel(
 
     /**
      * Sets the Google Pay wallet token used for authentication and transaction processing.
+     * Persisted in SavedStateHandle to survive process death.
      *
      * @param token The wallet token.
      */
     override fun setWalletToken(token: String) {
-        walletToken = token
+        savedStateHandle[KEY_WALLET_TOKEN] = token
     }
 
     /**
@@ -105,7 +111,7 @@ internal class GooglePayViewModel(
      * Updates the state to [GooglePayUIState.Idle].
      */
     override fun resetResultState() {
-        walletToken = null
+        savedStateHandle[KEY_WALLET_TOKEN] = null
         updateUiState(GooglePayUIState.Idle)
     }
 
@@ -313,7 +319,8 @@ internal class GooglePayViewModel(
      * @param paymentData The [PaymentData] containing the payment result.
      */
     fun processGooglePayPaymentResult(paymentData: PaymentData) {
-        walletToken?.let { token ->
+        val token = getWalletToken()
+        if (token != null) {
             runCatching { extractGooglePayToken(paymentData) }
                 .onSuccess { googlePayToken ->
                     val request = CaptureWalletChargeRequest(paymentMethodId = googlePayToken)
@@ -325,8 +332,15 @@ internal class GooglePayViewModel(
                             ?: MobileSDKConstants.GooglePayConfig.Errors.TOKEN_ERROR
                     )
                 }
-        } ?: run {
-            handleErrorResult(MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_ERROR)
+        } else {
+            // Wallet token was lost during process death - treat as error for proper user feedback
+            updateUiState(
+                GooglePayUIState.Error(
+                    GooglePayException.InitialisationWalletTokenException(
+                        "Wallet token lost during process recreation. Please try again."
+                    )
+                )
+            )
         }
     }
 
@@ -418,4 +432,8 @@ internal class GooglePayViewModel(
         }
     }
     //endregion
+
+    private companion object {
+        const val KEY_WALLET_TOKEN: String = "googlepay.wallet_token"
+    }
 }

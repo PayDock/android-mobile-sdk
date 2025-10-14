@@ -2,6 +2,7 @@ package com.paydock.feature.afterpay.presentation.viewmodels
 
 import android.content.Context
 import android.content.Intent
+import androidx.lifecycle.SavedStateHandle
 import com.afterpay.android.Afterpay
 import com.afterpay.android.CancellationStatus
 import com.paydock.MobileSDK
@@ -47,12 +48,14 @@ import java.util.Locale
  * @constructor Creates an instance of `AfterpayViewModel` with required dependencies for handling
  * Afterpay-specific wallet interactions.
  *
+ * @param savedStateHandle Handle for persisting state across process death.
  * @param captureWalletChargeUseCase Use case for capturing a wallet charge.
  * @param declineWalletChargeUseCase Use case for declining a wallet charge.
  * @param getWalletCallbackUseCase Use case for fetching a wallet callback.
  * @param dispatchers Provides coroutine dispatchers for managing asynchronous tasks.
  */
 internal class AfterpayViewModel(
+    private val savedStateHandle: SavedStateHandle,
     captureWalletChargeUseCase: CaptureWalletChargeUseCase,
     declineWalletChargeUseCase: DeclineWalletChargeUseCase,
     getWalletCallbackUseCase: GetWalletCallbackUseCase,
@@ -67,10 +70,13 @@ internal class AfterpayViewModel(
     //region Private Properties
     /**
      * Holds the wallet token used for Afterpay operations.
+     * Persisted in SavedStateHandle to survive process death with "Don't keep activities"
      *
      * This token is essential for authenticating and managing Afterpay transactions.
+     * Access via getWalletToken() method.
      */
-    private var walletToken: String? = null
+    private fun getWalletToken(): String? = savedStateHandle[KEY_WALLET_TOKEN]
+
     private var checkoutToken: String? = null
     private val _isConfigured = MutableStateFlow(false)
     private var primaryErrorToReport: SdkException? = null
@@ -88,11 +94,12 @@ internal class AfterpayViewModel(
     //region Overridden Methods
     /**
      * Sets the wallet token for the current session.
+     * Persisted in SavedStateHandle to survive process death.
      *
      * @param token The wallet token to associate with the session.
      */
     override fun setWalletToken(token: String) {
-        walletToken = token
+        savedStateHandle[KEY_WALLET_TOKEN] = token
     }
 
     /**
@@ -106,7 +113,7 @@ internal class AfterpayViewModel(
      * Resets the state to the initial state and clears the wallet token.
      */
     override fun resetResultState() {
-        walletToken = null
+        savedStateHandle[KEY_WALLET_TOKEN] = null
         updateUiState(AfterpayUIState.Idle)
     }
 
@@ -271,8 +278,8 @@ internal class AfterpayViewModel(
      *                               or that should be reported if decline is not possible.
      */
     fun declineWalletTransaction(pendingFailureException: SdkException) {
-        val token = walletToken
-        val chargeId = walletToken?.let { JwtHelper.getChargeIdToken(it) }
+        val token = getWalletToken()
+        val chargeId = token?.let { JwtHelper.getChargeIdToken(it) }
 
         if (token.isNullOrBlank() || chargeId.isNullOrBlank()) {
             // If we can't decline, and we have a primary error, we should ensure it's still reported.
@@ -295,8 +302,18 @@ internal class AfterpayViewModel(
                 )
             )
         )
-        walletToken?.let {
-            captureWalletTransaction(it, request)
+        val token = getWalletToken()
+        if (token != null) {
+            captureWalletTransaction(token, request)
+        } else {
+            // Wallet token was lost during process death - treat as error for proper user feedback
+            updateUiState(
+                AfterpayUIState.Error(
+                    AfterpayException.InitialisationWalletTokenException(
+                        "Wallet token lost during process recreation. Please try again."
+                    )
+                )
+            )
         }
     }
 
@@ -335,7 +352,19 @@ internal class AfterpayViewModel(
         val request = WalletCallbackRequest(
             type = MobileSDKConstants.WalletCallbackType.TYPE_CREATE_SESSION
         )
-        walletToken?.let { getWalletCallback(it, request) }
+        val token = getWalletToken()
+        if (token != null) {
+            getWalletCallback(token, request)
+        } else {
+            // Wallet token was lost during process death - treat as error for proper user feedback
+            updateUiState(
+                AfterpayUIState.Error(
+                    AfterpayException.InitialisationWalletTokenException(
+                        "Wallet token lost during process recreation. Please try again."
+                    )
+                )
+            )
+        }
     }
 
     /**
@@ -356,4 +385,8 @@ internal class AfterpayViewModel(
         updateUiState(AfterpayUIState.ProvideShippingOptionUpdateResult(shippingOptionUpdate?.mapToSDKShippingOptionUpdateResult()))
     }
     //endregion
+
+    private companion object {
+        const val KEY_WALLET_TOKEN: String = "afterpay.wallet_token"
+    }
 }

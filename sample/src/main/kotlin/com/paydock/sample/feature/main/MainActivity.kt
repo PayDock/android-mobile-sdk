@@ -301,15 +301,24 @@ fun MainScreenView(
                     .consumeWindowInsets(paddingValues = innerPadding)
                     .imePadding()
             ) {
-                if (isAddressInitialized && isCardInitialized && isGiftCardInitialized && isClickToPayInitialized && isAfterpayInitialized && isPayPalInitialized && isPayPalVaultInitialized && isGooglePayWidgetAppearanceInitialized && isColesPayWidgetAppearanceInitialized && isIntegrated3DSWidgetAppearanceInitialized && isStandalone3DSWidgetAppearanceInitialized) {
+                // Always render NavigationGraph to ensure activity result launchers are registered
+                // Show loading overlay when appearances are still initializing
+                Box(modifier = Modifier.fillMaxSize()) {
                     NavigationGraph(
                         navController = navController,
                         stylingViewModel,
                         onThemeSelected
                     )
-                } else {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                    
+                    if (!(isAddressInitialized && isCardInitialized && isGiftCardInitialized && isClickToPayInitialized && isAfterpayInitialized && isPayPalInitialized && isPayPalVaultInitialized && isGooglePayWidgetAppearanceInitialized && isColesPayWidgetAppearanceInitialized && isIntegrated3DSWidgetAppearanceInitialized && isStandalone3DSWidgetAppearanceInitialized)) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     }
                 }
             }
