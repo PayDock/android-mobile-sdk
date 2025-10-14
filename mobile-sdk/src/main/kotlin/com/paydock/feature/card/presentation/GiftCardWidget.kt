@@ -127,7 +127,8 @@ fun GiftCardWidget(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("addCard"),
-            text = stringResource(R.string.button_submit),
+            text = appearance.actionButton.text,
+            buttonIcon = appearance.actionButton.icon,
             enabled = isEnabled,
             isLoading = isLoading,
         ) {
@@ -376,7 +377,9 @@ object GiftCardAppearanceDefaults {
         verticalSpacing = WidgetDefaults.Spacing,
         horizontalSpacing = WidgetDefaults.Spacing,
         textField = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
-        actionButton = ButtonAppearanceDefaults.filledButtonAppearance()
+        actionButton = ButtonAppearanceDefaults.filledButtonAppearance().copy(
+            text = stringResource(R.string.button_submit)
+        )
     )
 
 }

@@ -41,7 +41,7 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
         WidgetType.GIFT_CARD -> listOf(
             StyleAppearanceComponent.PROPERTIES,
             StyleAppearanceComponent.TEXT_FIELD,
-            StyleAppearanceComponent.DEFAULT_ACTION_BUTTON,
+            StyleAppearanceComponent.COMPLETE_ACTION_BUTTON,
         )
 
         WidgetType.GOOGLE_PAY -> listOf(
