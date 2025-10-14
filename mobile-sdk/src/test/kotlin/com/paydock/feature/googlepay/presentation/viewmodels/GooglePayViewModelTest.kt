@@ -1,5 +1,6 @@
 package com.paydock.feature.googlepay.presentation.viewmodels
 
+import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.common.api.Status
@@ -65,6 +66,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
         declineWalletChargeUseCase = mockk()
         getWalletCallbackUseCase = mockk()
         paymentsClient = mockk()
+
         val isReadyToPayRequestJson = PaymentsUtil.createIsReadyToPayRequest()
         viewModel = GooglePayViewModel(
             paymentsClient,
@@ -72,6 +74,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
                 isReadyToPayRequestJson,
                 JSONObject()
             ),
+            SavedStateHandle(),
             captureWalletChargeUseCase,
             declineWalletChargeUseCase,
             getWalletCallbackUseCase,
@@ -88,9 +91,11 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
         runTest {
             // Re-initialize ViewModel with specific mock behavior for this test
             coEvery { paymentsClient.isReadyToPay(any()) } returns Tasks.forResult(false)
+
             viewModel = GooglePayViewModel( // Recreate to trigger init with new mock
                 paymentsClient,
                 GooglePayWidgetConfig(PaymentsUtil.createIsReadyToPayRequest(), JSONObject()),
+                SavedStateHandle(),
                 captureWalletChargeUseCase,
                 declineWalletChargeUseCase,
                 getWalletCallbackUseCase,

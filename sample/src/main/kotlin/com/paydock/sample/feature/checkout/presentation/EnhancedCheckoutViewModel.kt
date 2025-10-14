@@ -3,6 +3,7 @@ package com.paydock.sample.feature.checkout.presentation
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.paydock.feature.card.domain.model.integration.CardResult
@@ -38,6 +39,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class EnhancedCheckoutViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
     private val createCardSessionVaultTokenUseCase: CreateCardSessionVaultTokenUseCase,
     private val createIntegratedThreeDSTokenUseCase: CreateIntegratedThreeDSTokenUseCase,
     private val createStandaloneThreeDSTokenUseCase: CreateStandaloneThreeDSTokenUseCase,
@@ -46,8 +48,10 @@ class EnhancedCheckoutViewModel @Inject constructor(
     
     private val profileManager = UserProfileManager.shared
     
-    // Current step
-    private val _currentStep = MutableStateFlow(CheckoutStep.INFORMATION)
+    // Current step - persisted to survive process death with "Don't keep activities"
+    private val _currentStep = MutableStateFlow(
+        savedStateHandle[KEY_CURRENT_STEP] ?: CheckoutStep.INFORMATION
+    )
     val currentStep: StateFlow<CheckoutStep> = _currentStep.asStateFlow()
     
     // Contact Information
@@ -70,8 +74,10 @@ class EnhancedCheckoutViewModel @Inject constructor(
     var selectedBillingAddressId by mutableStateOf<String?>(null)
         private set
     
-    // Payment
-    var selectedPaymentMethod by mutableStateOf<PaymentMethod?>(null)
+    // Payment - persisted to survive process death with "Don't keep activities"
+    var selectedPaymentMethod by mutableStateOf<PaymentMethod?>(
+        savedStateHandle[KEY_PAYMENT_METHOD]
+    )
         private set
 
     var paymentToken by mutableStateOf<String?>(null)
@@ -218,6 +224,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
     
     fun setPaymentMethod(method: PaymentMethod) {
         selectedPaymentMethod = method
+        savedStateHandle[KEY_PAYMENT_METHOD] = method
     }
 
     fun setThePaymentToken(token: String) {
@@ -257,19 +264,24 @@ class EnhancedCheckoutViewModel @Inject constructor(
     
     fun setCurrentStep(step: CheckoutStep) {
         _currentStep.value = step
+        savedStateHandle[KEY_CURRENT_STEP] = step
     }
     
     fun goToNextStep() {
         val currentIndex = CheckoutStep.getAllSteps().indexOf(_currentStep.value)
         if (currentIndex < CheckoutStep.getAllSteps().size - 1) {
-            _currentStep.value = CheckoutStep.getAllSteps()[currentIndex + 1]
+            val nextStep = CheckoutStep.getAllSteps()[currentIndex + 1]
+            _currentStep.value = nextStep
+            savedStateHandle[KEY_CURRENT_STEP] = nextStep
         }
     }
     
     fun goToPreviousStep() {
         val currentIndex = CheckoutStep.getAllSteps().indexOf(_currentStep.value)
         if (currentIndex > 0) {
-            _currentStep.value = CheckoutStep.getAllSteps()[currentIndex - 1]
+            val previousStep = CheckoutStep.getAllSteps()[currentIndex - 1]
+            _currentStep.value = previousStep
+            savedStateHandle[KEY_CURRENT_STEP] = previousStep
         }
     }
     
@@ -496,6 +508,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
     
     private fun resetCheckout() {
         _currentStep.value = CheckoutStep.INFORMATION
+        savedStateHandle[KEY_CURRENT_STEP] = CheckoutStep.INFORMATION
         contactInfo = ContactInfo()
         shippingAddress = Address()
         billingAddress = Address()
@@ -503,6 +516,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
         selectedShippingAddressId = null
         selectedBillingAddressId = null
         selectedPaymentMethod = null
+        savedStateHandle[KEY_PAYMENT_METHOD] = null
         paymentToken = null
         orderCompleted = false
     }
@@ -532,5 +546,10 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 billingAddress = checkoutAddress
             }
         }
+    }
+    
+    private companion object {
+        const val KEY_CURRENT_STEP = "checkout.current_step"
+        const val KEY_PAYMENT_METHOD = "checkout.payment_method"
     }
 }

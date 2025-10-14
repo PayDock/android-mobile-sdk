@@ -210,8 +210,18 @@ internal class PayPalViewModel(
                 )
             )
         )
-        getWalletToken()?.let {
-            captureWalletTransaction(it, request)
+        val token = getWalletToken()
+        if (token != null) {
+            captureWalletTransaction(token, request)
+        } else {
+            // Wallet token was lost during process death - treat as error for proper user feedback
+            updateUiState(
+                PayPalCheckoutUIState.Error(
+                    PayPalException.InitialisationWalletTokenException(
+                        "Wallet token lost during process recreation. Please try again."
+                    )
+                )
+            )
         }
     }
 

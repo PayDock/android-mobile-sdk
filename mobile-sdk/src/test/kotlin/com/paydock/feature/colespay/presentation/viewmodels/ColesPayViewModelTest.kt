@@ -1,5 +1,6 @@
 package com.paydock.feature.colespay.presentation.viewmodels
 
+import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
@@ -52,8 +53,10 @@ internal class ColesPayViewModelTest : BaseKoinUnitTest() {
         captureWalletChargeUseCase = mockk()
         declineWalletChargeUseCase = mockk()
         getWalletCallbackUseCase = mockk()
+
         viewModel = ColesPayViewModel(
             ColesPayWidgetConfig(MobileSDKTestConstants.ColesPay.MOCK_CLIENT_ID),
+            SavedStateHandle(),
             captureWalletChargeUseCase,
             declineWalletChargeUseCase,
             getWalletCallbackUseCase,
