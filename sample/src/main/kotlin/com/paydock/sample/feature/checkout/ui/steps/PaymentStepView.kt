@@ -3,8 +3,10 @@ package com.paydock.sample.feature.checkout.ui.steps
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -24,14 +26,18 @@ import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -44,6 +50,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
@@ -80,6 +89,7 @@ fun PaymentStepView(
 
     var expanded by remember { mutableStateOf(false) }
     var showGiftCardEntry by remember { mutableStateOf(false) }
+    var giftCardSheetKey by remember { mutableIntStateOf(0) }
 
     val sectionSpacing = 20.dp
     LazyColumn(
@@ -180,7 +190,10 @@ fun PaymentStepView(
             GiftCardSection(
                 appliedGiftCards = cartManager.appliedGiftCards.collectAsState().value,
                 cartManager = cartManager,
-                onShowGiftCardEntry = { showGiftCardEntry = true })
+                onShowGiftCardEntry = {
+                    giftCardSheetKey++
+                    showGiftCardEntry = true
+                })
         }
 
         item {
@@ -204,9 +217,12 @@ fun PaymentStepView(
     }
 
     if (showGiftCardEntry) {
-        GiftCardEntryView(
-            cartManager = cartManager, onDismiss = { showGiftCardEntry = false }
-        )
+        // Use a unique key to force fresh state each time the sheet is opened
+        key(giftCardSheetKey) {
+            GiftCardEntryView(
+                cartManager = cartManager, onDismiss = { showGiftCardEntry = false }
+            )
+        }
     }
 }
 
@@ -348,51 +364,102 @@ private fun GiftCardEntryView(
 ) {
     var showAlert by remember { mutableStateOf(false) }
     var alertMessage by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+
+    // Create a fresh ViewModelStoreOwner for each instance to ensure fresh ViewModel
+    val viewModelStoreOwner = remember {
+        object : ViewModelStoreOwner {
+            override val viewModelStore: ViewModelStore = ViewModelStore()
+        }
+    }
+
+    val handleDismiss = {
+        if (!isLoading) {
+            // Clear the ViewModel store on dismiss to prevent memory leaks
+            viewModelStoreOwner.viewModelStore.clear()
+            onDismiss()
+        }
+    }
 
     AppBottomSheet(
         title = "Add Gift Card",
-        trailingContent = { AppTextButton(text = "Cancel", onClick = onDismiss) },
+        trailingContent = {
+            AppTextButton(
+                text = "Cancel",
+                onClick = handleDismiss,
+                enabled = !isLoading
+            )
+        },
         skipPartiallyExpanded = false,
         expandOnOpen = false,
-        allowOutsideDismiss = true,
-        onDismissRequest = onDismiss
+        allowOutsideDismiss = false,
+        onDismissRequest = handleDismiss
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp, start = 0.dp, end = 0.dp, bottom = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Enter your gift card details to apply it to your order",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            GiftCardWidget(
-                config = GiftCardWidgetConfig(
-                    accessToken = BuildConfig.WIDGET_ACCESS_TOKEN, storePin = false
-                ),
-                appearance = GiftCardAppearanceDefaults.appearance().copy(
-                    actionButton = ButtonAppearanceDefaults.outlineButtonAppearance().copy(
-                        text = stringResource(R.string.button_add),
-                        icon = ButtonIcon.Vector(Icons.Filled.Add)
+        // Provide fresh ViewModelStoreOwner to ensure GiftCardWidget gets a fresh ViewModel
+        CompositionLocalProvider(LocalViewModelStoreOwner provides viewModelStoreOwner) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp, start = 0.dp, end = 0.dp, bottom = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Enter your gift card details to apply it to your order",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
                     )
-                ),
-                completion = { result ->
-                    result.onSuccess { giftCardResult ->
-                        handleGiftCardResult(giftCardResult, cartManager) { message ->
-                            alertMessage = message
-                            showAlert = true
-                            if (message.contains("successfully")) {
-                                onDismiss()
+                    GiftCardWidget(
+                        config = GiftCardWidgetConfig(
+                            accessToken = BuildConfig.WIDGET_ACCESS_TOKEN, storePin = false
+                        ),
+                        appearance = GiftCardAppearanceDefaults.appearance().copy(
+                            actionButton = ButtonAppearanceDefaults.outlineButtonAppearance().copy(
+                                text = stringResource(R.string.button_add),
+                                icon = ButtonIcon.Vector(Icons.Filled.Add)
+                            )
+                        ),
+                        loadingDelegate = object : WidgetLoadingDelegate {
+                            override fun widgetLoadingDidStart() {
+                                isLoading = true
                             }
-                        }
-                    }.onFailure { error ->
-                        alertMessage = error.message ?: "An error occurred"
-                        showAlert = true
+                            override fun widgetLoadingDidFinish() {
+                                isLoading = false
+                            }
+                        },
+                        completion = { result ->
+                            result.onSuccess { giftCardResult ->
+                                handleGiftCardResult(giftCardResult, cartManager) { message ->
+                                    alertMessage = message
+                                    showAlert = true
+                                    if (message.contains("successfully")) {
+                                        // Clear the ViewModel store before dismissing
+                                        viewModelStoreOwner.viewModelStore.clear()
+                                        onDismiss()
+                                    }
+                                }
+                            }.onFailure { error ->
+                                alertMessage = error.message ?: "An error occurred"
+                                showAlert = true
+                            }
+                        })
+                }
+
+                // Loading overlay - overlays the content without affecting layout
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
-                })
+                }
+            }
         }
     }
 
