@@ -155,7 +155,8 @@ fun CardDetailsWidget(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("submitDetails"),
-            text = config.actionText,
+            text = appearance.actionButton.text,
+            buttonIcon = appearance.actionButton.icon,
             enabled = isEnabled,
             isLoading = isLoading,
         ) {
@@ -294,7 +295,9 @@ object CardDetailsAppearanceDefaults {
             style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
         ),
         textField = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
-        actionButton = ButtonAppearanceDefaults.filledButtonAppearance(),
+        actionButton = ButtonAppearanceDefaults.filledButtonAppearance().copy(
+            text = stringResource(R.string.button_submit)
+        ),
         toggle = ToggleAppearanceDefaults.appearance(),
         toggleText = TextAppearanceDefaults.appearance().copy(
             style = MaterialTheme.typography.bodyMedium,

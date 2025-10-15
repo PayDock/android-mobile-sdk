@@ -23,7 +23,7 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
             StyleAppearanceComponent.PROPERTIES,
             StyleAppearanceComponent.TITLE,
             StyleAppearanceComponent.TEXT_FIELD,
-            StyleAppearanceComponent.DEFAULT_ACTION_BUTTON,
+            StyleAppearanceComponent.COMPLETE_ACTION_BUTTON,
             StyleAppearanceComponent.TOGGLE,
             StyleAppearanceComponent.TOGGLE_TEXT, // Used for toggle text
             StyleAppearanceComponent.LINK_TEXT

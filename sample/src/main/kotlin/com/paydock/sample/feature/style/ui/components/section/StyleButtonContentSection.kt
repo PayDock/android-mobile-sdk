@@ -9,7 +9,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
@@ -76,12 +78,14 @@ fun StyleButtonContentSection(
                     add("Default (SDK)" to defaultIcon)
                 }
                 add("Add" to ButtonIcon.Vector(Icons.Filled.Add))
+                add("Card" to ButtonIcon.Vector(Icons.Filled.CreditCard))
                 add("Check" to ButtonIcon.Vector(Icons.Filled.Check))
+                add("Close" to ButtonIcon.Vector(Icons.Filled.Close))
                 add("Favorite" to ButtonIcon.Vector(Icons.Filled.Favorite))
                 add("Forward" to ButtonIcon.Vector(Icons.AutoMirrored.Filled.ArrowForward))
-                add("Refresh" to ButtonIcon.Vector(Icons.Filled.Refresh))
-                add("Close" to ButtonIcon.Vector(Icons.Filled.Close))
+                add("Home" to ButtonIcon.Vector(Icons.Filled.Home))
                 add("Link" to ButtonIcon.Vector(Icons.Filled.Link))
+                add("Refresh" to ButtonIcon.Vector(Icons.Filled.Refresh))
             }
             
             val selectedLabel = when (selectedIcon) {
