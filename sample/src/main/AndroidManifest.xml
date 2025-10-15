@@ -34,14 +34,6 @@
             android:launchMode="singleTop"
             android:configChanges="orientation|screenSize"
             android:windowSoftInputMode="adjustResize" />
-
-        <!-- 3DS demo Activity: opt out of recreation so JS context is preserved on rotation -->
-        <activity
-            android:name=".feature.checkout.ThreeDSActivity"
-            android:exported="true"
-            android:launchMode="singleTop"
-            android:configChanges="orientation|screenSize"
-            android:windowSoftInputMode="adjustResize" />
     </application>
 
 </manifest>

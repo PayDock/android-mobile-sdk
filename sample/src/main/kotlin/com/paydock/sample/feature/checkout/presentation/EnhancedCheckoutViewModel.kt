@@ -1,6 +1,7 @@
 package com.paydock.sample.feature.checkout.presentation
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
@@ -118,10 +119,10 @@ class EnhancedCheckoutViewModel @Inject constructor(
     var isLoading by mutableStateOf(false)
         private set
 
-    // Controls visibility of payment widget sheet on Payment step
-    var showPaymentWidget by mutableStateOf(false)
+    // Reset key to force fresh payment widget instances
+    var paymentWidgetResetKey by mutableIntStateOf(0)
         private set
-    
+
     // Get saved addresses from profile manager
     val savedAddresses: List<SavedAddress>
         get() = profileManager.profile.value.savedAddresses.map { profileAddress ->
@@ -212,19 +213,11 @@ class EnhancedCheckoutViewModel @Inject constructor(
         }
     }
     
-    fun clearShippingAddress() {
-        shippingAddress = Address()
-        selectedShippingAddressId = null
-    }
-    
-    fun clearBillingAddress() {
-        billingAddress = Address()
-        selectedBillingAddressId = null
-    }
-    
     fun setPaymentMethod(method: PaymentMethod) {
         selectedPaymentMethod = method
         savedStateHandle[KEY_PAYMENT_METHOD] = method
+        // Increment reset key to force fresh widget instance
+        paymentWidgetResetKey++
     }
 
     fun setThePaymentToken(token: String) {
@@ -234,17 +227,13 @@ class EnhancedCheckoutViewModel @Inject constructor(
     fun setIsLoading(loading: Boolean) {
         isLoading = loading
     }
-    
-    fun showAlert(title: String, message: String) {
-        alertTitle = title
-        alertMessage = message
-        showAlert = true
-    }
 
     fun routeToFailure() {
         isLoading = false
         orderCompleted = false
         setCurrentStep(CheckoutStep.CONFIRMATION)
+        // Increment reset key to force fresh widget on retry
+        paymentWidgetResetKey++
     }
 
     fun showAddressWidget(type: AddressType, initialAddress: Address? = null) {
@@ -258,10 +247,6 @@ class EnhancedCheckoutViewModel @Inject constructor(
         addressWidgetInitialAddress = null
     }
 
-    fun setPaymentWidgetVisible(visible: Boolean) {
-        showPaymentWidget = visible
-    }
-    
     fun setCurrentStep(step: CheckoutStep) {
         _currentStep.value = step
         savedStateHandle[KEY_CURRENT_STEP] = step
@@ -300,8 +285,8 @@ class EnhancedCheckoutViewModel @Inject constructor(
             try {
                 orderCompleted = true
                 setCurrentStep(CheckoutStep.CONFIRMATION)
-                
-            } catch (e: Exception) {
+
+            } catch (_: Exception) {
                 orderCompleted = false
                 setCurrentStep(CheckoutStep.CONFIRMATION)
             } finally {
@@ -375,14 +360,17 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 // Explicit NOT_SUPPORTED: proceed to capture if we have an id
                 status == ThreeDSToken.ThreeDSStatus.NOT_SUPPORTED && hasId -> {
                     when (threeDSType) {
-                        ThreeDSType.INTEGRATED -> captureIntegrated3DSCharge(threeDSResult.id!!)
-                        ThreeDSType.STANDALONE -> captureStandalone3DSCharge(threeDSResult.id!!)
+                        ThreeDSType.INTEGRATED -> captureIntegrated3DSCharge(threeDSResult.id)
+                        ThreeDSType.STANDALONE -> captureStandalone3DSCharge(threeDSResult.id)
                     }
                 }
 
                 // Explicit PRE_AUTH_PENDING: open 3DS flow if token present
                 status == ThreeDSToken.ThreeDSStatus.PRE_AUTH_PENDING && hasToken -> {
                     threeDSToken = threeDSResult.token
+                    // Dismiss payment footer when 3DS flow starts
+                    selectedPaymentMethod = null
+                    savedStateHandle[KEY_PAYMENT_METHOD] = null
                     isLoading = false
                 }
 
@@ -390,14 +378,17 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 // If a token is present, open 3DS regardless of status string
                 hasToken -> {
                     threeDSToken = threeDSResult.token
+                    // Dismiss payment footer when 3DS flow starts
+                    selectedPaymentMethod = null
+                    savedStateHandle[KEY_PAYMENT_METHOD] = null
                     isLoading = false
                 }
 
                 // If no token but an id exists, attempt capture (provider completed silently)
                 hasId -> {
                     when (threeDSType) {
-                        ThreeDSType.INTEGRATED -> captureIntegrated3DSCharge(threeDSResult.id!!)
-                        ThreeDSType.STANDALONE -> captureStandalone3DSCharge(threeDSResult.id!!)
+                        ThreeDSType.INTEGRATED -> captureIntegrated3DSCharge(threeDSResult.id)
+                        ThreeDSType.STANDALONE -> captureStandalone3DSCharge(threeDSResult.id)
                     }
                 }
 
@@ -419,13 +410,23 @@ class EnhancedCheckoutViewModel @Inject constructor(
             } else if (it.event == IntegratedEventType.CHARGE_AUTH_REJECT) {
                 isLoading = false
                 threeDSToken = null
+                vaultToken = null
+                paymentToken = null
+                selectedPaymentMethod = null
+                savedStateHandle[KEY_PAYMENT_METHOD] = null
                 orderCompleted = false
+                paymentWidgetResetKey++
                 setCurrentStep(CheckoutStep.CONFIRMATION)
             }
         }.onFailure {
             isLoading = false
             threeDSToken = null
+            vaultToken = null
+            paymentToken = null
+            selectedPaymentMethod = null
+            savedStateHandle[KEY_PAYMENT_METHOD] = null
             orderCompleted = false
+            paymentWidgetResetKey++
             setCurrentStep(CheckoutStep.CONFIRMATION)
         }
     }
@@ -440,13 +441,23 @@ class EnhancedCheckoutViewModel @Inject constructor(
             ) {
                 isLoading = false
                 threeDSToken = null
+                vaultToken = null
+                paymentToken = null
+                selectedPaymentMethod = null
+                savedStateHandle[KEY_PAYMENT_METHOD] = null
                 orderCompleted = false
+                paymentWidgetResetKey++
                 setCurrentStep(CheckoutStep.CONFIRMATION)
             }
         }.onFailure {
             isLoading = false
             threeDSToken = null
+            vaultToken = null
+            paymentToken = null
+            selectedPaymentMethod = null
+            savedStateHandle[KEY_PAYMENT_METHOD] = null
             orderCompleted = false
+            paymentWidgetResetKey++
             setCurrentStep(CheckoutStep.CONFIRMATION)
         }
     }
@@ -466,7 +477,13 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 setCurrentStep(CheckoutStep.CONFIRMATION)
             }.onFailure {
                 isLoading = false
+                threeDSToken = null
+                vaultToken = null
+                paymentToken = null
+                selectedPaymentMethod = null
+                savedStateHandle[KEY_PAYMENT_METHOD] = null
                 orderCompleted = false
+                paymentWidgetResetKey++
                 setCurrentStep(CheckoutStep.CONFIRMATION)
             }
         }
@@ -492,7 +509,13 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 setCurrentStep(CheckoutStep.CONFIRMATION)
             }.onFailure {
                 isLoading = false
+                threeDSToken = null
+                vaultToken = null
+                paymentToken = null
+                selectedPaymentMethod = null
+                savedStateHandle[KEY_PAYMENT_METHOD] = null
                 orderCompleted = false
+                paymentWidgetResetKey++
                 setCurrentStep(CheckoutStep.CONFIRMATION)
             }
         }

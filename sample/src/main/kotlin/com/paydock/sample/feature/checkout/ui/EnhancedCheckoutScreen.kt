@@ -3,6 +3,7 @@ package com.paydock.sample.feature.checkout.ui
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -35,7 +36,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
@@ -46,12 +46,12 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -63,12 +63,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.activity.compose.BackHandler
 import com.paydock.feature.address.domain.model.integration.BillingAddress
-import com.paydock.feature.threeDS.common.domain.integration.ThreeDSConfig
-import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSAppearanceDefaults
-import com.paydock.feature.threeDS.integrated.presentation.Integrated3DSWidget
-import com.paydock.feature.threeDS.standalone.presentation.Standalone3DSWidget
 import com.paydock.sample.designsystems.components.sheets.AddressWidgetResult
 import com.paydock.sample.designsystems.components.sheets.AddressWidgetSheet
 import com.paydock.sample.designsystems.theme.SampleTheme
@@ -78,6 +73,7 @@ import com.paydock.sample.feature.checkout.domain.model.AddressType
 import com.paydock.sample.feature.checkout.domain.model.CheckoutStep
 import com.paydock.sample.feature.checkout.presentation.CheckoutBackCoordinator
 import com.paydock.sample.feature.checkout.presentation.EnhancedCheckoutViewModel
+import com.paydock.sample.feature.checkout.ui.components.Checkout3DSBottomSheet
 import com.paydock.sample.feature.checkout.ui.steps.ConfirmationStepView
 import com.paydock.sample.feature.checkout.ui.steps.InformationStepView
 import com.paydock.sample.feature.checkout.ui.steps.PaymentStepView
@@ -189,7 +185,9 @@ fun EnhancedCheckoutScreen(
                     Box(modifier = Modifier.fillMaxSize()) {
                         when (step) {
                             CheckoutStep.INFORMATION -> {
-                                Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
+                                Column(modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(scrollState)) {
                                     InformationStepView(viewModel = viewModel)
                                     Spacer(modifier = Modifier.height(100.dp))
                                 }
@@ -198,7 +196,9 @@ fun EnhancedCheckoutScreen(
                                 PaymentStepView(viewModel = viewModel)
                             }
                             CheckoutStep.CONFIRMATION -> {
-                                Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
+                                Column(modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(scrollState)) {
                                     ConfirmationStepView(
                                         viewModel = viewModel,
                                         onContinueShopping = {
@@ -298,34 +298,38 @@ fun EnhancedCheckoutScreen(
     val vaultToken = viewModel.vaultToken
     if (!threeDSToken.isNullOrBlank() && !vaultToken.isNullOrBlank()) {
         val bottom3DSSheetState = rememberModalBottomSheetState(
+            // This will expand the modal fully based on the size
             skipPartiallyExpanded = true,
-            // Prevent dismiss via outside tap/drag; ViewModel controls lifecycle
-            confirmValueChange = { newState -> newState != SheetValue.Hidden }
-        )
-        ModalBottomSheet(
-            onDismissRequest = { /* no-op to avoid accidental dismissal */ },
-            sheetState = bottom3DSSheetState
-        ) {
-            when (viewModel.threeDSType) {
-                ThreeDSType.INTEGRATED -> {
-                    Integrated3DSWidget(
-                        config = ThreeDSConfig(token = threeDSToken),
-                        appearance = ThreeDSAppearanceDefaults.appearance()
-                    ) { result ->
-                        viewModel.handleIntegrated3DSResult(result)
-                    }
-                }
-
-                ThreeDSType.STANDALONE -> {
-                    Standalone3DSWidget(
-                        config = ThreeDSConfig(token = threeDSToken),
-                        appearance = ThreeDSAppearanceDefaults.appearance()
-                    ) { result ->
-                        viewModel.handleStandalone3DSResult(result)
-                    }
-                }
+            // Prevents dismissing sheet when dragging
+            confirmValueChange = { newState ->
+                newState != SheetValue.Hidden //  Stop bottom sheet from hiding on outside press
             }
-        }
+        )
+        val isLoading = viewModel.isLoading
+        Checkout3DSBottomSheet(
+            bottom3DSSheetState = bottom3DSSheetState,
+            onDismissRequest = {
+                // Handle dismiss (close button click) as 3DS failure/cancellation
+                val type = viewModel.threeDSType
+                when (type) {
+                    ThreeDSType.INTEGRATED -> {
+                        viewModel.handleIntegrated3DSResult(
+                            Result.failure(Exception("3DS cancelled by user"))
+                        )
+                    }
+
+                    ThreeDSType.STANDALONE -> {
+                        viewModel.handleStandalone3DSResult(
+                            Result.failure(Exception("3DS cancelled by user"))
+                        )
+                    }
+                }
+            },
+            vaultToken = vaultToken,
+            threeDSToken = threeDSToken,
+            showCloseButton = !isLoading,
+            viewModel = viewModel
+        )
     }
 
     // Full-screen blocking loader above everything (including payment footer and 3DS sheet)
@@ -498,10 +502,14 @@ private fun PaymentFooter(
                         label = "paymentWidgetCrossfade"
                     ) { method ->
                         if (method != null) {
-                            PaymentWidgetView(
-                                method = method,
-                                viewModel = viewModel
-                            )
+                            // Use key with both method and resetKey to force fresh widget instance
+                            // This ensures a new instance when method changes OR when resetKey changes
+                            key(method, viewModel.paymentWidgetResetKey) {
+                                PaymentWidgetView(
+                                    method = method,
+                                    viewModel = viewModel
+                                )
+                            }
                         }
                     }
                 }
