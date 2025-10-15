@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -53,6 +54,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
@@ -469,7 +473,7 @@ private fun GiftCardEntryView(
             title = { Text("Gift Card") },
             text = { Text(alertMessage) },
             confirmButton = {
-                androidx.compose.material3.Button(onClick = { showAlert = false }) {
+                Button(onClick = { showAlert = false }) {
                     Text("OK")
                 }
             })
@@ -608,11 +612,26 @@ private fun PaymentMethodRow(
 fun PaymentWidgetView(
     method: PaymentMethod,
     viewModel: EnhancedCheckoutViewModel
-    ) {
-        val walletViewModel: WalletViewModel = hiltViewModel()
-        Column(
-            modifier = Modifier.padding(16.dp)
+) {
+    val walletViewModel: WalletViewModel = hiltViewModel()
+
+    // Create a unique NavHost with a key to force fresh ViewModelStore
+    // Each time resetKey changes, we get a completely new navigation graph with fresh ViewModels
+    val uniqueNavKey = "${method.name}_${viewModel.paymentWidgetResetKey}"
+
+    key(uniqueNavKey) {
+        val navController = rememberNavController()
+
+        // NavHost provides both ViewModelStoreOwner and SavedStateRegistryOwner
+        NavHost(
+            navController = navController,
+            startDestination = "payment_widget",
+            modifier = Modifier
         ) {
+            composable("payment_widget") {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
             when (method) {
                 PaymentMethod.CARD -> {
                     CardContent(
@@ -712,6 +731,9 @@ fun PaymentWidgetView(
                         }
                     )
                 }
+            }
+                }
+            }
         }
     }
 }
