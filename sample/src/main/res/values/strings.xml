@@ -136,6 +136,7 @@
     <string name="button_ok">OK</string>
     <string name="button_add_address">Add Address</string>
     <string name="button_add">Add</string>
+    <string name="button_submit">Submit</string>
     <string name="button_reset">Reset</string>
     <string name="button_save_changes">Save Changes</string>
     <string name="button_delete">Delete</string>]

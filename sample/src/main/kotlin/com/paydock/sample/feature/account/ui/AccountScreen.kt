@@ -132,8 +132,7 @@ fun AccountScreen(viewModel: AccountViewModel = hiltViewModel<AccountViewModel>(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
             // Profile Info Section
-        val canSaveProfile =
-            firstName != profile.firstName ||
+            val canSaveProfile = firstName != profile.firstName ||
                     lastName != profile.lastName ||
                     email != profile.email ||
                     phone != profile.phone
