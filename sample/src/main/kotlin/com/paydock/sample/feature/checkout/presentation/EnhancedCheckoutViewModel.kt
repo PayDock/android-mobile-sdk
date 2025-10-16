@@ -85,7 +85,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
         private set
 
     // 3DS state
-    var threeDSType: ThreeDSType = ThreeDSType.INTEGRATED
+    var threeDSType: ThreeDSType = ThreeDSType.STANDALONE
         private set
 
     var vaultToken by mutableStateOf<String?>(null)
