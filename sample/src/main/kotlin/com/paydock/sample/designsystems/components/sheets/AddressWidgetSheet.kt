@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,9 +28,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.feature.address.domain.model.integration.AddressDetailsWidgetConfig
 import com.paydock.feature.address.domain.model.integration.BillingAddress
+import com.paydock.feature.address.presentation.AddressDetailsAppearanceDefaults
 import com.paydock.feature.address.presentation.AddressDetailsWidget
+import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.button.AppTextButton
 import com.paydock.sample.designsystems.components.sheets.AppBottomSheet
@@ -138,6 +143,12 @@ fun AddressWidgetSheet(
                     config = AddressDetailsWidgetConfig(
                         address = addressResult
                     ),
+                    appearance = AddressDetailsAppearanceDefaults.appearance().copy(
+                        actionButton = ButtonAppearanceDefaults.outlineButtonAppearance().copy(
+                            text = stringResource(R.string.button_add),
+                            icon = ButtonIcon.Vector(Icons.Filled.Add)
+                        )
+                    )
                 ) { billingAddress ->
                     addressResult = billingAddress
                     val result = AddressWidgetResult(

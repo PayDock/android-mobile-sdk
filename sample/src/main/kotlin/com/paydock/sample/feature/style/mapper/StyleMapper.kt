@@ -9,7 +9,7 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
             StyleAppearanceComponent.PROPERTIES,
             StyleAppearanceComponent.TITLE,
             StyleAppearanceComponent.TEXT_FIELD,
-            StyleAppearanceComponent.DEFAULT_ACTION_BUTTON,
+            StyleAppearanceComponent.COMPLETE_ACTION_BUTTON,
             StyleAppearanceComponent.LINK_BUTTON,
             StyleAppearanceComponent.SEARCH,
         )
