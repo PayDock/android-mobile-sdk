@@ -135,7 +135,8 @@ fun AddressDetailsWidget(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("saveAddress"),
-            text = stringResource(R.string.button_save_address),
+            text = appearance.actionButton.text,
+            buttonIcon = appearance.actionButton.icon,
             enabled = isDataValid,
         ) {
             completion(viewModel.getBillingAddress())
@@ -255,7 +256,9 @@ object AddressDetailsAppearanceDefaults {
             style = MaterialTheme.typography.titleMedium,
         ),
         textField = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
-        actionButton = ButtonAppearanceDefaults.filledButtonAppearance(),
+        actionButton = ButtonAppearanceDefaults.filledButtonAppearance().copy(
+            text = stringResource(R.string.button_save_address)
+        ),
         linkButton = LinkButtonAppearanceDefaults.appearance(),
         searchDropdown = SearchDropdownAppearanceDefaults.appearance()
     )
