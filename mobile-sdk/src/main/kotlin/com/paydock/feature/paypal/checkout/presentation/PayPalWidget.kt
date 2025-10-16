@@ -299,9 +299,9 @@ private fun handlePayPalResult(
                             data.getMessageExtra(MobileSDKConstants.PayPalConfig.Errors.PAY_PAL_ERROR)
                         completion(
                             Result.failure(
-                                PayPalException.WebViewException(
+                                PayPalException.PayPalSDKException(
                                     code = status,
-                                    displayableMessage = message
+                                    description = message
                                 )
                             )
                         )

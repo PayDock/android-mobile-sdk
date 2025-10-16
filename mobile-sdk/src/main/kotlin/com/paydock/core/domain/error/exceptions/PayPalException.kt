@@ -34,14 +34,93 @@ sealed class PayPalException(displayableMessage: String) : SdkException(displaya
     ) : PayPalException(error.displayableMessage)
 
     /**
-     * Exception thrown when there is an error while communicating with a WebView.
+     * Represents an exception specific to the PayPal SDK.
      *
-     * @param code The HTTP code of the response, if available.
-     * @param displayableMessage A message that can be displayed to the user.
-     * @constructor Creates a WebViewException with the specified HTTP code and displayable message.
+     * This exception is thrown when an error occurs during an interaction with the PayPal SDK,
+     * such as API calls, token management, or internal SDK operations. It provides a specific
+     * error code and a human-readable description of the issue.
+     *
+     * @property code The specific error code associated with the exception. This code can be used
+     *                  to identify the exact type of error that occurred.  Refer to PayPal's API
+     *                  documentation for details on possible error codes.
+     * @property description A human-readable description of the error that occurred. This provides
+     *                       more context about the nature of the error and may assist in debugging.
+     *                       This is the same message provided to the superclass `PayPalException`.
      */
-    class WebViewException(val code: Int? = null, displayableMessage: String) :
-        PayPalException(displayableMessage)
+    data class PayPalSDKException(
+        val code: Int,
+        val description: String
+    ) : PayPalException(description) {
+
+        /**
+         * Returns a user-friendly error reason based on the error code.
+         *
+         * This provides more context about what went wrong, which can be helpful for logging,
+         * analytics, or providing better error messages to end users.
+         *
+         * Common PayPal SDK error codes:
+         * - 0: UNKNOWN - An unknown error occurred
+         * - 1: DATA_PARSING_ERROR - Error parsing data from the server
+         * - 2: UNKNOWN_HOST - Network connectivity issue or invalid host
+         * - 3: NO_RESPONSE_DATA - Server returned no data
+         * - 4: INVALID_URL_REQUEST - The URL request was malformed
+         * - 5: SERVER_RESPONSE_ERROR - Server returned an error response
+         * - 6: CHECKOUT_ERROR - Error during checkout flow
+         * - 7: NATIVE_CHECKOUT_ERROR - Error in native checkout implementation
+         * - 8: GRAPHQL_JSON_INVALID_ERROR - Invalid GraphQL JSON response
+         *
+         * @return A user-friendly string describing the error category
+         */
+        fun getErrorReason(): String = when (code) {
+            0 -> "Unknown Error"
+            1 -> "Data Parsing Error"
+            2 -> "Network Connectivity Error"
+            3 -> "No Response Data"
+            4 -> "Invalid Request"
+            5 -> "Server Error"
+            6 -> "Checkout Error"
+            7 -> "Native Checkout Error"
+            8 -> "Invalid Response Format"
+            else -> "PayPal SDK Error (Code: $code)"
+        }
+
+        /**
+         * Returns the error category for grouping similar errors.
+         *
+         * This can be useful for analytics or error reporting to categorize
+         * different types of errors for better tracking and debugging.
+         *
+         * @return The error category as an [ErrorCategory]
+         */
+        fun getErrorCategory(): ErrorCategory = when (code) {
+            0 -> ErrorCategory.UNKNOWN
+            1, 8 -> ErrorCategory.PARSING
+            2 -> ErrorCategory.NETWORK
+            3, 4, 5 -> ErrorCategory.SERVER
+            6, 7 -> ErrorCategory.CHECKOUT
+            else -> ErrorCategory.UNKNOWN
+        }
+
+        /**
+         * Categories for PayPal SDK errors.
+         */
+        enum class ErrorCategory {
+            /** Unknown or unclassified error */
+            UNKNOWN,
+
+            /** Error related to data parsing */
+            PARSING,
+
+            /** Error related to network connectivity */
+            NETWORK,
+
+            /** Error related to server communication */
+            SERVER,
+
+            /** Error related to checkout flow */
+            CHECKOUT
+        }
+    }
 
     /**
      * Exception thrown when there is a cancellation error related to PayPal.
