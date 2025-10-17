@@ -52,7 +52,8 @@ fun FilledButtonAppearanceStyleEditor(
             onIconChange = { newIcon ->
                 onAppearanceChange(currentAppearance.copy(icon = newIcon))
             },
-            defaultIcon = null // Filled buttons don't have SDK defaults
+            // Pass DrawableRes icons as default so they appear in the dropdown
+            defaultIcon = currentAppearance.icon as? com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon.DrawableRes
         )
 
         HorizontalDivider()
