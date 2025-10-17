@@ -687,7 +687,7 @@ internal fun SdkButton(
 
     Button(
         onClick = onClick,
-        modifier = modifier.height(adjustedButtonHeight),
+        modifier = modifier.heightIn(min = adjustedButtonHeight),
         enabled = isEnabled,
         content = {
             ButtonContent(
@@ -777,7 +777,7 @@ internal fun SdkOutlineButton(
 
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.height(adjustedButtonHeight),
+        modifier = modifier.heightIn(min = adjustedButtonHeight),
         enabled = isEnabled,
         content = {
             ButtonContent(
@@ -861,7 +861,7 @@ internal fun SdkTextButton(
 
     TextButton(
         onClick = onClick,
-        modifier = modifier.height(adjustedButtonHeight),
+        modifier = modifier.heightIn(min = adjustedButtonHeight),
         enabled = isEnabled,
         content = {
             ButtonContent(
