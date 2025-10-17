@@ -21,6 +21,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -72,27 +73,34 @@ fun StyleButtonContentSection(
 
         // Button Icon Selection
         SectionContainer(title = stringResource(R.string.label_button_icon_asset)) {
-            val iconOptions = buildList {
-                add("None" to null)
-                if (defaultIcon != null) {
-                    add("Default (SDK)" to defaultIcon)
+            // Remember icon options to maintain stable references for equality checks
+            val iconOptions = remember(defaultIcon) {
+                buildList {
+                    add("None" to null)
+                    if (defaultIcon != null) {
+                        add("Default (SDK)" to defaultIcon)
+                    }
+                    add("Add" to ButtonIcon.Vector(Icons.Filled.Add))
+                    add("Card" to ButtonIcon.Vector(Icons.Filled.CreditCard))
+                    add("Check" to ButtonIcon.Vector(Icons.Filled.Check))
+                    add("Close" to ButtonIcon.Vector(Icons.Filled.Close))
+                    add("Favorite" to ButtonIcon.Vector(Icons.Filled.Favorite))
+                    add("Forward" to ButtonIcon.Vector(Icons.AutoMirrored.Filled.ArrowForward))
+                    add("Home" to ButtonIcon.Vector(Icons.Filled.Home))
+                    add("Link" to ButtonIcon.Vector(Icons.Filled.Link))
+                    add("Refresh" to ButtonIcon.Vector(Icons.Filled.Refresh))
                 }
-                add("Add" to ButtonIcon.Vector(Icons.Filled.Add))
-                add("Card" to ButtonIcon.Vector(Icons.Filled.CreditCard))
-                add("Check" to ButtonIcon.Vector(Icons.Filled.Check))
-                add("Close" to ButtonIcon.Vector(Icons.Filled.Close))
-                add("Favorite" to ButtonIcon.Vector(Icons.Filled.Favorite))
-                add("Forward" to ButtonIcon.Vector(Icons.AutoMirrored.Filled.ArrowForward))
-                add("Home" to ButtonIcon.Vector(Icons.Filled.Home))
-                add("Link" to ButtonIcon.Vector(Icons.Filled.Link))
-                add("Refresh" to ButtonIcon.Vector(Icons.Filled.Refresh))
             }
             
             val selectedLabel = when (selectedIcon) {
-                null -> iconOptions.firstOrNull { it.first.equals("None", ignoreCase = true) }?.first
-                    ?: iconOptions.firstOrNull()?.first.orEmpty()
-                else -> iconOptions.firstOrNull { it.second == selectedIcon }?.first
-                    ?: iconOptions.firstOrNull()?.first.orEmpty()
+                null -> {
+                    iconOptions.firstOrNull { it.first.equals("None", ignoreCase = true) }?.first
+                        ?: iconOptions.firstOrNull()?.first.orEmpty()
+                }
+                else -> {
+                    val matchingOption = iconOptions.firstOrNull { it.second == selectedIcon }
+                    matchingOption?.first ?: iconOptions.firstOrNull()?.first.orEmpty()
+                }
             }
             
             DropdownSelector(
