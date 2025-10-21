@@ -79,6 +79,8 @@ import com.paydock.sample.feature.checkout.ui.steps.InformationStepView
 import com.paydock.sample.feature.checkout.ui.steps.PaymentStepView
 import com.paydock.sample.feature.checkout.ui.steps.PaymentWidgetView
 import com.paydock.sample.feature.shop.data.CartManager
+import com.paydock.sample.feature.account.domain.model.SavedAddress as ProfileSavedAddress
+import com.paydock.sample.feature.checkout.domain.model.SavedAddress as CheckoutSavedAddress
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -255,8 +257,9 @@ fun EnhancedCheckoutScreen(
     // Address Widget Modal (shared)
     if (viewModel.showAddressWidget) {
         val initial = viewModel.addressWidgetInitialAddress
+        val isEditing = initial != null
         AddressWidgetSheet(
-            isEditing = initial != null,
+            isEditing = isEditing,
             title = when (viewModel.addressWidgetType) {
                 AddressType.SHIPPING -> "Shipping Address"
                 AddressType.BILLING -> "Billing Address"
@@ -276,18 +279,50 @@ fun EnhancedCheckoutScreen(
             showAddressTypeChips = true,
             onDismissRequest = { viewModel.hideAddressWidget() },
             onSave = { result: AddressWidgetResult ->
-                val address = Address(
+                // Create a SavedAddress to add to the profile
+                val savedAddress = ProfileSavedAddress(
+                    id = ProfileSavedAddress.generateId(),
+                    label = result.label,
                     addressLine1 = result.billingAddress.addressLine1 ?: "",
                     addressLine2 = result.billingAddress.addressLine2 ?: "",
                     city = result.billingAddress.city ?: "",
                     state = result.billingAddress.state ?: "",
                     postalCode = result.billingAddress.postalCode ?: "",
-                    country = result.billingAddress.country ?: ""
+                    country = result.billingAddress.country ?: "",
+                    isDefault = result.isDefault
                 )
+
+                // Add to profile manager
+                viewModel.saveAddress(savedAddress)
+
+                // Convert to checkout SavedAddress
+                val checkoutSavedAddress = CheckoutSavedAddress(
+                    id = savedAddress.id,
+                    label = savedAddress.label,
+                    address = Address(
+                        addressLine1 = savedAddress.addressLine1,
+                        addressLine2 = savedAddress.addressLine2,
+                        city = savedAddress.city,
+                        state = savedAddress.state,
+                        postalCode = savedAddress.postalCode,
+                        country = savedAddress.country
+                    ),
+                    isDefault = savedAddress.isDefault
+                )
+
+                // Select the newly added address
                 when (viewModel.addressWidgetType) {
-                    AddressType.SHIPPING -> viewModel.updateShippingAddress(address)
-                    AddressType.BILLING -> viewModel.updateBillingAddress(address)
+                    AddressType.SHIPPING -> viewModel.selectSavedAddress(
+                        checkoutSavedAddress,
+                        AddressType.SHIPPING
+                    )
+
+                    AddressType.BILLING -> viewModel.selectSavedAddress(
+                        checkoutSavedAddress,
+                        AddressType.BILLING
+                    )
                 }
+
                 viewModel.hideAddressWidget()
             }
         )
