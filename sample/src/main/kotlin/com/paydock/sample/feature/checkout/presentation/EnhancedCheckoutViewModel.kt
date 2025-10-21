@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.paydock.sample.feature.account.domain.model.SavedAddress as ProfileSavedAddress
 
 @HiltViewModel
 class EnhancedCheckoutViewModel @Inject constructor(
@@ -212,7 +213,11 @@ class EnhancedCheckoutViewModel @Inject constructor(
             }
         }
     }
-    
+
+    fun saveAddress(address: ProfileSavedAddress) {
+        profileManager.addAddress(address)
+    }
+
     fun setPaymentMethod(method: PaymentMethod) {
         selectedPaymentMethod = method
         savedStateHandle[KEY_PAYMENT_METHOD] = method

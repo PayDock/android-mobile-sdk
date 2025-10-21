@@ -43,8 +43,9 @@ class UserProfileManager private constructor() {
                 currentAddresses[i] = currentAddresses[i].copy(isDefault = false)
             }
         }
-        
-        currentAddresses.add(address)
+
+        // Add to the top of the list for better UX
+        currentAddresses.add(0, address)
         _profile.value = _profile.value.copy(savedAddresses = currentAddresses)
     }
     
