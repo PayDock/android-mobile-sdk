@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
@@ -526,7 +527,11 @@ object ButtonAppearanceDefaults {
                 ),
             textAppearance = TextAppearanceDefaults.appearance().copy(
                 style = LocalTextStyle.current.copy(
-                    platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    platformStyle = PlatformTextStyle(includeFontPadding = true),
+                    lineHeightStyle = LineHeightStyle(
+                        alignment = LineHeightStyle.Alignment.Center,
+                        trim = LineHeightStyle.Trim.Both
+                    )
                 )
             ),
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
@@ -567,7 +572,11 @@ object ButtonAppearanceDefaults {
                 ),
             textAppearance = TextAppearanceDefaults.appearance().copy(
                 style = LocalTextStyle.current.copy(
-                    platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    platformStyle = PlatformTextStyle(includeFontPadding = true),
+                    lineHeightStyle = LineHeightStyle(
+                        alignment = LineHeightStyle.Alignment.Center,
+                        trim = LineHeightStyle.Trim.Both
+                    )
                 )
             ),
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
@@ -605,7 +614,11 @@ object ButtonAppearanceDefaults {
                 ),
             textAppearance = TextAppearanceDefaults.appearance().copy(
                 style = LocalTextStyle.current.copy(
-                    platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    platformStyle = PlatformTextStyle(includeFontPadding = true),
+                    lineHeightStyle = LineHeightStyle(
+                        alignment = LineHeightStyle.Alignment.Center,
+                        trim = LineHeightStyle.Trim.Both
+                    )
                 )
             ),
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(

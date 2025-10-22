@@ -8,12 +8,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.R
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.res.stringResource
 
 @Composable
 fun DefaultBadge(modifier: Modifier = Modifier) {
@@ -28,10 +29,7 @@ fun DefaultBadge(modifier: Modifier = Modifier) {
         Text(
             text = stringResource(id = R.string.label_default),
             maxLines = 1,
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = FontWeight.Bold,
-                platformStyle = PlatformTextStyle(includeFontPadding = true)
-            ),
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onPrimary
         )
     }

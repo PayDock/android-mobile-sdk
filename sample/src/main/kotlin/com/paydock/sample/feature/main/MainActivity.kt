@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -218,7 +219,7 @@ fun MainScreenView(
                             ),
                             label = "toolbarBadgeScale"
                         )
-                        var lastCount by remember { mutableStateOf(itemCount) }
+                        var lastCount by remember { mutableIntStateOf(itemCount) }
                         val haptic = LocalHapticFeedback.current
                         LaunchedEffect(itemCount) {
                             if (itemCount > lastCount) {
@@ -272,7 +273,7 @@ fun MainScreenView(
                 onBackButtonClick = if (actionBarDetails.showBackButton) {
                     {
                         val currentRoute = actionBarDetails.route
-                        if (currentRoute?.contains("checkout") == true) {
+                        if (currentRoute.contains("checkout") == true) {
                             // Let checkout handle back navigation between steps first
                             val handled =
                                 com.paydock.sample.feature.checkout.presentation.CheckoutBackCoordinator.onToolbarBack?.invoke() == true
