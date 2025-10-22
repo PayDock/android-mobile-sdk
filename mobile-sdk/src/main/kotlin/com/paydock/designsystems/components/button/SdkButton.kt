@@ -678,6 +678,11 @@ internal fun SdkButton(
                 iconAppearance = appearance.iconAppearance.copy( // Assuming iconAppearance is not null
                     tint = disabledIconOrLoaderTint
                 ),
+                textAppearance = appearance.textAppearance.copy(
+                    style = appearance.textAppearance.style.copy(
+                        color = disabledIconOrLoaderTint
+                    )
+                ),
                 loaderAppearance = appearance.loaderAppearance.copy(
                     color = disabledIconOrLoaderTint
                 )
@@ -768,6 +773,11 @@ internal fun SdkOutlineButton(
                 iconAppearance = appearance.iconAppearance.copy( // Assuming iconAppearance is not null
                     tint = disabledIconOrLoaderTint
                 ),
+                textAppearance = appearance.textAppearance.copy(
+                    style = appearance.textAppearance.style.copy(
+                        color = disabledIconOrLoaderTint
+                    )
+                ),
                 loaderAppearance = appearance.loaderAppearance.copy(
                     color = disabledIconOrLoaderTint
                 )
@@ -851,6 +861,11 @@ internal fun SdkTextButton(
             appearance.copy(
                 iconAppearance = appearance.iconAppearance.copy( // Assuming iconAppearance is not null
                     tint = disabledIconOrLoaderTint
+                ),
+                textAppearance = appearance.textAppearance.copy(
+                    style = appearance.textAppearance.style.copy(
+                        color = disabledIconOrLoaderTint
+                    )
                 ),
                 loaderAppearance = appearance.loaderAppearance.copy(
                     color = disabledIconOrLoaderTint
