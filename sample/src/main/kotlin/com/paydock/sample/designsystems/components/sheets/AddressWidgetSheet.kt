@@ -1,5 +1,6 @@
 package com.paydock.sample.designsystems.components.sheets
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,9 +24,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
@@ -36,7 +37,6 @@ import com.paydock.feature.address.presentation.AddressDetailsWidget
 import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.button.AppTextButton
-import com.paydock.sample.designsystems.components.sheets.AppBottomSheet
 
 data class AddressWidgetResult(
     val label: String,
@@ -103,10 +103,8 @@ fun AddressWidgetSheet(
                                 onClick = { addressType = type },
                                 label = {
                                     Text(
-                                        text = type,
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            platformStyle = PlatformTextStyle(includeFontPadding = true)
-                                        )
+                                        style = MaterialTheme.typography.labelSmall,
+                                        text = type
                                     )
                                 },
                                 colors = AssistChipDefaults.assistChipColors(
