@@ -4,8 +4,10 @@ package com.paydock.designsystems.components.input
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -33,7 +35,6 @@ import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.LineHeightStyle
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.core.presentation.extensions.defaultErrorSemantics
@@ -117,7 +118,6 @@ internal fun SdkTextField(
                     appearance.label.copy(
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontSize = MaterialTheme.typography.bodyMedium.fontSize,
-                            lineHeight = TextUnit.Unspecified,
                             platformStyle = PlatformTextStyle(includeFontPadding = false),
                             lineHeightStyle = LineHeightStyle(
                                 alignment = LineHeightStyle.Alignment.Center,
@@ -126,7 +126,9 @@ internal fun SdkTextField(
                         )
                     )
                 }
-                TextFieldLabel(label, labelTextAppearance)
+                Box(modifier = Modifier.offset(y = 2.dp)) {
+                    TextFieldLabel(label, labelTextAppearance)
+                }
             },
             placeholder = {
                 TextFieldPlaceholder(placeholder, appearance.placeholder)
@@ -288,25 +290,18 @@ object TextFieldAppearanceDefaults {
      */
     @Composable
     fun appearance(): TextFieldAppearance = TextFieldAppearance(
-        // BasicTextField
-        style = MaterialTheme.typography.bodyMedium.copy(
-            lineHeight = TextUnit.Unspecified,
-            platformStyle = PlatformTextStyle(includeFontPadding = false),
-            lineHeightStyle = LineHeightStyle(
-                alignment = LineHeightStyle.Alignment.Center,
-                trim = LineHeightStyle.Trim.Both
-            )
-        ),
+        // BasicTextField - Keep natural for container expansion
+        style = MaterialTheme.typography.bodyMedium,
         // DecorationBox
         singleLine = false,
         placeholder = TextAppearanceDefaults.appearance().copy(
             style = MaterialTheme.typography.bodyMedium,
             maxLines = 1
         ),
+        // Label - Apply alignment fixes for icon alignment
         label = TextAppearanceDefaults.appearance().copy(
             maxLines = 1,
             style = MaterialTheme.typography.labelMedium.copy(
-                lineHeight = TextUnit.Unspecified,
                 platformStyle = PlatformTextStyle(includeFontPadding = false),
                 lineHeightStyle = LineHeightStyle(
                     alignment = LineHeightStyle.Alignment.Center,
@@ -496,9 +491,24 @@ internal fun PreviewSdkTextFieldEmptyState() {
 
 @SdkLightDarkPreviews
 @Composable
-internal fun PreviewSdkTextFieldWithLeadingIcon() {
+internal fun PreviewSdkTextFieldWithLeadingIconEmptyState() {
     // Mutable state for the text input field value
     var value by remember { mutableStateOf("") }
+    // Preview SdkTextField with pre-filled input
+    SdkTextField(
+        value = value,
+        leadingIcon = { CardSchemeIcon(null, false) },
+        onValueChange = { value = it },
+        placeholder = "Placeholder",
+        label = "Label"
+    )
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewSdkTextFieldWithLeadingIconWithInput() {
+    // Mutable state for the text input field value
+    var value by remember { mutableStateOf("Input") }
     // Preview SdkTextField with pre-filled input
     SdkTextField(
         value = value,
