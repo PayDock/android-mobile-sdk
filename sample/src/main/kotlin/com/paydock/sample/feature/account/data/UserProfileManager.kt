@@ -122,6 +122,8 @@ class UserProfileManager private constructor() {
         SavedAddress(
             id = "addr_1",
             label = "Home",
+            firstName = "John",
+            lastName = "Doe",
             addressLine1 = "123 Main Street",
             addressLine2 = "Apt 2B",
             city = "San Francisco",
@@ -133,6 +135,8 @@ class UserProfileManager private constructor() {
         SavedAddress(
             id = "addr_2",
             label = "Work",
+            firstName = "John",
+            lastName = "Doe",
             addressLine1 = "456 Market Street",
             addressLine2 = "Suite 1000",
             city = "San Francisco",

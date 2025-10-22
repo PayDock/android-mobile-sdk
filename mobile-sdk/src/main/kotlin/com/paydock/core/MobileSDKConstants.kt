@@ -246,7 +246,7 @@ internal object MobileSDKConstants {
             const val DATA_COLLECTOR_UNKNOWN_ERROR =
                 "An unknown error occurred while trying to initialise the PayPalDataCollector. " +
                     "Please try again later or contact support for assistance."
-            const val CANCELLATION_ERROR = "PayPal Vault charge was cancelled!"
+            const val CANCELLATION_ERROR = "PayPal Vault account linking was cancelled!"
         }
     }
 

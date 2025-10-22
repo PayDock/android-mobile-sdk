@@ -10,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -142,10 +143,16 @@ fun AddressWidgetSheet(
                         address = addressResult
                     ),
                     appearance = AddressDetailsAppearanceDefaults.appearance().copy(
-                        actionButton = ButtonAppearanceDefaults.outlineButtonAppearance().copy(
-                            text = stringResource(R.string.button_add),
-                            icon = ButtonIcon.Vector(Icons.Filled.Add)
-                        )
+                        actionButton = ButtonAppearanceDefaults
+                            .outlineButtonAppearance()
+                            .copy(
+                                text = if (isEditing) stringResource(R.string.button_edit) else stringResource(
+                                    R.string.button_add
+                                ),
+                                icon = if (isEditing) ButtonIcon.Vector(Icons.Filled.Edit) else ButtonIcon.Vector(
+                                    Icons.Filled.Add
+                                )
+                            )
                     )
                 ) { billingAddress ->
                     addressResult = billingAddress

@@ -34,13 +34,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.components.button.AppButtonShape
@@ -139,8 +136,8 @@ private fun CartContentView(
             // Gift Card, Shipping, and Order Summary moved to Payment step
         }
 
-        // Checkout Button fixed at bottom with safe padding
-        CheckoutButton(onCheckout = onCheckout)
+        // Checkout Button fixed at bottom with safe padding and cost summary
+        CheckoutButton(cartManager = cartManager, onCheckout = onCheckout)
     }
 }
 
@@ -181,9 +178,10 @@ private fun CartItemRowView(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            containerColor = MaterialTheme.colorScheme.surface
         ),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
@@ -192,62 +190,20 @@ private fun CartItemRowView(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Product Image
-            run {
-                val product = cartItem.product
-                val fallbackResId = when (product.imageName) {
-                    "demo_product_1" -> R.drawable.demo_product_1
-                    "demo_product_2" -> R.drawable.demo_product_2
-                    "ic_coles_pay" -> R.drawable.ic_coles_pay
-                    "ic_afterpay" -> R.drawable.ic_afterpay
-                    "ic_paypal" -> R.drawable.ic_paypal
-                    "ic_google_pay_default" -> R.drawable.ic_google_pay_default
-                    "ic_src" -> R.drawable.ic_src
-                    "ic_launcher_foreground" -> R.drawable.ic_launcher_foreground
-                    "demo_icon" -> R.drawable.demo_icon
-                    "ic_widgets" -> R.drawable.ic_widgets
-                    "ic_style" -> R.drawable.ic_style
-                    "ic_checkout" -> R.drawable.ic_checkout
-                    else -> null
-                }
-                val context = LocalContext.current
-                if (product.imageUrl != null) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .data(product.imageUrl)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = product.name,
-                        contentScale = ContentScale.Crop,
-                        placeholder = fallbackResId?.let { painterResource(it) },
-                        error = fallbackResId?.let { painterResource(it) }
-                            ?: painterResource(R.drawable.demo_product_1),
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.surface)
-                    )
-                } else if (fallbackResId != null) {
-                    Image(
-                        painter = painterResource(fallbackResId),
-                        contentDescription = product.name,
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.surface),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Filled.ShoppingCart,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.surface)
-                    )
-                }
+            // Product Image Container
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(cartItem.product.image.drawableRes),
+                    contentDescription = cartItem.product.name,
+                    modifier = Modifier.size(64.dp),
+                    contentScale = ContentScale.Fit
+                )
             }
             
             // Product Details
@@ -327,10 +283,37 @@ private fun CartItemRowView(
 
 @Composable
 private fun CheckoutButton(
+    cartManager: CartManager,
     onCheckout: () -> Unit
 ) {
+    // Collect cart items to trigger recomposition when they change
+    val cartItems by cartManager.cartItems.collectAsState()
+    // Calculate subtotal based on the current cart items
+    val formattedSubtotal = remember(cartItems) {
+        cartManager.formattedSubtotal
+    }
+    
     Column {
         HorizontalDivider()
+        // Subtotal row above the checkout button
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Subtotal",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = formattedSubtotal,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
         AppButton(
             text = "Proceed to Checkout",
             onClick = onCheckout,

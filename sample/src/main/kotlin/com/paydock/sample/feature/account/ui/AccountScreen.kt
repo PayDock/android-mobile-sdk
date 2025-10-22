@@ -1,7 +1,5 @@
 package com.paydock.sample.feature.account.ui
 
-import android.content.Context
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,6 +24,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -57,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
+import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
@@ -71,12 +71,12 @@ import com.paydock.sample.designsystems.components.button.AppTextButton
 import com.paydock.sample.designsystems.components.common.DefaultBadge
 import com.paydock.sample.designsystems.components.common.SectionCard
 import com.paydock.sample.designsystems.components.common.SectionHeader
-import com.paydock.sample.designsystems.components.dialogs.ErrorDialog
 import com.paydock.sample.designsystems.components.sheets.AddressWidgetResult
 import com.paydock.sample.designsystems.components.sheets.AddressWidgetSheet
 import com.paydock.sample.designsystems.theme.SampleTheme
 import com.paydock.sample.feature.account.AccountViewModel
 import com.paydock.sample.feature.account.data.UserProfileManager
+import com.paydock.sample.feature.account.domain.model.Customer
 import com.paydock.sample.feature.account.domain.model.SavedAddress
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,25 +87,6 @@ fun AccountScreen(viewModel: AccountViewModel = hiltViewModel<AccountViewModel>(
     val context = LocalContext.current
 
     val uiState by viewModel.stateFlow.collectAsState()
-    LaunchedEffect(uiState.customer) {
-        uiState.customer?.let {
-            Toast.makeText(
-                context,
-                context.getString(R.string.desc_pay_pal_customer_created),
-                Toast.LENGTH_SHORT
-            ).show()
-            viewModel.resetResultState()
-        }
-    }
-    if (!uiState.error.isNullOrBlank()) {
-        ErrorDialog(
-            onDismissRequest = { viewModel.resetResultState() },
-            onConfirmation = {
-                viewModel.resetResultState()
-            },
-            dialogText = uiState.error!!,
-        )
-    }
     
     var showAlert by remember { mutableStateOf(false) }
     var alertMessage by remember { mutableStateOf("") }
@@ -156,11 +137,16 @@ fun AccountScreen(viewModel: AccountViewModel = hiltViewModel<AccountViewModel>(
             )
             
             // Saved Payment Methods Section
-            SavedPaymentMethodsSection(viewModel, context)
+        SavedPaymentMethodsSection(
+            viewModel = viewModel,
+            customer = uiState.customer
+        )
             
             // Saved Addresses Section
             SavedAddressesSection(
                 savedAddresses = profile.savedAddresses,
+                fullName = listOfNotNull(profile.firstName, profile.lastName).joinToString(" ")
+                    .trim(),
                 onAddAddress = {
                     editingAddress = null
                     showAddressWidget = true
@@ -189,6 +175,8 @@ fun AccountScreen(viewModel: AccountViewModel = hiltViewModel<AccountViewModel>(
             isEditing = isEditing,
             initialBillingAddress = editingAddress?.let {
                 BillingAddress(
+                    firstName = it.firstName,
+                    lastName = it.lastName,
                     addressLine1 = it.addressLine1,
                     addressLine2 = it.addressLine2,
                     city = it.city,
@@ -207,6 +195,8 @@ fun AccountScreen(viewModel: AccountViewModel = hiltViewModel<AccountViewModel>(
                 val savedAddress = SavedAddress(
                     id = editingAddress?.id ?: SavedAddress.generateId(),
                     label = result.label,
+                    firstName = result.billingAddress.firstName ?: "",
+                    lastName = result.billingAddress.lastName ?: "",
                     addressLine1 = result.billingAddress.addressLine1 ?: "",
                     addressLine2 = result.billingAddress.addressLine2 ?: "",
                     city = result.billingAddress.city ?: "",
@@ -311,13 +301,17 @@ private fun ProfileInfoSection(
 }
 
 @Composable
-private fun SavedPaymentMethodsSection(viewModel: AccountViewModel, context: Context) {
+private fun SavedPaymentMethodsSection(
+    viewModel: AccountViewModel,
+    customer: Customer?,
+) {
+    var isLoading by remember { mutableStateOf(false) }
     SectionCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             SectionHeader(title = stringResource(R.string.label_saved_payment_methods))
-            
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -325,56 +319,173 @@ private fun SavedPaymentMethodsSection(viewModel: AccountViewModel, context: Con
                 ),
                 shape = RoundedCornerShape(10.dp)
             ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.Top
+                var paypalError by remember { mutableStateOf<String?>(null) }
+                var paypalSuccessEmail by remember { mutableStateOf<String?>(null) }
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_paypal),
-                            contentDescription = "PayPal"
+                        // (moved) status rows will render at the bottom
+
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_paypal),
+                                contentDescription = "PayPal"
+                            )
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+
+                        Text(
+                            text = stringResource(R.string.desc_link_your_paypal_account),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                                .padding(top = 4.dp)
                         )
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                    
-                    Text(
-                        text = stringResource(R.string.desc_link_your_paypal_account),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .padding(top = 4.dp)
-                    )
-                    
-                    // PayPal Vault Widget
-                    PayPalSavePaymentSourceWidget(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        config = PayPalVaultConfig(
-                            accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
-                            gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL
-                        ),
-                        appearance = PayPalPaymentSourceAppearanceDefaults.appearance().copy(
-                            actionButton = ButtonAppearanceDefaults
-                                .outlineButtonAppearance()
-                                .copy(
-                                    text = stringResource(id = R.string.button_link_account),
-                                )
-                        ),
-                        completion = { result ->
-                            result.onSuccess { vaultResult ->
-                                viewModel.createCustomer(vaultResult.token)
-                            }.onFailure { error ->
-                                val error = error.toError()
-                                Toast.makeText(context, error.displayableMessage, Toast.LENGTH_SHORT)
-                                    .show()
+
+                        // PayPal Vault Widget
+                        PayPalSavePaymentSourceWidget(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            config = PayPalVaultConfig(
+                                accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
+                                gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL
+                            ),
+                            appearance = PayPalPaymentSourceAppearanceDefaults.appearance().copy(
+                                actionButton = ButtonAppearanceDefaults
+                                    .outlineButtonAppearance()
+                                    .copy(
+                                        text = stringResource(id = R.string.button_link_account),
+                                    )
+                            ),
+                            loadingDelegate = object : WidgetLoadingDelegate {
+                                override fun widgetLoadingDidStart() {
+                                    isLoading = true
+                                    paypalError = null
+                                    paypalSuccessEmail = null
+                                }
+
+                                override fun widgetLoadingDidFinish() {
+                                    isLoading = false
+                                }
+                            },
+                            completion = { result ->
+                                result.onSuccess { vaultResult ->
+                                    paypalError = null
+                                    paypalSuccessEmail = vaultResult.email
+                                    viewModel.createCustomer(vaultResult.token)
+                                }.onFailure { throwable ->
+                                    paypalSuccessEmail = null
+                                    paypalError = throwable.toError().displayableMessage
+                                }
+                            }
+                        )
+
+                        // Bottom-aligned status area
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // Success details: Name / Email rows if available
+                            val fullName = listOfNotNull(
+                                customer?.firstName?.takeIf { it.isNotBlank() },
+                                customer?.lastName?.takeIf { it.isNotBlank() }
+                            ).joinToString(" ").trim().ifBlank { null }
+                            val emailToShow =
+                                (customer?.email?.takeIf { it.isNotBlank() } ?: paypalSuccessEmail)
+
+                            if (fullName != null || !emailToShow.isNullOrBlank()) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(
+                                            MaterialTheme.colorScheme.primaryContainer,
+                                            RoundedCornerShape(8.dp)
+                                        )
+                                        .padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.label_linked_account_details),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    fullName?.let { name ->
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = "Name",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            Text(
+                                                text = name,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                        }
+                                    }
+                                    emailToShow?.let { email ->
+                                        if (email.isNotBlank()) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text(
+                                                    text = "Email",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                                Text(
+                                                    text = email,
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Error message scoped to this flow
+                            paypalError?.let { message ->
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(
+                                            MaterialTheme.colorScheme.errorContainer,
+                                            RoundedCornerShape(8.dp)
+                                        )
+                                        .padding(12.dp)
+                                ) {
+                                    Text(
+                                        text = message,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                }
                             }
                         }
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    // Full-size overlay loader that does not affect layout
+                    if (isLoading) {
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
                 }
             }
         }
@@ -384,6 +495,7 @@ private fun SavedPaymentMethodsSection(viewModel: AccountViewModel, context: Con
 @Composable
 private fun SavedAddressesSection(
     savedAddresses: List<SavedAddress>,
+    fullName: String,
     onAddAddress: () -> Unit,
     onEditAddress: (SavedAddress) -> Unit,
     onDeleteAddress: (SavedAddress) -> Unit,
@@ -409,6 +521,7 @@ private fun SavedAddressesSection(
                 savedAddresses.forEach { address ->
                     SavedAddressCardView(
                         address = address,
+                        fullName = fullName,
                         onEdit = { onEditAddress(address) },
                         onDelete = { onDeleteAddress(address) },
                         onSetDefault = { onSetDefault(address) }
@@ -463,6 +576,7 @@ private fun EmptyAddressesView(
 @Composable
 private fun SavedAddressCardView(
     address: SavedAddress,
+    fullName: String? = null,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onSetDefault: () -> Unit
@@ -547,7 +661,19 @@ private fun SavedAddressCardView(
                     }
                 }
             }
-            
+
+            // Show name if available
+            val fullName = listOfNotNull(
+                address.firstName.takeIf { it.isNotBlank() },
+                address.lastName.takeIf { it.isNotBlank() }).joinToString(" ").trim()
+            if (fullName.isNotEmpty()) {
+                Text(
+                    text = fullName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
             Text(
                 text = address.formattedAddress,
                 style = MaterialTheme.typography.bodyMedium,

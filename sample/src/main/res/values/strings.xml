@@ -131,6 +131,8 @@
     <!-- Descriptions -->
     <string name="desc_pay_pal_customer_created">Customer account created with linked PayPal account as a payment source</string>
     <string name="desc_link_your_paypal_account">Link your PayPal account to use method next time you shop</string>
+    <string name="desc_pay_pal_customer_connected">%1$s is currently connected</string>
+    <string name="label_linked_account_details">Linked Account Details</string>
 
     <!-- Buttons -->
     <string name="button_ok">OK</string>

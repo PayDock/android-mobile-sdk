@@ -2,8 +2,7 @@ package com.paydock.sample.feature.checkout.domain.model
 
 enum class CheckoutStep(val title: String) {
     INFORMATION("Information"),
-    PAYMENT("Payment"),
-    CONFIRMATION("Confirmation");
+    PAYMENT("Payment");
 
     companion object {
         fun getAllSteps(): List<CheckoutStep> = entries
@@ -66,7 +65,9 @@ data class SavedAddress(
     val id: String,
     val label: String,
     val address: Address,
-    val isDefault: Boolean = false
+    val isDefault: Boolean = false,
+    val firstName: String? = null,
+    val lastName: String? = null,
 ) {
     val formattedAddress: String
         get() = address.formattedAddress

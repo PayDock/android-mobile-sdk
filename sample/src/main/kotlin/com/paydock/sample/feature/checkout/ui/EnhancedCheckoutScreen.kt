@@ -74,11 +74,9 @@ import com.paydock.sample.feature.checkout.domain.model.CheckoutStep
 import com.paydock.sample.feature.checkout.presentation.CheckoutBackCoordinator
 import com.paydock.sample.feature.checkout.presentation.EnhancedCheckoutViewModel
 import com.paydock.sample.feature.checkout.ui.components.Checkout3DSBottomSheet
-import com.paydock.sample.feature.checkout.ui.steps.ConfirmationStepView
 import com.paydock.sample.feature.checkout.ui.steps.InformationStepView
 import com.paydock.sample.feature.checkout.ui.steps.PaymentStepView
 import com.paydock.sample.feature.checkout.ui.steps.PaymentWidgetView
-import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.account.domain.model.SavedAddress as ProfileSavedAddress
 import com.paydock.sample.feature.checkout.domain.model.SavedAddress as CheckoutSavedAddress
 
@@ -86,9 +84,21 @@ import com.paydock.sample.feature.checkout.domain.model.SavedAddress as Checkout
 @Composable
 fun EnhancedCheckoutScreen(
     onDismiss: () -> Unit = {},
+    onOrderComplete: (isSuccess: Boolean) -> Unit = {},
     viewModel: EnhancedCheckoutViewModel = hiltViewModel()
 ) {
     val currentStep by viewModel.currentStep.collectAsState()
+    
+    // Listen for order completion and navigate to confirmation screen
+    LaunchedEffect(viewModel.orderCompleted, viewModel.orderFailed) {
+        if (viewModel.orderCompleted) {
+            onOrderComplete(true)
+            viewModel.resetCheckout()
+        } else if (viewModel.orderFailed) {
+            onOrderComplete(false)
+            viewModel.resetCheckout()
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.loadProfileData()
@@ -197,24 +207,6 @@ fun EnhancedCheckoutScreen(
                             CheckoutStep.PAYMENT -> {
                                 PaymentStepView(viewModel = viewModel)
                             }
-                            CheckoutStep.CONFIRMATION -> {
-                                Column(modifier = Modifier
-                                    .fillMaxSize()
-                                    .verticalScroll(scrollState)) {
-                                    ConfirmationStepView(
-                                        viewModel = viewModel,
-                                        onContinueShopping = {
-                                            CartManager.shared.clearCart()
-                                            onDismiss()
-                                        },
-                                        onCancel = {
-                                            // Keep cart intact; just dismiss checkout
-                                            onDismiss()
-                                        }
-                                    )
-                                    Spacer(modifier = Modifier.height(100.dp))
-                                }
-                            }
                         }
                     }
                 }
@@ -229,7 +221,6 @@ fun EnhancedCheckoutScreen(
             )
 
             CheckoutStep.PAYMENT -> PaymentFooter(viewModel = viewModel) { measured -> /* reserved for measurement if needed */ }
-            CheckoutStep.CONFIRMATION -> {}
         }
     }
 
@@ -266,6 +257,8 @@ fun EnhancedCheckoutScreen(
             },
             initialBillingAddress = initial?.let {
                 BillingAddress(
+                    firstName = viewModel.addressWidgetInitialFirstName,
+                    lastName = viewModel.addressWidgetInitialLastName,
                     addressLine1 = it.addressLine1,
                     addressLine2 = it.addressLine2,
                     city = it.city,

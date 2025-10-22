@@ -104,6 +104,12 @@ class EnhancedCheckoutViewModel @Inject constructor(
 
     var addressWidgetInitialAddress by mutableStateOf<Address?>(null)
         private set
+    var addressWidgetInitialFirstName by mutableStateOf<String?>(null)
+        private set
+    var addressWidgetInitialLastName by mutableStateOf<String?>(null)
+        private set
+    var editingSavedAddressId by mutableStateOf<String?>(null)
+        private set
     
     var showAlert by mutableStateOf(false)
         private set
@@ -115,6 +121,9 @@ class EnhancedCheckoutViewModel @Inject constructor(
         private set
     
     var orderCompleted by mutableStateOf(false)
+        private set
+    
+    var orderFailed by mutableStateOf(false)
         private set
     
     var isLoading by mutableStateOf(false)
@@ -138,7 +147,9 @@ class EnhancedCheckoutViewModel @Inject constructor(
                     postalCode = profileAddress.postalCode,
                     country = profileAddress.country
                 ),
-                isDefault = profileAddress.isDefault
+                isDefault = profileAddress.isDefault,
+                firstName = profileAddress.firstName,
+                lastName = profileAddress.lastName
             )
         }
     
@@ -152,14 +163,12 @@ class EnhancedCheckoutViewModel @Inject constructor(
         get() = when (_currentStep.value) {
             CheckoutStep.INFORMATION -> isInformationComplete
             CheckoutStep.PAYMENT -> selectedPaymentMethod != null
-            CheckoutStep.CONFIRMATION -> false
         }
     
     val actionButtonTitle: String
         get() = when (_currentStep.value) {
             CheckoutStep.INFORMATION -> "Continue to Payment"
             CheckoutStep.PAYMENT -> "Place Order"
-            CheckoutStep.CONFIRMATION -> "Done"
         }
     
     // Actions
@@ -236,20 +245,40 @@ class EnhancedCheckoutViewModel @Inject constructor(
     fun routeToFailure() {
         isLoading = false
         orderCompleted = false
-        setCurrentStep(CheckoutStep.CONFIRMATION)
+        orderFailed = true
         // Increment reset key to force fresh widget on retry
         paymentWidgetResetKey++
     }
 
-    fun showAddressWidget(type: AddressType, initialAddress: Address? = null) {
+    fun showAddressWidget(
+        type: AddressType,
+        initialAddress: Address? = null,
+        initialFirstName: String? = null,
+        initialLastName: String? = null
+    ) {
         addressWidgetType = type
         addressWidgetInitialAddress = initialAddress
+        addressWidgetInitialFirstName = initialFirstName
+        addressWidgetInitialLastName = initialLastName
         showAddressWidget = true
+    }
+
+    fun startEditingSavedAddress(saved: SavedAddress, type: AddressType) {
+        editingSavedAddressId = saved.id
+        showAddressWidget(
+            type = type,
+            initialAddress = saved.address,
+            initialFirstName = saved.firstName,
+            initialLastName = saved.lastName
+        )
     }
     
     fun hideAddressWidget() {
         showAddressWidget = false
         addressWidgetInitialAddress = null
+        addressWidgetInitialFirstName = null
+        addressWidgetInitialLastName = null
+        editingSavedAddressId = null
     }
 
     fun setCurrentStep(step: CheckoutStep) {
@@ -279,8 +308,6 @@ class EnhancedCheckoutViewModel @Inject constructor(
         when (_currentStep.value) {
             CheckoutStep.INFORMATION -> goToNextStep()
             CheckoutStep.PAYMENT -> placeOrder()
-            CheckoutStep.CONFIRMATION -> { /* no-op; actions hidden */
-            }
         }
     }
     
@@ -289,11 +316,11 @@ class EnhancedCheckoutViewModel @Inject constructor(
             isLoading = true
             try {
                 orderCompleted = true
-                setCurrentStep(CheckoutStep.CONFIRMATION)
+                // Navigation to confirmation screen will be handled by LaunchedEffect in EnhancedCheckoutScreen
 
             } catch (_: Exception) {
-                orderCompleted = false
-                setCurrentStep(CheckoutStep.CONFIRMATION)
+                orderFailed = true
+                // Navigation to confirmation screen will be handled by LaunchedEffect in EnhancedCheckoutScreen
             } finally {
                 isLoading = false
             }
@@ -419,9 +446,8 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 paymentToken = null
                 selectedPaymentMethod = null
                 savedStateHandle[KEY_PAYMENT_METHOD] = null
-                orderCompleted = false
+                orderFailed = true
                 paymentWidgetResetKey++
-                setCurrentStep(CheckoutStep.CONFIRMATION)
             }
         }.onFailure {
             isLoading = false
@@ -432,7 +458,6 @@ class EnhancedCheckoutViewModel @Inject constructor(
             savedStateHandle[KEY_PAYMENT_METHOD] = null
             orderCompleted = false
             paymentWidgetResetKey++
-            setCurrentStep(CheckoutStep.CONFIRMATION)
         }
     }
 
@@ -450,9 +475,8 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 paymentToken = null
                 selectedPaymentMethod = null
                 savedStateHandle[KEY_PAYMENT_METHOD] = null
-                orderCompleted = false
+                orderFailed = true
                 paymentWidgetResetKey++
-                setCurrentStep(CheckoutStep.CONFIRMATION)
             }
         }.onFailure {
             isLoading = false
@@ -463,7 +487,6 @@ class EnhancedCheckoutViewModel @Inject constructor(
             savedStateHandle[KEY_PAYMENT_METHOD] = null
             orderCompleted = false
             paymentWidgetResetKey++
-            setCurrentStep(CheckoutStep.CONFIRMATION)
         }
     }
 
@@ -479,7 +502,6 @@ class EnhancedCheckoutViewModel @Inject constructor(
             result.onSuccess {
                 isLoading = false
                 orderCompleted = true
-                setCurrentStep(CheckoutStep.CONFIRMATION)
             }.onFailure {
                 isLoading = false
                 threeDSToken = null
@@ -487,9 +509,8 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 paymentToken = null
                 selectedPaymentMethod = null
                 savedStateHandle[KEY_PAYMENT_METHOD] = null
-                orderCompleted = false
+                orderFailed = true
                 paymentWidgetResetKey++
-                setCurrentStep(CheckoutStep.CONFIRMATION)
             }
         }
     }
@@ -511,7 +532,6 @@ class EnhancedCheckoutViewModel @Inject constructor(
             result.onSuccess {
                 isLoading = false
                 orderCompleted = true
-                setCurrentStep(CheckoutStep.CONFIRMATION)
             }.onFailure {
                 isLoading = false
                 threeDSToken = null
@@ -519,9 +539,8 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 paymentToken = null
                 selectedPaymentMethod = null
                 savedStateHandle[KEY_PAYMENT_METHOD] = null
-                orderCompleted = false
+                orderFailed = true
                 paymentWidgetResetKey++
-                setCurrentStep(CheckoutStep.CONFIRMATION)
             }
         }
     }
@@ -534,7 +553,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
         }
     }
     
-    private fun resetCheckout() {
+    fun resetCheckout() {
         _currentStep.value = CheckoutStep.INFORMATION
         savedStateHandle[KEY_CURRENT_STEP] = CheckoutStep.INFORMATION
         contactInfo = ContactInfo()
@@ -547,6 +566,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
         savedStateHandle[KEY_PAYMENT_METHOD] = null
         paymentToken = null
         orderCompleted = false
+        orderFailed = false
     }
     
     fun loadProfileData() {
