@@ -29,13 +29,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.components.button.AppTextButton
 import com.paydock.sample.designsystems.components.common.DefaultBadge
-import com.paydock.sample.designsystems.theme.SampleTheme
 import com.paydock.sample.feature.checkout.domain.model.Address
 import com.paydock.sample.feature.checkout.domain.model.AddressType
 import com.paydock.sample.feature.checkout.domain.model.SavedAddress
@@ -190,6 +188,9 @@ private fun ShippingAddressSection(
                 onEnterNewAddress = {
                     // Open empty sheet (no prefill)
                     viewModel.showAddressWidget(AddressType.SHIPPING, initialAddress = null)
+                },
+                onEditAddress = { savedAddress ->
+                    viewModel.startEditingSavedAddress(savedAddress, AddressType.SHIPPING)
                 }
             )
         }
@@ -232,6 +233,9 @@ private fun BillingAddressSection(
                 },
                 onEnterNewAddress = {
                     viewModel.showAddressWidget(AddressType.BILLING, initialAddress = null)
+                },
+                onEditAddress = { savedAddress ->
+                    viewModel.startEditingSavedAddress(savedAddress, AddressType.BILLING)
                 }
             )
         }
@@ -256,7 +260,8 @@ private fun SavedAddressesSection(
     savedAddresses: List<SavedAddress>,
     selectedAddressId: String?,
     onAddressSelected: (SavedAddress) -> Unit,
-    onEnterNewAddress: () -> Unit
+    onEnterNewAddress: () -> Unit,
+    onEditAddress: (SavedAddress) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -288,7 +293,8 @@ private fun SavedAddressesSection(
                 SavedAddressRow(
                     address = address,
                     isSelected = selectedAddressId == address.id,
-                    onSelect = { onAddressSelected(address) }
+                    onSelect = { onAddressSelected(address) },
+                    onEdit = { onAddressSelected(address); onEditAddress(address) }
                 )
             }
         }
@@ -299,7 +305,8 @@ private fun SavedAddressesSection(
 private fun SavedAddressRow(
     address: SavedAddress,
     isSelected: Boolean,
-    onSelect: () -> Unit
+    onSelect: () -> Unit,
+    onEdit: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
@@ -331,6 +338,22 @@ private fun SavedAddressRow(
                 if (address.isDefault) {
                     DefaultBadge()
                 }
+                Spacer(modifier = Modifier.weight(1f))
+                IconButton(onClick = onEdit) {
+                    Icon(imageVector = Icons.Filled.Edit, contentDescription = "Edit address")
+                }
+            }
+            // Show name if available
+            val fullName = listOfNotNull(
+                address.firstName?.takeIf { it.isNotBlank() },
+                address.lastName?.takeIf { it.isNotBlank() }
+            ).joinToString(" ").trim()
+            if (fullName.isNotEmpty()) {
+                Text(
+                    text = fullName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             Text(
                 text = address.formattedAddress.replace("\n", ", "),

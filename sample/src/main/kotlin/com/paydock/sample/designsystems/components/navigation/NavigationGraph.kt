@@ -14,6 +14,8 @@ import com.paydock.sample.R
 import com.paydock.sample.designsystems.theme.AppTheme
 import com.paydock.sample.feature.account.ui.AccountScreen
 import com.paydock.sample.feature.checkout.ui.EnhancedCheckoutScreen
+import com.paydock.sample.feature.checkout.ui.OrderConfirmationScreen
+import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.shop.ui.CartScreen
 import com.paydock.sample.feature.shop.ui.ProductListScreen
 import com.paydock.sample.feature.style.StylingViewModel
@@ -54,6 +56,45 @@ fun NavigationGraph(
                 onDismiss = {
                     navController.navigate("shop") {
                         popUpTo("shop") { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
+                onOrderComplete = { isSuccess ->
+                    navController.navigate("order_confirmation/$isSuccess") {
+                        popUpTo("shop") { inclusive = false }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+        composable(
+            "order_confirmation/{isSuccess}",
+            arguments = listOf(navArgument("isSuccess") { type = NavType.BoolType })
+        ) { backStackEntry ->
+            val isSuccess = backStackEntry.arguments?.getBoolean("isSuccess") ?: false
+            OrderConfirmationScreen(
+                isSuccess = isSuccess,
+                onContinueShopping = {
+                    // Clear cart on successful order
+                    if (isSuccess) {
+                        CartManager.shared.clearCart()
+                    }
+                    navController.navigate("shop") {
+                        popUpTo("shop") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onRetryCheckout = {
+                    // Navigate back to checkout, keeping cart intact
+                    navController.navigate("checkout") {
+                        popUpTo("checkout") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onCancel = {
+                    // Return to shop, keeping cart intact
+                    navController.navigate("shop") {
+                        popUpTo("shop") { inclusive = true }
                         launchSingleTop = true
                     }
                 }
@@ -168,6 +209,7 @@ fun NavBackStackEntry.getRouteTitle(context: Context): String {
         "shop" -> "Shop"
         "cart" -> "Cart"
         "checkout" -> context.getString(R.string.nav_checkout)
+        "order_confirmation/{isSuccess}" -> "" // No title for confirmation screen
         "widgets" -> context.getString(R.string.nav_widgets)
         "style" -> context.getString(R.string.nav_style)
         "account" -> context.getString(R.string.title_my_account)
@@ -201,6 +243,7 @@ fun NavBackStackEntry.getRouteTitle(context: Context): String {
 fun NavBackStackEntry.showBackButton(): Boolean {
     return when (destination.route) {
         "shop",
+        "order_confirmation/{isSuccess}", // No back button on confirmation screen
         BottomNavItem.Shop.route,
         BottomNavItem.Widgets.route,
         BottomNavItem.Style.route -> false
@@ -212,6 +255,7 @@ fun NavBackStackEntry.showBackButton(): Boolean {
 fun NavBackStackEntry.showTitle(): Boolean {
     return when (destination.route) {
         "shop" -> false
+        "order_confirmation/{isSuccess}" -> false // No title for confirmation screen
         BottomNavItem.Shop.route -> false
         else -> true
     }
