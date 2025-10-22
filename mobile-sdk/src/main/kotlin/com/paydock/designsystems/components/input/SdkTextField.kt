@@ -29,8 +29,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.core.presentation.extensions.defaultErrorSemantics
@@ -44,6 +47,7 @@ import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
 import com.paydock.designsystems.theme.Success
+import com.paydock.feature.card.presentation.components.CardSchemeIcon
 
 /**
  * A customizable text field component that provides various styling and functionality options.
@@ -112,7 +116,13 @@ internal fun SdkTextField(
                 } else {
                     appearance.label.copy(
                         style = MaterialTheme.typography.labelMedium.copy(
-                            fontSize = MaterialTheme.typography.bodyMedium.fontSize
+                            fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+                            lineHeight = TextUnit.Unspecified,
+                            platformStyle = PlatformTextStyle(includeFontPadding = false),
+                            lineHeightStyle = LineHeightStyle(
+                                alignment = LineHeightStyle.Alignment.Center,
+                                trim = LineHeightStyle.Trim.Both
+                            )
                         )
                     )
                 }
@@ -279,7 +289,14 @@ object TextFieldAppearanceDefaults {
     @Composable
     fun appearance(): TextFieldAppearance = TextFieldAppearance(
         // BasicTextField
-        style = MaterialTheme.typography.bodyMedium,
+        style = MaterialTheme.typography.bodyMedium.copy(
+            lineHeight = TextUnit.Unspecified,
+            platformStyle = PlatformTextStyle(includeFontPadding = false),
+            lineHeightStyle = LineHeightStyle(
+                alignment = LineHeightStyle.Alignment.Center,
+                trim = LineHeightStyle.Trim.Both
+            )
+        ),
         // DecorationBox
         singleLine = false,
         placeholder = TextAppearanceDefaults.appearance().copy(
@@ -288,7 +305,14 @@ object TextFieldAppearanceDefaults {
         ),
         label = TextAppearanceDefaults.appearance().copy(
             maxLines = 1,
-            style = MaterialTheme.typography.labelMedium
+            style = MaterialTheme.typography.labelMedium.copy(
+                lineHeight = TextUnit.Unspecified,
+                platformStyle = PlatformTextStyle(includeFontPadding = false),
+                lineHeightStyle = LineHeightStyle(
+                    alignment = LineHeightStyle.Alignment.Center,
+                    trim = LineHeightStyle.Trim.Both
+                )
+            )
         ),
         errorLabel = TextAppearanceDefaults.appearance().copy(
             style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.error)
@@ -467,6 +491,21 @@ internal fun PreviewSdkTextFieldEmptyState() {
         placeholder = "Placeholder",
         label = "Label",
         error = if (value == "error") "This is error" else null
+    )
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewSdkTextFieldWithLeadingIcon() {
+    // Mutable state for the text input field value
+    var value by remember { mutableStateOf("") }
+    // Preview SdkTextField with pre-filled input
+    SdkTextField(
+        value = value,
+        leadingIcon = { CardSchemeIcon(null, false) },
+        onValueChange = { value = it },
+        placeholder = "Placeholder",
+        label = "Label"
     )
 }
 
