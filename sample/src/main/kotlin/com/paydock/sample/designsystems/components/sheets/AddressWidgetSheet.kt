@@ -146,7 +146,7 @@ fun AddressWidgetSheet(
                         actionButton = ButtonAppearanceDefaults
                             .outlineButtonAppearance()
                             .copy(
-                                text = if (isEditing) stringResource(R.string.button_edit) else stringResource(
+                                text = if (isEditing) stringResource(R.string.button_update) else stringResource(
                                     R.string.button_add
                                 ),
                                 icon = if (isEditing) ButtonIcon.Vector(Icons.Filled.Edit) else ButtonIcon.Vector(
