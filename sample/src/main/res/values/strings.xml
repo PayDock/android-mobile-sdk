@@ -143,6 +143,7 @@
     <string name="button_save_changes">Save Changes</string>
     <string name="button_delete">Delete</string>]
     <string name="button_edit">Edit</string>
+    <string name="button_update">Update</string>
     <string name="button_set_as_default">Set as Default</string>
     <string name="button_change_address">Change Address</string>
     <string name="button_enter_address">Enter Address</string>

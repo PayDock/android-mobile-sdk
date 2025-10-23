@@ -33,8 +33,11 @@ import com.paydock.sample.feature.threeDS.domain.usecase.CreateIntegratedThreeDS
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateStandaloneThreeDSTokenUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.paydock.sample.feature.account.domain.model.SavedAddress as ProfileSavedAddress
@@ -133,9 +136,9 @@ class EnhancedCheckoutViewModel @Inject constructor(
     var paymentWidgetResetKey by mutableIntStateOf(0)
         private set
 
-    // Get saved addresses from profile manager
-    val savedAddresses: List<SavedAddress>
-        get() = profileManager.profile.value.savedAddresses.map { profileAddress ->
+    // Get saved addresses from profile manager - converted to StateFlow for reactivity
+    val savedAddresses: StateFlow<List<SavedAddress>> = profileManager.profile.map { profile ->
+        profile.savedAddresses.map { profileAddress ->
             SavedAddress(
                 id = profileAddress.id,
                 label = profileAddress.label,
@@ -152,6 +155,11 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 lastName = profileAddress.lastName
             )
         }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
     
     // Computed properties
     val isInformationComplete: Boolean
@@ -225,6 +233,10 @@ class EnhancedCheckoutViewModel @Inject constructor(
 
     fun saveAddress(address: ProfileSavedAddress) {
         profileManager.addAddress(address)
+    }
+
+    fun updateAddress(address: ProfileSavedAddress) {
+        profileManager.updateAddress(address)
     }
 
     fun setPaymentMethod(method: PaymentMethod) {

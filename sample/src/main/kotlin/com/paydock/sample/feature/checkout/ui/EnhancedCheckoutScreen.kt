@@ -272,10 +272,15 @@ fun EnhancedCheckoutScreen(
             showAddressTypeChips = true,
             onDismissRequest = { viewModel.hideAddressWidget() },
             onSave = { result: AddressWidgetResult ->
-                // Create a SavedAddress to add to the profile
+                // Check if we're editing an existing address or creating a new one
+                val isEditing = viewModel.editingSavedAddressId != null
+                
+                // Create a SavedAddress with existing ID if editing, or generate new ID
                 val savedAddress = ProfileSavedAddress(
-                    id = ProfileSavedAddress.generateId(),
+                    id = viewModel.editingSavedAddressId ?: ProfileSavedAddress.generateId(),
                     label = result.label,
+                    firstName = result.billingAddress.firstName ?: "",
+                    lastName = result.billingAddress.lastName ?: "",
                     addressLine1 = result.billingAddress.addressLine1 ?: "",
                     addressLine2 = result.billingAddress.addressLine2 ?: "",
                     city = result.billingAddress.city ?: "",
@@ -285,8 +290,12 @@ fun EnhancedCheckoutScreen(
                     isDefault = result.isDefault
                 )
 
-                // Add to profile manager
-                viewModel.saveAddress(savedAddress)
+                // Update existing address or add new one to profile manager
+                if (isEditing) {
+                    viewModel.updateAddress(savedAddress)
+                } else {
+                    viewModel.saveAddress(savedAddress)
+                }
 
                 // Convert to checkout SavedAddress
                 val checkoutSavedAddress = CheckoutSavedAddress(
@@ -300,6 +309,8 @@ fun EnhancedCheckoutScreen(
                         postalCode = savedAddress.postalCode,
                         country = savedAddress.country
                     ),
+                    firstName = savedAddress.firstName,
+                    lastName = savedAddress.lastName,
                     isDefault = savedAddress.isDefault
                 )
 

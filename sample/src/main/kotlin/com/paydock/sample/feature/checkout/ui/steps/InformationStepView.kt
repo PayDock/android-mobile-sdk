@@ -24,6 +24,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -43,6 +45,8 @@ import com.paydock.sample.feature.checkout.presentation.EnhancedCheckoutViewMode
 fun InformationStepView(
     viewModel: EnhancedCheckoutViewModel
 ) {
+    val savedAddresses by viewModel.savedAddresses.collectAsState()
+    
     Column(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
@@ -78,7 +82,10 @@ fun InformationStepView(
         ContactInformationSection(viewModel = viewModel)
         
         // Shipping Address Section
-        ShippingAddressSection(viewModel = viewModel)
+        ShippingAddressSection(
+            viewModel = viewModel,
+            savedAddresses = savedAddresses
+        )
         
         // Use as Billing Address Toggle
         Row(
@@ -98,7 +105,10 @@ fun InformationStepView(
         
         // Billing Address Section (only if not using shipping as billing)
         if (!viewModel.useShippingAsBilling) {
-            BillingAddressSection(viewModel = viewModel)
+            BillingAddressSection(
+                viewModel = viewModel,
+                savedAddresses = savedAddresses
+            )
         }
     }
 }
@@ -158,7 +168,8 @@ private fun ContactInformationSection(
 
 @Composable
 private fun ShippingAddressSection(
-    viewModel: EnhancedCheckoutViewModel
+    viewModel: EnhancedCheckoutViewModel,
+    savedAddresses: List<SavedAddress>
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -170,17 +181,17 @@ private fun ShippingAddressSection(
         )
         
         // Saved Address Selection
-        if (viewModel.savedAddresses.isNotEmpty()) {
+        if (savedAddresses.isNotEmpty()) {
             // Auto-select default if none selected yet
-            LaunchedEffect(viewModel.savedAddresses, viewModel.selectedShippingAddressId) {
+            LaunchedEffect(savedAddresses, viewModel.selectedShippingAddressId) {
                 if (viewModel.selectedShippingAddressId == null) {
-                    viewModel.savedAddresses.firstOrNull { it.isDefault }?.let { def ->
+                    savedAddresses.firstOrNull { it.isDefault }?.let { def ->
                         viewModel.selectSavedAddress(def, AddressType.SHIPPING)
                     }
                 }
             }
             SavedAddressesSection(
-                savedAddresses = viewModel.savedAddresses,
+                savedAddresses = savedAddresses,
                 selectedAddressId = viewModel.selectedShippingAddressId,
                 onAddressSelected = { savedAddress ->
                     viewModel.selectSavedAddress(savedAddress, AddressType.SHIPPING)
@@ -212,7 +223,8 @@ private fun ShippingAddressSection(
 
 @Composable
 private fun BillingAddressSection(
-    viewModel: EnhancedCheckoutViewModel
+    viewModel: EnhancedCheckoutViewModel,
+    savedAddresses: List<SavedAddress>
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -224,9 +236,9 @@ private fun BillingAddressSection(
         )
         
         // Saved Address Selection for Billing
-        if (viewModel.savedAddresses.isNotEmpty()) {
+        if (savedAddresses.isNotEmpty()) {
             SavedAddressesSection(
-                savedAddresses = viewModel.savedAddresses,
+                savedAddresses = savedAddresses,
                 selectedAddressId = viewModel.selectedBillingAddressId,
                 onAddressSelected = { savedAddress ->
                     viewModel.selectSavedAddress(savedAddress, AddressType.BILLING)
@@ -294,7 +306,7 @@ private fun SavedAddressesSection(
                     address = address,
                     isSelected = selectedAddressId == address.id,
                     onSelect = { onAddressSelected(address) },
-                    onEdit = { onAddressSelected(address); onEditAddress(address) }
+                    onEdit = { onEditAddress(address) }
                 )
             }
         }
