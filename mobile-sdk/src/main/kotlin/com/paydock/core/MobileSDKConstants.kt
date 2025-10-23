@@ -16,7 +16,6 @@ internal object MobileSDKConstants {
     object General {
         // UI Constants
         internal const val INPUT_DELAY = 300L
-        internal const val DEBOUNCE_DELAY = 500L
 
         // Animation Constants
         internal const val DEFAULT_ANIMATION_DURATION = 300
@@ -93,7 +92,6 @@ internal object MobileSDKConstants {
      * Constants related to card details.
      */
     object CardDetailsConfig {
-        internal const val CARD_NUMBER_SECTION_SIZE = 4
         internal const val MIN_CREDIT_CARD_LENGTH = 12
         internal const val MAX_CREDIT_CARD_LENGTH = 19
         internal const val MIN_GIFT_CARD_LENGTH = 14
@@ -108,7 +106,6 @@ internal object MobileSDKConstants {
         internal const val MAX_MONTH_COUNT = 12
         internal const val DEFAULT_CONSENT_TEXT = "Remember this card for next time."
         internal const val DEFAULT_POLICY_TEXT = "Read our privacy policy"
-        internal const val FONT_SCALE_THRESHOLD = 2.0f
 
         object Errors {
             const val CARD_ERROR =

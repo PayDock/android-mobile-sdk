@@ -4,6 +4,8 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,7 +24,9 @@ fun GiftCardItem(context: Context, stylingViewModel: StylingViewModel) {
     val giftCardAppearance by stylingViewModel.giftCardWidgetAppearance.collectAsState()
     val currentOrDefaultAppearance = giftCardAppearance ?: GiftCardAppearanceDefaults.appearance()
     GiftCardWidget(
-        modifier = Modifier.padding(16.dp),
+        modifier = Modifier
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         config = GiftCardWidgetConfig(
             accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
             storePin = true
