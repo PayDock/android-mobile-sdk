@@ -1,6 +1,7 @@
 package com.paydock.feature.card.presentation
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,9 +20,9 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
 import com.paydock.R
-import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearance
@@ -77,8 +78,6 @@ fun GiftCardWidget(
 
     val configuration = LocalConfiguration.current
     val fontScale = configuration.fontScale
-    // Define threshold for large font scale
-    val largeFontScaleThreshold = MobileSDKConstants.CardDetailsConfig.FONT_SCALE_THRESHOLD
 
     // Focus handlers for input fields
     val focusCardNumber = remember { FocusRequester() }
@@ -96,30 +95,42 @@ fun GiftCardWidget(
         verticalArrangement = Arrangement.spacedBy(appearance.verticalSpacing, Alignment.Top),
         horizontalAlignment = Alignment.Start
     ) {
-        if (fontScale >= largeFontScaleThreshold) {
-            CardNumberPinColumn(
-                verticalSpacing = appearance.verticalSpacing,
-                appearance = appearance.textField,
-                enabled = uiState !is GiftCardUIState.Loading && enabled,
-                cardNumber = inputState.cardNumber,
-                cardPin = inputState.pin,
-                focusCardNumber = focusCardNumber,
-                focusCardPin = focusCardPin,
-                onCardNumberChange = { viewModel.updateCardNumber(it) },
-                onPinChange = { viewModel.updateCardPin(it) }
+        // Use BoxWithConstraints to measure available width and make intelligent layout decision
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            // For GiftCard: Card Number (70% weight) + PIN (30% weight) + spacing
+            // PIN field (smaller field) needs ~120dp minimum for 4 digits + padding
+            val shouldUseColumnLayout = WidgetDefaults.shouldUseColumnLayout(
+                availableWidth = maxWidth,
+                fontScale = fontScale,
+                minFieldWidth = 120.dp, // PIN field minimum
+                fieldWeight = 0.3f // PIN field weight
             )
-        } else {
-            CardNumberPinRow(
-                horizontalSpacing = appearance.horizontalSpacing,
-                appearance = appearance.textField,
-                enabled = uiState !is GiftCardUIState.Loading && enabled,
-                cardNumber = inputState.cardNumber,
-                cardPin = inputState.pin,
-                focusCardNumber = focusCardNumber,
-                focusCardPin = focusCardPin,
-                onCardNumberChange = { viewModel.updateCardNumber(it) },
-                onPinChange = { viewModel.updateCardPin(it) }
-            )
+
+            if (shouldUseColumnLayout) {
+                CardNumberPinColumn(
+                    verticalSpacing = appearance.verticalSpacing,
+                    appearance = appearance.textField,
+                    enabled = uiState !is GiftCardUIState.Loading && enabled,
+                    cardNumber = inputState.cardNumber,
+                    cardPin = inputState.pin,
+                    focusCardNumber = focusCardNumber,
+                    focusCardPin = focusCardPin,
+                    onCardNumberChange = { viewModel.updateCardNumber(it) },
+                    onPinChange = { viewModel.updateCardPin(it) }
+                )
+            } else {
+                CardNumberPinRow(
+                    horizontalSpacing = appearance.horizontalSpacing,
+                    appearance = appearance.textField,
+                    enabled = uiState !is GiftCardUIState.Loading && enabled,
+                    cardNumber = inputState.cardNumber,
+                    cardPin = inputState.pin,
+                    focusCardNumber = focusCardNumber,
+                    focusCardPin = focusCardPin,
+                    onCardNumberChange = { viewModel.updateCardNumber(it) },
+                    onPinChange = { viewModel.updateCardPin(it) }
+                )
+            }
         }
 
         // Submit button
