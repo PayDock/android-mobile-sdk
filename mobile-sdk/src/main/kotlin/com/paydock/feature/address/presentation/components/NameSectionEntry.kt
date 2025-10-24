@@ -120,7 +120,7 @@ private fun NameInputDetailsColumn(
     ) {
         AddressInputField(
             modifier = Modifier
-                .weight(0.5f)
+                .fillMaxWidth()
                 .testTag("firstName1Input"),
             appearance = appearance,
             value = firstName,
@@ -132,7 +132,7 @@ private fun NameInputDetailsColumn(
 
         AddressInputField(
             modifier = Modifier
-                .weight(0.5f)
+                .fillMaxWidth()
                 .focusRequester(focusLastName)
                 .testTag("lastNameInput"),
             appearance = appearance,
