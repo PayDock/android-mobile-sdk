@@ -104,6 +104,7 @@ object LinkButtonAppearanceDefaults {
     fun appearance() = LinkButtonAppearance(
         actionButton = ButtonAppearanceDefaults.textButtonAppearance().copy(
             height = LinkButtonHeight,
+            shape = MaterialTheme.shapes.extraSmall,
             contentPadding = PaddingValues(0.dp),
             textAppearance = TextAppearanceDefaults.appearance().copy(
                 style = MaterialTheme.typography.bodyMedium.copy(

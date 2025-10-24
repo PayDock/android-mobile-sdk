@@ -891,6 +891,7 @@ internal fun SdkTextButton(
         onClick = onClick,
         modifier = modifier.heightIn(min = adjustedButtonHeight),
         enabled = isEnabled,
+        shape = appearance.shape,
         content = {
             ButtonContent(
                 text = text ?: "",
