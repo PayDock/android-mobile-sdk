@@ -249,7 +249,7 @@ private fun handleColesPayResult(
             AppCompatActivity.RESULT_CANCELED -> {
                 when (data.getCancellationStatusExtra()) {
                     // If the cancellation was user-initiated, the completion is invoked with a failure result.
-                    CancellationStatus.USER_INITIATED -> {
+                    CancellationStatus.USER_INITIATED, CancellationStatus.PAGE_CLOSED -> {
                         completion(
                             Result.failure(
                                 ColesPayException.CancellationException(
