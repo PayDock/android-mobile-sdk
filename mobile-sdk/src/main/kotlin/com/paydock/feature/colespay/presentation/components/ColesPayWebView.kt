@@ -3,6 +3,7 @@ package com.paydock.feature.colespay.presentation.components
 import androidx.compose.runtime.Composable
 import com.paydock.core.MobileSDKConstants
 import com.paydock.designsystems.components.web.SdkWebView
+import com.paydock.feature.colespay.presentation.utils.CancellationStatus
 import com.paydock.feature.colespay.presentation.utils.ColesPayJSBridge
 
 /**
@@ -33,6 +34,9 @@ internal fun ColesPayWebView(
             }
         },
         shouldShowCustomLoader = false,
+        onCloseRequested = {
+            onFailure(CancellationStatus.PAGE_CLOSED.ordinal, "Checkout closed by page")
+        },
         // This is required for Coles Pay Web to work
         onShouldOverrideUrlLoading = { request ->
             val requestUrl = request?.url.toString()

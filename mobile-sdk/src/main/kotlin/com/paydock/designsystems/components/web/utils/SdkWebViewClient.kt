@@ -22,6 +22,7 @@ internal class SdkWebViewClient(
     private val onShouldOverrideUrlLoading: ((request: WebResourceRequest?) -> Boolean)? = null,
     private val onPageFinished: (WebView) -> Unit = {},
     private val onWebViewError: (Int, String) -> Unit,
+    private val onCloseRequested: () -> Unit = {},
     /**
      * When true, delegates lifecycle callbacks to the base AccompanistWebViewClient.
      * Must be false when this client is used with a raw Android WebView (not the Compose WebView),
@@ -110,6 +111,11 @@ internal class SdkWebViewClient(
         view: WebView,
         request: WebResourceRequest?
     ): Boolean {
+        // Intercept our custom scheme emitted from injected JS window.close override
+        if (request?.url?.scheme == "paydock" && request.url.host == "close") {
+            onCloseRequested()
+            return true
+        }
         return onShouldOverrideUrlLoading?.let { callback ->
             callback(request)
         } ?: if (delegateToAccompanist) {

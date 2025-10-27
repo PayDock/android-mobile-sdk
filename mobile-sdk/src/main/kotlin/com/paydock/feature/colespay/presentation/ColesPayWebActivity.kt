@@ -106,12 +106,22 @@ internal class ColesPayWebActivity : ComponentActivity() {
                         )
                         finish()
                     }, onFailure = { status, message ->
-                        setResult(
-                            RESULT_CANCELED,
-                            Intent()
-                                .putStatusExtra(status)
-                                .putMessageExtra(message)
-                        )
+                        // If status maps to a known CancellationStatus enum, surface that explicitly
+                        val cancellationStatus = CancellationStatus.entries.getOrNull(status)
+                        if (cancellationStatus != null) {
+                            setResult(
+                                RESULT_CANCELED,
+                                Intent()
+                                    .putCancellationStatusExtra(cancellationStatus)
+                            )
+                        } else {
+                            setResult(
+                                RESULT_CANCELED,
+                                Intent()
+                                    .putStatusExtra(status)
+                                    .putMessageExtra(message)
+                            )
+                        }
                         finish()
                     })
                 }
