@@ -43,7 +43,6 @@ import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.icon.IconAppearance
 import com.paydock.designsystems.components.icon.IconAppearanceDefaults
 import com.paydock.designsystems.components.icon.SdkIcon
-import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults.appearance
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
@@ -86,6 +85,13 @@ internal fun SdkTextField(
     // State to track whether the text input field is focused
     var isFocused by remember { mutableStateOf(false) }
     val isError = error != null
+
+    // Determine if we should render a trailing icon; avoid reserving space when not needed
+    val trailingIconComposable: (@Composable (() -> Unit))? = when {
+        isError -> ({ TextFieldErrorIcon() })
+        showValidIcon && value.isNotEmpty() -> ({ TextFieldValidIcon(appearance.validIcon) })
+        else -> trailingIcon
+    }
 
     Column(modifier = modifier) {
         OutlinedTextField(
@@ -133,13 +139,7 @@ internal fun SdkTextField(
             placeholder = {
                 TextFieldPlaceholder(placeholder, appearance.placeholder)
             },
-            trailingIcon = {
-                when {
-                    isError -> TextFieldErrorIcon()
-                    showValidIcon && value.isNotEmpty() -> TextFieldValidIcon(appearance.validIcon)
-                    else -> trailingIcon?.invoke()
-                }
-            },
+            trailingIcon = trailingIconComposable,
             leadingIcon = leadingIcon,
             isError = isError,
             singleLine = appearance.singleLine,
@@ -300,7 +300,7 @@ object TextFieldAppearanceDefaults {
         ),
         // Label - Apply alignment fixes for icon alignment
         label = TextAppearanceDefaults.appearance().copy(
-            maxLines = 1,
+            maxLines = 2,
             style = MaterialTheme.typography.labelMedium.copy(
                 platformStyle = PlatformTextStyle(includeFontPadding = false),
                 lineHeightStyle = LineHeightStyle(

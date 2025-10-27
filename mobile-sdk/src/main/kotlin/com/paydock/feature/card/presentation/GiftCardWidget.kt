@@ -98,11 +98,11 @@ fun GiftCardWidget(
         // Use BoxWithConstraints to measure available width and make intelligent layout decision
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
             // For GiftCard: Card Number (70% weight) + PIN (30% weight) + spacing
-            // PIN field (smaller field) needs ~120dp minimum for 4 digits + padding
+            // PIN field (smaller field) needs ~80dp minimum for 4 digits + padding
             val shouldUseColumnLayout = WidgetDefaults.shouldUseColumnLayout(
                 availableWidth = maxWidth,
                 fontScale = fontScale,
-                minFieldWidth = 120.dp, // PIN field minimum
+                minFieldWidth = 80.dp, // PIN field minimum
                 fieldWeight = 0.3f // PIN field weight
             )
 
