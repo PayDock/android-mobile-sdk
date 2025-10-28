@@ -13,6 +13,7 @@ import androidx.navigation.navArgument
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.theme.AppTheme
 import com.paydock.sample.feature.account.ui.AccountScreen
+import com.paydock.sample.feature.checkout.domain.model.CheckoutStep
 import com.paydock.sample.feature.checkout.ui.EnhancedCheckoutScreen
 import com.paydock.sample.feature.checkout.ui.OrderConfirmationScreen
 import com.paydock.sample.feature.shop.data.CartManager
@@ -47,11 +48,19 @@ fun NavigationGraph(
         }
         composable("cart") {
             CartScreen(
-                onCheckout = { navController.navigate("checkout") },
+                onCheckout = { navController.navigate("checkout?step=information") },
                 onContinueShopping = { navController.navigateUp() }
             )
         }
-        composable("checkout") {
+        composable(
+            route = "checkout?step={step}",
+            arguments = listOf(navArgument("step") { type = NavType.StringType; defaultValue = "information" })
+        ) { backStackEntry ->
+            val stepArg = backStackEntry.arguments?.getString("step") ?: "information"
+            val initialStep = if (stepArg.equals("payment", ignoreCase = true))
+                CheckoutStep.PAYMENT
+            else CheckoutStep.INFORMATION
+
             EnhancedCheckoutScreen(
                 onDismiss = {
                     navController.navigate("shop") {
@@ -61,10 +70,11 @@ fun NavigationGraph(
                 },
                 onOrderComplete = { isSuccess ->
                     navController.navigate("order_confirmation/$isSuccess") {
-                        popUpTo("shop") { inclusive = false }
+                        popUpTo("checkout") { inclusive = true }
                         launchSingleTop = true
                     }
-                }
+                },
+                initialStep = initialStep
             )
         }
         composable(
@@ -85,9 +95,9 @@ fun NavigationGraph(
                     }
                 },
                 onRetryCheckout = {
-                    // Navigate back to checkout, keeping cart intact
-                    navController.navigate("checkout") {
-                        popUpTo("checkout") { inclusive = true }
+                    // Navigate back to checkout at Payment step, keeping cart intact
+                    navController.navigate("checkout?step=payment") {
+                        popUpTo("order_confirmation/{isSuccess}") { inclusive = true }
                         launchSingleTop = true
                     }
                 },

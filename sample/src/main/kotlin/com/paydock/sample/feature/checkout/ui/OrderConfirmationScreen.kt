@@ -45,11 +45,8 @@ fun OrderConfirmationScreen(
     onRetryCheckout: () -> Unit = {},
     onCancel: () -> Unit = {}
 ) {
-    // Prevent back navigation on success (order completed)
-    // Allow back navigation on failure (can retry)
-    BackHandler(enabled = isSuccess) {
-        // Do nothing on back press if successful - force user to use "Continue Shopping"
-    }
+    // Always consume system back. Users must use on-screen buttons.
+    BackHandler(enabled = true) { }
 
     Column(
         modifier = Modifier

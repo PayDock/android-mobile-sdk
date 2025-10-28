@@ -4,18 +4,12 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -87,7 +81,8 @@ import com.paydock.sample.feature.checkout.domain.model.SavedAddress as Checkout
 fun EnhancedCheckoutScreen(
     onDismiss: () -> Unit = {},
     onOrderComplete: (isSuccess: Boolean) -> Unit = {},
-    viewModel: EnhancedCheckoutViewModel = hiltViewModel()
+    viewModel: EnhancedCheckoutViewModel = hiltViewModel(),
+    initialStep: CheckoutStep? = null
 ) {
     val currentStep by viewModel.currentStep.collectAsState()
     
@@ -102,7 +97,8 @@ fun EnhancedCheckoutScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(initialStep) {
+        initialStep?.let { viewModel.setCurrentStep(it) }
         viewModel.loadProfileData()
     }
 
@@ -180,7 +176,6 @@ fun EnhancedCheckoutScreen(
             Column(
                 modifier = contentModifier
             ) {
-                val steps = CheckoutStep.getAllSteps()
                 // No animation: render step content directly
                 Box(modifier = Modifier.fillMaxSize()) {
                     when (currentStep) {
