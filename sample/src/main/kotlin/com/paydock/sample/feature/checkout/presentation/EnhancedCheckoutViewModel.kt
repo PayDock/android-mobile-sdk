@@ -111,6 +111,8 @@ class EnhancedCheckoutViewModel @Inject constructor(
         private set
     var addressWidgetInitialLastName by mutableStateOf<String?>(null)
         private set
+    var addressWidgetInitialLabel by mutableStateOf<String?>(null)
+        private set
     var editingSavedAddressId by mutableStateOf<String?>(null)
         private set
     
@@ -283,6 +285,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
             initialFirstName = saved.firstName,
             initialLastName = saved.lastName
         )
+        addressWidgetInitialLabel = saved.label
     }
     
     fun hideAddressWidget() {
@@ -290,6 +293,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
         addressWidgetInitialAddress = null
         addressWidgetInitialFirstName = null
         addressWidgetInitialLastName = null
+        addressWidgetInitialLabel = null
         editingSavedAddressId = null
     }
 

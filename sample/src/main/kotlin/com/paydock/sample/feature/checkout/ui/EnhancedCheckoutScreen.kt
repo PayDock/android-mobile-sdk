@@ -7,8 +7,10 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -179,34 +181,21 @@ fun EnhancedCheckoutScreen(
                 modifier = contentModifier
             ) {
                 val steps = CheckoutStep.getAllSteps()
-                AnimatedContent(
-                    targetState = currentStep,
-                    transitionSpec = {
-                        val initialIndex = steps.indexOf(initialState)
-                        val targetIndex = steps.indexOf(targetState)
-                        if (targetIndex > initialIndex) {
-                            (slideInHorizontally { it } + fadeIn()) togetherWith (slideOutHorizontally { -it } + fadeOut())
-                        } else {
-                            (slideInHorizontally { -it } + fadeIn()) togetherWith (slideOutHorizontally { it } + fadeOut())
-                        }
-                    },
-                    label = "stepTransition"
-                ) { step ->
-                    // Wrap each step content in a non-scrollable Box with fillMaxSize
-                    // to ensure bounded constraints for any internal scrollables
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        when (step) {
-                            CheckoutStep.INFORMATION -> {
-                                Column(modifier = Modifier
+                // No animation: render step content directly
+                Box(modifier = Modifier.fillMaxSize()) {
+                    when (currentStep) {
+                        CheckoutStep.INFORMATION -> {
+                            Column(
+                                modifier = Modifier
                                     .fillMaxSize()
-                                    .verticalScroll(scrollState)) {
-                                    InformationStepView(viewModel = viewModel)
-                                    Spacer(modifier = Modifier.height(100.dp))
-                                }
+                                    .verticalScroll(scrollState)
+                            ) {
+                                InformationStepView(viewModel = viewModel)
+                                Spacer(modifier = Modifier.height(100.dp))
                             }
-                            CheckoutStep.PAYMENT -> {
-                                PaymentStepView(viewModel = viewModel)
-                            }
+                        }
+                        CheckoutStep.PAYMENT -> {
+                            PaymentStepView(viewModel = viewModel)
                         }
                     }
                 }
@@ -267,6 +256,7 @@ fun EnhancedCheckoutScreen(
                     country = it.country
                 )
             },
+            initialLabel = viewModel.addressWidgetInitialLabel,
             initialIsDefault = true,
             showDefaultToggle = true,
             showAddressTypeChips = true,
