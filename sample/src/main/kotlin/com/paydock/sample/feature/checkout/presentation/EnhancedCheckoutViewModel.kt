@@ -262,6 +262,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
         orderFailed = true
         // Increment reset key to force fresh widget on retry
         paymentWidgetResetKey++
+        setCurrentStep(CheckoutStep.PAYMENT)
     }
 
     fun showAddressWidget(

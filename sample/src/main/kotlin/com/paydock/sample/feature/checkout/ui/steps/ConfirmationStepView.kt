@@ -1,5 +1,6 @@
 package com.paydock.sample.feature.checkout.ui.steps
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +36,8 @@ fun ConfirmationStepView(
     onContinueShopping: () -> Unit = {},
     onCancel: () -> Unit = {}
 ) {
+    // Disable system back while on confirmation. Users must use on-screen actions.
+    BackHandler(enabled = true) { /* consume back press */ }
     val isSuccess = viewModel.orderCompleted
     Column(
         modifier = Modifier
