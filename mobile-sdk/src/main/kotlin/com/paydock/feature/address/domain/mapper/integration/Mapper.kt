@@ -14,12 +14,18 @@ internal fun Address.asEntity(): BillingAddress {
     val streetName = thoroughfare
 
     // Construct the street address based on available information
-    val streetAddress = if (!streetNumber.isNullOrBlank() && !streetName.isNullOrBlank()) {
-        "$streetNumber $streetName"
-    } else if (!streetNumber.isNullOrBlank() && streetName.isNullOrBlank()) {
-        streetNumber
-    } else {
-        streetName
+    // Check if values are identical to avoid duplicates (e.g., "Main Street Main Street")
+    val streetAddress = when {
+        !streetNumber.isNullOrBlank() && !streetName.isNullOrBlank() -> {
+            // If both exist but are identical, use only one
+            if (streetNumber.trim().equals(streetName.trim(), ignoreCase = true)) {
+                streetName
+            } else {
+                "$streetNumber $streetName"
+            }
+        }
+        !streetNumber.isNullOrBlank() && streetName.isNullOrBlank() -> streetNumber
+        else -> streetName
     }
 
     // Create and return a BillingAddress entity
