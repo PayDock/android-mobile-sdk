@@ -151,48 +151,22 @@ fun MainScreenView(
     val integrated3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
     val standalone3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
 
-    // Effect to initialize ViewModel ONLY IF NOT ALREADY INITIALIZED
-    // This preserves user customizations across all configuration changes (font scale, orientation, etc.)
-    LaunchedEffect(Unit) {
-        // Only initialize if the ViewModel states are null (first time only)
-        if (stylingViewModel.addressWidgetAppearance.value == null) {
-            stylingViewModel.updateInitialAddressDefaults(addressSdkDefaults)
-        }
-        if (stylingViewModel.cardDetailsWidgetAppearance.value == null) {
-            stylingViewModel.updateInitialCardDetailsDefaults(cardSdkDefaults)
-        }
-        if (stylingViewModel.giftCardWidgetAppearance.value == null) {
-            stylingViewModel.updateInitialGiftCardDetailsDefaults(giftCardSdkDefaults)
-        }
-        if (stylingViewModel.clickToPayWidgetAppearance.value == null) {
-            stylingViewModel.updateInitialClickToPayDefaults(clickToPaySdkDefaults)
-        }
-        if (stylingViewModel.afterpayWidgetAppearance.value == null) {
-            stylingViewModel.updateInitialAfterpayDefaults(afterpaySdkDefaults)
-        }
-        if (stylingViewModel.paypalWidgetAppearance.value == null) {
-            stylingViewModel.updateInitialPayPalDefaults(payPalSdkDefaults)
-        }
-        if (stylingViewModel.paypalVaultWidgetAppearance.value == null) {
-            stylingViewModel.updateInitialPayPalVaultDefaults(payPalVaultSdkDefaults)
-        }
-        if (stylingViewModel.googlePayWidgetAppearance.value == null) {
-            stylingViewModel.updateInitialGooglePayDefaults(googlePaySdkDefaults)
-        }
-        if (stylingViewModel.colesPayWidgetAppearance.value == null) {
-            stylingViewModel.updateInitialColesPayDefaults(colesPaySdkDefaults)
-        }
-        if (stylingViewModel.integrated3DSWidgetAppearance.value == null) {
-            stylingViewModel.updateInitialIntegrated3DSDefaults(integrated3DSSdkDefaults)
-        }
-        if (stylingViewModel.standalone3DSWidgetAppearance.value == null) {
-            stylingViewModel.updateInitialStandalone3DSDefaults(standalone3DSSdkDefaults)
-        }
+    // Effect to update ViewModel when the theme actually changes
+    // This runs on recomposition but only updates if theme changed (not on activity recreation)
+    LaunchedEffect(isActuallyDark) {
+        // Check if theme actually changed (or first initialization)
+        stylingViewModel.updateInitialAddressDefaults(addressSdkDefaults)
+        stylingViewModel.updateInitialCardDetailsDefaults(cardSdkDefaults)
+        stylingViewModel.updateInitialGiftCardDetailsDefaults(giftCardSdkDefaults)
+        stylingViewModel.updateInitialClickToPayDefaults(clickToPaySdkDefaults)
+        stylingViewModel.updateInitialAfterpayDefaults(afterpaySdkDefaults)
+        stylingViewModel.updateInitialPayPalDefaults(payPalSdkDefaults)
+        stylingViewModel.updateInitialPayPalVaultDefaults(payPalVaultSdkDefaults)
+        stylingViewModel.updateInitialGooglePayDefaults(googlePaySdkDefaults)
+        stylingViewModel.updateInitialColesPayDefaults(colesPaySdkDefaults)
+        stylingViewModel.updateInitialIntegrated3DSDefaults(integrated3DSSdkDefaults)
+        stylingViewModel.updateInitialStandalone3DSDefaults(standalone3DSSdkDefaults)
     }
-    
-    // Note: We DO NOT update ViewModel on theme or font scale changes!
-    // The ViewModel persists customizations, and MaterialTheme.typography automatically
-    // respects font scale. This means customizations are preserved while text scales properly.
 
     // Observe a combined state or a specific one to gate the UI
     val isAddressInitialized by stylingViewModel.addressWidgetAppearance.map { it != null }
@@ -293,7 +267,7 @@ fun MainScreenView(
                 onBackButtonClick = if (actionBarDetails.showBackButton) {
                     {
                         val currentRoute = actionBarDetails.route
-                        if (currentRoute.contains("checkout") == true) {
+                        if (currentRoute.contains("checkout")) {
                             // Let checkout handle back navigation between steps first
                             val handled =
                                 com.paydock.sample.feature.checkout.presentation.CheckoutBackCoordinator.onToolbarBack?.invoke() == true
