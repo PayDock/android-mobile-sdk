@@ -614,6 +614,15 @@ fun PaymentWidgetView(
     viewModel: EnhancedCheckoutViewModel
 ) {
     val walletViewModel: WalletViewModel = hiltViewModel()
+    
+    // Get customer data from checkout view model for wallet requests
+    val customerData = remember(
+        viewModel.contactInfo,
+        viewModel.shippingAddress,
+        viewModel.billingAddress
+    ) {
+        viewModel.getCustomerDataForWallet()
+    }
 
     // Create a unique NavHost with a key to force fresh ViewModelStore
     // Each time resetKey changes, we get a completely new navigation graph with fresh ViewModels
@@ -648,7 +657,10 @@ fun PaymentWidgetView(
                 PaymentMethod.GOOGLE_PAY -> {
                     GooglePayContent(
                         modifier = Modifier.fillMaxWidth(),
-                        tokenHandler = walletViewModel.getWalletTokenResultCallback(WalletType.GOOGLE),
+                        tokenHandler = walletViewModel.getWalletTokenResultCallback(
+                            walletType = WalletType.GOOGLE,
+                            customerData = customerData
+                        ),
                         loadingDelegate = object : WidgetLoadingDelegate {
                             override fun widgetLoadingDidStart() { viewModel.setIsLoading(true) }
                             override fun widgetLoadingDidFinish() { viewModel.setIsLoading(false) }
@@ -667,7 +679,10 @@ fun PaymentWidgetView(
                     PayPalContent(
                         modifier = Modifier.fillMaxWidth(),
                         enabled = true,
-                        tokenHandler = walletViewModel.getWalletTokenResultCallback(WalletType.PAY_PAL),
+                        tokenHandler = walletViewModel.getWalletTokenResultCallback(
+                            walletType = WalletType.PAY_PAL,
+                            customerData = customerData
+                        ),
                         loadingDelegate = object : WidgetLoadingDelegate {
                             override fun widgetLoadingDidStart() { viewModel.setIsLoading(true) }
                             override fun widgetLoadingDidFinish() { viewModel.setIsLoading(false) }
@@ -685,7 +700,10 @@ fun PaymentWidgetView(
                 PaymentMethod.AFTERPAY -> {
                     AfterpayContent(
                         modifier = Modifier.fillMaxWidth(),
-                        tokenHandler = walletViewModel.getWalletTokenResultCallback(WalletType.AFTER_PAY),
+                        tokenHandler = walletViewModel.getWalletTokenResultCallback(
+                            walletType = WalletType.AFTER_PAY,
+                            customerData = customerData
+                        ),
                         loadingDelegate = object : WidgetLoadingDelegate {
                             override fun widgetLoadingDidStart() { viewModel.setIsLoading(true) }
                             override fun widgetLoadingDidFinish() { viewModel.setIsLoading(false) }
@@ -717,7 +735,10 @@ fun PaymentWidgetView(
                 PaymentMethod.COLES_PAY -> {
                     ColesPayContent(
                         modifier = Modifier.fillMaxWidth(),
-                        tokenHandler = walletViewModel.getWalletTokenResultCallback(WalletType.COLES_PAY),
+                        tokenHandler = walletViewModel.getWalletTokenResultCallback(
+                            walletType = WalletType.COLES_PAY,
+                            customerData = customerData
+                        ),
                         loadingDelegate = object : WidgetLoadingDelegate {
                             override fun widgetLoadingDidStart() { viewModel.setIsLoading(true) }
                             override fun widgetLoadingDidFinish() { viewModel.setIsLoading(false) }

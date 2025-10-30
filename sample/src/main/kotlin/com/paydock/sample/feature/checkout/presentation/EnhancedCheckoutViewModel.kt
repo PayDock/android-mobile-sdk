@@ -16,14 +16,15 @@ import com.paydock.sample.BuildConfig
 import com.paydock.sample.feature.account.data.UserProfileManager
 import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
 import com.paydock.sample.feature.card.domain.usecase.CreateCardSessionVaultTokenUseCase
-import com.paydock.sample.feature.checkout.ThreeDSType
 import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
+import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.checkout.domain.model.Address
 import com.paydock.sample.feature.checkout.domain.model.AddressType
 import com.paydock.sample.feature.checkout.domain.model.CheckoutStep
 import com.paydock.sample.feature.checkout.domain.model.ContactInfo
 import com.paydock.sample.feature.checkout.domain.model.PaymentMethod
 import com.paydock.sample.feature.checkout.domain.model.SavedAddress
+import com.paydock.sample.feature.checkout.models.ThreeDSType
 import com.paydock.sample.feature.threeDS.data.api.dto.Capture3DSChargeRequest
 import com.paydock.sample.feature.threeDS.data.api.dto.CreateIntegratedThreeDSTokenRequest
 import com.paydock.sample.feature.threeDS.data.api.dto.CreateStandaloneThreeDSTokenRequest
@@ -31,6 +32,8 @@ import com.paydock.sample.feature.threeDS.domain.model.ThreeDSToken
 import com.paydock.sample.feature.threeDS.domain.usecase.CaptureThreeDSChargeTokenUseCase
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateIntegratedThreeDSTokenUseCase
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateStandaloneThreeDSTokenUseCase
+import com.paydock.sample.feature.wallet.presentation.AddressData
+import com.paydock.sample.feature.wallet.presentation.CustomerData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -39,6 +42,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.Locale
 import javax.inject.Inject
 import com.paydock.sample.feature.account.domain.model.SavedAddress as ProfileSavedAddress
 
@@ -611,6 +615,62 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 billingAddress = checkoutAddress
             }
         }
+    }
+    
+    // Provide customer data for wallet requests
+    fun getCustomerDataForWallet(): CustomerData {
+        // Get the cart total from CartManager for checkout flow
+        val cartTotal = CartManager.shared.totalPrice
+        
+        return CustomerData(
+            firstName = contactInfo.firstName,
+            lastName = contactInfo.lastName,
+            email = contactInfo.email,
+            phone = contactInfo.phone,
+            billingAddress = if (billingAddress.isComplete) {
+                AddressData(
+                    addressLine1 = billingAddress.addressLine1,
+                    addressLine2 = billingAddress.addressLine2,
+                    addressLine3 = null,
+                    city = billingAddress.city,
+                    state = billingAddress.state,
+                    postalCode = billingAddress.postalCode,
+                    countryCode = convertCountryNameToCode(billingAddress.country)
+                )
+            } else null,
+            shippingAddress = if (shippingAddress.isComplete) {
+                AddressData(
+                    addressLine1 = shippingAddress.addressLine1,
+                    addressLine2 = shippingAddress.addressLine2,
+                    addressLine3 = null,
+                    city = shippingAddress.city,
+                    state = shippingAddress.state,
+                    postalCode = shippingAddress.postalCode,
+                    countryCode = convertCountryNameToCode(shippingAddress.country)
+                )
+            } else null,
+            amount = cartTotal
+        )
+    }
+    
+    /**
+     * Converts a country name to its ISO country code.
+     * If the country name is not recognized, returns the input as-is (assumes it might already be a code).
+     * 
+     * @param countryName The full country name (e.g., "United States", "Australia")
+     * @return The ISO country code (e.g., "US", "AU") or the input if not found
+     */
+    private fun convertCountryNameToCode(countryName: String): String {
+        if (countryName.isBlank()) return countryName
+        
+        // Check if it's already a 2-letter code
+        if (countryName.length == 2) return countryName.uppercase()
+        
+        // Find the ISO country code that matches the country name
+        return Locale.getISOCountries().find { countryCode ->
+            val locale = Locale.Builder().setRegion(countryCode).build()
+            locale.displayCountry.equals(countryName, ignoreCase = true)
+        } ?: countryName // Return original if not found
     }
     
     private companion object {

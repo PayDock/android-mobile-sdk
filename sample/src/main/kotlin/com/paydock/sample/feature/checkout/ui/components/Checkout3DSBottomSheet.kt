@@ -9,7 +9,7 @@ import com.paydock.feature.threeDS.common.domain.integration.ThreeDSConfig
 import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSAppearanceDefaults
 import com.paydock.feature.threeDS.integrated.presentation.Integrated3DSWidget
 import com.paydock.feature.threeDS.standalone.presentation.Standalone3DSWidget
-import com.paydock.sample.feature.checkout.ThreeDSType
+import com.paydock.sample.feature.checkout.models.ThreeDSType
 import com.paydock.sample.feature.checkout.presentation.EnhancedCheckoutViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

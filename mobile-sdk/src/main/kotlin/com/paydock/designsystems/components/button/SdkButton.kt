@@ -527,7 +527,7 @@ object ButtonAppearanceDefaults {
                 ),
             textAppearance = TextAppearanceDefaults.appearance().copy(
                 style = LocalTextStyle.current.copy(
-                    platformStyle = PlatformTextStyle(includeFontPadding = true),
+                    platformStyle = PlatformTextStyle(includeFontPadding = false),
                     lineHeightStyle = LineHeightStyle(
                         alignment = LineHeightStyle.Alignment.Center,
                         trim = LineHeightStyle.Trim.Both
@@ -572,7 +572,7 @@ object ButtonAppearanceDefaults {
                 ),
             textAppearance = TextAppearanceDefaults.appearance().copy(
                 style = LocalTextStyle.current.copy(
-                    platformStyle = PlatformTextStyle(includeFontPadding = true),
+                    platformStyle = PlatformTextStyle(includeFontPadding = false),
                     lineHeightStyle = LineHeightStyle(
                         alignment = LineHeightStyle.Alignment.Center,
                         trim = LineHeightStyle.Trim.Both
@@ -614,7 +614,7 @@ object ButtonAppearanceDefaults {
                 ),
             textAppearance = TextAppearanceDefaults.appearance().copy(
                 style = LocalTextStyle.current.copy(
-                    platformStyle = PlatformTextStyle(includeFontPadding = true),
+                    platformStyle = PlatformTextStyle(includeFontPadding = false),
                     lineHeightStyle = LineHeightStyle(
                         alignment = LineHeightStyle.Alignment.Center,
                         trim = LineHeightStyle.Trim.Both
