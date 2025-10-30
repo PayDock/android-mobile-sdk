@@ -2,6 +2,7 @@ package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,6 +21,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.designsystems.components.icon.IconAppearanceDefaults
 import com.paydock.designsystems.components.icon.SdkIcon
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.components.input.TextFieldAppearance
@@ -51,7 +53,7 @@ internal fun GiftCardNumberInput(
     onValueChange: (String) -> Unit
 ) {
     // State to track the focus state of the input field
-    val focusedState = remember { mutableStateOf(false) }
+    var focusedState by remember { mutableStateOf(false) }
     var hasUserInteracted by remember { mutableStateOf(false) }
 
     var debouncedValue by remember { mutableStateOf("") }
@@ -72,7 +74,7 @@ internal fun GiftCardNumberInput(
 
     SdkTextField(
         modifier = modifier.onFocusChanged {
-            focusedState.value = it.isFocused
+            focusedState = it.isFocused
         },
         appearance = appearance,
         value = value,
@@ -93,7 +95,10 @@ internal fun GiftCardNumberInput(
             SdkIcon(
                 modifier = Modifier.testTag("cardIcon"),
                 painter = painterResource(id = R.drawable.ic_credit_card),
-                contentDescription = null
+                contentDescription = null,
+                appearance = IconAppearanceDefaults.appearance().copy(
+                    tint = if (focusedState) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                ),
             )
         },
         error = errorMessage,
