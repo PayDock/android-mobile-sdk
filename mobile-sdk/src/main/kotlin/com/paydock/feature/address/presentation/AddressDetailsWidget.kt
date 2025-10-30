@@ -62,7 +62,12 @@ fun AddressDetailsWidget(
     config: AddressDetailsWidgetConfig = AddressDetailsWidgetConfig(),
     completion: (BillingAddress) -> Unit,
 ) {
-    val viewModel: AddressDetailsViewModel = koinViewModel()
+    // Use config.address as part of the key to force fresh ViewModel when address changes
+    // This ensures that editing vs adding gets separate ViewModel instances
+    val viewModelKey = remember(config.address) {
+        "address_widget_${config.address.hashCode()}_${System.currentTimeMillis()}"
+    }
+    val viewModel: AddressDetailsViewModel = koinViewModel(key = viewModelKey)
     val uiState by viewModel.stateFlow.collectAsState()
 
     // Control whether the manual address section is shown
