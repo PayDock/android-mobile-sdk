@@ -28,6 +28,7 @@ internal fun WebView.setup() {
         domStorageEnabled = true // Enable DOM storage API
         javaScriptCanOpenWindowsAutomatically = true // Allow JavaScript to open new windows
         setSupportMultipleWindows(true) // Support multiple windows in the WebView
+        textZoom = 100 // Disable text autosizing to prevent system font size from breaking web UI layout
     }
 
     // Enable debugging in development builds to assist with JavaScript debugging
