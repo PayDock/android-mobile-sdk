@@ -63,10 +63,10 @@ import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.sample.designsystems.components.sheets.AddressWidgetResult
 import com.paydock.sample.designsystems.components.sheets.AddressWidgetSheet
 import com.paydock.sample.designsystems.theme.SampleTheme
-import com.paydock.sample.feature.checkout.ThreeDSType
 import com.paydock.sample.feature.checkout.domain.model.Address
 import com.paydock.sample.feature.checkout.domain.model.AddressType
 import com.paydock.sample.feature.checkout.domain.model.CheckoutStep
+import com.paydock.sample.feature.checkout.models.ThreeDSType
 import com.paydock.sample.feature.checkout.presentation.CheckoutBackCoordinator
 import com.paydock.sample.feature.checkout.presentation.EnhancedCheckoutViewModel
 import com.paydock.sample.feature.checkout.ui.components.Checkout3DSBottomSheet
@@ -261,6 +261,7 @@ fun EnhancedCheckoutScreen(
                 val isEditing = viewModel.editingSavedAddressId != null
                 
                 // Create a SavedAddress with existing ID if editing, or generate new ID
+                // Use countryCode if available, otherwise fall back to country name
                 val savedAddress = ProfileSavedAddress(
                     id = viewModel.editingSavedAddressId ?: ProfileSavedAddress.generateId(),
                     label = result.label,
@@ -271,7 +272,7 @@ fun EnhancedCheckoutScreen(
                     city = result.billingAddress.city ?: "",
                     state = result.billingAddress.state ?: "",
                     postalCode = result.billingAddress.postalCode ?: "",
-                    country = result.billingAddress.country ?: "",
+                    country = result.billingAddress.countryCode ?: result.billingAddress.country ?: "",
                     isDefault = result.isDefault
                 )
 

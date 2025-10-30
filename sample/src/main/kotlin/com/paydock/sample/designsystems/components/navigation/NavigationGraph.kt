@@ -41,10 +41,7 @@ fun NavigationGraph(
 ) {
     NavHost(navController, startDestination = "shop") {
         composable("shop") {
-            ProductListScreen(
-                onCartClick = { navController.navigate("cart") },
-                onProfileClick = { navController.navigate("account") }
-            )
+            ProductListScreen()
         }
         composable("cart") {
             CartScreen(

@@ -75,13 +75,12 @@ internal class CountryInputAutoCompleteTest :
                 )
             ) {
                 CountryInputAutoComplete(
-                    onCountryConfirmed = {},
                     modifier = TODO(),
                     appearance = TODO(),
-                    viewModel = TODO(),
+                    currentCountryValue = TODO(),
                     autofillType = TODO(),
-                    currentCountryValue = TODO()
-                )
+                    viewModel = TODO()
+                ) {}
             }
         }
 
@@ -104,15 +103,14 @@ internal class CountryInputAutoCompleteTest :
                 )
             ) {
                 CountryInputAutoComplete(
-                    onCountryConfirmed = {
-                        selectedItem = it
-                    },
                     modifier = TODO(),
                     appearance = TODO(),
-                    viewModel = TODO(),
+                    currentCountryValue = TODO(),
                     autofillType = TODO(),
-                    currentCountryValue = TODO()
-                )
+                    viewModel = TODO()
+                ) {
+                    selectedItem = it
+                }
 
             }
         }
@@ -159,12 +157,12 @@ internal class CountryInputAutoCompleteTest :
                 )
             ) {
                 CountryInputAutoComplete(
-                    onCountryConfirmed = onCountrySelected,
                     modifier = TODO(),
                     appearance = TODO(),
-                    viewModel = TODO(),
+                    currentCountryValue = TODO(),
                     autofillType = TODO(),
-                    currentCountryValue = TODO()
+                    viewModel = TODO(),
+                    onCountryConfirmed = onCountrySelected
                 )
 
             }

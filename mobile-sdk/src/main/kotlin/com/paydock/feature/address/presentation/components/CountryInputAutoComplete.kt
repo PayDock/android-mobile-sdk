@@ -36,9 +36,13 @@ import org.koin.androidx.compose.koinViewModel
 internal fun CountryInputAutoComplete(
     modifier: Modifier = Modifier,
     appearance: SearchDropdownAppearance = SearchDropdownAppearanceDefaults.appearance(),
-    viewModel: CountryAutoCompleteViewModel = koinViewModel(),
-    autofillType: ContentType? = null,
     currentCountryValue: String,
+    autofillType: ContentType? = null,
+    viewModel: CountryAutoCompleteViewModel = koinViewModel(
+        // Use currentCountryValue to force new ViewModel when country changes
+        // This ensures the dropdown clears properly when country is reset to blank
+        key = "country_autocomplete_${currentCountryValue.hashCode()}"
+    ),
     onCountryConfirmed: (String?) -> Unit
 ) {
     var confirmedSelectionForIcon by remember(currentCountryValue) {

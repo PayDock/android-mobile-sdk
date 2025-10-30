@@ -50,11 +50,7 @@ enum class ProductImage(@DrawableRes val drawableRes: Int) {
     // Home & Living
     PILLOWS(R.drawable.pillows),
     TABLE_LAMP(R.drawable.table_lamp),
-    SCALE(R.drawable.scale),
-    
-    // Legacy/Demo
-    DEMO_PRODUCT_1(R.drawable.demo_product_1),
-    DEMO_PRODUCT_2(R.drawable.demo_product_2)
+    SCALE(R.drawable.scale)
 }
 
 enum class ProductCategory(val displayName: String) {

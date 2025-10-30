@@ -19,6 +19,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -66,14 +68,25 @@ fun AddressWidgetSheet(
         )
     }
     var addressResult by remember(initialBillingAddress) { mutableStateOf(initialBillingAddress) }
+    
+    // Use a key to force widget recreation when sheet is reopened
+    // This ensures the AddressDetailsWidget starts fresh each time
+    var widgetKey by remember { mutableIntStateOf(0) }
+    
+    val handleDismiss = {
+        // Reset addressResult to initial value and increment key on dismiss
+        addressResult = initialBillingAddress
+        widgetKey++
+        onDismissRequest()
+    }
 
     AppBottomSheet(
         title = title ?: if (isEditing) stringResource(R.string.label_edit_address) else stringResource(R.string.label_add_new_address),
-        trailingContent = { AppTextButton(text = stringResource(id = R.string.button_cancel), onClick = onDismissRequest) },
+        trailingContent = { AppTextButton(text = stringResource(id = R.string.button_cancel), onClick = handleDismiss) },
         skipPartiallyExpanded = true,
         expandOnOpen = true,
         allowOutsideDismiss = false,
-        onDismissRequest = onDismissRequest
+        onDismissRequest = handleDismiss
     ) {
         Column(
             modifier = Modifier
@@ -140,30 +153,36 @@ fun AddressWidgetSheet(
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
-                AddressDetailsWidget(
-                    config = AddressDetailsWidgetConfig(
-                        address = addressResult
-                    ),
-                    appearance = AddressDetailsAppearanceDefaults.appearance().copy(
-                        actionButton = ButtonAppearanceDefaults
-                            .outlineButtonAppearance()
-                            .copy(
-                                text = if (isEditing) stringResource(R.string.button_update) else stringResource(
-                                    R.string.button_add
-                                ),
-                                icon = if (isEditing) ButtonIcon.Vector(Icons.Filled.Edit) else ButtonIcon.Vector(
-                                    Icons.Filled.Add
+                // Use key to force widget recreation and clear all fields including country
+                // Create a new config instance each time to ensure complete widget reset
+                key(widgetKey, addressResult) {
+                    AddressDetailsWidget(
+                        config = AddressDetailsWidgetConfig(
+                            address = addressResult
+                        ),
+                        appearance = AddressDetailsAppearanceDefaults.appearance().copy(
+                            actionButton = ButtonAppearanceDefaults
+                                .outlineButtonAppearance()
+                                .copy(
+                                    text = if (isEditing) stringResource(R.string.button_update) else stringResource(
+                                        R.string.button_add
+                                    ),
+                                    icon = if (isEditing) ButtonIcon.Vector(Icons.Filled.Edit) else ButtonIcon.Vector(
+                                        Icons.Filled.Add
+                                    )
                                 )
-                            )
-                    )
-                ) { billingAddress ->
-                    addressResult = billingAddress
-                    val result = AddressWidgetResult(
-                        label = addressType,
-                        isDefault = isDefault,
-                        billingAddress = billingAddress
-                    )
-                    onSave(result)
+                        )
+                    ) { billingAddress ->
+                        val result = AddressWidgetResult(
+                            label = addressType,
+                            isDefault = isDefault,
+                            billingAddress = billingAddress
+                        )
+                        // Reset addressResult and increment key before saving to force fresh widget on next open
+                        addressResult = initialBillingAddress
+                        widgetKey++
+                        onSave(result)
+                    }
                 }
             }
         }
