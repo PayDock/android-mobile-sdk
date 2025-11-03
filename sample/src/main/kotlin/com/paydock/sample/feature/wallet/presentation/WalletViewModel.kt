@@ -8,6 +8,8 @@ import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.AMOUNT
 import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.core.EMAIL
+import com.paydock.sample.core.FIRST_NAME
+import com.paydock.sample.core.LAST_NAME
 import com.paydock.sample.core.MERCHANT_NAME
 import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
 import com.paydock.sample.feature.wallet.data.api.dto.InitiateWalletRequest
@@ -106,11 +108,13 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
             amount = customerData?.amount?.let { BigDecimal(it) } ?: BigDecimal(AMOUNT),
             currency = AU_CURRENCY_CODE,
             customer = ChargesCustomerDTO(
+                firstName = customerData?.firstName ?: "Annaanna",
+                lastName = customerData?.lastName ?: "Annaanna",
                 email = customerData?.email ?: "annaanna@yopmail.com",
                 paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
                     gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL,
                     addressLine1 = customerData?.billingAddress?.addressLine1 ?: "asd1",
-                    addressLine2 = customerData?.billingAddress?.addressLine2 ?: "asd1",
+                    addressLine2 = customerData?.billingAddress?.addressLine2,
                     addressLine3 = customerData?.billingAddress?.addressLine3,
                     city = customerData?.billingAddress?.city ?: "city",
                     state = customerData?.billingAddress?.state ?: "state",
@@ -122,8 +126,8 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
             shippingDTO = customerData?.shippingAddress?.let {
                 InitiateWalletRequest.ShippingDTO(
                     addressLine1 = it.addressLine1,
-                    addressLine2 = it.addressLine2 ?: "",
-                    addressLine3 = it.addressLine3 ?: "",
+                    addressLine2 = it.addressLine2,
+                    addressLine3 = it.addressLine3,
                     city = it.city,
                     state = it.state,
                     countryCode = it.countryCode,
@@ -131,7 +135,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                     contact = InitiateWalletRequest.ShippingDTO.ContactDTO(
                         firstName = customerData.firstName,
                         lastName = customerData.lastName,
-                        phone = customerData.phone ?: ""
+                        phone = customerData.phone
                     )
                 )
             }
@@ -143,11 +147,13 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
             amount = customerData?.amount?.let { BigDecimal(it) } ?: BigDecimal(AMOUNT),
             currency = AU_CURRENCY_CODE,
             customer = ChargesCustomerDTO(
+                firstName = customerData?.firstName ?: FIRST_NAME,
+                lastName = customerData?.lastName ?: LAST_NAME,
                 email = customerData?.email ?: EMAIL,
                 paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
                     gatewayId = BuildConfig.GATEWAY_ID_COLES_PAY,
                     addressLine1 = customerData?.billingAddress?.addressLine1 ?: "asd1",
-                    addressLine2 = customerData?.billingAddress?.addressLine2 ?: "asd1",
+                    addressLine2 = customerData?.billingAddress?.addressLine2,
                     addressLine3 = customerData?.billingAddress?.addressLine3,
                     city = customerData?.billingAddress?.city ?: "city",
                     state = customerData?.billingAddress?.state ?: "state",
@@ -159,8 +165,8 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
             shippingDTO = customerData?.shippingAddress?.let {
                 InitiateWalletRequest.ShippingDTO(
                     addressLine1 = it.addressLine1,
-                    addressLine2 = it.addressLine2 ?: "",
-                    addressLine3 = it.addressLine3 ?: "",
+                    addressLine2 = it.addressLine2,
+                    addressLine3 = it.addressLine3,
                     city = it.city,
                     state = it.state,
                     countryCode = it.countryCode,
@@ -168,7 +174,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                     contact = InitiateWalletRequest.ShippingDTO.ContactDTO(
                         firstName = customerData.firstName,
                         lastName = customerData.lastName,
-                        phone = customerData.phone ?: ""
+                        phone = customerData.phone
                     )
                 )
             },
@@ -180,11 +186,13 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
             amount = customerData?.amount?.let { BigDecimal(it) } ?: BigDecimal(AMOUNT),
             currency = AU_CURRENCY_CODE,
             customer = ChargesCustomerDTO(
+                firstName = customerData?.firstName ?: FIRST_NAME,
+                lastName = customerData?.lastName ?: LAST_NAME,
                 email = customerData?.email ?: EMAIL,
                 paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
                     gatewayId = BuildConfig.GATEWAY_ID_GOOGLE_PAY,
                     addressLine1 = customerData?.billingAddress?.addressLine1 ?: "asd1",
-                    addressLine2 = customerData?.billingAddress?.addressLine2 ?: "asd1",
+                    addressLine2 = customerData?.billingAddress?.addressLine2,
                     addressLine3 = customerData?.billingAddress?.addressLine3,
                     city = customerData?.billingAddress?.city ?: "city",
                     state = customerData?.billingAddress?.state ?: "state",
@@ -196,8 +204,8 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
             shippingDTO = customerData?.shippingAddress?.let {
                 InitiateWalletRequest.ShippingDTO(
                     addressLine1 = it.addressLine1,
-                    addressLine2 = it.addressLine2 ?: "",
-                    addressLine3 = it.addressLine3 ?: "",
+                    addressLine2 = it.addressLine2,
+                    addressLine3 = it.addressLine3,
                     city = it.city,
                     state = it.state,
                     countryCode = it.countryCode,
@@ -205,7 +213,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                     contact = InitiateWalletRequest.ShippingDTO.ContactDTO(
                         firstName = customerData.firstName,
                         lastName = customerData.lastName,
-                        phone = customerData.phone ?: ""
+                        phone = customerData.phone
                     )
                 )
             },
@@ -218,13 +226,13 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
             amount = customerData?.amount?.let { BigDecimal(it) } ?: BigDecimal(AMOUNT),
             currency = AU_CURRENCY_CODE,
             customer = ChargesCustomerDTO(
+                firstName = customerData?.firstName ?: "David",
+                lastName = customerData?.lastName ?: "Cameron",
                 email = "david.cameron@paydock.com",
-                firstName = "David",
-                lastName = "Cameron",
                 paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
                     gatewayId = BuildConfig.GATEWAY_ID_AFTER_PAY,
                     addressLine1 = customerData?.billingAddress?.addressLine1 ?: "asd1",
-                    addressLine2 = customerData?.billingAddress?.addressLine2 ?: "asd1",
+                    addressLine2 = customerData?.billingAddress?.addressLine2,
                     addressLine3 = customerData?.billingAddress?.addressLine3,
                     city = customerData?.billingAddress?.city ?: "city",
                     state = customerData?.billingAddress?.state ?: "state",
@@ -242,17 +250,18 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
             shippingDTO = customerData?.shippingAddress?.let {
                 InitiateWalletRequest.ShippingDTO(
                     addressLine1 = it.addressLine1,
-                    addressLine2 = it.addressLine2 ?: "",
-                    addressLine3 = it.addressLine3 ?: "",
+                    addressLine2 = it.addressLine2,
+                    addressLine3 = it.addressLine3,
                     city = it.city,
                     state = it.state,
                     countryCode = it.countryCode,
                     postalCode = it.postalCode,
-                    amount = customerData.amount?.let { amount -> BigDecimal(amount) } ?: BigDecimal(AMOUNT),
+                    amount = customerData.amount?.let { amount -> BigDecimal(amount) }
+                        ?: BigDecimal(AMOUNT),
                     contact = InitiateWalletRequest.ShippingDTO.ContactDTO(
                         firstName = customerData.firstName,
                         lastName = customerData.lastName,
-                        phone = customerData.phone ?: ""
+                        phone = customerData.phone
                     )
                 )
             } ?: InitiateWalletRequest.ShippingDTO(),

@@ -13,10 +13,11 @@ enum class ShippingOption(
     STANDARD("standard", "Standard Shipping", "5-7 business days", 0.0, "5-7 days"),
     EXPRESS("express", "Express Shipping", "2-3 business days", 9.99, "2-3 days"),
     OVERNIGHT("overnight", "Overnight Shipping", "Next business day", 19.99, "1 day");
-    
+
     val formattedPrice: String
-        get() = if (price == 0.0) "Free" else NumberFormat.getCurrencyInstance(Locale.US).format(price)
-    
+        get() = if (price == 0.0) "Free" else NumberFormat.getCurrencyInstance(Locale.US)
+            .format(price)
+
     companion object {
         fun getAllOptions(): List<ShippingOption> = values().toList()
     }
@@ -30,7 +31,7 @@ data class GiftCard(
 ) {
     val maskedCardNumber: String
         get() = "**** **** **** ${cardNumber.takeLast(4)}"
-    
+
     val formattedBalance: String
         get() = NumberFormat.getCurrencyInstance(Locale.US).format(balance)
 }

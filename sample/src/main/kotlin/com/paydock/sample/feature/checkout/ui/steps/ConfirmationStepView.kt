@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
@@ -21,14 +22,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.components.button.AppButtonVariant
-import com.paydock.sample.designsystems.theme.SampleTheme
 import com.paydock.sample.feature.checkout.presentation.EnhancedCheckoutViewModel
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.HorizontalDivider
 
 @Composable
 fun ConfirmationStepView(
@@ -69,7 +66,10 @@ fun ConfirmationStepView(
                         .clip(CircleShape)
                         .padding(0.dp)
                         .then(Modifier)
-                        .background(color = MaterialTheme.colorScheme.errorContainer, shape = CircleShape)
+                        .background(
+                            color = MaterialTheme.colorScheme.errorContainer,
+                            shape = CircleShape
+                        )
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Error,

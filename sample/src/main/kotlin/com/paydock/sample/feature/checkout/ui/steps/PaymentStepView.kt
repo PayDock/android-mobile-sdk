@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -66,6 +65,7 @@ import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.R
+import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.components.button.AppTextButton
 import com.paydock.sample.designsystems.components.sheets.AppBottomSheet
 import com.paydock.sample.designsystems.theme.SampleTheme
@@ -103,7 +103,7 @@ fun PaymentStepView(
         // Title (scrolls with content)
         item {
             Text(
-                text = "Payment Method",
+                text = stringResource(R.string.label_payment_method),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -154,7 +154,7 @@ fun PaymentStepView(
                                 }
                                 Text(
                                     text = viewModel.selectedPaymentMethod?.displayName
-                                        ?: "Select a payment method",
+                                        ?: stringResource(R.string.label_select_payment_method),
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Medium,
                                     modifier = Modifier.weight(1f)
@@ -318,11 +318,11 @@ private fun GiftCardSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Gift Cards",
+                    text = stringResource(R.string.label_gift_cards),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                AppTextButton(text = "Add Gift Card", onClick = onShowGiftCardEntry)
+                AppTextButton(text = stringResource(R.string.label_add_gift_card), onClick = onShowGiftCardEntry)
             }
 
             if (cartManager.hasGiftCards) {
@@ -352,7 +352,7 @@ private fun GiftCardSection(
                                 )
                             }
                             AppTextButton(
-                                text = "Remove",
+                                text = stringResource(R.string.button_remove),
                                 onClick = { cartManager.removeGiftCard(appliedGiftCard) })
                         }
                     }
@@ -386,7 +386,7 @@ private fun GiftCardEntryView(
     }
 
     AppBottomSheet(
-        title = "Add Gift Card",
+        title = stringResource(R.string.label_add_gift_card),
         trailingContent = {
             AppTextButton(
                 text = "Cancel",
@@ -409,7 +409,7 @@ private fun GiftCardEntryView(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Enter your gift card details to apply it to your order",
+                        text = stringResource(R.string.label_enter_gift_card_details),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -428,6 +428,7 @@ private fun GiftCardEntryView(
                             override fun widgetLoadingDidStart() {
                                 isLoading = true
                             }
+
                             override fun widgetLoadingDidFinish() {
                                 isLoading = false
                             }
@@ -470,12 +471,13 @@ private fun GiftCardEntryView(
     if (showAlert) {
         AlertDialog(
             onDismissRequest = { showAlert = false },
-            title = { Text("Gift Card") },
+            title = { Text(stringResource(R.string.label_gift_cards)) },
             text = { Text(alertMessage) },
             confirmButton = {
-                Button(onClick = { showAlert = false }) {
-                    Text("OK")
-                }
+                AppButton(
+                    text = stringResource(R.string.button_ok),
+                    onClick = { showAlert = false }
+                )
             })
     }
 }
@@ -493,7 +495,7 @@ private fun ShippingSection(
             modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Shipping Options",
+                text = stringResource(R.string.label_shipping_options),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -560,9 +562,9 @@ private fun PaymentMethodRow(
             .fillMaxWidth()
             .clickable { onSelect() },
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) 
+            containerColor = if (isSelected)
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            else 
+            else
                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
         )
     ) {
@@ -577,9 +579,9 @@ private fun PaymentMethodRow(
                 contentDescription = if (isSelected) "Selected" else "Not selected",
                 tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
             )
-            
+
             Spacer(modifier = Modifier.width(12.dp))
-            
+
             // Payment method icon
             val iconRes = when (method.iconRes) {
                 "ic_card_filled" -> R.drawable.ic_card_filled
@@ -590,15 +592,15 @@ private fun PaymentMethodRow(
                 "ic_coles_pay" -> R.drawable.ic_coles_pay
                 else -> R.drawable.ic_card_filled
             }
-            
+
             Image(
                 painter = painterResource(id = iconRes),
                 contentDescription = method.displayName,
                 modifier = Modifier.size(width = 40.dp, height = 24.dp)
             )
-            
+
             Spacer(modifier = Modifier.width(12.dp))
-            
+
             Text(
                 text = method.displayName,
                 style = MaterialTheme.typography.bodyLarge,
@@ -614,7 +616,7 @@ fun PaymentWidgetView(
     viewModel: EnhancedCheckoutViewModel
 ) {
     val walletViewModel: WalletViewModel = hiltViewModel()
-    
+
     // Get customer data from checkout view model for wallet requests
     val customerData = remember(
         viewModel.contactInfo,
@@ -641,118 +643,149 @@ fun PaymentWidgetView(
                 Column(
                     modifier = Modifier.padding(16.dp)
                 ) {
-            when (method) {
-                PaymentMethod.CARD -> {
-                    CardContent(
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = true,
-                        loadingDelegate = object : WidgetLoadingDelegate {
-                            override fun widgetLoadingDidStart() { viewModel.setIsLoading(true) }
-                            override fun widgetLoadingDidFinish() { viewModel.setIsLoading(false) }
-                        },
-                        resultHandler = { result -> viewModel.handleCardResult(result) }
-                    )
-                }
-                
-                PaymentMethod.GOOGLE_PAY -> {
-                    GooglePayContent(
-                        modifier = Modifier.fillMaxWidth(),
-                        tokenHandler = walletViewModel.getWalletTokenResultCallback(
-                            walletType = WalletType.GOOGLE,
-                            customerData = customerData
-                        ),
-                        loadingDelegate = object : WidgetLoadingDelegate {
-                            override fun widgetLoadingDidStart() { viewModel.setIsLoading(true) }
-                            override fun widgetLoadingDidFinish() { viewModel.setIsLoading(false) }
-                        },
-                        resultHandler = { result ->
-                            result.onSuccess { chargeResponse ->
-                                viewModel.setThePaymentToken(chargeResponse.resource.data?.id ?: "google_pay_success")
-                                viewModel.placeOrder()
-                            }
-                            result.onFailure { _ -> viewModel.routeToFailure() }
+                    when (method) {
+                        PaymentMethod.CARD -> {
+                            CardContent(
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = true,
+                                loadingDelegate = object : WidgetLoadingDelegate {
+                                    override fun widgetLoadingDidStart() {
+                                        viewModel.setIsLoading(true)
+                                    }
+
+                                    override fun widgetLoadingDidFinish() {
+                                        viewModel.setIsLoading(false)
+                                    }
+                                },
+                                resultHandler = { result -> viewModel.handleCardResult(result) }
+                            )
                         }
-                    )
-                }
-                
-                PaymentMethod.PAYPAL -> {
-                    PayPalContent(
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = true,
-                        tokenHandler = walletViewModel.getWalletTokenResultCallback(
-                            walletType = WalletType.PAY_PAL,
-                            customerData = customerData
-                        ),
-                        loadingDelegate = object : WidgetLoadingDelegate {
-                            override fun widgetLoadingDidStart() { viewModel.setIsLoading(true) }
-                            override fun widgetLoadingDidFinish() { viewModel.setIsLoading(false) }
-                        },
-                        resultHandler = { result ->
-                            result.onSuccess { chargeResponse ->
-                                viewModel.setThePaymentToken(chargeResponse.resource.data?.id ?: "paypal_success")
-                                viewModel.placeOrder()
-                            }
-                            result.onFailure { _ -> viewModel.routeToFailure() }
+
+                        PaymentMethod.GOOGLE_PAY -> {
+                            GooglePayContent(
+                                modifier = Modifier.fillMaxWidth(),
+                                tokenHandler = walletViewModel.getWalletTokenResultCallback(
+                                    walletType = WalletType.GOOGLE,
+                                    customerData = customerData
+                                ),
+                                loadingDelegate = object : WidgetLoadingDelegate {
+                                    override fun widgetLoadingDidStart() {
+                                        viewModel.setIsLoading(true)
+                                    }
+
+                                    override fun widgetLoadingDidFinish() {
+                                        viewModel.setIsLoading(false)
+                                    }
+                                },
+                                resultHandler = { result ->
+                                    result.onSuccess { chargeResponse ->
+                                        viewModel.setThePaymentToken(
+                                            chargeResponse.resource.data?.id ?: "google_pay_success"
+                                        )
+                                        viewModel.placeOrder()
+                                    }
+                                    result.onFailure { _ -> viewModel.routeToFailure() }
+                                }
+                            )
                         }
-                    )
-                }
-                
-                PaymentMethod.AFTERPAY -> {
-                    AfterpayContent(
-                        modifier = Modifier.fillMaxWidth(),
-                        tokenHandler = walletViewModel.getWalletTokenResultCallback(
-                            walletType = WalletType.AFTER_PAY,
-                            customerData = customerData
-                        ),
-                        loadingDelegate = object : WidgetLoadingDelegate {
-                            override fun widgetLoadingDidStart() { viewModel.setIsLoading(true) }
-                            override fun widgetLoadingDidFinish() { viewModel.setIsLoading(false) }
-                        },
-                        resultHandler = { result ->
-                            result.onSuccess { chargeResponse ->
-                                viewModel.setThePaymentToken(chargeResponse.resource.data?.id ?: "afterpay_success")
-                                viewModel.placeOrder()
-                            }
-                            result.onFailure { _ -> viewModel.routeToFailure() }
+
+                        PaymentMethod.PAYPAL -> {
+                            PayPalContent(
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = true,
+                                tokenHandler = walletViewModel.getWalletTokenResultCallback(
+                                    walletType = WalletType.PAY_PAL,
+                                    customerData = customerData
+                                ),
+                                loadingDelegate = object : WidgetLoadingDelegate {
+                                    override fun widgetLoadingDidStart() {
+                                        viewModel.setIsLoading(true)
+                                    }
+
+                                    override fun widgetLoadingDidFinish() {
+                                        viewModel.setIsLoading(false)
+                                    }
+                                },
+                                resultHandler = { result ->
+                                    result.onSuccess { chargeResponse ->
+                                        viewModel.setThePaymentToken(
+                                            chargeResponse.resource.data?.id ?: "paypal_success"
+                                        )
+                                        viewModel.placeOrder()
+                                    }
+                                    result.onFailure { _ -> viewModel.routeToFailure() }
+                                }
+                            )
                         }
-                    )
-                }
-                
-                PaymentMethod.CLICK_TO_PAY -> {
-                    ClickToPayComponent(
-                        resultHandler = { result ->
-                            result.onSuccess { token ->
-                                viewModel.setThePaymentToken(token)
-                                viewModel.placeOrder()
-                            }
-                            result.onFailure { _ ->
-                                viewModel.routeToFailure()
-                            }
+
+                        PaymentMethod.AFTERPAY -> {
+                            AfterpayContent(
+                                modifier = Modifier.fillMaxWidth(),
+                                tokenHandler = walletViewModel.getWalletTokenResultCallback(
+                                    walletType = WalletType.AFTER_PAY,
+                                    customerData = customerData
+                                ),
+                                loadingDelegate = object : WidgetLoadingDelegate {
+                                    override fun widgetLoadingDidStart() {
+                                        viewModel.setIsLoading(true)
+                                    }
+
+                                    override fun widgetLoadingDidFinish() {
+                                        viewModel.setIsLoading(false)
+                                    }
+                                },
+                                resultHandler = { result ->
+                                    result.onSuccess { chargeResponse ->
+                                        viewModel.setThePaymentToken(
+                                            chargeResponse.resource.data?.id ?: "afterpay_success"
+                                        )
+                                        viewModel.placeOrder()
+                                    }
+                                    result.onFailure { _ -> viewModel.routeToFailure() }
+                                }
+                            )
                         }
-                    )
-                }
-                
-                PaymentMethod.COLES_PAY -> {
-                    ColesPayContent(
-                        modifier = Modifier.fillMaxWidth(),
-                        tokenHandler = walletViewModel.getWalletTokenResultCallback(
-                            walletType = WalletType.COLES_PAY,
-                            customerData = customerData
-                        ),
-                        loadingDelegate = object : WidgetLoadingDelegate {
-                            override fun widgetLoadingDidStart() { viewModel.setIsLoading(true) }
-                            override fun widgetLoadingDidFinish() { viewModel.setIsLoading(false) }
-                        },
-                        resultHandler = { result ->
-                            result.onSuccess { token ->
-                                viewModel.setThePaymentToken(token)
-                                viewModel.placeOrder()
-                            }
-                            result.onFailure { _ -> viewModel.routeToFailure() }
+
+                        PaymentMethod.CLICK_TO_PAY -> {
+                            ClickToPayComponent(
+                                resultHandler = { result ->
+                                    result.onSuccess { token ->
+                                        viewModel.setThePaymentToken(token)
+                                        viewModel.placeOrder()
+                                    }
+                                    result.onFailure { _ ->
+                                        viewModel.routeToFailure()
+                                    }
+                                }
+                            )
                         }
-                    )
-                }
-            }
+
+                        PaymentMethod.COLES_PAY -> {
+                            ColesPayContent(
+                                modifier = Modifier.fillMaxWidth(),
+                                tokenHandler = walletViewModel.getWalletTokenResultCallback(
+                                    walletType = WalletType.COLES_PAY,
+                                    customerData = customerData
+                                ),
+                                loadingDelegate = object : WidgetLoadingDelegate {
+                                    override fun widgetLoadingDidStart() {
+                                        viewModel.setIsLoading(true)
+                                    }
+
+                                    override fun widgetLoadingDidFinish() {
+                                        viewModel.setIsLoading(false)
+                                    }
+                                },
+                                resultHandler = { result ->
+                                    result.onSuccess { token ->
+                                        viewModel.setThePaymentToken(token)
+                                        viewModel.placeOrder()
+                                    }
+                                    result.onFailure { _ -> viewModel.routeToFailure() }
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }

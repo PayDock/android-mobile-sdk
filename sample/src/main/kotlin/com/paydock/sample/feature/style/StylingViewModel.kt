@@ -32,7 +32,8 @@ import javax.inject.Inject
 @HiltViewModel
 class StylingViewModel @Inject constructor() : ViewModel() {
     private val _addressWidgetAppearance = MutableStateFlow<AddressDetailsWidgetAppearance?>(null)
-    val addressWidgetAppearance: StateFlow<AddressDetailsWidgetAppearance?> = _addressWidgetAppearance.asStateFlow()
+    val addressWidgetAppearance: StateFlow<AddressDetailsWidgetAppearance?> =
+        _addressWidgetAppearance.asStateFlow()
 
     private val _cardDetailsWidgetAppearance = MutableStateFlow<CardDetailsWidgetAppearance?>(null)
     val cardDetailsWidgetAppearance: StateFlow<CardDetailsWidgetAppearance?> =
@@ -79,33 +80,43 @@ class StylingViewModel @Inject constructor() : ViewModel() {
     fun updateInitialAddressDefaults(updatedDefaults: AddressDetailsWidgetAppearance) {
         _addressWidgetAppearance.update { updatedDefaults }
     }
+
     fun updateInitialCardDetailsDefaults(updatedDefaults: CardDetailsWidgetAppearance) {
         _cardDetailsWidgetAppearance.update { updatedDefaults }
     }
+
     fun updateInitialGiftCardDetailsDefaults(updatedDefaults: GiftCardWidgetAppearance) {
         _giftCardWidgetAppearance.update { updatedDefaults }
     }
+
     fun updateInitialPayPalDefaults(updatedDefaults: PayPalWidgetAppearance) {
         _paypalWidgetAppearance.update { updatedDefaults }
     }
+
     fun updateInitialPayPalVaultDefaults(updatedDefaults: PayPalPaymentSourceWidgetAppearance) {
         _paypalVaultWidgetAppearance.update { updatedDefaults }
     }
+
     fun updateInitialAfterpayDefaults(updatedDefaults: AfterpayWidgetAppearance) {
         _afterpayWidgetAppearance.update { updatedDefaults }
     }
+
     fun updateInitialGooglePayDefaults(updatedDefaults: GooglePayWidgetAppearance) {
         _googlePayWidgetAppearance.update { updatedDefaults }
     }
+
     fun updateInitialColesPayDefaults(updatedDefaults: ColesPayWidgetAppearance) {
         _colesPayWidgetAppearance.update { updatedDefaults }
     }
+
     fun updateInitialClickToPayDefaults(updatedDefaults: ClickToPayWidgetAppearance) {
         _clickToPayWidgetAppearance.update { updatedDefaults }
     }
+
     fun updateInitialIntegrated3DSDefaults(updatedDefaults: ThreeDSWidgetAppearance) {
         _integrated3DSWidgetAppearance.update { updatedDefaults }
     }
+
     fun updateInitialStandalone3DSDefaults(updatedDefaults: ThreeDSWidgetAppearance) {
         _standalone3DSWidgetAppearance.update { updatedDefaults }
     }
@@ -169,14 +180,17 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                         StyleAppearanceComponent.SUB_TEXT_FIELD_PLACEHOLDER -> current.copy(
                             textField = current.textField.copy(placeholder = newComponentAppearance as TextAppearance)
                         )
+
                         StyleAppearanceComponent.SUB_TEXT_FIELD_LABEL -> current.copy(
                             textField = current.textField.copy(
                                 label = newComponentAppearance as TextAppearance
                             )
                         )
+
                         StyleAppearanceComponent.SUB_TEXT_FIELD_ERROR_LABEL -> current.copy(
                             textField = current.textField.copy(error = newComponentAppearance as TextAppearance)
                         )
+
                         StyleAppearanceComponent.SUB_TEXT_FIELD_VALID_ICON -> current.copy(
                             textField = current.textField.copy(
                                 validIcon = newComponentAppearance as IconAppearance
@@ -234,6 +248,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                                 )
                             )
                         }
+
                         else -> current
                     }
                     _addressWidgetAppearance.value = updatedAppearance
@@ -249,6 +264,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                                 horizontalSpacing = newComponentAppearance.horizontalSpacing
                             )
                         }
+
                         StyleAppearanceComponent.TITLE -> current.copy(title = newComponentAppearance as TextAppearance)
                         StyleAppearanceComponent.TOGGLE_TEXT -> current.copy(toggleText = newComponentAppearance as TextAppearance)
                         StyleAppearanceComponent.SUB_TEXT_FIELD_PROPERTIES -> (newComponentAppearance as TextFieldAppearance).let {
@@ -261,6 +277,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                                 )
                             )
                         }
+
                         StyleAppearanceComponent.SUB_TEXT_FIELD_PLACEHOLDER -> current.copy(
                             textField = current.textField.copy(placeholder = newComponentAppearance as TextAppearance)
                         )
@@ -280,6 +297,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                                 validIcon = newComponentAppearance as IconAppearance
                             )
                         )
+
                         StyleAppearanceComponent.SUB_ACTION_BUTTON_PROPERTIES -> {
                             current.copy(actionButton = newComponentAppearance as ButtonAppearance)
                         }
@@ -294,25 +312,30 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                                 )
                             )
                         }
+
                         StyleAppearanceComponent.TOGGLE -> (newComponentAppearance as ToggleAppearance).let {
-                            current.copy(switch = current.toggle.copy(
-                                colors = newComponentAppearance.colors.copy(
-                                    checkedThumbColor = newComponentAppearance.colors.checkedThumbColor,
-                                    checkedIconColor = newComponentAppearance.colors.checkedIconColor,
-                                    checkedTrackColor = newComponentAppearance.colors.checkedTrackColor,
-                                    checkedBorderColor = newComponentAppearance.colors.checkedBorderColor,
-                                    uncheckedThumbColor = newComponentAppearance.colors.uncheckedThumbColor,
-                                    uncheckedIconColor = newComponentAppearance.colors.uncheckedIconColor,
-                                    uncheckedTrackColor = newComponentAppearance.colors.uncheckedTrackColor,
-                                    uncheckedBorderColor = newComponentAppearance.colors.uncheckedBorderColor,
+                            current.copy(
+                                switch = current.toggle.copy(
+                                    colors = newComponentAppearance.colors.copy(
+                                        checkedThumbColor = newComponentAppearance.colors.checkedThumbColor,
+                                        checkedIconColor = newComponentAppearance.colors.checkedIconColor,
+                                        checkedTrackColor = newComponentAppearance.colors.checkedTrackColor,
+                                        checkedBorderColor = newComponentAppearance.colors.checkedBorderColor,
+                                        uncheckedThumbColor = newComponentAppearance.colors.uncheckedThumbColor,
+                                        uncheckedIconColor = newComponentAppearance.colors.uncheckedIconColor,
+                                        uncheckedTrackColor = newComponentAppearance.colors.uncheckedTrackColor,
+                                        uncheckedBorderColor = newComponentAppearance.colors.uncheckedBorderColor,
+                                    )
                                 )
-                            ))
+                            )
                         }
+
                         StyleAppearanceComponent.SUB_LINK_TEXT -> current.copy(
                             linkText = current.linkText.copy(
                                 newComponentAppearance as TextAppearance
                             )
                         )
+
                         else -> current
                     }
                     _cardDetailsWidgetAppearance.value = updatedAppearance
@@ -339,6 +362,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                                 )
                             )
                         }
+
                         StyleAppearanceComponent.SUB_TEXT_FIELD_PLACEHOLDER -> current.copy(
                             textField = current.textField.copy(placeholder = newComponentAppearance as TextAppearance)
                         )
@@ -358,6 +382,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                                 validIcon = newComponentAppearance as IconAppearance
                             )
                         )
+
                         StyleAppearanceComponent.SUB_ACTION_BUTTON_PROPERTIES -> {
                             current.copy(actionButton = newComponentAppearance as ButtonAppearance)
                         }
@@ -372,6 +397,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                                 )
                             )
                         }
+
                         else -> current
                     }
                     _giftCardWidgetAppearance.value = updatedAppearance
@@ -387,6 +413,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                                 colorScheme = newComponentAppearance.colorScheme
                             )
                         }
+
                         StyleAppearanceComponent.LOADER -> current.copy(loader = newComponentAppearance as LoaderAppearance)
                         else -> current
                     }
@@ -414,6 +441,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                                 cornerRadius = newComponentAppearance.cornerRadius
                             )
                         }
+
                         StyleAppearanceComponent.LOADER -> current.copy(loader = newComponentAppearance as LoaderAppearance)
                         else -> current
                     }
@@ -469,6 +497,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                                 )
                             )
                         }
+
                         else -> current
                     }
                     _paypalVaultWidgetAppearance.value = updatedAppearance
@@ -500,6 +529,7 @@ private fun ButtonAppearance.copyWithSubAppearance(
                 is ButtonIcon? -> this.copy(icon = subAppearance as ButtonIcon?)
                 else -> this
             }
+
             StyleAppearanceComponent.SUB_BUTTON_LOADER -> this.copy(loaderAppearance = subAppearance as LoaderAppearance)
             else -> this
         }
@@ -511,6 +541,7 @@ private fun ButtonAppearance.copyWithSubAppearance(
                 is ButtonIcon? -> this.copy(icon = subAppearance as ButtonIcon?)
                 else -> this
             }
+
             StyleAppearanceComponent.SUB_BUTTON_LOADER -> this.copy(loaderAppearance = subAppearance as LoaderAppearance)
             else -> this
         }
@@ -528,6 +559,7 @@ private fun ButtonAppearance.copyWithSubAppearance(
 
             StyleAppearanceComponent.SUB_LINK_BUTTON_LOADER,
             StyleAppearanceComponent.SUB_BUTTON_LOADER -> this.copy(loaderAppearance = subAppearance as LoaderAppearance)
+
             else -> this
         }
 

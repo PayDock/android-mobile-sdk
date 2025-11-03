@@ -46,7 +46,7 @@ fun CategoryFilter(
                 onClick = { onCategorySelected(null) }
             )
         }
-        
+
         // Category chips
         items(ProductCategory.getAllCategories()) { category ->
             CategoryChip(
@@ -70,25 +70,25 @@ fun CategoryChip(
         animationSpec = tween(durationMillis = 200),
         label = "scale"
     )
-    
+
     val backgroundColor = if (isSelected) {
         MaterialTheme.colorScheme.primary
     } else {
         MaterialTheme.colorScheme.surfaceVariant
     }
-    
+
     val textColor = if (isSelected) {
         MaterialTheme.colorScheme.onPrimary
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
     }
-    
+
     val borderColor = if (isSelected) {
         Color.Transparent
     } else {
         MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
     }
-    
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier

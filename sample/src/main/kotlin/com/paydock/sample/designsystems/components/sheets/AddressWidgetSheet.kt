@@ -68,11 +68,11 @@ fun AddressWidgetSheet(
         )
     }
     var addressResult by remember(initialBillingAddress) { mutableStateOf(initialBillingAddress) }
-    
+
     // Use a key to force widget recreation when sheet is reopened
     // This ensures the AddressDetailsWidget starts fresh each time
     var widgetKey by remember { mutableIntStateOf(0) }
-    
+
     val handleDismiss = {
         // Reset addressResult to initial value and increment key on dismiss
         addressResult = initialBillingAddress
@@ -81,8 +81,14 @@ fun AddressWidgetSheet(
     }
 
     AppBottomSheet(
-        title = title ?: if (isEditing) stringResource(R.string.label_edit_address) else stringResource(R.string.label_add_new_address),
-        trailingContent = { AppTextButton(text = stringResource(id = R.string.button_cancel), onClick = handleDismiss) },
+        title = title
+            ?: if (isEditing) stringResource(R.string.label_edit_address) else stringResource(R.string.label_add_new_address),
+        trailingContent = {
+            AppTextButton(
+                text = stringResource(id = R.string.button_cancel),
+                onClick = handleDismiss
+            )
+        },
         skipPartiallyExpanded = true,
         expandOnOpen = true,
         allowOutsideDismiss = false,

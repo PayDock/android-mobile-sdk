@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class UserProfileManager private constructor() {
-    
+
     private val _profile = MutableStateFlow(
         UserProfile(
             firstName = "John",
@@ -19,7 +19,7 @@ class UserProfileManager private constructor() {
         )
     )
     val profile: StateFlow<UserProfile> = _profile.asStateFlow()
-    
+
     fun updateProfile(
         firstName: String,
         lastName: String,
@@ -33,10 +33,10 @@ class UserProfileManager private constructor() {
             phone = phone
         )
     }
-    
+
     fun addAddress(address: SavedAddress) {
         val currentAddresses = _profile.value.savedAddresses.toMutableList()
-        
+
         // If this is set as default, remove default from other addresses
         if (address.isDefault) {
             for (i in currentAddresses.indices) {
@@ -48,11 +48,11 @@ class UserProfileManager private constructor() {
         currentAddresses.add(0, address)
         _profile.value = _profile.value.copy(savedAddresses = currentAddresses)
     }
-    
+
     fun updateAddress(updatedAddress: SavedAddress) {
         val currentAddresses = _profile.value.savedAddresses.toMutableList()
         val index = currentAddresses.indexOfFirst { it.id == updatedAddress.id }
-        
+
         if (index != -1) {
             // If this is set as default, remove default from other addresses
             if (updatedAddress.isDefault) {
@@ -62,32 +62,32 @@ class UserProfileManager private constructor() {
                     }
                 }
             }
-            
+
             currentAddresses[index] = updatedAddress
             _profile.value = _profile.value.copy(savedAddresses = currentAddresses)
         }
     }
-    
+
     fun deleteAddress(address: SavedAddress) {
         val currentAddresses = _profile.value.savedAddresses.toMutableList()
         currentAddresses.removeAll { it.id == address.id }
-        
+
         // If we deleted the default address and there are other addresses, make the first one default
         if (address.isDefault && currentAddresses.isNotEmpty()) {
             currentAddresses[0] = currentAddresses[0].copy(isDefault = true)
         }
-        
+
         _profile.value = _profile.value.copy(savedAddresses = currentAddresses)
     }
-    
+
     fun setAddressAsDefault(address: SavedAddress) {
         val currentAddresses = _profile.value.savedAddresses.toMutableList()
-        
+
         // Remove default from all addresses
         for (i in currentAddresses.indices) {
             currentAddresses[i] = currentAddresses[i].copy(isDefault = false)
         }
-        
+
         // Set the selected address as default
         val index = currentAddresses.indexOfFirst { it.id == address.id }
         if (index != -1) {
@@ -95,11 +95,11 @@ class UserProfileManager private constructor() {
             _profile.value = _profile.value.copy(savedAddresses = currentAddresses)
         }
     }
-    
+
     fun populateCheckoutFromProfile(): CheckoutData {
         val profile = _profile.value
         val defaultAddress = profile.savedAddresses.find { it.isDefault }
-        
+
         return CheckoutData(
             firstName = profile.firstName,
             lastName = profile.lastName,
@@ -108,7 +108,7 @@ class UserProfileManager private constructor() {
             address = defaultAddress
         )
     }
-    
+
     fun saveCheckoutDataToProfile(
         firstName: String,
         lastName: String,
@@ -117,7 +117,7 @@ class UserProfileManager private constructor() {
     ) {
         updateProfile(firstName, lastName, email, phone)
     }
-    
+
     private fun getSampleAddresses(): List<SavedAddress> = listOf(
         SavedAddress(
             id = "addr_1",
@@ -146,11 +146,11 @@ class UserProfileManager private constructor() {
             isDefault = false
         )
     )
-    
+
     companion object {
         @Volatile
         private var INSTANCE: UserProfileManager? = null
-        
+
         val shared: UserProfileManager
             get() {
                 return INSTANCE ?: synchronized(this) {

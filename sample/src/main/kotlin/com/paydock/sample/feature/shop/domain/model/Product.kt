@@ -27,7 +27,7 @@ enum class ProductImage(@DrawableRes val drawableRes: Int) {
     WINTER_COAT(R.drawable.winter_coat),
     PANTS(R.drawable.pants),
     DRESS(R.drawable.dress),
-    
+
     // Accessories
     LEATHER_BELT(R.drawable.leather_belt),
     SILK_SCARF(R.drawable.silk_scarf),
@@ -37,7 +37,7 @@ enum class ProductImage(@DrawableRes val drawableRes: Int) {
     CROSSBODY_BAG(R.drawable.crossbody_bag),
     BACKPACK(R.drawable.backpack),
     WATCH(R.drawable.watch),
-    
+
     // Electronics
     HEADPHONES(R.drawable.headphones),
     SMARTWATCH(R.drawable.smartwatch),
@@ -46,7 +46,7 @@ enum class ProductImage(@DrawableRes val drawableRes: Int) {
     LAPTOP(R.drawable.laptop),
     TABLET(R.drawable.tablet),
     COFFEE_MAKER(R.drawable.coffee_maker),
-    
+
     // Home & Living
     PILLOWS(R.drawable.pillows),
     TABLE_LAMP(R.drawable.table_lamp),

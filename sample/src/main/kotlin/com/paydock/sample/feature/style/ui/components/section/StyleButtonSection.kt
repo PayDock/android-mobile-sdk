@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -99,7 +98,7 @@ fun ButtonAppearanceStyleEditor(
         ) { newType ->
             if (selectedButtonType != newType) {
                 selectedButtonType = newType
-                
+
                 // Immediately persist the type change by creating the new typed appearance
                 // and preserving the current text and icon
                 val newAppearance = when (newType) {
@@ -107,10 +106,12 @@ fun ButtonAppearanceStyleEditor(
                         text = currentAppearance.text,
                         icon = currentAppearance.icon
                     )
+
                     EditableButtonType.OUTLINE -> defaultOutlineAppearance.copy(
                         text = currentAppearance.text,
                         icon = currentAppearance.icon
                     )
+
                     EditableButtonType.TEXT -> defaultTextAppearance.copy(
                         text = currentAppearance.text,
                         icon = currentAppearance.icon

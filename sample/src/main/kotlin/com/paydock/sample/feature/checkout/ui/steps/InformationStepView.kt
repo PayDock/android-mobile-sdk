@@ -46,7 +46,7 @@ fun InformationStepView(
     viewModel: EnhancedCheckoutViewModel
 ) {
     val savedAddresses by viewModel.savedAddresses.collectAsState()
-    
+
     Column(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
@@ -77,16 +77,16 @@ fun InformationStepView(
                 }
             }
         }
-        
+
         // Contact Information Section
         ContactInformationSection(viewModel = viewModel)
-        
+
         // Shipping Address Section
         ShippingAddressSection(
             viewModel = viewModel,
             savedAddresses = savedAddresses
         )
-        
+
         // Use as Billing Address Toggle
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -102,7 +102,7 @@ fun InformationStepView(
                 onCheckedChange = { viewModel.setShippingAsBilling(it) }
             )
         }
-        
+
         // Billing Address Section (only if not using shipping as billing)
         if (!viewModel.useShippingAsBilling) {
             BillingAddressSection(
@@ -125,7 +125,7 @@ private fun ContactInformationSection(
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
-        
+
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -138,7 +138,7 @@ private fun ContactInformationSection(
                     label = { Text("First Name") },
                     modifier = Modifier.weight(1f)
                 )
-                
+
                 OutlinedTextField(
                     value = viewModel.contactInfo.lastName,
                     onValueChange = { viewModel.updateContactInfo(lastName = it) },
@@ -146,7 +146,7 @@ private fun ContactInformationSection(
                     modifier = Modifier.weight(1f)
                 )
             }
-            
+
             OutlinedTextField(
                 value = viewModel.contactInfo.email,
                 onValueChange = { viewModel.updateContactInfo(email = it) },
@@ -154,7 +154,7 @@ private fun ContactInformationSection(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth()
             )
-            
+
             OutlinedTextField(
                 value = viewModel.contactInfo.phone,
                 onValueChange = { viewModel.updateContactInfo(phone = it) },
@@ -179,7 +179,7 @@ private fun ShippingAddressSection(
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
-        
+
         // Saved Address Selection
         if (savedAddresses.isNotEmpty()) {
             // Auto-select default if none selected yet
@@ -205,7 +205,7 @@ private fun ShippingAddressSection(
                 }
             )
         }
-        
+
         // Address Input Section
         if (viewModel.selectedShippingAddressId == null) {
             AddressInputSection(
@@ -234,7 +234,7 @@ private fun BillingAddressSection(
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
-        
+
         // Saved Address Selection for Billing
         if (savedAddresses.isNotEmpty()) {
             SavedAddressesSection(
@@ -251,7 +251,7 @@ private fun BillingAddressSection(
                 }
             )
         }
-        
+
         // Billing Address Input Section
         if (viewModel.selectedBillingAddressId == null) {
             AddressInputSection(
@@ -332,9 +332,9 @@ private fun SavedAddressRow(
             contentDescription = if (isSelected) "Selected" else "Not selected",
             tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
         )
-        
+
         Spacer(modifier = Modifier.width(12.dp))
-        
+
         Column(
             modifier = Modifier.weight(1f)
         ) {
@@ -424,7 +424,6 @@ private fun AddressInputSection(
         AppButton(
             text = "Add ${if (addressType == AddressType.SHIPPING) "Shipping" else "Billing"} Address",
             onClick = onEnterAddress,
-            height = 50.dp,
             modifier = Modifier.fillMaxWidth()
         )
     }

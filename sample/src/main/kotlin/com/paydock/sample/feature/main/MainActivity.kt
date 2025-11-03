@@ -34,8 +34,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -138,15 +138,19 @@ fun MainScreenView(
 
     // *** Call @Composable defaults here, in the Composable scope ***
     // These will re-evaluate if MainScreenView recomposes due to isActuallyDark changing
-    val addressSdkDefaults: AddressDetailsWidgetAppearance = AddressDetailsAppearanceDefaults.appearance()
+    val addressSdkDefaults: AddressDetailsWidgetAppearance =
+        AddressDetailsAppearanceDefaults.appearance()
     val cardSdkDefaults: CardDetailsWidgetAppearance = CardDetailsAppearanceDefaults.appearance()
     val giftCardSdkDefaults: GiftCardWidgetAppearance = GiftCardAppearanceDefaults.appearance()
-    val clickToPaySdkDefaults: ClickToPayWidgetAppearance = ClickToPayAppearanceDefaults.appearance()
+    val clickToPaySdkDefaults: ClickToPayWidgetAppearance =
+        ClickToPayAppearanceDefaults.appearance()
     val afterpaySdkDefaults: AfterpayWidgetAppearance = AfterpayAppearanceDefaults.appearance()
     val payPalSdkDefaults: PayPalWidgetAppearance = PayPalAppearanceDefaults.appearance()
-    val payPalVaultSdkDefaults: PayPalPaymentSourceWidgetAppearance = PayPalPaymentSourceAppearanceDefaults.appearance()
+    val payPalVaultSdkDefaults: PayPalPaymentSourceWidgetAppearance =
+        PayPalPaymentSourceAppearanceDefaults.appearance()
     val googlePaySdkDefaults: GooglePayWidgetAppearance = GooglePayAppearanceDefaults.appearance()
-    val colesPaySdkDefaults: ColesPayWidgetAppearance = ColesPayWidgetAppearanceDefaults.appearance()
+    val colesPaySdkDefaults: ColesPayWidgetAppearance =
+        ColesPayWidgetAppearanceDefaults.appearance()
     // For 3DS, ensure ThreeDSAppearanceDefaults.appearance() is also @Composable if its internals depend on theme
     val integrated3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
     val standalone3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
@@ -304,7 +308,7 @@ fun MainScreenView(
                         stylingViewModel,
                         onThemeSelected
                     )
-                    
+
                     if (!(isAddressInitialized && isCardInitialized && isGiftCardInitialized && isClickToPayInitialized && isAfterpayInitialized && isPayPalInitialized && isPayPalVaultInitialized && isGooglePayWidgetAppearanceInitialized && isColesPayWidgetAppearanceInitialized && isIntegrated3DSWidgetAppearanceInitialized && isStandalone3DSWidgetAppearanceInitialized)) {
                         Box(
                             modifier = Modifier

@@ -1,14 +1,11 @@
 package com.paydock.sample.feature.checkout.ui.components
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
-import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.CardResult

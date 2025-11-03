@@ -9,9 +9,9 @@ data class UserProfile(
 ) {
     val fullName: String
         get() = "$firstName $lastName".trim()
-    
+
     val isComplete: Boolean
-        get() = firstName.isNotBlank() && lastName.isNotBlank() && 
+        get() = firstName.isNotBlank() && lastName.isNotBlank() &&
                 email.isNotBlank() && phone.isNotBlank()
 }
 
@@ -39,11 +39,11 @@ data class SavedAddress(
                 append("\n$country")
             }
         }
-    
+
     val isComplete: Boolean
-        get() = addressLine1.isNotBlank() && city.isNotBlank() && 
+        get() = addressLine1.isNotBlank() && city.isNotBlank() &&
                 state.isNotBlank() && postalCode.isNotBlank() && country.isNotBlank()
-    
+
     companion object {
         fun generateId(): String = "addr_${System.currentTimeMillis()}"
     }

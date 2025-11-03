@@ -21,18 +21,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -51,6 +47,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
@@ -60,6 +57,9 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.feature.address.domain.model.integration.BillingAddress
+import com.paydock.sample.R
+import com.paydock.sample.designsystems.components.button.AppButton
+import com.paydock.sample.designsystems.components.button.AppButtonVariant
 import com.paydock.sample.designsystems.components.sheets.AddressWidgetResult
 import com.paydock.sample.designsystems.components.sheets.AddressWidgetSheet
 import com.paydock.sample.designsystems.theme.SampleTheme
@@ -85,7 +85,7 @@ fun EnhancedCheckoutScreen(
     initialStep: CheckoutStep? = null
 ) {
     val currentStep by viewModel.currentStep.collectAsState()
-    
+
     // Listen for order completion and navigate to confirmation screen
     LaunchedEffect(viewModel.orderCompleted, viewModel.orderFailed) {
         if (viewModel.orderCompleted) {
@@ -147,9 +147,8 @@ fun EnhancedCheckoutScreen(
         }
         onDispose {
             if (window != null) {
-                val resetColor = backgroundColor
                 val controller = WindowCompat.getInsetsController(window, view)
-                controller.isAppearanceLightNavigationBars = resetColor.luminance() > 0.5f
+                controller.isAppearanceLightNavigationBars = backgroundColor.luminance() > 0.5f
             }
         }
     }
@@ -189,6 +188,7 @@ fun EnhancedCheckoutScreen(
                                 Spacer(modifier = Modifier.height(100.dp))
                             }
                         }
+
                         CheckoutStep.PAYMENT -> {
                             PaymentStepView(viewModel = viewModel)
                         }
@@ -204,7 +204,7 @@ fun EnhancedCheckoutScreen(
                 currentStep = currentStep
             )
 
-            CheckoutStep.PAYMENT -> PaymentFooter(viewModel = viewModel) { measured -> /* reserved for measurement if needed */ }
+            CheckoutStep.PAYMENT -> PaymentFooter(viewModel = viewModel) { _ -> /* reserved for measurement if needed */ }
         }
     }
 
@@ -215,16 +215,15 @@ fun EnhancedCheckoutScreen(
             title = { Text(viewModel.alertTitle) },
             text = { Text(viewModel.alertMessage) },
             confirmButton = {
-                Button(
+                AppButton(
+                    text = stringResource(R.string.button_ok),
                     onClick = {
                         viewModel.dismissAlert()
                         if (viewModel.orderCompleted) {
                             onDismiss()
                         }
                     }
-                ) {
-                    Text("OK")
-                }
+                )
             }
         )
     }
@@ -259,7 +258,7 @@ fun EnhancedCheckoutScreen(
             onSave = { result: AddressWidgetResult ->
                 // Check if we're editing an existing address or creating a new one
                 val isEditing = viewModel.editingSavedAddressId != null
-                
+
                 // Create a SavedAddress with existing ID if editing, or generate new ID
                 // Use countryCode if available, otherwise fall back to country name
                 val savedAddress = ProfileSavedAddress(
@@ -272,7 +271,8 @@ fun EnhancedCheckoutScreen(
                     city = result.billingAddress.city ?: "",
                     state = result.billingAddress.state ?: "",
                     postalCode = result.billingAddress.postalCode ?: "",
-                    country = result.billingAddress.countryCode ?: result.billingAddress.country ?: "",
+                    country = result.billingAddress.countryCode ?: result.billingAddress.country
+                    ?: "",
                     isDefault = result.isDefault
                 )
 
@@ -435,7 +435,7 @@ private fun ActionButtons(
 ) {
     Column {
         HorizontalDivider()
-        
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -444,46 +444,27 @@ private fun ActionButtons(
         ) {
             // Back button (not shown for first step)
             if (currentStep != CheckoutStep.INFORMATION) {
-                OutlinedButton(
+                AppButton(
+                    text = stringResource(R.string.button_back),
                     onClick = { viewModel.goToPreviousStep() },
-                    modifier = Modifier
-                        .height(50.dp)
-                        .weight(1f),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = "Back",
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+                    variant = AppButtonVariant.Outline,
+                    height = 50.dp,
+                    modifier = Modifier.weight(1f)
+                )
             }
-            
+
             // Main action button
-            Button(
+            AppButton(
+                text = viewModel.actionButtonTitle,
                 onClick = { viewModel.handleActionButton() },
                 enabled = viewModel.canProceed && !viewModel.isLoading,
-                modifier = Modifier
-                    .height(50.dp)
-                    .weight(if (currentStep == CheckoutStep.INFORMATION) 1f else 1f),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (viewModel.canProceed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                    contentColor = Color.White
-                )
-            ) {
-                if (viewModel.isLoading && currentStep == CheckoutStep.PAYMENT) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text(
-                        text = viewModel.actionButtonTitle,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
+                isLoading = viewModel.isLoading && currentStep == CheckoutStep.PAYMENT,
+                variant = AppButtonVariant.Filled,
+                height = 50.dp,
+                containerColor = if (viewModel.canProceed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                contentColor = Color.White,
+                modifier = Modifier.weight(if (currentStep == CheckoutStep.INFORMATION) 1f else 1f)
+            )
         }
     }
 }

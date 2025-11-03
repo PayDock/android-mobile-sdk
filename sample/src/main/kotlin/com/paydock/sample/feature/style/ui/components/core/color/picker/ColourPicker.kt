@@ -20,14 +20,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.core.extensions.color
-import com.paydock.sample.core.extensions.toColor
 import com.paydock.sample.core.extensions.toHSV
 import com.paydock.sample.core.extensions.toHexCode
-import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.theme.SampleTheme
 
 @Composable
@@ -62,7 +59,8 @@ fun ColourPicker(
         // Effect to update hexInput when currentColor changes (e.g., from sliders)
         // This also sets the initial hex value.
         LaunchedEffect(currentColor) {
-            hexInput = currentColor.toHexCode(includeAlpha = false) // Or true, if your hex field supports it
+            hexInput =
+                currentColor.toHexCode(includeAlpha = false) // Or true, if your hex field supports it
         }
 
         ColorInputField(
