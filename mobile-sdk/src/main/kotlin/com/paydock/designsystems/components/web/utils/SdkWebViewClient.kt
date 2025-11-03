@@ -112,7 +112,7 @@ internal class SdkWebViewClient(
         request: WebResourceRequest?
     ): Boolean {
         // Intercept our custom scheme emitted from injected JS window.close override
-        if (request?.url?.scheme == "paydock" && request.url.host == "close") {
+        if (request?.url?.scheme == MobileSDKConstants.WEB_CLOSE_DEEPLINK && request.url.host == "close") {
             onCloseRequested()
             return true
         }

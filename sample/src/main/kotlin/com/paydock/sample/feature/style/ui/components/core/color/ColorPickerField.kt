@@ -15,9 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isUnspecified
-import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.unit.dp
-import com.paydock.sample.core.extensions.toHexCode
 import com.paydock.sample.feature.style.models.ColourTheme
 import com.paydock.sample.feature.style.ui.components.core.color.picker.ColourPicker
 import kotlinx.coroutines.launch

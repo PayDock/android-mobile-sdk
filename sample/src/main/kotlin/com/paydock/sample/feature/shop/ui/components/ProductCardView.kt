@@ -30,7 +30,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paydock.sample.designsystems.components.button.AppButton
@@ -43,7 +42,6 @@ import com.paydock.sample.feature.shop.domain.model.ProductImage
 @Composable
 fun ProductCardView(
     product: Product,
-    cardHeight: Dp,
     onAddToCart: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -51,40 +49,31 @@ fun ProductCardView(
     val cartItemsState = cartManager.cartItems.collectAsState()
     val productQty = cartItemsState.value.firstOrNull { it.product.id == product.id }?.quantity ?: 0
     val haptic = LocalHapticFeedback.current
-    val buttonText = if (productQty > 0) "${productQty} in Cart" else "Add to Cart"
-    // Define fixed heights for consistent layout
+    val buttonText = if (productQty > 0) "$productQty in Cart" else "Add to Cart"
+
+    // Define spacing
     val padding = 12.dp
-    val titleHeight = 44.dp // 2 lines at 16pt + spacing
-    val descriptionHeight = 32.dp // 2 lines at 12pt + spacing
-    val priceHeight = 24.dp // Single line at 18pt
-    val buttonHeight = 36.dp
     val spacing = 8.dp
-    
-    // Calculate image height based on remaining space
-    val contentHeight = cardHeight - (padding * 2)
-    val fixedContentHeight = titleHeight + descriptionHeight + priceHeight + buttonHeight + (spacing * 4)
-    val imageHeight = contentHeight - fixedContentHeight
-    
+
     Card(
-        modifier = modifier
-            .height(cardHeight)
-            .fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Box {
-            Column(
-                modifier = Modifier.padding(padding)
-            ) {
-            // Product Image Container - Fixed Height with centered square image
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxWidth()
+        ) {
+            // Product Image Container - Fixed height for consistency across all cards
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(imageHeight)
+                    .height(100.dp)
                     .background(
                         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                         shape = RoundedCornerShape(8.dp)
@@ -92,90 +81,75 @@ fun ProductCardView(
                     .clip(RoundedCornerShape(8.dp))
             ) {
                 // Square image, centered and sized to fit within the container
-                val imageSize = minOf(imageHeight, 160.dp)
                 Image(
                     painter = painterResource(product.image.drawableRes),
                     contentDescription = product.name,
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
-                        .size(imageSize)
+                        .size(80.dp)
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(spacing))
 
-            // Product Name - Fixed Height Container
-            Box(
-                modifier = Modifier.height(titleHeight),
-                contentAlignment = Alignment.TopStart
-            ) {
-                Text(
-                    text = product.name,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    lineHeight = 20.sp,
-                    maxLines = 2,
-                    minLines = 2,
-                    overflow = TextOverflow.Clip,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(spacing))
-            
-            // Product Description - Fixed Height Container
-            Box(
-                modifier = Modifier.height(descriptionHeight),
-                contentAlignment = Alignment.TopStart
-            ) {
-                Text(
-                    text = product.description,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 16.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Clip,
-                    minLines = 2,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(spacing))
-            
-            // Price - Fixed Height Container
-            Box(
-                modifier = Modifier.height(priceHeight),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                Text(
-                    text = product.formattedPrice,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-            
+            // Product Name - Flexible height, respects font scaling
+            Text(
+                text = product.name,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                lineHeight = 20.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth()
+            )
+
             Spacer(modifier = Modifier.height(spacing))
 
-                // Add to Cart Button - Fixed Height with quantity badge
-                AppButton(
-                    text = buttonText,
-                    onClick = {
-                        onAddToCart()
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    },
-                    enabled = true,
-                    height = buttonHeight,
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            // Product Description - Flexible height, respects font scaling
+            Text(
+                text = product.description,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 16.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(spacing))
+
+            // Price - Flexible height, respects font scaling
+            Text(
+                text = product.formattedPrice,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            // Flexible spacer - pushes button to bottom of card
+            Spacer(modifier = Modifier.weight(1f))
+
+            Spacer(modifier = Modifier.height(spacing))
+
+            // Add to Cart Button - Docked to bottom, wraps content height naturally with font scaling
+            AppButton(
+                text = buttonText,
+                onClick = {
+                    onAddToCart()
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                },
+                enabled = true,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp)
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -193,7 +167,6 @@ internal fun PreviewProductCardView() {
                 image = ProductImage.JACKET,
                 category = ProductCategory.CLOTHING
             ),
-            cardHeight = 280.dp,
             onAddToCart = {}
         )
     }

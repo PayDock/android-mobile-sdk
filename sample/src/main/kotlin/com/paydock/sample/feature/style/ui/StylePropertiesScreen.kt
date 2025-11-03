@@ -3,13 +3,11 @@ package com.paydock.sample.feature.style.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -37,6 +35,9 @@ import com.paydock.feature.card.presentation.GiftCardWidgetAppearance
 import com.paydock.feature.googlepay.presentation.GooglePayWidgetAppearance
 import com.paydock.feature.paypal.checkout.presentation.PayPalWidgetAppearance
 import com.paydock.sample.R
+import com.paydock.sample.designsystems.components.button.AppButton
+import com.paydock.sample.designsystems.components.button.AppButtonShape
+import com.paydock.sample.designsystems.components.button.AppButtonVariant
 import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.style.models.StyleAppearanceComponent
 import com.paydock.sample.feature.style.ui.components.section.ButtonAppearanceStyleEditor
@@ -348,7 +349,7 @@ fun StylePropertiesScreen(
 
         HorizontalDivider(modifier = Modifier.padding(top = 12.dp))
 
-        Column (
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 32.dp, top = 20.dp),
@@ -362,12 +363,12 @@ fun StylePropertiesScreen(
                 text = stringResource(R.string.disclaimer_reset_button),
             )
 
-            OutlinedButton(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                shape = MaterialTheme.shapes.small,
+            AppButton(
+                modifier = Modifier.fillMaxWidth(),
+                variant = AppButtonVariant.Outline,
+                shape = AppButtonShape.Rectangle,
                 enabled = hasChanges,
+                text = stringResource(R.string.button_reset),
                 onClick = {
                     initialAppearanceValue?.let {
                         stylingViewModel.updateWidgetComponentAppearance(
@@ -377,9 +378,7 @@ fun StylePropertiesScreen(
                         )
                     }
                 }
-            ) {
-                Text(style = MaterialTheme.typography.bodyMedium, text = stringResource(R.string.button_reset))
-            }
+            )
         }
     }
 }
@@ -423,7 +422,8 @@ fun getAppearanceForWidgetComponent(
                 }
             }
         }
-         WidgetType.CARD_DETAILS -> {
+
+        WidgetType.CARD_DETAILS -> {
             val cardAppearance by stylingViewModel.cardDetailsWidgetAppearance.collectAsState()
             remember(cardAppearance, styleItemName) {
                 derivedStateOf {
@@ -447,7 +447,7 @@ fun getAppearanceForWidgetComponent(
                     }
                 }
             }
-         }
+        }
 
         WidgetType.GIFT_CARD -> {
             val giftCardAppearance by stylingViewModel.giftCardWidgetAppearance.collectAsState()

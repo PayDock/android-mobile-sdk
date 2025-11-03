@@ -56,7 +56,7 @@ fun StyleButtonContentSection(
                 placeholder = { Text(text = stringResource(R.string.placeholder_enter_button_text)) },
                 trailingIcon = {
                     if (!contentText.isNullOrEmpty()) {
-                        IconButton(onClick = { 
+                        IconButton(onClick = {
                             onContentTextChange("")
                         }) {
                             Icon(
@@ -91,18 +91,19 @@ fun StyleButtonContentSection(
                     add("Refresh" to ButtonIcon.Vector(Icons.Filled.Refresh))
                 }
             }
-            
+
             val selectedLabel = when (selectedIcon) {
                 null -> {
                     iconOptions.firstOrNull { it.first.equals("None", ignoreCase = true) }?.first
                         ?: iconOptions.firstOrNull()?.first.orEmpty()
                 }
+
                 else -> {
                     val matchingOption = iconOptions.firstOrNull { it.second == selectedIcon }
                     matchingOption?.first ?: iconOptions.firstOrNull()?.first.orEmpty()
                 }
             }
-            
+
             DropdownSelector(
                 modifier = Modifier.fillMaxWidth(),
                 options = iconOptions.map { it.first },
@@ -122,10 +123,12 @@ fun StyleButtonContentSection(
                                 imageVector = icon.icon,
                                 contentDescription = null
                             )
+
                             label == "Default (SDK)" -> SdkIcon(
                                 imageVector = Icons.Filled.Settings,
                                 contentDescription = "SDK Default Icon"
                             )
+
                             else -> { /* no preview for null icons */
                             }
                         }
@@ -138,10 +141,12 @@ fun StyleButtonContentSection(
                             imageVector = selectedIcon.icon,
                             contentDescription = null
                         )
+
                         selectedIcon == defaultIcon && defaultIcon != null -> SdkIcon(
                             imageVector = Icons.Filled.Settings,
                             contentDescription = "SDK Default Icon"
                         )
+
                         else -> null // Don't show any icon for "None" or null selections
                     }
                 }

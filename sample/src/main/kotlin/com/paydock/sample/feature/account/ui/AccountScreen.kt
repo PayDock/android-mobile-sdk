@@ -46,10 +46,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -87,18 +85,18 @@ fun AccountScreen(viewModel: AccountViewModel = hiltViewModel<AccountViewModel>(
     val context = LocalContext.current
 
     val uiState by viewModel.stateFlow.collectAsState()
-    
+
     var showAlert by remember { mutableStateOf(false) }
     var alertMessage by remember { mutableStateOf("") }
     var showAddressWidget by remember { mutableStateOf(false) }
     var editingAddress by remember { mutableStateOf<SavedAddress?>(null) }
-    
+
     // Editable profile fields
     var firstName by remember { mutableStateOf(profile.firstName) }
     var lastName by remember { mutableStateOf(profile.lastName) }
     var email by remember { mutableStateOf(profile.email) }
     var phone by remember { mutableStateOf(profile.phone) }
-    
+
     // Update fields when profile changes
     LaunchedEffect(profile) {
         firstName = profile.firstName
@@ -114,58 +112,58 @@ fun AccountScreen(viewModel: AccountViewModel = hiltViewModel<AccountViewModel>(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-            // Profile Info Section
-            val canSaveProfile = firstName != profile.firstName ||
-                    lastName != profile.lastName ||
-                    email != profile.email ||
-                    phone != profile.phone
-            ProfileInfoSection(
-                firstName = firstName,
-                lastName = lastName,
-                email = email,
-                phone = phone,
-                onFirstNameChange = { firstName = it },
-                onLastNameChange = { lastName = it },
-                onEmailChange = { email = it },
-                onPhoneChange = { phone = it },
-                onSaveChanges = {
-                    profileManager.updateProfile(firstName, lastName, email, phone)
-                    alertMessage = context.getString(R.string.msg_profile_updated)
-                    showAlert = true
-                },
-                canSave = canSaveProfile
-            )
-            
-            // Saved Payment Methods Section
+        // Profile Info Section
+        val canSaveProfile = firstName != profile.firstName ||
+                lastName != profile.lastName ||
+                email != profile.email ||
+                phone != profile.phone
+        ProfileInfoSection(
+            firstName = firstName,
+            lastName = lastName,
+            email = email,
+            phone = phone,
+            onFirstNameChange = { firstName = it },
+            onLastNameChange = { lastName = it },
+            onEmailChange = { email = it },
+            onPhoneChange = { phone = it },
+            onSaveChanges = {
+                profileManager.updateProfile(firstName, lastName, email, phone)
+                alertMessage = context.getString(R.string.msg_profile_updated)
+                showAlert = true
+            },
+            canSave = canSaveProfile
+        )
+
+        // Saved Payment Methods Section
         SavedPaymentMethodsSection(
             viewModel = viewModel,
             customer = uiState.customer
         )
-            
-            // Saved Addresses Section
-            SavedAddressesSection(
-                savedAddresses = profile.savedAddresses,
-                fullName = listOfNotNull(profile.firstName, profile.lastName).joinToString(" ")
-                    .trim(),
-                onAddAddress = {
-                    editingAddress = null
-                    showAddressWidget = true
-                },
-                onEditAddress = { address ->
-                    editingAddress = address
-                    showAddressWidget = true
-                },
-                onDeleteAddress = { address ->
-                    profileManager.deleteAddress(address)
-                    alertMessage = context.getString(R.string.msg_address_deleted)
-                    showAlert = true
-                },
-                onSetDefault = { address ->
-                    profileManager.setAddressAsDefault(address)
-                    alertMessage = context.getString(R.string.msg_default_address_updated)
-                    showAlert = true
-                }
-            )
+
+        // Saved Addresses Section
+        SavedAddressesSection(
+            savedAddresses = profile.savedAddresses,
+            fullName = listOfNotNull(profile.firstName, profile.lastName).joinToString(" ")
+                .trim(),
+            onAddAddress = {
+                editingAddress = null
+                showAddressWidget = true
+            },
+            onEditAddress = { address ->
+                editingAddress = address
+                showAddressWidget = true
+            },
+            onDeleteAddress = { address ->
+                profileManager.deleteAddress(address)
+                alertMessage = context.getString(R.string.msg_address_deleted)
+                showAlert = true
+            },
+            onSetDefault = { address ->
+                profileManager.setAddressAsDefault(address)
+                alertMessage = context.getString(R.string.msg_default_address_updated)
+                showAlert = true
+            }
+        )
     }
 
     // Address Widget Modal (shared)
@@ -218,7 +216,7 @@ fun AccountScreen(viewModel: AccountViewModel = hiltViewModel<AccountViewModel>(
             }
         )
     }
-    
+
     // Alert Dialog
     if (showAlert) {
         AlertDialog(
@@ -251,7 +249,7 @@ private fun ProfileInfoSection(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             SectionHeader(title = stringResource(R.string.label_personal_information))
-            
+
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -264,7 +262,7 @@ private fun ProfileInfoSection(
                         label = { Text(stringResource(R.string.label_first_name)) },
                         modifier = Modifier.weight(1f)
                     )
-                    
+
                     OutlinedTextField(
                         value = lastName,
                         onValueChange = onLastNameChange,
@@ -272,7 +270,7 @@ private fun ProfileInfoSection(
                         modifier = Modifier.weight(1f)
                     )
                 }
-                
+
                 OutlinedTextField(
                     value = email,
                     onValueChange = onEmailChange,
@@ -280,7 +278,7 @@ private fun ProfileInfoSection(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier.fillMaxWidth()
                 )
-                
+
                 OutlinedTextField(
                     value = phone,
                     onValueChange = onPhoneChange,
@@ -514,7 +512,7 @@ private fun SavedAddressesSection(
                     )
                 }
             )
-            
+
             if (savedAddresses.isEmpty()) {
                 EmptyAddressesView(onAddAddress = onAddAddress)
             } else {
@@ -549,13 +547,13 @@ private fun EmptyAddressesView(
             modifier = Modifier.size(40.dp),
             tint = MaterialTheme.colorScheme.outline
         )
-        
+
         Text(
             text = stringResource(R.string.label_no_saved_addresses),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.outline
         )
-        
+
         Text(
             text = stringResource(R.string.label_add_address_to_speed_up_checkout),
             style = MaterialTheme.typography.bodyMedium,
@@ -582,7 +580,7 @@ private fun SavedAddressCardView(
     onSetDefault: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -614,12 +612,12 @@ private fun SavedAddressCardView(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    
+
                     if (address.isDefault) {
                         DefaultBadge()
                     }
                 }
-                
+
                 Box {
                     IconButton(onClick = { showMenu = true }) {
                         Icon(
@@ -628,7 +626,7 @@ private fun SavedAddressCardView(
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
-                    
+
                     DropdownMenu(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false }
@@ -640,7 +638,7 @@ private fun SavedAddressCardView(
                                 onEdit()
                             }
                         )
-                        
+
                         if (!address.isDefault) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.button_set_as_default)) },
@@ -650,7 +648,7 @@ private fun SavedAddressCardView(
                                 }
                             )
                         }
-                        
+
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.button_delete)) },
                             onClick = {
@@ -679,7 +677,7 @@ private fun SavedAddressCardView(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            
+
             if (!address.isComplete) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -691,7 +689,7 @@ private fun SavedAddressCardView(
                         tint = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.size(16.dp)
                     )
-                    
+
                     Text(
                         text = stringResource(R.string.label_address_incomplete),
                         style = MaterialTheme.typography.labelSmall,

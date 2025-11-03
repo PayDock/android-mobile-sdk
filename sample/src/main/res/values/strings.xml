@@ -21,6 +21,7 @@
     <string name="label_click_to_pay">Click to Pay</string>
     <string name="label_access_token">Access Token</string>
     <string name="label_saved_payment_method">Saved payment method</string>
+    <string name="label_payment_method">Payment Method</string>
     <string name="label_link_paypal_desc">Link your PayPal account to use method next time you shop</string>
     <string name="label_select_widget">Select Widget</string>
     <string name="label_checkout_with_click_to_pay">Checkout with Click to Pay</string>
@@ -124,6 +125,11 @@
     <string name="label_address_incomplete">Address incomplete</string>
     <string name="label_address_type">Address Type</string>
     <string name="label_saved_payment_methods">Saved Payment Methods</string>
+    <string name="label_gift_cards">Gift Cards</string>
+    <string name="label_enter_gift_card_details">Enter your gift card details to apply it to your order</string>
+    <string name="label_add_gift_card">Add Gift Card</string>
+    <string name="label_shipping_options">Shipping Options</string>
+    <string name="label_select_payment_method">Select a payment method</string>
 
     <string name="disclaimer_rounded_shape_defaults">Note: Initial radius/percentage values are component defaults, not necessarily reflecting the current shape\'s exact creation parameters. Please adjust to define the desired corners.</string>
     <string name="disclaimer_elevation_defaults">Note: These are predefined elevation styles for demonstration purposes. Granular elevation control is not enabled in this demo.</string>
@@ -150,6 +156,8 @@
     <string name="button_cancel">Cancel</string>
     <string name="button_save">Save</string>
     <string name="button_link_account">Link Account</string>
+    <string name="button_back">Back</string>
+    <string name="button_remove">Remove</string>
 
     <!-- Messages -->
     <string name="msg_profile_updated">Profile updated successfully!</string>

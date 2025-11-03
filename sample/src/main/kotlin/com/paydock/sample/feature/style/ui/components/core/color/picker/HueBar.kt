@@ -34,13 +34,13 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.createBitmap
 import androidx.core.graphics.toRect
 import com.paydock.sample.core.extensions.toHSV
 import com.paydock.sample.designsystems.theme.SampleTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import android.graphics.Color as AndroidColor
-import androidx.core.graphics.createBitmap
 
 @Composable
 fun HueBar(
@@ -73,7 +73,10 @@ fun HueBar(
         val drawScopeSize = size
 
         if (drawScopeSize.width <= 0 || drawScopeSize.height <= 0) {
-            Log.e("ColorPickerCrash", "HueBar: Invalid size for Bitmap creation. Width: ${drawScopeSize.width}, Height: ${drawScopeSize.height}")
+            Log.e(
+                "ColorPickerCrash",
+                "HueBar: Invalid size for Bitmap creation. Width: ${drawScopeSize.width}, Height: ${drawScopeSize.height}"
+            )
             return@Canvas
         }
 

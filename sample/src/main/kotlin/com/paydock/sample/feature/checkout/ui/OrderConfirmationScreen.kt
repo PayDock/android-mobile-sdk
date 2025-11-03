@@ -32,7 +32,7 @@ import com.paydock.sample.designsystems.theme.SampleTheme
 /**
  * Standalone Order Confirmation Screen
  * Shows success or failure state after checkout completion
- * 
+ *
  * @param isSuccess Whether the order was successful
  * @param onContinueShopping Callback for successful orders to return to shop
  * @param onRetryCheckout Callback for failed orders to retry checkout
@@ -145,7 +145,7 @@ fun OrderConfirmationScreen(
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             // Retry button (primary action)
             AppButton(
                 text = "Retry Payment",
@@ -154,7 +154,7 @@ fun OrderConfirmationScreen(
                 variant = AppButtonVariant.Filled
             )
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             // Cancel button (secondary action)
             AppButton(
                 text = "Cancel",

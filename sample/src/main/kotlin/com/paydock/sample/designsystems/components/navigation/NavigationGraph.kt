@@ -51,7 +51,9 @@ fun NavigationGraph(
         }
         composable(
             route = "checkout?step={step}",
-            arguments = listOf(navArgument("step") { type = NavType.StringType; defaultValue = "information" })
+            arguments = listOf(navArgument("step") {
+                type = NavType.StringType; defaultValue = "information"
+            })
         ) { backStackEntry ->
             val stepArg = backStackEntry.arguments?.getString("step") ?: "information"
             val initialStep = if (stepArg.equals("payment", ignoreCase = true))
@@ -141,7 +143,9 @@ fun NavigationGraph(
         ) { navBackStackEntry ->
             navBackStackEntry.arguments?.getString("widgetType")?.let { type ->
                 val widgetType = WidgetType.valueOf(type)
-                val styleItems = remember { widgetType.mapWidgetTypeToAppearanceComponents().sortedBy { it.displayName() } }
+                val styleItems = remember {
+                    widgetType.mapWidgetTypeToAppearanceComponents().sortedBy { it.displayName() }
+                }
                 StyleComponentListScreen(styleItems) { selectedItem ->
                     if (selectedItem.hasSubComponents) {
                         navController.navigate("style_sub_components/${widgetType.name}/${selectedItem.name}") // Pass widgetType too if sub-components can vary by parent widget
@@ -167,7 +171,10 @@ fun NavigationGraph(
                 val styleComponent = StyleAppearanceComponent.valueOf(component)
 
                 val items: List<StyleAppearanceComponent> =
-                    remember { styleComponent.mapAppearanceComponentToSubComponents()?.sortedBy { it.displayName() } ?: emptyList() }
+                    remember {
+                        styleComponent.mapAppearanceComponentToSubComponents()
+                            ?.sortedBy { it.displayName() } ?: emptyList()
+                    }
 
                 StyleSubComponentListScreen(
                     subComponents = items,

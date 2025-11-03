@@ -9,6 +9,8 @@ internal object MobileSDKConstants {
     const val MOBILE_SDK_TAG = "[MobileSDK]"
     const val JS_BRIDGE_NAME = "PayDockMobileSDK"
     const val DEFAULT_WEB_URL = "https://paydock.com/"
+    const val WEB_SCHEME = "paydock"
+    const val WEB_CLOSE_DEEPLINK = "$WEB_SCHEME://close"
 
     /**
      * Constants related to the UI.

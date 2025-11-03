@@ -17,7 +17,6 @@ import com.paydock.sample.feature.account.data.UserProfileManager
 import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
 import com.paydock.sample.feature.card.domain.usecase.CreateCardSessionVaultTokenUseCase
 import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
-import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.checkout.domain.model.Address
 import com.paydock.sample.feature.checkout.domain.model.AddressType
 import com.paydock.sample.feature.checkout.domain.model.CheckoutStep
@@ -25,6 +24,7 @@ import com.paydock.sample.feature.checkout.domain.model.ContactInfo
 import com.paydock.sample.feature.checkout.domain.model.PaymentMethod
 import com.paydock.sample.feature.checkout.domain.model.SavedAddress
 import com.paydock.sample.feature.checkout.models.ThreeDSType
+import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.threeDS.data.api.dto.Capture3DSChargeRequest
 import com.paydock.sample.feature.threeDS.data.api.dto.CreateIntegratedThreeDSTokenRequest
 import com.paydock.sample.feature.threeDS.data.api.dto.CreateStandaloneThreeDSTokenRequest
@@ -54,35 +54,35 @@ class EnhancedCheckoutViewModel @Inject constructor(
     private val createStandaloneThreeDSTokenUseCase: CreateStandaloneThreeDSTokenUseCase,
     private val captureThreeDSChargeTokenUseCase: CaptureThreeDSChargeTokenUseCase,
 ) : ViewModel() {
-    
+
     private val profileManager = UserProfileManager.shared
-    
+
     // Current step - persisted to survive process death with "Don't keep activities"
     private val _currentStep = MutableStateFlow(
         savedStateHandle[KEY_CURRENT_STEP] ?: CheckoutStep.INFORMATION
     )
     val currentStep: StateFlow<CheckoutStep> = _currentStep.asStateFlow()
-    
+
     // Contact Information
     var contactInfo by mutableStateOf(ContactInfo())
         private set
-    
+
     // Addresses
     var shippingAddress by mutableStateOf(Address())
         private set
-    
+
     var billingAddress by mutableStateOf(Address())
         private set
-    
+
     var useShippingAsBilling by mutableStateOf(true)
         private set
-    
+
     var selectedShippingAddressId by mutableStateOf<String?>(null)
         private set
-    
+
     var selectedBillingAddressId by mutableStateOf<String?>(null)
         private set
-    
+
     // Payment - persisted to survive process death with "Don't keep activities"
     var selectedPaymentMethod by mutableStateOf<PaymentMethod?>(
         savedStateHandle[KEY_PAYMENT_METHOD]
@@ -101,11 +101,11 @@ class EnhancedCheckoutViewModel @Inject constructor(
 
     var threeDSToken by mutableStateOf<String?>(null)
         private set
-    
+
     // UI State
     var showAddressWidget by mutableStateOf(false)
         private set
-    
+
     var addressWidgetType by mutableStateOf(AddressType.SHIPPING)
         private set
 
@@ -119,22 +119,22 @@ class EnhancedCheckoutViewModel @Inject constructor(
         private set
     var editingSavedAddressId by mutableStateOf<String?>(null)
         private set
-    
+
     var showAlert by mutableStateOf(false)
         private set
-    
+
     var alertTitle by mutableStateOf("")
         private set
-    
+
     var alertMessage by mutableStateOf("")
         private set
-    
+
     var orderCompleted by mutableStateOf(false)
         private set
-    
+
     var orderFailed by mutableStateOf(false)
         private set
-    
+
     var isLoading by mutableStateOf(false)
         private set
 
@@ -166,25 +166,25 @@ class EnhancedCheckoutViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
-    
+
     // Computed properties
     val isInformationComplete: Boolean
-        get() = contactInfo.isComplete && 
-                shippingAddress.isComplete && 
+        get() = contactInfo.isComplete &&
+                shippingAddress.isComplete &&
                 (useShippingAsBilling || billingAddress.isComplete)
-    
+
     val canProceed: Boolean
         get() = when (_currentStep.value) {
             CheckoutStep.INFORMATION -> isInformationComplete
             CheckoutStep.PAYMENT -> selectedPaymentMethod != null
         }
-    
+
     val actionButtonTitle: String
         get() = when (_currentStep.value) {
             CheckoutStep.INFORMATION -> "Continue to Payment"
             CheckoutStep.PAYMENT -> "Place Order"
         }
-    
+
     // Actions
     fun updateContactInfo(
         firstName: String? = null,
@@ -199,7 +199,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
             phone = phone ?: contactInfo.phone
         )
     }
-    
+
     fun updateShippingAddress(address: Address) {
         shippingAddress = address
         selectedShippingAddressId = null
@@ -207,12 +207,12 @@ class EnhancedCheckoutViewModel @Inject constructor(
             billingAddress = address
         }
     }
-    
+
     fun updateBillingAddress(address: Address) {
         billingAddress = address
         selectedBillingAddressId = null
     }
-    
+
     fun setShippingAsBilling(use: Boolean) {
         useShippingAsBilling = use
         if (use) {
@@ -220,7 +220,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
             selectedBillingAddressId = null
         }
     }
-    
+
     fun selectSavedAddress(savedAddress: SavedAddress, type: AddressType) {
         when (type) {
             AddressType.SHIPPING -> {
@@ -230,6 +230,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
                     billingAddress = savedAddress.address
                 }
             }
+
             AddressType.BILLING -> {
                 selectedBillingAddressId = savedAddress.id
                 billingAddress = savedAddress.address
@@ -292,7 +293,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
         )
         addressWidgetInitialLabel = saved.label
     }
-    
+
     fun hideAddressWidget() {
         showAddressWidget = false
         addressWidgetInitialAddress = null
@@ -306,7 +307,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
         _currentStep.value = step
         savedStateHandle[KEY_CURRENT_STEP] = step
     }
-    
+
     fun goToNextStep() {
         val currentIndex = CheckoutStep.getAllSteps().indexOf(_currentStep.value)
         if (currentIndex < CheckoutStep.getAllSteps().size - 1) {
@@ -315,7 +316,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
             savedStateHandle[KEY_CURRENT_STEP] = nextStep
         }
     }
-    
+
     fun goToPreviousStep() {
         val currentIndex = CheckoutStep.getAllSteps().indexOf(_currentStep.value)
         if (currentIndex > 0) {
@@ -324,14 +325,14 @@ class EnhancedCheckoutViewModel @Inject constructor(
             savedStateHandle[KEY_CURRENT_STEP] = previousStep
         }
     }
-    
+
     fun handleActionButton() {
         when (_currentStep.value) {
             CheckoutStep.INFORMATION -> goToNextStep()
             CheckoutStep.PAYMENT -> placeOrder()
         }
     }
-    
+
     fun placeOrder() {
         viewModelScope.launch {
             isLoading = true
@@ -565,7 +566,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
             }
         }
     }
-    
+
     fun dismissAlert() {
         showAlert = false
         if (orderCompleted) {
@@ -573,7 +574,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
             resetCheckout()
         }
     }
-    
+
     fun resetCheckout() {
         _currentStep.value = CheckoutStep.INFORMATION
         savedStateHandle[KEY_CURRENT_STEP] = CheckoutStep.INFORMATION
@@ -589,7 +590,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
         orderCompleted = false
         orderFailed = false
     }
-    
+
     fun loadProfileData() {
         viewModelScope.launch {
             // Load from UserProfileManager
@@ -600,7 +601,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 email = profile.email,
                 phone = profile.phone
             )
-            
+
             // Auto-select default address if available
             profile.savedAddresses.find { it.isDefault }?.let { defaultAddress ->
                 val checkoutAddress = Address(
@@ -616,21 +617,21 @@ class EnhancedCheckoutViewModel @Inject constructor(
             }
         }
     }
-    
+
     // Provide customer data for wallet requests
     fun getCustomerDataForWallet(): CustomerData {
         // Get the cart total from CartManager for checkout flow
         val cartTotal = CartManager.shared.totalPrice
-        
+
         return CustomerData(
             firstName = contactInfo.firstName,
             lastName = contactInfo.lastName,
             email = contactInfo.email,
-            phone = contactInfo.phone,
+            phone = contactInfo.phone.takeIf { it.isNotBlank() },
             billingAddress = if (billingAddress.isComplete) {
                 AddressData(
                     addressLine1 = billingAddress.addressLine1,
-                    addressLine2 = billingAddress.addressLine2,
+                    addressLine2 = billingAddress.addressLine2?.takeIf { it.isNotBlank() },
                     addressLine3 = null,
                     city = billingAddress.city,
                     state = billingAddress.state,
@@ -641,7 +642,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
             shippingAddress = if (shippingAddress.isComplete) {
                 AddressData(
                     addressLine1 = shippingAddress.addressLine1,
-                    addressLine2 = shippingAddress.addressLine2,
+                    addressLine2 = shippingAddress.addressLine2?.takeIf { it.isNotBlank() },
                     addressLine3 = null,
                     city = shippingAddress.city,
                     state = shippingAddress.state,
@@ -652,27 +653,27 @@ class EnhancedCheckoutViewModel @Inject constructor(
             amount = cartTotal
         )
     }
-    
+
     /**
      * Converts a country name to its ISO country code.
      * If the country name is not recognized, returns the input as-is (assumes it might already be a code).
-     * 
+     *
      * @param countryName The full country name (e.g., "United States", "Australia")
      * @return The ISO country code (e.g., "US", "AU") or the input if not found
      */
     private fun convertCountryNameToCode(countryName: String): String {
         if (countryName.isBlank()) return countryName
-        
+
         // Check if it's already a 2-letter code
         if (countryName.length == 2) return countryName.uppercase()
-        
+
         // Find the ISO country code that matches the country name
         return Locale.getISOCountries().find { countryCode ->
             val locale = Locale.Builder().setRegion(countryCode).build()
             locale.displayCountry.equals(countryName, ignoreCase = true)
         } ?: countryName // Return original if not found
     }
-    
+
     private companion object {
         const val KEY_CURRENT_STEP = "checkout.current_step"
         const val KEY_PAYMENT_METHOD = "checkout.payment_method"

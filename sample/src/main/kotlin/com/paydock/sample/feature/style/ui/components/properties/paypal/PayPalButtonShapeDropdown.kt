@@ -4,9 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.paypal.android.paymentbuttons.PaymentButtonShape
 import com.paydock.sample.R
 import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paypal.android.paymentbuttons.PaymentButtonShape
 
 @Composable
 fun PayPalButtonShapeDropdown(
@@ -32,7 +32,8 @@ fun PayPalButtonShapeDropdown(
         options = options.map { it.first },
         selectedOption = selectedOptionString,
         onOptionSelected = { newValueString ->
-            val newShape = options.find { it.first == newValueString }?.second ?: PaymentButtonShape.ROUNDED
+            val newShape =
+                options.find { it.first == newValueString }?.second ?: PaymentButtonShape.ROUNDED
             onPayPalShapeChange(newShape)
         }
     )

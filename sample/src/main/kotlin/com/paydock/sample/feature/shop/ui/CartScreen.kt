@@ -38,7 +38,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.components.button.AppButtonShape
 import com.paydock.sample.designsystems.components.button.AppTextButton
@@ -87,13 +86,13 @@ private fun EmptyCartView(
                 modifier = Modifier.size(60.dp),
                 tint = MaterialTheme.colorScheme.outline
             )
-            
+
             Text(
                 text = "Your cart is empty",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Medium
             )
-            
+
             Text(
                 text = "Add some products to get started",
                 style = MaterialTheme.typography.bodyLarge,
@@ -154,7 +153,7 @@ private fun CartItemsSection(
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
-        
+
         cartItems.forEach { cartItem ->
             CartItemRowView(
                 cartItem = cartItem,
@@ -205,7 +204,7 @@ private fun CartItemRowView(
                     contentScale = ContentScale.Fit
                 )
             }
-            
+
             // Product Details
             Column(
                 modifier = Modifier.weight(1f),
@@ -217,14 +216,14 @@ private fun CartItemRowView(
                     fontWeight = FontWeight.Medium,
                     maxLines = 2
                 )
-                
+
                 Text(
                     text = cartItem.product.formattedPrice,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            
+
             // Quantity Controls
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -250,13 +249,13 @@ private fun CartItemRowView(
                             tint = if (cartItem.quantity > 1) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                         )
                     }
-                    
+
                     Text(
                         text = cartItem.quantity.toString(),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium
                     )
-                    
+
                     IconButton(
                         onClick = {
                             onQuantityChange(cartItem, cartItem.quantity + 1)
@@ -292,7 +291,7 @@ private fun CheckoutButton(
     val formattedSubtotal = remember(cartItems) {
         cartManager.formattedSubtotal
     }
-    
+
     Column {
         HorizontalDivider()
         // Subtotal row above the checkout button
@@ -317,7 +316,6 @@ private fun CheckoutButton(
         AppButton(
             text = "Proceed to Checkout",
             onClick = onCheckout,
-            height = 50.dp,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)

@@ -29,29 +29,29 @@ data class ContactInfo(
     val phone: String = ""
 ) {
     val isComplete: Boolean
-        get() = firstName.isNotBlank() && lastName.isNotBlank() && 
+        get() = firstName.isNotBlank() && lastName.isNotBlank() &&
                 email.isNotBlank() && phone.isNotBlank()
-    
+
     val fullName: String
         get() = "$firstName $lastName".trim()
 }
 
 data class Address(
     val addressLine1: String = "",
-    val addressLine2: String = "",
+    val addressLine2: String? = null,
     val city: String = "",
     val state: String = "",
     val postalCode: String = "",
     val country: String = ""
 ) {
     val isComplete: Boolean
-        get() = addressLine1.isNotBlank() && city.isNotBlank() && 
+        get() = addressLine1.isNotBlank() && city.isNotBlank() &&
                 state.isNotBlank() && postalCode.isNotBlank() && country.isNotBlank()
-    
+
     val formattedAddress: String
         get() = buildString {
             append(addressLine1)
-            if (addressLine2.isNotBlank()) {
+            if (addressLine2?.isNotBlank() == true) {
                 append("\n$addressLine2")
             }
             append("\n$city, $state $postalCode")

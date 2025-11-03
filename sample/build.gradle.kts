@@ -108,6 +108,7 @@ kotlin {
 enum class BuildVariable(private val baseEnvName: String) {
     // Shared Variables
     MERCHANT_IDENTIFIER("MERCHANT_IDENTIFIER"),
+
     // Environment Specific Variables
     WIDGET_ACCESS_TOKEN("WIDGET_ACCESS_TOKEN"),
     API_ACCESS_TOKEN("API_ACCESS_TOKEN"),

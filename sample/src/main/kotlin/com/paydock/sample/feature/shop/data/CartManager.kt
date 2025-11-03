@@ -15,10 +15,10 @@ import kotlin.math.min
 class CartManager private constructor() {
     private val _cartItems = MutableStateFlow<List<CartItem>>(emptyList())
     val cartItems: StateFlow<List<CartItem>> = _cartItems.asStateFlow()
-    
+
     private val _appliedGiftCards = MutableStateFlow<List<AppliedGiftCard>>(emptyList())
     val appliedGiftCards: StateFlow<List<AppliedGiftCard>> = _appliedGiftCards.asStateFlow()
-    
+
     private val _selectedShipping = MutableStateFlow(ShippingOption.STANDARD)
     val selectedShipping: StateFlow<ShippingOption> = _selectedShipping.asStateFlow()
 
@@ -47,7 +47,8 @@ class CartManager private constructor() {
         get() = _selectedShipping.value.price
 
     val formattedShippingCost: String
-        get() = if (shippingCost == 0.0) "Free" else NumberFormat.getCurrencyInstance(Locale.US).format(shippingCost)
+        get() = if (shippingCost == 0.0) "Free" else NumberFormat.getCurrencyInstance(Locale.US)
+            .format(shippingCost)
 
     val totalPrice: Double
         get() = (subtotal + shippingCost - totalGiftCardAmount).coerceAtLeast(0.0)
@@ -61,7 +62,7 @@ class CartManager private constructor() {
     fun addToCart(product: Product, quantity: Int = 1) {
         val currentItems = _cartItems.value.toMutableList()
         val existingItemIndex = currentItems.indexOfFirst { it.product.id == product.id }
-        
+
         if (existingItemIndex >= 0) {
             currentItems[existingItemIndex] = currentItems[existingItemIndex].copy(
                 quantity = currentItems[existingItemIndex].quantity + quantity
@@ -69,7 +70,7 @@ class CartManager private constructor() {
         } else {
             currentItems.add(CartItem(product, quantity))
         }
-        
+
         _cartItems.value = currentItems
     }
 
@@ -88,10 +89,10 @@ class CartManager private constructor() {
             removeFromCart(productId)
             return
         }
-        
+
         val currentItems = _cartItems.value.toMutableList()
         val itemIndex = currentItems.indexOfFirst { it.product.id == productId }
-        
+
         if (itemIndex >= 0) {
             currentItems[itemIndex] = currentItems[itemIndex].copy(quantity = quantity)
             _cartItems.value = currentItems
@@ -103,10 +104,10 @@ class CartManager private constructor() {
             removeFromCart(cartItem)
             return
         }
-        
+
         val currentItems = _cartItems.value.toMutableList()
         val itemIndex = currentItems.indexOf(cartItem)
-        
+
         if (itemIndex >= 0) {
             currentItems[itemIndex] = cartItem.copy(quantity = quantity)
             _cartItems.value = currentItems
@@ -122,17 +123,18 @@ class CartManager private constructor() {
         if (_appliedGiftCards.value.any { it.giftCard.id == giftCard.id }) {
             return false
         }
-        
+
         // Calculate how much of the gift card to apply
-        val remainingTotal = totalPrice + totalGiftCardAmount // Add back current gift cards to get original total
+        val remainingTotal =
+            totalPrice + totalGiftCardAmount // Add back current gift cards to get original total
         val applicableAmount = min(giftCard.balance, remainingTotal)
-        
+
         if (applicableAmount > 0) {
             val appliedGiftCard = AppliedGiftCard(giftCard, applicableAmount)
             _appliedGiftCards.value = _appliedGiftCards.value + appliedGiftCard
             return true
         }
-        
+
         return false
     }
 

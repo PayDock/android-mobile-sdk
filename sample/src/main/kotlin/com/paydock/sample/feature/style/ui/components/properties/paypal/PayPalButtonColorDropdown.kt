@@ -4,9 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.paypal.android.paymentbuttons.PayPalButtonColor
 import com.paydock.sample.R
 import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paypal.android.paymentbuttons.PayPalButtonColor
 
 @Composable
 fun PayPalButtonColorDropdown(
@@ -34,7 +34,8 @@ fun PayPalButtonColorDropdown(
         options = options.map { it.first },
         selectedOption = selectedOptionString,
         onOptionSelected = { newValueString ->
-            val newColor = options.find { it.first == newValueString }?.second ?: PayPalButtonColor.GOLD
+            val newColor =
+                options.find { it.first == newValueString }?.second ?: PayPalButtonColor.GOLD
             onPayPalColorChange(newColor)
         }
     )

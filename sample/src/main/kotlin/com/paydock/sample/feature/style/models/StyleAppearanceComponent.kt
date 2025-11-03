@@ -66,10 +66,13 @@ enum class StyleAppearanceComponent(val hasSubComponents: Boolean = false) {
         TOGGLE_TEXT -> "Toggle Text"
         SUB_SEARCH_TEXT_FIELD_PLACEHOLDER,
         SUB_TEXT_FIELD_PLACEHOLDER -> "Placeholder Label"
+
         SUB_SEARCH_TEXT_FIELD_LABEL,
         SUB_TEXT_FIELD_LABEL -> "Floating Label"
+
         SUB_SEARCH_TEXT_FIELD_ERROR_LABEL,
         SUB_TEXT_FIELD_ERROR_LABEL -> "Error Label"
+
         SUB_DROPDOWN_ITEM -> "Dropdown Item"
         SUB_LINK_TEXT,
         SUB_LINK_BUTTON_TEXT -> "Text"
@@ -78,20 +81,25 @@ enum class StyleAppearanceComponent(val hasSubComponents: Boolean = false) {
         DROP_DOWN -> "Dropdown"
         SUB_SEARCH_TEXT_FIELD,
         TEXT_FIELD -> "Text Field"
+
         SEARCH -> "Search Dropdown"
         DEFAULT_ACTION_BUTTON,
         COMPLETE_ACTION_BUTTON -> "Action Button"
+
         IMAGE_BUTTON -> "Image Button"
         SUB_LINK_BUTTON_LOADER,
         SUB_BUTTON_LOADER,
         LOADER -> "Loader"
+
         TOGGLE -> "Toggle"
         LINK_TEXT -> "Link Text"
-        LINK_BUTTON ->  "Link Button"
+        LINK_BUTTON -> "Link Button"
         SUB_LINK_BUTTON_ICON,
         ICON -> "Icon"
+
         SUB_SEARCH_TEXT_FIELD_VALID_ICON,
         SUB_TEXT_FIELD_VALID_ICON -> "Valid Icon"
+
         SUB_BUTTON_ICON -> "Button Icon"
         SUB_DROP_DOWN_PROPERTIES,
         SUB_SEARCH_TEXT_FIELD_PROPERTIES,

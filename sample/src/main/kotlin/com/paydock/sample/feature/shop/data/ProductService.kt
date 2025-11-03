@@ -5,9 +5,9 @@ import com.paydock.sample.feature.shop.domain.model.ProductCategory
 import com.paydock.sample.feature.shop.domain.model.ProductImage
 
 class ProductService private constructor() {
-    
+
     fun getAllProducts(): List<Product> = sampleProducts
-    
+
     private val sampleProducts = listOf(
         // Clothing
         Product(
@@ -74,7 +74,7 @@ class ProductService private constructor() {
             image = ProductImage.DRESS,
             category = ProductCategory.CLOTHING
         ),
-        
+
         // Accessories
         Product(
             id = "9",
@@ -140,7 +140,7 @@ class ProductService private constructor() {
             image = ProductImage.WATCH,
             category = ProductCategory.ACCESSORIES
         ),
-        
+
         // Electronics
         Product(
             id = "17",
@@ -198,7 +198,7 @@ class ProductService private constructor() {
             image = ProductImage.COFFEE_MAKER,
             category = ProductCategory.ELECTRONICS
         ),
-        
+
         // Home & Living
         Product(
             id = "24",
@@ -225,7 +225,7 @@ class ProductService private constructor() {
             category = ProductCategory.HOME
         )
     )
-    
+
     companion object {
         @Volatile
         private var INSTANCE: ProductService? = null
