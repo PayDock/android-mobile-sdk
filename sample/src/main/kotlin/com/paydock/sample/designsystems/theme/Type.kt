@@ -1,12 +1,10 @@
 package com.paydock.sample.designsystems.theme
 
 import androidx.compose.material3.Typography
-import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
 import com.paydock.sample.R
 
 val appFontFamily = FontFamily(
@@ -22,124 +20,49 @@ val baseline = Typography()
 
 val AppTypography = Typography(
     displayLarge = baseline.displayLarge.copy(
-        fontFamily = appFontFamily,
-        platformStyle = PlatformTextStyle(includeFontPadding = true),
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.None
-        )
+        fontFamily = appFontFamily
     ),
     displayMedium = baseline.displayMedium.copy(
-        fontFamily = appFontFamily,
-        platformStyle = PlatformTextStyle(includeFontPadding = true),
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.None
-        )
+        fontFamily = appFontFamily
     ),
     displaySmall = baseline.displaySmall.copy(
-        fontFamily = appFontFamily,
-        platformStyle = PlatformTextStyle(includeFontPadding = true),
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.None
-        )
+        fontFamily = appFontFamily
     ),
     headlineLarge = baseline.headlineLarge.copy(
-        fontFamily = appFontFamily,
-        platformStyle = PlatformTextStyle(includeFontPadding = true),
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.None
-        )
+        fontFamily = appFontFamily
     ),
     headlineMedium = baseline.headlineMedium.copy(
-        fontFamily = appFontFamily,
-        platformStyle = PlatformTextStyle(includeFontPadding = true),
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.None
-        )
+        fontFamily = appFontFamily
     ),
     headlineSmall = baseline.headlineSmall.copy(
-        fontFamily = appFontFamily,
-        platformStyle = PlatformTextStyle(includeFontPadding = true),
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.None
-        )
+        fontFamily = appFontFamily
     ),
     titleLarge = baseline.titleLarge.copy(
-        fontFamily = appFontFamily,
-        platformStyle = PlatformTextStyle(includeFontPadding = true),
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.None
-        )
+        fontFamily = appFontFamily
     ),
     titleMedium = baseline.titleMedium.copy(
-        fontFamily = appFontFamily,
-        platformStyle = PlatformTextStyle(includeFontPadding = true),
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.None
-        )
+        fontFamily = appFontFamily
     ),
     titleSmall = baseline.titleSmall.copy(
-        fontFamily = appFontFamily,
-        platformStyle = PlatformTextStyle(includeFontPadding = true),
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.None
-        )
+        fontFamily = appFontFamily
     ),
     bodyLarge = baseline.bodyLarge.copy(
-        fontFamily = appFontFamily,
-        platformStyle = PlatformTextStyle(includeFontPadding = true),
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.None
-        )
+        fontFamily = appFontFamily
     ),
     bodyMedium = baseline.bodyMedium.copy(
-        fontFamily = appFontFamily,
-        platformStyle = PlatformTextStyle(includeFontPadding = true),
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.None
-        )
+        fontFamily = appFontFamily
     ),
     bodySmall = baseline.bodySmall.copy(
-        fontFamily = appFontFamily,
-        platformStyle = PlatformTextStyle(includeFontPadding = true),
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.None
-        )
+        fontFamily = appFontFamily
     ),
     labelLarge = baseline.labelLarge.copy(
-        fontFamily = appFontFamily,
-        platformStyle = PlatformTextStyle(includeFontPadding = true),
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.None
-        )
+        fontFamily = appFontFamily
     ),
     labelMedium = baseline.labelMedium.copy(
-        fontFamily = appFontFamily,
-        platformStyle = PlatformTextStyle(includeFontPadding = true),
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.None
-        )
+        fontFamily = appFontFamily
     ),
     labelSmall = baseline.labelSmall.copy(
-        fontFamily = appFontFamily,
-        platformStyle = PlatformTextStyle(includeFontPadding = true),
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.None
-        )
+        fontFamily = appFontFamily
     ),
 )
 
