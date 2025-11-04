@@ -31,10 +31,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.core.presentation.extensions.defaultErrorSemantics
@@ -122,14 +120,7 @@ internal fun SdkTextField(
                     appearance.label
                 } else {
                     appearance.label.copy(
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontSize = MaterialTheme.typography.bodyMedium.fontSize,
-                            platformStyle = PlatformTextStyle(includeFontPadding = false),
-                            lineHeightStyle = LineHeightStyle(
-                                alignment = LineHeightStyle.Alignment.Center,
-                                trim = LineHeightStyle.Trim.Both
-                            )
-                        )
+                        style = MaterialTheme.typography.labelMedium
                     )
                 }
                 Box(modifier = Modifier.offset(y = 2.dp)) {
@@ -301,13 +292,7 @@ object TextFieldAppearanceDefaults {
         // Label - Apply alignment fixes for icon alignment
         label = TextAppearanceDefaults.appearance().copy(
             maxLines = 2,
-            style = MaterialTheme.typography.labelMedium.copy(
-                platformStyle = PlatformTextStyle(includeFontPadding = false),
-                lineHeightStyle = LineHeightStyle(
-                    alignment = LineHeightStyle.Alignment.Center,
-                    trim = LineHeightStyle.Trim.Both
-                )
-            )
+            style = MaterialTheme.typography.labelMedium
         ),
         errorLabel = TextAppearanceDefaults.appearance().copy(
             style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.error)

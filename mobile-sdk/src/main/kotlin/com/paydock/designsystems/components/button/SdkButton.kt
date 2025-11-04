@@ -20,7 +20,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonElevation
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
@@ -33,8 +32,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.PlatformTextStyle
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
@@ -525,15 +522,7 @@ object ButtonAppearanceDefaults {
                     size = ButtonIconSize,
                     tint = ButtonDefaults.buttonColors().contentColor
                 ),
-            textAppearance = TextAppearanceDefaults.appearance().copy(
-                style = LocalTextStyle.current.copy(
-                    platformStyle = PlatformTextStyle(includeFontPadding = false),
-                    lineHeightStyle = LineHeightStyle(
-                        alignment = LineHeightStyle.Alignment.Center,
-                        trim = LineHeightStyle.Trim.Both
-                    )
-                )
-            ),
+            textAppearance = TextAppearanceDefaults.appearance(),
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
                 color = ButtonDefaults.buttonColors().containerColor,
                 strokeWidth = ButtonLoaderWidth
@@ -570,15 +559,7 @@ object ButtonAppearanceDefaults {
                     size = ButtonIconSize,
                     tint = ButtonDefaults.buttonColors().containerColor
                 ),
-            textAppearance = TextAppearanceDefaults.appearance().copy(
-                style = LocalTextStyle.current.copy(
-                    platformStyle = PlatformTextStyle(includeFontPadding = false),
-                    lineHeightStyle = LineHeightStyle(
-                        alignment = LineHeightStyle.Alignment.Center,
-                        trim = LineHeightStyle.Trim.Both
-                    )
-                )
-            ),
+            textAppearance = TextAppearanceDefaults.appearance(),
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
                 color = ButtonDefaults.buttonColors().containerColor,
                 strokeWidth = ButtonLoaderWidth
@@ -612,15 +593,7 @@ object ButtonAppearanceDefaults {
                     size = ButtonIconSize,
                     tint = ButtonDefaults.buttonColors().containerColor
                 ),
-            textAppearance = TextAppearanceDefaults.appearance().copy(
-                style = LocalTextStyle.current.copy(
-                    platformStyle = PlatformTextStyle(includeFontPadding = false),
-                    lineHeightStyle = LineHeightStyle(
-                        alignment = LineHeightStyle.Alignment.Center,
-                        trim = LineHeightStyle.Trim.Both
-                    )
-                )
-            ),
+            textAppearance = TextAppearanceDefaults.appearance(),
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
                 color = ButtonDefaults.buttonColors().containerColor,
                 strokeWidth = ButtonLoaderWidth
