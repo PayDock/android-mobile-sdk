@@ -623,9 +623,20 @@ class EnhancedCheckoutViewModel @Inject constructor(
         // Get the cart total from CartManager for checkout flow
         val cartTotal = CartManager.shared.totalPrice
 
+        // Determine which firstName/lastName to use based on selected saved address
+        val selectedShippingSaved = selectedShippingAddressId?.let { id ->
+            savedAddresses.value.find { it.id == id }
+        }
+
+        // Use saved address firstName/lastName if available, otherwise fall back to contactInfo
+        val firstName = selectedShippingSaved?.firstName?.takeIf { it.isNotBlank() }
+            ?: contactInfo.firstName
+        val lastName = selectedShippingSaved?.lastName?.takeIf { it.isNotBlank() }
+            ?: contactInfo.lastName
+
         return CustomerData(
-            firstName = contactInfo.firstName,
-            lastName = contactInfo.lastName,
+            firstName = firstName,
+            lastName = lastName,
             email = contactInfo.email,
             phone = contactInfo.phone.takeIf { it.isNotBlank() },
             billingAddress = if (billingAddress.isComplete) {
