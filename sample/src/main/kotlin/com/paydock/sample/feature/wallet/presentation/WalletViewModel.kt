@@ -112,7 +112,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                 lastName = customerData?.lastName ?: "Annaanna",
                 email = customerData?.email ?: "annaanna@yopmail.com",
                 paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                    gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL,
+                    gatewayId = BuildConfig.SERVICE_ID_PAYPAL,
                     addressLine1 = customerData?.billingAddress?.addressLine1 ?: "asd1",
                     addressLine2 = customerData?.billingAddress?.addressLine2,
                     addressLine3 = customerData?.billingAddress?.addressLine3,
@@ -151,7 +151,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                 lastName = customerData?.lastName ?: LAST_NAME,
                 email = customerData?.email ?: EMAIL,
                 paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                    gatewayId = BuildConfig.GATEWAY_ID_COLES_PAY,
+                    gatewayId = BuildConfig.SERVICE_ID_COLES_PAY,
                     addressLine1 = customerData?.billingAddress?.addressLine1 ?: "asd1",
                     addressLine2 = customerData?.billingAddress?.addressLine2,
                     addressLine3 = customerData?.billingAddress?.addressLine3,
@@ -190,7 +190,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                 lastName = customerData?.lastName ?: LAST_NAME,
                 email = customerData?.email ?: EMAIL,
                 paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                    gatewayId = BuildConfig.GATEWAY_ID_GOOGLE_PAY,
+                    gatewayId = BuildConfig.SERVICE_ID_GOOGLE_PAY_MPGS,
                     addressLine1 = customerData?.billingAddress?.addressLine1 ?: "asd1",
                     addressLine2 = customerData?.billingAddress?.addressLine2,
                     addressLine3 = customerData?.billingAddress?.addressLine3,
@@ -230,7 +230,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                 lastName = customerData?.lastName ?: "Cameron",
                 email = "david.cameron@paydock.com",
                 paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                    gatewayId = BuildConfig.GATEWAY_ID_AFTER_PAY,
+                    gatewayId = BuildConfig.SERVICE_ID_AFTERPAY,
                     addressLine1 = customerData?.billingAddress?.addressLine1 ?: "asd1",
                     addressLine2 = customerData?.billingAddress?.addressLine2,
                     addressLine3 = customerData?.billingAddress?.addressLine3,

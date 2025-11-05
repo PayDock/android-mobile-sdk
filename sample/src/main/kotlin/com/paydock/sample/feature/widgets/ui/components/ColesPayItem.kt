@@ -40,7 +40,7 @@ fun ColesPayItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        config = ColesPayWidgetConfig(BuildConfig.COLES_PAY_CLIENT_ID),
+        config = ColesPayWidgetConfig(BuildConfig.WALLET_ID_COLES_PAY),
         appearance = currentOrDefaultAppearance,
         tokenRequest = walletViewModel.getWalletTokenResultCallback(WalletType.COLES_PAY)
     ) { result ->

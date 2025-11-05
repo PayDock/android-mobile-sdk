@@ -416,7 +416,7 @@ private fun GiftCardEntryView(
                     )
                     GiftCardWidget(
                         config = GiftCardWidgetConfig(
-                            accessToken = BuildConfig.WIDGET_ACCESS_TOKEN, storePin = false
+                            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET, storePin = false
                         ),
                         appearance = GiftCardAppearanceDefaults.appearance().copy(
                             actionButton = ButtonAppearanceDefaults.outlineButtonAppearance().copy(

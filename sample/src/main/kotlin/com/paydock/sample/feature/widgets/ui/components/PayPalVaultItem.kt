@@ -25,8 +25,8 @@ fun PayPalVaultItem(context: Context, stylingViewModel: StylingViewModel) {
     PayPalSavePaymentSourceWidget(
         modifier = Modifier.padding(16.dp),
         config = PayPalVaultConfig(
-            accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
-            gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL
+            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
+            gatewayId = BuildConfig.SERVICE_ID_PAYPAL
         ),
         appearance = currentOrDefaultAppearance
     ) { result ->

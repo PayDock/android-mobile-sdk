@@ -35,8 +35,8 @@ fun CardDetailsItem(context: Context, stylingViewModel: StylingViewModel) {
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
         config = CardDetailsWidgetConfig(
-            accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
-            gatewayId = BuildConfig.GATEWAY_ID_MPGS,
+            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
+            gatewayId = BuildConfig.SERVICE_ID_MPGS,
             allowSaveCard = SaveCardConfig(
                 privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
                     privacyPolicyURL = "https://www.google.com"

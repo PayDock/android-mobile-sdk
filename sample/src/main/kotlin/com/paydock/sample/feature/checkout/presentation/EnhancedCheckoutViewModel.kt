@@ -381,7 +381,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 request = CreateIntegratedThreeDSTokenRequest(
                     customer = ChargesCustomerDTO(
                         paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                            gatewayId = BuildConfig.GATEWAY_ID_MPGS,
+                            gatewayId = BuildConfig.SERVICE_ID_MPGS,
                             vaultToken = vaultToken
                         )
                     )
@@ -545,7 +545,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 threeDSChargeId = threeDSChargeId,
                 customer = ChargesCustomerDTO(
                     paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                        gatewayId = BuildConfig.GATEWAY_ID_MPGS,
+                        gatewayId = BuildConfig.SERVICE_ID_MPGS,
                         vaultToken = vault
                     )
                 )
