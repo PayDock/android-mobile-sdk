@@ -230,17 +230,17 @@ build_sandbox:
 
 # buildProd:
 # This job builds the production version of the Android application.
-build_prod:
-  extends: .build_template # Extends the '.build_template' template.
-  script:
-    - bundle exec fastlane buildDebug flavor:prod # Executes the 'build' lane using prod flavor in the Fastfile.
+#build_prod:
+#  extends: .build_template # Extends the '.build_template' template.
+#  script:
+#    - bundle exec fastlane buildDebug flavor:prod # Executes the 'build' lane using prod flavor in the Fastfile.
     # Fastfile Reference: This lane is defined in the Fastfile and handles the actual build process.
-  environment:
-    name: production
-  needs: [increment_version]
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
-      when: on_success
+#  environment:
+#    name: production
+#  needs: [increment_version]
+#  rules:
+#    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
+#      when: on_success
 
 # .deploy_template:
 # This is a hidden job template for deploying the Android application to Firebase App Distribution.
@@ -304,19 +304,19 @@ deploy_sandbox:
 # deployProd:
 # This job deploys the production version of the Android application to Firebase App Distribution.
 # It extends the '.deploy_template' to inherit the necessary setup and configuration.
-deploy_prod:
-  extends: .deploy_template # Inherits configuration from the .deploy_template template.
-  variables:
-    APP_ID: $FIREBASE_APP_ID_PROD # Firebase App ID for the production environment.
-  environment:
-    name: production # Sets the environment name to 'production'.
-  needs:
-    - job: build_prod
-  script:
-    - bundle exec fastlane deploy flavor:prod # Executes the 'deploy' lane using prod flavor in the Fastfile.
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
-      when: on_success
+#deploy_prod:
+#  extends: .deploy_template # Inherits configuration from the .deploy_template template.
+#  variables:
+#    APP_ID: $FIREBASE_APP_ID_PROD # Firebase App ID for the production environment.
+#  environment:
+#    name: production # Sets the environment name to 'production'.
+#  needs:
+#    - job: build_prod
+#  script:
+#    - bundle exec fastlane deploy flavor:prod # Executes the 'deploy' lane using prod flavor in the Fastfile.
+#  rules:
+#    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
+#      when: on_success
 
 # tag_release:
 # This job tags a release in the repository.
