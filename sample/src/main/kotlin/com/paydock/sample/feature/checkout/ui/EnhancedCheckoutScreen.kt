@@ -260,7 +260,7 @@ fun EnhancedCheckoutScreen(
                 val isEditing = viewModel.editingSavedAddressId != null
 
                 // Create a SavedAddress with existing ID if editing, or generate new ID
-                // Use countryCode if available, otherwise fall back to country name
+                // Store full country name for display; will convert to code when making API requests
                 val savedAddress = ProfileSavedAddress(
                     id = viewModel.editingSavedAddressId ?: ProfileSavedAddress.generateId(),
                     label = result.label,
@@ -271,7 +271,7 @@ fun EnhancedCheckoutScreen(
                     city = result.billingAddress.city ?: "",
                     state = result.billingAddress.state ?: "",
                     postalCode = result.billingAddress.postalCode ?: "",
-                    country = result.billingAddress.countryCode ?: result.billingAddress.country
+                    country = result.billingAddress.country ?: result.billingAddress.countryCode
                     ?: "",
                     isDefault = result.isDefault
                 )
