@@ -11,7 +11,7 @@ interface AccountApi {
 
     @POST("/v1/customers")
     suspend fun createCustomer(
-        @Header("X-Access-Token") accessToken: String = BuildConfig.API_ACCESS_TOKEN,
+        @Header("X-Access-Token") accessToken: String = BuildConfig.ACCESS_TOKEN_API,
         @Body request: CreateCustomerOTTRequest,
     ): CustomerResponse
 

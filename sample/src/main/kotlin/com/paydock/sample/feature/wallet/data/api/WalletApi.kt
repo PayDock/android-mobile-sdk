@@ -13,19 +13,19 @@ interface WalletApi {
 
     @POST("/v1/charges/wallet")
     suspend fun initiateWalletTransaction(
-        @Header("X-Access-Token") accessToken: String = BuildConfig.API_ACCESS_TOKEN,
+        @Header("X-Access-Token") accessToken: String = BuildConfig.ACCESS_TOKEN_API,
         @Body request: InitiateWalletRequest,
     ): WalletInitiateResponse
 
     @POST("/v1/charges/wallet?capture=false")
     suspend fun initiateWalletTransactionManualCapture(
-        @Header("X-Access-Token") accessToken: String = BuildConfig.API_ACCESS_TOKEN,
+        @Header("X-Access-Token") accessToken: String = BuildConfig.ACCESS_TOKEN_API,
         @Body request: InitiateWalletRequest,
     ): WalletInitiateResponse
 
     @POST("/v1/charges/{id}/capture")
     suspend fun captureWalletCharge(
-        @Header("X-Access-Token") accessToken: String = BuildConfig.API_ACCESS_TOKEN,
+        @Header("X-Access-Token") accessToken: String = BuildConfig.ACCESS_TOKEN_API,
         @Path("id") id: String,
     ): WalletCaptureResponse
 

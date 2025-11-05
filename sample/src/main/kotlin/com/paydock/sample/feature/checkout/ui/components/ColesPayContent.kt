@@ -21,7 +21,7 @@ fun ColesPayContent(
     ColesPayWidget(
         modifier = modifier.fillMaxWidth(),
         enabled = enabled,
-        config = ColesPayWidgetConfig(BuildConfig.COLES_PAY_CLIENT_ID),
+        config = ColesPayWidgetConfig(BuildConfig.WALLET_ID_COLES_PAY),
         appearance = ColesPayWidgetAppearanceDefaults.appearance(),
         tokenRequest = tokenHandler,
         loadingDelegate = loadingDelegate,

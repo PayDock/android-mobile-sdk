@@ -33,7 +33,7 @@ fun CardContent(
             )
         ),
         config = CardDetailsWidgetConfig(
-            accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
+            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
             showCardTitle = false,
             collectCardholderName = false,
             allowSaveCard = SaveCardConfig(

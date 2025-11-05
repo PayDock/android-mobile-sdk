@@ -40,8 +40,8 @@ fun PayPalItem(
             .fillMaxWidth()
             .padding(16.dp),
         config = PayPalWidgetConfig(
-            accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
-            gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL,
+            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
+            gatewayId = BuildConfig.SERVICE_ID_PAYPAL,
             fundingSource = PayPalWidgetConfig.PayPalFundingSource.PAYPAL
         ),
         tokenRequest = walletViewModel.getWalletTokenResultCallback(WalletType.PAY_PAL),

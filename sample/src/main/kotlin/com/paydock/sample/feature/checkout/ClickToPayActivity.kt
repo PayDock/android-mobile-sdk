@@ -80,8 +80,8 @@ fun ClickToPayScreen(resultHandler: (Result<String>) -> Unit) {
                 .fillMaxWidth()
                 .padding(paddingValues),
             config = ClickToPayWidgetConfig(
-                accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
-                serviceId = BuildConfig.GATEWAY_ID_CLICK_TO_PAY,
+                accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
+                serviceId = BuildConfig.SERVICE_ID_CLICK_TO_PAY,
                 meta = ClickToPayMeta(disableSummaryScreen = true),
             ),
             appearance = ClickToPayAppearanceDefaults.appearance(),

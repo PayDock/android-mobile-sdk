@@ -28,7 +28,7 @@ fun GiftCardItem(context: Context, stylingViewModel: StylingViewModel) {
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
         config = GiftCardWidgetConfig(
-            accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
+            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
             storePin = true
         ),
         appearance = currentOrDefaultAppearance,

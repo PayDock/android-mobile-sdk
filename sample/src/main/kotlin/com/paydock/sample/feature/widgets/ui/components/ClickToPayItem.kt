@@ -34,8 +34,8 @@ fun ClickToPayItem(context: Context, stylingViewModel: StylingViewModel) {
             modifier = Modifier
                 .fillMaxWidth(),
             config = ClickToPayWidgetConfig(
-                accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
-                serviceId = BuildConfig.GATEWAY_ID_CLICK_TO_PAY,
+                accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
+                serviceId = BuildConfig.SERVICE_ID_CLICK_TO_PAY,
                 meta = ClickToPayMeta(
                     disableSummaryScreen = true
                 )

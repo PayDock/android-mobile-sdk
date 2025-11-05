@@ -22,8 +22,8 @@ fun PayPalContent(
     PayPalWidget(
         modifier = modifier.fillMaxWidth(),
         config = PayPalWidgetConfig(
-            accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
-            gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL,
+            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
+            gatewayId = BuildConfig.SERVICE_ID_PAYPAL,
             requestShipping = false,
             fundingSource = PayPalWidgetConfig.PayPalFundingSource.PAY_LATER
         ),

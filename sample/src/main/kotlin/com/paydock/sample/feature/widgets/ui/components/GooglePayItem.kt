@@ -59,7 +59,7 @@ fun GooglePayItem(
                 currencyCode = AU_CURRENCY_CODE,
                 countryCode = AU_COUNTRY_CODE,
                 merchantName = MERCHANT_NAME,
-                merchantIdentifier = BuildConfig.MERCHANT_IDENTIFIER,
+                merchantIdentifier = BuildConfig.MERCHANT_ID_GOOGLE_PAY,
                 shippingAddressRequired = true,
                 shippingAddressParameters = shippingAddressParameters
             )
