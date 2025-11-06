@@ -8,6 +8,9 @@ plugins {
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.dagger.hilt) apply false
     alias(libs.plugins.ksp.devtools) apply false
+    // Dependency Validation Plugins
+    alias(libs.plugins.dependency.analysis) apply true
+    alias(libs.plugins.dependency.guard) apply false
 }
 
 buildscript {
@@ -60,4 +63,75 @@ tasks.register("installGitHooks", Exec::class.java) {
 
 afterEvaluate {
     tasks.getByPath(":mobile-sdk:preBuild").dependsOn(":installGitHooks")
+}
+
+// Dependency Analysis Plugin Configuration
+// Docs: https://github.com/autonomousapps/dependency-analysis-gradle-plugin
+
+dependencyAnalysis {
+    issues {
+        all {
+            onAny {
+                severity("fail")
+            }
+            onUnusedDependencies {
+                severity("fail")
+            }
+            onUsedTransitiveDependencies {
+                severity("ignore")
+            }
+            onIncorrectConfiguration {
+                severity("fail")
+            }
+            onCompileOnly {
+                severity("fail")
+            }
+            onRuntimeOnly {
+                severity("fail")
+            }
+        }
+        
+        project(":mobile-sdk") {
+            onAny {
+                exclude(
+                    "com.afterpay:afterpay-android",
+                    "com.paypal.android:paypal-web-payments",
+                    "com.paypal.android:fraud-protection"
+                )
+            }
+            // Fail on unused dependencies (strict)
+            onUnusedDependencies {
+                severity("fail")
+                exclude(
+                    "com.afterpay:afterpay-android",
+                    "com.paypal.android:payment-buttons",
+                    "com.google.pay.button:compose-pay-button",
+                    "io.mockk:mockk-android",  // Used in androidTest but plugin can't detect
+                    "org.mockito:mockito-android",  // Used in androidTest but plugin can't detect
+                    "androidx.test.ext:junit-ktx"  // Used in androidTest but plugin can't detect
+                )
+            }
+            // IGNORE transitive dependencies (using strictly() constraints for version control)
+            onUsedTransitiveDependencies {
+                severity("ignore")
+            }
+            // Don't fail on test-junit (we need testImplementation for @Test, not testRuntimeOnly)
+            onRuntimeOnly {
+                exclude("org.jetbrains.kotlin:kotlin-test-junit")
+            }
+        }
+    }
+    
+    // Structure for reports
+    structure {
+        bundle("androidx") {
+            primary("androidx.core:core-ktx")
+            includeGroup("androidx.compose")
+            includeGroup("androidx.lifecycle")
+        }
+        bundle("compose") {
+            primary("androidx.compose.runtime:runtime")
+            includeGroup("androidx.compose")
+        }
+    }
 }
