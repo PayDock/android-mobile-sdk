@@ -51,7 +51,8 @@ fun CardDetailsItem(context: Context, stylingViewModel: StylingViewModel) {
                     CardType.DINERS,
                     CardType.DISCOVER,
                     CardType.JAPCB,
-                    CardType.SOLO
+                    CardType.SOLO,
+                    CardType.UNIONPAY
                 ),
                 enableValidation = true
             )
