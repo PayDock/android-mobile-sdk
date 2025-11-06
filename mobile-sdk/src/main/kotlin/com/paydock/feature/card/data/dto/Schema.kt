@@ -67,7 +67,14 @@ internal enum class Schema {
      * One of the most widely used card networks globally.
      */
     @SerialName("visa")
-    VISA;
+    VISA,
+
+    /**
+     * UnionPay card schema.
+     * A card network widely used in China and accepted globally.
+     */
+    @SerialName("unionpay")
+    UNIONPAY;
 
     /**
      * Companion object providing utility methods for [Schema].

@@ -44,7 +44,8 @@ internal class MapperTest : BaseUnitTest() {
             { "bin": "6011", "schema": "discover" },
             { "bin": "180000~180099", "schema": "japcb" },
             { "bin": "633454", "schema": "solo" },
-            { "bin": "5610", "schema": "ausbc" }
+            { "bin": "5610", "schema": "ausbc" },
+            { "bin": "6282~6288", "schema": "unionpay" }
           ]
         }
         """.trimIndent()
@@ -52,10 +53,10 @@ internal class MapperTest : BaseUnitTest() {
         // Act
         val cardSchemas = response.asEntity()
         // Assert
-        assertEquals(8, cardSchemas.size)
+        assertEquals(9, cardSchemas.size)
         // Assert that the keys are sorted correctly
         val sortedKeys = cardSchemas.keys.sorted()
-        assertEquals(listOf(309, 5610, 6011, 420412, 2221, 180000, 633454, 324000).sorted(), sortedKeys)
+        assertEquals(listOf(309, 5610, 6011, 6282, 420412, 2221, 180000, 633454, 324000).sorted(), sortedKeys)
 
         // Assert that the values are correct
         cardSchemas.forEach { (_, value) ->
@@ -98,6 +99,11 @@ internal class MapperTest : BaseUnitTest() {
                 CardType.DISCOVER -> {
                     assertEquals("6011", value.bin)
                     assertEquals(CardType.DISCOVER, value.schema)
+                }
+
+                CardType.UNIONPAY -> {
+                    assertEquals("6282~6288", value.bin)
+                    assertEquals(CardType.UNIONPAY, value.schema)
                 }
 
                 null -> fail("Unknown schema: bin: ${value.bin}")

@@ -49,6 +49,66 @@
       "schema": "discover"
     },
     {
+      "bin": "6282~6288",
+      "schema": "unionpay"
+    },
+    {
+      "bin": "622929",
+      "schema": "unionpay"
+    },
+    {
+      "bin": "622934",
+      "schema": "unionpay"
+    },
+    {
+      "bin": "622941",
+      "schema": "unionpay"
+    },
+    {
+      "bin": "622944",
+      "schema": "unionpay"
+    },
+    {
+      "bin": "622956",
+      "schema": "unionpay"
+    },
+    {
+      "bin": "622958",
+      "schema": "unionpay"
+    },
+    {
+      "bin": "622964~622966",
+      "schema": "unionpay"
+    },
+    {
+      "bin": "622969~622970",
+      "schema": "unionpay"
+    },
+    {
+      "bin": "622981",
+      "schema": "unionpay"
+    },
+    {
+      "bin": "622984~622985",
+      "schema": "unionpay"
+    },
+    {
+      "bin": "622987~622988",
+      "schema": "unionpay"
+    },
+    {
+      "bin": "624000~626256",
+      "schema": "unionpay"
+    },
+    {
+      "bin": "626258~626999",
+      "schema": "unionpay"
+    },
+    {
+      "bin": "8100~8171",
+      "schema": "unionpay"
+    },
+    {
       "bin": "34901~34903",
       "schema": "amex"
     },
