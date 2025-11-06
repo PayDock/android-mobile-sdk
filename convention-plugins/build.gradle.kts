@@ -22,4 +22,5 @@ dependencies {
     implementation(libs.detekt.plugin) // Convention fully configures detekt
     implementation(libs.org.jreleaser.gradle.plugin) // Convention fully configures JReleaser
     implementation(libs.android.gradlePlugin) // For Android LibraryExtension access
+    implementation(libs.dependency.analysis.plugin) // Convention for dependency validation
 }

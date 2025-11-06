@@ -12,6 +12,9 @@ plugins {
     id("maven-central-publish-convention")
     // test coverage
     id("test-coverage-convention")
+    // dependency validation
+    id("dependency-analysis-convention")
+    alias(libs.plugins.dependency.guard)
 }
 
 android {
@@ -85,14 +88,13 @@ dependencies {
     implementation(libs.bundles.androidx)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.ext)
-    androidTestImplementation(libs.androidx.test.espresso.core)
-    // Compose
+    androidTestImplementation(libs.androidx.runner)
+    // Compose - BOM 2025.06.01 (Compose 1.8.3)
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
-    // Release requires this to be included for previews
     implementation(libs.bundles.composeDebug)
     androidTestImplementation(libs.androidx.ui.test.junit4.android)
-    androidTestImplementation(libs.androidx.ui.test.manifest)
+    androidTestRuntimeOnly(libs.androidx.ui.test.manifest)
     // Kotlin
     implementation(platform(libs.kotlin.bom))
     implementation(libs.bundles.kotlin)
@@ -101,7 +103,7 @@ dependencies {
     androidTestImplementation(libs.kotlinx.coroutines.test)
     // Coroutines
     implementation(libs.bundles.coroutins)
-    // Koin - Injection
+    // Koin - Dependency Injection
     implementation(libs.bundles.koin)
     testImplementation(libs.koin.test)
     androidTestImplementation(libs.koin.test)
@@ -115,8 +117,8 @@ dependencies {
     // Expose only the button types to consumers; keep the rest internal to the SDK
     api(libs.paypal.payment.buttons)
     implementation(libs.bundles.paypal)
-    // Mocking
-    implementation(libs.slf4j.jdk14)
+    // Logging (runtime only)
+    runtimeOnly(libs.slf4j.jdk14)
     // Unit Testing (General)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
@@ -126,4 +128,15 @@ dependencies {
     // UI Testing (General)
     androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.mockito.android)
+}
+
+// Dependency Guard Configuration
+// Detects transitive dependency version changes
+dependencyGuard {
+    // Monitor production runtime classpath for version changes
+    configuration("releaseRuntimeClasspath") {
+        // Track both modules and artifacts for comprehensive detection
+        modules = true
+        artifacts = true
+    }
 }
