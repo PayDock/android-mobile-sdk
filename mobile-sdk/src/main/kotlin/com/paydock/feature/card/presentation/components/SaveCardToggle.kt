@@ -38,6 +38,7 @@ import com.paydock.feature.card.domain.model.integration.SaveCardConfig
  * @param linkTextAppearance The appearance for the tappable link text.
  * @param toggleAppearance The appearance for the toggle switch.
  * @param onToggle A callback invoked when the toggle switch is changed. The boolean parameter indicates the new checked state.
+ * @param onPrivacyPolicyClick An optional callback invoked when the privacy policy link is clicked. The string parameter is the URL.
  */
 @Composable
 internal fun SaveCardToggle(
@@ -47,7 +48,8 @@ internal fun SaveCardToggle(
     linkToggleAppearance: TextAppearance = TextAppearanceDefaults.appearance(),
     linkTextAppearance: LinkTextAppearance = LinkTextAppearanceDefaults.appearance(),
     toggleAppearance: ToggleAppearance = ToggleAppearanceDefaults.appearance(),
-    onToggle: (Boolean) -> Unit
+    onToggle: (Boolean) -> Unit,
+    onPrivacyPolicyClick: ((String) -> Unit)? = null
 ) {
     val context = LocalContext.current
 
@@ -95,6 +97,7 @@ internal fun SaveCardToggle(
                     appearance = linkTextAppearance
                 ) {
                     if (enabled) {
+                        onPrivacyPolicyClick?.invoke(config.privacyPolicyConfig.privacyPolicyURL)
                         context.openBrowser(config.privacyPolicyConfig.privacyPolicyURL)
                     }
                 }
@@ -123,10 +126,10 @@ internal fun PreviewSaveCardToggleOff() {
         saveCard = false,
         config = SaveCardConfig(
             privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(privacyPolicyURL = "https://google.com")
-        )
-    ) {
-
-    }
+        ),
+        onPrivacyPolicyClick = {},
+        onToggle = {}
+    )
 }
 
 @SdkLightDarkPreviews
@@ -136,8 +139,8 @@ internal fun PreviewSaveCardToggleOn() {
         saveCard = true,
         config = SaveCardConfig(
             privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(privacyPolicyURL = "https://google.com")
-        )
-    ) {
-
-    }
+        ),
+        onPrivacyPolicyClick = {},
+        onToggle = {}
+    )
 }

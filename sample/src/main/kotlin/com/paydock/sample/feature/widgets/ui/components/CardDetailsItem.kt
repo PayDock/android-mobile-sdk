@@ -15,7 +15,9 @@ import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.domain.error.exceptions.GenericException
 import com.paydock.core.domain.error.toError
+import com.paydock.core.domain.model.Event
 import com.paydock.core.network.dto.error.displayableMessage
+import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.SaveCardConfig
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
@@ -58,6 +60,11 @@ fun CardDetailsItem(context: Context, stylingViewModel: StylingViewModel) {
             )
         ),
         appearance = currentOrDefaultAppearance,
+        eventDelegate = object : WidgetEventDelegate {
+            override fun widgetEvent(event: Event) {
+                Log.d("[CardDetailsWidget]", "Event: $event")
+            }
+        },
         completion = { result ->
             // This breaks down 3 ways to retrieve and handle the result
             // Option 1: Default Result Handler

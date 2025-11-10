@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
+import com.paydock.core.domain.model.Event
+import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.presentation.GooglePayAppearanceDefaults
 import com.paydock.feature.googlepay.presentation.GooglePayWidget
@@ -64,6 +66,11 @@ fun GooglePayItem(
                 shippingAddressParameters = shippingAddressParameters
             )
         ),
+        eventDelegate = object : WidgetEventDelegate {
+            override fun widgetEvent(event: Event) {
+                Log.d("[GooglePayWidget]", "Event: $event")
+            }
+        },
         appearance = currentOrDefaultAppearance,
         tokenRequest = walletViewModel.getWalletTokenResultCallback(WalletType.GOOGLE),
     ) { result ->

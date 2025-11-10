@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
+import com.paydock.core.domain.model.Event
+import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOptionUpdate
@@ -56,6 +58,11 @@ fun AfterpayItem(
             .fillMaxWidth()
             .padding(16.dp),
         tokenRequest = walletViewModel.getWalletTokenResultCallback(WalletType.AFTER_PAY),
+        eventDelegate = object : WidgetEventDelegate {
+            override fun widgetEvent(event: Event) {
+                Log.d("[AfterpayWidget]", "Event: $event")
+            }
+        },
         config = configuration,
         selectAddress = { _, provideShippingOptions ->
             val currency = Currency.getInstance(configuration.config.currency)

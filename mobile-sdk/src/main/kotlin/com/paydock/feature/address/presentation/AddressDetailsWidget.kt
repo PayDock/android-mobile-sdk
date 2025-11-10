@@ -21,6 +21,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.takeOrElse
 import com.paydock.R
+import com.paydock.core.domain.model.Event
+import com.paydock.core.domain.model.EventAction
+import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.button.RenderButton
@@ -35,6 +38,7 @@ import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
 import com.paydock.designsystems.core.WidgetDefaults
 import com.paydock.feature.address.domain.mapper.integration.asEntity
+import com.paydock.feature.address.domain.model.AddressDetailsEventNames
 import com.paydock.feature.address.domain.model.integration.AddressDetailsWidgetConfig
 import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.address.presentation.components.AddressSearchSection
@@ -53,6 +57,7 @@ import org.koin.androidx.compose.koinViewModel
  * @param modifier Modifier to apply to the composable.
  * @param appearance Customization options for the widget's appearance. See [AddressDetailsWidgetAppearance].
  * @param config Configuration for the widget's behavior and initial data, such as pre-filling the address. See [AddressDetailsWidgetConfig].
+ * @param eventDelegate An optional [WidgetEventDelegate] for tracking widget events such as button clicks.
  * @param completion A callback function that is invoked when the user saves the address. It receives the entered [BillingAddress] as a parameter.
  */
 @Composable
@@ -60,6 +65,7 @@ fun AddressDetailsWidget(
     modifier: Modifier = Modifier,
     appearance: AddressDetailsWidgetAppearance = AddressDetailsAppearanceDefaults.appearance(),
     config: AddressDetailsWidgetConfig = AddressDetailsWidgetConfig(),
+    eventDelegate: WidgetEventDelegate? = null,
     completion: (BillingAddress) -> Unit,
 ) {
     // Use config.address as part of the key to force fresh ViewModel when address changes
@@ -117,6 +123,13 @@ fun AddressDetailsWidget(
                 linkText = stringResource(R.string.button_enter_address_manually),
                 appearance = appearance.linkButton
             ) {
+                // Emit manual entry button event
+                eventDelegate?.widgetEvent(
+                    Event.ButtonEvent(
+                        name = AddressDetailsEventNames.MANUAL_ENTRY_BUTTON,
+                        action = EventAction.CLICK
+                    )
+                )
                 isManualAddressVisible = !isManualAddressVisible
             }
         }
@@ -144,6 +157,14 @@ fun AddressDetailsWidget(
             buttonIcon = appearance.actionButton.icon,
             enabled = isDataValid,
         ) {
+            // Emit save button event
+            eventDelegate?.widgetEvent(
+                Event.ButtonEvent(
+                    name = AddressDetailsEventNames.SAVE_BUTTON,
+                    action = EventAction.CLICK,
+                    text = appearance.actionButton.text
+                )
+            )
             completion(viewModel.getBillingAddress())
         }
     }
