@@ -23,13 +23,17 @@ import androidx.compose.ui.res.stringResource
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
+import com.paydock.core.domain.model.Event
+import com.paydock.core.domain.model.EventAction
 import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.button.RenderButton
+import com.paydock.feature.paypal.core.domain.model.PayPalEventNames
 import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultResult
@@ -56,6 +60,7 @@ import org.koin.core.parameter.parametersOf
  * @param config The configuration for PayPal vault, including the access token and gateway ID.
  * @param appearance The appearance configuration for the widget, allowing customization of elements like the action button.
  * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
+ * @param eventDelegate An optional [WidgetEventDelegate] for tracking widget events such as button clicks.
  * @param completion The callback invoked when the PayPal linking process completes, either with a success
  *                   containing a [PayPalVaultResult] or a failure containing a [PayPalVaultException].
  */
@@ -66,6 +71,7 @@ fun PayPalSavePaymentSourceWidget(
     config: PayPalVaultConfig,
     appearance: PayPalPaymentSourceWidgetAppearance = PayPalPaymentSourceAppearanceDefaults.appearance(),
     loadingDelegate: WidgetLoadingDelegate? = null,
+    eventDelegate: WidgetEventDelegate? = null,
     completion: (Result<PayPalVaultResult>) -> Unit,
 ) {
     val context = LocalContext.current
@@ -104,6 +110,13 @@ fun PayPalSavePaymentSourceWidget(
             enabled = isEnabled,
             isLoading = isLoading,
         ) {
+            // Emit button event
+            eventDelegate?.widgetEvent(
+                Event.ButtonEvent(
+                    name = PayPalEventNames.PAYPAL_VAULT_BUTTON,
+                    action = EventAction.CLICK
+                )
+            )
             viewModel.createPayPalSetupToken()
         }
     }

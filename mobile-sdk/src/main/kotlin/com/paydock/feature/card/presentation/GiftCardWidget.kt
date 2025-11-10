@@ -23,7 +23,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
 import com.paydock.R
+import com.paydock.core.domain.model.Event
+import com.paydock.core.domain.model.EventAction
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
@@ -31,6 +34,7 @@ import com.paydock.designsystems.components.button.RenderButton
 import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.designsystems.core.WidgetDefaults
+import com.paydock.feature.card.domain.model.GiftCardEventNames
 import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
 import com.paydock.feature.card.presentation.components.CardPinInput
 import com.paydock.feature.card.presentation.components.GiftCardNumberInput
@@ -52,6 +56,7 @@ import org.koin.core.parameter.parametersOf
  * @param config The configuration for the gift card widget, including necessary access details.
  * @param appearance Defines the visual appearance of the gift card widget elements. Defaults to a standard appearance.
  * @param loadingDelegate An optional delegate to manage the visibility of loading indicators externally.
+ * @param eventDelegate An optional [WidgetEventDelegate] for tracking widget events such as button clicks.
  * @param completion A callback invoked with the result of the tokenization process, providing either
  *                   a success with the token or a failure with an exception.
  */
@@ -62,6 +67,7 @@ fun GiftCardWidget(
     config: GiftCardWidgetConfig,
     appearance: GiftCardWidgetAppearance = GiftCardAppearanceDefaults.appearance(),
     loadingDelegate: WidgetLoadingDelegate? = null,
+    eventDelegate: WidgetEventDelegate? = null,
     completion: (Result<String>) -> Unit,
 ) {
     // ViewModel instance scoped to the Koin dependency injection framework
@@ -143,6 +149,14 @@ fun GiftCardWidget(
             enabled = isEnabled,
             isLoading = isLoading,
         ) {
+            // Emit button event
+            eventDelegate?.widgetEvent(
+                Event.ButtonEvent(
+                    name = GiftCardEventNames.TOKENISATION_BUTTON,
+                    action = EventAction.CLICK,
+                    text = appearance.actionButton.text
+                )
+            )
             viewModel.tokeniseCard()
         }
     }
@@ -436,7 +450,8 @@ private fun handleUIState(
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewGiftCardDetails() {
-    GiftCardWidget(config = GiftCardWidgetConfig("accessToken")) {
-
-    }
+    GiftCardWidget(
+        config = GiftCardWidgetConfig("accessToken"),
+        completion = {}
+    )
 }

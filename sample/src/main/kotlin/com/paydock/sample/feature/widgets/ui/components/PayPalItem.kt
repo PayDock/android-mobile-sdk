@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
+import com.paydock.core.domain.model.Event
+import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
 import com.paydock.feature.paypal.checkout.presentation.PayPalAppearanceDefaults
 import com.paydock.feature.paypal.checkout.presentation.PayPalWidget
@@ -44,6 +46,11 @@ fun PayPalItem(
             gatewayId = BuildConfig.SERVICE_ID_PAYPAL,
             fundingSource = PayPalWidgetConfig.PayPalFundingSource.PAYPAL
         ),
+        eventDelegate = object : WidgetEventDelegate {
+            override fun widgetEvent(event: Event) {
+                Log.d("[PayPalWidget]", "Event: $event")
+            }
+        },
         tokenRequest = walletViewModel.getWalletTokenResultCallback(WalletType.PAY_PAL),
         appearance = currentOrDefaultAppearance
     ) { result ->

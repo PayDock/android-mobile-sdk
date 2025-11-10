@@ -19,7 +19,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.takeOrElse
 import com.paydock.R
+import com.paydock.core.domain.model.Event
+import com.paydock.core.domain.model.EventAction
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
@@ -34,6 +37,7 @@ import com.paydock.designsystems.components.text.TextAppearanceDefaults
 import com.paydock.designsystems.components.toggle.ToggleAppearance
 import com.paydock.designsystems.components.toggle.ToggleAppearanceDefaults
 import com.paydock.designsystems.core.WidgetDefaults
+import com.paydock.feature.card.domain.model.CardDetailsEventNames
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.CardResult
 import com.paydock.feature.card.presentation.components.CardInputFields
@@ -61,6 +65,8 @@ import org.koin.core.parameter.parametersOf
  * @param appearance Customization options for the visual appearance of the widget, encapsulated in [CardDetailsWidgetAppearance].
  * @param loadingDelegate An optional [WidgetLoadingDelegate] for overriding the default loader
  * behavior during tokenization or other async operations.
+ * @param eventDelegate An optional [WidgetEventDelegate] for tracking widget events such as
+ * button clicks, toggle interactions, and link clicks.
  * @param completion A callback invoked with the result of the tokenization process.
  * It provides a [Result] containing a [CardResult] on success or an error on failure.
  */
@@ -72,6 +78,7 @@ fun CardDetailsWidget(
     config: CardDetailsWidgetConfig,
     appearance: CardDetailsWidgetAppearance = CardDetailsAppearanceDefaults.appearance(),
     loadingDelegate: WidgetLoadingDelegate? = null,
+    eventDelegate: WidgetEventDelegate? = null,
     completion: (Result<CardResult>) -> Unit
 ) {
     val viewModel: CardDetailsViewModel = koinViewModel(parameters = {
@@ -146,7 +153,27 @@ fun CardDetailsWidget(
                 linkTextAppearance = appearance.linkText,
                 linkToggleAppearance = appearance.toggleText,
                 toggleAppearance = appearance.toggle,
-                onToggle = viewModel::updateSaveCard
+                onToggle = { newState ->
+                    viewModel.updateSaveCard(newState)
+                    // Emit toggle event
+                    eventDelegate?.widgetEvent(
+                        Event.ToggleEvent(
+                            name = CardDetailsEventNames.SAVE_CARD_TOGGLE,
+                            action = EventAction.CLICK,
+                            state = newState
+                        )
+                    )
+                },
+                onPrivacyPolicyClick = { url ->
+                    // Emit link event
+                    eventDelegate?.widgetEvent(
+                        Event.LinkTextEvent(
+                            name = CardDetailsEventNames.PRIVACY_POLICY_LINK,
+                            action = EventAction.CLICK,
+                            url = url
+                        )
+                    )
+                }
             )
         }
 
@@ -160,6 +187,14 @@ fun CardDetailsWidget(
             enabled = isEnabled,
             isLoading = isLoading,
         ) {
+            // Emit button event
+            eventDelegate?.widgetEvent(
+                Event.ButtonEvent(
+                    name = CardDetailsEventNames.TOKENISATION_BUTTON,
+                    action = EventAction.CLICK,
+                    text = appearance.actionButton.text
+                )
+            )
             viewModel.tokeniseCard()
         }
     }
@@ -365,7 +400,8 @@ private fun handleUIState(
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewCardDetails() {
-    CardDetailsWidget(config = CardDetailsWidgetConfig(accessToken = "")) {
-
-    }
+    CardDetailsWidget(
+        config = CardDetailsWidgetConfig(accessToken = ""),
+        completion = {}
+    )
 }

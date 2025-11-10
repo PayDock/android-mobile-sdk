@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
+import com.paydock.core.domain.model.Event
+import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
 import com.paydock.feature.card.presentation.GiftCardAppearanceDefaults
 import com.paydock.feature.card.presentation.GiftCardWidget
@@ -32,6 +34,11 @@ fun GiftCardItem(context: Context, stylingViewModel: StylingViewModel) {
             storePin = true
         ),
         appearance = currentOrDefaultAppearance,
+        eventDelegate = object : WidgetEventDelegate {
+            override fun widgetEvent(event: Event) {
+                Log.d("[GiftCardWidget]", "Event: $event")
+            }
+        },
         completion = { result ->
             result.onSuccess {
                 Log.d("[GiftCardWidget]", "Success: $it")

@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
+import com.paydock.core.domain.model.Event
+import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.presentation.PayPalPaymentSourceAppearanceDefaults
 import com.paydock.feature.paypal.vault.presentation.PayPalSavePaymentSourceWidget
@@ -28,6 +30,11 @@ fun PayPalVaultItem(context: Context, stylingViewModel: StylingViewModel) {
             accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
             gatewayId = BuildConfig.SERVICE_ID_PAYPAL
         ),
+        eventDelegate = object : WidgetEventDelegate {
+            override fun widgetEvent(event: Event) {
+                Log.d("[PayPalSavePaymentSourceWidget]", "Event: $event")
+            }
+        },
         appearance = currentOrDefaultAppearance
     ) { result ->
         result.onSuccess {
