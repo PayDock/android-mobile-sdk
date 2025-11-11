@@ -57,6 +57,7 @@ internal class PayPalVaultActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         hasStartedVault = savedInstanceState?.getBoolean(KEY_HAS_STARTED) ?: false
+
         setContent {
             enableEdgeToEdge()
             val vaultResult by viewModel.vaultResult.collectAsState()
@@ -72,7 +73,6 @@ internal class PayPalVaultActivity : AppCompatActivity() {
                         clientId,
                         setupToken
                     )
-                    shouldStartPayPal = false
                     hasStartedVault = true
                 }
             }
@@ -135,9 +135,6 @@ internal class PayPalVaultActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         this.intent = intent
-
-        if (handleCancellationIfNeeded()) return
-
         viewModel.handleDeeplinkResult(this, intent)
     }
 
@@ -152,33 +149,9 @@ internal class PayPalVaultActivity : AppCompatActivity() {
      */
     override fun onResume() {
         super.onResume()
-
-        if (handleCancellationIfNeeded()) return
-
         // Fallback: if returning without redirect intent and vault flow was already started, finish as canceled
         if (hasStartedVault && intent?.data == null) {
             finishWithCancellation()
-        }
-    }
-
-    /**
-     * Checks if the current intent indicates a user cancellation and handles it.
-     *
-     * PayPal Vault uses a simple deep link pattern with cancellation indicated by
-     * the path segment: `com.paydock.paypal.vault://vault/cancel?...`
-     *
-     * @return true if cancellation was detected and handled, false otherwise
-     */
-    private fun handleCancellationIfNeeded(): Boolean {
-        val data = intent?.data
-        val host = data?.host
-        val pathSegment = data?.pathSegments?.firstOrNull()
-
-        return if (host == "vault" && pathSegment == "cancel") {
-            finishWithCancellation()
-            true
-        } else {
-            false
         }
     }
 
