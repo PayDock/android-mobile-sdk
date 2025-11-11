@@ -40,7 +40,7 @@ fun AddressDetailsItem(context: Context, stylingViewModel: StylingViewModel) {
         ),
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {
-                Log.d("[AddressDetailsWidget]", "Event: $event")
+                Log.d("[AddressDetailsWidget Event]", "[type=${event.type}] $event")
             }
         },
         appearance = currentOrDefaultAppearance

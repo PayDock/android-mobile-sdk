@@ -36,7 +36,7 @@ fun GiftCardItem(context: Context, stylingViewModel: StylingViewModel) {
         appearance = currentOrDefaultAppearance,
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {
-                Log.d("[GiftCardWidget]", "Event: $event")
+                Log.d("[GiftCardWidget Event]", "[type=${event.type}] $event")
             }
         },
         completion = { result ->

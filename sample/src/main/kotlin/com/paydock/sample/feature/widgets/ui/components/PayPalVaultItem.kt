@@ -32,7 +32,7 @@ fun PayPalVaultItem(context: Context, stylingViewModel: StylingViewModel) {
         ),
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {
-                Log.d("[PayPalSavePaymentSourceWidget]", "Event: $event")
+                Log.d("[PayPalSavePaymentSourceWidget Event]", "[type=${event.type}] $event")
             }
         },
         appearance = currentOrDefaultAppearance

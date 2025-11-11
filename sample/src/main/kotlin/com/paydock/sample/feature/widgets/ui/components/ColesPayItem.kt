@@ -45,7 +45,7 @@ fun ColesPayItem(
         config = ColesPayWidgetConfig(BuildConfig.WALLET_ID_COLES_PAY),
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {
-                Log.d("[ColesPayWidget]", "Event: $event")
+                Log.d("[ColesPayWidget Event]", "[type=${event.type}] $event")
             }
         },
         appearance = currentOrDefaultAppearance,
