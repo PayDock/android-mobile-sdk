@@ -155,13 +155,19 @@ fun MainScreenView(
     val integrated3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
     val standalone3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
 
-    // Effect to update ViewModel when the theme actually changes
-    // This runs on recomposition but only updates if theme changed (not on activity recreation)
+    // Effect to update ViewModel when theme changes
+    // On first init: Apply full defaults
+    // On theme change: Update theme-dependent properties while preserving user customizations
     LaunchedEffect(isActuallyDark) {
-        // Check if theme actually changed (or first initialization)
-        stylingViewModel.updateInitialAddressDefaults(addressSdkDefaults)
-        stylingViewModel.updateInitialCardDetailsDefaults(cardSdkDefaults)
-        stylingViewModel.updateInitialGiftCardDetailsDefaults(giftCardSdkDefaults)
+        val isInitialized = stylingViewModel.addressWidgetAppearance.value != null
+        
+        // Update all widget appearances with theme-appropriate defaults
+        // If already initialized, preserve user customizations
+        stylingViewModel.updateInitialAddressDefaults(addressSdkDefaults, preserveCustomizations = isInitialized)
+        stylingViewModel.updateInitialCardDetailsDefaults(cardSdkDefaults, preserveCustomizations = isInitialized)
+        stylingViewModel.updateInitialGiftCardDetailsDefaults(giftCardSdkDefaults, preserveCustomizations = isInitialized)
+        
+        // Widgets without customization tracking - always update (these typically only have theme colors)
         stylingViewModel.updateInitialClickToPayDefaults(clickToPaySdkDefaults)
         stylingViewModel.updateInitialAfterpayDefaults(afterpaySdkDefaults)
         stylingViewModel.updateInitialPayPalDefaults(payPalSdkDefaults)
