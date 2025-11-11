@@ -21,5 +21,11 @@ internal enum class CodeType {
      * Card Identification Number (CID) security code type.
      * Required digits: 3|4
      */
-    CID
+    CID,
+
+    /**
+     * Card Verification Number (CVN) security code type.
+     * Required digits: 3
+     */
+    CVN
 }
