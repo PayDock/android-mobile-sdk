@@ -48,7 +48,7 @@ fun PayPalItem(
         ),
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {
-                Log.d("[PayPalWidget]", "Event: $event")
+                Log.d("[PayPalWidget Event]", "[type=${event.type}] $event")
             }
         },
         tokenRequest = walletViewModel.getWalletTokenResultCallback(WalletType.PAY_PAL),

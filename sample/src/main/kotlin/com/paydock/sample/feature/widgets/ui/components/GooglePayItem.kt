@@ -68,7 +68,7 @@ fun GooglePayItem(
         ),
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {
-                Log.d("[GooglePayWidget]", "Event: $event")
+                Log.d("[GooglePayWidget Event]", "[type=${event.type}] $event")
             }
         },
         appearance = currentOrDefaultAppearance,

@@ -62,7 +62,7 @@ fun CardDetailsItem(context: Context, stylingViewModel: StylingViewModel) {
         appearance = currentOrDefaultAppearance,
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {
-                Log.d("[CardDetailsWidget]", "Event: $event")
+                Log.d("[CardDetailsWidget Event]", "[type=${event.type}] $event")
             }
         },
         completion = { result ->

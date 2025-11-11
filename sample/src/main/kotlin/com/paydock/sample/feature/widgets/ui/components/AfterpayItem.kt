@@ -60,7 +60,7 @@ fun AfterpayItem(
         tokenRequest = walletViewModel.getWalletTokenResultCallback(WalletType.AFTER_PAY),
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {
-                Log.d("[AfterpayWidget]", "Event: $event")
+                Log.d("[AfterpayWidget Event]", "[type=${event.type}] $event")
             }
         },
         config = configuration,
