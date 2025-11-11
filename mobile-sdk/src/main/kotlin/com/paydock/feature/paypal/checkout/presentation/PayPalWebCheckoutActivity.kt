@@ -82,7 +82,6 @@ internal class PayPalWebCheckoutActivity : AppCompatActivity() {
                                 clientId, orderId, fundingSource
                             )
 
-                            shouldStartPayPal = false
                             hasStartedCheckout = true
                         } catch (e: IllegalArgumentException) {
                             // Log and propagate a user-friendly error to avoid swallowing exceptions
@@ -159,9 +158,6 @@ internal class PayPalWebCheckoutActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-
-        if (handleCancellationIfNeeded()) return
-
         viewModel.handleDeeplinkResult(this, intent)
     }
 
@@ -174,34 +170,9 @@ internal class PayPalWebCheckoutActivity : AppCompatActivity() {
      */
     override fun onResume() {
         super.onResume()
-
-        if (handleCancellationIfNeeded()) return
-
         // Fallback: if returning without redirect intent and flow was already started, treat as cancel
         if (hasStartedCheckout && intent?.data == null) {
             finishWithCancellation()
-        }
-    }
-
-    /**
-     * Checks if the current intent indicates a user cancellation and handles it.
-     *
-     * PayPal Checkout uses the x-callback-url pattern with cancellation indicated by
-     * the query parameter `opType=cancel`.
-     *
-     * @return true if cancellation was detected and handled, false otherwise
-     */
-    private fun handleCancellationIfNeeded(): Boolean {
-        val data = intent?.data
-        val host = data?.host
-        val opType = data?.getQueryParameter("opType")
-
-        // Check for PayPal cancellation via query parameter
-        return if (host == "x-callback-url" && opType == "cancel") {
-            finishWithCancellation()
-            true
-        } else {
-            false
         }
     }
 

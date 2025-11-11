@@ -1,18 +1,15 @@
 package com.paydock.feature.paypal.checkout.injection
 
-import androidx.appcompat.app.AppCompatActivity
-import com.paydock.MobileSDK
-import com.paydock.core.domain.mapper.mapToPayPalEnv
 import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
 import com.paydock.feature.paypal.checkout.presentation.viewmodel.PayPalViewModel
 import com.paydock.feature.paypal.checkout.presentation.viewmodel.PayPalWebCheckoutViewModel
-import com.paypal.android.corepayments.CoreConfig
-import com.paypal.android.paypalwebpayments.PayPalWebCheckoutClient
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**
- * Koin module for PayPal Checkout-related components including repositories, use cases, and view models as well as walletModule.
+ * Koin module for PayPal Checkout-related components.
+ *
+ * Simplified with [PayPalWebClientManager] handling client lifecycle management.
  */
 internal val payPalCheckoutModule = module {
     // Define a view model for PayPalViewModel with SavedStateHandle
@@ -21,20 +18,12 @@ internal val payPalCheckoutModule = module {
         PayPalViewModel(config, get(), get(), get(), get(), get(), get())
     }
 
-    // PayPalWebCheckoutViewModel with function parameters and SavedStateHandle
+    // PayPalWebCheckoutViewModel - uses default PayPalWebClientManager
+    // SavedStateHandle and dispatchers are auto-injected by Koin
     viewModel {
         PayPalWebCheckoutViewModel(
             savedStateHandle = get(),
-            dispatchers = get(),
-            coreConfigProvider = { clientId ->
-                CoreConfig(
-                    clientId = clientId,
-                    environment = MobileSDK.getInstance().environment.mapToPayPalEnv()
-                )
-            },
-            clientProvider = { activity: AppCompatActivity, coreConfig: CoreConfig, returnUrl: String ->
-                PayPalWebCheckoutClient(activity, coreConfig, returnUrl)
-            }
+            dispatchers = get()
         )
     }
 }

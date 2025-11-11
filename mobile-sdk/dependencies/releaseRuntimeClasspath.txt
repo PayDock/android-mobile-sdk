@@ -119,7 +119,7 @@ co.touchlab:stately-concurrent-collections:2.1.0
 co.touchlab:stately-strict-jvm:2.1.0
 co.touchlab:stately-strict:2.1.0
 com.afterpay:afterpay-android:4.7.0
-com.braintreepayments.api:browser-switch:3.0.0-beta1
+com.braintreepayments.api:browser-switch:3.2.0
 com.google.android.gms:play-services-base:18.5.0
 com.google.android.gms:play-services-basement:18.4.0
 com.google.android.gms:play-services-identity:18.1.0
@@ -133,10 +133,10 @@ com.google.guava:listenablefuture:1.0
 com.google.pay.button:compose-pay-button:1.1.0
 com.paydock.core:network-android:1.4.0
 com.paydock.core:network:1.4.0
-com.paypal.android:core-payments:2.0.0
-com.paypal.android:fraud-protection:2.0.0
-com.paypal.android:payment-buttons:2.0.0
-com.paypal.android:paypal-web-payments:2.0.0
+com.paypal.android:core-payments:2.3.0
+com.paypal.android:fraud-protection:2.3.0
+com.paypal.android:payment-buttons:2.3.0
+com.paypal.android:paypal-web-payments:2.3.0
 com.squareup.okhttp3:logging-interceptor:5.1.0
 com.squareup.okhttp3:mockwebserver3:5.1.0
 com.squareup.okhttp3:mockwebserver:5.1.0
