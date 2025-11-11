@@ -31,6 +31,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class StylingViewModel @Inject constructor() : ViewModel() {
+    // Track which widgets have user customizations to preserve them on theme changes
+    private val hasAddressCustomizations = MutableStateFlow(false)
+    private val hasCardDetailsCustomizations = MutableStateFlow(false)
+    private val hasGiftCardCustomizations = MutableStateFlow(false)
+    
     private val _addressWidgetAppearance = MutableStateFlow<AddressDetailsWidgetAppearance?>(null)
     val addressWidgetAppearance: StateFlow<AddressDetailsWidgetAppearance?> =
         _addressWidgetAppearance.asStateFlow()
@@ -77,16 +82,51 @@ class StylingViewModel @Inject constructor() : ViewModel() {
         _standalone3DSWidgetAppearance.asStateFlow()
 
     // --- Initialization ---
-    fun updateInitialAddressDefaults(updatedDefaults: AddressDetailsWidgetAppearance) {
-        _addressWidgetAppearance.update { updatedDefaults }
+    fun updateInitialAddressDefaults(updatedDefaults: AddressDetailsWidgetAppearance, preserveCustomizations: Boolean = false) {
+        _addressWidgetAppearance.update { current ->
+            if (preserveCustomizations && current != null && hasAddressCustomizations.value) {
+                // Preserve user customizations (structural changes like icons, text, spacing)
+                // but update theme-dependent properties (colors from defaults)
+                updatedDefaults.copy(
+                    actionButton = current.actionButton, // Preserve custom button (icon, text)
+                    linkButton = current.linkButton,
+                    verticalSpacing = current.verticalSpacing,
+                    horizontalSpacing = current.horizontalSpacing
+                )
+            } else {
+                updatedDefaults
+            }
+        }
     }
 
-    fun updateInitialCardDetailsDefaults(updatedDefaults: CardDetailsWidgetAppearance) {
-        _cardDetailsWidgetAppearance.update { updatedDefaults }
+    fun updateInitialCardDetailsDefaults(updatedDefaults: CardDetailsWidgetAppearance, preserveCustomizations: Boolean = false) {
+        _cardDetailsWidgetAppearance.update { current ->
+            if (preserveCustomizations && current != null && hasCardDetailsCustomizations.value) {
+                // Preserve user customizations
+                updatedDefaults.copy(
+                    actionButton = current.actionButton,
+                    verticalSpacing = current.verticalSpacing,
+                    horizontalSpacing = current.horizontalSpacing
+                )
+            } else {
+                updatedDefaults
+            }
+        }
     }
 
-    fun updateInitialGiftCardDetailsDefaults(updatedDefaults: GiftCardWidgetAppearance) {
-        _giftCardWidgetAppearance.update { updatedDefaults }
+    fun updateInitialGiftCardDetailsDefaults(updatedDefaults: GiftCardWidgetAppearance, preserveCustomizations: Boolean = false) {
+        _giftCardWidgetAppearance.update { current ->
+            if (preserveCustomizations && current != null && hasGiftCardCustomizations.value) {
+                // Preserve user customizations
+                updatedDefaults.copy(
+                    actionButton = current.actionButton,
+                    verticalSpacing = current.verticalSpacing,
+                    horizontalSpacing = current.horizontalSpacing
+                )
+            } else {
+                updatedDefaults
+            }
+        }
     }
 
     fun updateInitialPayPalDefaults(updatedDefaults: PayPalWidgetAppearance) {
@@ -133,6 +173,14 @@ class StylingViewModel @Inject constructor() : ViewModel() {
         component: StyleAppearanceComponent,
         newComponentAppearance: Any
     ) {
+        // Mark that this widget has user customizations
+        when (widgetType) {
+            WidgetType.ADDRESS_DETAILS -> hasAddressCustomizations.value = true
+            WidgetType.CARD_DETAILS -> hasCardDetailsCustomizations.value = true
+            WidgetType.GIFT_CARD -> hasGiftCardCustomizations.value = true
+            else -> { /* Other widgets don't have customization tracking yet */ }
+        }
+        
         when (widgetType) {
             WidgetType.ADDRESS_DETAILS -> {
                 _addressWidgetAppearance.value?.let { current ->
