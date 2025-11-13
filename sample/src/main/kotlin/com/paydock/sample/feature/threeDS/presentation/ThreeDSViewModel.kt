@@ -3,9 +3,12 @@ package com.paydock.sample.feature.threeDS.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.paydock.sample.core.THREE_DS_CARD_ERROR
+import com.paydock.sample.core.THREE_DS_NOT_SUPPORTED_ERROR
+import com.paydock.sample.core.THREE_DS_STATUS_ERROR
 import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
 import com.paydock.sample.feature.threeDS.data.api.dto.CreateIntegratedThreeDSTokenRequest
 import com.paydock.sample.feature.threeDS.data.api.dto.CreateStandaloneThreeDSTokenRequest
+import com.paydock.sample.feature.threeDS.domain.model.ThreeDSToken
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateIntegratedThreeDSTokenUseCase
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateStandaloneThreeDSTokenUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,8 +38,30 @@ class ThreeDSViewModel @Inject constructor(
                     CreateIntegratedThreeDSTokenRequest(token = cardToken)
                 )
             result.onSuccess { threeDSResult ->
-                _stateFlow.update { state ->
-                    state.copy(token = threeDSResult.token, isLoading = false, error = null)
+                when(threeDSResult.status) {
+                    ThreeDSToken.ThreeDSStatus.PRE_AUTH_PENDING -> {
+                        _stateFlow.update { state ->
+                            state.copy(token = threeDSResult.token, isLoading = false, error = null)
+                        }
+                    }
+                    ThreeDSToken.ThreeDSStatus.NOT_SUPPORTED -> {
+                        _stateFlow.update { state ->
+                            state.copy(
+                                token = null,
+                                isLoading = false,
+                                error = THREE_DS_NOT_SUPPORTED_ERROR
+                            )
+                        }
+                    }
+                    else -> {
+                        _stateFlow.update { state ->
+                            state.copy(
+                                token = null,
+                                isLoading = false,
+                                error = THREE_DS_CARD_ERROR
+                            )
+                        }
+                    }
                 }
             }
             result.onFailure {
