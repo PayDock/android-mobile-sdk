@@ -37,13 +37,15 @@ internal object CreditCardNumberValidator {
      * This function applies the following validations in order:
      * 1. Checks if the input is blank and the user has interacted, returning [CardNumberError.Empty].
      * 2. Validates the input using the Luhn algorithm, returning [CardNumberError.InvalidLuhn] if invalid.
-     * 3. Checks if the card scheme is among the supported schemes (if validation is enabled),
+     * 3. Checks if the card number length is valid (12-19 digits for default, or scheme-specific if detected),
+     *    returning [CardNumberError.InvalidLength] if invalid.
+     * 4. Checks if the card scheme is among the supported schemes (only if a scheme is detected and validation is enabled),
      *    returning [CardNumberError.UnsupportedCardScheme] if unsupported.
-     * 4. Checks if the card number length is valid for the given scheme, returning [CardNumberError.InvalidLength] if invalid.
+     *    Note: If no card scheme is detected, default validation (12-19 digits + Luhn) is used regardless of merchant settings.
      * 5. If all validations pass, it returns [CardNumberError.None].
      *
      * @param cardNumber The credit card number to validate.
-     * @param cardScheme The detected card scheme, if available.
+     * @param cardScheme The detected card scheme, if available. If null, default validation (12-19 digits + Luhn) is applied.
      * @param schemeConfig The configuration defining the supported card schemes and validation settings.
      * @param hasUserInteracted Flag indicating if the user has interacted with the input field.
      * @return A [CardNumberError] representing the validation result.
@@ -55,13 +57,22 @@ internal object CreditCardNumberValidator {
         hasUserInteracted: Boolean,
     ): CardNumberError {
         val isLuhnValid = LuhnValidator.isLuhnValid(cardNumber)
-        val supportedCardSchemes = getSupportedCardSchemes(schemeConfig)
-        val cardType = cardScheme?.type
         val isValidLength = validateCardNumberLength(cardScheme, cardNumber)
-        // Determine if the card scheme is supported (only if validation is enabled)
-        val isCardSchemeSupported = supportedCardSchemes?.let {
-            it.isNotEmpty() && cardType != null && it.contains(cardType)
-        } ?: true // Default to true if validation is disabled or schemes are not provided
+
+        // If no card scheme is detected, use default validation (12-19 digits + Luhn)
+        // Merchant supported schemes only apply when a card scheme IS detected
+        val isCardSchemeSupported = if (cardScheme == null) {
+            // No card scheme detected - use default validation, always allow if passes length/Luhn
+            true
+        } else {
+            // Card scheme detected - check merchant supported schemes if validation is enabled
+            val supportedCardSchemes = getSupportedCardSchemes(schemeConfig)
+            supportedCardSchemes?.let {
+                // If merchant specified supported schemes, check if detected scheme is in the list
+                it.isNotEmpty() && it.contains(cardScheme.type)
+            } ?: true // If validation disabled or no schemes specified, allow all
+        }
+
         return when {
             cardNumber.isBlank() && hasUserInteracted -> CardNumberError.Empty
             cardNumber.isNotBlank() && !isLuhnValid -> CardNumberError.InvalidLuhn

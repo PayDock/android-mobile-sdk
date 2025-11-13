@@ -86,9 +86,9 @@ internal fun CardSecurityCodeInput(
 
     val placeholder = remember(cardCode, securityCodeType) {
         buildString {
-            val requiredDigits =
-                cardCode?.size ?: MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
-            repeat(requiredDigits) { append("X") }
+            val maxDigits =
+                cardCode?.size ?: MobileSDKConstants.CardDetailsConfig.MAX_SECURITY_CODE_LENGTH
+            repeat(maxDigits) { append("X") }
         }
     }
 
@@ -100,9 +100,10 @@ internal fun CardSecurityCodeInput(
         onValueChange = {
             hasUserInteracted = true
             // Format and parse the security code input before invoking the callback
+            // When no cardCode is provided, allow up to MAX_SECURITY_CODE_LENGTH (4) digits
             CreditCardInputParser.parseSecurityCode(
                 it,
-                cardCode?.size ?: MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
+                cardCode?.size ?: MobileSDKConstants.CardDetailsConfig.MAX_SECURITY_CODE_LENGTH
             )?.let { code ->
                 onValueChange(code)
             }
