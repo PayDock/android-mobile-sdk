@@ -104,6 +104,8 @@ internal object MobileSDKConstants {
         internal const val CVV_CVC_LENGTH = 3
         internal const val CID3_LENGTH = 3
         internal const val CID_LENGTH = 4
+        internal const val MIN_SECURITY_CODE_LENGTH = 3
+        internal const val MAX_SECURITY_CODE_LENGTH = 4
         internal const val EXPIRY_BASE_YEAR = 2000
         internal const val MAX_MONTH_COUNT = 12
         internal const val DEFAULT_CONSENT_TEXT = "Remember this card for next time."
