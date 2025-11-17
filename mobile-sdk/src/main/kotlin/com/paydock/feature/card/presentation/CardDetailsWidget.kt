@@ -126,8 +126,8 @@ fun CardDetailsWidget(
         CardInputFields(
             shouldCollectCardholderName = config.collectCardholderName,
             schemeConfig = config.schemeSupport,
-            verticalSpacing = appearance.verticalSpacing,
-            horizontalSpacing = appearance.horizontalSpacing,
+            verticalSpacing = appearance.textFieldVerticalSpacing,
+            horizontalSpacing = appearance.textFieldHorizontalSpacing,
             textFieldAppearance = appearance.textField,
             focusCardNumber = focusCardNumber,
             focusExpiry = focusExpiration,
@@ -209,6 +209,8 @@ fun CardDetailsWidget(
  *
  * @property verticalSpacing The vertical spacing between elements in the widget.
  * @property horizontalSpacing The horizontal spacing within composite elements (e.g., text fields).
+ * @property textFieldVerticalSpacing The vertical spacing between text input fields.
+ * @property textFieldHorizontalSpacing The horizontal spacing between text input fields.
  * @property title The text appearance for the widget's title.
  * @property textField The appearance settings for the text input fields (e.g., card number, expiry).
  * @property actionButton A composable lambda that provides the [ButtonAppearance] based on whether the button is enabled.
@@ -220,6 +222,8 @@ fun CardDetailsWidget(
 class CardDetailsWidgetAppearance(
     val verticalSpacing: Dp,
     val horizontalSpacing: Dp,
+    val textFieldVerticalSpacing: Dp,
+    val textFieldHorizontalSpacing: Dp,
     val title: TextAppearance,
     val textField: TextFieldAppearance,
     val actionButton: ButtonAppearance,
@@ -237,6 +241,8 @@ class CardDetailsWidgetAppearance(
      *
      * @param verticalSpacing The vertical spacing to use. Defaults to the original vertical spacing.
      * @param horizontalSpacing The horizontal spacing to use. Defaults to the original horizontal spacing.
+     * @param textFieldVerticalSpacing The vertical spacing between text fields. Defaults to the original text field vertical spacing.
+     * @param textFieldHorizontalSpacing The horizontal spacing between text fields. Defaults to the original text field horizontal spacing.
      * @param title The text appearance for the title. Defaults to the original title appearance.
      * @param textField The appearance for text fields. Defaults to the original text field appearance.
      * @param actionButton A composable lambda that defines the appearance of the action button based on its enabled state.
@@ -249,6 +255,8 @@ class CardDetailsWidgetAppearance(
     fun copy(
         verticalSpacing: Dp = this.verticalSpacing,
         horizontalSpacing: Dp = this.horizontalSpacing,
+        textFieldVerticalSpacing: Dp = this.textFieldVerticalSpacing,
+        textFieldHorizontalSpacing: Dp = this.textFieldHorizontalSpacing,
         title: TextAppearance = this.title,
         textField: TextFieldAppearance = this.textField,
         actionButton: ButtonAppearance = this.actionButton,
@@ -259,6 +267,8 @@ class CardDetailsWidgetAppearance(
         CardDetailsWidgetAppearance(
             verticalSpacing = verticalSpacing.takeOrElse { this.verticalSpacing },
             horizontalSpacing = horizontalSpacing.takeOrElse { this.horizontalSpacing },
+            textFieldVerticalSpacing = textFieldVerticalSpacing.takeOrElse { this.textFieldVerticalSpacing },
+            textFieldHorizontalSpacing = textFieldHorizontalSpacing.takeOrElse { this.textFieldHorizontalSpacing },
             title = title.copy(),
             textField = textField.copy(),
             actionButton = when (actionButton) {
@@ -280,6 +290,8 @@ class CardDetailsWidgetAppearance(
 
         if (verticalSpacing != other.verticalSpacing) return false
         if (horizontalSpacing != other.horizontalSpacing) return false
+        if (textFieldVerticalSpacing != other.textFieldVerticalSpacing) return false
+        if (textFieldHorizontalSpacing != other.textFieldHorizontalSpacing) return false
         if (title != other.title) return false
         if (textField != other.textField) return false
         if (actionButton != other.actionButton) return false
@@ -293,6 +305,8 @@ class CardDetailsWidgetAppearance(
     override fun hashCode(): Int {
         var result = verticalSpacing.hashCode()
         result = 31 * result + horizontalSpacing.hashCode()
+        result = 31 * result + textFieldVerticalSpacing.hashCode()
+        result = 31 * result + textFieldHorizontalSpacing.hashCode()
         result = 31 * result + title.hashCode()
         result = 31 * result + textField.hashCode()
         result = 31 * result + actionButton.hashCode()
@@ -326,6 +340,8 @@ object CardDetailsAppearanceDefaults {
     fun appearance(): CardDetailsWidgetAppearance = CardDetailsWidgetAppearance(
         verticalSpacing = WidgetDefaults.Spacing,
         horizontalSpacing = WidgetDefaults.Spacing,
+        textFieldVerticalSpacing = WidgetDefaults.Spacing,
+        textFieldHorizontalSpacing = WidgetDefaults.Spacing,
         title = TextAppearanceDefaults.appearance().copy(
             style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
         ),

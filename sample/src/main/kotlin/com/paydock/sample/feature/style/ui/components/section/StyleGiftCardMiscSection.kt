@@ -21,6 +21,8 @@ fun StyleGiftCardMiscSection(
     // Derived states remain essential for UDF
     val currentVerticalSpacing = currentAppearance.verticalSpacing
     val currentHorizontalSpacing = currentAppearance.horizontalSpacing
+    val currentTextFieldVerticalSpacing = currentAppearance.textFieldVerticalSpacing
+    val currentTextFieldHorizontalSpacing = currentAppearance.textFieldHorizontalSpacing
 
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
@@ -42,6 +44,26 @@ fun StyleGiftCardMiscSection(
             value = currentHorizontalSpacing.value.toInt(),
             onValueChange = { newValue ->
                 onAppearanceChange(currentAppearance.copy(horizontalSpacing = newValue.dp))
+            }
+        )
+
+        HorizontalDivider()
+
+        NumberCounter(
+            title = stringResource(R.string.label_text_field_vertical_spacing),
+            value = currentTextFieldVerticalSpacing.value.toInt(),
+            onValueChange = { newValue ->
+                onAppearanceChange(currentAppearance.copy(textFieldVerticalSpacing = newValue.dp))
+            }
+        )
+
+        HorizontalDivider()
+
+        NumberCounter(
+            title = stringResource(R.string.label_text_field_horizontal_spacing),
+            value = currentTextFieldHorizontalSpacing.value.toInt(),
+            onValueChange = { newValue ->
+                onAppearanceChange(currentAppearance.copy(textFieldHorizontalSpacing = newValue.dp))
             }
         )
     }
