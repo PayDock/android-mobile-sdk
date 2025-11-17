@@ -91,7 +91,9 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                     actionButton = current.actionButton, // Preserve custom button (icon, text)
                     linkButton = current.linkButton,
                     verticalSpacing = current.verticalSpacing,
-                    horizontalSpacing = current.horizontalSpacing
+                    horizontalSpacing = current.horizontalSpacing,
+                    textFieldVerticalSpacing = current.textFieldVerticalSpacing,
+                    textFieldHorizontalSpacing = current.textFieldHorizontalSpacing
                 )
             } else {
                 updatedDefaults
@@ -106,7 +108,9 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                 updatedDefaults.copy(
                     actionButton = current.actionButton,
                     verticalSpacing = current.verticalSpacing,
-                    horizontalSpacing = current.horizontalSpacing
+                    horizontalSpacing = current.horizontalSpacing,
+                    textFieldVerticalSpacing = current.textFieldVerticalSpacing,
+                    textFieldHorizontalSpacing = current.textFieldHorizontalSpacing
                 )
             } else {
                 updatedDefaults
@@ -121,7 +125,9 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                 updatedDefaults.copy(
                     actionButton = current.actionButton,
                     verticalSpacing = current.verticalSpacing,
-                    horizontalSpacing = current.horizontalSpacing
+                    horizontalSpacing = current.horizontalSpacing,
+                    textFieldVerticalSpacing = current.textFieldVerticalSpacing,
+                    textFieldHorizontalSpacing = current.textFieldHorizontalSpacing
                 )
             } else {
                 updatedDefaults
@@ -309,7 +315,9 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                         StyleAppearanceComponent.PROPERTIES -> (newComponentAppearance as CardDetailsWidgetAppearance).let {
                             current.copy(
                                 verticalSpacing = newComponentAppearance.verticalSpacing,
-                                horizontalSpacing = newComponentAppearance.horizontalSpacing
+                                horizontalSpacing = newComponentAppearance.horizontalSpacing,
+                                textFieldVerticalSpacing = newComponentAppearance.textFieldVerticalSpacing,
+                                textFieldHorizontalSpacing = newComponentAppearance.textFieldHorizontalSpacing
                             )
                         }
 
@@ -396,7 +404,9 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                         StyleAppearanceComponent.PROPERTIES -> (newComponentAppearance as GiftCardWidgetAppearance).let {
                             current.copy(
                                 verticalSpacing = newComponentAppearance.verticalSpacing,
-                                horizontalSpacing = newComponentAppearance.horizontalSpacing
+                                horizontalSpacing = newComponentAppearance.horizontalSpacing,
+                                textFieldVerticalSpacing = newComponentAppearance.textFieldVerticalSpacing,
+                                textFieldHorizontalSpacing = newComponentAppearance.textFieldHorizontalSpacing
                             )
                         }
 

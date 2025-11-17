@@ -114,7 +114,7 @@ fun GiftCardWidget(
 
             if (shouldUseColumnLayout) {
                 CardNumberPinColumn(
-                    verticalSpacing = appearance.verticalSpacing,
+                    verticalSpacing = appearance.textFieldVerticalSpacing,
                     appearance = appearance.textField,
                     enabled = uiState !is GiftCardUIState.Loading && enabled,
                     cardNumber = inputState.cardNumber,
@@ -126,7 +126,7 @@ fun GiftCardWidget(
                 )
             } else {
                 CardNumberPinRow(
-                    horizontalSpacing = appearance.horizontalSpacing,
+                    horizontalSpacing = appearance.textFieldHorizontalSpacing,
                     appearance = appearance.textField,
                     enabled = uiState !is GiftCardUIState.Loading && enabled,
                     cardNumber = inputState.cardNumber,
@@ -298,6 +298,8 @@ fun CardNumberPinColumn(
  *  margin applied vertically between these elements.
  * @property horizontalSpacing The horizontal space between elements within the row of input fields in
  *  the [GiftCardWidget]. This affects the spacing between the card number and PIN input fields.
+ * @property textFieldVerticalSpacing The vertical spacing between text input fields.
+ * @property textFieldHorizontalSpacing The horizontal spacing between text input fields.
  * @property textField The appearance configuration for the input text fields within the
  *  [GiftCardWidget]. This property allows for customization of the text field's visual style, such
  *  as the colors, borders, and content padding. See [TextFieldAppearance] for more details.
@@ -315,6 +317,8 @@ fun CardNumberPinColumn(
 class GiftCardWidgetAppearance(
     val verticalSpacing: Dp,
     val horizontalSpacing: Dp,
+    val textFieldVerticalSpacing: Dp,
+    val textFieldHorizontalSpacing: Dp,
     val textField: TextFieldAppearance,
     val actionButton: ButtonAppearance,
 ) {
@@ -330,6 +334,10 @@ class GiftCardWidgetAppearance(
      *  [Dp.Unspecified], the original `verticalSpacing` of this instance will be used.
      * @param horizontalSpacing An optional override for the horizontal spacing between elements. If set
      *  to [Dp.Unspecified], the original `horizontalSpacing` of this instance will be used.
+     * @param textFieldVerticalSpacing An optional override for the vertical spacing between text fields. If set to
+     *  [Dp.Unspecified], the original `textFieldVerticalSpacing` of this instance will be used.
+     * @param textFieldHorizontalSpacing An optional override for the horizontal spacing between text fields. If set to
+     *  [Dp.Unspecified], the original `textFieldHorizontalSpacing` of this instance will be used.
      * @param textField An optional override for the text field appearance configuration. If not
      *  specified, the original `textField` appearance will be used.
      * @param actionButton An optional override for the action button's appearance. If not specified, the
@@ -342,11 +350,15 @@ class GiftCardWidgetAppearance(
     fun copy(
         verticalSpacing: Dp = this.verticalSpacing,
         horizontalSpacing: Dp = this.horizontalSpacing,
+        textFieldVerticalSpacing: Dp = this.textFieldVerticalSpacing,
+        textFieldHorizontalSpacing: Dp = this.textFieldHorizontalSpacing,
         textField: TextFieldAppearance = this.textField,
         actionButton: ButtonAppearance = this.actionButton,
     ): GiftCardWidgetAppearance = GiftCardWidgetAppearance(
         verticalSpacing = verticalSpacing.takeOrElse { this.verticalSpacing },
         horizontalSpacing = horizontalSpacing.takeOrElse { this.horizontalSpacing },
+        textFieldVerticalSpacing = textFieldVerticalSpacing.takeOrElse { this.textFieldVerticalSpacing },
+        textFieldHorizontalSpacing = textFieldHorizontalSpacing.takeOrElse { this.textFieldHorizontalSpacing },
         textField = textField.copy(),
         actionButton = when (actionButton) {
             is ButtonAppearance.FilledButtonAppearance -> actionButton.copy()
@@ -364,6 +376,8 @@ class GiftCardWidgetAppearance(
 
         if (verticalSpacing != other.verticalSpacing) return false
         if (horizontalSpacing != other.horizontalSpacing) return false
+        if (textFieldVerticalSpacing != other.textFieldVerticalSpacing) return false
+        if (textFieldHorizontalSpacing != other.textFieldHorizontalSpacing) return false
         if (textField != other.textField) return false
         if (actionButton != other.actionButton) return false
 
@@ -373,6 +387,8 @@ class GiftCardWidgetAppearance(
     override fun hashCode(): Int {
         var result = verticalSpacing.hashCode()
         result = 31 * result + horizontalSpacing.hashCode()
+        result = 31 * result + textFieldVerticalSpacing.hashCode()
+        result = 31 * result + textFieldHorizontalSpacing.hashCode()
         result = 31 * result + textField.hashCode()
         result = 31 * result + actionButton.hashCode()
         return result
@@ -401,6 +417,8 @@ object GiftCardAppearanceDefaults {
     fun appearance(): GiftCardWidgetAppearance = GiftCardWidgetAppearance(
         verticalSpacing = WidgetDefaults.Spacing,
         horizontalSpacing = WidgetDefaults.Spacing,
+        textFieldVerticalSpacing = WidgetDefaults.Spacing,
+        textFieldHorizontalSpacing = WidgetDefaults.Spacing,
         textField = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
         actionButton = ButtonAppearanceDefaults.filledButtonAppearance().copy(
             text = stringResource(R.string.button_submit)

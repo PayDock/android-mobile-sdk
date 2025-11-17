@@ -102,8 +102,8 @@ fun AddressDetailsWidget(
             lastName = uiState.billingAddress.lastName,
             onFirstNameChange = viewModel::updateFirstName,
             onLastNameChange = viewModel::updateLastName,
-            verticalSpacing = appearance.verticalSpacing,
-            horizontalSpacing = appearance.horizontalSpacing,
+            verticalSpacing = appearance.textFieldVerticalSpacing,
+            horizontalSpacing = appearance.textFieldHorizontalSpacing,
             titleAppearance = appearance.title,
             textFieldAppearance = appearance.textField
         )
@@ -143,7 +143,7 @@ fun AddressDetailsWidget(
             onStateChange = viewModel::updateState,
             onPostalCodeChange = viewModel::updatePostalCode,
             onCountryChange = viewModel::updateCountry,
-            verticalSpacing = appearance.verticalSpacing,
+            verticalSpacing = appearance.textFieldVerticalSpacing,
             textFieldAppearance = appearance.textField,
             searchAppearance = appearance.searchDropdown
         )
@@ -175,6 +175,8 @@ fun AddressDetailsWidget(
  *
  * @property horizontalSpacing The horizontal spacing between the elements in the widget.
  * @property verticalSpacing The vertical spacing between the elements in the widget.
+ * @property textFieldVerticalSpacing The vertical spacing between text input fields.
+ * @property textFieldHorizontalSpacing The horizontal spacing between text input fields.
  * @property title The appearance configuration for the title text.
  * @property textField The appearance configuration for the text fields.
  * @property actionButton The appearance configuration for the action button.
@@ -185,6 +187,8 @@ fun AddressDetailsWidget(
 class AddressDetailsWidgetAppearance(
     val horizontalSpacing: Dp,
     val verticalSpacing: Dp,
+    val textFieldVerticalSpacing: Dp,
+    val textFieldHorizontalSpacing: Dp,
     val title: TextAppearance,
     val textField: TextFieldAppearance,
     val actionButton: ButtonAppearance,
@@ -197,6 +201,8 @@ class AddressDetailsWidgetAppearance(
      *
      * @param horizontalSpacing The horizontal spacing between elements.
      * @param verticalSpacing The vertical spacing between elements.
+     * @param textFieldVerticalSpacing The vertical spacing between text fields.
+     * @param textFieldHorizontalSpacing The horizontal spacing between text fields.
      * @param title The appearance for the title text.
      * @param textField The appearance for the text input fields.
      * @param actionButton The appearance for the action button (Save Address).
@@ -207,6 +213,8 @@ class AddressDetailsWidgetAppearance(
     fun copy(
         horizontalSpacing: Dp = this.horizontalSpacing,
         verticalSpacing: Dp = this.verticalSpacing,
+        textFieldVerticalSpacing: Dp = this.textFieldVerticalSpacing,
+        textFieldHorizontalSpacing: Dp = this.textFieldHorizontalSpacing,
         title: TextAppearance = this.title,
         textField: TextFieldAppearance = this.textField,
         actionButton: ButtonAppearance = this.actionButton,
@@ -215,6 +223,8 @@ class AddressDetailsWidgetAppearance(
     ): AddressDetailsWidgetAppearance = AddressDetailsWidgetAppearance(
         horizontalSpacing = horizontalSpacing.takeOrElse { this.horizontalSpacing },
         verticalSpacing = verticalSpacing.takeOrElse { this.verticalSpacing },
+        textFieldVerticalSpacing = textFieldVerticalSpacing.takeOrElse { this.textFieldVerticalSpacing },
+        textFieldHorizontalSpacing = textFieldHorizontalSpacing.takeOrElse { this.textFieldHorizontalSpacing },
         title = title.copy(),
         textField = textField.copy(),
         actionButton = when (actionButton) {
@@ -235,6 +245,8 @@ class AddressDetailsWidgetAppearance(
 
         if (horizontalSpacing != other.horizontalSpacing) return false
         if (verticalSpacing != other.verticalSpacing) return false
+        if (textFieldVerticalSpacing != other.textFieldVerticalSpacing) return false
+        if (textFieldHorizontalSpacing != other.textFieldHorizontalSpacing) return false
         if (title != other.title) return false
         if (textField != other.textField) return false
         if (actionButton != other.actionButton) return false
@@ -247,6 +259,8 @@ class AddressDetailsWidgetAppearance(
     override fun hashCode(): Int {
         var result = verticalSpacing.hashCode()
         result = 31 * result + horizontalSpacing.hashCode()
+        result = 31 * result + textFieldVerticalSpacing.hashCode()
+        result = 31 * result + textFieldHorizontalSpacing.hashCode()
         result = 31 * result + title.hashCode()
         result = 31 * result + textField.hashCode()
         result = 31 * result + actionButton.hashCode()
@@ -278,6 +292,8 @@ object AddressDetailsAppearanceDefaults {
     fun appearance(): AddressDetailsWidgetAppearance = AddressDetailsWidgetAppearance(
         horizontalSpacing = WidgetDefaults.Spacing,
         verticalSpacing = WidgetDefaults.Spacing,
+        textFieldVerticalSpacing = WidgetDefaults.Spacing,
+        textFieldHorizontalSpacing = WidgetDefaults.Spacing,
         title = TextAppearanceDefaults.appearance().copy(
             style = MaterialTheme.typography.titleMedium,
         ),
