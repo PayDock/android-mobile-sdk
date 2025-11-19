@@ -12,6 +12,8 @@ plugins {
     alias(libs.plugins.dagger.hilt)
 }
 
+val deployVersionName: String = project.findProperty("versionName") as String? ?: "1.0.0"
+
 android {
     namespace = "com.paydock.sample"
     compileSdk = 36
@@ -21,7 +23,7 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0.0"
+        versionName = deployVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
