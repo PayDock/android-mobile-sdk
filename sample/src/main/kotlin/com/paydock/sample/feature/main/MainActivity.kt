@@ -166,12 +166,12 @@ fun MainScreenView(
         stylingViewModel.updateInitialAddressDefaults(addressSdkDefaults, preserveCustomizations = isInitialized)
         stylingViewModel.updateInitialCardDetailsDefaults(cardSdkDefaults, preserveCustomizations = isInitialized)
         stylingViewModel.updateInitialGiftCardDetailsDefaults(giftCardSdkDefaults, preserveCustomizations = isInitialized)
+        stylingViewModel.updateInitialPayPalVaultDefaults(payPalVaultSdkDefaults, preserveCustomizations = isInitialized)
         
         // Widgets without customization tracking - always update (these typically only have theme colors)
         stylingViewModel.updateInitialClickToPayDefaults(clickToPaySdkDefaults)
         stylingViewModel.updateInitialAfterpayDefaults(afterpaySdkDefaults)
         stylingViewModel.updateInitialPayPalDefaults(payPalSdkDefaults)
-        stylingViewModel.updateInitialPayPalVaultDefaults(payPalVaultSdkDefaults)
         stylingViewModel.updateInitialGooglePayDefaults(googlePaySdkDefaults)
         stylingViewModel.updateInitialColesPayDefaults(colesPaySdkDefaults)
         stylingViewModel.updateInitialIntegrated3DSDefaults(integrated3DSSdkDefaults)
