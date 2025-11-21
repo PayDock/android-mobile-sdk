@@ -24,7 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -41,6 +40,7 @@ import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.icon.IconAppearance
 import com.paydock.designsystems.components.icon.IconAppearanceDefaults
 import com.paydock.designsystems.components.icon.SdkIcon
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults.appearance
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
@@ -81,7 +81,6 @@ internal fun SdkTextField(
     leadingIcon: @Composable (() -> Unit)? = null,
 ) {
     // State to track whether the text input field is focused
-    var isFocused by remember { mutableStateOf(false) }
     val isError = error != null
 
     // Determine if we should render a trailing icon; avoid reserving space when not needed
@@ -97,9 +96,6 @@ internal fun SdkTextField(
             onValueChange = onValueChange,
             modifier = Modifier
                 .fillMaxWidth()
-                .onFocusChanged {
-                    isFocused = it.isFocused
-                }
                 .testTag("sdkInput")
                 .semantics {
                     autofillType?.let { contentType = it }
@@ -112,19 +108,11 @@ internal fun SdkTextField(
             visualTransformation = visualTransformation,
             interactionSource = interactionSource,
             label = {
-                // State to track whether the label should be displayed based on focus and text input
-                val shouldShowLabel = isFocused || value.isNotEmpty()
-
-                // Set the current label text style based on the focused state and whether there's text
-                val labelTextAppearance = if (shouldShowLabel) {
-                    appearance.label
-                } else {
-                    appearance.label.copy(
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                }
+                // Use appearance.label directly to preserve custom styling in both focused and unfocused states
+                // Previously, unfocused state was overriding with MaterialTheme.typography.labelMedium,
+                // which prevented custom styling from being applied to the collapsed label
                 Box(modifier = Modifier.offset(y = 2.dp)) {
-                    TextFieldLabel(label, labelTextAppearance)
+                    TextFieldLabel(label, appearance.label)
                 }
             },
             placeholder = {
