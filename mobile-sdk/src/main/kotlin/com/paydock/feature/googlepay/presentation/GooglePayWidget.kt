@@ -149,7 +149,7 @@ fun GooglePayWidget(
                             )
                         )
                     },
-                    enabled = uiState !is GooglePayUIState.Loading && enabled,
+                    enabled = uiState !is GooglePayUIState.Loading && uiState !is GooglePayUIState.LaunchGooglePayTask && enabled,
                 )
             }
         }
