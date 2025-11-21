@@ -35,6 +35,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
     private val hasAddressCustomizations = MutableStateFlow(false)
     private val hasCardDetailsCustomizations = MutableStateFlow(false)
     private val hasGiftCardCustomizations = MutableStateFlow(false)
+    private val hasPayPalVaultCustomizations = MutableStateFlow(false)
     
     private val _addressWidgetAppearance = MutableStateFlow<AddressDetailsWidgetAppearance?>(null)
     val addressWidgetAppearance: StateFlow<AddressDetailsWidgetAppearance?> =
@@ -139,8 +140,17 @@ class StylingViewModel @Inject constructor() : ViewModel() {
         _paypalWidgetAppearance.update { updatedDefaults }
     }
 
-    fun updateInitialPayPalVaultDefaults(updatedDefaults: PayPalPaymentSourceWidgetAppearance) {
-        _paypalVaultWidgetAppearance.update { updatedDefaults }
+    fun updateInitialPayPalVaultDefaults(updatedDefaults: PayPalPaymentSourceWidgetAppearance, preserveCustomizations: Boolean = false) {
+        _paypalVaultWidgetAppearance.update { current ->
+            if (preserveCustomizations && current != null && hasPayPalVaultCustomizations.value) {
+                // Preserve user customizations (actionButton)
+                updatedDefaults.copy(
+                    actionButton = current.actionButton
+                )
+            } else {
+                updatedDefaults
+            }
+        }
     }
 
     fun updateInitialAfterpayDefaults(updatedDefaults: AfterpayWidgetAppearance) {
@@ -184,6 +194,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
             WidgetType.ADDRESS_DETAILS -> hasAddressCustomizations.value = true
             WidgetType.CARD_DETAILS -> hasCardDetailsCustomizations.value = true
             WidgetType.GIFT_CARD -> hasGiftCardCustomizations.value = true
+            WidgetType.PAY_PAL_VAULT -> hasPayPalVaultCustomizations.value = true
             else -> { /* Other widgets don't have customization tracking yet */ }
         }
         
