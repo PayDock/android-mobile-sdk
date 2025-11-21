@@ -1,6 +1,6 @@
 # Changelog
 
-## [5.2.0] - 2025-11-17
+## [5.2.0] - 2025-11-21
 
 ### Added
 - UnionPay support for card schemes

@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
@@ -267,7 +267,7 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
                             modifier = Modifier
                                 .fillMaxWidth()
                         ) {
-                            items(itemsToShow, key = { it }) { itemString ->
+                            itemsIndexed(itemsToShow, key = { index, _ -> index }) { index, itemString ->
                                 if (itemString == noResultsFoundLabel && currentSearchResultsAsStrings.isEmpty() && !isSearching) {
                                     DropdownItem(
                                         item = AnnotatedString(itemString),
@@ -279,9 +279,9 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
                                         item = AnnotatedString(itemString),
                                         appearance = appearance.dropdown,
                                         onItemSelected = {
-                                            val originalObjectIndex = currentSearchResultsAsStrings.indexOf(itemString)
-                                            if (originalObjectIndex != -1 && originalObjectIndex < searchResultsObjects.size) {
-                                                val selectedActualObject = searchResultsObjects[originalObjectIndex]
+                                            // Use the index directly instead of indexOf to handle duplicate strings correctly
+                                            if (index < currentSearchResultsAsStrings.size && index < searchResultsObjects.size) {
+                                                val selectedActualObject = searchResultsObjects[index]
                                                 viewModel.onSearchTextChange(itemString)
                                                 onSelectionChanged(selectedActualObject)
                                                 focusManager.clearFocus()
