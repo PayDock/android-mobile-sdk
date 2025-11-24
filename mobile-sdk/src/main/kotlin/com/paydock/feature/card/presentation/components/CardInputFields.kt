@@ -120,7 +120,7 @@ internal fun CardInputFields(
             // For Card Details: Expiry (50% weight) + CVV (50% weight) + spacing
             // Each field needs ~150dp minimum (MM/YY format + CVV digits + padding)
             val shouldUseColumnLayout = WidgetDefaults.shouldUseColumnLayout(
-                availableWidth = maxWidth,
+                availableWidth = this.maxWidth,
                 fontScale = fontScale,
                 minFieldWidth = 150.dp, // Expiry/CVV field minimum
                 fieldWeight = 0.5f // Each field weight (equal split)
@@ -262,6 +262,7 @@ private fun ExpiryAndCodeRow(
                 .weight(0.5f)
                 .focusRequester(focusCode)
                 .testTag("cardSecurityCodeInput"),
+            appearance = appearance,
             value = code,
             enabled = enabled,
             cardCode = cardScheme?.code,
