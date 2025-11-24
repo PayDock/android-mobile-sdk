@@ -104,7 +104,7 @@ internal fun <T : Any?> SdkWebView(
                               try {
                                 var __origClose = window.close;
                                 window.close = function(){
-                                  location.href = ${MobileSDKConstants.WEB_CLOSE_DEEPLINK};
+                                  location.href = "${MobileSDKConstants.WEB_CLOSE_DEEPLINK}";
                                 };
                               } catch(e) {}
                             })();
@@ -132,7 +132,7 @@ internal fun <T : Any?> SdkWebView(
                               try {
                                 var __origClose = window.close;
                                 window.close = function(){
-                                  location.href = ${MobileSDKConstants.WEB_CLOSE_DEEPLINK};
+                                  location.href = "${MobileSDKConstants.WEB_CLOSE_DEEPLINK}";
                                 };
                               } catch(e) {}
                             })();
