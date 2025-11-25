@@ -147,7 +147,7 @@ internal fun ManualAddressEntry(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("countryInput"),
-                appearance = searchAppearance,
+                appearance = searchAppearance.copy(textField = textFieldAppearance),
                 currentCountryValue = addressInputState.country,
                 autofillType = ContentType.AddressCountry,
                 onCountryConfirmed = onCountryChange
