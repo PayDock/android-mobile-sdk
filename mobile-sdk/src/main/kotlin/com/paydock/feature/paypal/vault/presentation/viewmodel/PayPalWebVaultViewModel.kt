@@ -90,6 +90,10 @@ internal class PayPalWebVaultViewModel(
      *
      * If the paypalClient is null (process was killed), it will be recreated using persisted config.
      *
+     * When "do not keep activities" is enabled, the PayPal SDK may return NoResult even though
+     * the intent contains success data. This method includes fallback logic to manually parse
+     * the intent data in such cases.
+     *
      * @param activity The activity handling the deep link (needed to recreate client if necessary).
      * @param intent The Intent received from the PayPal redirect or deeplink.
      */
@@ -111,10 +115,40 @@ internal class PayPalWebVaultViewModel(
                 _vaultResult.value = PayPalWebVaultState.Success(approvalSessionId)
             }
             is PayPalWebCheckoutFinishVaultResult.NoResult -> {
-                // Treat as cancellation so the Activity can close cleanly
-                _vaultResult.value = PayPalWebVaultState.Canceled
+                // Fallback: When "do not keep activities" is enabled, the SDK may return NoResult
+                // even though the intent contains success data. Manually parse the intent to check.
+                val approvalSessionId = extractApprovalSessionIdFromIntent(intent)
+                if (approvalSessionId != null) {
+                    _vaultResult.value = PayPalWebVaultState.Success(approvalSessionId)
+                } else {
+                    // Treat as cancellation so the Activity can close cleanly
+                    _vaultResult.value = PayPalWebVaultState.Canceled
+                }
             }
         }
+    }
+
+    /**
+     * Extracts the approval session ID from the intent data URI as a fallback when the SDK
+     * returns NoResult but the intent contains success data.
+     *
+     * This handles the edge case where "do not keep activities" is enabled and the activity
+     * is recreated, causing the SDK to lose internal state.
+     *
+     * @param intent The Intent containing the deep link data.
+     * @return The approval session ID if found in the success URL, null otherwise.
+     */
+    private fun extractApprovalSessionIdFromIntent(intent: Intent): String? {
+        val dataUri = intent.data ?: return null
+        val expectedPath = "/success"
+
+        // Check if the URI matches the success path
+        if (dataUri.path != expectedPath) {
+            return null
+        }
+
+        // Extract approval_session_id from query parameters
+        return dataUri.getQueryParameter("approval_session_id")
     }
 
     /**
