@@ -86,7 +86,12 @@ internal class PayPalWebCheckoutViewModel(
      *
      * If the paypalClient is lost due to process death, it will be recreated using persisted configuration.
      *
+     * When "do not keep activities" is enabled, the PayPal SDK may return NoResult even though
+     * the intent contains success data. This method includes fallback logic to manually parse
+     * the intent data in such cases.
+     *
      * @param activity The hosting activity (required to recreate the client if lost).
+     * @param intent The Intent received from the PayPal redirect or deeplink.
      */
     fun handleDeeplinkResult(activity: AppCompatActivity, intent: Intent) {
         // Get or recreate client if lost due to process death
@@ -110,9 +115,65 @@ internal class PayPalWebCheckoutViewModel(
                 _checkoutState.value = PayPalWebCheckoutState.Failure(result.error)
             }
             is PayPalWebCheckoutFinishStartResult.NoResult -> {
-                _checkoutState.value = PayPalWebCheckoutState.Canceled
+                // Fallback: When "do not keep activities" is enabled, the SDK may return NoResult
+                // even though the intent contains success data. Manually parse the intent to check.
+                val checkoutData = extractCheckoutDataFromIntent(intent)
+                if (checkoutData != null) {
+                    _checkoutState.value = PayPalWebCheckoutState.Success(
+                        paymentMethodId = checkoutData.orderId,
+                        payerId = checkoutData.payerId
+                    )
+                } else {
+                    _checkoutState.value = PayPalWebCheckoutState.Canceled
+                }
             }
         }
+    }
+
+    /**
+     * Data class to hold extracted checkout data from intent.
+     */
+    private data class CheckoutData(
+        val orderId: String,
+        val payerId: String
+    )
+
+    /**
+     * Extracts the order ID and payer ID from the intent data URI as a fallback when the SDK
+     * returns NoResult but the intent contains success data.
+     *
+     * This handles the edge case where "do not keep activities" is enabled and the activity
+     * is recreated, causing the SDK to lose internal state.
+     *
+     * The expected URL pattern is:
+     * {scheme}://paypal-sdk/paypal-checkout?opType=payment&token={orderId}&PayerID={payerId}
+     *
+     * @param intent The Intent containing the deep link data.
+     * @return A [CheckoutData] object with orderId and payerId if found in the success URL, null otherwise.
+     */
+    private fun extractCheckoutDataFromIntent(intent: Intent): CheckoutData? {
+        val dataUri = intent.data ?: return null
+        val expectedPath = "/paypal-sdk/paypal-checkout"
+
+        // Check if the URI matches the expected path
+        if (dataUri.path != expectedPath) {
+            return null
+        }
+
+        // Check if opType is payment (success case)
+        val opType = dataUri.getQueryParameter("opType")
+        if (opType != "payment") {
+            return null
+        }
+
+        // Extract orderId (from token parameter) and payerId from query parameters
+        // Note: PayPal uses PayerID (capital ID) in the URL
+        val orderId = dataUri.getQueryParameter("token") ?: return null
+        val payerId = dataUri.getQueryParameter("PayerID")
+            ?: dataUri.getQueryParameter("payerId") // Fallback to lowercase for robustness
+            ?: return null
+
+        return CheckoutData(orderId = orderId, payerId = payerId)
     }
 
     /**

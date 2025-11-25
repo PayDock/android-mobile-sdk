@@ -118,7 +118,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                     addressLine3 = customerData?.billingAddress?.addressLine3,
                     city = customerData?.billingAddress?.city ?: "city",
                     state = customerData?.billingAddress?.state ?: "state",
-                    countryCode = customerData?.billingAddress?.countryCode ?: "US",
+                    countryCode = customerData?.billingAddress?.countryCode ?: "AU",
                     postalCode = customerData?.billingAddress?.postalCode ?: "12345",
                     walletType = WalletType.PAY_PAL.type
                 )
@@ -157,7 +157,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                     addressLine3 = customerData?.billingAddress?.addressLine3,
                     city = customerData?.billingAddress?.city ?: "city",
                     state = customerData?.billingAddress?.state ?: "state",
-                    countryCode = customerData?.billingAddress?.countryCode ?: "US",
+                    countryCode = customerData?.billingAddress?.countryCode ?: "AU",
                     postalCode = customerData?.billingAddress?.postalCode ?: "12345",
                     walletType = WalletType.COLES_PAY.type
                 )
@@ -236,7 +236,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                     addressLine3 = customerData?.billingAddress?.addressLine3,
                     city = customerData?.billingAddress?.city ?: "city",
                     state = customerData?.billingAddress?.state ?: "state",
-                    countryCode = customerData?.billingAddress?.countryCode ?: "US",
+                    countryCode = customerData?.billingAddress?.countryCode ?: "AU",
                     postalCode = customerData?.billingAddress?.postalCode ?: "12345",
                     walletType = WalletType.AFTER_PAY.type
                 ),
