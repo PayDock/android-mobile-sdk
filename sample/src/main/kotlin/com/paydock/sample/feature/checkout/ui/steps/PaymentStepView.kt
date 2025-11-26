@@ -748,15 +748,7 @@ fun PaymentWidgetView(
 
                         PaymentMethod.CLICK_TO_PAY -> {
                             ClickToPayComponent(
-                                resultHandler = { result ->
-                                    result.onSuccess { token ->
-                                        viewModel.setThePaymentToken(token)
-                                        viewModel.placeOrder()
-                                    }
-                                    result.onFailure { _ ->
-                                        viewModel.routeToFailure()
-                                    }
-                                }
+                                resultHandler = { result -> viewModel.handleClickToPayResult(result) }
                             )
                         }
 
