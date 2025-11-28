@@ -1,6 +1,7 @@
 package com.paydock.feature.card.presentation
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,10 +20,13 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
 import com.paydock.R
-import com.paydock.core.MobileSDKConstants
+import com.paydock.core.domain.model.Event
+import com.paydock.core.domain.model.EventAction
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
@@ -30,6 +34,7 @@ import com.paydock.designsystems.components.button.RenderButton
 import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.designsystems.core.WidgetDefaults
+import com.paydock.feature.card.domain.model.GiftCardEventNames
 import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
 import com.paydock.feature.card.presentation.components.CardPinInput
 import com.paydock.feature.card.presentation.components.GiftCardNumberInput
@@ -51,6 +56,7 @@ import org.koin.core.parameter.parametersOf
  * @param config The configuration for the gift card widget, including necessary access details.
  * @param appearance Defines the visual appearance of the gift card widget elements. Defaults to a standard appearance.
  * @param loadingDelegate An optional delegate to manage the visibility of loading indicators externally.
+ * @param eventDelegate An optional [WidgetEventDelegate] for tracking widget events such as button clicks.
  * @param completion A callback invoked with the result of the tokenization process, providing either
  *                   a success with the token or a failure with an exception.
  */
@@ -61,6 +67,7 @@ fun GiftCardWidget(
     config: GiftCardWidgetConfig,
     appearance: GiftCardWidgetAppearance = GiftCardAppearanceDefaults.appearance(),
     loadingDelegate: WidgetLoadingDelegate? = null,
+    eventDelegate: WidgetEventDelegate? = null,
     completion: (Result<String>) -> Unit,
 ) {
     // ViewModel instance scoped to the Koin dependency injection framework
@@ -77,12 +84,10 @@ fun GiftCardWidget(
 
     val configuration = LocalConfiguration.current
     val fontScale = configuration.fontScale
-    // Define threshold for large font scale
-    val largeFontScaleThreshold = MobileSDKConstants.CardDetailsConfig.FONT_SCALE_THRESHOLD
 
     // Focus handlers for input fields
-    val focusCardNumber = FocusRequester()
-    val focusCardPin = FocusRequester()
+    val focusCardNumber = remember { FocusRequester() }
+    val focusCardPin = remember { FocusRequester() }
 
     // React to changes in the UI state
     LaunchedEffect(uiState) {
@@ -96,30 +101,42 @@ fun GiftCardWidget(
         verticalArrangement = Arrangement.spacedBy(appearance.verticalSpacing, Alignment.Top),
         horizontalAlignment = Alignment.Start
     ) {
-        if (fontScale >= largeFontScaleThreshold) {
-            CardNumberPinColumn(
-                verticalSpacing = appearance.verticalSpacing,
-                appearance = appearance.textField,
-                enabled = uiState !is GiftCardUIState.Loading && enabled,
-                cardNumber = inputState.cardNumber,
-                cardPin = inputState.pin,
-                focusCardNumber = focusCardNumber,
-                focusCardPin = focusCardPin,
-                onCardNumberChange = { viewModel.updateCardNumber(it) },
-                onPinChange = { viewModel.updateCardPin(it) }
+        // Use BoxWithConstraints to measure available width and make intelligent layout decision
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            // For GiftCard: Card Number (70% weight) + PIN (30% weight) + spacing
+            // PIN field (smaller field) needs ~80dp minimum for 4 digits + padding
+            val shouldUseColumnLayout = WidgetDefaults.shouldUseColumnLayout(
+                availableWidth = maxWidth,
+                fontScale = fontScale,
+                minFieldWidth = 80.dp, // PIN field minimum
+                fieldWeight = 0.3f // PIN field weight
             )
-        } else {
-            CardNumberPinRow(
-                horizontalSpacing = appearance.horizontalSpacing,
-                appearance = appearance.textField,
-                enabled = uiState !is GiftCardUIState.Loading && enabled,
-                cardNumber = inputState.cardNumber,
-                cardPin = inputState.pin,
-                focusCardNumber = focusCardNumber,
-                focusCardPin = focusCardPin,
-                onCardNumberChange = { viewModel.updateCardNumber(it) },
-                onPinChange = { viewModel.updateCardPin(it) }
-            )
+
+            if (shouldUseColumnLayout) {
+                CardNumberPinColumn(
+                    verticalSpacing = appearance.textFieldVerticalSpacing,
+                    appearance = appearance.textField,
+                    enabled = uiState !is GiftCardUIState.Loading && enabled,
+                    cardNumber = inputState.cardNumber,
+                    cardPin = inputState.pin,
+                    focusCardNumber = focusCardNumber,
+                    focusCardPin = focusCardPin,
+                    onCardNumberChange = { viewModel.updateCardNumber(it) },
+                    onPinChange = { viewModel.updateCardPin(it) }
+                )
+            } else {
+                CardNumberPinRow(
+                    horizontalSpacing = appearance.textFieldHorizontalSpacing,
+                    appearance = appearance.textField,
+                    enabled = uiState !is GiftCardUIState.Loading && enabled,
+                    cardNumber = inputState.cardNumber,
+                    cardPin = inputState.pin,
+                    focusCardNumber = focusCardNumber,
+                    focusCardPin = focusCardPin,
+                    onCardNumberChange = { viewModel.updateCardNumber(it) },
+                    onPinChange = { viewModel.updateCardPin(it) }
+                )
+            }
         }
 
         // Submit button
@@ -127,10 +144,19 @@ fun GiftCardWidget(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("addCard"),
-            text = stringResource(R.string.button_submit),
+            text = appearance.actionButton.text,
+            buttonIcon = appearance.actionButton.icon,
             enabled = isEnabled,
             isLoading = isLoading,
         ) {
+            // Emit button event
+            eventDelegate?.widgetEvent(
+                Event.ButtonEvent(
+                    name = GiftCardEventNames.TOKENISATION_BUTTON,
+                    action = EventAction.CLICK,
+                    text = appearance.actionButton.text
+                )
+            )
             viewModel.tokeniseCard()
         }
     }
@@ -272,6 +298,8 @@ fun CardNumberPinColumn(
  *  margin applied vertically between these elements.
  * @property horizontalSpacing The horizontal space between elements within the row of input fields in
  *  the [GiftCardWidget]. This affects the spacing between the card number and PIN input fields.
+ * @property textFieldVerticalSpacing The vertical spacing between text input fields.
+ * @property textFieldHorizontalSpacing The horizontal spacing between text input fields.
  * @property textField The appearance configuration for the input text fields within the
  *  [GiftCardWidget]. This property allows for customization of the text field's visual style, such
  *  as the colors, borders, and content padding. See [TextFieldAppearance] for more details.
@@ -289,6 +317,8 @@ fun CardNumberPinColumn(
 class GiftCardWidgetAppearance(
     val verticalSpacing: Dp,
     val horizontalSpacing: Dp,
+    val textFieldVerticalSpacing: Dp,
+    val textFieldHorizontalSpacing: Dp,
     val textField: TextFieldAppearance,
     val actionButton: ButtonAppearance,
 ) {
@@ -304,6 +334,10 @@ class GiftCardWidgetAppearance(
      *  [Dp.Unspecified], the original `verticalSpacing` of this instance will be used.
      * @param horizontalSpacing An optional override for the horizontal spacing between elements. If set
      *  to [Dp.Unspecified], the original `horizontalSpacing` of this instance will be used.
+     * @param textFieldVerticalSpacing An optional override for the vertical spacing between text fields. If set to
+     *  [Dp.Unspecified], the original `textFieldVerticalSpacing` of this instance will be used.
+     * @param textFieldHorizontalSpacing An optional override for the horizontal spacing between text fields. If set to
+     *  [Dp.Unspecified], the original `textFieldHorizontalSpacing` of this instance will be used.
      * @param textField An optional override for the text field appearance configuration. If not
      *  specified, the original `textField` appearance will be used.
      * @param actionButton An optional override for the action button's appearance. If not specified, the
@@ -316,11 +350,15 @@ class GiftCardWidgetAppearance(
     fun copy(
         verticalSpacing: Dp = this.verticalSpacing,
         horizontalSpacing: Dp = this.horizontalSpacing,
+        textFieldVerticalSpacing: Dp = this.textFieldVerticalSpacing,
+        textFieldHorizontalSpacing: Dp = this.textFieldHorizontalSpacing,
         textField: TextFieldAppearance = this.textField,
         actionButton: ButtonAppearance = this.actionButton,
     ): GiftCardWidgetAppearance = GiftCardWidgetAppearance(
         verticalSpacing = verticalSpacing.takeOrElse { this.verticalSpacing },
         horizontalSpacing = horizontalSpacing.takeOrElse { this.horizontalSpacing },
+        textFieldVerticalSpacing = textFieldVerticalSpacing.takeOrElse { this.textFieldVerticalSpacing },
+        textFieldHorizontalSpacing = textFieldHorizontalSpacing.takeOrElse { this.textFieldHorizontalSpacing },
         textField = textField.copy(),
         actionButton = when (actionButton) {
             is ButtonAppearance.FilledButtonAppearance -> actionButton.copy()
@@ -338,6 +376,8 @@ class GiftCardWidgetAppearance(
 
         if (verticalSpacing != other.verticalSpacing) return false
         if (horizontalSpacing != other.horizontalSpacing) return false
+        if (textFieldVerticalSpacing != other.textFieldVerticalSpacing) return false
+        if (textFieldHorizontalSpacing != other.textFieldHorizontalSpacing) return false
         if (textField != other.textField) return false
         if (actionButton != other.actionButton) return false
 
@@ -347,6 +387,8 @@ class GiftCardWidgetAppearance(
     override fun hashCode(): Int {
         var result = verticalSpacing.hashCode()
         result = 31 * result + horizontalSpacing.hashCode()
+        result = 31 * result + textFieldVerticalSpacing.hashCode()
+        result = 31 * result + textFieldHorizontalSpacing.hashCode()
         result = 31 * result + textField.hashCode()
         result = 31 * result + actionButton.hashCode()
         return result
@@ -375,8 +417,12 @@ object GiftCardAppearanceDefaults {
     fun appearance(): GiftCardWidgetAppearance = GiftCardWidgetAppearance(
         verticalSpacing = WidgetDefaults.Spacing,
         horizontalSpacing = WidgetDefaults.Spacing,
+        textFieldVerticalSpacing = WidgetDefaults.Spacing,
+        textFieldHorizontalSpacing = WidgetDefaults.Spacing,
         textField = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
-        actionButton = ButtonAppearanceDefaults.filledButtonAppearance()
+        actionButton = ButtonAppearanceDefaults.filledButtonAppearance().copy(
+            text = stringResource(R.string.button_submit)
+        )
     )
 
 }
@@ -422,7 +468,8 @@ private fun handleUIState(
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewGiftCardDetails() {
-    GiftCardWidget(config = GiftCardWidgetConfig("accessToken")) {
-
-    }
+    GiftCardWidget(
+        config = GiftCardWidgetConfig("accessToken"),
+        completion = {}
+    )
 }

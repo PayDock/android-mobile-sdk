@@ -2,8 +2,6 @@ package com.paydock.sample.feature.checkout.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
@@ -18,14 +16,13 @@ import com.paydock.sample.core.AU_COUNTRY_CODE
 import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.core.COUNTRY_CODE_LIST
 import com.paydock.sample.core.MERCHANT_NAME
-import com.paydock.sample.feature.style.StylingViewModel
 import org.json.JSONArray
 import org.json.JSONObject
 import java.math.BigDecimal
 
 @Composable
 fun GooglePayContent(
-    stylingViewModel: StylingViewModel,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     tokenHandler: (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
@@ -35,10 +32,8 @@ fun GooglePayContent(
         put("phoneNumberRequired", false)
         put("allowedCountryCodes", JSONArray(COUNTRY_CODE_LIST))
     }
-    val googlePayAppearance by stylingViewModel.googlePayWidgetAppearance.collectAsState()
-    val currentOrDefaultAppearance = googlePayAppearance ?: GooglePayAppearanceDefaults.appearance()
     GooglePayWidget(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         enabled = enabled,
         tokenRequest = tokenHandler,
         config = GooglePayWidgetConfig(
@@ -49,13 +44,13 @@ fun GooglePayContent(
                 currencyCode = AU_CURRENCY_CODE,
                 countryCode = AU_COUNTRY_CODE,
                 merchantName = MERCHANT_NAME,
-                merchantIdentifier = BuildConfig.MERCHANT_IDENTIFIER,
+                merchantIdentifier = BuildConfig.MERCHANT_ID_GOOGLE_PAY,
                 shippingAddressRequired = true,
                 shippingAddressParameters = shippingAddressParameters
             )
         ),
         loadingDelegate = loadingDelegate,
-        appearance = currentOrDefaultAppearance,
+        appearance = GooglePayAppearanceDefaults.appearance(),
         completion = resultHandler
     )
 }

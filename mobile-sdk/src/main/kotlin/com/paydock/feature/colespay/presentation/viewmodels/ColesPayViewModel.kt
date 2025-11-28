@@ -1,5 +1,6 @@
 package com.paydock.feature.colespay.presentation.viewmodels
 
+import androidx.lifecycle.SavedStateHandle
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.ColesPayException
@@ -22,6 +23,7 @@ import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
  * `WalletViewModel` and leverages specific use cases for interacting with Coles Pay-related services.
  *
  * @property config The client ID used for authenticating or identifying the Coles Pay transaction.
+ * @param savedStateHandle Handle for persisting state across process death.
  * @param captureWalletChargeUseCase Use case for capturing charges associated with Coles Pay wallets.
  * @param declineWalletChargeUseCase Use case for declining charges associated with Coles Pay wallets.
  * @param getWalletCallbackUseCase Use case for fetching callback data from the Coles Pay wallet service.
@@ -29,6 +31,7 @@ import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
  */
 internal class ColesPayViewModel(
     val config: ColesPayWidgetConfig,
+    private val savedStateHandle: SavedStateHandle,
     captureWalletChargeUseCase: CaptureWalletChargeUseCase,
     declineWalletChargeUseCase: DeclineWalletChargeUseCase,
     getWalletCallbackUseCase: GetWalletCallbackUseCase,
@@ -43,10 +46,12 @@ internal class ColesPayViewModel(
     //region Private Properties
     /**
      * Holds the wallet token used for Coles Pay operations.
+     * Persisted in SavedStateHandle to survive process death with "Don't keep activities"
      *
      * This token is essential for authenticating and managing Coles Pay transactions.
+     * Access via getWalletToken() method.
      */
-    private var walletToken: String? = null
+    private fun getWalletToken(): String? = savedStateHandle[KEY_WALLET_TOKEN]
     //endregion
 
     //region Overridden Methods
@@ -62,11 +67,12 @@ internal class ColesPayViewModel(
 
     /**
      * Stores the Coles Pay wallet token for subsequent API interactions.
+     * Persisted in SavedStateHandle to survive process death.
      *
      * @param token The wallet token, typically required for authentication or session management.
      */
     override fun setWalletToken(token: String) {
-        walletToken = token
+        savedStateHandle[KEY_WALLET_TOKEN] = token
     }
 
     /**
@@ -75,7 +81,7 @@ internal class ColesPayViewModel(
      * This method ensures the UI returns to its initial idle state, ready for new interactions.
      */
     override fun resetResultState() {
-        walletToken = null
+        savedStateHandle[KEY_WALLET_TOKEN] = null
         updateUiState(ColesPayUIState.Idle)
     }
 
@@ -180,4 +186,8 @@ internal class ColesPayViewModel(
         updateUiState(ColesPayUIState.Success(orderId))
     }
     //endregion
+
+    private companion object {
+        const val KEY_WALLET_TOKEN: String = "colespay.wallet_token"
+    }
 }

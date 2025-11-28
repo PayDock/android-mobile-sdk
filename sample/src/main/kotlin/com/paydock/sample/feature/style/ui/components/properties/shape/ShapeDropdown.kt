@@ -1,11 +1,8 @@
 package com.paydock.sample.feature.style.ui.components.properties.shape
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -81,6 +78,7 @@ fun ShapeDropdown(
                     cornerRadiusDp = defaultRadiusDP,
                     cornerRadiusPercent = defaultRadiusPercent
                 )
+
                 is RoundedCornerShape -> EnhancedShapeConfig(
                     type = ConfigurableShapeType.ROUNDED_RECTANGLE,
                     // For a RoundedCornerShape, we cannot reliably read its creation Dp/Percent.
@@ -88,6 +86,7 @@ fun ShapeDropdown(
                     cornerRadiusDp = defaultRadiusDP,
                     cornerRadiusPercent = defaultRadiusPercent
                 )
+
                 else -> EnhancedShapeConfig(
                     type = ConfigurableShapeType.RECTANGLE,
                     cornerUnit = defaultUnit,
@@ -118,6 +117,7 @@ fun ShapeDropdown(
                     cornerRadiusDp = defaultRadiusDP,
                     cornerRadiusPercent = defaultRadiusPercent
                 )
+
                 ConfigurableShapeType.ROUNDED_RECTANGLE -> EnhancedShapeConfig(
                     type = ConfigurableShapeType.ROUNDED_RECTANGLE,
                     cornerUnit = defaultUnit,       // Reset to default unit
@@ -138,7 +138,11 @@ fun ShapeDropdown(
         }
     }
 
-    SectionContainer(modifier = modifier, title = containerLabel, subTitle = stringResource(R.string.disclaimer_rounded_shape_defaults)) {
+    SectionContainer(
+        modifier = modifier,
+        title = containerLabel,
+        subTitle = stringResource(R.string.disclaimer_rounded_shape_defaults)
+    ) {
         DropdownSelector(
             options = configurableShapeTypeOptions.map { it.displayName },
             selectedOption = internalConfig.type.displayName,
@@ -195,6 +199,7 @@ fun ShapeDropdown(
                         }
                     )
                 }
+
                 CornerUnit.PERCENTAGE -> {
                     NumberCounter(
                         title = stringResource(id = R.string.label_corner_radius_percent),
@@ -202,7 +207,8 @@ fun ShapeDropdown(
                         onValueChange = { newIntValue ->
                             val newPercent = newIntValue.coerceIn(0, 100)
                             if (newPercent != internalConfig.cornerRadiusPercent) {
-                                val newConfig = internalConfig.copy(cornerRadiusPercent = newPercent)
+                                val newConfig =
+                                    internalConfig.copy(cornerRadiusPercent = newPercent)
                                 internalConfig = newConfig
                                 onShapeChange(newConfig.composeShape)
                             }

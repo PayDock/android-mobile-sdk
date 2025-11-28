@@ -96,7 +96,7 @@ internal class ColesPayWebActivity : ComponentActivity() {
                     val colesPayOrderId = requireNotNull(intent.getOrderIdExtra())
                     val colesPayClientId = requireNotNull(intent.getClientIdExtra())
                     // Stores and remembers the ColesPay URL created from the callback URL.
-                    val colesPayUrl: String by rememberSaveable(colesPayOrderId, colesPayClientId) {
+                    val colesPayUrl: String by rememberSaveable(inputs = arrayOf(colesPayOrderId, colesPayClientId)) {
                         mutableStateOf(createColesPayUrl(colesPayOrderId, colesPayClientId))
                     }
                     ColesPayWebView(colesPayUrl = colesPayUrl, onSuccess = {
@@ -106,12 +106,22 @@ internal class ColesPayWebActivity : ComponentActivity() {
                         )
                         finish()
                     }, onFailure = { status, message ->
-                        setResult(
-                            RESULT_CANCELED,
-                            Intent()
-                                .putStatusExtra(status)
-                                .putMessageExtra(message)
-                        )
+                        // If status maps to a known CancellationStatus enum, surface that explicitly
+                        val cancellationStatus = CancellationStatus.entries.getOrNull(status)
+                        if (cancellationStatus != null) {
+                            setResult(
+                                RESULT_CANCELED,
+                                Intent()
+                                    .putCancellationStatusExtra(cancellationStatus)
+                            )
+                        } else {
+                            setResult(
+                                RESULT_CANCELED,
+                                Intent()
+                                    .putStatusExtra(status)
+                                    .putMessageExtra(message)
+                            )
+                        }
                         finish()
                     })
                 }

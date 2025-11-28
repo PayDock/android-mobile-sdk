@@ -9,7 +9,7 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
             StyleAppearanceComponent.PROPERTIES,
             StyleAppearanceComponent.TITLE,
             StyleAppearanceComponent.TEXT_FIELD,
-            StyleAppearanceComponent.DEFAULT_ACTION_BUTTON,
+            StyleAppearanceComponent.COMPLETE_ACTION_BUTTON,
             StyleAppearanceComponent.LINK_BUTTON,
             StyleAppearanceComponent.SEARCH,
         )
@@ -23,7 +23,7 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
             StyleAppearanceComponent.PROPERTIES,
             StyleAppearanceComponent.TITLE,
             StyleAppearanceComponent.TEXT_FIELD,
-            StyleAppearanceComponent.DEFAULT_ACTION_BUTTON,
+            StyleAppearanceComponent.COMPLETE_ACTION_BUTTON,
             StyleAppearanceComponent.TOGGLE,
             StyleAppearanceComponent.TOGGLE_TEXT, // Used for toggle text
             StyleAppearanceComponent.LINK_TEXT
@@ -41,7 +41,7 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
         WidgetType.GIFT_CARD -> listOf(
             StyleAppearanceComponent.PROPERTIES,
             StyleAppearanceComponent.TEXT_FIELD,
-            StyleAppearanceComponent.DEFAULT_ACTION_BUTTON,
+            StyleAppearanceComponent.COMPLETE_ACTION_BUTTON,
         )
 
         WidgetType.GOOGLE_PAY -> listOf(
@@ -59,7 +59,7 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
         )
 
         WidgetType.PAY_PAL_VAULT -> listOf(
-            StyleAppearanceComponent.COMPLETE_ACTION_BUTTON,
+            StyleAppearanceComponent.COMPLETE_ACTION_BUTTON
         )
 
         WidgetType.STANDALONE_3DS -> listOf(
@@ -74,6 +74,7 @@ fun StyleAppearanceComponent.mapAppearanceComponentToSubComponents(): List<Style
             StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD,
             StyleAppearanceComponent.DROP_DOWN
         )
+
         StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD -> listOf(
             StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD_PROPERTIES,
             StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD_LABEL,
@@ -81,28 +82,34 @@ fun StyleAppearanceComponent.mapAppearanceComponentToSubComponents(): List<Style
             StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD_ERROR_LABEL,
             StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD_VALID_ICON,
         )
+
         StyleAppearanceComponent.LINK_BUTTON -> listOf(
             StyleAppearanceComponent.SUB_TEXT_BUTTON_PROPERTIES,
             StyleAppearanceComponent.SUB_LINK_BUTTON_TEXT
         )
+
         StyleAppearanceComponent.LINK_TEXT -> listOf(
             StyleAppearanceComponent.SUB_LINK_TEXT
         )
+
         StyleAppearanceComponent.DEFAULT_ACTION_BUTTON -> listOf(
             StyleAppearanceComponent.SUB_ACTION_BUTTON_PROPERTIES,
             StyleAppearanceComponent.SUB_BUTTON_TEXT,
             StyleAppearanceComponent.SUB_BUTTON_LOADER
         )
+
         StyleAppearanceComponent.COMPLETE_ACTION_BUTTON -> listOf(
             StyleAppearanceComponent.SUB_ACTION_BUTTON_PROPERTIES,
             StyleAppearanceComponent.SUB_BUTTON_TEXT,
             StyleAppearanceComponent.SUB_BUTTON_LOADER,
             StyleAppearanceComponent.SUB_BUTTON_ICON
         )
+
         StyleAppearanceComponent.DROP_DOWN -> listOf(
             StyleAppearanceComponent.SUB_DROP_DOWN_PROPERTIES,
             StyleAppearanceComponent.SUB_DROPDOWN_ITEM
         )
+
         StyleAppearanceComponent.TEXT_FIELD -> listOf(
             StyleAppearanceComponent.SUB_TEXT_FIELD_PROPERTIES,
             StyleAppearanceComponent.SUB_TEXT_FIELD_LABEL,
@@ -110,6 +117,7 @@ fun StyleAppearanceComponent.mapAppearanceComponentToSubComponents(): List<Style
             StyleAppearanceComponent.SUB_TEXT_FIELD_ERROR_LABEL,
             StyleAppearanceComponent.SUB_TEXT_FIELD_VALID_ICON,
         )
+
         else -> null // No sub-components
     }
 }

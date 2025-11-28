@@ -1,6 +1,7 @@
 package com.paydock.feature.card.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,7 +13,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
-import com.paydock.core.MobileSDKConstants
+import androidx.compose.ui.unit.dp
 import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.designsystems.core.WidgetDefaults
@@ -53,7 +54,8 @@ import com.paydock.feature.card.domain.model.ui.CardScheme
  *
  * UI Behavior:
  * - If `shouldCollectCardholderName` is `true`, the cardholder name input field is shown.
- * - When the system's font scale exceeds a predefined threshold ([MobileSDKConstants.CardDetailsConfig.FONT_SCALE_THRESHOLD]),
+ * - The layout adapts dynamically: when the effective width (considering font scale) is insufficient
+ *   for side-by-side fields, they are stacked vertically to prevent clipping.
  */
 @Suppress("LongParameterList")
 @Composable
@@ -79,8 +81,6 @@ internal fun CardInputFields(
 ) {
     val configuration = LocalConfiguration.current
     val fontScale = configuration.fontScale
-    // Define threshold for large font scale
-    val largeFontScaleThreshold = MobileSDKConstants.CardDetailsConfig.FONT_SCALE_THRESHOLD
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -115,33 +115,44 @@ internal fun CardInputFields(
             nextFocus = focusExpiry
         )
 
-        // Expiry and Security Code Inputs
-        if (fontScale >= largeFontScaleThreshold) {
-            ExpiryAndCodeColumn(
-                verticalSpacing = verticalSpacing,
-                appearance = textFieldAppearance,
-                expiry = expiry,
-                code = code,
-                focusExpiry = focusExpiry,
-                focusCode = focusCode,
-                enabled = enabled,
-                cardScheme = cardScheme,
-                onExpiryChange = onExpiryChange,
-                onSecurityCodeChange = onSecurityCodeChange
+        // Expiry and Security Code Inputs - use intelligent layout decision
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            // For Card Details: Expiry (50% weight) + CVV (50% weight) + spacing
+            // Each field needs ~150dp minimum (MM/YY format + CVV digits + padding)
+            val shouldUseColumnLayout = WidgetDefaults.shouldUseColumnLayout(
+                availableWidth = this.maxWidth,
+                fontScale = fontScale,
+                minFieldWidth = 150.dp, // Expiry/CVV field minimum
+                fieldWeight = 0.5f // Each field weight (equal split)
             )
-        } else {
-            ExpiryAndCodeRow(
-                horizontalSpacing = horizontalSpacing,
-                appearance = textFieldAppearance,
-                expiry = expiry,
-                code = code,
-                focusExpiry = focusExpiry,
-                focusCode = focusCode,
-                enabled = enabled,
-                cardScheme = cardScheme,
-                onExpiryChange = onExpiryChange,
-                onSecurityCodeChange = onSecurityCodeChange
-            )
+
+            if (shouldUseColumnLayout) {
+                ExpiryAndCodeColumn(
+                    verticalSpacing = verticalSpacing,
+                    appearance = textFieldAppearance,
+                    expiry = expiry,
+                    code = code,
+                    focusExpiry = focusExpiry,
+                    focusCode = focusCode,
+                    enabled = enabled,
+                    cardScheme = cardScheme,
+                    onExpiryChange = onExpiryChange,
+                    onSecurityCodeChange = onSecurityCodeChange
+                )
+            } else {
+                ExpiryAndCodeRow(
+                    horizontalSpacing = horizontalSpacing,
+                    appearance = textFieldAppearance,
+                    expiry = expiry,
+                    code = code,
+                    focusExpiry = focusExpiry,
+                    focusCode = focusCode,
+                    enabled = enabled,
+                    cardScheme = cardScheme,
+                    onExpiryChange = onExpiryChange,
+                    onSecurityCodeChange = onSecurityCodeChange
+                )
+            }
         }
     }
 }
@@ -251,6 +262,7 @@ private fun ExpiryAndCodeRow(
                 .weight(0.5f)
                 .focusRequester(focusCode)
                 .testTag("cardSecurityCodeInput"),
+            appearance = appearance,
             value = code,
             enabled = enabled,
             cardCode = cardScheme?.code,

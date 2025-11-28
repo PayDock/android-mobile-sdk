@@ -58,6 +58,7 @@ private fun mapSchemaStringToEnum(schema: Schema?): CardType? {
         Schema.SOLO -> CardType.SOLO
         Schema.JAPCB -> CardType.JAPCB
         Schema.AUSBC -> CardType.AUSBC
+        Schema.UNIONPAY -> CardType.UNIONPAY
         else -> null
     }
 }

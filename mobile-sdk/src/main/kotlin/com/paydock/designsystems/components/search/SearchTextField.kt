@@ -7,11 +7,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
@@ -33,6 +32,7 @@ import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -235,35 +235,66 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
                 shape = appearance.dropdown.shape,
                 elevation = CardDefaults.elevatedCardElevation()
             ) {
-                // Calculate the height based on items.
-                val dropdownHeight = appearance.dropdown.itemHeight * itemsToShow.size
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth() // Make dropdown take available width
-                        .heightIn(max = dropdownHeight) // Max height example
-                ) {
-                    items(itemsToShow, key = { it }) { itemString ->
-                        if (itemString == noResultsFoundLabel && currentSearchResultsAsStrings.isEmpty() && !isSearching) {
-                            DropdownItem( // Your composable DropdownItem
+                // Dynamic height: measure up to 5 items to compute max height; rows wrap to content.
+                SubcomposeLayout { constraints ->
+                    val maxVisibleItems = 5
+                    val itemsForMeasurement = itemsToShow.take(maxVisibleItems)
+
+                    val measuredHeights = subcompose("measure") {
+                        itemsForMeasurement.forEach { itemString ->
+                            DropdownItem(
                                 item = AnnotatedString(itemString),
                                 appearance = appearance.dropdown,
-                                onItemSelected = { /* No action */ },
-                            )
-                        } else if (itemString != noResultsFoundLabel) {
-                            DropdownItem( // Your composable DropdownItem
-                                item = AnnotatedString(itemString),
-                                appearance = appearance.dropdown,
-                                onItemSelected = {
-                                    val originalObjectIndex = currentSearchResultsAsStrings.indexOf(itemString)
-                                    if (originalObjectIndex != -1 && originalObjectIndex < searchResultsObjects.size) {
-                                        val selectedActualObject = searchResultsObjects[originalObjectIndex]
-                                        viewModel.onSearchTextChange(itemString)
-                                        onSelectionChanged(selectedActualObject)
-                                        focusManager.clearFocus()
-                                    }
-                                }
+                                onItemSelected = { }
                             )
                         }
+                    }.map { measurable ->
+                        measurable.measure(
+                            constraints.copy(
+                                minWidth = constraints.maxWidth,
+                                maxWidth = constraints.maxWidth,
+                                minHeight = 0
+                            )
+                        ).height
+                    }
+
+                    val desiredMaxHeightPx = measuredHeights.sum().coerceAtMost(constraints.maxHeight)
+                    // Cap dropdown height to a fraction of available space to avoid covering screen
+                    val dropdownMaxPx = minOf(desiredMaxHeightPx, (constraints.maxHeight * 0.6f).toInt())
+
+                    val listPlaceable = subcompose("list") {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        ) {
+                            itemsIndexed(itemsToShow, key = { index, _ -> index }) { index, itemString ->
+                                if (itemString == noResultsFoundLabel && currentSearchResultsAsStrings.isEmpty() && !isSearching) {
+                                    DropdownItem(
+                                        item = AnnotatedString(itemString),
+                                        appearance = appearance.dropdown,
+                                        onItemSelected = { /* No action */ },
+                                    )
+                                } else if (itemString != noResultsFoundLabel) {
+                                    DropdownItem(
+                                        item = AnnotatedString(itemString),
+                                        appearance = appearance.dropdown,
+                                        onItemSelected = {
+                                            // Use the index directly instead of indexOf to handle duplicate strings correctly
+                                            if (index < currentSearchResultsAsStrings.size && index < searchResultsObjects.size) {
+                                                val selectedActualObject = searchResultsObjects[index]
+                                                viewModel.onSearchTextChange(itemString)
+                                                onSelectionChanged(selectedActualObject)
+                                                focusManager.clearFocus()
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }.first().measure(constraints.copy(minHeight = 0, maxHeight = dropdownMaxPx))
+
+                    layout(listPlaceable.width, listPlaceable.height) {
+                        listPlaceable.placeRelative(0, 0)
                     }
                 }
             }

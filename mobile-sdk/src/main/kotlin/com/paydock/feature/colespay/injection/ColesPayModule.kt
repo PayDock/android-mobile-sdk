@@ -12,7 +12,8 @@ import org.koin.dsl.module
 internal val colesPayModule = module {
     includes(walletModule)
 
+    // SavedStateHandle is auto-injected by Koin when not in the lambda parameters
     viewModel { (config: ColesPayWidgetConfig) ->
-        ColesPayViewModel(config, get(), get(), get(), get())
+        ColesPayViewModel(config, get(), get(), get(), get(), get())
     }
 }

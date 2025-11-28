@@ -9,6 +9,8 @@ internal object MobileSDKConstants {
     const val MOBILE_SDK_TAG = "[MobileSDK]"
     const val JS_BRIDGE_NAME = "PayDockMobileSDK"
     const val DEFAULT_WEB_URL = "https://paydock.com/"
+    const val WEB_SCHEME = "paydock"
+    const val WEB_CLOSE_DEEPLINK = "$WEB_SCHEME://close"
 
     /**
      * Constants related to the UI.
@@ -16,7 +18,6 @@ internal object MobileSDKConstants {
     object General {
         // UI Constants
         internal const val INPUT_DELAY = 300L
-        internal const val DEBOUNCE_DELAY = 500L
 
         // Animation Constants
         internal const val DEFAULT_ANIMATION_DURATION = 300
@@ -93,7 +94,6 @@ internal object MobileSDKConstants {
      * Constants related to card details.
      */
     object CardDetailsConfig {
-        internal const val CARD_NUMBER_SECTION_SIZE = 4
         internal const val MIN_CREDIT_CARD_LENGTH = 12
         internal const val MAX_CREDIT_CARD_LENGTH = 19
         internal const val MIN_GIFT_CARD_LENGTH = 14
@@ -104,12 +104,12 @@ internal object MobileSDKConstants {
         internal const val CVV_CVC_LENGTH = 3
         internal const val CID3_LENGTH = 3
         internal const val CID_LENGTH = 4
+        internal const val MIN_SECURITY_CODE_LENGTH = 3
+        internal const val MAX_SECURITY_CODE_LENGTH = 4
         internal const val EXPIRY_BASE_YEAR = 2000
         internal const val MAX_MONTH_COUNT = 12
-        internal const val DEFAULT_ACTION_TEXT = "Submit"
         internal const val DEFAULT_CONSENT_TEXT = "Remember this card for next time."
         internal const val DEFAULT_POLICY_TEXT = "Read our privacy policy"
-        internal const val FONT_SCALE_THRESHOLD = 2.0f
 
         object Errors {
             const val CARD_ERROR =
@@ -247,7 +247,7 @@ internal object MobileSDKConstants {
             const val DATA_COLLECTOR_UNKNOWN_ERROR =
                 "An unknown error occurred while trying to initialise the PayPalDataCollector. " +
                     "Please try again later or contact support for assistance."
-            const val CANCELLATION_ERROR = "PayPal Vault charge was cancelled!"
+            const val CANCELLATION_ERROR = "PayPal Vault account linking was cancelled!"
         }
     }
 

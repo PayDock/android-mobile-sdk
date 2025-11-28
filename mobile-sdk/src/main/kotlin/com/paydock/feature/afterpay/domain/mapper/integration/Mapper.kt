@@ -94,7 +94,7 @@ fun ShippingAddress.mapFromBillingAddress(): BillingAddress =
         city = this.suburb,
         state = this.state,
         country = this.countryCode?.let {
-            Locale("", it).displayCountry
+            Locale.Builder().setRegion(it).build().displayCountry
         },
         postalCode = this.postcode,
         phoneNumber = this.phoneNumber

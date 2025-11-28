@@ -12,6 +12,8 @@ plugins {
     alias(libs.plugins.dagger.hilt)
 }
 
+val deployVersionName: String = project.findProperty("versionName") as String? ?: "1.0.0"
+
 android {
     namespace = "com.paydock.sample"
     compileSdk = 36
@@ -21,7 +23,7 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0.0"
+        versionName = deployVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -107,22 +109,25 @@ kotlin {
 
 enum class BuildVariable(private val baseEnvName: String) {
     // Shared Variables
-    MERCHANT_IDENTIFIER("MERCHANT_IDENTIFIER"),
+    MERCHANT_ID_GOOGLE_PAY("MERCHANT_ID_GOOGLE_PAY"),
+    WALLET_ID_COLES_PAY("WALLET_ID_COLES_PAY"),
+
     // Environment Specific Variables
-    WIDGET_ACCESS_TOKEN("WIDGET_ACCESS_TOKEN"),
-    API_ACCESS_TOKEN("API_ACCESS_TOKEN"),
-    GATEWAY_ID_MPGS("GATEWAY_ID_MPGS"),
-    GATEWAY_ID_PAY_PAL("GATEWAY_ID_PAY_PAL"),
-    GATEWAY_ID_COLES_PAY("GATEWAY_ID_COLES_PAY"),
-    GATEWAY_ID_AFTER_PAY("GATEWAY_ID_AFTER_PAY"),
-    GATEWAY_ID_CLICK_TO_PAY("GATEWAY_ID_CLICK_TO_PAY"),
-    GATEWAY_ID_GOOGLE_PAY("GATEWAY_ID_GOOGLE_PAY"),
-    STANDALONE_3DS_SERVICE_ID("STANDALONE_3DS_SERVICE_ID"),
-    COLES_PAY_CLIENT_ID("COLES_PAY_CLIENT_ID");
+    ACCESS_TOKEN_WIDGET("ACCESS_TOKEN_WIDGET"),
+    ACCESS_TOKEN_API("ACCESS_TOKEN_API"),
+    SERVICE_ID_MPGS("SERVICE_ID_MPGS"),
+    SERVICE_ID_MPGS_TEST("SERVICE_ID_MPGS_TEST"),
+    SERVICE_ID_PAYPAL("SERVICE_ID_PAYPAL"),
+    SERVICE_ID_COLES_PAY("SERVICE_ID_COLES_PAY"),
+    SERVICE_ID_AFTERPAY("SERVICE_ID_AFTERPAY"),
+    SERVICE_ID_CLICK_TO_PAY("SERVICE_ID_CLICK_TO_PAY"),
+    SERVICE_ID_GOOGLE_PAY_MPGS("SERVICE_ID_GOOGLE_PAY_MPGS"),
+    SERVICE_ID_GPAYMENTS("SERVICE_ID_GPAYMENTS");
 
     fun getEnvName(flavor: String): String {
         return when {
-            this == MERCHANT_IDENTIFIER -> this.baseEnvName
+            this == MERCHANT_ID_GOOGLE_PAY -> this.baseEnvName
+            this == WALLET_ID_COLES_PAY -> this.baseEnvName
             flavor.isEmpty() -> this.baseEnvName
             else -> "${this.baseEnvName}_${flavor.uppercase()}"
         }

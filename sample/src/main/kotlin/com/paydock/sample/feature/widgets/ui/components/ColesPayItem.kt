@@ -14,9 +14,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
+import com.paydock.core.domain.model.Event
+import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
 import com.paydock.feature.colespay.presentation.ColesPayWidget
 import com.paydock.feature.colespay.presentation.ColesPayWidgetAppearanceDefaults
@@ -40,7 +42,12 @@ fun ColesPayItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        config = ColesPayWidgetConfig(BuildConfig.COLES_PAY_CLIENT_ID),
+        config = ColesPayWidgetConfig(BuildConfig.WALLET_ID_COLES_PAY),
+        eventDelegate = object : WidgetEventDelegate {
+            override fun widgetEvent(event: Event) {
+                Log.d("[ColesPayWidget Event]", "[type=${event.type}] $event")
+            }
+        },
         appearance = currentOrDefaultAppearance,
         tokenRequest = walletViewModel.getWalletTokenResultCallback(WalletType.COLES_PAY)
     ) { result ->

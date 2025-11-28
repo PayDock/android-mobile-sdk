@@ -4,8 +4,10 @@ package com.paydock.designsystems.components.input
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -22,14 +24,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.contentType
-import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
@@ -41,10 +40,12 @@ import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.icon.IconAppearance
 import com.paydock.designsystems.components.icon.IconAppearanceDefaults
 import com.paydock.designsystems.components.icon.SdkIcon
+import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults.appearance
 import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
 import com.paydock.designsystems.theme.Success
+import com.paydock.feature.card.presentation.components.CardSchemeIcon
 
 /**
  * A customizable text field component that provides various styling and functionality options.
@@ -80,8 +81,14 @@ internal fun SdkTextField(
     leadingIcon: @Composable (() -> Unit)? = null,
 ) {
     // State to track whether the text input field is focused
-    var isFocused by remember { mutableStateOf(false) }
     val isError = error != null
+
+    // Determine if we should render a trailing icon; avoid reserving space when not needed
+    val trailingIconComposable: (@Composable (() -> Unit))? = when {
+        isError -> ({ TextFieldErrorIcon() })
+        showValidIcon && value.isNotEmpty() -> ({ TextFieldValidIcon(appearance.validIcon) })
+        else -> trailingIcon
+    }
 
     Column(modifier = modifier) {
         OutlinedTextField(
@@ -89,9 +96,6 @@ internal fun SdkTextField(
             onValueChange = onValueChange,
             modifier = Modifier
                 .fillMaxWidth()
-                .onFocusChanged {
-                    isFocused = it.isFocused
-                }
                 .testTag("sdkInput")
                 .semantics {
                     autofillType?.let { contentType = it }
@@ -104,31 +108,17 @@ internal fun SdkTextField(
             visualTransformation = visualTransformation,
             interactionSource = interactionSource,
             label = {
-                // State to track whether the label should be displayed based on focus and text input
-                val shouldShowLabel = isFocused || value.isNotEmpty()
-
-                // Set the current label text style based on the focused state and whether there's text
-                val labelTextAppearance = if (shouldShowLabel) {
-                    appearance.label
-                } else {
-                    appearance.label.copy(
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontSize = MaterialTheme.typography.bodyMedium.fontSize
-                        )
-                    )
+                // Use appearance.label directly to preserve custom styling in both focused and unfocused states
+                // Previously, unfocused state was overriding with MaterialTheme.typography.labelMedium,
+                // which prevented custom styling from being applied to the collapsed label
+                Box(modifier = Modifier.offset(y = 2.dp)) {
+                    TextFieldLabel(label, appearance.label)
                 }
-                TextFieldLabel(label, labelTextAppearance)
             },
             placeholder = {
                 TextFieldPlaceholder(placeholder, appearance.placeholder)
             },
-            trailingIcon = {
-                when {
-                    isError -> TextFieldErrorIcon()
-                    showValidIcon && value.isNotEmpty() -> TextFieldValidIcon(appearance.validIcon)
-                    else -> trailingIcon?.invoke()
-                }
-            },
+            trailingIcon = trailingIconComposable,
             leadingIcon = leadingIcon,
             isError = isError,
             singleLine = appearance.singleLine,
@@ -279,7 +269,7 @@ object TextFieldAppearanceDefaults {
      */
     @Composable
     fun appearance(): TextFieldAppearance = TextFieldAppearance(
-        // BasicTextField
+        // BasicTextField - Keep natural for container expansion
         style = MaterialTheme.typography.bodyMedium,
         // DecorationBox
         singleLine = false,
@@ -287,8 +277,9 @@ object TextFieldAppearanceDefaults {
             style = MaterialTheme.typography.bodyMedium,
             maxLines = 1
         ),
+        // Label - Apply alignment fixes for icon alignment
         label = TextAppearanceDefaults.appearance().copy(
-            maxLines = 1,
+            maxLines = 2,
             style = MaterialTheme.typography.labelMedium
         ),
         errorLabel = TextAppearanceDefaults.appearance().copy(
@@ -438,7 +429,6 @@ private fun TextFieldErrorLabel(
         SdkText(
             modifier = Modifier
                 .padding(start = 15.dp, top = 6.dp)
-//                .semantics { this.invisibleToUser() }
                 .testTag("errorLabel"),
             text = error ?: "",
             appearance = appearance
@@ -455,21 +445,6 @@ internal fun TextFieldErrorLabelPreview() {
 }
 
 /**
- * A modifier that enables autofill for a composable element when the provided [autofillType] is not null.
- *
- * This function conditionally applies the [autofill] modifier to a given [Modifier]. If [autofillType] is provided,
- * it will configure the element for autofill with the specified type. If [autofillType] is null, it returns the original
- * modifier without applying any autofill behavior.
- *
- * @param autofillType The type of autofill to enable for the composable element. If null, no autofill is enabled.
- *                     See [ContentType] for available options.
- * @param onFill A callback that is invoked when autofill is triggered and a value is filled.
- *               It receives the filled string as a parameter.
- * @return The modified [Modifier] with autofill behavior if [autofillType] is not null, otherwise the original [Modifier].
- */
-private fun Modifier.autofillModifier(autofillType: ContentType?, onFill: (String) -> Unit): Modifier = this
-
-/**
  * Composable function to preview an empty state of the SdkTextField.
  */
 @SdkLightDarkPreviews
@@ -484,6 +459,36 @@ internal fun PreviewSdkTextFieldEmptyState() {
         placeholder = "Placeholder",
         label = "Label",
         error = if (value == "error") "This is error" else null
+    )
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewSdkTextFieldWithLeadingIconEmptyState() {
+    // Mutable state for the text input field value
+    var value by remember { mutableStateOf("") }
+    // Preview SdkTextField with pre-filled input
+    SdkTextField(
+        value = value,
+        leadingIcon = { CardSchemeIcon(null, false) },
+        onValueChange = { value = it },
+        placeholder = "Placeholder",
+        label = "Label"
+    )
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewSdkTextFieldWithLeadingIconWithInput() {
+    // Mutable state for the text input field value
+    var value by remember { mutableStateOf("Input") }
+    // Preview SdkTextField with pre-filled input
+    SdkTextField(
+        value = value,
+        leadingIcon = { CardSchemeIcon(null, false) },
+        onValueChange = { value = it },
+        placeholder = "Placeholder",
+        label = "Label"
     )
 }
 

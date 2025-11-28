@@ -2,6 +2,7 @@ package com.paydock.feature.afterpay.presentation.viewmodels
 
 import android.content.Context
 import android.content.Intent
+import androidx.lifecycle.SavedStateHandle
 import com.afterpay.android.Afterpay
 import com.afterpay.android.CancellationStatus
 import com.paydock.MobileSDK
@@ -47,12 +48,14 @@ import java.util.Locale
  * @constructor Creates an instance of `AfterpayViewModel` with required dependencies for handling
  * Afterpay-specific wallet interactions.
  *
+ * @param savedStateHandle Handle for persisting state across process death.
  * @param captureWalletChargeUseCase Use case for capturing a wallet charge.
  * @param declineWalletChargeUseCase Use case for declining a wallet charge.
  * @param getWalletCallbackUseCase Use case for fetching a wallet callback.
  * @param dispatchers Provides coroutine dispatchers for managing asynchronous tasks.
  */
 internal class AfterpayViewModel(
+    private val savedStateHandle: SavedStateHandle,
     captureWalletChargeUseCase: CaptureWalletChargeUseCase,
     declineWalletChargeUseCase: DeclineWalletChargeUseCase,
     getWalletCallbackUseCase: GetWalletCallbackUseCase,
@@ -67,13 +70,29 @@ internal class AfterpayViewModel(
     //region Private Properties
     /**
      * Holds the wallet token used for Afterpay operations.
+     * Persisted in SavedStateHandle to survive process death with "Don't keep activities"
      *
      * This token is essential for authenticating and managing Afterpay transactions.
+     * Access via getWalletToken() method.
      */
-    private var walletToken: String? = null
+    private fun getWalletToken(): String? = savedStateHandle[KEY_WALLET_TOKEN]
+
     private var checkoutToken: String? = null
     private val _isConfigured = MutableStateFlow(false)
     private var primaryErrorToReport: SdkException? = null
+
+    /**
+     * Tracks the flow state to distinguish between:
+     * - INITIAL: Fetching checkout token before launching SDK
+     * - SDK_LAUNCHED: SDK is running and requesting checkout token via callback
+     */
+    private enum class FlowState {
+        INITIAL,
+        SDK_LAUNCHED
+    }
+
+    private var flowState: FlowState = FlowState.SDK_LAUNCHED
+    private var pendingIntent: Intent? = null
     //endregion
 
     //region Public Properties
@@ -88,11 +107,12 @@ internal class AfterpayViewModel(
     //region Overridden Methods
     /**
      * Sets the wallet token for the current session.
+     * Persisted in SavedStateHandle to survive process death.
      *
      * @param token The wallet token to associate with the session.
      */
     override fun setWalletToken(token: String) {
-        walletToken = token
+        savedStateHandle[KEY_WALLET_TOKEN] = token
     }
 
     /**
@@ -106,7 +126,9 @@ internal class AfterpayViewModel(
      * Resets the state to the initial state and clears the wallet token.
      */
     override fun resetResultState() {
-        walletToken = null
+        savedStateHandle[KEY_WALLET_TOKEN] = null
+        flowState = FlowState.SDK_LAUNCHED
+        pendingIntent = null
         updateUiState(AfterpayUIState.Idle)
     }
 
@@ -120,6 +142,10 @@ internal class AfterpayViewModel(
     /**
      * Updates the UI state based on the result of a wallet callback.
      *
+     * This method handles two different scenarios based on the flow state:
+     * 1. INITIAL: Fetching checkout token before SDK launch - launches the SDK after success
+     * 2. SDK_LAUNCHED: SDK is running and requesting token via callback - provides token to SDK
+     *
      * @param result The result of the wallet callback operation.
      */
     override fun updateCallbackUIState(result: Result<WalletCallback>) {
@@ -128,7 +154,29 @@ internal class AfterpayViewModel(
                 callbackData.refToken?.let { refToken ->
                     val tokenResult: Result<String> = Result.success(refToken)
                     checkoutToken = tokenResult.getOrNull()
-                    updateUiState(AfterpayUIState.ProvideCheckoutTokenResult(tokenResult))
+
+                    when (flowState) {
+                        FlowState.INITIAL -> {
+                            // Initial flow: We have the checkout token, now launch the SDK
+                            val intent = pendingIntent
+                            if (intent != null) {
+                                flowState = FlowState.SDK_LAUNCHED
+                                pendingIntent = null
+                                updateUiState(AfterpayUIState.LaunchIntent(intent))
+                            } else {
+                                // This shouldn't happen, but handle gracefully
+                                updateUiState(
+                                    AfterpayUIState.Error(
+                                        AfterpayException.TokenException("Intent was lost during flow initialization")
+                                    )
+                                )
+                            }
+                        }
+                        FlowState.SDK_LAUNCHED -> {
+                            // SDK callback: Provide the token result back to the SDK
+                            updateUiState(AfterpayUIState.ProvideCheckoutTokenResult(tokenResult))
+                        }
+                    }
                 } ?: updateUiState(
                     AfterpayUIState.Error(
                         AfterpayException.TokenException(MobileSDKConstants.AfterpayConfig.Errors.CALLBACK_ERROR)
@@ -136,6 +184,10 @@ internal class AfterpayViewModel(
                 )
             },
             onFailure = { throwable ->
+                // Clean up on error
+                flowState = FlowState.SDK_LAUNCHED
+                pendingIntent = null
+
                 updateUiState(
                     AfterpayUIState.PendingDeclineOnError(
                         throwable.mapApiException(
@@ -186,14 +238,13 @@ internal class AfterpayViewModel(
     //endregion
 
     //region Public Methods
-
     /**
-     * Starts the Afterpay payment flow by requesting a token and launching the Afterpay checkout intent.
+     * Starts the Afterpay payment flow by requesting a token and fetching the checkout token.
      *
      * This function coordinates the Afterpay payment process by first obtaining a wallet token
-     * via the provided `tokenProvider`. Once the token is received, it updates the internal
-     * wallet token and then transitions the UI state to launch the Afterpay checkout intent,
-     * which is created using the provided `context` and `config`.
+     * via the provided `tokenProvider`. Once the token is received, it fetches the checkout token
+     * from the backend via the callback. Only after successfully obtaining the checkout token
+     * does it launch the Afterpay SDK. This ensures the backend is ready before starting the SDK flow.
      *
      * @param tokenProvider A suspend function that takes a callback `(Result<WalletTokenResult>) -> Unit`
      * and provides the wallet token to it.
@@ -207,12 +258,21 @@ internal class AfterpayViewModel(
         config: AfterpaySDKConfig
     ) {
         setLoadingState()
-        val checkoutIntent = createCheckoutIntent(context, config)
+
+        // Set flow state to INITIAL and prepare the intent
+        flowState = FlowState.INITIAL
+        pendingIntent = createCheckoutIntent(context, config)
+
         tokenProvider.invoke { tokenResult ->
             tokenResult.onSuccess { result ->
                 setWalletToken(result.token)
-                updateUiState(AfterpayUIState.LaunchIntent(checkoutIntent))
+                // Fetch checkout token from backend before launching SDK
+                loadCheckoutToken()
             }.onFailure { throwable ->
+                // Clean up on error
+                flowState = FlowState.SDK_LAUNCHED
+                pendingIntent = null
+
                 updateUiState(
                     AfterpayUIState.PendingDeclineOnError(
                         AfterpayException.InitialisationWalletTokenException(
@@ -223,9 +283,7 @@ internal class AfterpayViewModel(
             }
         }
     }
-    //endregion
 
-    //region Public Methods
     /**
      * Creates an intent for the Afterpay checkout process.
      *
@@ -271,8 +329,8 @@ internal class AfterpayViewModel(
      *                               or that should be reported if decline is not possible.
      */
     fun declineWalletTransaction(pendingFailureException: SdkException) {
-        val token = walletToken
-        val chargeId = walletToken?.let { JwtHelper.getChargeIdToken(it) }
+        val token = getWalletToken()
+        val chargeId = token?.let { JwtHelper.getChargeIdToken(it) }
 
         if (token.isNullOrBlank() || chargeId.isNullOrBlank()) {
             // If we can't decline, and we have a primary error, we should ensure it's still reported.
@@ -295,8 +353,18 @@ internal class AfterpayViewModel(
                 )
             )
         )
-        walletToken?.let {
-            captureWalletTransaction(it, request)
+        val token = getWalletToken()
+        if (token != null) {
+            captureWalletTransaction(token, request)
+        } else {
+            // Wallet token was lost during process death - treat as error for proper user feedback
+            updateUiState(
+                AfterpayUIState.Error(
+                    AfterpayException.InitialisationWalletTokenException(
+                        "Wallet token lost during process recreation. Please try again."
+                    )
+                )
+            )
         }
     }
 
@@ -312,7 +380,7 @@ internal class AfterpayViewModel(
                     minimumAmount = configuration.minimumAmount,
                     maximumAmount = configuration.maximumAmount,
                     currencyCode = configuration.currency,
-                    locale = Locale(configuration.language, configuration.country),
+                    locale = Locale.Builder().setLanguage(configuration.language).setRegion(configuration.country).build(),
                     environment = MobileSDK.getInstance().environment.mapToAfterpayEnv()
                 )
                 _isConfigured.value = true
@@ -335,7 +403,19 @@ internal class AfterpayViewModel(
         val request = WalletCallbackRequest(
             type = MobileSDKConstants.WalletCallbackType.TYPE_CREATE_SESSION
         )
-        walletToken?.let { getWalletCallback(it, request) }
+        val token = getWalletToken()
+        if (token != null) {
+            getWalletCallback(token, request)
+        } else {
+            // Wallet token was lost during process death - treat as error for proper user feedback
+            updateUiState(
+                AfterpayUIState.Error(
+                    AfterpayException.InitialisationWalletTokenException(
+                        "Wallet token lost during process recreation. Please try again."
+                    )
+                )
+            )
+        }
     }
 
     /**
@@ -356,4 +436,8 @@ internal class AfterpayViewModel(
         updateUiState(AfterpayUIState.ProvideShippingOptionUpdateResult(shippingOptionUpdate?.mapToSDKShippingOptionUpdateResult()))
     }
     //endregion
+
+    private companion object {
+        const val KEY_WALLET_TOKEN: String = "afterpay.wallet_token"
+    }
 }

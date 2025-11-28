@@ -55,11 +55,11 @@ internal object CreditCardInputParser {
      * Parses and validates the security code input based on the specified security code type.
      *
      * @param code The security code input string to parse and validate.
-     * @param codeLength The expected security code length for the given card scheme.
+     * @param maxCodeLength The maximum allowed security code length for the given card scheme or default validation.
      * @return The parsed and validated security code if valid, an empty string if input is empty, or null if invalid.
      */
-    fun parseSecurityCode(code: String, codeLength: Int): String? = when {
-        code.isNotBlank() && code.matches(MobileSDKConstants.Regex.NUMERIC_DIGITS) && code.length <= codeLength -> code
+    fun parseSecurityCode(code: String, maxCodeLength: Int): String? = when {
+        code.isNotBlank() && code.matches(MobileSDKConstants.Regex.NUMERIC_DIGITS) && code.length <= maxCodeLength -> code
         code.isEmpty() -> ""
         else -> null
     }

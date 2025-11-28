@@ -4,9 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.paypal.android.paymentbuttons.PayPalButtonLabel
 import com.paydock.sample.R
 import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paypal.android.paymentbuttons.PayPalButtonLabel
 
 @Composable
 fun PayPalButtonLabelDropdown(
@@ -34,7 +34,8 @@ fun PayPalButtonLabelDropdown(
         options = options.map { it.first },
         selectedOption = selectedOptionString,
         onOptionSelected = { newValueString ->
-            val newLabel = options.find { it.first == newValueString }?.second ?: PayPalButtonLabel.PAYPAL
+            val newLabel =
+                options.find { it.first == newValueString }?.second ?: PayPalButtonLabel.PAYPAL
             onPayPalLabelChange(newLabel)
         }
     )

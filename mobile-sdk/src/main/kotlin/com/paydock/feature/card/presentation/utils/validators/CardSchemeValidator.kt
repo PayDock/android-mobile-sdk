@@ -71,6 +71,13 @@ internal object CardSchemeValidator {
             gaps = emptyList(),
             lengths = listOf(12, 19),
             code = CardCode(type = CodeType.CVC, size = MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH)
+        ),
+
+        CardScheme(
+            type = CardType.UNIONPAY,
+            gaps = listOf(4, 8, 12, 16),
+            lengths = listOf(16, 17, 18, 19),
+            code = CardCode(type = CodeType.CVN, size = MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH)
         )
     )
 
@@ -114,7 +121,7 @@ internal object CardSchemeValidator {
             //  Early exit if card number is too short
             if (cardNumber.length < prefixLength) continue
 
-            val cardPrefix = cardNumber.substring(0, prefixLength)
+            val cardPrefix = cardNumber.take(prefixLength)
 
             if (cardPrefix >= entry.start && cardPrefix <= entry.end) {
                 return schemes.find { it.type == entry.schema }

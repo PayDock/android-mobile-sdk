@@ -42,6 +42,21 @@ fun FilledButtonAppearanceStyleEditor(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
+        // Button Content Section (Text + Icon)
+        StyleButtonContentSection(
+            contentText = currentAppearance.text,
+            onContentTextChange = { newText ->
+                onAppearanceChange(currentAppearance.copy(text = newText))
+            },
+            selectedIcon = currentAppearance.icon,
+            onIconChange = { newIcon ->
+                onAppearanceChange(currentAppearance.copy(icon = newIcon))
+            },
+            // Pass DrawableRes icons as default so they appear in the dropdown
+            defaultIcon = currentAppearance.icon as? com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon.DrawableRes
+        )
+
+        HorizontalDivider()
 
         SectionContainer(title = stringResource(R.string.label_button_colours)) {
             ColorPickerField(

@@ -42,7 +42,12 @@ enum class CardType {
     /**
      * Visa card scheme.
      */
-    VISA;
+    VISA,
+
+    /*
+     * UnionPay card scheme
+     */
+    UNIONPAY;
 
     companion object {
         /**
@@ -70,6 +75,7 @@ enum class CardType {
                 MASTERCARD -> "MasterCard"
                 SOLO -> "Solo"
                 VISA -> "Visa"
+                UNIONPAY -> "UnionPay International"
             }
         }
     }

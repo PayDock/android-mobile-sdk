@@ -1,3 +1,4 @@
+@file:Suppress("MaxLineLength")
 package com.paydock.feature.paypal.checkout.presentation
 
 import android.content.Context
@@ -22,9 +23,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.PayPalException
+import com.paydock.core.domain.model.Event
+import com.paydock.core.domain.model.EventAction
 import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.loader.LoaderAppearance
@@ -40,6 +44,7 @@ import com.paydock.feature.paypal.checkout.presentation.utils.putClientIdExtra
 import com.paydock.feature.paypal.checkout.presentation.utils.putFundingSourceExtra
 import com.paydock.feature.paypal.checkout.presentation.utils.putOrderIdExtra
 import com.paydock.feature.paypal.checkout.presentation.viewmodel.PayPalViewModel
+import com.paydock.feature.paypal.core.domain.model.PayPalEventNames
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paypal.android.paymentbuttons.PayPalButton
@@ -53,19 +58,21 @@ import org.koin.core.parameter.parametersOf
  * A Composable that renders the PayPal checkout button and orchestrates the PayPal payment flow.
  *
  * The button is provided by the PayPal Android SDK [PayPalButton]
- * and is hosted via `AndroidView`. All business logic (tokenization, URL parsing, capture/decline,
- * and error handling) remains in the existing `PayPalViewModel`.
+ * and is hosted via `AndroidView`.
+ * All business logic (tokenization, URL parsing, capture/decline, and error handling)
+ * remains in the existing `PayPalViewModel`.
  *
  * Visuals can be customized through [appearance], which maps directly to PayPal SDK styling:
  * - [PayPalWidgetAppearance.buttonColour] to control the button color
  * - [PayPalWidgetAppearance.buttonLabel] to control the button label/wordmark treatment
  * - [PayPalWidgetAppearance.buttonShape] to control the button shape (e.g. rounded, pill)
- * - [PayPalWidgetAppearance.loader] to control the overlay loader shown during `Loading` when
- *   [loadingDelegate] is not provided
+ * - [PayPalWidgetAppearance.loader] to control the overlay loader shown during `Loading`
+ *   when [loadingDelegate] is not provided
  *
  * While processing (`Loading`) or when launching the browser intent (`LaunchIntent`), the button is
- * automatically disabled. When [loadingDelegate] is null, an overlay loader is shown; otherwise the
- * caller owns loader presentation via the delegate callbacks.
+ * automatically disabled.
+ * When [loadingDelegate] is null, an overlay loader is shown; otherwise the caller owns loader
+ * presentation via the delegate callbacks.
  *
  * @param modifier Modifier for customizing the appearance and behavior of the Composable.
  * @param enabled When false, disables the PayPal button and blocks user interaction.
@@ -73,6 +80,7 @@ import org.koin.core.parameter.parametersOf
  * @param appearance Appearance configuration mapping to PayPal SDK button styling and loader.
  * @param tokenRequest A callback to asynchronously provide a wallet token to the flow.
  * @param loadingDelegate Optional delegate to externally control loading lifecycle.
+ * @param eventDelegate An optional [WidgetEventDelegate] for tracking widget events such as button clicks.
  * @param completion Callback invoked with the final [ChargeResponse] or an error.
  */
 @Composable
@@ -83,6 +91,7 @@ fun PayPalWidget(
     appearance: PayPalWidgetAppearance = PayPalAppearanceDefaults.appearance(),
     tokenRequest: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
+    eventDelegate: WidgetEventDelegate? = null,
     completion: (Result<ChargeResponse>) -> Unit,
 ) {
     val context = LocalContext.current
@@ -143,6 +152,13 @@ fun PayPalWidget(
                 // Attach/detach click listener based on the current enabled state
                 if (isButtonEnabled) {
                     view.setOnClickListener {
+                        // Emit button event
+                        eventDelegate?.widgetEvent(
+                            Event.ButtonEvent(
+                                name = PayPalEventNames.PAYPAL_CHECKOUT_BUTTON,
+                                action = EventAction.CLICK
+                            )
+                        )
                         viewModel.handlePayPalButtonClick(config, tokenRequest)
                     }
                 } else {
@@ -296,9 +312,9 @@ private fun handlePayPalResult(
                             data.getMessageExtra(MobileSDKConstants.PayPalConfig.Errors.PAY_PAL_ERROR)
                         completion(
                             Result.failure(
-                                PayPalException.WebViewException(
+                                PayPalException.PayPalSDKException(
                                     code = status,
-                                    displayableMessage = message
+                                    description = message
                                 )
                             )
                         )

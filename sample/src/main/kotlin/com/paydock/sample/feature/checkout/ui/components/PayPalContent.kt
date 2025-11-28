@@ -2,8 +2,6 @@ package com.paydock.sample.feature.checkout.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
@@ -12,27 +10,24 @@ import com.paydock.feature.paypal.checkout.presentation.PayPalWidget
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.sample.BuildConfig
-import com.paydock.sample.feature.style.StylingViewModel
 
 @Composable
 fun PayPalContent(
-    stylingViewModel: StylingViewModel,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     tokenHandler: (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
     resultHandler: (Result<ChargeResponse>) -> Unit,
 ) {
-    val paypalAppearance by stylingViewModel.paypalWidgetAppearance.collectAsState()
-    val currentOrDefaultAppearance = paypalAppearance ?: PayPalAppearanceDefaults.appearance()
     PayPalWidget(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         config = PayPalWidgetConfig(
-            accessToken = BuildConfig.WIDGET_ACCESS_TOKEN,
-            gatewayId = BuildConfig.GATEWAY_ID_PAY_PAL,
+            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
+            gatewayId = BuildConfig.SERVICE_ID_PAYPAL,
             requestShipping = false,
             fundingSource = PayPalWidgetConfig.PayPalFundingSource.PAY_LATER
         ),
-        appearance = currentOrDefaultAppearance,
+        appearance = PayPalAppearanceDefaults.appearance(),
         enabled = enabled,
         tokenRequest = tokenHandler,
         loadingDelegate = loadingDelegate,

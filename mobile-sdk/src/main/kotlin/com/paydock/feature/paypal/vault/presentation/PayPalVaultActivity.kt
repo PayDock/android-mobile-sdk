@@ -57,6 +57,7 @@ internal class PayPalVaultActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         hasStartedVault = savedInstanceState?.getBoolean(KEY_HAS_STARTED) ?: false
+
         setContent {
             enableEdgeToEdge()
             val vaultResult by viewModel.vaultResult.collectAsState()
@@ -72,7 +73,6 @@ internal class PayPalVaultActivity : AppCompatActivity() {
                         clientId,
                         setupToken
                     )
-                    shouldStartPayPal = false
                     hasStartedVault = true
                 }
             }
@@ -135,14 +135,6 @@ internal class PayPalVaultActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         this.intent = intent
-        val data = intent.data
-        val host = data?.host
-        val pathSegment = data?.pathSegments?.firstOrNull()
-        if (host == "vault" && pathSegment == "cancel") {
-            setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(CancellationStatus.USER_INITIATED))
-            finish()
-            return
-        }
         viewModel.handleDeeplinkResult(this, intent)
     }
 
@@ -157,21 +149,18 @@ internal class PayPalVaultActivity : AppCompatActivity() {
      */
     override fun onResume() {
         super.onResume()
-        val data = intent?.data
-        val host = data?.host
-        val pathSegment = data?.pathSegments?.firstOrNull()
-        if (host == "vault" && pathSegment == "cancel") {
-            setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(CancellationStatus.USER_INITIATED))
-            finish()
-            return
-        }
-
         // Fallback: if returning without redirect intent and vault flow was already started, finish as canceled
-        if (hasStartedVault && data == null) {
-            setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(CancellationStatus.USER_INITIATED))
-            finish()
-            return
+        if (hasStartedVault && intent?.data == null) {
+            finishWithCancellation()
         }
+    }
+
+    /**
+     * Finishes the activity with a user-initiated cancellation result.
+     */
+    private fun finishWithCancellation() {
+        setResult(RESULT_CANCELED, Intent().putCancellationStatusExtra(CancellationStatus.USER_INITIATED))
+        finish()
     }
 
     private companion object {

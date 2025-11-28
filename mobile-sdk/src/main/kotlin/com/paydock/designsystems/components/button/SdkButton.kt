@@ -20,7 +20,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonElevation
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
@@ -33,7 +32,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
@@ -79,7 +77,7 @@ internal fun ButtonAppearance.RenderButton(
 ) {
     when (this) {
         is ButtonAppearance.FilledButtonAppearance -> {
-            require(text != null) { "FilledButtonAppearance requires a text" }
+            require(text != null || this.icon != null) { "FilledButtonAppearance requires a text Or an icon" }
             SdkButton(
                 modifier = modifier,
                 text = text,
@@ -92,7 +90,7 @@ internal fun ButtonAppearance.RenderButton(
         }
         // Apply similar logic for Outline and Text buttons
         is ButtonAppearance.OutlineButtonAppearance -> {
-            require(text != null) { "OutlineButtonAppearance requires a text" }
+            require(text != null || this.icon != null) { "OutlineButtonAppearance requires a text Or an icon" }
             SdkOutlineButton(
                 modifier = modifier,
                 text = text,
@@ -104,7 +102,7 @@ internal fun ButtonAppearance.RenderButton(
             )
         }
         is ButtonAppearance.TextButtonAppearance -> {
-            require(text != null) { "TextButtonAppearance requires a text" }
+            require(text != null || this.icon != null) { "TextButtonAppearance requires a text Or an icon" }
             SdkTextButton(
                 modifier = modifier,
                 text = text,
@@ -116,7 +114,7 @@ internal fun ButtonAppearance.RenderButton(
             )
         }
         is ButtonAppearance.IconButtonAppearance -> {
-            require(buttonIcon != null) { "ImageButtonAppearance requires a text" }
+            require(buttonIcon != null) { "IconButtonAppearance requires a buttonIcon" }
             SdkIconButton(
                 modifier = modifier,
                 enabled = enabled,
@@ -159,6 +157,9 @@ sealed class ButtonAppearance(
     open val elevation: ButtonElevation?,
     open val border: BorderStroke?,
     open val contentPadding: PaddingValues,
+    // Content
+    open val text: String?,
+    open val icon: ButtonIcon?,
     // Content Appearance
     open val iconAppearance: IconAppearance?,
     open val textAppearance: TextAppearance?,
@@ -193,6 +194,8 @@ sealed class ButtonAppearance(
         override val elevation: ButtonElevation?,
         override val border: BorderStroke?,
         override val contentPadding: PaddingValues,
+        override val text: String?,
+        override val icon: ButtonIcon?,
         override val iconAppearance: IconAppearance,
         override val textAppearance: TextAppearance,
         override val loaderAppearance: LoaderAppearance,
@@ -204,6 +207,8 @@ sealed class ButtonAppearance(
         elevation,
         border?.copy(),
         contentPadding,
+        text,
+        icon,
         iconAppearance,
         textAppearance,
         loaderAppearance
@@ -215,7 +220,9 @@ sealed class ButtonAppearance(
             colors: ButtonColors = this.colors,
             elevation: ButtonElevation? = this.elevation,
             border: BorderStroke? = this.border,
-            contentPadding: PaddingValues = this.contentPadding
+            contentPadding: PaddingValues = this.contentPadding,
+            text: String? = this.text,
+            icon: ButtonIcon? = this.icon
         ): FilledButtonAppearance = FilledButtonAppearance(
             height = height.takeOrElse { this.height },
             contentSpacing = contentSpacing.takeOrElse { this.contentSpacing },
@@ -224,6 +231,8 @@ sealed class ButtonAppearance(
             elevation = elevation,
             border = border,
             contentPadding = contentPadding,
+            text = text,
+            icon = icon,
             iconAppearance = iconAppearance.copy(),
             textAppearance = textAppearance.copy(),
             loaderAppearance = loaderAppearance.copy()
@@ -262,6 +271,8 @@ sealed class ButtonAppearance(
         override val elevation: ButtonElevation?,
         override val border: BorderStroke?,
         override val contentPadding: PaddingValues,
+        override val text: String?,
+        override val icon: ButtonIcon?,
         override val iconAppearance: IconAppearance,
         override val textAppearance: TextAppearance,
         override val loaderAppearance: LoaderAppearance,
@@ -273,6 +284,8 @@ sealed class ButtonAppearance(
         elevation,
         border,
         contentPadding,
+        text,
+        icon,
         iconAppearance,
         textAppearance,
         loaderAppearance
@@ -284,7 +297,9 @@ sealed class ButtonAppearance(
             colors: ButtonColors = this.colors,
             elevation: ButtonElevation? = this.elevation,
             border: BorderStroke? = this.border,
-            contentPadding: PaddingValues = this.contentPadding
+            contentPadding: PaddingValues = this.contentPadding,
+            text: String? = this.text,
+            icon: ButtonIcon? = this.icon
         ): OutlineButtonAppearance = OutlineButtonAppearance(
             height = height.takeOrElse { this.height },
             contentSpacing = contentSpacing.takeOrElse { this.contentSpacing },
@@ -293,6 +308,8 @@ sealed class ButtonAppearance(
             elevation = elevation,
             border = border?.copy(),
             contentPadding = contentPadding,
+            text = text,
+            icon = icon,
             iconAppearance = iconAppearance.copy(),
             textAppearance = textAppearance.copy(),
             loaderAppearance = loaderAppearance.copy()
@@ -329,6 +346,8 @@ sealed class ButtonAppearance(
         override val elevation: ButtonElevation?,
         override val border: BorderStroke?,
         override val contentPadding: PaddingValues,
+        override val text: String?,
+        override val icon: ButtonIcon?,
         override val iconAppearance: IconAppearance,
         override val textAppearance: TextAppearance,
         override val loaderAppearance: LoaderAppearance,
@@ -340,6 +359,8 @@ sealed class ButtonAppearance(
         elevation,
         border,
         contentPadding,
+        text,
+        icon,
         iconAppearance,
         textAppearance,
         loaderAppearance
@@ -351,7 +372,9 @@ sealed class ButtonAppearance(
             colors: ButtonColors = this.colors,
             elevation: ButtonElevation? = this.elevation,
             border: BorderStroke? = this.border,
-            contentPadding: PaddingValues = this.contentPadding
+            contentPadding: PaddingValues = this.contentPadding,
+            text: String? = this.text,
+            icon: ButtonIcon? = this.icon
         ): TextButtonAppearance = TextButtonAppearance(
             height = height.takeOrElse { this.height },
             contentSpacing = contentSpacing.takeOrElse { this.contentSpacing },
@@ -360,6 +383,8 @@ sealed class ButtonAppearance(
             elevation = elevation,
             border = border?.copy(),
             contentPadding = contentPadding,
+            text = text,
+            icon = icon,
             iconAppearance = iconAppearance.copy(),
             textAppearance = textAppearance.copy(),
             loaderAppearance = loaderAppearance.copy()
@@ -403,6 +428,8 @@ sealed class ButtonAppearance(
         override val elevation: ButtonElevation?,
         override val border: BorderStroke?,
         override val contentPadding: PaddingValues,
+        override val text: String?,
+        override val icon: ButtonIcon?,
         override val iconAppearance: IconAppearance?,
         override val textAppearance: TextAppearance?,
         override val loaderAppearance: LoaderAppearance,
@@ -414,6 +441,8 @@ sealed class ButtonAppearance(
         elevation,
         border,
         contentPadding,
+        text,
+        icon,
         iconAppearance,
         textAppearance,
         loaderAppearance
@@ -425,7 +454,9 @@ sealed class ButtonAppearance(
             colors: ButtonColors = this.colors,
             elevation: ButtonElevation? = this.elevation,
             border: BorderStroke? = this.border,
-            contentPadding: PaddingValues = this.contentPadding
+            contentPadding: PaddingValues = this.contentPadding,
+            text: String? = this.text,
+            icon: ButtonIcon? = this.icon
         ): IconButtonAppearance = IconButtonAppearance(
             height = height.takeOrElse { this.height },
             contentSpacing = contentSpacing.takeOrElse { this.contentSpacing },
@@ -434,6 +465,8 @@ sealed class ButtonAppearance(
             elevation = elevation,
             border = border?.copy(),
             contentPadding = contentPadding,
+            text = text,
+            icon = icon,
             iconAppearance = iconAppearance?.copy(),
             textAppearance = textAppearance?.copy(),
             loaderAppearance = loaderAppearance.copy()
@@ -482,16 +515,14 @@ object ButtonAppearanceDefaults {
             elevation = ButtonDefaults.buttonElevation(),
             border = null,
             contentPadding = ButtonDefaults.ContentPadding,
+            text = null,
+            icon = null,
             iconAppearance = IconAppearanceDefaults.appearance()
                 .copy(
                     size = ButtonIconSize,
                     tint = ButtonDefaults.buttonColors().contentColor
                 ),
-            textAppearance = TextAppearanceDefaults.appearance().copy(
-                style = LocalTextStyle.current.copy(
-                    platformStyle = PlatformTextStyle(includeFontPadding = false)
-                )
-            ),
+            textAppearance = TextAppearanceDefaults.appearance(),
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
                 color = ButtonDefaults.buttonColors().containerColor,
                 strokeWidth = ButtonLoaderWidth
@@ -521,16 +552,14 @@ object ButtonAppearanceDefaults {
                 color = ButtonDefaults.buttonColors().containerColor
             ),
             contentPadding = ButtonDefaults.ContentPadding,
+            text = null,
+            icon = null,
             iconAppearance = IconAppearanceDefaults.appearance()
                 .copy(
                     size = ButtonIconSize,
                     tint = ButtonDefaults.buttonColors().containerColor
                 ),
-            textAppearance = TextAppearanceDefaults.appearance().copy(
-                style = LocalTextStyle.current.copy(
-                    platformStyle = PlatformTextStyle(includeFontPadding = false)
-                )
-            ),
+            textAppearance = TextAppearanceDefaults.appearance(),
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
                 color = ButtonDefaults.buttonColors().containerColor,
                 strokeWidth = ButtonLoaderWidth
@@ -557,16 +586,14 @@ object ButtonAppearanceDefaults {
             elevation = null,
             border = null,
             contentPadding = ButtonDefaults.TextButtonContentPadding,
+            text = null,
+            icon = null,
             iconAppearance = IconAppearanceDefaults.appearance()
                 .copy(
                     size = ButtonIconSize,
                     tint = ButtonDefaults.buttonColors().containerColor
                 ),
-            textAppearance = TextAppearanceDefaults.appearance().copy(
-                style = LocalTextStyle.current.copy(
-                    platformStyle = PlatformTextStyle(includeFontPadding = false)
-                )
-            ),
+            textAppearance = TextAppearanceDefaults.appearance(),
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
                 color = ButtonDefaults.buttonColors().containerColor,
                 strokeWidth = ButtonLoaderWidth
@@ -583,6 +610,8 @@ object ButtonAppearanceDefaults {
             elevation = null,
             border = null,
             contentPadding = ButtonDefaults.ContentPadding,
+            text = null,
+            icon = null,
             iconAppearance = null,
             textAppearance = null,
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
@@ -635,6 +664,11 @@ internal fun SdkButton(
                 iconAppearance = appearance.iconAppearance.copy( // Assuming iconAppearance is not null
                     tint = disabledIconOrLoaderTint
                 ),
+                textAppearance = appearance.textAppearance.copy(
+                    style = appearance.textAppearance.style.copy(
+                        color = disabledIconOrLoaderTint
+                    )
+                ),
                 loaderAppearance = appearance.loaderAppearance.copy(
                     color = disabledIconOrLoaderTint
                 )
@@ -644,12 +678,12 @@ internal fun SdkButton(
 
     Button(
         onClick = onClick,
-        modifier = modifier.height(adjustedButtonHeight),
+        modifier = modifier.heightIn(min = adjustedButtonHeight),
         enabled = isEnabled,
         content = {
             ButtonContent(
                 text = text ?: "",
-                buttonIcon = buttonIcon,
+                buttonIcon = buttonIcon ?: runtimeAppearance.icon,
                 isLoading = isLoading,
                 horizontalSpacing = runtimeAppearance.contentSpacing,
                 iconAppearance = runtimeAppearance.iconAppearance,
@@ -661,7 +695,7 @@ internal fun SdkButton(
         shape = runtimeAppearance.shape,
         elevation = runtimeAppearance.elevation,
         border = runtimeAppearance.border,
-        contentPadding = if (buttonIcon != null && isLoading) {
+        contentPadding = if ((buttonIcon ?: runtimeAppearance.icon) != null && isLoading) {
             ButtonDefaults.ButtonWithIconContentPadding
         } else {
             runtimeAppearance.contentPadding
@@ -725,6 +759,11 @@ internal fun SdkOutlineButton(
                 iconAppearance = appearance.iconAppearance.copy( // Assuming iconAppearance is not null
                     tint = disabledIconOrLoaderTint
                 ),
+                textAppearance = appearance.textAppearance.copy(
+                    style = appearance.textAppearance.style.copy(
+                        color = disabledIconOrLoaderTint
+                    )
+                ),
                 loaderAppearance = appearance.loaderAppearance.copy(
                     color = disabledIconOrLoaderTint
                 )
@@ -734,12 +773,12 @@ internal fun SdkOutlineButton(
 
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.height(adjustedButtonHeight),
+        modifier = modifier.heightIn(min = adjustedButtonHeight),
         enabled = isEnabled,
         content = {
             ButtonContent(
                 text = text ?: "",
-                buttonIcon = buttonIcon,
+                buttonIcon = buttonIcon ?: runtimeAppearance.icon,
                 isLoading = isLoading,
                 horizontalSpacing = runtimeAppearance.contentSpacing,
                 iconAppearance = runtimeAppearance.iconAppearance,
@@ -751,7 +790,7 @@ internal fun SdkOutlineButton(
         shape = runtimeAppearance.shape,
         elevation = runtimeAppearance.elevation,
         border = runtimeAppearance.border,
-        contentPadding = if (buttonIcon != null && isLoading) {
+        contentPadding = if ((buttonIcon ?: runtimeAppearance.icon) != null && isLoading) {
             ButtonDefaults.ButtonWithIconContentPadding
         } else {
             runtimeAppearance.contentPadding
@@ -809,6 +848,11 @@ internal fun SdkTextButton(
                 iconAppearance = appearance.iconAppearance.copy( // Assuming iconAppearance is not null
                     tint = disabledIconOrLoaderTint
                 ),
+                textAppearance = appearance.textAppearance.copy(
+                    style = appearance.textAppearance.style.copy(
+                        color = disabledIconOrLoaderTint
+                    )
+                ),
                 loaderAppearance = appearance.loaderAppearance.copy(
                     color = disabledIconOrLoaderTint
                 )
@@ -818,12 +862,13 @@ internal fun SdkTextButton(
 
     TextButton(
         onClick = onClick,
-        modifier = modifier.height(adjustedButtonHeight),
+        modifier = modifier.heightIn(min = adjustedButtonHeight),
         enabled = isEnabled,
+        shape = appearance.shape,
         content = {
             ButtonContent(
                 text = text ?: "",
-                buttonIcon = buttonIcon,
+                buttonIcon = buttonIcon ?: runtimeAppearance.icon,
                 isLoading = isLoading,
                 horizontalSpacing = runtimeAppearance.contentSpacing,
                 iconAppearance = runtimeAppearance.iconAppearance,
@@ -834,7 +879,7 @@ internal fun SdkTextButton(
         colors = runtimeAppearance.colors,
         elevation = runtimeAppearance.elevation,
         border = runtimeAppearance.border,
-        contentPadding = if (buttonIcon != null && isLoading) {
+        contentPadding = if ((buttonIcon ?: runtimeAppearance.icon) != null && isLoading) {
             ButtonDefaults.ButtonWithIconContentPadding
         } else {
             runtimeAppearance.contentPadding
@@ -848,7 +893,7 @@ internal fun SdkIconButton(
     enabled: Boolean = true,
     isLoading: Boolean = false,
     appearance: ButtonAppearance.IconButtonAppearance = ButtonAppearanceDefaults.imageButtonAppearance(),
-    buttonIcon: ButtonIcon,
+    buttonIcon: ButtonIcon? = null,
     contentDescription: String? = null,
     onClick: () -> Unit
 ) {
@@ -891,13 +936,14 @@ internal fun SdkIconButton(
         }
 
         // Animate visibility of the icon
+        val effectiveIcon = buttonIcon ?: runtimeAppearance.icon
         AnimatedVisibility(
             visible = !isLoading,
             enter = fadeIn() + expandIn(expandFrom = Alignment.Center),
             exit = fadeOut() + shrinkOut(shrinkTowards = Alignment.Center),
             label = "iconVisibilityAnimation"
         ) {
-            when (buttonIcon) {
+            when (val buttonIcon = effectiveIcon) {
                 is ButtonIcon.Vector -> SdkIcon(
                     imageVector = buttonIcon.icon,
                     contentDescription = contentDescription
@@ -906,6 +952,7 @@ internal fun SdkIconButton(
                     painter = painterResource(buttonIcon.drawable),
                     contentDescription = contentDescription
                 )
+                null -> Unit
             }
         }
     }

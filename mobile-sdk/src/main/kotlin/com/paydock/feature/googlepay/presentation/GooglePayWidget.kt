@@ -36,11 +36,15 @@ import com.google.pay.button.ButtonType
 import com.google.pay.button.PayButton
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.GooglePayException
+import com.paydock.core.domain.model.Event
+import com.paydock.core.domain.model.EventAction
+import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkLoader
+import com.paydock.feature.googlepay.domain.model.GooglePayEventNames
 import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.presentation.viewmodels.GooglePayViewModel
@@ -64,6 +68,7 @@ import org.koin.core.parameter.parametersOf
  * the provided `onTokenReceived` lambda with the retrieved token.
  * @param loadingDelegate An optional delegate to manage loading indicators externally.
  * If provided, the widget will not display its internal loader.
+ * @param eventDelegate An optional [WidgetEventDelegate] for tracking widget events such as button clicks.
  * @param completion A callback to handle the result of the Google Pay operation, either success or failure.
  */
 @Composable
@@ -74,6 +79,7 @@ fun GooglePayWidget(
     appearance: GooglePayWidgetAppearance = GooglePayAppearanceDefaults.appearance(),
     tokenRequest: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
+    eventDelegate: WidgetEventDelegate? = null,
     completion: (Result<ChargeResponse>) -> Unit
 ) {
     // Retrieve the GooglePayViewModel using Koin
@@ -123,6 +129,13 @@ fun GooglePayWidget(
                     theme = if (isSystemInDarkTheme()) ButtonTheme.Dark else ButtonTheme.Light,
                     type = appearance.type,
                     onClick = {
+                        // Emit button event
+                        eventDelegate?.widgetEvent(
+                            Event.ButtonEvent(
+                                name = GooglePayEventNames.GOOGLE_PAY_CHECKOUT_BUTTON,
+                                action = EventAction.CLICK
+                            )
+                        )
                         viewModel.startGooglePayPaymentFlow(tokenRequest)
                     }, radius = appearance.cornerRadius,
                     allowedPaymentMethods = allowedPaymentMethods,
@@ -136,7 +149,7 @@ fun GooglePayWidget(
                             )
                         )
                     },
-                    enabled = uiState !is GooglePayUIState.Loading && enabled,
+                    enabled = uiState !is GooglePayUIState.Loading && uiState !is GooglePayUIState.LaunchGooglePayTask && enabled,
                 )
             }
         }

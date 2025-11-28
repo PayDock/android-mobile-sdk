@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.paydock.designsystems.components.button.ButtonAppearance
+import com.paydock.feature.paypal.vault.presentation.PayPalPaymentSourceAppearanceDefaults
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
 import com.paydock.sample.feature.style.ui.components.core.color.ColorPickerField
@@ -42,6 +43,21 @@ fun OutlineButtonAppearanceStyleEditor(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
+        // Button Content Section (Text + Icon)
+        StyleButtonContentSection(
+            contentText = currentAppearance.text,
+            onContentTextChange = { newText ->
+                onAppearanceChange(currentAppearance.copy(text = newText))
+            },
+            selectedIcon = currentAppearance.icon,
+            onIconChange = { newIcon ->
+                onAppearanceChange(currentAppearance.copy(icon = newIcon))
+            },
+            defaultIcon = PayPalPaymentSourceAppearanceDefaults.appearance().actionButton.icon
+        )
+
+        HorizontalDivider()
+
         SectionContainer(title = stringResource(R.string.label_button_colours)) {
             ColorPickerField(
                 modifier = Modifier.fillMaxWidth(),
