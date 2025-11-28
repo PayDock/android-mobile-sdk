@@ -23,7 +23,10 @@ import com.afterpay.android.view.AfterpayColorScheme
 import com.afterpay.android.view.AfterpayPaymentButton
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.AfterpayException
+import com.paydock.core.domain.model.Event
+import com.paydock.core.domain.model.EventAction
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.loader.LoaderAppearance
@@ -32,6 +35,7 @@ import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.afterpay.domain.mapper.integration.mapFromBillingAddress
 import com.paydock.feature.afterpay.domain.mapper.integration.mapFromShippingOption
+import com.paydock.feature.afterpay.domain.model.AfterpayEventNames
 import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOptionUpdate
@@ -55,6 +59,7 @@ import org.koin.androidx.compose.koinViewModel
  * @param selectAddress A lambda for selecting a billing address and providing corresponding shipping options.
  * @param selectShippingOption A lambda for selecting a shipping option and providing the updated shipping option result.
  * @param loadingDelegate An optional delegate for managing the widget's loading state.
+ * @param eventDelegate An optional [WidgetEventDelegate] for tracking widget events such as button clicks.
  * @param completion A callback to handle the final result of the payment process, either success or failure.
  */
 @Composable
@@ -73,6 +78,7 @@ fun AfterpayWidget(
         provideShippingOptionUpdateResult: (AfterpayShippingOptionUpdate?) -> Unit,
     ) -> Unit = { _, _ -> },
     loadingDelegate: WidgetLoadingDelegate? = null,
+    eventDelegate: WidgetEventDelegate? = null,
     completion: (Result<ChargeResponse>) -> Unit,
 ) {
     val viewModel: AfterpayViewModel = koinViewModel()
@@ -123,6 +129,13 @@ fun AfterpayWidget(
                         this.colorScheme = appearance.colorScheme
                         this.isEnabled = enabled
                         setOnClickListener {
+                            // Emit button event
+                            eventDelegate?.widgetEvent(
+                                Event.ButtonEvent(
+                                    name = AfterpayEventNames.AFTERPAY_CHECKOUT_BUTTON,
+                                    action = EventAction.CLICK
+                                )
+                            )
                             viewModel.startAfterpayFlow(tokenRequest, context, config)
                         }
                     }

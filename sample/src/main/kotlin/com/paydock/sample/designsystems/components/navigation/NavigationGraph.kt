@@ -13,7 +13,12 @@ import androidx.navigation.navArgument
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.theme.AppTheme
 import com.paydock.sample.feature.account.ui.AccountScreen
-import com.paydock.sample.feature.checkout.ui.CheckoutStandaloneScreen
+import com.paydock.sample.feature.checkout.domain.model.CheckoutStep
+import com.paydock.sample.feature.checkout.ui.EnhancedCheckoutScreen
+import com.paydock.sample.feature.checkout.ui.OrderConfirmationScreen
+import com.paydock.sample.feature.shop.data.CartManager
+import com.paydock.sample.feature.shop.ui.CartScreen
+import com.paydock.sample.feature.shop.ui.ProductListScreen
 import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.style.mapper.mapAppearanceComponentToSubComponents
 import com.paydock.sample.feature.style.mapper.mapWidgetTypeToAppearanceComponents
@@ -34,9 +39,75 @@ fun NavigationGraph(
     stylingViewModel: StylingViewModel,
     onThemeSelected: (AppTheme) -> Unit
 ) {
-    NavHost(navController, startDestination = BottomNavItem.Checkout.route) {
-        composable(BottomNavItem.Checkout.route) {
-            CheckoutStandaloneScreen(stylingViewModel = stylingViewModel)
+    NavHost(navController, startDestination = "shop") {
+        composable("shop") {
+            ProductListScreen()
+        }
+        composable("cart") {
+            CartScreen(
+                onCheckout = { navController.navigate("checkout?step=information") },
+                onContinueShopping = { navController.navigateUp() }
+            )
+        }
+        composable(
+            route = "checkout?step={step}",
+            arguments = listOf(navArgument("step") {
+                type = NavType.StringType; defaultValue = "information"
+            })
+        ) { backStackEntry ->
+            val stepArg = backStackEntry.arguments?.getString("step") ?: "information"
+            val initialStep = if (stepArg.equals("payment", ignoreCase = true))
+                CheckoutStep.PAYMENT
+            else CheckoutStep.INFORMATION
+
+            EnhancedCheckoutScreen(
+                onDismiss = {
+                    navController.navigate("shop") {
+                        popUpTo("shop") { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
+                onOrderComplete = { isSuccess ->
+                    navController.navigate("order_confirmation/$isSuccess") {
+                        popUpTo("checkout") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                initialStep = initialStep
+            )
+        }
+        composable(
+            "order_confirmation/{isSuccess}",
+            arguments = listOf(navArgument("isSuccess") { type = NavType.BoolType })
+        ) { backStackEntry ->
+            val isSuccess = backStackEntry.arguments?.getBoolean("isSuccess") ?: false
+            OrderConfirmationScreen(
+                isSuccess = isSuccess,
+                onContinueShopping = {
+                    // Clear cart on successful order
+                    if (isSuccess) {
+                        CartManager.shared.clearCart()
+                    }
+                    navController.navigate("shop") {
+                        popUpTo("shop") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onRetryCheckout = {
+                    // Navigate back to checkout at Payment step, keeping cart intact
+                    navController.navigate("checkout?step=payment") {
+                        popUpTo("order_confirmation/{isSuccess}") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onCancel = {
+                    // Return to shop, keeping cart intact
+                    navController.navigate("shop") {
+                        popUpTo("shop") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
         composable(BottomNavItem.Widgets.route) {
             WidgetsScreen { widgetType ->
@@ -72,7 +143,9 @@ fun NavigationGraph(
         ) { navBackStackEntry ->
             navBackStackEntry.arguments?.getString("widgetType")?.let { type ->
                 val widgetType = WidgetType.valueOf(type)
-                val styleItems = remember { widgetType.mapWidgetTypeToAppearanceComponents().sortedBy { it.displayName() } }
+                val styleItems = remember {
+                    widgetType.mapWidgetTypeToAppearanceComponents().sortedBy { it.displayName() }
+                }
                 StyleComponentListScreen(styleItems) { selectedItem ->
                     if (selectedItem.hasSubComponents) {
                         navController.navigate("style_sub_components/${widgetType.name}/${selectedItem.name}") // Pass widgetType too if sub-components can vary by parent widget
@@ -98,7 +171,10 @@ fun NavigationGraph(
                 val styleComponent = StyleAppearanceComponent.valueOf(component)
 
                 val items: List<StyleAppearanceComponent> =
-                    remember { styleComponent.mapAppearanceComponentToSubComponents()?.sortedBy { it.displayName() } ?: emptyList() }
+                    remember {
+                        styleComponent.mapAppearanceComponentToSubComponents()
+                            ?.sortedBy { it.displayName() } ?: emptyList()
+                    }
 
                 StyleSubComponentListScreen(
                     subComponents = items,
@@ -144,7 +220,10 @@ fun NavigationGraph(
 
 fun NavBackStackEntry.getRouteTitle(context: Context): String {
     return when (destination.route) {
+        "shop" -> "Shop"
+        "cart" -> "Cart"
         "checkout" -> context.getString(R.string.nav_checkout)
+        "order_confirmation/{isSuccess}" -> "" // No title for confirmation screen
         "widgets" -> context.getString(R.string.nav_widgets)
         "style" -> context.getString(R.string.nav_style)
         "account" -> context.getString(R.string.title_my_account)
@@ -177,7 +256,9 @@ fun NavBackStackEntry.getRouteTitle(context: Context): String {
 
 fun NavBackStackEntry.showBackButton(): Boolean {
     return when (destination.route) {
-        BottomNavItem.Checkout.route,
+        "shop",
+        "order_confirmation/{isSuccess}", // No back button on confirmation screen
+        BottomNavItem.Shop.route,
         BottomNavItem.Widgets.route,
         BottomNavItem.Style.route -> false
 
@@ -187,7 +268,9 @@ fun NavBackStackEntry.showBackButton(): Boolean {
 
 fun NavBackStackEntry.showTitle(): Boolean {
     return when (destination.route) {
-        BottomNavItem.Checkout.route -> false
+        "shop" -> false
+        "order_confirmation/{isSuccess}" -> false // No title for confirmation screen
+        BottomNavItem.Shop.route -> false
         else -> true
     }
 }

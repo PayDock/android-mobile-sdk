@@ -24,7 +24,9 @@ internal object CardSecurityCodeValidator {
      *
      * The validation considers the following cases:
      * - If the input is blank and the user has interacted with the field, it returns [SecurityCodeError.Empty].
-     * - If the input is not blank but incomplete (doesn't match the required length), it returns [SecurityCodeError.Invalid].
+     * - If the input is not blank but doesn't match the required length (or range when no cardCode is provided),
+     *   it returns [SecurityCodeError.Invalid].
+     * - When no cardCode is provided (default validation), accepts 3-4 digits.
      * - Otherwise, it returns [SecurityCodeError.None].
      *
      * @param securityCode The security code input provided by the user.
@@ -39,9 +41,16 @@ internal object CardSecurityCodeValidator {
     ): SecurityCodeError {
         return when {
             securityCode.isBlank() && hasUserInteracted -> SecurityCodeError.Empty
-            securityCode.isNotBlank() && securityCode.length != (
-                cardCode?.size ?: MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
-                ) -> SecurityCodeError.Invalid
+            securityCode.isNotBlank() -> {
+                val isValidLength = if (cardCode != null) {
+                    // When cardCode is provided, validate exact length
+                    securityCode.length == cardCode.size
+                } else {
+                    // When no cardCode is provided (default validation), accept 3-4 digits
+                    securityCode.length in MobileSDKConstants.CardDetailsConfig.MIN_SECURITY_CODE_LENGTH..MobileSDKConstants.CardDetailsConfig.MAX_SECURITY_CODE_LENGTH
+                }
+                if (!isValidLength) SecurityCodeError.Invalid else SecurityCodeError.None
+            }
             else -> SecurityCodeError.None
         }
     }

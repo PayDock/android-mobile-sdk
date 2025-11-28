@@ -25,8 +25,8 @@ data class InitiateWalletRequest(
 
     data class ShippingDTO(
         @SerializedName("address_line1") val addressLine1: String = "ship1",
-        @SerializedName("address_line2") val addressLine2: String = "ship22",
-        @SerializedName("address_line3") val addressLine3: String = "ship3",
+        @SerializedName("address_line2") val addressLine2: String? = null,
+        @SerializedName("address_line3") val addressLine3: String? = null,
         @SerializedName("address_city") val city: String = "shipcity",
         @SerializedName("address_state") val state: String = "shipstate",
         @SerializedName("address_country") val countryCode: String = AU_COUNTRY_CODE,
@@ -38,7 +38,7 @@ data class InitiateWalletRequest(
         data class ContactDTO(
             @SerializedName("first_name") val firstName: String = FIRST_NAME,
             @SerializedName("last_name") val lastName: String = LAST_NAME,
-            val phone: String = PHONE_NUMBER,
+            val phone: String? = PHONE_NUMBER,
         )
     }
 

@@ -31,6 +31,7 @@ variables:
 stages:
   - quality # Stage for code quality checks (e.g., linting, static analysis).
   - code_quality # Stage for linting the codebase using detekt
+  - dependency_validation # Stage for validating dependencies (version changes & health checks).
   - versioning # Stage for incrementing version code for new builds.
   - test # Stage for running unit and integration tests.
   - build # Stage for building the Android application.
@@ -85,6 +86,57 @@ code_quality:
     - if: $CI_COMMIT_BRANCH  # Run on all branch pushes
       when: on_success
     - if: $CI_MERGE_REQUEST_IID # Run on merge (Merge Results)
+      when: on_success
+
+# dependency_guard:
+# Fast check (~10 sec) that compares resolved dependencies against the committed baseline.
+# Fails if ANY dependency version changes are detected (e.g., Compose 1.8.3 -> 1.9.0).
+# This prevents unintended transitive dependency upgrades that could break merchant integrations.
+dependency_guard:
+  stage: dependency_validation
+  extends: .setup_bundler
+  script:
+    - echo "Running Dependency Guard - detecting version changes..."
+    - ./gradlew dependencyGuard --console=plain
+    - echo "SUCCESS - No dependency version changes detected"
+  artifacts:
+    expire_in: 1 week
+    when: always
+    paths:
+      - mobile-sdk/dependencies/
+    expose_as: 'Dependency Guard Baseline'
+  rules:
+    - if: $CI_COMMIT_BRANCH  # Run on all branch pushes (for testing phase)
+      when: on_success
+    - if: $CI_MERGE_REQUEST_IID # Run on merge requests
+      when: on_success
+
+# dependency_health:
+# Deep check (~1 min) that analyzes dependency health issues:
+#   - Unused dependencies that should be removed
+#   - Incorrect configurations (api vs implementation)
+#   - Transitive dependencies used directly in code
+# Only runs if dependency_guard passes (versions are correct first).
+dependency_health:
+  stage: dependency_validation
+  extends: .setup_bundler
+  needs:
+    - job: dependency_guard
+      artifacts: false
+  script:
+    - echo "Running Dependency Analysis - checking dependency health..."
+    - ./gradlew buildHealth --console=plain
+    - echo "SUCCESS - All dependencies are healthy"
+  artifacts:
+    expire_in: 1 week
+    when: always
+    paths:
+      - build/reports/dependency-analysis/
+    expose_as: 'Dependency Health Reports'
+  rules:
+    - if: $CI_COMMIT_BRANCH  # Run on all branch pushes (for testing phase)
+      when: on_success
+    - if: $CI_MERGE_REQUEST_IID # Run on merge requests
       when: on_success
 
 ## test: (All flavors are the same)
@@ -230,17 +282,17 @@ build_sandbox:
 
 # buildProd:
 # This job builds the production version of the Android application.
-build_prod:
-  extends: .build_template # Extends the '.build_template' template.
-  script:
-    - bundle exec fastlane buildDebug flavor:prod # Executes the 'build' lane using prod flavor in the Fastfile.
+#build_prod:
+#  extends: .build_template # Extends the '.build_template' template.
+#  script:
+#    - bundle exec fastlane buildDebug flavor:prod # Executes the 'build' lane using prod flavor in the Fastfile.
     # Fastfile Reference: This lane is defined in the Fastfile and handles the actual build process.
-  environment:
-    name: production
-  needs: [increment_version]
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
-      when: on_success
+#  environment:
+#    name: production
+#  needs: [increment_version]
+#  rules:
+#    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
+#      when: on_success
 
 # .deploy_template:
 # This is a hidden job template for deploying the Android application to Firebase App Distribution.
@@ -304,19 +356,19 @@ deploy_sandbox:
 # deployProd:
 # This job deploys the production version of the Android application to Firebase App Distribution.
 # It extends the '.deploy_template' to inherit the necessary setup and configuration.
-deploy_prod:
-  extends: .deploy_template # Inherits configuration from the .deploy_template template.
-  variables:
-    APP_ID: $FIREBASE_APP_ID_PROD # Firebase App ID for the production environment.
-  environment:
-    name: production # Sets the environment name to 'production'.
-  needs:
-    - job: build_prod
-  script:
-    - bundle exec fastlane deploy flavor:prod # Executes the 'deploy' lane using prod flavor in the Fastfile.
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
-      when: on_success
+#deploy_prod:
+#  extends: .deploy_template # Inherits configuration from the .deploy_template template.
+#  variables:
+#    APP_ID: $FIREBASE_APP_ID_PROD # Firebase App ID for the production environment.
+#  environment:
+#    name: production # Sets the environment name to 'production'.
+#  needs:
+#    - job: build_prod
+#  script:
+#    - bundle exec fastlane deploy flavor:prod # Executes the 'deploy' lane using prod flavor in the Fastfile.
+#  rules:
+#    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
+#      when: on_success
 
 # tag_release:
 # This job tags a release in the repository.
@@ -398,10 +450,4 @@ publish_to_maven_central:
   #   - Running JReleaser full release process
   #   - Creating Maven Central deployment
   #   - Updating GitLab release with Maven Central information
-  artifacts:
-    when: always
-    reports:
-    # JReleaser output for debugging
-    paths:
-      - mobile-sdk/build/jreleaser/
   allow_failure: false

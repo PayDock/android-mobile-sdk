@@ -5,16 +5,16 @@ import androidx.annotation.StringRes
 import com.paydock.sample.R
 
 sealed class BottomNavItem(
-    @StringRes val label: Int,
-    @DrawableRes val iconOutlined: Int,
-    @DrawableRes val iconFilled: Int,
+    @param:StringRes val label: Int,
+    @param:DrawableRes val iconOutlined: Int,
+    @param:DrawableRes val iconFilled: Int,
     val route: String,
 ) {
-    data object Checkout : BottomNavItem(
-        R.string.nav_checkout,
+    data object Shop : BottomNavItem(
+        R.string.nav_shop,
         R.drawable.ic_checkout,
         R.drawable.ic_checkout_selected,
-        "checkout"
+        "shop"
     )
 
     data object Widgets :

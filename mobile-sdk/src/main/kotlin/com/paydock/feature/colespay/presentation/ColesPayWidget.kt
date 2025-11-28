@@ -31,9 +31,12 @@ import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.ColesPayException
+import com.paydock.core.domain.model.Event
+import com.paydock.core.domain.model.EventAction
 import com.paydock.core.presentation.extensions.getMessageExtra
 import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ImageButtonAppearance
 import com.paydock.designsystems.components.button.ImageButtonDefaults
@@ -41,6 +44,7 @@ import com.paydock.designsystems.components.button.SdkImageButton
 import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkLoader
+import com.paydock.feature.colespay.domain.model.ColesPayEventNames
 import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
 import com.paydock.feature.colespay.presentation.state.ColesPayUIState
 import com.paydock.feature.colespay.presentation.utils.CancellationStatus
@@ -63,6 +67,7 @@ import org.koin.core.parameter.parametersOf
  * @param appearance The appearance configuration for the Coles Pay widget.
  * @param tokenRequest A callback to obtain the wallet token asynchronously.
  * @param loadingDelegate The delegate passed to overwrite control of showing loaders.
+ * @param eventDelegate An optional [WidgetEventDelegate] for tracking widget events such as button clicks.
  * @param completion A callback to handle the result of the Coles Pay operation.
  */
 @Suppress("MagicNumber")
@@ -74,6 +79,7 @@ fun ColesPayWidget(
     appearance: ColesPayWidgetAppearance = ColesPayWidgetAppearanceDefaults.appearance(),
     tokenRequest: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
+    eventDelegate: WidgetEventDelegate? = null,
     completion: (Result<String>) -> Unit
 ) {
     val context = LocalContext.current
@@ -114,6 +120,13 @@ fun ColesPayWidget(
             painter = painterResource(id = R.drawable.pay_with_coles_pay_button),
             contentDescription = LocalContext.current.getString(R.string.content_desc_coles_pay_button),
         ) {
+            // Emit button event
+            eventDelegate?.widgetEvent(
+                Event.ButtonEvent(
+                    name = ColesPayEventNames.COLES_PAY_CHECKOUT_BUTTON,
+                    action = EventAction.CLICK
+                )
+            )
             viewModel.startColesPayFlow(tokenRequest)
         }
     } else {
@@ -249,7 +262,7 @@ private fun handleColesPayResult(
             AppCompatActivity.RESULT_CANCELED -> {
                 when (data.getCancellationStatusExtra()) {
                     // If the cancellation was user-initiated, the completion is invoked with a failure result.
-                    CancellationStatus.USER_INITIATED -> {
+                    CancellationStatus.USER_INITIATED, CancellationStatus.PAGE_CLOSED -> {
                         completion(
                             Result.failure(
                                 ColesPayException.CancellationException(

@@ -8,14 +8,19 @@ import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.utils.MainDispatcherRule
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalWebCheckoutState
 import com.paydock.feature.paypal.checkout.presentation.viewmodel.PayPalWebCheckoutViewModel
+import com.paydock.feature.paypal.core.presentation.PayPalWebClientManager
 import com.paypal.android.corepayments.PayPalSDKError
+import com.paypal.android.paypalwebpayments.PayPalPresentAuthChallengeResult
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutClient
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFinishStartResult
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFundingSource
+import com.paypal.android.paypalwebpayments.PayPalWebStartCallback
 import io.mockk.MockKAnnotations
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.spyk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -47,20 +52,16 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `handleDeeplinkResult emits Success on finishStart success`() = runTest {
         val savedStateHandle = SavedStateHandle()
-        savedStateHandle["paypal.checkout.auth_state"] = "auth"
-        val vm = spyk(PayPalWebCheckoutViewModel(savedStateHandle, dispatchers))
-        val client = io.mockk.mockk<PayPalWebCheckoutClient>(relaxed = true)
-        // Set client via reflection
-        vm.apply {
-            val clientField = javaClass.getDeclaredField("paypalClient")
-            clientField.isAccessible = true
-            clientField.set(this, client)
-        }
+        val mockClient = mockk<PayPalWebCheckoutClient>(relaxed = true)
+        val mockManager = mockk<PayPalWebClientManager>(relaxed = true)
+        every { mockManager.getOrCreateClient(any()) } returns mockClient
+
+        val vm = PayPalWebCheckoutViewModel(savedStateHandle, dispatchers, mockManager)
         val intent = Intent("action")
-        val success = io.mockk.mockk<PayPalWebCheckoutFinishStartResult.Success>(relaxed = true)
+        val success = mockk<PayPalWebCheckoutFinishStartResult.Success>(relaxed = true)
         every { success.orderId } returns "ORDER-1"
         every { success.payerId } returns "PAYER-1"
-        every { client.finishStart(intent, any()) } returns success
+        every { mockClient.finishStart(intent) } returns success
 
         vm.handleDeeplinkResult(mockActivity, intent)
 
@@ -70,17 +71,14 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `handleDeeplinkResult emits Canceled on finishStart canceled`() = runTest {
         val savedStateHandle = SavedStateHandle()
-        savedStateHandle["paypal.checkout.auth_state"] = "auth"
-        val vm = spyk(PayPalWebCheckoutViewModel(savedStateHandle, dispatchers))
-        val client = io.mockk.mockk<PayPalWebCheckoutClient>(relaxed = true)
-        vm.apply {
-            val clientField = javaClass.getDeclaredField("paypalClient")
-            clientField.isAccessible = true
-            clientField.set(this, client)
-        }
+        val mockClient = mockk<PayPalWebCheckoutClient>(relaxed = true)
+        val mockManager = mockk<PayPalWebClientManager>(relaxed = true)
+        every { mockManager.getOrCreateClient(any()) } returns mockClient
+
+        val vm = PayPalWebCheckoutViewModel(savedStateHandle, dispatchers, mockManager)
         val intent = Intent("action")
-        val canceled = io.mockk.mockk<PayPalWebCheckoutFinishStartResult.Canceled>(relaxed = true)
-        every { client.finishStart(intent, any()) } returns canceled
+        val canceled = mockk<PayPalWebCheckoutFinishStartResult.Canceled>(relaxed = true)
+        every { mockClient.finishStart(intent) } returns canceled
 
         vm.handleDeeplinkResult(mockActivity, intent)
 
@@ -90,19 +88,16 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `handleDeeplinkResult emits Failure on finishStart failure`() = runTest {
         val savedStateHandle = SavedStateHandle()
-        savedStateHandle["paypal.checkout.auth_state"] = "auth"
-        val vm = spyk(PayPalWebCheckoutViewModel(savedStateHandle, dispatchers))
-        val client = io.mockk.mockk<PayPalWebCheckoutClient>(relaxed = true)
-        vm.apply {
-            val clientField = javaClass.getDeclaredField("paypalClient")
-            clientField.isAccessible = true
-            clientField.set(this, client)
-        }
+        val mockClient = mockk<PayPalWebCheckoutClient>(relaxed = true)
+        val mockManager = mockk<PayPalWebClientManager>(relaxed = true)
+        every { mockManager.getOrCreateClient(any()) } returns mockClient
+
+        val vm = PayPalWebCheckoutViewModel(savedStateHandle, dispatchers, mockManager)
         val intent = Intent("action")
-        val failure = io.mockk.mockk<PayPalWebCheckoutFinishStartResult.Failure>(relaxed = true)
-        val sdkError = io.mockk.mockk<PayPalSDKError>(relaxed = true)
+        val failure = mockk<PayPalWebCheckoutFinishStartResult.Failure>(relaxed = true)
+        val sdkError = mockk<PayPalSDKError>(relaxed = true)
         every { failure.error } returns sdkError
-        every { client.finishStart(intent, any()) } returns failure
+        every { mockClient.finishStart(intent) } returns failure
 
         vm.handleDeeplinkResult(mockActivity, intent)
 
@@ -112,9 +107,10 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `handleDeeplinkResult emits Canceled on NoResult`() = runTest {
         val savedStateHandle = SavedStateHandle()
-        savedStateHandle["paypal.checkout.auth_state"] = "auth"
-        val vm = spyk(PayPalWebCheckoutViewModel(savedStateHandle, dispatchers))
-        // Leave client null to trigger NoResult path via Elvis operator
+        val mockManager = mockk<PayPalWebClientManager>(relaxed = true)
+        every { mockManager.getOrCreateClient(any()) } returns null
+
+        val vm = PayPalWebCheckoutViewModel(savedStateHandle, dispatchers, mockManager)
         val intent = Intent("action")
 
         vm.handleDeeplinkResult(mockActivity, intent)
@@ -123,48 +119,49 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
     }
 
     @Test
-    fun `initiateCheckout success stores authState`() = runTest {
-        val present = io.mockk.mockk<com.paypal.android.paypalwebpayments.PayPalPresentAuthChallengeResult.Success>(relaxed = true)
-        every { present.authState } returns "auth"
-        val vm = PayPalWebCheckoutViewModel(
-            SavedStateHandle(),
-            dispatchers,
-            coreConfigProvider = { _: String -> io.mockk.mockk(relaxed = true) },
-            clientProvider = { _: AppCompatActivity, _: com.paypal.android.corepayments.CoreConfig, _: String ->
-                val client = io.mockk.mockk<PayPalWebCheckoutClient>(relaxed = true)
-                every { client.start(any(), any()) } returns present
-                client
-            }
-        )
+    fun `initiateCheckout success stores client for later finishStart`() = runTest {
+        val savedStateHandle = SavedStateHandle()
+        val mockClient = mockk<PayPalWebCheckoutClient>(relaxed = true)
+        val mockManager = mockk<PayPalWebClientManager>(relaxed = true)
+        val presentSuccess = mockk<PayPalPresentAuthChallengeResult.Success>(relaxed = true)
+        val callbackSlot = slot<PayPalWebStartCallback>()
+
+        every { mockManager.getOrCreateClient(any(), any()) } returns mockClient
+        every { mockClient.start(any(), any(), capture(callbackSlot)) } answers {
+            callbackSlot.captured.onPayPalWebStartResult(presentSuccess)
+        }
+
+        val vm = PayPalWebCheckoutViewModel(savedStateHandle, dispatchers, mockManager)
         vm.initiateCheckout(mockActivity, "CLIENT", "ORDER", PayPalWebCheckoutFundingSource.PAYPAL)
         advanceUntilIdle()
+
         // Now invoke deeplink and expect Success path to be reachable
-        val finishSuccess = io.mockk.mockk<PayPalWebCheckoutFinishStartResult.Success>(relaxed = true)
+        every { mockManager.getOrCreateClient(any()) } returns mockClient
+        val finishSuccess = mockk<PayPalWebCheckoutFinishStartResult.Success>(relaxed = true)
         every { finishSuccess.orderId } returns "ORDER-1"
         every { finishSuccess.payerId } returns "PAYER-1"
-        val clientField = vm.javaClass.getDeclaredField("paypalClient")
-        clientField.isAccessible = true
-        val client = clientField.get(vm) as PayPalWebCheckoutClient
-        every { client.finishStart(any(), "auth") } returns finishSuccess
+        every { mockClient.finishStart(any()) } returns finishSuccess
+
         vm.handleDeeplinkResult(mockActivity, Intent("action"))
         assertIs<PayPalWebCheckoutState.Success>(vm.checkoutState.first())
     }
 
     @Test
     fun `initiateCheckout failure sets Failure state`() = runTest {
-        val failure = io.mockk.mockk<com.paypal.android.paypalwebpayments.PayPalPresentAuthChallengeResult.Failure>(relaxed = true)
-        val error = io.mockk.mockk<PayPalSDKError>(relaxed = true)
+        val savedStateHandle = SavedStateHandle()
+        val mockClient = mockk<PayPalWebCheckoutClient>(relaxed = true)
+        val mockManager = mockk<PayPalWebClientManager>(relaxed = true)
+        val failure = mockk<PayPalPresentAuthChallengeResult.Failure>(relaxed = true)
+        val error = mockk<PayPalSDKError>(relaxed = true)
+        val callbackSlot = slot<PayPalWebStartCallback>()
+
         every { failure.error } returns error
-        val vm = PayPalWebCheckoutViewModel(
-            SavedStateHandle(),
-            dispatchers,
-            coreConfigProvider = { _: String -> io.mockk.mockk(relaxed = true) },
-            clientProvider = { _: AppCompatActivity, _: com.paypal.android.corepayments.CoreConfig, _: String ->
-                val client = io.mockk.mockk<PayPalWebCheckoutClient>(relaxed = true)
-                every { client.start(any(), any()) } returns failure
-                client
-            }
-        )
+        every { mockManager.getOrCreateClient(any(), any()) } returns mockClient
+        every { mockClient.start(any(), any(), capture(callbackSlot)) } answers {
+            callbackSlot.captured.onPayPalWebStartResult(failure)
+        }
+
+        val vm = PayPalWebCheckoutViewModel(savedStateHandle, dispatchers, mockManager)
         vm.initiateCheckout(mockActivity, "CLIENT", "ORDER", PayPalWebCheckoutFundingSource.PAYPAL)
         advanceUntilIdle()
         assertIs<PayPalWebCheckoutState.Failure>(vm.checkoutState.first())
@@ -173,22 +170,15 @@ internal class PayPalWebCheckoutViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `onCleared resets internal state`() = runTest {
         val savedStateHandle = SavedStateHandle()
-        savedStateHandle["paypal.checkout.auth_state"] = "auth"
-        val vm = spyk(PayPalWebCheckoutViewModel(savedStateHandle, dispatchers))
-        // Pre-set client
-        vm.apply {
-            val clientField = javaClass.getDeclaredField("paypalClient")
-            clientField.isAccessible = true
-            clientField.set(this, io.mockk.mockk<PayPalWebCheckoutClient>(relaxed = true))
-        }
+        val mockManager = mockk<PayPalWebClientManager>(relaxed = true)
+        every { mockManager.clear() } returns Unit
+
+        val vm = spyk(PayPalWebCheckoutViewModel(savedStateHandle, dispatchers, mockManager))
 
         val method = vm.javaClass.getDeclaredMethod("onCleared")
         method.isAccessible = true
         method.invoke(vm)
 
-        val clientField = vm.javaClass.getDeclaredField("paypalClient")
-        clientField.isAccessible = true
-        assert(savedStateHandle.get<String>("paypal.checkout.auth_state") == null)
-        assert(clientField.get(vm) == null)
+        io.mockk.verify { mockManager.clear() }
     }
 }

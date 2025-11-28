@@ -1,5 +1,28 @@
 # Changelog
 
+## [5.2.0] - 2025-11-28
+
+### Added
+- UnionPay support for card schemes
+- Callback for info events to enable analytical collection
+- Dependency resolution library for better dependency management
+- Customisation options: spacing control for input form widgets (widget + input spacing)
+- Updated checkout implementation for ExampleApp (demo app - E2E flows)
+
+### Changed
+- Updated internal libraries for `Integrated3DSWidget`, `Standalone3DSWidget` and `ClickToPayWidget`
+- Updated PayPal SDK from version `2.0.0` to `2.3.0`
+- Configuration improvements: address moved to Config object for Address Widget; 
+- Text and Icon customisation moved into appearance objects for SDK button widgets (ie. `PayPalSavePaymentSourceWidget`, `CardDetailsWidget`, `AddressDetailsWidget` and `GiftCardWidget`)
+- Updated logic for no card scheme detection - applying default validation
+
+### Fixed
+- Accessibility improvements: keyboard navigation focus issues, Large Text support across widgets, Dark Mode input text contrast, button text truncation, and 3DS Widget visibility issues
+- Payment methods: PayPal cancellation and state management 
+- ColesPay widget closing and back to store cancellation 
+- Google Pay cancellation feedback
+- UI/UX: input field text vertical centering, disabled button styling, Click to Pay WebView session management, and app theme persistence on device rotation
+
 ## [5.1.0] - 2025-10-07
 
 ### Changed

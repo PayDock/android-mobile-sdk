@@ -1,6 +1,7 @@
 package com.paydock.feature.afterpay.presentation.viewmodels
 
 import android.content.Context
+import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.afterpay.android.CancellationStatus
 import com.paydock.MobileSDK
@@ -82,7 +83,9 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
         captureWalletChargeUseCase = mockk()
         declineWalletChargeUseCase = mockk()
         getWalletCallbackUseCase = mockk()
+
         viewModel = AfterpayViewModel(
+            SavedStateHandle(),
             captureWalletChargeUseCase,
             declineWalletChargeUseCase,
             getWalletCallbackUseCase,

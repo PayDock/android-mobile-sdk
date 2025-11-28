@@ -1,5 +1,6 @@
 package com.paydock.feature.card.presentation.viewmodels
 
+import androidx.lifecycle.SavedStateHandle
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.safeCastAs
@@ -33,6 +34,7 @@ internal class CardDetailsViewModel(
     private val getCardSchemasUseCase: GetCardSchemasUseCase,
     private val createCardPaymentTokenUseCase: CreateCardPaymentTokenUseCase,
     dispatchers: DispatchersProvider,
+    private val savedStateHandle: SavedStateHandle,
 ) : BaseViewModel(dispatchers) {
 
     /**
@@ -52,6 +54,21 @@ internal class CardDetailsViewModel(
     init {
         updateSchemeConfigState(schemeConfig)
         getCardSchemas()
+        restoreFromSavedState()
+    }
+
+    private fun restoreFromSavedState() {
+        // For security/PCI reasons, do not restore PAN/CVV/expiry from disk-backed state
+        val savedCardholderName: String? = savedStateHandle[KEY_CARDHOLDER_NAME]
+        val savedSaveCard: Boolean? = savedStateHandle[KEY_SAVE_CARD]
+        if (savedCardholderName != null || savedSaveCard != null) {
+            _inputStateFlow.update { state ->
+                state.copy(
+                    cardholderName = savedCardholderName ?: state.cardholderName,
+                    saveCard = savedSaveCard ?: state.saveCard
+                )
+            }
+        }
     }
 
     private fun updateSchemeConfigState(schemeConfig: SupportedSchemeConfig) {
@@ -109,6 +126,7 @@ internal class CardDetailsViewModel(
         _inputStateFlow.update { state ->
             state.copy(cardholderName = name)
         }
+        savedStateHandle[KEY_CARDHOLDER_NAME] = name
     }
 
     /**
@@ -153,6 +171,7 @@ internal class CardDetailsViewModel(
         _inputStateFlow.update { state ->
             state.copy(saveCard = saveCard)
         }
+        savedStateHandle[KEY_SAVE_CARD] = saveCard
     }
 
     /**
@@ -194,5 +213,10 @@ internal class CardDetailsViewModel(
                         ?.let { updateState(CardDetailsUIState.Error(it)) }
                 }
         }
+    }
+
+    private companion object {
+        const val KEY_CARDHOLDER_NAME = "card_input_cardholder_name"
+        const val KEY_SAVE_CARD = "card_input_save_card"
     }
 }

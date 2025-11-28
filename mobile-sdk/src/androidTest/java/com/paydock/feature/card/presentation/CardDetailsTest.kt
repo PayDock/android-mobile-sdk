@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
+import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.paydock.core.BaseViewModelKoinTest
 import com.paydock.core.domain.error.exceptions.CardDetailsException
@@ -42,7 +43,6 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.koin.compose.ComposeContextWrapper
 import org.koin.compose.LocalKoinApplication
 import org.koin.compose.LocalKoinScope
 import org.koin.core.annotation.KoinInternalApi
@@ -115,7 +115,8 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             ),
             createCardPaymentTokenUseCase = createCardPaymentTokenUseCase,
             getCardSchemasUseCase = getCardSchemasUseCase,
-            dispatchers = dispatchersProvider
+            dispatchers = dispatchersProvider,
+            savedStateHandle = SavedStateHandle()
         )
     }
 
@@ -125,12 +126,8 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             // This shouldn't be needed, but allows robolectric tests to run successfully
             // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557
             CompositionLocalProvider(
-                LocalKoinScope provides ComposeContextWrapper(
-                    KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope
-                ),
-                LocalKoinApplication provides ComposeContextWrapper(
-                    KoinPlatformTools.defaultContext().get()
-                )
+                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
+                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
             ) {
                 CardDetailsWidget(
                     config = CardDetailsWidgetConfig(
@@ -157,12 +154,8 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             // This shouldn't be needed, but allows robolectric tests to run successfully
             // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557
             CompositionLocalProvider(
-                LocalKoinScope provides ComposeContextWrapper(
-                    KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope
-                ),
-                LocalKoinApplication provides ComposeContextWrapper(
-                    KoinPlatformTools.defaultContext().get()
-                )
+                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
+                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
             ) {
                 CardDetailsWidget(
                     config = CardDetailsWidgetConfig(
@@ -225,12 +218,8 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             // This shouldn't be needed, but allows robolectric tests to run successfully
             // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557
             CompositionLocalProvider(
-                LocalKoinScope provides ComposeContextWrapper(
-                    KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope
-                ),
-                LocalKoinApplication provides ComposeContextWrapper(
-                    KoinPlatformTools.defaultContext().get()
-                )
+                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
+                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
             ) {
                 CardDetailsWidget(
                     config = CardDetailsWidgetConfig(
@@ -288,12 +277,8 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             // This shouldn't be needed, but allows robolectric tests to run successfully
             // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557
             CompositionLocalProvider(
-                LocalKoinScope provides ComposeContextWrapper(
-                    KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope
-                ),
-                LocalKoinApplication provides ComposeContextWrapper(
-                    KoinPlatformTools.defaultContext().get()
-                )
+                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
+                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
             ) {
                 // Set up your ViewModel and other dependencies
                 CardDetailsWidget(
@@ -384,12 +369,8 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             // This shouldn't be needed, but allows robolectric tests to run successfully
             // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557
             CompositionLocalProvider(
-                LocalKoinScope provides ComposeContextWrapper(
-                    KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope
-                ),
-                LocalKoinApplication provides ComposeContextWrapper(
-                    KoinPlatformTools.defaultContext().get()
-                )
+                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
+                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
             ) {
                 CardDetailsWidget(
                     config = CardDetailsWidgetConfig(

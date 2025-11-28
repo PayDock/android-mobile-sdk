@@ -12,5 +12,6 @@ internal val afterPayModule = module {
     includes(walletModule)
 
     // Define a view model for Afterpay
+    // SavedStateHandle is auto-injected by Koin when not in the lambda parameters
     viewModelOf(::AfterpayViewModel)
 }

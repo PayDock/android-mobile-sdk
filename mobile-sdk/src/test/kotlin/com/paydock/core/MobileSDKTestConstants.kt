@@ -52,6 +52,7 @@ internal object MobileSDKTestConstants {
     }
 
     object PayPal {
+        const val MOCK_ORDER_ID = "6DH74585DP725353W"
         const val MOCK_PAYMENT_METHOD_ID = "06S13800C2876432A"
         const val MOCK_PAYER_ID = "H2G7GULMXJZU6"
         const val MOCK_CALLBACK_URL =

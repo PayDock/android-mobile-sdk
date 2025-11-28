@@ -13,6 +13,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,6 +34,7 @@ import com.paydock.designsystems.components.icon.SdkIcon
  *
  * @param allowFullScreen Flag indicating whether the bottom sheet can take up the full screen.
  * @param bottomSheetState The state of the bottom sheet to control its visibility and position.
+ * @param shouldDismissOnBackPress Whether the sheet should be dismissed when the user presses the back button.
  * @param onDismissRequest Callback to be invoked when the bottom sheet is dismissed.
  * @param content The content of the bottom sheet provided as a composable function.
  */
@@ -43,6 +45,7 @@ fun SdkBottomSheet(
     allowFullScreen: Boolean = false,
     bottomSheetState: SheetState,
     enableClose: Boolean = true,
+    shouldDismissOnBackPress: Boolean = true,
     onDismissRequest: () -> Unit,
     content: @Composable () -> Unit
 ) {
@@ -63,6 +66,9 @@ fun SdkBottomSheet(
     // Display a modal bottom sheet with customizable content
     ModalBottomSheet(
         modifier = modifier.statusBarsPadding(),
+        properties = ModalBottomSheetProperties(
+            shouldDismissOnBackPress = shouldDismissOnBackPress
+        ),
         containerColor = containerColor,
         contentWindowInsets = { windowInsets },
         dragHandle = null,

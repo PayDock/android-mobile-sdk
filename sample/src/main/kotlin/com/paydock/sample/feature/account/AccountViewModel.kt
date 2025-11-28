@@ -50,6 +50,12 @@ class AccountViewModel @Inject constructor(
         }
     }
 
+    fun setError(message: String) {
+        _stateFlow.update { state ->
+            state.copy(isLoading = false, error = message)
+        }
+    }
+
     override fun widgetLoadingDidStart() {
         _stateFlow.update { state ->
             state.copy(isLoading = true)

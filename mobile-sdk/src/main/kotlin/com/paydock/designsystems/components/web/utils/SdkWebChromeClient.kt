@@ -9,6 +9,7 @@ import android.view.View
 import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebView
+import androidx.core.net.toUri
 import com.kevinnzou.web.AccompanistWebChromeClient
 import com.paydock.MobileSDK
 import com.paydock.core.MobileSDKConstants
@@ -31,6 +32,7 @@ internal class SdkWebChromeClient(
     private val onOpenWebView: (WebView) -> Unit,
     private val onPageFinished: (WebView) -> Unit,
     private val onWebViewError: (Int, String) -> Unit,
+    private val onCloseRequested: () -> Unit = {},
     private val openExternalLink: (Uri) -> Unit
 ) : AccompanistWebChromeClient() {
 
@@ -98,10 +100,6 @@ internal class SdkWebChromeClient(
             )
 
             ConsoleMessage.MessageLevel.TIP -> Log.i(MobileSDKConstants.MOBILE_SDK_TAG, logMessage)
-            else -> Log.v(
-                MobileSDKConstants.MOBILE_SDK_TAG,
-                logMessage
-            ) // Verbose for unknown levels
         }
     }
 
@@ -175,9 +173,11 @@ internal class SdkWebChromeClient(
                 view?.requestFocusNodeHref(hrefMessage)
 
                 val url = hrefMessage?.data?.getString(URL_KEY)
-                url?.let { openExternalLink(Uri.parse(it)) }
+                url?.let { openExternalLink(it.toUri()) }
 
-                return false
+                // Some sites attempt window.close(); when not opened by script, intercept and close host
+                onCloseRequested()
+                return true
             }
 
             override fun onCloseWindow(window: WebView?) {

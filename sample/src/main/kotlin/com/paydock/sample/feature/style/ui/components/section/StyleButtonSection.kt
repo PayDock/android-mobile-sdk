@@ -4,9 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,41 +49,43 @@ fun ButtonAppearanceStyleEditor(
 
     // This derived state helps ensure we are always working with the correct type
     // and simplifies the `onAppearanceChange` calls from sub-editors.
-    // However, direct modification through sub-editors will still need to use
-    // the `copy()` methods of the specific type.
+    // When the type matches, return as-is (don't create new instance).
+    // When type doesn't match, create default for new type with preserved text/icon.
     val appearanceForEditing =
         remember(currentAppearance, selectedButtonType) {
-            // If the currentAppearance's type doesn't match selectedButtonType,
-            // it means the user just changed the dropdown. We should reset to the default for that type.
             when (selectedButtonType) {
-                EditableButtonType.FILLED ->
-                    if (currentAppearance is ButtonAppearance.FilledButtonAppearance && selectedButtonType == EditableButtonType.FILLED) currentAppearance
-                    else defaultFilledAppearance
+                EditableButtonType.FILLED -> {
+                    currentAppearance as? ButtonAppearance.FilledButtonAppearance
+                        ?: defaultFilledAppearance.copy(
+                            text = currentAppearance.text,
+                            icon = currentAppearance.icon
+                        )
+                }
 
-                EditableButtonType.OUTLINE ->
-                    if (currentAppearance is ButtonAppearance.OutlineButtonAppearance && selectedButtonType == EditableButtonType.OUTLINE) currentAppearance
-                    else defaultOutlineAppearance
+                EditableButtonType.OUTLINE -> {
+                    currentAppearance as? ButtonAppearance.OutlineButtonAppearance
+                        ?: defaultOutlineAppearance.copy(
+                            text = currentAppearance.text,
+                            icon = currentAppearance.icon
+                        )
+                }
 
-                EditableButtonType.TEXT ->
-                    if (currentAppearance is ButtonAppearance.TextButtonAppearance && selectedButtonType == EditableButtonType.TEXT) currentAppearance
-                    else defaultTextAppearance
+                EditableButtonType.TEXT -> {
+                    currentAppearance as? ButtonAppearance.TextButtonAppearance
+                        ?: defaultTextAppearance.copy(
+                            text = currentAppearance.text,
+                            icon = currentAppearance.icon
+                        )
+                }
 
 //                EditableButtonType.ICON ->
-//                    if (currentAppearance is ButtonAppearance.IconButtonAppearance && selectedButtonType == EditableButtonType.ICON) currentAppearance
-//                    else defaultIconAppearance
+//                    if (currentAppearance is ButtonAppearance.IconButtonAppearance) {
+//                        currentAppearance
+//                    } else {
+//                        defaultIconAppearance.copy(icon = iconToPreserve)
+//                    }
             }
         }
-
-    // This LaunchedEffect is now less about "fixing" a type mismatch after the fact,
-    // and more about a general safeguard or if an external change to 'currentAppearance'
-    // somehow didn't align with 'selectedButtonType'. For direct dropdown changes,
-    // the immediate call to onAppearanceChange in the dropdown's lambda is more direct.
-    // You might even find this effect becomes redundant if the dropdown logic is robust.
-    LaunchedEffect(appearanceForEditing, currentAppearance) {
-        if (currentAppearance::class != appearanceForEditing::class) {
-            onAppearanceChange(appearanceForEditing)
-        }
-    }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
@@ -97,15 +97,27 @@ fun ButtonAppearanceStyleEditor(
             currentButtonType = selectedButtonType
         ) { newType ->
             if (selectedButtonType != newType) {
-                selectedButtonType = newType // Update local state for the dropdown
-                // Immediately update the parent/ViewModel with the correct default for the new type
-                val newDefaultAppearance = when (newType) {
-                    EditableButtonType.FILLED -> defaultFilledAppearance
-                    EditableButtonType.OUTLINE -> defaultOutlineAppearance
-                    EditableButtonType.TEXT -> defaultTextAppearance
-                    // EditableButtonType.ICON -> defaultIconAppearance
+                selectedButtonType = newType
+
+                // Immediately persist the type change by creating the new typed appearance
+                // and preserving the current text and icon
+                val newAppearance = when (newType) {
+                    EditableButtonType.FILLED -> defaultFilledAppearance.copy(
+                        text = currentAppearance.text,
+                        icon = currentAppearance.icon
+                    )
+
+                    EditableButtonType.OUTLINE -> defaultOutlineAppearance.copy(
+                        text = currentAppearance.text,
+                        icon = currentAppearance.icon
+                    )
+
+                    EditableButtonType.TEXT -> defaultTextAppearance.copy(
+                        text = currentAppearance.text,
+                        icon = currentAppearance.icon
+                    )
                 }
-                onAppearanceChange(newDefaultAppearance)
+                onAppearanceChange(newAppearance)
             }
         }
 
@@ -132,7 +144,6 @@ fun ButtonAppearanceStyleEditor(
                 onAppearanceChange = onAppearanceChange
             )
 
-            else -> Text("$appearanceForEditing not implemented!")
         }
     }
 }

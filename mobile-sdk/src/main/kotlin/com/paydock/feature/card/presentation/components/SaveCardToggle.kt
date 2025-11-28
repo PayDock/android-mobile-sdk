@@ -1,6 +1,5 @@
 package com.paydock.feature.card.presentation.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,7 +10,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import com.paydock.R
@@ -38,6 +36,7 @@ import com.paydock.feature.card.domain.model.integration.SaveCardConfig
  * @param linkTextAppearance The appearance for the tappable link text.
  * @param toggleAppearance The appearance for the toggle switch.
  * @param onToggle A callback invoked when the toggle switch is changed. The boolean parameter indicates the new checked state.
+ * @param onPrivacyPolicyClick An optional callback invoked when the privacy policy link is clicked. The string parameter is the URL.
  */
 @Composable
 internal fun SaveCardToggle(
@@ -47,7 +46,8 @@ internal fun SaveCardToggle(
     linkToggleAppearance: TextAppearance = TextAppearanceDefaults.appearance(),
     linkTextAppearance: LinkTextAppearance = LinkTextAppearanceDefaults.appearance(),
     toggleAppearance: ToggleAppearance = ToggleAppearanceDefaults.appearance(),
-    onToggle: (Boolean) -> Unit
+    onToggle: (Boolean) -> Unit,
+    onPrivacyPolicyClick: ((String) -> Unit)? = null
 ) {
     val context = LocalContext.current
 
@@ -59,27 +59,11 @@ internal fun SaveCardToggle(
     }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .semantics(mergeDescendants = true) {
-                contentDescription = "$descriptionText. $currentToggleState"
-                role = Role.Switch
-            }
-            .clickable(
-                enabled = enabled,
-                onClickLabel = stringResource(id = R.string.content_desc_save_card_toggle_action)
-            ) {
-                onToggle(!saveCard)
-            },
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .semantics {
-                    // Hides from accessibility tree, content is in parent
-                    hideFromAccessibility()
-                },
+            modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.Start
         ) {
             // Consent Label
@@ -95,6 +79,7 @@ internal fun SaveCardToggle(
                     appearance = linkTextAppearance
                 ) {
                     if (enabled) {
+                        onPrivacyPolicyClick?.invoke(config.privacyPolicyConfig.privacyPolicyURL)
                         context.openBrowser(config.privacyPolicyConfig.privacyPolicyURL)
                     }
                 }
@@ -105,13 +90,17 @@ internal fun SaveCardToggle(
             modifier = Modifier
                 .align(Alignment.CenterVertically)
                 .semantics {
-                    // Hides from accessibility tree, content is in parent
-                    hideFromAccessibility()
+                    contentDescription = "$descriptionText. $currentToggleState"
+                    role = Role.Switch
                 },
             enabled = enabled,
             isChecked = saveCard,
             appearance = toggleAppearance,
-            onCheckedChange = null
+            onCheckedChange = { newState ->
+                if (enabled) {
+                    onToggle(newState)
+                }
+            }
         )
     }
 }
@@ -123,10 +112,10 @@ internal fun PreviewSaveCardToggleOff() {
         saveCard = false,
         config = SaveCardConfig(
             privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(privacyPolicyURL = "https://google.com")
-        )
-    ) {
-
-    }
+        ),
+        onPrivacyPolicyClick = {},
+        onToggle = {}
+    )
 }
 
 @SdkLightDarkPreviews
@@ -136,8 +125,8 @@ internal fun PreviewSaveCardToggleOn() {
         saveCard = true,
         config = SaveCardConfig(
             privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(privacyPolicyURL = "https://google.com")
-        )
-    ) {
-
-    }
+        ),
+        onPrivacyPolicyClick = {},
+        onToggle = {}
+    )
 }

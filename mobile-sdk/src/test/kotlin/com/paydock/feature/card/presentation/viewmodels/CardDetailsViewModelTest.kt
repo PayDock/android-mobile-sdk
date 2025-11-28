@@ -1,5 +1,6 @@
 package com.paydock.feature.card.presentation.viewmodels
 
+import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
@@ -119,7 +120,8 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
             SupportedSchemeConfig(),
             getCardSchemasUseCaseTest,
             createCardPaymentUseCase,
-            dispatchersProvider
+            dispatchersProvider,
+            SavedStateHandle()
         )
     }
 

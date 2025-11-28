@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -85,7 +84,10 @@ fun NumberCounter(
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.inverseOnSurface),
                 // Removed padding(end = 0.dp) as it's often better handled by the parent layout
-                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top), // Consider Arrangement.Center if icons look too high
+                verticalArrangement = Arrangement.spacedBy(
+                    8.dp,
+                    Alignment.Top
+                ), // Consider Arrangement.Center if icons look too high
                 horizontalAlignment = Alignment.CenterHorizontally, // Usually icons are centered
             ) {
                 Icon(
@@ -112,6 +114,7 @@ fun NumberCounter(
         }
     }
 }
+
 @PreviewLightDark
 @Composable
 internal fun PreviewNumberCounter() {

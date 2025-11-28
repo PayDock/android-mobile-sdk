@@ -1,6 +1,7 @@
 package com.paydock.feature.address.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,8 +17,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.paydock.R
-import com.paydock.core.MobileSDKConstants
 import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.designsystems.components.text.SdkText
@@ -52,7 +53,6 @@ internal fun NameSectionEntry(
 ) {
     val configuration = LocalConfiguration.current
     val fontScale = configuration.fontScale
-    val largeFontScaleThreshold = MobileSDKConstants.CardDetailsConfig.FONT_SCALE_THRESHOLD
 
     val focusLastName = remember { FocusRequester() }
 
@@ -66,26 +66,37 @@ internal fun NameSectionEntry(
             appearance = titleAppearance,
             text = stringResource(R.string.label_name),
         )
-        if (fontScale >= largeFontScaleThreshold) {
-            NameInputDetailsColumn(
-                verticalSpacing = verticalSpacing,
-                appearance = textFieldAppearance,
-                firstName = firstName,
-                lastName = lastName,
-                focusLastName = focusLastName,
-                onFirstNameChange = onFirstNameChange,
-                onLastNameChange = onLastNameChange
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            // For Name fields: FirstName (50% weight) + LastName (50% weight) + spacing
+            // Each field needs ~150dp minimum for typical names + padding
+            val shouldUseColumnLayout = WidgetDefaults.shouldUseColumnLayout(
+                availableWidth = maxWidth,
+                fontScale = fontScale,
+                minFieldWidth = 150.dp, // Name field minimum
+                fieldWeight = 0.5f // Each field weight (equal split)
             )
-        } else {
-            NameInputDetailsRow(
-                horizontalSpacing = horizontalSpacing,
-                appearance = textFieldAppearance,
-                firstName = firstName,
-                lastName = lastName,
-                focusLastName = focusLastName,
-                onFirstNameChange = onFirstNameChange,
-                onLastNameChange = onLastNameChange
-            )
+
+            if (shouldUseColumnLayout) {
+                NameInputDetailsColumn(
+                    verticalSpacing = verticalSpacing,
+                    appearance = textFieldAppearance,
+                    firstName = firstName,
+                    lastName = lastName,
+                    focusLastName = focusLastName,
+                    onFirstNameChange = onFirstNameChange,
+                    onLastNameChange = onLastNameChange
+                )
+            } else {
+                NameInputDetailsRow(
+                    horizontalSpacing = horizontalSpacing,
+                    appearance = textFieldAppearance,
+                    firstName = firstName,
+                    lastName = lastName,
+                    focusLastName = focusLastName,
+                    onFirstNameChange = onFirstNameChange,
+                    onLastNameChange = onLastNameChange
+                )
+            }
         }
     }
 }
@@ -120,7 +131,7 @@ private fun NameInputDetailsColumn(
     ) {
         AddressInputField(
             modifier = Modifier
-                .weight(0.5f)
+                .fillMaxWidth()
                 .testTag("firstName1Input"),
             appearance = appearance,
             value = firstName,
@@ -132,7 +143,7 @@ private fun NameInputDetailsColumn(
 
         AddressInputField(
             modifier = Modifier
-                .weight(0.5f)
+                .fillMaxWidth()
                 .focusRequester(focusLastName)
                 .testTag("lastNameInput"),
             appearance = appearance,

@@ -48,6 +48,7 @@ internal fun <T : Any?> SdkWebView(
     shouldShowCustomLoader: Boolean = true,
     jsBridge: SdkJSBridge<T>? = null,
     loaderAppearance: LoaderAppearance = LoaderAppearanceDefaults.appearance(),
+    onCloseRequested: () -> Unit = {},
     onShouldOverrideUrlLoading: ((request: WebResourceRequest?) -> Boolean)? = null,
     onPageFinished: ((WebView) -> Unit)? = null,
     onWebViewError: (Int, String) -> Unit,
@@ -96,11 +97,26 @@ internal fun <T : Any?> SdkWebView(
                 SdkWebViewClient(
                     onShouldOverrideUrlLoading = onShouldOverrideUrlLoading,
                     onPageFinished = { webView ->
+                        // Inject a small shim to map window.close() into a custom scheme that we intercept
+                        webView.evaluateJavascript(
+                            """
+                            (function(){
+                              try {
+                                var __origClose = window.close;
+                                window.close = function(){
+                                  location.href = "${MobileSDKConstants.WEB_CLOSE_DEEPLINK}";
+                                };
+                              } catch(e) {}
+                            })();
+                            """.trimIndent(),
+                            null
+                        )
                         onPageFinished?.let { callback ->
                             callback(webView)
                         }
                     },
-                    onWebViewError = onWebViewError
+                    onWebViewError = onWebViewError,
+                    onCloseRequested = onCloseRequested,
                 )
             },
             chromeClient = remember {
@@ -109,11 +125,26 @@ internal fun <T : Any?> SdkWebView(
                     onOpenWebView = { showWindowLoader = true },
                     onPageFinished = { webView ->
                         showWindowLoader = false
+                        // Ensure child windows also map window.close to our scheme
+                        webView.evaluateJavascript(
+                            """
+                            (function(){
+                              try {
+                                var __origClose = window.close;
+                                window.close = function(){
+                                  location.href = "${MobileSDKConstants.WEB_CLOSE_DEEPLINK}";
+                                };
+                              } catch(e) {}
+                            })();
+                            """.trimIndent(),
+                            null
+                        )
                         onPageFinished?.let { callback ->
                             callback(webView)
                         }
                     },
                     onWebViewError = onWebViewError,
+                    onCloseRequested = onCloseRequested,
                     openExternalLink = { url ->
                         context.openBrowser(uri = url, onError = { failedUrl ->
                             onWebViewError(

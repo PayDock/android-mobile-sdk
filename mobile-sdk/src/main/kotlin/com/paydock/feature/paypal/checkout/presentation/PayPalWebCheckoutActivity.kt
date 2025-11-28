@@ -2,6 +2,7 @@ package com.paydock.feature.paypal.checkout.presentation
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -81,11 +82,10 @@ internal class PayPalWebCheckoutActivity : AppCompatActivity() {
                                 clientId, orderId, fundingSource
                             )
 
-                            shouldStartPayPal = false
                             hasStartedCheckout = true
                         } catch (e: IllegalArgumentException) {
                             // Log and propagate a user-friendly error to avoid swallowing exceptions
-                            android.util.Log.w(
+                            Log.w(
                                 MobileSDKConstants.MOBILE_SDK_TAG,
                                 "Invalid PayPal funding source: ${intent.getFundingSourceExtra().orEmpty()}",
                                 e
@@ -151,53 +151,40 @@ internal class PayPalWebCheckoutActivity : AppCompatActivity() {
      * Receives deep link intents from the PayPal flow and forwards them to the ViewModel.
      *
      * Detects the user-cancel deep link and finishes accordingly.
+     *
+     * PayPal Checkout uses an x-callback-url pattern with cancellation indicated by a query parameter:
+     * com.paydock.paypal.checkout://x-callback-url/paypal-sdk/paypal-checkout?opType=cancel&token=...
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        this.intent = intent
-        val data = intent.data
-        val host = data?.host
-        val pathSegment = data?.pathSegments?.firstOrNull()
-        if (host == "checkout" && pathSegment == "cancel") {
-            setResult(
-                RESULT_CANCELED,
-                Intent().putCancellationStatusExtra(CancellationStatus.USER_INITIATED)
-            )
-            finish()
-            return
-        }
-
+        setIntent(intent)
         viewModel.handleDeeplinkResult(this, intent)
     }
 
     /**
      * Provides a fallback for cases where the user returns without a redirect intent.
      *
-     * If the activity resumes a second time without a deep link, it is treated as a cancellation.
+     * This method checks for specific deep link scenarios (e.g., user cancellation from PayPal)
+     * and also implements a fallback mechanism to handle cases where the activity resumes
+     * without a redirect intent (e.g., if the browser was closed manually by the user).
      */
     override fun onResume() {
         super.onResume()
-        val data = intent?.data
-        val host = data?.host
-        val pathSegment = data?.pathSegments?.firstOrNull()
-        if (host == "checkout" && pathSegment == "cancel") {
-            setResult(
-                RESULT_CANCELED,
-                Intent().putCancellationStatusExtra(CancellationStatus.USER_INITIATED)
-            )
-            finish()
-            return
-        }
-
         // Fallback: if returning without redirect intent and flow was already started, treat as cancel
-        if (hasStartedCheckout && data == null) {
-            setResult(
-                RESULT_CANCELED,
-                Intent().putCancellationStatusExtra(CancellationStatus.USER_INITIATED)
-            )
-            finish()
-            return
+        if (hasStartedCheckout && intent?.data == null) {
+            finishWithCancellation()
         }
+    }
+
+    /**
+     * Finishes the activity with a user-initiated cancellation result.
+     */
+    private fun finishWithCancellation() {
+        setResult(
+            RESULT_CANCELED,
+            Intent().putCancellationStatusExtra(CancellationStatus.USER_INITIATED)
+        )
+        finish()
     }
 
     private companion object {

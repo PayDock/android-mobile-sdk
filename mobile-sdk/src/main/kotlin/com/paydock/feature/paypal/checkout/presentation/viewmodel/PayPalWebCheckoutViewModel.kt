@@ -3,15 +3,12 @@ package com.paydock.feature.paypal.checkout.presentation.viewmodel
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.SavedStateHandle
-import com.paydock.MobileSDK
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
-import com.paydock.core.domain.mapper.mapToPayPalEnv
 import com.paydock.core.presentation.viewmodels.BaseViewModel
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalWebCheckoutState
-import com.paypal.android.corepayments.CoreConfig
+import com.paydock.feature.paypal.core.presentation.PayPalWebClientManager
 import com.paypal.android.paypalwebpayments.PayPalPresentAuthChallengeResult
-import com.paypal.android.paypalwebpayments.PayPalWebCheckoutClient
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFinishStartResult
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFundingSource
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutRequest
@@ -25,42 +22,24 @@ import kotlinx.coroutines.flow.asStateFlow
  * Exposes [checkoutState] so the hosting Activity can react to SDK presentation results,
  * deep link completions, and errors.
  *
+ * Uses [PayPalWebClientManager] for centralized client lifecycle management.
+ *
  * @property savedStateHandle Handle for persisting state across process death.
+ * @property clientManager Manages PayPal Web Client lifecycle and configuration.
  */
 internal class PayPalWebCheckoutViewModel(
     private val savedStateHandle: SavedStateHandle,
     dispatchers: DispatchersProvider,
-    private val coreConfigProvider: (clientId: String) -> CoreConfig = { clientId ->
-        CoreConfig(
-            clientId = clientId,
-            environment = MobileSDK.getInstance().environment.mapToPayPalEnv()
-        )
-    },
-    private val clientProvider: (
-        AppCompatActivity,
-        CoreConfig,
-        String
-    ) -> PayPalWebCheckoutClient = { activity, coreConfig, returnUrl ->
-        PayPalWebCheckoutClient(activity, coreConfig, returnUrl)
-    }
+    private val clientManager: PayPalWebClientManager = PayPalWebClientManager(
+        savedStateHandle,
+        MobileSDKConstants.PayPalConfig.URL_SCHEME
+    )
 ) : BaseViewModel(dispatchers) {
 
     private val _checkoutState = MutableStateFlow<PayPalWebCheckoutState>(PayPalWebCheckoutState.Idle)
     val checkoutState: StateFlow<PayPalWebCheckoutState> = _checkoutState.asStateFlow()
 
-    private var paypalClient: PayPalWebCheckoutClient? = null
-
-    // Auth state returned after presenting the auth challenge; required to finish the flow
-    // Persisted in SavedStateHandle to survive process death with "Don't keep activities"
-    private var authState: String?
-        get() = savedStateHandle[KEY_AUTH_STATE]
-        set(value) { savedStateHandle[KEY_AUTH_STATE] = value }
-
-    // Client configuration persisted to recreate the client if lost due to process death
-    private var clientId: String?
-        get() = savedStateHandle[KEY_CLIENT_ID]
-        set(value) { savedStateHandle[KEY_CLIENT_ID] = value }
-
+    // Persist orderId for potential use after process death
     private var orderId: String?
         get() = savedStateHandle[KEY_ORDER_ID]
         set(value) { savedStateHandle[KEY_ORDER_ID] = value }
@@ -80,23 +59,21 @@ internal class PayPalWebCheckoutViewModel(
         fundingSource: PayPalWebCheckoutFundingSource
     ) {
         launchOnMain {
-            // Persist client configuration for potential recreation after process death
-            this@PayPalWebCheckoutViewModel.clientId = clientId
+            // Persist orderId for potential use after process death
             this@PayPalWebCheckoutViewModel.orderId = orderId
 
-            val coreConfig = coreConfigProvider(clientId)
-            val returnUrl = MobileSDKConstants.PayPalConfig.URL_SCHEME
-            paypalClient = clientProvider(activity, coreConfig, returnUrl)
+            // Get or create PayPal client
+            val paypalClient = clientManager.getOrCreateClient(activity, clientId)
             val webCheckoutRequest = PayPalWebCheckoutRequest(orderId, fundingSource)
-            when (val present = paypalClient?.start(activity, webCheckoutRequest)) {
-                is PayPalPresentAuthChallengeResult.Success -> {
-                    authState = present.authState
-                }
-                is PayPalPresentAuthChallengeResult.Failure -> {
-                    _checkoutState.value = PayPalWebCheckoutState.Failure(present.error)
-                }
-                else -> {
-                    _checkoutState.value = PayPalWebCheckoutState.Canceled
+
+            paypalClient?.start(activity, webCheckoutRequest) { result ->
+                when (result) {
+                    is PayPalPresentAuthChallengeResult.Success -> {
+                        // Auth state is stored internally by SDK - no action needed
+                    }
+                    is PayPalPresentAuthChallengeResult.Failure -> {
+                        _checkoutState.value = PayPalWebCheckoutState.Failure(result.error)
+                    }
                 }
             }
         }
@@ -107,71 +84,107 @@ internal class PayPalWebCheckoutViewModel(
      *
      * Extracts the `paymentMethodId` (orderId) and `payerId` on success and emits [PayPalWebCheckoutState.Success].
      *
-     * If the authState is null (e.g., process was killed with "Don't keep activities"),
-     * the flow is treated as canceled to allow the Activity to recover gracefully.
-     *
      * If the paypalClient is lost due to process death, it will be recreated using persisted configuration.
      *
+     * When "do not keep activities" is enabled, the PayPal SDK may return NoResult even though
+     * the intent contains success data. This method includes fallback logic to manually parse
+     * the intent data in such cases.
+     *
      * @param activity The hosting activity (required to recreate the client if lost).
+     * @param intent The Intent received from the PayPal redirect or deeplink.
      */
     fun handleDeeplinkResult(activity: AppCompatActivity, intent: Intent) {
-        val state = authState
-        if (state == null) {
-            // Process was killed and authState lost - treat as cancellation for graceful recovery
-            _checkoutState.value = PayPalWebCheckoutState.Canceled
-            return
-        }
+        // Get or recreate client if lost due to process death
+        val paypalClient = clientManager.getOrCreateClient(activity)
 
-        // Recreate client if lost due to process death
-        if (paypalClient == null) {
-            val savedClientId = clientId
-            val savedOrderId = orderId
-            if (savedClientId != null && savedOrderId != null) {
-                val coreConfig = coreConfigProvider(savedClientId)
-                val returnUrl = MobileSDKConstants.PayPalConfig.URL_SCHEME
-                paypalClient = clientProvider(activity, coreConfig, returnUrl)
-            }
-        }
-
-        val result = paypalClient?.finishStart(intent, state) ?: PayPalWebCheckoutFinishStartResult.NoResult
+        val result = paypalClient?.finishStart(intent) ?: PayPalWebCheckoutFinishStartResult.NoResult
         when (result) {
             is PayPalWebCheckoutFinishStartResult.Success -> {
                 // Extract values required for capture. The SDK provides them on the success result.
-                // Names may vary by SDK version; adapt if the properties differ.
                 val paymentMethodId = result.orderId ?: ""
                 val payerId = result.payerId ?: ""
-                authState = null
                 _checkoutState.value = PayPalWebCheckoutState.Success(
                     paymentMethodId = paymentMethodId,
                     payerId = payerId
                 )
             }
             is PayPalWebCheckoutFinishStartResult.Canceled -> {
-                authState = null
                 _checkoutState.value = PayPalWebCheckoutState.Canceled
             }
             is PayPalWebCheckoutFinishStartResult.Failure -> {
-                authState = null
                 _checkoutState.value = PayPalWebCheckoutState.Failure(result.error)
             }
             is PayPalWebCheckoutFinishStartResult.NoResult -> {
-                _checkoutState.value = PayPalWebCheckoutState.Canceled
+                // Fallback: When "do not keep activities" is enabled, the SDK may return NoResult
+                // even though the intent contains success data. Manually parse the intent to check.
+                val checkoutData = extractCheckoutDataFromIntent(intent)
+                if (checkoutData != null) {
+                    _checkoutState.value = PayPalWebCheckoutState.Success(
+                        paymentMethodId = checkoutData.orderId,
+                        payerId = checkoutData.payerId
+                    )
+                } else {
+                    _checkoutState.value = PayPalWebCheckoutState.Canceled
+                }
             }
         }
     }
 
     /**
-     * Clears the PayPal client and authentication state when the ViewModel is cleared.
+     * Data class to hold extracted checkout data from intent.
+     */
+    private data class CheckoutData(
+        val orderId: String,
+        val payerId: String
+    )
+
+    /**
+     * Extracts the order ID and payer ID from the intent data URI as a fallback when the SDK
+     * returns NoResult but the intent contains success data.
+     *
+     * This handles the edge case where "do not keep activities" is enabled and the activity
+     * is recreated, causing the SDK to lose internal state.
+     *
+     * The expected URL pattern is:
+     * {scheme}://paypal-sdk/paypal-checkout?opType=payment&token={orderId}&PayerID={payerId}
+     *
+     * @param intent The Intent containing the deep link data.
+     * @return A [CheckoutData] object with orderId and payerId if found in the success URL, null otherwise.
+     */
+    private fun extractCheckoutDataFromIntent(intent: Intent): CheckoutData? {
+        val dataUri = intent.data ?: return null
+        val expectedPath = "/paypal-sdk/paypal-checkout"
+
+        // Check if the URI matches the expected path
+        if (dataUri.path != expectedPath) {
+            return null
+        }
+
+        // Check if opType is payment (success case)
+        val opType = dataUri.getQueryParameter("opType")
+        if (opType != "payment") {
+            return null
+        }
+
+        // Extract orderId (from token parameter) and payerId from query parameters
+        // Note: PayPal uses PayerID (capital ID) in the URL
+        val orderId = dataUri.getQueryParameter("token") ?: return null
+        val payerId = dataUri.getQueryParameter("PayerID")
+            ?: dataUri.getQueryParameter("payerId") // Fallback to lowercase for robustness
+            ?: return null
+
+        return CheckoutData(orderId = orderId, payerId = payerId)
+    }
+
+    /**
+     * Clears the PayPal client when the ViewModel is cleared.
      */
     override fun onCleared() {
         super.onCleared()
-        authState = null
-        paypalClient = null
+        clientManager.clear()
     }
 
     private companion object {
-        const val KEY_AUTH_STATE: String = "paypal.checkout.auth_state"
-        const val KEY_CLIENT_ID: String = "paypal.checkout.client_id"
         const val KEY_ORDER_ID: String = "paypal.checkout.order_id"
     }
 }

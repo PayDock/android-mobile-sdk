@@ -1,11 +1,13 @@
 <resources>
     <!-- Bottom Navigation -->
+    <string name="nav_shop">Shop</string>
     <string name="nav_checkout">Checkout</string>
     <string name="nav_widgets">Widgets</string>
     <string name="nav_style">Style</string>
 
     <!-- Titles -->
-    <string name="title_my_account">My Account</string>">
+    <string name="title_my_account">My Account</string>
+    <string name="title_profile">Profile</string>
 
     <!-- Labels -->
     <string name="label_colours">Colours</string>
@@ -16,12 +18,13 @@
     <string name="label_transaction_failed">Transaction Failed</string>
     <string name="label_card">Card</string>
     <string name="label_coles_pay">Coles Pay</string>
-    <string name="label_click_to_pay">SRC</string>
+    <string name="label_click_to_pay">Click to Pay</string>
     <string name="label_access_token">Access Token</string>
     <string name="label_saved_payment_method">Saved payment method</string>
+    <string name="label_payment_method">Payment Method</string>
     <string name="label_link_paypal_desc">Link your PayPal account to use method next time you shop</string>
     <string name="label_select_widget">Select Widget</string>
-    <string name="label_checkout_with_click_to_pay">Checkout with Click To Pay</string>
+    <string name="label_checkout_with_click_to_pay">Checkout with Click to Pay</string>
     <!-- Style Screen Labels -->
     <string name="label_style_screen_caption">Customise the look and feel of the widgets. These styles apply to the widgets based on your phone\'s dark or light mode setting.</string>
     <string name="label_text_style">Text Style</string>
@@ -56,8 +59,13 @@
     <string name="label_paypal_button_shape">PayPal - Button Shape</string>
     <string name="label_vertical_spacing">Vertical Spacing</string>
     <string name="label_horizontal_spacing">Horizontal Spacing</string>
+    <string name="label_text_field_vertical_spacing">Text Field Vertical Spacing</string>
+    <string name="label_text_field_horizontal_spacing">Text Field Horizontal Spacing</string>
     <string name="label_tint_colour">Tint Colour</string>
     <string name="label_size">Size (Dp)</string>
+    <string name="label_button_icon_asset">Button Icon</string>
+    <string name="label_button_text">Button Text</string>
+    <string name="placeholder_enter_button_text">Enter button text</string>
     <string name="label_toggle_colours">Toggle Colours</string>
     <string name="label_checked_thumb_colour">Checked Thumb Colour</string>
     <string name="label_checked_icon_colour">Checked Icon Colour</string>
@@ -98,14 +106,70 @@
     <string name="label_border_stroke">Border Stroke</string>
     <string name="label_border_colour">Border Colour</string>
     <string name="label_border_width">Border Width (Dp)</string>
+    <string name="label_personal_information">Personal Information</string>
+    <string name="label_first_name">First Name</string>
+    <string name="label_email">Email</string>
+    <string name="label_last_name">Last Name</string>
+    <string name="label_phone">Phone</string>
+    <string name="label_more_options">More options</string>
+    <string name="label_saved_addresses">Saved Addresses</string>
+    <string name="label_default">DEFAULT</string>
+    <string name="label_no_saved_addresses">No saved addresses</string>
+    <string name="label_add_address_to_speed_up_checkout">Add an address to speed up checkout</string>
+    <string name="button_add_your_first_address">Add Your First Address</string>
+    <string name="label_edit_address">Edit Address</string>
+    <string name="label_add_new_address">Add New Address</string>
+    <string name="label_address_label_hint">Address Label (e.g., Home, Work)</string>
+    <string name="label_set_as_default_address">Set as default address</string>
+    <string name="label_address">Address:</string>
+    <string name="label_enter_your_address">Enter Your Address</string>
+    <string name="label_incomplete">Incomplete</string>
+    <string name="label_address_incomplete">Address incomplete</string>
+    <string name="label_address_type">Address Type</string>
+    <string name="label_saved_payment_methods">Saved Payment Methods</string>
+    <string name="label_gift_cards">Gift Cards</string>
+    <string name="label_enter_gift_card_details">Enter your gift card details to apply it to your order</string>
+    <string name="label_add_gift_card">Add Gift Card</string>
+    <string name="label_shipping_options">Shipping Options</string>
+    <string name="label_select_payment_method">Select a payment method</string>
 
     <string name="disclaimer_rounded_shape_defaults">Note: Initial radius/percentage values are component defaults, not necessarily reflecting the current shape\'s exact creation parameters. Please adjust to define the desired corners.</string>
     <string name="disclaimer_elevation_defaults">Note: These are predefined elevation styles for demonstration purposes. Granular elevation control is not enabled in this demo.</string>
     <string name="disclaimer_reset_button"><b>Note:</b> The reset button restores the component\'s style properties to their last saved state.</string>
     <!-- Descriptions -->
     <string name="desc_pay_pal_customer_created">Customer account created with linked PayPal account as a payment source</string>
+    <string name="desc_link_your_paypal_account">Link your PayPal account to use method next time you shop</string>
+    <string name="desc_pay_pal_customer_connected">%1$s is currently connected</string>
+    <string name="label_linked_account_details">Linked Account Details</string>
 
     <!-- Buttons -->
     <string name="button_ok">OK</string>
+    <string name="button_add_address">Add Address</string>
+    <string name="button_add">Add</string>
+    <string name="button_submit">Submit</string>
     <string name="button_reset">Reset</string>
+    <string name="button_save_changes">Save Changes</string>
+    <string name="button_delete">Delete</string>]
+    <string name="button_edit">Edit</string>
+    <string name="button_update">Update</string>
+    <string name="button_set_as_default">Set as Default</string>
+    <string name="button_change_address">Change Address</string>
+    <string name="button_enter_address">Enter Address</string>
+    <string name="button_cancel">Cancel</string>
+    <string name="button_save">Save</string>
+    <string name="button_link_account">Link Account</string>
+    <string name="button_back">Back</string>
+    <string name="button_remove">Remove</string>
+
+    <!-- Messages -->
+    <string name="msg_profile_updated">Profile updated successfully!</string>
+    <string name="msg_address_deleted">Address deleted successfully!</string>
+    <string name="msg_default_address_updated">Default address updated!</string>
+    <string name="msg_address_added">Address added successfully!</string>
+    <string name="msg_address_updated">Address updated successfully!</string>
+
+    <!-- Bottom Navigation  -->
+    <string name="type_home">Home</string>
+    <string name="type_work">Work</string>
+    <string name="type_other">Other</string>
 </resources>

@@ -66,34 +66,40 @@ The sample app uses a `config.properties` file to manage environment-specific se
 3.  **Structure:** The `config.properties` file should contain key-value pairs for each configuration setting.
 4.  **Required Fields:** The following fields are required in the `config.properties` file:
 
-   *   **`API_ACCESS_TOKEN`:** The Paydock API access token for the specified environment (e.g., sandbox, staging, production). This token is used by the sample app to make direct calls to the Paydock API for tasks like creating customers or managing transactions.
-   *   **`WIDGET_ACCESS_TOKEN`:** The Paydock Widget/UI access token for the specified environment. This token is used by the Paydock SDK to authenticate and authorize the use of the pre-built UI widgets for payment processing.
-   *   **`GATEWAY_ID_MPGS`:** Your Paydock service ID for the MPGS (Mastercard Payment Gateway Services) gateway. This ID is required to process card payments, handle 3D Secure (3DS) authentication, and manage other card-related transactions.
-   *   **`GATEWAY_ID_PAY_PAL`:** Your Paydock service ID for the PayPal gateway. This ID is necessary to enable PayPal as a payment method within the sample app.
-   *   **`GATEWAY_ID_COLES_PAY`:** Your Paydock service ID for the Coles Pay gateway. This ID is required to enable Coles Pay as a payment method.
-   *   **`GATEWAY_ID_AFTER_PAY`:** Your Paydock service ID for the Afterpay gateway. This ID is required to enable Afterpay as a payment method.
-   *   **`GATEWAY_ID_CLICK_TO_PAY`:** Your Paydock service ID for the ClickToPay gateway. This ID is required to enable ClickToPay as a payment method.
-   *   **`GATEWAY_ID_GOOGLE_PAY`:** Your Paydock service ID for the Google Pay gateway. This ID is required to enable Google Pay as a payment method.
-   *   **`STANDALONE_3DS_SERVICE_ID`:** The Paydock service ID for Standalone 3DS (3D Secure) authentication, specifically using the GPayments service. This ID is used when you need to perform 3DS authentication outside of a regular payment flow.
-   *   **`MERCHANT_IDENTIFIER`:** Your Paydock merchant identifier, which is required for Google Pay. This identifier is used to associate your transactions with your Google Pay merchant account.
-   *   **`COLES_PAY_CLIENT_ID`:** The client ID provided by Coles Pay. This ID is required for authenticating and using the Coles Pay service.
+   *   **`ACCESS_TOKEN_API`:** The Paydock API access token for the specified environment (e.g., sandbox, staging, production). This token is used by the sample app to make direct calls to the Paydock API for tasks like creating customers or managing transactions.
+   *   **`ACCESS_TOKEN_WIDGET`:** The Paydock Widget/UI access token for the specified environment. This token is used by the Paydock SDK to authenticate and authorize the use of the pre-built UI widgets for payment processing.
+   *   **`SERVICE_ID_MPGS`:** Your Paydock service ID for the MPGS (Mastercard Payment Gateway Services) gateway. This ID is required to process card payments, handle 3D Secure (3DS) authentication, and manage other card-related transactions.
+   *   **`SERVICE_ID_MPGS_TEST`:** Your Paydock service ID for the MPGS (Mastercard Payment Gateway Services) gateway. This ID should use an MPGS merchant id starting with TEST* for using MPGS supported test cards and 3ds challenge emulator.
+   *   **`SERVICE_ID_PAYPAL`:** Your Paydock service ID for the PayPal gateway. This ID is necessary to enable PayPal as a payment method within the sample app.
+   *   **`SERVICE_ID_COLES_PAY`:** Your Paydock service ID for the Coles Pay gateway. This ID is required to enable Coles Pay as a payment method.
+   *   **`SERVICE_ID_AFTERPAY`:** Your Paydock service ID for the Afterpay gateway. This ID is required to enable Afterpay as a payment method.
+   *   **`SERVICE_ID_CLICK_TO_PAY`:** Your Paydock service ID for the ClickToPay gateway. This ID is required to enable ClickToPay as a payment method.
+   *   **`SERVICE_ID_GOOGLE_PAY_MPGS`:** Your Paydock service ID for the Google Pay gateway. This ID is required to enable Google Pay as a payment method.
+   *   **`SERVICE_ID_GPAYMENTS`:** The Paydock service ID for Standalone 3DS (3D Secure) authentication, specifically using the GPayments service. This ID is used when you need to perform 3DS authentication outside of a regular payment flow.
+   *   **`MERCHANT_ID_GOOGLE_PAY`:** Your Paydock merchant identifier, which is required for Google Pay. This identifier is used to associate your transactions with your Google Pay merchant account.
+   *   **`WALLET_ID_COLES_PAY`:** The walled ID provided to Coles Pay. The wallet id is used to tag the wallet that is being used (e.g. Beem).
 
 **Example `config.properties`:**
 ```
-# Authentication keys
-API_ACCESS_TOKEN=your_api_access_token 
-WIDGET_ACCESS_TOKEN=your_widget_access_token 
-# Gateway keys
-GATEWAY_ID_MPGS=your_gateway_id_mpgs 
-GATEWAY_ID_PAY_PAL= your_gateway_id_pay_pal 
-GATEWAY_ID_COLES_PAY=your_gateway_id_coles_pay 
-GATEWAY_ID_AFTER_PAY= your_gateway_id_after_pay 
-GATEWAY_ID_CLICK_TO_PAY= your_gateway_id_click_to_pay 
-GATEWAY_ID_GOOGLE_PAY= your_gateway_id_google_pay 
-STANDALONE_3DS_SERVICE_ID= your_standalone_3ds_service_id 
-# Misc Gateway keys
-MERCHANT_IDENTIFIER= your_merchant_identifier 
-COLES_PAY_CLIENT_ID= your_coles_pay_client_id 
+# Authentication
+ACCESS_TOKEN_API="your_api_access_token"
+ACCESS_TOKEN_WIDGET="your_widget_access_token"
+# MPGS
+SERVICE_ID_MPGS="your_gateway_id_mpgs"
+# AFTERPAY
+SERVICE_ID_AFTERPAY="your_gateway_id_after_pay"
+# GOOGLE PAY
+SERVICE_ID_GOOGLE_PAY_MPGS="your_gateway_id_google_pay"
+MERCHANT_ID_GOOGLE_PAY="your_merchant_id_google_pay"
+# CLICK TO PAY
+SERVICE_ID_CLICK_TO_PAY="your_service_id_click_to_pay"
+# COLES PAY
+SERVICE_ID_COLES_PAY="your_gateway_id_coles_pay" 
+WALLET_ID_COLES_PAY="your_wallet_id_coles_pay"
+# GPAYMENTS (Standalone 3ds)
+SERVICE_ID_GPAYMENTS="your_gpayments_service_id"
+# PAYPAL
+SERVICE_ID_PAYPAL=your_gateway_id_pay_pal
 ```
 
 **Note:**

@@ -78,7 +78,10 @@ fun CheckoutBaseScreen(onCheckoutButtonClick: () -> Unit) {
     }
 }
 
-fun formatCurrency(amount: Double, locale: Locale = Locale("en", AU_COUNTRY_CODE)): String {
+fun formatCurrency(amount: Double,
+                   locale: Locale = Locale.Builder().setLanguage("en").setRegion(AU_COUNTRY_CODE)
+                       .build()
+): String {
     val currencyFormatter = NumberFormat.getCurrencyInstance(locale)
     currencyFormatter.currency = Currency.getInstance(AU_CURRENCY_CODE)
     return currencyFormatter.format(amount)

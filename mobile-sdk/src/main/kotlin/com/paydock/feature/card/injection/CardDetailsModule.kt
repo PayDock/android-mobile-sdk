@@ -26,7 +26,7 @@ internal val cardDetailsModule = module {
 
     // Factory methods for creating instances of ViewModels with access tokens
     viewModel { (accessToken: String, gatewayId: String?, schemeConfig: SupportedSchemeConfig) ->
-        CardDetailsViewModel(accessToken, gatewayId, schemeConfig, get(), get(), get())
+        CardDetailsViewModel(accessToken, gatewayId, schemeConfig, get(), get(), get(), get())
     }
     viewModel { (config: GiftCardWidgetConfig) ->
         GiftCardViewModel(config, get(), get())

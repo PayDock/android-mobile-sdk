@@ -15,7 +15,7 @@ data class CreateStandaloneThreeDSTokenRequest(
     // We do not need any other request properties (ie. customer, shipping)
 ) {
     data class ThreeDSDetails(
-        @SerializedName("service_id") val serviceId: String = BuildConfig.STANDALONE_3DS_SERVICE_ID,
+        @SerializedName("service_id") val serviceId: String = BuildConfig.SERVICE_ID_GPAYMENTS,
         val authentication: Authentication = Authentication(),
     )
 
