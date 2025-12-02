@@ -429,7 +429,6 @@ fun getAppearanceForWidgetComponent(
                 derivedStateOf {
                     when (styleItemName) {
                         StyleAppearanceComponent.PROPERTIES -> cardAppearance
-                        StyleAppearanceComponent.TITLE -> cardAppearance?.title
                         StyleAppearanceComponent.TOGGLE_TEXT -> cardAppearance?.toggleText
                         StyleAppearanceComponent.SUB_ACTION_BUTTON_PROPERTIES -> cardAppearance?.actionButton
                         StyleAppearanceComponent.SUB_BUTTON_ICON -> cardAppearance?.actionButton?.iconAppearance

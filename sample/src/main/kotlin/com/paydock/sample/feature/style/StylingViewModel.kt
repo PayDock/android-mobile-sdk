@@ -332,7 +332,6 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                             )
                         }
 
-                        StyleAppearanceComponent.TITLE -> current.copy(title = newComponentAppearance as TextAppearance)
                         StyleAppearanceComponent.TOGGLE_TEXT -> current.copy(toggleText = newComponentAppearance as TextAppearance)
                         StyleAppearanceComponent.SUB_TEXT_FIELD_PROPERTIES -> (newComponentAppearance as TextFieldAppearance).let {
                             current.copy(

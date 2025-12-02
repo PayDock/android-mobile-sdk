@@ -34,7 +34,6 @@ fun CardContent(
         ),
         config = CardDetailsWidgetConfig(
             accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
-            showCardTitle = false,
             collectCardholderName = false,
             allowSaveCard = SaveCardConfig(
                 consentText = "Save payment details",
