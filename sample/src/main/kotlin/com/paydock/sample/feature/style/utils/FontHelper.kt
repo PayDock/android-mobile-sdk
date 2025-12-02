@@ -3,6 +3,7 @@ package com.paydock.sample.feature.style.utils
 import android.content.Context
 import android.graphics.fonts.SystemFonts
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -19,9 +20,9 @@ object FontHelper {
 
     data class FontInfo(val displayName: String, val fileName: String)
 
-    // Your default display name for your app's resource font
-    const val DEFAULT_APP_FONT_DISPLAY_NAME = "Acid Grotesk" // Cleaner display name
-    private const val DEFAULT_APP_FONT_RESOURCE_ID = "acid_grotesk" // Internal resource name
+    // Your default display name for your app's default font (system Roboto)
+    const val DEFAULT_APP_FONT_DISPLAY_NAME = "Roboto" // System default font
+    private const val DEFAULT_APP_FONT_RESOURCE_ID = "roboto" // Not used for system fonts
 
     // --- Functions to get font details (used by StyleTitleSection) ---
 
@@ -68,28 +69,41 @@ object FontHelper {
         fontFamily: FontFamily?,
         systemFontDetails: List<FontInfo> // Needs the list of known system fonts
     ): String? {
-        if (fontFamily == null) return null
+        // 0. Check if it's null or the default system font (Roboto)
+        // Note: Material 3 typography uses FontFamily.SansSerif by default, which maps to Roboto on Android
+        if (fontFamily == null || fontFamily == FontFamily.Default || fontFamily == FontFamily.SansSerif) {
+            Log.d("FontHelper", "Returning default font: $DEFAULT_APP_FONT_DISPLAY_NAME")
+            return DEFAULT_APP_FONT_DISPLAY_NAME
+        }
+
         val context = androidx.compose.ui.platform.LocalContext.current
 
         // 1. Try resource font name first
         val resourceName = getDisplayableResourceFontName(context, fontFamily)
-        if (resourceName != null) return resourceName
+        if (resourceName != null) {
+            Log.d("FontHelper", "Found resource font name: $resourceName")
+            return resourceName
+        }
 
         // 2. Try to get system font name using the previous (fragile) parsing method
         //    This is only for display purposes if the fontFamily IS a system font.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) { // Guard the Q-specific logic
             val systemFileNameFromFamily = getSystemFileNameFromFontFamilyUsingParsing(fontFamily)
+            Log.d("FontHelper", "System file name from parsing: $systemFileNameFromFamily")
             if (systemFileNameFromFamily != null) {
                 // Now find the FontInfo that matches this fileName to get its proper displayName
                 val matchingFontInfo =
                     systemFontDetails.find { it.fileName == systemFileNameFromFamily }
                 if (matchingFontInfo != null) {
+                    Log.d("FontHelper", "Found matching font info: ${matchingFontInfo.displayName}")
                     return matchingFontInfo.displayName
                 }
                 // Fallback if somehow the parsed filename isn't in our details (shouldn't happen ideally)
                 // or if its normalized name is better.
-                return normalizeFontNameForDisplay(systemFileNameFromFamily)
+                val normalizedName = normalizeFontNameForDisplay(systemFileNameFromFamily)
                     ?: systemFileNameFromFamily
+                Log.d("FontHelper", "Using normalized name: $normalizedName")
+                return normalizedName
             }
         }
 
@@ -103,10 +117,12 @@ object FontHelper {
                 val tempFont = Font(tempSystemFile)
                 val tempFontFamily = FontFamily(tempFont)
                 if (fontFamily == tempFontFamily) {
+                    Log.d("FontHelper", "Found via heuristic comparison: ${fontInfo.displayName}")
                     return fontInfo.displayName
                 }
             }
         }
+        Log.d("FontHelper", "No display name found, returning null")
         return null // No display name found
     }
 

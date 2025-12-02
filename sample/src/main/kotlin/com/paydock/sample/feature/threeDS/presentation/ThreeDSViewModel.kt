@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.paydock.sample.core.THREE_DS_CARD_ERROR
 import com.paydock.sample.core.THREE_DS_NOT_SUPPORTED_ERROR
-import com.paydock.sample.core.THREE_DS_STATUS_ERROR
 import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
 import com.paydock.sample.feature.threeDS.data.api.dto.CreateIntegratedThreeDSTokenRequest
 import com.paydock.sample.feature.threeDS.data.api.dto.CreateStandaloneThreeDSTokenRequest
@@ -38,12 +37,13 @@ class ThreeDSViewModel @Inject constructor(
                     CreateIntegratedThreeDSTokenRequest(token = cardToken)
                 )
             result.onSuccess { threeDSResult ->
-                when(threeDSResult.status) {
+                when (threeDSResult.status) {
                     ThreeDSToken.ThreeDSStatus.PRE_AUTH_PENDING -> {
                         _stateFlow.update { state ->
                             state.copy(token = threeDSResult.token, isLoading = false, error = null)
                         }
                     }
+
                     ThreeDSToken.ThreeDSStatus.NOT_SUPPORTED -> {
                         _stateFlow.update { state ->
                             state.copy(
@@ -53,6 +53,7 @@ class ThreeDSViewModel @Inject constructor(
                             )
                         }
                     }
+
                     else -> {
                         _stateFlow.update { state ->
                             state.copy(

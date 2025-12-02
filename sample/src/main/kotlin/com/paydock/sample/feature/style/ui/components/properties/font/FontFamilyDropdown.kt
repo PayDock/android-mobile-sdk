@@ -45,16 +45,22 @@ fun FontFamilyDropdown(
             } else {
                 defaultAppFontDisplayName?.let { options.add(it) }
                 options.addAll(systemFontDetails.map { it.displayName }
-                    .filterNot { name -> name == defaultAppFontDisplayName })
+                    .filterNot { name ->
+                        // Filter out the default font and its variants (e.g., "Roboto", "Roboto Regular", "Roboto Bold")
+                        name == defaultAppFontDisplayName ||
+                                (defaultAppFontDisplayName != null && name.startsWith("$defaultAppFontDisplayName "))
+                    })
                 if (options.isEmpty()) {
                     options.add(noFontsAvailableText)
                 }
             }
-            if (isLoadingFonts || (options.size == 1 && (options.first() == loadingText || options.first() == noFontsAvailableText))) {
-                options
-            } else {
-                options.distinct().sorted()
-            }
+            val finalOptions =
+                if (isLoadingFonts || (options.size == 1 && (options.first() == loadingText || options.first() == noFontsAvailableText))) {
+                    options
+                } else {
+                    options.distinct().sorted()
+                }
+            finalOptions
         }
     }
 
@@ -78,7 +84,8 @@ fun FontFamilyDropdown(
                         systemFontDetails.find { it.displayName == selectedDisplayName }
                     // Use its fileName to get the font
                     selectedFontInfo?.let {
-                        fontHelper.findSystemFontByFileName(it.fileName)?.toFontFamily()
+                        val font = fontHelper.findSystemFontByFileName(it.fileName)?.toFontFamily()
+                        font
                     }
                 }
 
