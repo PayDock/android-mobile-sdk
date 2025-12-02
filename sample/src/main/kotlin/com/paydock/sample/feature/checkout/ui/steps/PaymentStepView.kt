@@ -322,7 +322,10 @@ private fun GiftCardSection(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                AppTextButton(text = stringResource(R.string.label_add_gift_card), onClick = onShowGiftCardEntry)
+                AppTextButton(
+                    text = stringResource(R.string.label_add_gift_card),
+                    onClick = onShowGiftCardEntry
+                )
             }
 
             if (cartManager.hasGiftCards) {

@@ -14,12 +14,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
-import com.paydock.sample.designsystems.theme.appFontFamily
 import com.paydock.sample.feature.style.ui.components.core.color.ColorPickerField
 import com.paydock.sample.feature.style.ui.components.core.counter.NumberCounter
 import com.paydock.sample.feature.style.ui.components.core.toggle.StyleableToggleRow
@@ -86,7 +86,7 @@ fun StyleTextFieldSection(
                 systemFontDetails = systemFontDetailsList,
                 isLoadingFonts = isLoadingSystemFonts,
                 defaultAppFontDisplayName = FontHelper.DEFAULT_APP_FONT_DISPLAY_NAME,
-                appDefaultFontFamily = appFontFamily,
+                appDefaultFontFamily = FontFamily.SansSerif, // Material 3 uses SansSerif (Roboto) by default
                 onFontFamilySelected = { newFontFamily ->
                     onAppearanceChange(
                         currentAppearance.copy(
