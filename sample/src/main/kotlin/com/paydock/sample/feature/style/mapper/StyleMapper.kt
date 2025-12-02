@@ -21,7 +21,6 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
 
         WidgetType.CARD_DETAILS -> listOf(
             StyleAppearanceComponent.PROPERTIES,
-            StyleAppearanceComponent.TITLE,
             StyleAppearanceComponent.TEXT_FIELD,
             StyleAppearanceComponent.COMPLETE_ACTION_BUTTON,
             StyleAppearanceComponent.TOGGLE,
