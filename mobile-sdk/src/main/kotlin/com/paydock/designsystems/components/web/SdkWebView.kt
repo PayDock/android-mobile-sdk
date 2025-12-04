@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.semantics
 import com.kevinnzou.web.LoadingState
 import com.kevinnzou.web.WebView
 import com.kevinnzou.web.rememberSaveableWebViewState
@@ -20,6 +21,7 @@ import com.kevinnzou.web.rememberWebViewNavigator
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.extensions.openBrowser
+import com.paydock.core.presentation.util.webviewLoadingAccessibility
 import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkLoader
@@ -84,14 +86,16 @@ internal fun <T : Any?> SdkWebView(
     var showWindowLoader: Boolean by remember {
         mutableStateOf(false)
     }
+
+    val isLoading = state.isLoading || showWindowLoader
+
     // Display a WebView in a Box composable
     Box(
         contentAlignment = Alignment.Center,
     ) {
         WebView(
             state = state,
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             navigator = navigator,
             client = remember {
                 SdkWebViewClient(
@@ -168,11 +172,28 @@ internal fun <T : Any?> SdkWebView(
             }
         )
 
-        // Display a loading indicator if the WebView is still loading co
-        if (shouldShowCustomLoader && (state.isLoading || showWindowLoader)) {
-            state.safeCastAs<LoadingState.Loading>()?.let {
-                SdkProgressLoader(appearance = loaderAppearance, progress = { (state.loadingState as LoadingState.Loading).progress })
-            } ?: SdkLoader(appearance = loaderAppearance)
+        // Display a loading indicator if the WebView is still loading
+        // Wrap loader in full-screen Box with accessibility semantics so tapping anywhere reads "Loading"
+        if (shouldShowCustomLoader && isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .webviewLoadingAccessibility(isLoading = true)
+                    .semantics(mergeDescendants = false) {
+                        // mergeDescendants = false ensures our contentDescription from webviewLoadingAccessibility
+                        // overrides the default CircularProgressIndicator semantics ("In progress, progress bar")
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                state.safeCastAs<LoadingState.Loading>()?.let {
+                    SdkProgressLoader(
+                        appearance = loaderAppearance,
+                        progress = { (state.loadingState as LoadingState.Loading).progress }
+                    )
+                } ?: SdkLoader(
+                    appearance = loaderAppearance
+                )
+            }
         }
     }
 }

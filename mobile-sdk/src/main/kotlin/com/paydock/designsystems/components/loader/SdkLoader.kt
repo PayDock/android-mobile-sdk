@@ -10,8 +10,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.takeOrElse
+import com.paydock.R
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 
@@ -35,13 +42,29 @@ internal fun SdkLoader(
     modifier: Modifier = Modifier,
     appearance: LoaderAppearance = LoaderAppearanceDefaults.appearance()
 ) {
-    CircularProgressIndicator(
-        modifier = modifier,
-        color = appearance.color,
-        strokeWidth = appearance.strokeWidth,
-        trackColor = appearance.trackColor,
-        strokeCap = appearance.strokeCap
-    )
+    val context = LocalContext.current
+    val loadingText = context.getString(R.string.accessibility_webview_loading)
+
+    Box(
+        modifier = modifier.semantics(mergeDescendants = false) {
+            // Provide default "Loading" accessibility announcement
+            // Parent can override by wrapping this Box with custom accessibility semantics
+            liveRegion = LiveRegionMode.Polite
+            contentDescription = loadingText
+        }
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.semantics {
+                // Hide default CircularProgressIndicator semantics so parent can provide custom one
+                // This prevents "In progress, progress bar" from being announced
+                hideFromAccessibility()
+            },
+            color = appearance.color,
+            strokeWidth = appearance.strokeWidth,
+            trackColor = appearance.trackColor,
+            strokeCap = appearance.strokeCap
+        )
+    }
 }
 
 /**
@@ -51,6 +74,9 @@ internal fun SdkLoader(
  * within a button's UI. It uses the `onPrimary` color from the Material Theme for its color,
  * making it suitable for display on primary-colored backgrounds.
  *
+ * Note: This loader hides its accessibility semantics because buttons handle their own
+ * accessibility announcements via the `buttonLoadingAccessibility` modifier.
+ *
  * @see SdkLoader
  * @see LoaderAppearanceDefaults
  */
@@ -58,15 +84,22 @@ internal fun SdkLoader(
 internal fun SdkButtonLoader(
     appearance: LoaderAppearance = LoaderAppearanceDefaults.appearance()
 ) {
-    SdkLoader(
-        modifier = Modifier.size(ButtonAppearanceDefaults.ButtonLoaderSize),
-        appearance = LoaderAppearanceDefaults.appearance().copy(
-            color = appearance.color,
-            strokeWidth = appearance.strokeWidth,
-            trackColor = appearance.trackColor,
-            strokeCap = appearance.strokeCap
+    // Hide accessibility semantics since buttons handle their own via buttonLoadingAccessibility modifier
+    Box(
+        modifier = Modifier.semantics {
+            hideFromAccessibility()
+        }
+    ) {
+        SdkLoader(
+            modifier = Modifier.size(ButtonAppearanceDefaults.ButtonLoaderSize),
+            appearance = LoaderAppearanceDefaults.appearance().copy(
+                color = appearance.color,
+                strokeWidth = appearance.strokeWidth,
+                trackColor = appearance.trackColor,
+                strokeCap = appearance.strokeCap
+            )
         )
-    )
+    }
 }
 
 /**
@@ -93,14 +126,30 @@ internal fun SdkProgressLoader(
     appearance: LoaderAppearance = LoaderAppearanceDefaults.progressAppearance(),
     progress: () -> Float
 ) {
-    CircularProgressIndicator(
-        modifier = modifier,
-        progress = progress,
-        color = appearance.color,
-        strokeWidth = appearance.strokeWidth,
-        trackColor = appearance.trackColor,
-        strokeCap = appearance.strokeCap
-    )
+    val context = LocalContext.current
+    val loadingText = context.getString(R.string.accessibility_webview_loading)
+
+    Box(
+        modifier = modifier.semantics(mergeDescendants = false) {
+            // Provide default "Loading" accessibility announcement
+            // Parent can override by wrapping this Box with custom accessibility semantics
+            liveRegion = LiveRegionMode.Polite
+            contentDescription = loadingText
+        }
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.semantics {
+                // Hide default CircularProgressIndicator semantics so parent can provide custom one
+                // This prevents "In progress, progress bar" from being announced
+                hideFromAccessibility()
+            },
+            progress = progress,
+            color = appearance.color,
+            strokeWidth = appearance.strokeWidth,
+            trackColor = appearance.trackColor,
+            strokeCap = appearance.strokeCap
+        )
+    }
 }
 
 @SdkLightDarkPreviews
