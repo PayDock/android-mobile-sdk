@@ -20,7 +20,10 @@ fun <T : DisplayableListItem> ListScreen(
     LazyColumn(
         modifier = Modifier.fillMaxSize()
     ) {
-        items(items) { item ->
+        items(
+            items = items,
+            key = { it.displayName() } // Add key for better recomposition performance
+        ) { item ->
             ListRowItem(
                 title = item.displayName(),
                 description = if (displaySubTitle) item.displayDescription() else null,

@@ -12,8 +12,8 @@ import androidx.compose.ui.unit.dp
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
+import com.paydock.sample.designsystems.components.fields.NumberCounter
 import com.paydock.sample.feature.style.ui.components.core.color.ColorPickerField
-import com.paydock.sample.feature.style.ui.components.core.counter.NumberCounter
 import com.paydock.sample.feature.style.ui.components.properties.button.BorderStrokeEditor
 import com.paydock.sample.feature.style.ui.components.properties.button.ElevationDropdown
 import com.paydock.sample.feature.style.ui.components.properties.padding.PaddingEditor

@@ -3,7 +3,7 @@ package com.paydock.sample.feature.style.ui.components.properties.button
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paydock.sample.designsystems.components.fields.StringDropdown
 import com.paydock.sample.feature.style.ui.components.section.EditableButtonType
 
 @Composable
@@ -19,7 +19,7 @@ fun ButtonTypeDropdown(
             ?: EditableButtonType.FILLED.displayName
     }
 
-    DropdownSelector(
+    StringDropdown(
         modifier = modifier,
         title = "Button Style",
         options = options,

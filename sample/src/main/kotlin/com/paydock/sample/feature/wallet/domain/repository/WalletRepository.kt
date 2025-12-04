@@ -6,9 +6,13 @@ import com.paydock.sample.feature.wallet.data.model.WalletCharge
 interface WalletRepository {
 
     suspend fun initiateWalletTransaction(
+        accessToken: String,
         manualCapture: Boolean,
         request: InitiateWalletRequest,
     ): WalletCharge
 
-    suspend fun captureWalletCharge(chargeId: String): WalletCharge
+    suspend fun captureWalletCharge(
+        accessToken: String,
+        chargeId: String,
+    ): WalletCharge
 }

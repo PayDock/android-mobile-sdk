@@ -1,4 +1,4 @@
-package com.paydock.sample.feature.style.ui.components.core.counter
+package com.paydock.sample.designsystems.components.fields
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,11 +26,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.paydock.sample.designsystems.theme.SampleTheme
+import com.paydock.sample.R
 
+/**
+ * Reusable number counter component for Int values.
+ * Used in both Style and Config screens.
+ */
 @Composable
 fun NumberCounter(
     modifier: Modifier = Modifier,
@@ -61,15 +65,15 @@ fun NumberCounter(
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextField(
-                value = currentValue.toString(), // Display internal state
+                value = currentValue.toString(),
                 onValueChange = {
-                    val newValueFromString = it.toIntOrNull() ?: 0 // Use a different name
-                    currentValue = newValueFromString // Update internal state
-                    onValueChange(newValueFromString) // Notify parent
+                    val newValueFromString = it.toIntOrNull() ?: 0
+                    currentValue = newValueFromString
+                    onValueChange(newValueFromString)
                 },
-                readOnly = true, // Keep it true if only buttons change it
+                readOnly = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                keyboardActions = KeyboardActions(onDone = { /* onValueChange(currentValue) - This is usually not needed if readOnly=true */ }),
+                keyboardActions = KeyboardActions(onDone = {}),
                 modifier = Modifier.weight(1f),
                 shape = RectangleShape,
                 colors = TextFieldDefaults.colors(
@@ -83,46 +87,35 @@ fun NumberCounter(
             Column(
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.inverseOnSurface),
-                // Removed padding(end = 0.dp) as it's often better handled by the parent layout
                 verticalArrangement = Arrangement.spacedBy(
                     8.dp,
                     Alignment.Top
-                ), // Consider Arrangement.Center if icons look too high
-                horizontalAlignment = Alignment.CenterHorizontally, // Usually icons are centered
+                ),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Icon(
                     modifier = Modifier
                         .clickable {
                             val newValueAfterIncrement = currentValue + 1
-                            currentValue = newValueAfterIncrement // Update internal state
-                            onValueChange(newValueAfterIncrement) // Notify parent
+                            currentValue = newValueAfterIncrement
+                            onValueChange(newValueAfterIncrement)
                         },
                     imageVector = Icons.Filled.ArrowDropUp,
-                    contentDescription = "Increase",
+                    contentDescription = stringResource(R.string.content_desc_increase),
                 )
                 Icon(
                     modifier = Modifier
                         .clickable {
                             val newValueAfterDecrement = (currentValue - 1).coerceAtLeast(0)
-                            currentValue = newValueAfterDecrement // Update internal state
-                            onValueChange(newValueAfterDecrement) // Notify parent
+                            currentValue = newValueAfterDecrement
+                            onValueChange(newValueAfterDecrement)
                         },
                     imageVector = Icons.Filled.ArrowDropDown,
-                    contentDescription = "Decrease",
+                    contentDescription = stringResource(R.string.content_desc_decrease),
                 )
             }
         }
     }
 }
 
-@PreviewLightDark
-@Composable
-internal fun PreviewNumberCounter() {
-    SampleTheme {
-        NumberCounter(
-            modifier = Modifier.fillMaxWidth(),
-            title = "Number Field",
-            value = 1,
-            onValueChange = {})
-    }
-}
+

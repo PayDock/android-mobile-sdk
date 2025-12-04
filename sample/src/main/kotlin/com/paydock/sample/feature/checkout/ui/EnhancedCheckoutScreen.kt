@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -130,16 +131,19 @@ fun EnhancedCheckoutScreen(
     val scrollState = rememberScrollState()
 
     // Sync navigation bar color with payment footer visibility
-    val selectedMethodForSystemBar = viewModel.selectedPaymentMethod
+    // Use derivedStateOf to avoid recomposition when other state changes
+    val selectedMethodForSystemBar by remember {
+        derivedStateOf { viewModel.selectedPaymentMethod }
+    }
+    val backgroundColor = MaterialTheme.colorScheme.background
     val navBarColor = if (selectedMethodForSystemBar != null) {
         MaterialTheme.colorScheme.surface
     } else {
-        MaterialTheme.colorScheme.background
+        backgroundColor
     }
-    val backgroundColor = MaterialTheme.colorScheme.background
     val view = LocalView.current
     val activity = remember(view) { view.context.findActivity() }
-    DisposableEffect(selectedMethodForSystemBar, navBarColor, activity) {
+    DisposableEffect(selectedMethodForSystemBar, activity) {
         val window = activity?.window
         if (window != null) {
             val controller = WindowCompat.getInsetsController(window, view)
@@ -204,7 +208,12 @@ fun EnhancedCheckoutScreen(
                 currentStep = currentStep
             )
 
-            CheckoutStep.PAYMENT -> PaymentFooter(viewModel = viewModel) { _ -> /* reserved for measurement if needed */ }
+            CheckoutStep.PAYMENT -> {
+                // Use key to force recomposition when payment method changes
+                key(viewModel.selectedPaymentMethod, viewModel.paymentWidgetResetKey) {
+                    PaymentFooter(viewModel = viewModel) { _ -> /* reserved for measurement if needed */ }
+                }
+            }
         }
     }
 
@@ -474,7 +483,10 @@ private fun PaymentFooter(
     viewModel: EnhancedCheckoutViewModel,
     onHeightChange: (Dp) -> Unit
 ) {
-    val selectedMethod = viewModel.selectedPaymentMethod
+    // Use derivedStateOf to avoid unnecessary recompositions
+    val selectedMethod by remember {
+        derivedStateOf { viewModel.selectedPaymentMethod }
+    }
     AnimatedVisibility(
         visible = selectedMethod != null,
         enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
@@ -510,7 +522,8 @@ private fun PaymentFooter(
                         if (method != null) {
                             // Use key with both method and resetKey to force fresh widget instance
                             // This ensures a new instance when method changes OR when resetKey changes
-                            key(method, viewModel.paymentWidgetResetKey) {
+                            val resetKey = viewModel.paymentWidgetResetKey
+                            key(method, resetKey) {
                                 PaymentWidgetView(
                                     method = method,
                                     viewModel = viewModel

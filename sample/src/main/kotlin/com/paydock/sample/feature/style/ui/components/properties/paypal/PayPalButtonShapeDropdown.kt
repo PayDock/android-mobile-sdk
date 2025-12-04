@@ -5,7 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.paydock.sample.R
-import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paydock.sample.designsystems.components.fields.StringDropdown
 import com.paypal.android.paymentbuttons.PaymentButtonShape
 
 @Composable
@@ -26,7 +26,7 @@ fun PayPalButtonShapeDropdown(
         options.find { it.second == currentShape }?.first ?: PaymentButtonShape.ROUNDED.name
     }
 
-    DropdownSelector(
+    StringDropdown(
         modifier = modifier,
         title = stringResource(R.string.label_paypal_button_shape),
         options = options.map { it.first },

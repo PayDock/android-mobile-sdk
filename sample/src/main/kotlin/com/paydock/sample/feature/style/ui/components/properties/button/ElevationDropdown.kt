@@ -12,7 +12,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
-import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paydock.sample.designsystems.components.fields.StringDropdown
 
 @Composable
 fun ElevationDropdown(
@@ -49,7 +49,7 @@ fun ElevationDropdown(
         title = stringResource(R.string.label_elevation),
         subTitle = stringResource(R.string.disclaimer_elevation_defaults)
     ) {
-        DropdownSelector(
+        StringDropdown(
             modifier = modifier,
             options = predefinedElevations.keys.toList(),
             selectedOption = selectedElevationKey,

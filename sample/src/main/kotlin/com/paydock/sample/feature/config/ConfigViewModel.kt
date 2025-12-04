@@ -1,0 +1,1029 @@
+package com.paydock.sample.feature.config
+
+import androidx.lifecycle.ViewModel
+import com.paydock.feature.address.domain.model.integration.BillingAddress
+import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
+import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
+import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
+import com.paydock.feature.card.domain.model.integration.SaveCardConfig
+import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
+import com.paydock.feature.card.domain.model.integration.enums.CardType
+import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
+import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.util.PaymentsUtil
+import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
+import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
+import com.paydock.feature.src.domain.model.integration.ClickToPayWidgetConfig
+import com.paydock.feature.src.domain.model.integration.meta.ClickToPayDPAData
+import com.paydock.feature.src.domain.model.integration.meta.ClickToPayDPAOptions
+import com.paydock.feature.src.domain.model.integration.meta.ClickToPayMeta
+import com.paydock.feature.src.domain.model.integration.meta.Customer
+import com.paydock.feature.src.domain.model.integration.meta.PaymentOption
+import com.paydock.feature.src.domain.model.integration.meta.Phone
+import com.paydock.feature.src.domain.model.integration.meta.PhoneNumber
+import com.paydock.feature.src.domain.model.integration.meta.enum.ApplicationType
+import com.paydock.feature.src.domain.model.integration.meta.enum.CardBrands
+import com.paydock.feature.src.domain.model.integration.meta.enum.CheckoutExperience
+import com.paydock.feature.src.domain.model.integration.meta.enum.ClickToPayDPAShippingBillingPreference
+import com.paydock.feature.src.domain.model.integration.meta.enum.ClickToPayOrderType
+import com.paydock.feature.src.domain.model.integration.meta.enum.Services
+import com.paydock.feature.src.domain.model.integration.meta.enum.UnacceptedCardType
+import com.paydock.sample.BuildConfig
+import com.paydock.sample.core.AMOUNT
+import com.paydock.sample.core.AU_COUNTRY_CODE
+import com.paydock.sample.core.AU_CURRENCY_CODE
+import com.paydock.sample.core.MERCHANT_NAME
+import com.paydock.sample.feature.config.data.GlobalConfigRepository
+import com.paydock.sample.feature.config.models.ConfigComponent
+import com.paydock.sample.feature.widgets.ui.models.WidgetType
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import org.json.JSONArray
+import org.json.JSONObject
+import java.math.BigDecimal
+import javax.inject.Inject
+
+/**
+ * Global configuration that applies to all widgets.
+ */
+data class GlobalConfig(
+    val apiAccessToken: String = BuildConfig.ACCESS_TOKEN_API,
+    val cartAmount: BigDecimal = BigDecimal(AMOUNT),
+    val cartCurrency: String = AU_CURRENCY_CODE
+)
+
+@HiltViewModel
+class ConfigViewModel @Inject constructor(
+    private val globalConfigRepository: GlobalConfigRepository
+) : ViewModel() {
+
+    // Global Config - delegate to repository
+    val globalConfig: StateFlow<GlobalConfig> =
+        globalConfigRepository.globalConfig
+
+    // Helper function to get access token for widget configs
+    // Widgets default to ACCESS_TOKEN_WIDGET, but can use global config if set
+    private fun getAccessToken(): String {
+        val globalToken = globalConfigRepository.globalConfig.value.apiAccessToken
+        // Use global token if it's different from default (user has set it)
+        return if (globalToken != BuildConfig.ACCESS_TOKEN_API && globalToken.isNotBlank()) {
+            globalToken
+        } else {
+            BuildConfig.ACCESS_TOKEN_WIDGET
+        }
+    }
+
+    // Helper function to create default configs
+    private fun createDefaultCardDetailsConfig(): CardDetailsWidgetConfig {
+        return CardDetailsWidgetConfig(
+            accessToken = getAccessToken(),
+            gatewayId = BuildConfig.SERVICE_ID_MPGS,
+            collectCardholderName = true,
+            allowSaveCard = SaveCardConfig(
+                privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
+                    privacyPolicyURL = "https://www.paydock.com/privacy"
+                )
+            ),
+            schemeSupport = SupportedSchemeConfig(
+                supportedSchemes = CardType.entries.toSet(),
+                enableValidation = true
+            )
+        )
+    }
+
+    private fun createDefaultGiftCardConfig(): GiftCardWidgetConfig {
+        return GiftCardWidgetConfig(
+            accessToken = getAccessToken()
+        )
+    }
+
+    private fun createDefaultPayPalConfig(): PayPalWidgetConfig {
+        return PayPalWidgetConfig(
+            accessToken = getAccessToken(),
+            gatewayId = BuildConfig.SERVICE_ID_PAYPAL
+        )
+    }
+
+    private fun createDefaultColesPayConfig(): ColesPayWidgetConfig {
+        return ColesPayWidgetConfig(
+            clientId = BuildConfig.WALLET_ID_COLES_PAY
+        )
+    }
+
+    private fun createDefaultClickToPayConfig(): ClickToPayWidgetConfig {
+        return ClickToPayWidgetConfig(
+            serviceId = BuildConfig.SERVICE_ID_CLICK_TO_PAY,
+            meta = ClickToPayMeta(disableSummaryScreen = true),
+            accessToken = getAccessToken()
+        )
+    }
+
+    private fun createDefaultAfterpayConfig(): AfterpaySDKConfig {
+        val globalConfig = globalConfigRepository.globalConfig.value
+        return AfterpaySDKConfig(
+            config = AfterpaySDKConfig.AfterpayConfiguration(
+                minimumAmount = "1.00",
+                maximumAmount = globalConfig.cartAmount.toString(),
+                currency = globalConfig.cartCurrency,
+                language = "en",
+                country = AU_COUNTRY_CODE
+            ),
+            options = AfterpaySDKConfig.CheckoutOptions(
+                shippingOptionRequired = true,
+                enableSingleShippingOptionUpdate = true
+            )
+        )
+    }
+
+    private fun createDefaultPayPalVaultConfig(): PayPalVaultConfig {
+        return PayPalVaultConfig(
+            accessToken = getAccessToken(),
+            gatewayId = BuildConfig.SERVICE_ID_PAYPAL
+        )
+    }
+
+    private fun createDefaultGooglePayConfig(): GooglePayWidgetConfig {
+        return GooglePayWidgetConfig(
+            isReadyToPayRequest = PaymentsUtil.createIsReadyToPayRequest(),
+            paymentRequest = PaymentsUtil.createGooglePayRequest(
+                amount = BigDecimal(AMOUNT),
+                amountLabel = "Goodies",
+                currencyCode = AU_CURRENCY_CODE,
+                countryCode = AU_COUNTRY_CODE,
+                merchantName = MERCHANT_NAME,
+                merchantIdentifier = BuildConfig.MERCHANT_ID_GOOGLE_PAY,
+                shippingAddressRequired = true,
+                shippingAddressParameters = JSONObject().apply {
+                    put("phoneNumberRequired", false)
+                    put("allowedCountryCodes", JSONArray(listOf("US", "GB", "AU")))
+                }
+            )
+        )
+    }
+
+    // Card Details Config - initialized with defaults
+    private val _cardDetailsWidgetConfig = MutableStateFlow(createDefaultCardDetailsConfig())
+    val cardDetailsWidgetConfig: StateFlow<CardDetailsWidgetConfig> =
+        _cardDetailsWidgetConfig.asStateFlow()
+
+    // Gift Card Config - initialized with defaults
+    private val _giftCardWidgetConfig = MutableStateFlow(createDefaultGiftCardConfig())
+    val giftCardWidgetConfig: StateFlow<GiftCardWidgetConfig> =
+        _giftCardWidgetConfig.asStateFlow()
+
+    // Google Pay Config - nullable as it uses JSONObject
+    private val _googlePayWidgetConfig =
+        MutableStateFlow<GooglePayWidgetConfig>(createDefaultGooglePayConfig())
+    val googlePayWidgetConfig: StateFlow<GooglePayWidgetConfig> =
+        _googlePayWidgetConfig.asStateFlow()
+
+    // PayPal Config - initialized with defaults
+    private val _paypalWidgetConfig = MutableStateFlow(createDefaultPayPalConfig())
+    val paypalWidgetConfig: StateFlow<PayPalWidgetConfig> =
+        _paypalWidgetConfig.asStateFlow()
+
+    // Coles Pay Config - initialized with defaults
+    private val _colesPayWidgetConfig = MutableStateFlow(createDefaultColesPayConfig())
+    val colesPayWidgetConfig: StateFlow<ColesPayWidgetConfig> =
+        _colesPayWidgetConfig.asStateFlow()
+
+    // Click to Pay Config - initialized with defaults
+    private val _clickToPayWidgetConfig = MutableStateFlow(createDefaultClickToPayConfig())
+    val clickToPayWidgetConfig: StateFlow<ClickToPayWidgetConfig> =
+        _clickToPayWidgetConfig.asStateFlow()
+
+    // Afterpay Config - initialized with defaults
+    private val _afterpayWidgetConfig = MutableStateFlow(createDefaultAfterpayConfig())
+    val afterpayWidgetConfig: StateFlow<AfterpaySDKConfig> =
+        _afterpayWidgetConfig.asStateFlow()
+
+    // PayPal Vault Config - initialized with defaults
+    private val _paypalVaultWidgetConfig = MutableStateFlow(createDefaultPayPalVaultConfig())
+    val paypalVaultWidgetConfig: StateFlow<PayPalVaultConfig> =
+        _paypalVaultWidgetConfig.asStateFlow()
+
+    // Address Config - nullable as it's optional pre-fill
+    private val _addressConfig = MutableStateFlow<BillingAddress?>(null)
+    val addressConfig: StateFlow<BillingAddress?> =
+        _addressConfig.asStateFlow()
+
+    // --- Global Config methods ---
+    fun updateGlobalAccessToken(accessToken: String?) {
+        val newToken =
+            accessToken?.takeIf { token -> token.isNotBlank() } ?: BuildConfig.ACCESS_TOKEN_API
+        globalConfigRepository.updateAccessToken(newToken)
+        // Update all widget configs that use access token with new global token if they're using defaults
+        updateConfigsWithGlobalAccessToken(newToken)
+    }
+
+    fun updateGlobalCartAmount(amount: BigDecimal?) {
+        val newAmount = amount ?: BigDecimal(AMOUNT)
+        globalConfigRepository.updateCartAmount(newAmount)
+        // Update Afterpay config with new cart amount
+        _afterpayWidgetConfig.update { current ->
+            current.copy(
+                config = current.config.copy(maximumAmount = newAmount.toString())
+            )
+        }
+    }
+
+    fun updateGlobalCartCurrency(currency: String?) {
+        val newCurrency = currency?.takeIf { curr -> curr.isNotBlank() } ?: AU_CURRENCY_CODE
+        globalConfigRepository.updateCartCurrency(newCurrency)
+        // Update Afterpay config with new cart currency
+        _afterpayWidgetConfig.update { current ->
+            current.copy(
+                config = current.config.copy(currency = newCurrency)
+            )
+        }
+    }
+
+    // Helper to update configs that should use global access token
+    private fun updateConfigsWithGlobalAccessToken(accessToken: String) {
+        // Only update if configs are still at defaults (using BuildConfig.ACCESS_TOKEN_WIDGET)
+        // This prevents overwriting user-configured values
+        _cardDetailsWidgetConfig.update { current ->
+            if (current.accessToken == BuildConfig.ACCESS_TOKEN_WIDGET) {
+                current.copy(accessToken = accessToken)
+            } else {
+                current
+            }
+        }
+        _giftCardWidgetConfig.update { current ->
+            if (current.accessToken == BuildConfig.ACCESS_TOKEN_WIDGET) {
+                current.copy(accessToken = accessToken)
+            } else {
+                current
+            }
+        }
+        _paypalWidgetConfig.update { current ->
+            if (current.accessToken == BuildConfig.ACCESS_TOKEN_WIDGET) {
+                current.copy(accessToken = accessToken)
+            } else {
+                current
+            }
+        }
+        _clickToPayWidgetConfig.update { current ->
+            if (current.accessToken == BuildConfig.ACCESS_TOKEN_WIDGET) {
+                current.copy(accessToken = accessToken)
+            } else {
+                current
+            }
+        }
+        _paypalVaultWidgetConfig.update { current ->
+            if (current.accessToken == BuildConfig.ACCESS_TOKEN_WIDGET) {
+                current.copy(accessToken = accessToken)
+            } else {
+                current
+            }
+        }
+    }
+
+    // --- Initialization methods (optional - can override defaults) ---
+    fun updateInitialCardDetailsConfig(config: CardDetailsWidgetConfig) {
+        _cardDetailsWidgetConfig.update { config }
+    }
+
+    fun updateInitialGiftCardConfig(config: GiftCardWidgetConfig) {
+        _giftCardWidgetConfig.update { config }
+    }
+
+    fun updateInitialGooglePayConfig(config: GooglePayWidgetConfig) {
+        _googlePayWidgetConfig.update { config }
+    }
+
+    fun updateInitialPayPalConfig(config: PayPalWidgetConfig) {
+        _paypalWidgetConfig.update { config }
+    }
+
+    fun updateInitialColesPayConfig(config: ColesPayWidgetConfig) {
+        _colesPayWidgetConfig.update { config }
+    }
+
+    fun updateInitialClickToPayConfig(config: ClickToPayWidgetConfig) {
+        _clickToPayWidgetConfig.update { config }
+    }
+
+    fun updateInitialAfterpayConfig(config: AfterpaySDKConfig) {
+        _afterpayWidgetConfig.update { config }
+    }
+
+    fun updateInitialPayPalVaultConfig(config: PayPalVaultConfig) {
+        _paypalVaultWidgetConfig.update { config }
+    }
+
+    fun updateInitialAddressConfig(address: BillingAddress?) {
+        _addressConfig.update { address }
+    }
+
+    // --- Update methods for specific config properties ---
+    fun updateWidgetConfig(
+        widgetType: WidgetType,
+        component: ConfigComponent,
+        newValue: Any?
+    ) {
+        when (widgetType) {
+            WidgetType.CARD_DETAILS -> {
+                val current = _cardDetailsWidgetConfig.value
+                val updatedConfig = when (component) {
+                    ConfigComponent.ACCESS_TOKEN -> current.copy(accessToken = newValue as String)
+                    ConfigComponent.GATEWAY_ID -> current.copy(gatewayId = newValue as? String)
+                    ConfigComponent.COLLECT_CARDHOLDER_NAME -> current.copy(
+                        collectCardholderName = newValue as Boolean
+                    )
+
+                    ConfigComponent.ALLOW_SAVE_CARD -> current.copy(allowSaveCard = newValue as? SaveCardConfig)
+                    ConfigComponent.SCHEME_SUPPORT -> current.copy(schemeSupport = newValue as SupportedSchemeConfig)
+                    ConfigComponent.SAVE_CARD_CONSENT_TEXT -> {
+                        val saveCardConfig = current.allowSaveCard
+                        if (saveCardConfig != null) {
+                            current.copy(
+                                allowSaveCard = saveCardConfig.copy(consentText = newValue as String)
+                            )
+                        } else {
+                            // Initialize SaveCardConfig if it doesn't exist
+                            current.copy(
+                                allowSaveCard = SaveCardConfig(consentText = newValue as String)
+                            )
+                        }
+                    }
+
+                    ConfigComponent.PRIVACY_POLICY_TEXT -> {
+                        val saveCardConfig = current.allowSaveCard
+                        val privacyConfig = saveCardConfig?.privacyPolicyConfig
+                        when {
+                            saveCardConfig != null && privacyConfig != null -> {
+                                current.copy(
+                                    allowSaveCard = saveCardConfig.copy(
+                                        privacyPolicyConfig = privacyConfig.copy(
+                                            privacyPolicyText = newValue as String
+                                        )
+                                    )
+                                )
+                            }
+
+                            saveCardConfig != null && privacyConfig == null -> {
+                                // Initialize PrivacyPolicyConfig if it doesn't exist
+                                current.copy(
+                                    allowSaveCard = saveCardConfig.copy(
+                                        privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
+                                            privacyPolicyText = newValue as String,
+                                            privacyPolicyURL = ""
+                                        )
+                                    )
+                                )
+                            }
+
+                            else -> {
+                                // Initialize both SaveCardConfig and PrivacyPolicyConfig
+                                current.copy(
+                                    allowSaveCard = SaveCardConfig(
+                                        privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
+                                            privacyPolicyText = newValue as String,
+                                            privacyPolicyURL = ""
+                                        )
+                                    )
+                                )
+                            }
+                        }
+                    }
+
+                    ConfigComponent.PRIVACY_POLICY_URL -> {
+                        val saveCardConfig = current.allowSaveCard
+                        val privacyConfig = saveCardConfig?.privacyPolicyConfig
+                        when {
+                            saveCardConfig != null && privacyConfig != null -> {
+                                current.copy(
+                                    allowSaveCard = saveCardConfig.copy(
+                                        privacyPolicyConfig = privacyConfig.copy(
+                                            privacyPolicyURL = newValue as String
+                                        )
+                                    )
+                                )
+                            }
+
+                            saveCardConfig != null && privacyConfig == null -> {
+                                // Initialize PrivacyPolicyConfig if it doesn't exist
+                                current.copy(
+                                    allowSaveCard = saveCardConfig.copy(
+                                        privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
+                                            privacyPolicyText = "",
+                                            privacyPolicyURL = newValue as String
+                                        )
+                                    )
+                                )
+                            }
+
+                            else -> {
+                                // Initialize both SaveCardConfig and PrivacyPolicyConfig
+                                current.copy(
+                                    allowSaveCard = SaveCardConfig(
+                                        privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
+                                            privacyPolicyText = "",
+                                            privacyPolicyURL = newValue as String
+                                        )
+                                    )
+                                )
+                            }
+                        }
+                    }
+
+                    ConfigComponent.ENABLE_VALIDATION -> {
+                        current.copy(
+                            schemeSupport = current.schemeSupport.copy(
+                                enableValidation = newValue as Boolean
+                            )
+                        )
+                    }
+
+                    ConfigComponent.SUPPORTED_SCHEMES -> {
+                        current.copy(
+                            schemeSupport = current.schemeSupport.copy(
+                                supportedSchemes = newValue as? Set<CardType>
+                            )
+                        )
+                    }
+
+                    else -> current
+                }
+                _cardDetailsWidgetConfig.value = updatedConfig
+            }
+
+            WidgetType.GIFT_CARD -> {
+                val current = _giftCardWidgetConfig.value
+                val updatedConfig = when (component) {
+                    ConfigComponent.ACCESS_TOKEN -> current.copy(accessToken = newValue as String)
+                    ConfigComponent.STORE_PIN -> current.copy(storePin = newValue as Boolean)
+                    else -> current
+                }
+                _giftCardWidgetConfig.value = updatedConfig
+            }
+
+            WidgetType.PAY_PAL -> {
+                val current = _paypalWidgetConfig.value
+                val updatedConfig = when (component) {
+                    ConfigComponent.ACCESS_TOKEN -> current.copy(accessToken = newValue as String)
+                    ConfigComponent.GATEWAY_ID -> current.copy(gatewayId = newValue as String)
+                    ConfigComponent.REQUEST_SHIPPING -> current.copy(requestShipping = newValue as Boolean)
+                    ConfigComponent.FUNDING_SOURCE -> current.copy(fundingSource = newValue as PayPalWidgetConfig.PayPalFundingSource)
+                    else -> current
+                }
+                _paypalWidgetConfig.value = updatedConfig
+            }
+
+            WidgetType.COLES_PAY -> {
+                val current = _colesPayWidgetConfig.value
+                val updatedConfig = when (component) {
+                    ConfigComponent.CLIENT_ID -> current.copy(clientId = newValue as String)
+                    else -> current
+                }
+                _colesPayWidgetConfig.value = updatedConfig
+            }
+
+            WidgetType.CLICK_TO_PAY -> {
+                val current = _clickToPayWidgetConfig.value
+                val updatedConfig = when (component) {
+                    ConfigComponent.SERVICE_ID -> current.copy(serviceId = newValue as String)
+                    ConfigComponent.ACCESS_TOKEN -> current.copy(accessToken = newValue as String)
+
+                    ConfigComponent.CLICK_TO_PAY_META -> {
+                        // Update the entire ClickToPayMeta object
+                        current.copy(meta = newValue as? ClickToPayMeta)
+                    }
+
+                    // Handle sub-components (individual fields)
+                    ConfigComponent.DISABLE_SUMMARY_SCREEN -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        current.copy(
+                            meta = currentMeta.copy(disableSummaryScreen = newValue as? Boolean)
+                        )
+                    }
+
+                    ConfigComponent.CHECKOUT_EXPERIENCE -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        current.copy(
+                            meta = currentMeta.copy(checkoutExperience = newValue as? CheckoutExperience)
+                        )
+                    }
+
+                    ConfigComponent.SERVICES -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        current.copy(
+                            meta = currentMeta.copy(services = newValue as? Services)
+                        )
+                    }
+
+                    ConfigComponent.UNACCEPTED_CARD_TYPE -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        current.copy(
+                            meta = currentMeta.copy(unacceptedCardType = newValue as? UnacceptedCardType)
+                        )
+                    }
+
+                    ConfigComponent.CARD_BRANDS -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        current.copy(
+                            meta = currentMeta.copy(cardBrands = newValue as? List<CardBrands>)
+                        )
+                    }
+
+                    ConfigComponent.CO_BRAND_NAMES -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        current.copy(
+                            meta = currentMeta.copy(coBrandNames = newValue as? List<String>)
+                        )
+                    }
+
+                    ConfigComponent.DPA_DATA -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        current.copy(
+                            meta = currentMeta.copy(dpaData = newValue as? ClickToPayDPAData)
+                        )
+                    }
+
+                    // Handle DPA Data sub-components
+                    ConfigComponent.DPA_ADDRESS -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAData = currentMeta.dpaData ?: ClickToPayDPAData()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaData = currentDPAData.copy(
+                                    dpaAddress = (newValue as? String)?.ifEmpty { null }
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.DPA_EMAIL_ADDRESS -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAData = currentMeta.dpaData ?: ClickToPayDPAData()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaData = currentDPAData.copy(
+                                    dpaEmailAddress = (newValue as? String)?.ifEmpty { null }
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.DPA_PHONE_NUMBER -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAData = currentMeta.dpaData ?: ClickToPayDPAData()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaData = currentDPAData.copy(
+                                    dpaPhoneNumber = newValue as? PhoneNumber
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.DPA_PHONE_COUNTRY_CODE -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAData = currentMeta.dpaData ?: ClickToPayDPAData()
+                        val currentPhone = currentDPAData.dpaPhoneNumber
+                        val newCountryCode = (newValue as? String)?.takeIf { it.isNotBlank() }
+                        val currentPhoneNumber = currentPhone?.phoneNumber ?: ""
+
+                        val updatedPhone =
+                            if (newCountryCode != null && currentPhoneNumber.isNotBlank()) {
+                                PhoneNumber(
+                                    countryCode = newCountryCode,
+                                    phoneNumber = currentPhoneNumber
+                                )
+                            } else {
+                                null
+                            }
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaData = currentDPAData.copy(dpaPhoneNumber = updatedPhone)
+                            )
+                        )
+                    }
+
+                    ConfigComponent.DPA_PHONE_NUMBER_FIELD -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAData = currentMeta.dpaData ?: ClickToPayDPAData()
+                        val currentPhone = currentDPAData.dpaPhoneNumber
+                        val newPhoneNumber = (newValue as? String)?.takeIf { it.isNotBlank() }
+                        val currentCountryCode = currentPhone?.countryCode ?: ""
+
+                        val updatedPhone =
+                            if (currentCountryCode.isNotBlank() && newPhoneNumber != null) {
+                                PhoneNumber(
+                                    countryCode = currentCountryCode,
+                                    phoneNumber = newPhoneNumber
+                                )
+                            } else {
+                                null
+                            }
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaData = currentDPAData.copy(dpaPhoneNumber = updatedPhone)
+                            )
+                        )
+                    }
+
+                    ConfigComponent.DPA_LOGO_URI -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAData = currentMeta.dpaData ?: ClickToPayDPAData()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaData = currentDPAData.copy(
+                                    dpaLogoUri = (newValue as? String)?.ifEmpty { null }
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.DPA_SUPPORTED_EMAIL_ADDRESS -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAData = currentMeta.dpaData ?: ClickToPayDPAData()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaData = currentDPAData.copy(
+                                    dpaSupportedEmailAddress = (newValue as? String)?.ifEmpty { null }
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.DPA_SUPPORTED_PHONE_NUMBER -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAData = currentMeta.dpaData ?: ClickToPayDPAData()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaData = currentDPAData.copy(
+                                    dpaSupportedPhoneNumber = newValue as? PhoneNumber
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.DPA_URI -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAData = currentMeta.dpaData ?: ClickToPayDPAData()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaData = currentDPAData.copy(
+                                    dpaUri = (newValue as? String)?.ifEmpty { null }
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.DPA_SUPPORT_URI -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAData = currentMeta.dpaData ?: ClickToPayDPAData()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaData = currentDPAData.copy(
+                                    dpaSupportUri = (newValue as? String)?.ifEmpty { null }
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.DPA_APPLICATION_TYPE -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAData = currentMeta.dpaData ?: ClickToPayDPAData()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaData = currentDPAData.copy(
+                                    applicationType = newValue as? ApplicationType
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.DPA_TRANSACTION_OPTIONS -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        current.copy(
+                            meta = currentMeta.copy(dpaTransactionOptions = newValue as? ClickToPayDPAOptions)
+                        )
+                    }
+
+                    // Handle DPA Transaction Options sub-components
+                    ConfigComponent.DPA_BILLING_PREFERENCE -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAOptions =
+                            currentMeta.dpaTransactionOptions ?: ClickToPayDPAOptions()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaTransactionOptions = currentDPAOptions.copy(
+                                    dpaBillingPreference = newValue as? ClickToPayDPAShippingBillingPreference
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.ORDER_TYPE -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAOptions =
+                            currentMeta.dpaTransactionOptions ?: ClickToPayDPAOptions()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaTransactionOptions = currentDPAOptions.copy(
+                                    orderType = newValue as? ClickToPayOrderType
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.PAYMENT_OPTIONS -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAOptions =
+                            currentMeta.dpaTransactionOptions ?: ClickToPayDPAOptions()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaTransactionOptions = currentDPAOptions.copy(
+                                    paymentOptions = newValue as? List<PaymentOption>
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.THREE_DS_PREFERENCE -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAOptions =
+                            currentMeta.dpaTransactionOptions ?: ClickToPayDPAOptions()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaTransactionOptions = currentDPAOptions.copy(
+                                    threeDSPreference = (newValue as? String)?.ifEmpty { null }
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.CONFIRM_PAYMENT -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAOptions =
+                            currentMeta.dpaTransactionOptions ?: ClickToPayDPAOptions()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaTransactionOptions = currentDPAOptions.copy(
+                                    confirmPayment = newValue as? Boolean
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.TRANSACTION_AMOUNT_VALUE -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAOptions =
+                            currentMeta.dpaTransactionOptions ?: ClickToPayDPAOptions()
+                        // Since transactionAmount is inherited from BaseDPAOptions and can't be modified via .copy(),
+                        // we need to recreate the object. However, this is a limitation of the SDK structure.
+                        // For now, we'll update other properties and note that transactionAmount updates
+                        // require SDK-level changes to support transactionAmount in ClickToPayDPAOptions constructor.
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaTransactionOptions = currentDPAOptions.copy()
+                            )
+                        )
+                    }
+
+                    ConfigComponent.TRANSACTION_CURRENCY_CODE -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentDPAOptions =
+                            currentMeta.dpaTransactionOptions ?: ClickToPayDPAOptions()
+                        // Same limitation as TRANSACTION_AMOUNT_VALUE
+                        current.copy(
+                            meta = currentMeta.copy(
+                                dpaTransactionOptions = currentDPAOptions.copy()
+                            )
+                        )
+                    }
+
+                    ConfigComponent.CUSTOMER -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        current.copy(
+                            meta = currentMeta.copy(customer = newValue as? Customer)
+                        )
+                    }
+
+                    // Handle Customer sub-components
+                    ConfigComponent.CUSTOMER_EMAIL -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentCustomer = currentMeta.customer ?: Customer()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                customer = currentCustomer.copy(
+                                    email = (newValue as? String)?.ifEmpty { null }
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.CUSTOMER_FIRST_NAME -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentCustomer = currentMeta.customer ?: Customer()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                customer = currentCustomer.copy(
+                                    firstName = (newValue as? String)?.ifEmpty { null }
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.CUSTOMER_LAST_NAME -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentCustomer = currentMeta.customer ?: Customer()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                customer = currentCustomer.copy(
+                                    lastName = (newValue as? String)?.ifEmpty { null }
+                                )
+                            )
+                        )
+                    }
+
+                    ConfigComponent.CUSTOMER_PHONE -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentCustomer = currentMeta.customer ?: Customer()
+                        current.copy(
+                            meta = currentMeta.copy(
+                                customer = currentCustomer.copy(phone = newValue as? Phone)
+                            )
+                        )
+                    }
+
+                    ConfigComponent.CUSTOMER_PHONE_COUNTRY_CODE -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentCustomer = currentMeta.customer ?: Customer()
+                        val currentPhone = currentCustomer.phone
+                        val newCountryCode = (newValue as? String)?.takeIf { it.isNotBlank() }
+                        val currentPhoneNumber = currentPhone?.phone ?: ""
+
+                        val updatedPhone =
+                            if (newCountryCode != null && currentPhoneNumber.isNotBlank()) {
+                                Phone(countryCode = newCountryCode, phone = currentPhoneNumber)
+                            } else if (newCountryCode != null || currentPhoneNumber.isNotBlank()) {
+                                Phone(
+                                    countryCode = newCountryCode,
+                                    phone = currentPhoneNumber.ifEmpty { null }
+                                )
+                            } else {
+                                null
+                            }
+                        current.copy(
+                            meta = currentMeta.copy(
+                                customer = currentCustomer.copy(phone = updatedPhone)
+                            )
+                        )
+                    }
+
+                    ConfigComponent.CUSTOMER_PHONE_NUMBER -> {
+                        val currentMeta = current.meta ?: ClickToPayMeta()
+                        val currentCustomer = currentMeta.customer ?: Customer()
+                        val currentPhone = currentCustomer.phone
+                        val newPhoneNumber = (newValue as? String)?.takeIf { it.isNotBlank() }
+                        val currentCountryCode = currentPhone?.countryCode ?: ""
+
+                        val updatedPhone =
+                            if (currentCountryCode.isNotBlank() && newPhoneNumber != null) {
+                                Phone(countryCode = currentCountryCode, phone = newPhoneNumber)
+                            } else if (currentCountryCode.isNotBlank() || newPhoneNumber != null) {
+                                Phone(
+                                    countryCode = currentCountryCode.ifEmpty { null },
+                                    phone = newPhoneNumber
+                                )
+                            } else {
+                                null
+                            }
+                        current.copy(
+                            meta = currentMeta.copy(
+                                customer = currentCustomer.copy(phone = updatedPhone)
+                            )
+                        )
+                    }
+
+                    else -> current
+                }
+                _clickToPayWidgetConfig.value = updatedConfig
+            }
+
+            WidgetType.AFTER_PAY -> {
+                val current = _afterpayWidgetConfig.value
+                val updatedConfig = when (component) {
+                    ConfigComponent.AFTERPAY_CONFIGURATION -> {
+                        // Update the entire AfterpayConfiguration object
+                        current.copy(
+                            config = newValue as? AfterpaySDKConfig.AfterpayConfiguration
+                                ?: current.config
+                        )
+                    }
+
+                    ConfigComponent.AFTERPAY_CHECKOUT_OPTIONS -> {
+                        // Update the entire CheckoutOptions object
+                        current.copy(options = newValue as? AfterpaySDKConfig.CheckoutOptions)
+                    }
+
+                    // Handle sub-components (individual fields) for backward compatibility
+                    ConfigComponent.MINIMUM_AMOUNT -> current.copy(
+                        config = current.config.copy(minimumAmount = newValue as? String)
+                    )
+
+                    ConfigComponent.MAXIMUM_AMOUNT -> current.copy(
+                        config = current.config.copy(maximumAmount = newValue as String)
+                    )
+
+                    ConfigComponent.CURRENCY -> current.copy(
+                        config = current.config.copy(currency = newValue as String)
+                    )
+
+                    ConfigComponent.LANGUAGE -> current.copy(
+                        config = current.config.copy(language = newValue as String)
+                    )
+
+                    ConfigComponent.COUNTRY -> current.copy(
+                        config = current.config.copy(country = newValue as String)
+                    )
+
+                    ConfigComponent.PICKUP -> {
+                        val currentOptions =
+                            current.options ?: AfterpaySDKConfig.CheckoutOptions()
+                        current.copy(
+                            options = currentOptions.copy(pickup = newValue as? Boolean)
+                        )
+                    }
+
+                    ConfigComponent.BUY_NOW -> {
+                        val currentOptions =
+                            current.options ?: AfterpaySDKConfig.CheckoutOptions()
+                        current.copy(
+                            options = currentOptions.copy(buyNow = newValue as? Boolean)
+                        )
+                    }
+
+                    ConfigComponent.SHIPPING_OPTION_REQUIRED -> {
+                        val currentOptions =
+                            current.options ?: AfterpaySDKConfig.CheckoutOptions()
+                        current.copy(
+                            options = currentOptions.copy(shippingOptionRequired = newValue as? Boolean)
+                        )
+                    }
+
+                    ConfigComponent.ENABLE_SINGLE_SHIPPING_OPTION_UPDATE -> {
+                        val currentOptions =
+                            current.options ?: AfterpaySDKConfig.CheckoutOptions()
+                        current.copy(
+                            options = currentOptions.copy(enableSingleShippingOptionUpdate = newValue as? Boolean)
+                        )
+                    }
+
+                    else -> current
+                }
+                _afterpayWidgetConfig.value = updatedConfig
+            }
+
+            WidgetType.PAY_PAL_VAULT -> {
+                val current = _paypalVaultWidgetConfig.value
+                val updatedConfig = when (component) {
+                    ConfigComponent.ACCESS_TOKEN -> current.copy(accessToken = newValue as String)
+                    ConfigComponent.GATEWAY_ID -> current.copy(gatewayId = newValue as String)
+                    else -> current
+                }
+                _paypalVaultWidgetConfig.value = updatedConfig
+            }
+
+            WidgetType.ADDRESS_DETAILS -> {
+                when (component) {
+                    ConfigComponent.BILLING_ADDRESS -> {
+                        // Update the entire BillingAddress object
+                        _addressConfig.value = newValue as? BillingAddress ?: BillingAddress()
+                    }
+
+                    else -> {
+                        // Handle sub-components (individual fields)
+                        val current = _addressConfig.value ?: BillingAddress()
+                        val updatedConfig = when (component) {
+                            ConfigComponent.FIRST_NAME -> current.copy(firstName = (newValue as? String)?.ifEmpty { null })
+                            ConfigComponent.LAST_NAME -> current.copy(lastName = (newValue as? String)?.ifEmpty { null })
+                            ConfigComponent.NAME -> current.copy(name = (newValue as? String)?.ifEmpty { null })
+                            ConfigComponent.ADDRESS_LINE1 -> current.copy(addressLine1 = (newValue as? String)?.ifEmpty { null })
+                            ConfigComponent.ADDRESS_LINE2 -> current.copy(addressLine2 = (newValue as? String)?.ifEmpty { null })
+                            ConfigComponent.CITY -> current.copy(city = (newValue as? String)?.ifEmpty { null })
+                            ConfigComponent.STATE -> current.copy(state = (newValue as? String)?.ifEmpty { null })
+                            ConfigComponent.POSTAL_CODE -> current.copy(postalCode = (newValue as? String)?.ifEmpty { null })
+                            ConfigComponent.COUNTRY -> current.copy(country = (newValue as? String)?.ifEmpty { null })
+                            ConfigComponent.PHONE_NUMBER -> current.copy(phoneNumber = (newValue as? String)?.ifEmpty { null })
+                            else -> current
+                        }
+                        _addressConfig.value = updatedConfig
+                    }
+                }
+            }
+
+            else -> {
+                // No config for other widget types currently
+            }
+        }
+    }
+}
+

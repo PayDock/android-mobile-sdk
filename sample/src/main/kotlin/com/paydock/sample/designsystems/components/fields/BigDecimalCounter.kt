@@ -1,4 +1,4 @@
-package com.paydock.sample.feature.style.ui.components.core.counter
+package com.paydock.sample.designsystems.components.fields
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -19,37 +20,43 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import java.text.DecimalFormat
+import com.paydock.sample.R
+import java.math.BigDecimal
 
+/**
+ * Reusable BigDecimal counter component.
+ * Used in both Style and Config screens.
+ */
 @Composable
-fun FloatCounter(
+fun BigDecimalCounter(
     modifier: Modifier = Modifier,
-    title: String,
-    value: Float, // Changed to Float
-    onValueChange: (Float) -> Unit, // Changed to Float
-    minValue: Float = 0.0f,
-    maxValue: Float = 1.0f,
-    step: Float = 0.1f,
-    decimalFormatPattern: String = "0.0" // For display formatting
+    label: String,
+    value: BigDecimal?,
+    onValueChange: (BigDecimal?) -> Unit,
+    step: BigDecimal = BigDecimal("1.0")
 ) {
-    var currentValue by remember { mutableFloatStateOf(value.coerceIn(minValue, maxValue)) }
+    // Remember the step to ensure it's stable across recompositions
+    val rememberedStep = remember(step) { step }
 
+    var currentValue by remember { mutableStateOf(value?.toPlainString() ?: "") }
+
+    // Synchronize internal currentValue with the value prop when the prop changes
     LaunchedEffect(value) {
-        if (value != currentValue) {
-            currentValue = value.coerceIn(minValue, maxValue)
+        val newValueString = value?.toPlainString() ?: ""
+        if (currentValue != newValueString) {
+            currentValue = newValueString
         }
     }
-
-    val decimalFormat = remember { DecimalFormat(decimalFormatPattern) }
 
     Column(
         modifier = modifier,
@@ -57,26 +64,31 @@ fun FloatCounter(
         horizontalAlignment = Alignment.Start
     ) {
         Text(
-            text = title,
-            style = MaterialTheme.typography.labelMedium
+            text = label,
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.padding(bottom = 8.dp)
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextField(
-                value = decimalFormat.format(currentValue), // Format for display
-                onValueChange = {
-                    val newValue = it.toFloatOrNull() ?: currentValue // Fallback to current
-                    val coercedValue = newValue.coerceIn(minValue, maxValue)
-                    if (currentValue != coercedValue) {
-                        currentValue = coercedValue
-                        onValueChange(coercedValue)
+                value = currentValue,
+                onValueChange = { newValue ->
+                    // Allow empty string or valid decimal number
+                    if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d*$"))) {
+                        currentValue = newValue
+                        val parsedValue = newValue.toBigDecimalOrNull()
+                        onValueChange(parsedValue)
                     }
                 },
-                readOnly = true, // Keeping it readOnly as per your original
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), // KeyboardType.Decimal might be better if not readOnly
-                keyboardActions = KeyboardActions(onDone = { /* Usually for text input submission */ }),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        val parsedValue = currentValue.toBigDecimalOrNull()
+                        onValueChange(parsedValue)
+                    }
+                ),
                 modifier = Modifier.weight(1f),
                 shape = RectangleShape,
                 colors = TextFieldDefaults.colors(
@@ -93,39 +105,35 @@ fun FloatCounter(
                 verticalArrangement = Arrangement.spacedBy(
                     8.dp,
                     Alignment.Top
-                ), // Adjusted spacing if needed
-                horizontalAlignment = Alignment.CenterHorizontally, // Center icons
+                ),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Icon(
                     modifier = Modifier
                         .clickable {
-                            val newValue = (currentValue + step).coerceIn(minValue, maxValue)
-                            // Round to avoid precision errors if needed, e.g., for 0.1 + 0.2
-                            val roundedNewValue =
-                                (newValue * (1 / step).toInt()).toInt() / (1 / step).toFloat()
-                            if (currentValue != roundedNewValue) {
-                                currentValue = roundedNewValue
-                                onValueChange(roundedNewValue)
-                            }
+                            val currentAmount = currentValue.toBigDecimalOrNull() ?: BigDecimal.ZERO
+                            val newValue = currentAmount.add(rememberedStep)
+                            currentValue = newValue.toPlainString()
+                            onValueChange(newValue)
                         },
                     imageVector = Icons.Filled.ArrowDropUp,
-                    contentDescription = "Increase",
+                    contentDescription = stringResource(R.string.content_desc_increase),
                 )
                 Icon(
                     modifier = Modifier
                         .clickable {
-                            val newValue = (currentValue - step).coerceIn(minValue, maxValue)
-                            val roundedNewValue =
-                                (newValue * (1 / step).toInt()).toInt() / (1 / step).toFloat()
-                            if (currentValue != roundedNewValue) {
-                                currentValue = roundedNewValue
-                                onValueChange(roundedNewValue)
-                            }
+                            val currentAmount = currentValue.toBigDecimalOrNull() ?: BigDecimal.ZERO
+                            val newValue =
+                                (currentAmount.subtract(rememberedStep)).coerceAtLeast(BigDecimal.ZERO)
+                            currentValue = newValue.toPlainString()
+                            onValueChange(newValue)
                         },
                     imageVector = Icons.Filled.ArrowDropDown,
-                    contentDescription = "Decrease",
+                    contentDescription = stringResource(R.string.content_desc_decrease),
                 )
             }
         }
     }
 }
+
+

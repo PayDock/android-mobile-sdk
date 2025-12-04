@@ -30,7 +30,7 @@ import com.paydock.designsystems.components.icon.SdkIcon
 import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
-import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paydock.sample.designsystems.components.fields.StringDropdown
 
 @Composable
 fun StyleButtonContentSection(
@@ -104,7 +104,7 @@ fun StyleButtonContentSection(
                 }
             }
 
-            DropdownSelector(
+            StringDropdown(
                 modifier = Modifier.fillMaxWidth(),
                 options = iconOptions.map { it.first },
                 selectedOption = selectedLabel,

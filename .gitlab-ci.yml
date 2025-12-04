@@ -240,7 +240,7 @@ commit_bin_file:
 
 # .build_template:
 # This is a hidden job template for building the Android application.
-# It extends the '.setup_bundler' template and copies the card schemes file.
+# It extends the '.setup_bundler' template.
 .build_template:
   stage: build # Runs in the 'build' stage.
   extends: .setup_bundler # Extends the '.setup_bundler' template.

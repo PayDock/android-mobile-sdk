@@ -36,7 +36,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
     private val hasCardDetailsCustomizations = MutableStateFlow(false)
     private val hasGiftCardCustomizations = MutableStateFlow(false)
     private val hasPayPalVaultCustomizations = MutableStateFlow(false)
-    
+
     private val _addressWidgetAppearance = MutableStateFlow<AddressDetailsWidgetAppearance?>(null)
     val addressWidgetAppearance: StateFlow<AddressDetailsWidgetAppearance?> =
         _addressWidgetAppearance.asStateFlow()
@@ -83,7 +83,10 @@ class StylingViewModel @Inject constructor() : ViewModel() {
         _standalone3DSWidgetAppearance.asStateFlow()
 
     // --- Initialization ---
-    fun updateInitialAddressDefaults(updatedDefaults: AddressDetailsWidgetAppearance, preserveCustomizations: Boolean = false) {
+    fun updateInitialAddressDefaults(
+        updatedDefaults: AddressDetailsWidgetAppearance,
+        preserveCustomizations: Boolean = false
+    ) {
         _addressWidgetAppearance.update { current ->
             if (preserveCustomizations && current != null && hasAddressCustomizations.value) {
                 // Preserve user customizations (structural changes like icons, text, spacing)
@@ -102,7 +105,10 @@ class StylingViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun updateInitialCardDetailsDefaults(updatedDefaults: CardDetailsWidgetAppearance, preserveCustomizations: Boolean = false) {
+    fun updateInitialCardDetailsDefaults(
+        updatedDefaults: CardDetailsWidgetAppearance,
+        preserveCustomizations: Boolean = false
+    ) {
         _cardDetailsWidgetAppearance.update { current ->
             if (preserveCustomizations && current != null && hasCardDetailsCustomizations.value) {
                 // Preserve user customizations
@@ -119,7 +125,10 @@ class StylingViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun updateInitialGiftCardDetailsDefaults(updatedDefaults: GiftCardWidgetAppearance, preserveCustomizations: Boolean = false) {
+    fun updateInitialGiftCardDetailsDefaults(
+        updatedDefaults: GiftCardWidgetAppearance,
+        preserveCustomizations: Boolean = false
+    ) {
         _giftCardWidgetAppearance.update { current ->
             if (preserveCustomizations && current != null && hasGiftCardCustomizations.value) {
                 // Preserve user customizations
@@ -140,7 +149,10 @@ class StylingViewModel @Inject constructor() : ViewModel() {
         _paypalWidgetAppearance.update { updatedDefaults }
     }
 
-    fun updateInitialPayPalVaultDefaults(updatedDefaults: PayPalPaymentSourceWidgetAppearance, preserveCustomizations: Boolean = false) {
+    fun updateInitialPayPalVaultDefaults(
+        updatedDefaults: PayPalPaymentSourceWidgetAppearance,
+        preserveCustomizations: Boolean = false
+    ) {
         _paypalVaultWidgetAppearance.update { current ->
             if (preserveCustomizations && current != null && hasPayPalVaultCustomizations.value) {
                 // Preserve user customizations (actionButton)
@@ -195,9 +207,10 @@ class StylingViewModel @Inject constructor() : ViewModel() {
             WidgetType.CARD_DETAILS -> hasCardDetailsCustomizations.value = true
             WidgetType.GIFT_CARD -> hasGiftCardCustomizations.value = true
             WidgetType.PAY_PAL_VAULT -> hasPayPalVaultCustomizations.value = true
-            else -> { /* Other widgets don't have customization tracking yet */ }
+            else -> { /* Other widgets don't have customization tracking yet */
+            }
         }
-        
+
         when (widgetType) {
             WidgetType.ADDRESS_DETAILS -> {
                 _addressWidgetAppearance.value?.let { current ->
