@@ -42,4 +42,10 @@
     <string name="button_pay_with">Pay with</string>
     <string name="button_link_paypal_account">Link PayPal account</string>
     <!-- endregion -->
+    <!-- region Accessibility -->
+    <string name="accessibility_button_loading">Loading</string>
+    <string name="accessibility_webview_loading">Loading</string>
+    <string name="accessibility_overlay_loading">Loading, please wait.</string>
+    <string name="accessibility_overlay_still_loading">Still loading, this might take a few moments.</string>
+    <!-- endregion -->
 </resources>
