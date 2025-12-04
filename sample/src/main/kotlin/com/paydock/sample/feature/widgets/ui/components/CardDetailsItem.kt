@@ -18,47 +18,27 @@ import com.paydock.core.domain.error.toError
 import com.paydock.core.domain.model.Event
 import com.paydock.core.network.dto.error.displayableMessage
 import com.paydock.core.presentation.util.WidgetEventDelegate
-import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
-import com.paydock.feature.card.domain.model.integration.SaveCardConfig
-import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
-import com.paydock.feature.card.domain.model.integration.enums.CardType
 import com.paydock.feature.card.presentation.CardDetailsAppearanceDefaults
 import com.paydock.feature.card.presentation.CardDetailsWidget
-import com.paydock.sample.BuildConfig
+import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.style.StylingViewModel
 
 @Composable
-fun CardDetailsItem(context: Context, stylingViewModel: StylingViewModel) {
+fun CardDetailsItem(
+    context: Context,
+    stylingViewModel: StylingViewModel,
+    configViewModel: ConfigViewModel
+) {
     val cardDetailsAppearance by stylingViewModel.cardDetailsWidgetAppearance.collectAsState()
     val currentOrDefaultAppearance =
         cardDetailsAppearance ?: CardDetailsAppearanceDefaults.appearance()
+    val cardDetailsConfig by configViewModel.cardDetailsWidgetConfig.collectAsState()
+
     CardDetailsWidget(
         modifier = Modifier
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
-        config = CardDetailsWidgetConfig(
-            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
-            gatewayId = BuildConfig.SERVICE_ID_MPGS,
-            allowSaveCard = SaveCardConfig(
-                privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
-                    privacyPolicyURL = "https://www.google.com"
-                )
-            ),
-            schemeSupport = SupportedSchemeConfig(
-                supportedSchemes = setOf(
-                    CardType.VISA,
-                    CardType.MASTERCARD,
-                    CardType.AMEX,
-                    CardType.AUSBC,
-                    CardType.DINERS,
-                    CardType.DISCOVER,
-                    CardType.JAPCB,
-                    CardType.SOLO,
-                    CardType.UNIONPAY
-                ),
-                enableValidation = true
-            )
-        ),
+        config = cardDetailsConfig,
         appearance = currentOrDefaultAppearance,
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {

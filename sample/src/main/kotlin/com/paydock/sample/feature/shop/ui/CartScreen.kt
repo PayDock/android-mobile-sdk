@@ -11,9 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
@@ -119,53 +119,49 @@ private fun CartContentView(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+        // Use LazyColumn for better performance with many items
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Cart Items Section
-            CartItemsSection(
-                cartItems = cartItems,
-                cartManager = cartManager
-            )
+            // Cart Items Section Header
+            item {
+                CartItemsSectionHeader(cartManager = cartManager)
+            }
 
-            // Gift Card, Shipping, and Order Summary moved to Payment step
+            // Cart Items - lazy loaded for better performance
+            items(
+                items = cartItems,
+                key = { it.product.id } // Use product ID as key for stable recomposition
+            ) { cartItem ->
+                CartItemRowView(
+                    cartItem = cartItem,
+                    onQuantityChange = { updatedItem, newQuantity ->
+                        cartManager.updateQuantity(updatedItem, newQuantity)
+                    },
+                    onRemove = { itemToRemove ->
+                        cartManager.removeFromCart(itemToRemove)
+                    }
+                )
+            }
         }
 
         // Checkout Button fixed at bottom with safe padding and cost summary
-        CheckoutButton(cartManager = cartManager, onCheckout = onCheckout)
+        CheckoutButton(cartItems = cartItems, cartManager = cartManager, onCheckout = onCheckout)
     }
 }
 
 @Composable
-private fun CartItemsSection(
-    cartItems: List<CartItem>,
+private fun CartItemsSectionHeader(
     cartManager: CartManager
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = "Items (${cartManager.itemCount})",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-
-        cartItems.forEach { cartItem ->
-            CartItemRowView(
-                cartItem = cartItem,
-                onQuantityChange = { updatedItem, newQuantity ->
-                    cartManager.updateQuantity(updatedItem, newQuantity)
-                },
-                onRemove = { itemToRemove ->
-                    cartManager.removeFromCart(itemToRemove)
-                }
-            )
-        }
-    }
+    Text(
+        text = "Items (${cartManager.itemCount})",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(bottom = 12.dp)
+    )
 }
 
 @Composable
@@ -282,12 +278,11 @@ private fun CartItemRowView(
 
 @Composable
 private fun CheckoutButton(
+    cartItems: List<CartItem>,
     cartManager: CartManager,
     onCheckout: () -> Unit
 ) {
-    // Collect cart items to trigger recomposition when they change
-    val cartItems by cartManager.cartItems.collectAsState()
-    // Calculate subtotal based on the current cart items
+    // Calculate subtotal based on the current cart items - use remember to cache
     val formattedSubtotal = remember(cartItems) {
         cartManager.formattedSubtotal
     }

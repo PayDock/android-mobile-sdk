@@ -669,7 +669,8 @@ fun PaymentWidgetView(
                                 modifier = Modifier.fillMaxWidth(),
                                 tokenHandler = walletViewModel.getWalletTokenResultCallback(
                                     walletType = WalletType.GOOGLE,
-                                    customerData = customerData
+                                    customerData = customerData,
+                                    useGlobalConfig = false // Checkout uses BuildConfig defaults
                                 ),
                                 loadingDelegate = object : WidgetLoadingDelegate {
                                     override fun widgetLoadingDidStart() {
@@ -698,7 +699,8 @@ fun PaymentWidgetView(
                                 enabled = true,
                                 tokenHandler = walletViewModel.getWalletTokenResultCallback(
                                     walletType = WalletType.PAY_PAL,
-                                    customerData = customerData
+                                    customerData = customerData,
+                                    useGlobalConfig = false // Checkout uses BuildConfig defaults
                                 ),
                                 loadingDelegate = object : WidgetLoadingDelegate {
                                     override fun widgetLoadingDidStart() {
@@ -726,7 +728,8 @@ fun PaymentWidgetView(
                                 modifier = Modifier.fillMaxWidth(),
                                 tokenHandler = walletViewModel.getWalletTokenResultCallback(
                                     walletType = WalletType.AFTER_PAY,
-                                    customerData = customerData
+                                    customerData = customerData,
+                                    useGlobalConfig = false // Checkout uses BuildConfig defaults
                                 ),
                                 loadingDelegate = object : WidgetLoadingDelegate {
                                     override fun widgetLoadingDidStart() {
@@ -760,7 +763,8 @@ fun PaymentWidgetView(
                                 modifier = Modifier.fillMaxWidth(),
                                 tokenHandler = walletViewModel.getWalletTokenResultCallback(
                                     walletType = WalletType.COLES_PAY,
-                                    customerData = customerData
+                                    customerData = customerData,
+                                    useGlobalConfig = false // Checkout uses BuildConfig defaults
                                 ),
                                 loadingDelegate = object : WidgetLoadingDelegate {
                                     override fun widgetLoadingDidStart() {

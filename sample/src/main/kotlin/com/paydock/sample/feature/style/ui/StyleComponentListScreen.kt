@@ -20,7 +20,10 @@ fun StyleComponentListScreen(
     Column(modifier = Modifier.fillMaxWidth()) {
         HorizontalDivider()
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
-            items(styleItems) { item ->
+            items(
+                items = styleItems,
+                key = { it.name } // Add key for better recomposition performance
+            ) { item ->
                 ListRowItem(
                     title = item.displayName()
                 ) {

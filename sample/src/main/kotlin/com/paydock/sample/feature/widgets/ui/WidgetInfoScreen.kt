@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.widgets.ui.components.AddressDetailsItem
 import com.paydock.sample.feature.widgets.ui.components.AfterpayItem
@@ -23,7 +24,8 @@ import com.paydock.sample.feature.widgets.ui.models.WidgetType
 @Composable
 fun WidgetInfoScreen(
     widgetType: WidgetType,
-    stylingViewModel: StylingViewModel
+    stylingViewModel: StylingViewModel,
+    configViewModel: ConfigViewModel
 ) {
     Box(
         contentAlignment = Alignment.TopCenter,
@@ -32,31 +34,59 @@ fun WidgetInfoScreen(
         val context = LocalContext.current
         when (widgetType) {
             WidgetType.ADDRESS_DETAILS -> {
-                AddressDetailsItem(context = context, stylingViewModel = stylingViewModel)
+                AddressDetailsItem(
+                    context = context,
+                    stylingViewModel = stylingViewModel,
+                    configViewModel = configViewModel
+                )
             }
 
             WidgetType.AFTER_PAY -> {
-                AfterpayItem(context = context, stylingViewModel = stylingViewModel)
+                AfterpayItem(
+                    context = context,
+                    stylingViewModel = stylingViewModel,
+                    configViewModel = configViewModel
+                )
             }
 
             WidgetType.CARD_DETAILS -> {
-                CardDetailsItem(context = context, stylingViewModel = stylingViewModel)
+                CardDetailsItem(
+                    context = context,
+                    stylingViewModel = stylingViewModel,
+                    configViewModel = configViewModel
+                )
             }
 
             WidgetType.CLICK_TO_PAY -> {
-                ClickToPayItem(context = context, stylingViewModel = stylingViewModel)
+                ClickToPayItem(
+                    context = context,
+                    stylingViewModel = stylingViewModel,
+                    configViewModel = configViewModel
+                )
             }
 
             WidgetType.COLES_PAY -> {
-                ColesPayItem(context = context, stylingViewModel = stylingViewModel)
+                ColesPayItem(
+                    context = context,
+                    stylingViewModel = stylingViewModel,
+                    configViewModel = configViewModel
+                )
             }
 
             WidgetType.GIFT_CARD -> {
-                GiftCardItem(context = context, stylingViewModel = stylingViewModel)
+                GiftCardItem(
+                    context = context,
+                    stylingViewModel = stylingViewModel,
+                    configViewModel = configViewModel
+                )
             }
 
             WidgetType.GOOGLE_PAY -> {
-                GooglePayItem(context = context, stylingViewModel = stylingViewModel)
+                GooglePayItem(
+                    context = context,
+                    stylingViewModel = stylingViewModel,
+                    configViewModel = configViewModel
+                )
             }
 
             WidgetType.INTEGRATED_3DS -> {
@@ -64,11 +94,19 @@ fun WidgetInfoScreen(
             }
 
             WidgetType.PAY_PAL -> {
-                PayPalItem(context = context, stylingViewModel = stylingViewModel)
+                PayPalItem(
+                    context = context,
+                    stylingViewModel = stylingViewModel,
+                    configViewModel = configViewModel
+                )
             }
 
             WidgetType.PAY_PAL_VAULT -> {
-                PayPalVaultItem(context = context, stylingViewModel = stylingViewModel)
+                PayPalVaultItem(
+                    context = context,
+                    stylingViewModel = stylingViewModel,
+                    configViewModel = configViewModel
+                )
             }
 
             WidgetType.STANDALONE_3DS -> {

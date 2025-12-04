@@ -19,12 +19,11 @@ import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
 import com.paydock.core.domain.model.Event
 import com.paydock.core.presentation.util.WidgetEventDelegate
-import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
 import com.paydock.feature.colespay.presentation.ColesPayWidget
 import com.paydock.feature.colespay.presentation.ColesPayWidgetAppearanceDefaults
 import com.paydock.feature.wallet.domain.model.integration.WalletType
-import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
+import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.wallet.presentation.WalletViewModel
 
@@ -32,17 +31,20 @@ import com.paydock.sample.feature.wallet.presentation.WalletViewModel
 fun ColesPayItem(
     context: Context,
     walletViewModel: WalletViewModel = hiltViewModel(),
-    stylingViewModel: StylingViewModel
+    stylingViewModel: StylingViewModel,
+    configViewModel: ConfigViewModel
 ) {
     val colesPayAppearance by stylingViewModel.colesPayWidgetAppearance.collectAsState()
     val currentOrDefaultAppearance =
         colesPayAppearance ?: ColesPayWidgetAppearanceDefaults.appearance()
     val uiState by walletViewModel.stateFlow.collectAsState()
+    val colesPayConfig by configViewModel.colesPayWidgetConfig.collectAsState()
+
     ColesPayWidget(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        config = ColesPayWidgetConfig(BuildConfig.WALLET_ID_COLES_PAY),
+        config = colesPayConfig,
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {
                 Log.d("[ColesPayWidget Event]", "[type=${event.type}] $event")
@@ -53,7 +55,8 @@ fun ColesPayItem(
     ) { result ->
         result.onSuccess {
             Log.d("[ColesPayWidget]", "Success: $it")
-            Toast.makeText(context, "Coles Pay Result returned [$it]", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Coles Pay Result returned [$it]", Toast.LENGTH_SHORT)
+                .show()
         }.onFailure {
             val error = it.toError()
             Log.d("[ColesPayWidget]", "Failure: ${error.displayableMessage}")

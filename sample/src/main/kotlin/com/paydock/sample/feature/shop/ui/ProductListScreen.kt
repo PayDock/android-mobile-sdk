@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,10 +44,14 @@ fun ProductListScreen() {
         products = productService.getAllProducts()
     }
 
-    val filteredProducts = remember(products, selectedCategory) {
-        selectedCategory?.let { category ->
-            products.filter { it.category == category }
-        } ?: products
+    // Use derivedStateOf for filtered products - more efficient for derived state
+    // derivedStateOf automatically tracks changes to selectedCategory and products
+    val filteredProducts by remember(products, selectedCategory) {
+        derivedStateOf {
+            selectedCategory?.let { category ->
+                products.filter { it.category == category }
+            } ?: products
+        }
     }
 
     // Calculate a fixed card height that scales with font size

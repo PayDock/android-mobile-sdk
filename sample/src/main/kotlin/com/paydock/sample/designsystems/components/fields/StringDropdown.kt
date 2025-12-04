@@ -1,4 +1,4 @@
-package com.paydock.sample.feature.style.ui.components.core.dropdown
+package com.paydock.sample.designsystems.components.fields
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,10 +9,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.paydock.sample.designsystems.components.fields.DropdownListField
 
+/**
+ * Reusable string dropdown component with a label.
+ * Used in Style screens.
+ */
 @Composable
-fun DropdownSelector(
+fun StringDropdown(
     modifier: Modifier = Modifier,
     title: String? = null,
     options: List<String>,
@@ -47,3 +50,5 @@ fun DropdownSelector(
         )
     }
 }
+
+

@@ -15,8 +15,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
-import com.paydock.sample.feature.style.ui.components.core.counter.NumberCounter
-import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paydock.sample.designsystems.components.fields.NumberCounter
+import com.paydock.sample.designsystems.components.fields.StringDropdown
 
 enum class CornerUnit {
     DP,
@@ -143,7 +143,7 @@ fun ShapeDropdown(
         title = containerLabel,
         subTitle = stringResource(R.string.disclaimer_rounded_shape_defaults)
     ) {
-        DropdownSelector(
+        StringDropdown(
             options = configurableShapeTypeOptions.map { it.displayName },
             selectedOption = internalConfig.type.displayName,
             onOptionSelected = { selectedDisplayName ->
@@ -167,7 +167,7 @@ fun ShapeDropdown(
 
         if (internalConfig.type == ConfigurableShapeType.ROUNDED_RECTANGLE) {
             // Dropdown for CornerUnit (DP vs PERCENTAGE)
-            DropdownSelector(
+            StringDropdown(
                 title = stringResource(R.string.label_corner_unit),
                 options = cornerUnitOptions.map { it.name },
                 selectedOption = internalConfig.cornerUnit.name,

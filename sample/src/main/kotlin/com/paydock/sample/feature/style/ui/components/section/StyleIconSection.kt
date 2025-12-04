@@ -11,8 +11,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.paydock.designsystems.components.icon.IconAppearance
 import com.paydock.sample.R
+import com.paydock.sample.designsystems.components.fields.NumberCounter
 import com.paydock.sample.feature.style.ui.components.core.color.ColorPickerField
-import com.paydock.sample.feature.style.ui.components.core.counter.NumberCounter
 
 @Composable
 fun StyleIconSection(

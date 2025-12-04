@@ -13,11 +13,8 @@ import com.paydock.feature.threeDS.integrated.domain.model.integration.enums.Int
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.StandaloneEventType
 import com.paydock.sample.BuildConfig
-import com.paydock.sample.core.TOKENISE_CLICK_TO_PAY_ERROR
-import com.paydock.sample.core.WALLET_CHARGE_TRANSACTION_ERROR
 import com.paydock.sample.feature.account.data.UserProfileManager
 import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
-import com.paydock.sample.feature.card.domain.usecase.CaptureCardChargeTokenUseCase
 import com.paydock.sample.feature.card.domain.usecase.CreateCardSessionVaultTokenUseCase
 import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
 import com.paydock.sample.feature.checkout.domain.model.Address
@@ -35,7 +32,6 @@ import com.paydock.sample.feature.threeDS.domain.model.ThreeDSToken
 import com.paydock.sample.feature.threeDS.domain.usecase.CaptureThreeDSChargeTokenUseCase
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateIntegratedThreeDSTokenUseCase
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateStandaloneThreeDSTokenUseCase
-import com.paydock.sample.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.sample.feature.wallet.presentation.AddressData
 import com.paydock.sample.feature.wallet.presentation.CustomerData
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -57,7 +53,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
     private val createIntegratedThreeDSTokenUseCase: CreateIntegratedThreeDSTokenUseCase,
     private val createStandaloneThreeDSTokenUseCase: CreateStandaloneThreeDSTokenUseCase,
     private val captureThreeDSChargeTokenUseCase: CaptureThreeDSChargeTokenUseCase,
-    ) : ViewModel() {
+) : ViewModel() {
 
     private val profileManager = UserProfileManager.shared
 

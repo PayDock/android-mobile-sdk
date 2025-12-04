@@ -15,20 +15,32 @@ class WalletRepositoryImpl @Inject constructor(
 ) : WalletRepository {
 
     override suspend fun initiateWalletTransaction(
+        accessToken: String,
         manualCapture: Boolean,
         request: InitiateWalletRequest,
     ): WalletCharge =
         withContext(dispatcher) {
             if (manualCapture) {
-                walletApi.initiateWalletTransactionManualCapture(request = request).toDomain()
+                walletApi.initiateWalletTransactionManualCapture(
+                    accessToken = accessToken,
+                    request = request
+                ).toDomain()
             } else {
-                walletApi.initiateWalletTransaction(request = request).toDomain()
-
+                walletApi.initiateWalletTransaction(
+                    accessToken = accessToken,
+                    request = request
+                ).toDomain()
             }
         }
 
-    override suspend fun captureWalletCharge(chargeId: String): WalletCharge =
+    override suspend fun captureWalletCharge(
+        accessToken: String,
+        chargeId: String,
+    ): WalletCharge =
         withContext(dispatcher) {
-            walletApi.captureWalletCharge(id = chargeId).toDomain()
+            walletApi.captureWalletCharge(
+                accessToken = accessToken,
+                id = chargeId
+            ).toDomain()
         }
 }

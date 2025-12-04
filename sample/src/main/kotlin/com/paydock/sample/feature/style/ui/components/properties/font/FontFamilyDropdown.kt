@@ -9,7 +9,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.toFontFamily
 import com.paydock.sample.R
-import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paydock.sample.designsystems.components.fields.StringDropdown
 import com.paydock.sample.feature.style.utils.FontHelper
 
 @Composable
@@ -64,7 +64,7 @@ fun FontFamilyDropdown(
         }
     }
 
-    DropdownSelector(
+    StringDropdown(
         modifier = modifier,
         title = stringResource(R.string.label_font_family),
         options = dropdownOptions,
@@ -72,7 +72,7 @@ fun FontFamilyDropdown(
         selectedOption = currentDisplaySelectedName,
         onOptionSelected = { selectedDisplayName ->
             if (selectedDisplayName == loadingText || selectedDisplayName == noFontsAvailableText) {
-                return@DropdownSelector
+                return@StringDropdown
             }
 
             val newFontToSelect: FontFamily? =

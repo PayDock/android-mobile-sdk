@@ -20,9 +20,9 @@ import androidx.compose.ui.unit.sp
 import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
+import com.paydock.sample.designsystems.components.fields.BooleanField
+import com.paydock.sample.designsystems.components.fields.NumberCounter
 import com.paydock.sample.feature.style.ui.components.core.color.ColorPickerField
-import com.paydock.sample.feature.style.ui.components.core.counter.NumberCounter
-import com.paydock.sample.feature.style.ui.components.core.toggle.StyleableToggleRow
 import com.paydock.sample.feature.style.ui.components.properties.font.FontFamilyDropdown
 import com.paydock.sample.feature.style.ui.components.properties.shape.ShapeDropdown
 import com.paydock.sample.feature.style.utils.FontHelper
@@ -268,10 +268,10 @@ fun StyleTextFieldSection(
 
         HorizontalDivider()
 
-        StyleableToggleRow(
+        BooleanField(
             label = stringResource(R.string.label_single_line),
-            isChecked = currentSingleLine,
-            onCheckedChange = { newCheckedState ->
+            value = currentSingleLine,
+            onValueChange = { newCheckedState ->
                 onAppearanceChange(currentAppearance.copy(singleLine = newCheckedState))
             }
         )
