@@ -1,0 +1,13 @@
+{
+  "status": 500,
+  "error": {
+    "message": "Failed to create payment source token",
+    "code": "token_creation_failed"
+  },
+  "error_summary": {
+    "code": "token_creation_failed",
+    "message": "Failed to create payment source token"
+  }
+}
+
+

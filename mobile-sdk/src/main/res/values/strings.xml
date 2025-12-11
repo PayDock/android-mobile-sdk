@@ -47,5 +47,7 @@
     <string name="accessibility_webview_loading">Loading</string>
     <string name="accessibility_overlay_loading">Loading, please wait.</string>
     <string name="accessibility_overlay_still_loading">Still loading, this might take a few moments.</string>
+    <string name="content_desc_zip_button">Pay with Zip</string>
+    <string name="content_desc_zip_loading">Zip loading</string>
     <!-- endregion -->
 </resources>

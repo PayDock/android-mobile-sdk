@@ -1,0 +1,13 @@
+{
+  "status": 400,
+  "error": {
+    "message": "Invalid gateway configuration",
+    "code": "invalid_gateway"
+  },
+  "error_summary": {
+    "code": "invalid_gateway",
+    "message": "Invalid gateway configuration"
+  }
+}
+
+

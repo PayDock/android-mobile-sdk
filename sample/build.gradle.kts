@@ -122,7 +122,8 @@ enum class BuildVariable(private val baseEnvName: String) {
     SERVICE_ID_AFTERPAY("SERVICE_ID_AFTERPAY"),
     SERVICE_ID_CLICK_TO_PAY("SERVICE_ID_CLICK_TO_PAY"),
     SERVICE_ID_GOOGLE_PAY_MPGS("SERVICE_ID_GOOGLE_PAY_MPGS"),
-    SERVICE_ID_GPAYMENTS("SERVICE_ID_GPAYMENTS");
+    SERVICE_ID_GPAYMENTS("SERVICE_ID_GPAYMENTS"),
+    SERVICE_ID_ZIP("SERVICE_ID_ZIP");
 
     fun getEnvName(flavor: String): String {
         return when {

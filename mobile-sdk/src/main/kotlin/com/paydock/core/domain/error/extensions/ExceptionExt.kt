@@ -10,6 +10,7 @@ import com.paydock.core.domain.error.exceptions.GooglePayException
 import com.paydock.core.domain.error.exceptions.PayPalException
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.domain.error.exceptions.SdkException
+import com.paydock.core.domain.error.exceptions.ZipException
 import com.paydock.core.extensions.castAs
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.network.exceptions.ApiParseException
@@ -42,6 +43,7 @@ import kotlin.reflect.KClass
  * - **[GooglePayException]**: Delegates mapping to `mapGooglePayApiException`.
  * - **[PayPalException]**: Delegates mapping to `mapPayPalApiException`.
  * - **[PayPalVaultException]**: Delegates mapping to `mapPayPalVaultException`.
+ * - **[ZipException]**: Delegates mapping to `mapZipApiException`.
  * - **Fallback**: Maps to [GenericException.UnknownException] if no match is found.
  *
  * ### Example Usage:
@@ -81,6 +83,9 @@ internal fun Throwable.mapApiException(exceptionClass: KClass<out SdkException>)
 
         PayPalVaultException::class.java.isAssignableFrom(exceptionClass.java) ->
             this.mapPayPalVaultApiException(exceptionClass.castAs<KClass<PayPalVaultException>>())
+
+        ZipException::class.java.isAssignableFrom(exceptionClass.java) ->
+            this.mapZipApiException(exceptionClass.castAs<KClass<ZipException>>())
 
         else -> GenericException.UnknownException(
             "No suitable exception mapping of [${this::class.java.simpleName}] " +
@@ -472,6 +477,42 @@ internal fun Throwable.mapGiftCardDetailsApiException(
         is ApiParseException -> GiftCardException.ParseException(displayableMessage = this.errorMessage, errorBody = this.errorBody)
 
         else -> GiftCardException.UnknownException(
+            displayableMessage = this.message ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
+        )
+    }
+
+/**
+ * Maps a `Throwable` to a specific type of `ZipException` based on the provided exception type.
+ *
+ * This function is designed to handle exceptions that occur during API interactions with Zip,
+ * converting them into specific, developer-defined exceptions (`ZipException`) for better error handling.
+ *
+ * @param exceptionClass The expected type of the `ZipException` to map to.
+ * @receiver The original exception (`Throwable`) to be mapped.
+ * @return A `ZipException` that represents the mapped exception.
+ */
+internal fun Throwable.mapZipApiException(exceptionClass: KClass<out ZipException>): ZipException =
+    when (this) {
+        is ApiException -> {
+            when (exceptionClass) {
+                ZipException.FetchingCheckoutUrlException::class ->
+                    ZipException.FetchingCheckoutUrlException(error = this.error)
+
+                ZipException.CreatingPaymentSourceTokenException::class ->
+                    ZipException.CreatingPaymentSourceTokenException(error = this.error)
+
+                else -> ZipException.UnknownException(
+                    displayableMessage = this.message ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
+                )
+            }
+        }
+
+        is ApiParseException -> ZipException.ParseException(
+            displayableMessage = this.errorMessage,
+            errorBody = this.errorBody
+        )
+
+        else -> ZipException.UnknownException(
             displayableMessage = this.message ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
         )
     }

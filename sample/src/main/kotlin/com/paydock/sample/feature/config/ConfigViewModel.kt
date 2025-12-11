@@ -28,6 +28,7 @@ import com.paydock.feature.src.domain.model.integration.meta.enum.ClickToPayDPAS
 import com.paydock.feature.src.domain.model.integration.meta.enum.ClickToPayOrderType
 import com.paydock.feature.src.domain.model.integration.meta.enum.Services
 import com.paydock.feature.src.domain.model.integration.meta.enum.UnacceptedCardType
+import com.paydock.feature.zip.domain.model.integration.ZipWidgetConfig
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.AMOUNT
 import com.paydock.sample.core.AU_COUNTRY_CODE
@@ -145,6 +146,30 @@ class ConfigViewModel @Inject constructor(
         )
     }
 
+    private fun createDefaultZipConfig(): ZipWidgetConfig {
+        return ZipWidgetConfig(
+            accessToken = getAccessToken(),
+            gatewayId = BuildConfig.SERVICE_ID_ZIP,
+            amount = BigDecimal("50.00"),
+            currency = AU_CURRENCY_CODE,
+            shopper = ZipWidgetConfig.Shopper(
+                firstName = "John",
+                lastName = "Doe",
+                email = "john.doe@example.com",
+                phone = "+61412345678"
+            ),
+            billing = ZipWidgetConfig.Address(
+                firstName = "John",
+                lastName = "Doe",
+                line1 = "123 Main Street",
+                city = "Sydney",
+                state = "NSW",
+                postalCode = "2000",
+                countryCode = "AU"
+            )
+        )
+    }
+
     private fun createDefaultGooglePayConfig(): GooglePayWidgetConfig {
         return GooglePayWidgetConfig(
             isReadyToPayRequest = PaymentsUtil.createIsReadyToPayRequest(),
@@ -204,6 +229,11 @@ class ConfigViewModel @Inject constructor(
     private val _paypalVaultWidgetConfig = MutableStateFlow(createDefaultPayPalVaultConfig())
     val paypalVaultWidgetConfig: StateFlow<PayPalVaultConfig> =
         _paypalVaultWidgetConfig.asStateFlow()
+
+    // Zip Config - initialized with defaults
+    private val _zipWidgetConfig = MutableStateFlow(createDefaultZipConfig())
+    val zipWidgetConfig: StateFlow<ZipWidgetConfig> =
+        _zipWidgetConfig.asStateFlow()
 
     // Address Config - nullable as it's optional pre-fill
     private val _addressConfig = MutableStateFlow<BillingAddress?>(null)
@@ -280,6 +310,13 @@ class ConfigViewModel @Inject constructor(
                 current
             }
         }
+        _zipWidgetConfig.update { current ->
+            if (current.accessToken == BuildConfig.ACCESS_TOKEN_WIDGET) {
+                current.copy(accessToken = accessToken)
+            } else {
+                current
+            }
+        }
     }
 
     // --- Initialization methods (optional - can override defaults) ---
@@ -313,6 +350,10 @@ class ConfigViewModel @Inject constructor(
 
     fun updateInitialPayPalVaultConfig(config: PayPalVaultConfig) {
         _paypalVaultWidgetConfig.update { config }
+    }
+
+    fun updateInitialZipConfig(config: ZipWidgetConfig) {
+        _zipWidgetConfig.update { config }
     }
 
     fun updateInitialAddressConfig(address: BillingAddress?) {

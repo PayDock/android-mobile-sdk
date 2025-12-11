@@ -12,6 +12,7 @@ import com.paydock.core.domain.error.exceptions.PayPalDataCollectorException
 import com.paydock.core.domain.error.exceptions.PayPalException
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.domain.error.exceptions.Standalone3DSException
+import com.paydock.core.domain.error.exceptions.ZipException
 
 /**
  * Represents various types of errors that can occur within the application.
@@ -123,6 +124,13 @@ sealed interface ErrorModel {
      * @property exception The [CardDetailsException] specific to Card details.
      */
     data class CardDetailsError(val exception: CardDetailsException) : ErrorModel
+
+    /**
+     * Zip Error: Represents errors specific to Zip payment functionality.
+     *
+     * @property exception The [ZipException] specific to Zip payments.
+     */
+    data class ZipError(val exception: ZipException) : ErrorModel
 }
 
 /**
@@ -144,6 +152,7 @@ fun Throwable.toError(): ErrorModel {
         is ClickToPayException -> ErrorModel.ClickToPayError(this)
         is GooglePayException -> ErrorModel.GooglePayError(this)
         is AfterpayException -> ErrorModel.AfterpayError(this)
+        is ZipException -> ErrorModel.ZipError(this)
         // Generic
         is GenericException.TimeoutException -> ErrorModel.ConnectionError.Timeout
         is GenericException.ConnectionException -> ErrorModel.ConnectionError.UnknownHost

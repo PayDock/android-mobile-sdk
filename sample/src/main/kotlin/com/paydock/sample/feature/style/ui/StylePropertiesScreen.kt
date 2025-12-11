@@ -571,5 +571,17 @@ fun getAppearanceForWidgetComponent(
                 }
             }
         }
+
+        WidgetType.ZIP -> {
+            val zipAppearance by stylingViewModel.zipWidgetAppearance.collectAsState()
+            remember(zipAppearance, styleItemName) {
+                derivedStateOf {
+                    when (styleItemName) {
+                        StyleAppearanceComponent.LOADER -> zipAppearance?.loader
+                        else -> null
+                    }
+                }
+            }
+        }
     }
 }

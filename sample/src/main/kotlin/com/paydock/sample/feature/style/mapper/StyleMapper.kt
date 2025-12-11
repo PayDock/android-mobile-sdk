@@ -64,6 +64,8 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
         WidgetType.STANDALONE_3DS -> listOf(
             StyleAppearanceComponent.LOADER
         )
+
+        WidgetType.ZIP -> listOf()
     }
 }
 

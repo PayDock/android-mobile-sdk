@@ -20,6 +20,7 @@ import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 import com.paydock.feature.paypal.vault.presentation.PayPalPaymentSourceWidgetAppearance
 import com.paydock.feature.src.presentation.ClickToPayWidgetAppearance
 import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSWidgetAppearance
+import com.paydock.feature.zip.presentation.ZipWidgetAppearance
 import com.paydock.sample.feature.style.models.StyleAppearanceComponent
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -81,6 +82,10 @@ class StylingViewModel @Inject constructor() : ViewModel() {
     private val _standalone3DSWidgetAppearance = MutableStateFlow<ThreeDSWidgetAppearance?>(null)
     val standalone3DSWidgetAppearance: StateFlow<ThreeDSWidgetAppearance?> =
         _standalone3DSWidgetAppearance.asStateFlow()
+
+    private val _zipWidgetAppearance = MutableStateFlow<ZipWidgetAppearance?>(null)
+    val zipWidgetAppearance: StateFlow<ZipWidgetAppearance?> =
+        _zipWidgetAppearance.asStateFlow()
 
     // --- Initialization ---
     fun updateInitialAddressDefaults(
@@ -187,6 +192,10 @@ class StylingViewModel @Inject constructor() : ViewModel() {
 
     fun updateInitialStandalone3DSDefaults(updatedDefaults: ThreeDSWidgetAppearance) {
         _standalone3DSWidgetAppearance.update { updatedDefaults }
+    }
+
+    fun updateInitialZipDefaults(updatedDefaults: ZipWidgetAppearance) {
+        _zipWidgetAppearance.update { updatedDefaults }
     }
 
     // --- Update methods for specific appearances ---
@@ -592,6 +601,16 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                         else -> current
                     }
                     _standalone3DSWidgetAppearance.value = updatedAppearance
+                }
+            }
+
+            WidgetType.ZIP -> {
+                _zipWidgetAppearance.value?.let { current ->
+                    val updatedAppearance = when (component) {
+                        StyleAppearanceComponent.LOADER -> current.copy(loader = newComponentAppearance as LoaderAppearance)
+                        else -> current
+                    }
+                    _zipWidgetAppearance.value = updatedAppearance
                 }
             }
         }

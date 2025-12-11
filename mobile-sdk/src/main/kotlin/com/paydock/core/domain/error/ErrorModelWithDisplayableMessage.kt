@@ -59,6 +59,10 @@ val ErrorModel?.displayableMessage: String
                 exception.message
                     ?: MobileSDKConstants.AfterpayConfig.Errors.AFTER_PAY_ERROR
 
+            is ErrorModel.ZipError ->
+                exception.message
+                    ?: MobileSDKConstants.ZipConfig.Errors.ZIP_ERROR
+
             is ErrorModel.UnknownError ->
                 throwable.message
                     ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR
