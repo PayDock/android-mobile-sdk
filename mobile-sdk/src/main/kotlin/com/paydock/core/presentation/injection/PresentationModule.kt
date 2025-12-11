@@ -11,6 +11,7 @@ import com.paydock.feature.paypal.core.injection.payPalModule
 import com.paydock.feature.src.injection.clickToPayModule
 import com.paydock.feature.threeDS.integrated.injection.integrated3DSModule
 import com.paydock.feature.threeDS.standalone.injection.standalone3DSModule
+import com.paydock.feature.zip.injection.zipModule
 import org.koin.android.ext.koin.androidApplication
 import org.koin.dsl.module
 
@@ -34,6 +35,7 @@ internal val presentationModule = module {
         googlePayModule,
         payPalModule,
         colesPayModule,
-        afterPayModule
+        afterPayModule,
+        zipModule
     )
 }

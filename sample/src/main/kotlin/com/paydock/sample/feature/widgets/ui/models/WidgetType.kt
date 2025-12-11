@@ -8,7 +8,7 @@ import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.list.DisplayableListItem
 
 enum class WidgetType : DisplayableListItem {
-    ADDRESS_DETAILS, AFTER_PAY, CARD_DETAILS, COLES_PAY, GOOGLE_PAY, GIFT_CARD, INTEGRATED_3DS, CLICK_TO_PAY, PAY_PAL, PAY_PAL_VAULT, STANDALONE_3DS;
+    ADDRESS_DETAILS, AFTER_PAY, CARD_DETAILS, COLES_PAY, GOOGLE_PAY, GIFT_CARD, INTEGRATED_3DS, CLICK_TO_PAY, PAY_PAL, PAY_PAL_VAULT, STANDALONE_3DS, ZIP;
 
     override fun displayIcon(): Int? = when (this) {
         ADDRESS_DETAILS -> R.drawable.ic_address_widget
@@ -22,6 +22,7 @@ enum class WidgetType : DisplayableListItem {
         PAY_PAL -> R.drawable.ic_paypal_widget
         PAY_PAL_VAULT -> R.drawable.ic_paypal_widget
         STANDALONE_3DS -> R.drawable.ic_standalone_3ds_widget
+        ZIP -> R.drawable.ic_zip_widget
     }
 
     override fun displayName(): String = when (this) {
@@ -36,6 +37,7 @@ enum class WidgetType : DisplayableListItem {
         PAY_PAL -> "PayPal"
         PAY_PAL_VAULT -> "PayPal Vault"
         STANDALONE_3DS -> "Standalone 3DS"
+        ZIP -> "Zip"
     }
 
     override fun displayDescription(): String = when (this) {
@@ -50,6 +52,7 @@ enum class WidgetType : DisplayableListItem {
         PAY_PAL -> "Standalone PayPal button"
         PAY_PAL_VAULT -> "Link your Paypal account for faster checkout"
         STANDALONE_3DS -> "Standalone 3DS flow"
+        ZIP -> "Standalone Zip button"
     }
 }
 

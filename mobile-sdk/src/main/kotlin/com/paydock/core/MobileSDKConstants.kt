@@ -297,4 +297,24 @@ internal object MobileSDKConstants {
                 "An unexpected error occurred while processing ClickToPay. Please try again later or contact support for assistance."
         }
     }
+
+    /**
+     * Constants related to Zip configuration.
+     */
+    object ZipConfig {
+        /**
+         * Redirect URL used for Zip callbacks.
+         * This URL is used to capture the result of the Zip checkout flow.
+         */
+        internal const val ZIP_REDIRECT_URL = "https://paydock.com/zip/response"
+
+        object Errors {
+            const val ZIP_ERROR =
+                "An unexpected error occurred while processing Zip"
+            const val CANCELLATION_ERROR = "Zip tokenisation was cancelled"
+            const val DECLINED_ERROR = "Zip transaction was declined"
+            const val REFERRED_ERROR = "Zip transaction requires review"
+            const val UNKNOWN_ERROR = "An unknown error occurred. Please try again."
+        }
+    }
 }

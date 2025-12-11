@@ -1,0 +1,87 @@
+package com.paydock.sample.feature.widgets.ui.components
+
+import android.content.Context
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.paydock.core.domain.error.displayableMessage
+import com.paydock.core.domain.error.exceptions.CardDetailsException
+import com.paydock.core.domain.error.exceptions.GenericException
+import com.paydock.core.domain.error.exceptions.ZipException
+import com.paydock.core.domain.error.toError
+import com.paydock.core.domain.model.Event
+import com.paydock.core.network.dto.error.displayableMessage
+import com.paydock.core.presentation.util.WidgetEventDelegate
+import com.paydock.feature.zip.presentation.ZipWidget
+import com.paydock.feature.zip.presentation.ZipWidgetAppearanceDefaults
+import com.paydock.sample.feature.config.ConfigViewModel
+import com.paydock.sample.feature.style.StylingViewModel
+
+@Composable
+fun ZipItem(
+    context: Context,
+    stylingViewModel: StylingViewModel,
+    configViewModel: ConfigViewModel
+) {
+    val zipAppearance by stylingViewModel.zipWidgetAppearance.collectAsState()
+    val currentOrDefaultAppearance =
+        zipAppearance ?: ZipWidgetAppearanceDefaults.appearance()
+    val zipConfig by configViewModel.zipWidgetConfig.collectAsState()
+
+    ZipWidget(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(80.0.dp)
+            .padding(16.dp),
+        config = zipConfig,
+        eventDelegate = object : WidgetEventDelegate {
+            override fun widgetEvent(event: Event) {
+                Log.d("[ZipWidget Event]", "[type=${event.type}] $event")
+            }
+        },
+        appearance = currentOrDefaultAppearance
+    ) { result ->
+        result.onSuccess {
+            Log.d("[ZipWidget]", "Success: $it")
+            Toast.makeText(context, "Zip Result returned [Token: ${it.token}]", Toast.LENGTH_SHORT)
+                .show()
+        }.onFailure { exception: Throwable ->
+            if (exception is GenericException) {
+                val error = exception.toError().displayableMessage
+                Log.d("[ZipWidget]", "Failure: $error")
+                Toast.makeText(
+                    context,
+                    "Zip tokenisation failed! [${error}]",
+                    Toast.LENGTH_SHORT
+                )
+                    .show()
+            } else if (exception is ZipException) {
+                val error = when (exception) {
+                    is ZipException.CancellationException -> exception.toError().displayableMessage
+                    is ZipException.CreatingPaymentSourceTokenException -> exception.toError().displayableMessage
+                    is ZipException.DeclinedException -> exception.toError().displayableMessage
+                    is ZipException.FetchingCheckoutUrlException -> exception.toError().displayableMessage
+                    is ZipException.ParseException -> exception.toError().displayableMessage
+                    is ZipException.ReferredException -> exception.toError().displayableMessage
+                    is ZipException.UnexpectedStatusException -> exception.toError().displayableMessage
+                    is ZipException.WebViewException -> exception.toError().displayableMessage
+                    is ZipException.UnknownException -> exception.toError().displayableMessage
+                }
+                Log.d("[ZipWidget]", "Failure: $error")
+                Toast.makeText(
+                    context,
+                    "Zip tokenisation failed! [${error}]",
+                    Toast.LENGTH_SHORT
+                )
+                    .show()
+            }
+        }
+    }
+}

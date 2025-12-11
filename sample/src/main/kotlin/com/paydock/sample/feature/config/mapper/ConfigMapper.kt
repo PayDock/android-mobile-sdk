@@ -53,6 +53,8 @@ fun WidgetType.mapWidgetTypeToConfigComponents(): List<ConfigComponent> {
             // Google Pay uses JSONObject config, not editable via simple fields
         )
 
+        WidgetType.ZIP -> listOf()
+
         WidgetType.INTEGRATED_3DS,
         WidgetType.STANDALONE_3DS -> emptyList()
     }.sortedBy { it.displayName() }

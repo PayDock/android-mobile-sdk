@@ -19,6 +19,7 @@ import com.paydock.sample.feature.widgets.ui.components.Integrated3DSItem
 import com.paydock.sample.feature.widgets.ui.components.PayPalItem
 import com.paydock.sample.feature.widgets.ui.components.PayPalVaultItem
 import com.paydock.sample.feature.widgets.ui.components.StandaloneThreeDSItem
+import com.paydock.sample.feature.widgets.ui.components.ZipItem
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
 
 @Composable
@@ -111,6 +112,14 @@ fun WidgetInfoScreen(
 
             WidgetType.STANDALONE_3DS -> {
                 StandaloneThreeDSItem(context = context, stylingViewModel = stylingViewModel)
+            }
+
+            WidgetType.ZIP -> {
+                ZipItem(
+                    context = context,
+                    stylingViewModel = stylingViewModel,
+                    configViewModel = configViewModel
+                )
             }
         }
     }
