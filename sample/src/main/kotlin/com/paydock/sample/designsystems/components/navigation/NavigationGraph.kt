@@ -19,11 +19,15 @@ import com.paydock.sample.feature.checkout.ui.OrderConfirmationScreen
 import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.config.mapper.mapWidgetTypeToConfigComponents
 import com.paydock.sample.feature.config.models.ConfigComponent
+import com.paydock.sample.feature.config.ui.CartConfigScreen
+import com.paydock.sample.feature.config.ui.CheckoutConfigScreen
 import com.paydock.sample.feature.config.ui.ConfigComponentListScreen
 import com.paydock.sample.feature.config.ui.ConfigPropertiesScreen
+import com.paydock.sample.feature.config.ui.ConfigScreen
 import com.paydock.sample.feature.config.ui.ConfigSubComponentListScreen
 import com.paydock.sample.feature.config.ui.ConfigWidgetListScreen
 import com.paydock.sample.feature.config.ui.GlobalConfigScreen
+import com.paydock.sample.feature.config.ui.PaymentProcessorConfigScreen
 import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.shop.ui.CartScreen
 import com.paydock.sample.feature.shop.ui.ProductListScreen
@@ -137,6 +141,35 @@ fun NavigationGraph(
             }
         }
         composable(BottomNavItem.Config.route) {
+            ConfigScreen(
+                onGlobalConfigSelected = {
+                    navController.navigate("global_config")
+                },
+                onCheckoutConfigSelected = {
+                    navController.navigate("config_checkout")
+                },
+                onWidgetsConfigSelected = {
+                    navController.navigate("config_widgets_list")
+                }
+            )
+        }
+        composable("global_config") {
+            GlobalConfigScreen(configViewModel = configViewModel)
+        }
+        composable("config_checkout") {
+            CheckoutConfigScreen(
+                onPaymentProcessorSelected = {
+                    navController.navigate("config_payment_processor")
+                }
+            )
+        }
+        composable("config_payment_processor") {
+            PaymentProcessorConfigScreen(viewModel = configViewModel)
+        }
+        composable("config_cart") {
+            CartConfigScreen(configViewModel = configViewModel)
+        }
+        composable("config_widgets_list") {
             ConfigWidgetListScreen(
                 onWidgetSelected = { widgetType ->
                     navController.currentBackStackEntry?.arguments?.putString(
@@ -145,13 +178,10 @@ fun NavigationGraph(
                     )
                     navController.navigate("config_components/${widgetType.name}")
                 },
-                onGlobalConfigSelected = {
-                    navController.navigate("global_config")
+                onCartSelected = {
+                    navController.navigate("config_cart")
                 }
             )
-        }
-        composable("global_config") {
-            GlobalConfigScreen(configViewModel = configViewModel)
         }
         composable(
             "widget_info/{widgetType}",

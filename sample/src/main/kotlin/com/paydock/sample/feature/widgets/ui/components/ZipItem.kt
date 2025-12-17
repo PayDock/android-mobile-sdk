@@ -12,12 +12,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.paydock.core.domain.error.displayableMessage
-import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.domain.error.exceptions.GenericException
 import com.paydock.core.domain.error.exceptions.ZipException
 import com.paydock.core.domain.error.toError
 import com.paydock.core.domain.model.Event
-import com.paydock.core.network.dto.error.displayableMessage
 import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.feature.zip.presentation.ZipWidget
 import com.paydock.feature.zip.presentation.ZipWidgetAppearanceDefaults

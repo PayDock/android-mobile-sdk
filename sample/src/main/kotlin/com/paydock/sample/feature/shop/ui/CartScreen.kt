@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,10 +39,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.paydock.sample.core.utils.CurrencyFormatter
 import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.components.button.AppButtonShape
 import com.paydock.sample.designsystems.components.button.AppTextButton
 import com.paydock.sample.designsystems.theme.SampleTheme
+import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.shop.domain.model.CartItem
 
@@ -49,8 +53,11 @@ import com.paydock.sample.feature.shop.domain.model.CartItem
 @Composable
 fun CartScreen(
     onCheckout: () -> Unit = {},
-    onContinueShopping: () -> Unit = {}
+    onContinueShopping: () -> Unit = {},
+    configViewModel: ConfigViewModel = hiltViewModel()
 ) {
+    val globalConfig by configViewModel.globalConfig.collectAsState()
+    val currencyCode = globalConfig.currencyCode
     val cartManager = remember { CartManager.shared }
     val cartItems by cartManager.cartItems.collectAsState()
 
@@ -60,6 +67,7 @@ fun CartScreen(
         CartContentView(
             cartManager = cartManager,
             cartItems = cartItems,
+            currencyCode = currencyCode,
             onCheckout = onCheckout
         )
     }
@@ -113,6 +121,7 @@ private fun EmptyCartView(
 private fun CartContentView(
     cartManager: CartManager,
     cartItems: List<CartItem>,
+    currencyCode: String,
     onCheckout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -122,7 +131,7 @@ private fun CartContentView(
         // Use LazyColumn for better performance with many items
         LazyColumn(
             modifier = Modifier.weight(1f),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+            contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Cart Items Section Header
@@ -137,6 +146,7 @@ private fun CartContentView(
             ) { cartItem ->
                 CartItemRowView(
                     cartItem = cartItem,
+                    currencyCode = currencyCode,
                     onQuantityChange = { updatedItem, newQuantity ->
                         cartManager.updateQuantity(updatedItem, newQuantity)
                     },
@@ -148,7 +158,12 @@ private fun CartContentView(
         }
 
         // Checkout Button fixed at bottom with safe padding and cost summary
-        CheckoutButton(cartItems = cartItems, cartManager = cartManager, onCheckout = onCheckout)
+        CheckoutButton(
+            cartItems = cartItems,
+            cartManager = cartManager,
+            currencyCode = currencyCode,
+            onCheckout = onCheckout
+        )
     }
 }
 
@@ -167,6 +182,7 @@ private fun CartItemsSectionHeader(
 @Composable
 private fun CartItemRowView(
     cartItem: CartItem,
+    currencyCode: String,
     onQuantityChange: (CartItem, Int) -> Unit,
     onRemove: (CartItem) -> Unit
 ) {
@@ -214,7 +230,7 @@ private fun CartItemRowView(
                 )
 
                 Text(
-                    text = cartItem.product.formattedPrice,
+                    text = CurrencyFormatter.format(cartItem.product.price, currencyCode),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -280,11 +296,12 @@ private fun CartItemRowView(
 private fun CheckoutButton(
     cartItems: List<CartItem>,
     cartManager: CartManager,
+    currencyCode: String,
     onCheckout: () -> Unit
 ) {
     // Calculate subtotal based on the current cart items - use remember to cache
-    val formattedSubtotal = remember(cartItems) {
-        cartManager.formattedSubtotal
+    val formattedSubtotal = remember(cartItems, currencyCode) {
+        CurrencyFormatter.format(cartManager.subtotal, currencyCode)
     }
 
     Column {

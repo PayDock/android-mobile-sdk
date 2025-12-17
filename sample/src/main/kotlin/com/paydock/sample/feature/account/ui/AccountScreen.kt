@@ -76,6 +76,7 @@ import com.paydock.sample.feature.account.AccountViewModel
 import com.paydock.sample.feature.account.data.UserProfileManager
 import com.paydock.sample.feature.account.domain.model.Customer
 import com.paydock.sample.feature.account.domain.model.SavedAddress
+import com.paydock.sample.feature.config.ConfigViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -303,6 +304,8 @@ private fun SavedPaymentMethodsSection(
     viewModel: AccountViewModel,
     customer: Customer?,
 ) {
+    val configViewModel: ConfigViewModel = hiltViewModel()
+    val globalConfig by configViewModel.globalConfig.collectAsState()
     var isLoading by remember { mutableStateOf(false) }
     SectionCard(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -350,7 +353,7 @@ private fun SavedPaymentMethodsSection(
                         PayPalSavePaymentSourceWidget(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             config = PayPalVaultConfig(
-                                accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
+                                accessToken = globalConfig.apiAccessToken,
                                 gatewayId = BuildConfig.SERVICE_ID_PAYPAL
                             ),
                             appearance = PayPalPaymentSourceAppearanceDefaults.appearance().copy(

@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.paydock.sample.core.utils.CurrencyFormatter
 import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.theme.SampleTheme
 import com.paydock.sample.feature.shop.data.CartManager
@@ -43,6 +44,7 @@ import com.paydock.sample.feature.shop.domain.model.ProductImage
 fun ProductCardView(
     product: Product,
     onAddToCart: () -> Unit,
+    currencyCode: String = "USD",
     modifier: Modifier = Modifier
 ) {
     val cartManager = remember { CartManager.shared }
@@ -120,7 +122,7 @@ fun ProductCardView(
 
             // Price - Flexible height, respects font scaling
             Text(
-                text = product.formattedPrice,
+                text = CurrencyFormatter.format(product.price, currencyCode),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,

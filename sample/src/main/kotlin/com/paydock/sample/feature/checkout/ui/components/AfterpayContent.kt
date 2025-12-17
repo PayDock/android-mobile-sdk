@@ -2,7 +2,11 @@ package com.paydock.sample.feature.checkout.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
@@ -12,7 +16,8 @@ import com.paydock.feature.afterpay.presentation.AfterpayWidget
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.sample.core.AU_COUNTRY_CODE
-import com.paydock.sample.core.AU_CURRENCY_CODE
+import com.paydock.sample.feature.config.ConfigViewModel
+import com.paydock.sample.feature.shop.data.CartManager
 import java.util.Currency
 
 @Composable
@@ -22,11 +27,16 @@ fun AfterpayContent(
     tokenHandler: (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
     resultHandler: (Result<ChargeResponse>) -> Unit,
+    configViewModel: ConfigViewModel = hiltViewModel(),
 ) {
+    val globalConfig by configViewModel.globalConfig.collectAsState()
+    val cartManager = remember { CartManager.shared }
+    val cartTotal = cartManager.totalPrice
+
     val configuration = AfterpaySDKConfig(
         config = AfterpaySDKConfig.AfterpayConfiguration(
-            maximumAmount = "0.50",
-            currency = AU_CURRENCY_CODE,
+            maximumAmount = cartTotal.toString(),
+            currency = globalConfig.currencyCode,
             language = "en",
             country = AU_COUNTRY_CODE
         ),

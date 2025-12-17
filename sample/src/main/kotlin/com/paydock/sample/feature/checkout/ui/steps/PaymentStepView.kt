@@ -63,8 +63,8 @@ import com.paydock.feature.card.presentation.GiftCardAppearanceDefaults
 import com.paydock.feature.card.presentation.GiftCardWidget
 import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 import com.paydock.feature.wallet.domain.model.integration.WalletType
-import com.paydock.sample.BuildConfig
 import com.paydock.sample.R
+import com.paydock.sample.core.utils.CurrencyFormatter
 import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.components.button.AppTextButton
 import com.paydock.sample.designsystems.components.sheets.AppBottomSheet
@@ -77,6 +77,7 @@ import com.paydock.sample.feature.checkout.ui.components.ClickToPayComponent
 import com.paydock.sample.feature.checkout.ui.components.ColesPayContent
 import com.paydock.sample.feature.checkout.ui.components.GooglePayContent
 import com.paydock.sample.feature.checkout.ui.components.PayPalContent
+import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.shop.domain.model.AppliedGiftCard
 import com.paydock.sample.feature.shop.domain.model.GiftCard
@@ -86,10 +87,13 @@ import com.paydock.sample.feature.wallet.presentation.WalletViewModel
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PaymentStepView(
-    viewModel: EnhancedCheckoutViewModel
+    viewModel: EnhancedCheckoutViewModel,
+    configViewModel: ConfigViewModel = hiltViewModel()
 ) {
     // Shared cart manager for shipping/gift card sections
     val cartManager = remember { CartManager.shared }
+    val globalConfig by configViewModel.globalConfig.collectAsState()
+    val currencyCode = globalConfig.currencyCode
 
     var expanded by remember { mutableStateOf(false) }
     var showGiftCardEntry by remember { mutableStateOf(false) }
@@ -194,6 +198,7 @@ fun PaymentStepView(
             GiftCardSection(
                 appliedGiftCards = cartManager.appliedGiftCards.collectAsState().value,
                 cartManager = cartManager,
+                currencyCode = currencyCode,
                 onShowGiftCardEntry = {
                     giftCardSheetKey++
                     showGiftCardEntry = true
@@ -207,7 +212,8 @@ fun PaymentStepView(
         item {
             ShippingSection(
                 selectedShipping = cartManager.selectedShipping.collectAsState().value,
-                cartManager = cartManager
+                cartManager = cartManager,
+                currencyCode = currencyCode
             )
         }
 
@@ -216,7 +222,7 @@ fun PaymentStepView(
         }
 
         item {
-            ReviewSummary()
+            ReviewSummary(currencyCode = currencyCode)
         }
     }
 
@@ -231,7 +237,7 @@ fun PaymentStepView(
 }
 
 @Composable
-private fun ReviewSummary() {
+private fun ReviewSummary(currencyCode: String) {
     val cartManager = CartManager.shared
     val appliedGiftCards = cartManager.appliedGiftCards.collectAsState().value
     // Collect to trigger recomposition when these change
@@ -251,7 +257,10 @@ private fun ReviewSummary() {
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyMedium
             )
-            Text(text = cartManager.formattedSubtotal, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = CurrencyFormatter.format(cartManager.subtotal, currencyCode),
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -260,7 +269,10 @@ private fun ReviewSummary() {
                 style = MaterialTheme.typography.bodyMedium
             )
             Text(
-                text = cartManager.formattedShippingCost,
+                text = if (cartManager.shippingCost == 0.0) "Free" else CurrencyFormatter.format(
+                    cartManager.shippingCost,
+                    currencyCode
+                ),
                 style = MaterialTheme.typography.bodyMedium
             )
         }
@@ -274,7 +286,12 @@ private fun ReviewSummary() {
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = cartManager.formattedTotalGiftCardAmount,
+                    text = "-${
+                        CurrencyFormatter.format(
+                            cartManager.totalGiftCardAmount,
+                            currencyCode
+                        )
+                    }",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -289,7 +306,7 @@ private fun ReviewSummary() {
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = cartManager.formattedTotal,
+                text = CurrencyFormatter.format(cartManager.totalPrice, currencyCode),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -302,6 +319,7 @@ private fun ReviewSummary() {
 private fun GiftCardSection(
     appliedGiftCards: List<AppliedGiftCard>,
     cartManager: CartManager,
+    currencyCode: String,
     onShowGiftCardEntry: () -> Unit
 ) {
     Card(
@@ -349,7 +367,12 @@ private fun GiftCardSection(
                                     fontWeight = FontWeight.Medium
                                 )
                                 Text(
-                                    text = "Applied: ${appliedGiftCard.formattedAppliedAmount}",
+                                    text = "Applied: ${
+                                        CurrencyFormatter.format(
+                                            appliedGiftCard.appliedAmount,
+                                            currencyCode
+                                        )
+                                    }",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -369,6 +392,8 @@ private fun GiftCardSection(
 private fun GiftCardEntryView(
     cartManager: CartManager, onDismiss: () -> Unit
 ) {
+    val configViewModel: ConfigViewModel = hiltViewModel()
+    val globalConfig by configViewModel.globalConfig.collectAsState()
     var showAlert by remember { mutableStateOf(false) }
     var alertMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -419,7 +444,7 @@ private fun GiftCardEntryView(
                     )
                     GiftCardWidget(
                         config = GiftCardWidgetConfig(
-                            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET, storePin = false
+                            accessToken = globalConfig.apiAccessToken, storePin = false
                         ),
                         appearance = GiftCardAppearanceDefaults.appearance().copy(
                             actionButton = ButtonAppearanceDefaults.outlineButtonAppearance().copy(
@@ -487,7 +512,9 @@ private fun GiftCardEntryView(
 
 @Composable
 private fun ShippingSection(
-    selectedShipping: ShippingOption, cartManager: CartManager
+    selectedShipping: ShippingOption,
+    cartManager: CartManager,
+    currencyCode: String
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
@@ -528,7 +555,10 @@ private fun ShippingSection(
                         )
                     }
                     Text(
-                        text = option.formattedPrice,
+                        text = if (option.price == 0.0) "Free" else CurrencyFormatter.format(
+                            option.price,
+                            currencyCode
+                        ),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold
                     )

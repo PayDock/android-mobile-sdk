@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,7 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.sample.designsystems.theme.SampleTheme
+import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.shop.data.ProductService
 import com.paydock.sample.feature.shop.domain.model.Product
@@ -31,7 +34,11 @@ import com.paydock.sample.feature.shop.ui.components.ProductCardView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductListScreen() {
+fun ProductListScreen(
+    configViewModel: ConfigViewModel = hiltViewModel()
+) {
+    val globalConfig by configViewModel.globalConfig.collectAsState()
+    val currencyCode = globalConfig.currencyCode
     val cartManager = remember { CartManager.shared }
     val productService = remember { ProductService.shared }
     val configuration = LocalConfiguration.current
@@ -95,6 +102,7 @@ fun ProductListScreen() {
                 onAddToCart = {
                     cartManager.addToCart(product)
                 },
+                currencyCode = currencyCode,
                 modifier = Modifier.height(cardHeight)
             )
         }

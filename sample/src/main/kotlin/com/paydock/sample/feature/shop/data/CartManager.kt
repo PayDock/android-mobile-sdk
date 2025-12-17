@@ -8,8 +8,6 @@ import com.paydock.sample.feature.shop.domain.model.ShippingOption
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.text.NumberFormat
-import java.util.Locale
 import kotlin.math.min
 
 class CartManager private constructor() {
@@ -31,33 +29,17 @@ class CartManager private constructor() {
     val subtotal: Double
         get() = _cartItems.value.sumOf { it.totalPrice }
 
-    val formattedSubtotal: String
-        get() = NumberFormat.getCurrencyInstance(Locale.US).format(subtotal)
-
     val hasGiftCards: Boolean
         get() = _appliedGiftCards.value.isNotEmpty()
 
     val totalGiftCardAmount: Double
         get() = _appliedGiftCards.value.sumOf { it.appliedAmount }
 
-    val formattedTotalGiftCardAmount: String
-        get() = "-${NumberFormat.getCurrencyInstance(Locale.US).format(totalGiftCardAmount)}"
-
     val shippingCost: Double
         get() = _selectedShipping.value.price
 
-    val formattedShippingCost: String
-        get() = if (shippingCost == 0.0) "Free" else NumberFormat.getCurrencyInstance(Locale.US)
-            .format(shippingCost)
-
     val totalPrice: Double
         get() = (subtotal + shippingCost - totalGiftCardAmount).coerceAtLeast(0.0)
-
-    val formattedTotalPrice: String
-        get() = NumberFormat.getCurrencyInstance(Locale.US).format(totalPrice)
-
-    val formattedTotal: String
-        get() = formattedTotalPrice
 
     fun addToCart(product: Product, quantity: Int = 1) {
         val currentItems = _cartItems.value.toMutableList()

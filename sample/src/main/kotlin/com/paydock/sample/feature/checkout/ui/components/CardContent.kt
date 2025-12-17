@@ -3,8 +3,11 @@ package com.paydock.sample.feature.checkout.ui.components
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
@@ -13,8 +16,8 @@ import com.paydock.feature.card.domain.model.integration.SaveCardConfig
 import com.paydock.feature.card.presentation.CardDetailsAppearanceDefaults
 import com.paydock.feature.card.presentation.CardDetailsWidget
 import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
-import com.paydock.sample.BuildConfig
 import com.paydock.sample.R
+import com.paydock.sample.feature.config.ConfigViewModel
 
 @Composable
 fun CardContent(
@@ -23,6 +26,9 @@ fun CardContent(
     loadingDelegate: WidgetLoadingDelegate?,
     resultHandler: (Result<CardResult>) -> Unit
 ) {
+    val configViewModel: ConfigViewModel = hiltViewModel()
+    val globalConfig by configViewModel.globalConfig.collectAsState()
+
     CardDetailsWidget(
         modifier = modifier,
         enabled = enabled,
@@ -33,7 +39,7 @@ fun CardContent(
             )
         ),
         config = CardDetailsWidgetConfig(
-            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
+            accessToken = globalConfig.apiAccessToken,
             collectCardholderName = false,
             allowSaveCard = SaveCardConfig(
                 consentText = "Save payment details",

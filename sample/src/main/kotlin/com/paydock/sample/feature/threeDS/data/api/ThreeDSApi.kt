@@ -1,6 +1,5 @@
 package com.paydock.sample.feature.threeDS.data.api
 
-import com.paydock.sample.BuildConfig
 import com.paydock.sample.feature.checkout.data.api.dto.CaptureChargeResponse
 import com.paydock.sample.feature.threeDS.data.api.dto.Capture3DSChargeRequest
 import com.paydock.sample.feature.threeDS.data.api.dto.CreateIntegratedThreeDSTokenRequest
@@ -14,19 +13,19 @@ interface ThreeDSApi {
 
     @POST("/v1/charges/3ds")
     suspend fun createIntegrated3dsToken(
-        @Header("X-Access-Token") accessToken: String = BuildConfig.ACCESS_TOKEN_API,
+        @Header("X-Access-Token") accessToken: String,
         @Body request: CreateIntegratedThreeDSTokenRequest,
     ): ThreeDSTokenResponse
 
     @POST("/v1/charges/standalone-3ds")
     suspend fun createStandalone3dsToken(
-        @Header("X-Access-Token") accessToken: String = BuildConfig.ACCESS_TOKEN_API,
+        @Header("X-Access-Token") accessToken: String,
         @Body request: CreateStandaloneThreeDSTokenRequest,
     ): ThreeDSTokenResponse
 
     @POST("/v1/charges")
     suspend fun capture3DSCharge(
-        @Header("X-Access-Token") accessToken: String = BuildConfig.ACCESS_TOKEN_API,
+        @Header("X-Access-Token") accessToken: String,
         @Body request: Capture3DSChargeRequest,
     ): CaptureChargeResponse
 
