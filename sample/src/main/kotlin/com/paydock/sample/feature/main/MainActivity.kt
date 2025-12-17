@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
@@ -137,9 +138,13 @@ fun MainScreenView(
     val context = LocalContext.current
     val navController = rememberNavController()
     val actionBarDetails = rememberActionBarDetails(navController, context)
+    
+    // Track font scale to respond to accessibility settings changes
+    val configuration = LocalConfiguration.current
+    val fontScale = configuration.fontScale
 
     // *** Call @Composable defaults here, in the Composable scope ***
-    // These will re-evaluate if MainScreenView recomposes due to isActuallyDark changing
+    // These will re-evaluate if MainScreenView recomposes due to isActuallyDark or fontScale changing
     // Call composable functions first, then remember the result
     val addressSdkDefaults: AddressDetailsWidgetAppearance =
         AddressDetailsAppearanceDefaults.appearance()
@@ -157,10 +162,10 @@ fun MainScreenView(
     val integrated3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
     val standalone3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
 
-    // Effect to update ViewModel when theme changes
+    // Effect to update ViewModel when theme or font scale changes
     // On first init: Apply full defaults
-    // On theme change: Update theme-dependent properties while preserving user customizations
-    LaunchedEffect(isActuallyDark) {
+    // On theme/font scale change: Update theme-dependent properties while preserving user customizations
+    LaunchedEffect(isActuallyDark, fontScale) {
         val isInitialized = stylingViewModel.addressWidgetAppearance.value != null
 
         // Update all widget appearances with theme-appropriate defaults

@@ -97,8 +97,11 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                 // Preserve user customizations (structural changes like icons, text, spacing)
                 // but update theme-dependent properties (colors from defaults)
                 updatedDefaults.copy(
+                    title = current.title, // Preserve custom title text appearance
                     actionButton = current.actionButton, // Preserve custom button (icon, text)
                     linkButton = current.linkButton,
+                    textField = current.textField, // Preserve custom text field appearance
+                    searchDropdown = current.searchDropdown, // Preserve custom search dropdown appearance
                     verticalSpacing = current.verticalSpacing,
                     horizontalSpacing = current.horizontalSpacing,
                     textFieldVerticalSpacing = current.textFieldVerticalSpacing,
@@ -116,9 +119,13 @@ class StylingViewModel @Inject constructor() : ViewModel() {
     ) {
         _cardDetailsWidgetAppearance.update { current ->
             if (preserveCustomizations && current != null && hasCardDetailsCustomizations.value) {
-                // Preserve user customizations
+                // Preserve user customizations (text appearances, buttons, spacing)
+                // but update theme-dependent properties (colors from defaults)
                 updatedDefaults.copy(
                     actionButton = current.actionButton,
+                    textField = current.textField, // Preserve custom text field appearance
+                    toggleText = current.toggleText, // Preserve custom toggle text appearance
+                    linkText = current.linkText, // Preserve custom link text appearance
                     verticalSpacing = current.verticalSpacing,
                     horizontalSpacing = current.horizontalSpacing,
                     textFieldVerticalSpacing = current.textFieldVerticalSpacing,
@@ -136,9 +143,11 @@ class StylingViewModel @Inject constructor() : ViewModel() {
     ) {
         _giftCardWidgetAppearance.update { current ->
             if (preserveCustomizations && current != null && hasGiftCardCustomizations.value) {
-                // Preserve user customizations
+                // Preserve user customizations (text appearances, buttons, spacing)
+                // but update theme-dependent properties (colors from defaults)
                 updatedDefaults.copy(
                     actionButton = current.actionButton,
+                    textField = current.textField, // Preserve custom text field appearance
                     verticalSpacing = current.verticalSpacing,
                     horizontalSpacing = current.horizontalSpacing,
                     textFieldVerticalSpacing = current.textFieldVerticalSpacing,
