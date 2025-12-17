@@ -5,14 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.BuildConfig
-import com.paydock.sample.core.AMOUNT
-import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.core.EMAIL
 import com.paydock.sample.core.FIRST_NAME
 import com.paydock.sample.core.LAST_NAME
 import com.paydock.sample.core.MERCHANT_NAME
 import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
 import com.paydock.sample.feature.config.data.GlobalConfigRepository
+import com.paydock.sample.feature.config.data.WidgetConfigRepository
+import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.wallet.data.api.dto.InitiateWalletRequest
 import com.paydock.sample.feature.wallet.data.model.WalletCharge
 import com.paydock.sample.feature.wallet.domain.usecase.InitiateWalletTransactionUseCase
@@ -28,23 +28,25 @@ import javax.inject.Inject
 @HiltViewModel
 class WalletViewModel @Inject constructor(
     private val initiateWalletTransactionUseCase: InitiateWalletTransactionUseCase,
-    // GlobalConfigRepository provides access to global config values
-    private val globalConfigRepository: GlobalConfigRepository
+    // GlobalConfigRepository provides access to global config values (access token)
+    private val globalConfigRepository: GlobalConfigRepository,
+    // WidgetConfigRepository provides access to widget config values (cart amount, currency)
+    private val widgetConfigRepository: WidgetConfigRepository
 ) : ViewModel() {
 
-    // Get access token from global config (defaults to BuildConfig.ACCESS_TOKEN_API if not set)
+    // Get access token from global config
     private suspend fun getAccessToken(): String {
         return globalConfigRepository.globalConfig.first().apiAccessToken
     }
 
-    // Get cart amount from global config (defaults to AMOUNT if not set)
+    // Get cart amount from widget config (defaults to AMOUNT if not set)
     private suspend fun getCartAmount(): BigDecimal {
-        return globalConfigRepository.globalConfig.first().cartAmount
+        return widgetConfigRepository.widgetConfig.first().cartAmount
     }
 
     // Get cart currency from global config (defaults to AU_CURRENCY_CODE if not set)
     private suspend fun getCartCurrency(): String {
-        return globalConfigRepository.globalConfig.first().cartCurrency
+        return globalConfigRepository.globalConfig.first().currencyCode
     }
 
     private val _stateFlow: MutableStateFlow<WalletTransactionUIState> =
@@ -114,11 +116,9 @@ class WalletViewModel @Inject constructor(
                             customerData = customerData,
                             useGlobalConfig = useGlobalConfig,
                             overrideAmount = overrideAmount,
-                            overrideCurrency = overrideCurrency
                         )
                         initiateWalletTransactionResult(
-                            accessToken = overrideAccessToken
-                                ?: if (useGlobalConfig) getAccessToken() else BuildConfig.ACCESS_TOKEN_API,
+                            accessToken = getAccessToken(),
                             request = request,
                             callback = onTokenReceived
                         )
@@ -132,8 +132,7 @@ class WalletViewModel @Inject constructor(
                             overrideCurrency = overrideCurrency
                         )
                         initiateWalletTransactionResult(
-                            accessToken = overrideAccessToken
-                                ?: if (useGlobalConfig) getAccessToken() else BuildConfig.ACCESS_TOKEN_API,
+                            accessToken = getAccessToken(),
                             request = request,
                             callback = onTokenReceived
                         )
@@ -144,11 +143,9 @@ class WalletViewModel @Inject constructor(
                             customerData = customerData,
                             useGlobalConfig = useGlobalConfig,
                             overrideAmount = overrideAmount,
-                            overrideCurrency = overrideCurrency
                         )
                         initiateWalletTransactionResult(
-                            accessToken = overrideAccessToken
-                                ?: if (useGlobalConfig) getAccessToken() else BuildConfig.ACCESS_TOKEN_API,
+                            accessToken = getAccessToken(),
                             manualCapture = true,
                             request = request,
                             callback = onTokenReceived
@@ -159,12 +156,10 @@ class WalletViewModel @Inject constructor(
                         val request = createPayPalWalletRequest(
                             customerData = customerData,
                             useGlobalConfig = useGlobalConfig,
-                            overrideAmount = overrideAmount,
-                            overrideCurrency = overrideCurrency
+                            overrideAmount = overrideAmount
                         )
                         initiateWalletTransactionResult(
-                            accessToken = overrideAccessToken
-                                ?: if (useGlobalConfig) getAccessToken() else BuildConfig.ACCESS_TOKEN_API,
+                            accessToken = getAccessToken(),
                             request = request,
                             callback = onTokenReceived
                         )
@@ -177,13 +172,11 @@ class WalletViewModel @Inject constructor(
         customerData: CustomerData? = null,
         useGlobalConfig: Boolean = true,
         overrideAmount: BigDecimal? = null,
-        overrideCurrency: String? = null
     ): InitiateWalletRequest {
         val amount = customerData?.amount?.let { BigDecimal(it) }
             ?: overrideAmount
-            ?: if (useGlobalConfig) getCartAmount() else BigDecimal(AMOUNT)
-        val currency = overrideCurrency
-            ?: if (useGlobalConfig) getCartCurrency() else AU_CURRENCY_CODE
+            ?: if (useGlobalConfig) getCartAmount() else BigDecimal(CartManager.shared.totalPrice)
+        val currency = getCartCurrency()
         return InitiateWalletRequest(
             amount = amount,
             currency = currency,
@@ -212,6 +205,8 @@ class WalletViewModel @Inject constructor(
                     state = it.state,
                     countryCode = it.countryCode,
                     postalCode = it.postalCode,
+                    amount = amount,
+                    currency = currency,
                     contact = InitiateWalletRequest.ShippingDTO.ContactDTO(
                         firstName = customerData.firstName,
                         lastName = customerData.lastName,
@@ -225,14 +220,12 @@ class WalletViewModel @Inject constructor(
     private suspend fun createColesPayWalletRequest(
         customerData: CustomerData? = null,
         useGlobalConfig: Boolean = true,
-        overrideAmount: BigDecimal? = null,
-        overrideCurrency: String? = null
+        overrideAmount: BigDecimal? = null
     ): InitiateWalletRequest {
         val amount = customerData?.amount?.let { BigDecimal(it) }
             ?: overrideAmount
-            ?: if (useGlobalConfig) getCartAmount() else BigDecimal(AMOUNT)
-        val currency = overrideCurrency
-            ?: if (useGlobalConfig) getCartCurrency() else AU_CURRENCY_CODE
+            ?: if (useGlobalConfig) getCartAmount() else BigDecimal(CartManager.shared.totalPrice)
+        val currency = getCartCurrency()
         return InitiateWalletRequest(
             amount = amount,
             currency = currency,
@@ -261,6 +254,8 @@ class WalletViewModel @Inject constructor(
                     state = it.state,
                     countryCode = it.countryCode,
                     postalCode = it.postalCode,
+                    amount = amount,
+                    currency = currency,
                     contact = InitiateWalletRequest.ShippingDTO.ContactDTO(
                         firstName = customerData.firstName,
                         lastName = customerData.lastName,
@@ -279,9 +274,8 @@ class WalletViewModel @Inject constructor(
     ): InitiateWalletRequest {
         val amount = customerData?.amount?.let { BigDecimal(it) }
             ?: overrideAmount
-            ?: if (useGlobalConfig) getCartAmount() else BigDecimal(AMOUNT)
-        val currency = overrideCurrency
-            ?: if (useGlobalConfig) getCartCurrency() else AU_CURRENCY_CODE
+            ?: if (useGlobalConfig) getCartAmount() else BigDecimal(CartManager.shared.totalPrice)
+        val currency = overrideCurrency ?: getCartCurrency()
         return InitiateWalletRequest(
             amount = amount,
             currency = currency,
@@ -310,6 +304,8 @@ class WalletViewModel @Inject constructor(
                     state = it.state,
                     countryCode = it.countryCode,
                     postalCode = it.postalCode,
+                    amount = amount,
+                    currency = currency,
                     contact = InitiateWalletRequest.ShippingDTO.ContactDTO(
                         firstName = customerData.firstName,
                         lastName = customerData.lastName,
@@ -325,13 +321,11 @@ class WalletViewModel @Inject constructor(
         customerData: CustomerData? = null,
         useGlobalConfig: Boolean = true,
         overrideAmount: BigDecimal? = null,
-        overrideCurrency: String? = null
     ): InitiateWalletRequest {
         val amount = customerData?.amount?.let { BigDecimal(it) }
             ?: overrideAmount
-            ?: if (useGlobalConfig) getCartAmount() else BigDecimal(AMOUNT)
-        val currency = overrideCurrency
-            ?: if (useGlobalConfig) getCartCurrency() else AU_CURRENCY_CODE
+            ?: if (useGlobalConfig) getCartAmount() else BigDecimal(CartManager.shared.totalPrice)
+        val currency = getCartCurrency()
         return InitiateWalletRequest(
             amount = amount,
             currency = currency,
@@ -360,7 +354,7 @@ class WalletViewModel @Inject constructor(
             shippingDTO = customerData?.shippingAddress?.let {
                 val shippingAmount = customerData.amount?.let { amount -> BigDecimal(amount) }
                     ?: overrideAmount
-                    ?: if (useGlobalConfig) getCartAmount() else BigDecimal(AMOUNT)
+                    ?: if (useGlobalConfig) getCartAmount() else BigDecimal(CartManager.shared.totalPrice)
                 InitiateWalletRequest.ShippingDTO(
                     addressLine1 = it.addressLine1,
                     addressLine2 = it.addressLine2,
@@ -370,14 +364,22 @@ class WalletViewModel @Inject constructor(
                     countryCode = it.countryCode,
                     postalCode = it.postalCode,
                     amount = shippingAmount,
+                    currency = currency,
                     contact = InitiateWalletRequest.ShippingDTO.ContactDTO(
                         firstName = customerData.firstName,
                         lastName = customerData.lastName,
                         phone = customerData.phone
                     )
                 )
-            } ?: InitiateWalletRequest.ShippingDTO(),
-            itemDTOS = listOf(InitiateWalletRequest.ItemDTO()),
+            } ?: InitiateWalletRequest.ShippingDTO(
+                amount = amount,
+                currency = currency
+            ),
+            itemDTOS = listOf(
+                InitiateWalletRequest.ItemDTO(
+                    amount = amount
+                )
+            ),
         )
     }
 }

@@ -2,8 +2,6 @@ package com.paydock.sample.feature.shop.domain.model
 
 import androidx.annotation.DrawableRes
 import com.paydock.sample.R
-import java.text.NumberFormat
-import java.util.Locale
 
 data class Product(
     val id: String,
@@ -12,10 +10,7 @@ data class Product(
     val price: Double,
     val image: ProductImage,
     val category: ProductCategory
-) {
-    val formattedPrice: String
-        get() = NumberFormat.getCurrencyInstance(Locale.US).format(price)
-}
+)
 
 enum class ProductImage(@DrawableRes val drawableRes: Int) {
     // Clothing

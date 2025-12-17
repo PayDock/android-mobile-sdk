@@ -7,8 +7,8 @@ import javax.inject.Inject
 
 class CaptureCardChargeTokenUseCase @Inject constructor(private val repository: CardRepository) {
 
-    suspend operator fun invoke(request: CaptureCardChargeRequest) =
+    suspend operator fun invoke(accessToken: String, request: CaptureCardChargeRequest) =
         suspendRunCatching {
-            repository.captureCardCharge(request)
+            repository.captureCardCharge(accessToken, request)
         }
 }

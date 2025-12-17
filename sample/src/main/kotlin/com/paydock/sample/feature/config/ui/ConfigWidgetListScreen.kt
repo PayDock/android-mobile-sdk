@@ -1,6 +1,5 @@
 package com.paydock.sample.feature.config.ui
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -12,29 +11,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.paydock.sample.BuildConfig
 import com.paydock.sample.R
-import com.paydock.sample.designsystems.components.list.DisplayableListItem
 import com.paydock.sample.designsystems.components.list.ListRowItem
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
-
-// Global Config list item
-object GlobalConfigListItem : DisplayableListItem {
-    override fun displayIcon(): Int? = R.drawable.ic_config
-    override fun displayName(): String = "Global Config"
-    override fun displayDescription(): String? = "API access token and test cart configuration"
-}
 
 @Composable
 fun ConfigWidgetListScreen(
     onWidgetSelected: (WidgetType) -> Unit,
-    onGlobalConfigSelected: () -> Unit = {}
+    onCartSelected: () -> Unit = {}
 ) {
     // Cache filtered and sorted to avoid recomputation
     val configurableWidgets = remember {
@@ -44,47 +31,19 @@ fun ConfigWidgetListScreen(
     }
 
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
-        // Caption text
-        item {
-            Text(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                text = stringResource(R.string.label_config_screen_caption),
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp
-                ),
-            )
-        }
 
-        // Divider
-        item {
-            HorizontalDivider(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            )
-        }
-
-        // Global Config item - placed before widget list
+        // Cart item - placed before widget list
         item {
             ListRowItem(
-                title = GlobalConfigListItem.displayName(),
-                description = GlobalConfigListItem.displayDescription(),
-                iconResource = GlobalConfigListItem.displayIcon()
+                title = "Cart",
+                description = "Cart amount configuration",
+                iconResource = R.drawable.ic_config
             ) {
-                onGlobalConfigSelected()
+                onCartSelected()
             }
         }
-
         item {
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-        }
-
-        // Spacer to separate Global Config from Widget section
-        item {
-            Spacer(modifier = Modifier.height(24.dp))
         }
 
         // Widget section title
@@ -92,7 +51,7 @@ fun ConfigWidgetListScreen(
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
+                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
                 text = stringResource(R.string.label_config_widget_list_title),
                 style = MaterialTheme.typography.titleMedium,
             )
@@ -111,40 +70,6 @@ fun ConfigWidgetListScreen(
                 onWidgetSelected(widgetType)
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-        }
-
-        // Spacer before version section
-        item {
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        // Version section
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "App Version",
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.Medium
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Version: ${BuildConfig.VERSION_NAME}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Build: ${BuildConfig.VERSION_CODE}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
         }
 
         // Bottom padding

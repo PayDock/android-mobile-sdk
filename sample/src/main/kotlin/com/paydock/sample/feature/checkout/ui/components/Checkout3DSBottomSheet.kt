@@ -19,6 +19,7 @@ fun Checkout3DSBottomSheet(
     onDismissRequest: () -> Unit,
     vaultToken: String?,
     threeDSToken: String?,
+    threeDSType: ThreeDSType,
     showCloseButton: Boolean = true,
     viewModel: EnhancedCheckoutViewModel
 ) {
@@ -30,8 +31,7 @@ fun Checkout3DSBottomSheet(
             onDismissRequest = onDismissRequest,
             enableClose = showCloseButton
         ) {
-            val type = viewModel.threeDSType
-            when (type) {
+            when (threeDSType) {
                 ThreeDSType.INTEGRATED -> {
                     Integrated3DSWidget(
                         config = ThreeDSConfig(token = threeDSToken),

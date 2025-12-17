@@ -74,6 +74,7 @@ import com.paydock.sample.feature.checkout.ui.components.Checkout3DSBottomSheet
 import com.paydock.sample.feature.checkout.ui.steps.InformationStepView
 import com.paydock.sample.feature.checkout.ui.steps.PaymentStepView
 import com.paydock.sample.feature.checkout.ui.steps.PaymentWidgetView
+import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.account.domain.model.SavedAddress as ProfileSavedAddress
 import com.paydock.sample.feature.checkout.domain.model.SavedAddress as CheckoutSavedAddress
 
@@ -83,9 +84,16 @@ fun EnhancedCheckoutScreen(
     onDismiss: () -> Unit = {},
     onOrderComplete: (isSuccess: Boolean) -> Unit = {},
     viewModel: EnhancedCheckoutViewModel = hiltViewModel(),
+    configViewModel: ConfigViewModel = hiltViewModel(),
     initialStep: CheckoutStep? = null
 ) {
     val currentStep by viewModel.currentStep.collectAsState()
+    val checkoutConfig by configViewModel.checkoutConfig.collectAsState()
+
+    // Update checkout config in ViewModel when it changes
+    LaunchedEffect(checkoutConfig) {
+        viewModel.updateCheckoutConfig(checkoutConfig)
+    }
 
     // Listen for order completion and navigate to confirmation screen
     LaunchedEffect(viewModel.orderCompleted, viewModel.orderFailed) {
@@ -101,6 +109,8 @@ fun EnhancedCheckoutScreen(
     LaunchedEffect(initialStep) {
         initialStep?.let { viewModel.setCurrentStep(it) }
         viewModel.loadProfileData()
+        // Initialize checkout config on first load
+        viewModel.updateCheckoutConfig(checkoutConfig)
     }
 
     // Bind toolbar back handler for checkout route
@@ -340,12 +350,12 @@ fun EnhancedCheckoutScreen(
             }
         )
         val isLoading = viewModel.isLoading
+        val threeDSType by viewModel.threeDSType.collectAsState()
         Checkout3DSBottomSheet(
             bottom3DSSheetState = bottom3DSSheetState,
             onDismissRequest = {
                 // Handle dismiss (close button click) as 3DS failure/cancellation
-                val type = viewModel.threeDSType
-                when (type) {
+                when (threeDSType) {
                     ThreeDSType.INTEGRATED -> {
                         viewModel.handleIntegrated3DSResult(
                             Result.failure(Exception("3DS cancelled by user"))
@@ -361,6 +371,7 @@ fun EnhancedCheckoutScreen(
             },
             vaultToken = vaultToken,
             threeDSToken = threeDSToken,
+            threeDSType = threeDSType,
             showCloseButton = !isLoading,
             viewModel = viewModel
         )

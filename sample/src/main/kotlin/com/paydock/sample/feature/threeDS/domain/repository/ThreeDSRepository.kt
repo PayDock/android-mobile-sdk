@@ -9,10 +9,17 @@ import com.paydock.sample.feature.threeDS.domain.model.ThreeDSToken
 interface ThreeDSRepository {
 
     suspend fun createIntegrated3dsToken(
+        accessToken: String,
         request: CreateIntegratedThreeDSTokenRequest
     ): ThreeDSToken
 
-    suspend fun createStandalone3dsToken(request: CreateStandaloneThreeDSTokenRequest): ThreeDSToken
+    suspend fun createStandalone3dsToken(
+        accessToken: String,
+        request: CreateStandaloneThreeDSTokenRequest
+    ): ThreeDSToken
 
-    suspend fun capture3DSCharge(request: Capture3DSChargeRequest): ChargeResponse
+    suspend fun capture3DSCharge(
+        accessToken: String,
+        request: Capture3DSChargeRequest
+    ): ChargeResponse
 }

@@ -17,12 +17,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paydock.sample.R
-import com.paydock.sample.designsystems.components.fields.BigDecimalCounter
 import com.paydock.sample.designsystems.components.fields.EnumDropdown
 import com.paydock.sample.designsystems.components.fields.TextField
 import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.config.models.CurrencyCode
-import java.math.BigDecimal
 
 @Composable
 fun GlobalConfigScreen(
@@ -31,8 +29,8 @@ fun GlobalConfigScreen(
 ) {
     val globalConfig by configViewModel.globalConfig.collectAsState()
 
-    val currentCurrency = remember(globalConfig.cartCurrency) {
-        CurrencyCode.fromCode(globalConfig.cartCurrency) ?: CurrencyCode.USD
+    val currentCurrency = remember(globalConfig.currencyCode) {
+        CurrencyCode.fromCode(globalConfig.currencyCode) ?: CurrencyCode.USD
     }
 
     Column(
@@ -59,26 +57,6 @@ fun GlobalConfigScreen(
             label = stringResource(R.string.label_api_access_token),
             value = globalConfig.apiAccessToken ?: "",
             onValueChange = { configViewModel.updateGlobalAccessToken(it) },
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-        // Test Cart Configuration Section
-        Text(
-            text = stringResource(R.string.label_test_cart_configuration),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
-        )
-
-        // Total Amount - using BigDecimal counter
-        BigDecimalCounter(
-            label = stringResource(R.string.label_total_amount),
-            value = globalConfig.cartAmount,
-            onValueChange = { amount ->
-                configViewModel.updateGlobalCartAmount(amount)
-            },
-            step = BigDecimal("1.0"), // Step of 1.0 for easier incrementing
             modifier = Modifier.padding(bottom = 16.dp)
         )
 

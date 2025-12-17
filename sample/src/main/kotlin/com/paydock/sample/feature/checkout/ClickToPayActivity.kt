@@ -11,8 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
 import com.paydock.feature.src.domain.model.integration.ClickToPayWidgetConfig
@@ -22,6 +25,7 @@ import com.paydock.feature.src.presentation.ClickToPayWidget
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.CenterAppTopBar
+import com.paydock.sample.feature.config.ConfigViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -63,6 +67,9 @@ class ClickToPayActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClickToPayScreen(resultHandler: (Result<String>) -> Unit) {
+    val configViewModel: ConfigViewModel = hiltViewModel()
+    val globalConfig by configViewModel.globalConfig.collectAsState()
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -80,7 +87,7 @@ fun ClickToPayScreen(resultHandler: (Result<String>) -> Unit) {
                 .fillMaxWidth()
                 .padding(paddingValues),
             config = ClickToPayWidgetConfig(
-                accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
+                accessToken = globalConfig.apiAccessToken,
                 serviceId = BuildConfig.SERVICE_ID_CLICK_TO_PAY,
                 meta = ClickToPayMeta(disableSummaryScreen = true),
             ),

@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.paydock.sample.core.THREE_DS_CARD_ERROR
 import com.paydock.sample.core.THREE_DS_NOT_SUPPORTED_ERROR
 import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
+import com.paydock.sample.feature.config.data.GlobalConfigRepository
+import com.paydock.sample.feature.config.data.WidgetConfigRepository
 import com.paydock.sample.feature.threeDS.data.api.dto.CreateIntegratedThreeDSTokenRequest
 import com.paydock.sample.feature.threeDS.data.api.dto.CreateStandaloneThreeDSTokenRequest
 import com.paydock.sample.feature.threeDS.domain.model.ThreeDSToken
@@ -21,6 +23,8 @@ import javax.inject.Inject
 class ThreeDSViewModel @Inject constructor(
     private val createIntegratedThreeDSTokenUseCase: CreateIntegratedThreeDSTokenUseCase,
     private val createStandaloneThreeDSTokenUseCase: CreateStandaloneThreeDSTokenUseCase,
+    private val globalConfigRepository: GlobalConfigRepository,
+    private val widgetConfigRepository: WidgetConfigRepository,
 ) : ViewModel() {
 
     private val _stateFlow: MutableStateFlow<ThreeDSUIState> =
@@ -32,10 +36,15 @@ class ThreeDSViewModel @Inject constructor(
             _stateFlow.update { state ->
                 state.copy(isLoading = true)
             }
-            val result =
-                createIntegratedThreeDSTokenUseCase(
-                    CreateIntegratedThreeDSTokenRequest(token = cardToken)
-                )
+            val amount = widgetConfigRepository.widgetConfig.value.cartAmount
+            val currency = globalConfigRepository.globalConfig.value.currencyCode
+            val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
+            val request = CreateIntegratedThreeDSTokenRequest(
+                token = cardToken,
+                amount = amount,
+                currency = currency
+            )
+            val result = createIntegratedThreeDSTokenUseCase(accessToken, request)
             result.onSuccess { threeDSResult ->
                 when (threeDSResult.status) {
                     ThreeDSToken.ThreeDSStatus.PRE_AUTH_PENDING -> {
@@ -82,14 +91,17 @@ class ThreeDSViewModel @Inject constructor(
             _stateFlow.update { state ->
                 state.copy(isLoading = true)
             }
-            val result =
-                createStandaloneThreeDSTokenUseCase(
-                    CreateStandaloneThreeDSTokenRequest(
-                        customer = ChargesCustomerDTO(
-                            paymentSource = ChargesCustomerDTO.PaymentSourceDTO(vaultToken = vaultToken)
-                        )
-                    )
+            val amount = widgetConfigRepository.widgetConfig.value.cartAmount
+            val currency = globalConfigRepository.globalConfig.value.currencyCode
+            val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
+            val request = CreateStandaloneThreeDSTokenRequest(
+                amount = amount,
+                currency = currency,
+                customer = ChargesCustomerDTO(
+                    paymentSource = ChargesCustomerDTO.PaymentSourceDTO(vaultToken = vaultToken)
                 )
+            )
+            val result = createStandaloneThreeDSTokenUseCase(accessToken, request)
             result.onSuccess { threeDSResult ->
                 _stateFlow.update { state ->
                     state.copy(token = threeDSResult.token, isLoading = false, error = null)

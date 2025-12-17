@@ -17,21 +17,32 @@ class CardRepositoryImpl @Inject constructor(
 ) : CardRepository {
 
     override suspend fun tokeniseCardDetails(
+        accessToken: String,
         request: TokeniseCardRequest,
     ): String =
         withContext(dispatcher) {
             cardApi.tokeniseCardDetails(
+                accessToken = accessToken,
                 request = request
             ).resource.resourceData
         }
 
-    override suspend fun captureCardCharge(request: CaptureCardChargeRequest): ChargeResponse =
+    override suspend fun captureCardCharge(
+        accessToken: String,
+        request: CaptureCardChargeRequest
+    ): ChargeResponse =
         withContext(dispatcher) {
-            cardApi.captureCharge(request = request).toDomain()
+            cardApi.captureCharge(accessToken = accessToken, request = request).toDomain()
         }
 
-    override suspend fun createCardVaultToken(request: VaultTokenRequest): String =
+    override suspend fun createCardVaultToken(
+        accessToken: String,
+        request: VaultTokenRequest
+    ): String =
         withContext(dispatcher) {
-            cardApi.createVaultToken(request = request).resource.resourceData.token
+            cardApi.createVaultToken(
+                accessToken = accessToken,
+                request = request
+            ).resource.resourceData.token
         }
 }

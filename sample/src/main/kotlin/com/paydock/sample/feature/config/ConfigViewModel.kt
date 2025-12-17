@@ -30,12 +30,15 @@ import com.paydock.feature.src.domain.model.integration.meta.enum.Services
 import com.paydock.feature.src.domain.model.integration.meta.enum.UnacceptedCardType
 import com.paydock.feature.zip.domain.model.integration.ZipWidgetConfig
 import com.paydock.sample.BuildConfig
-import com.paydock.sample.core.AMOUNT
 import com.paydock.sample.core.AU_COUNTRY_CODE
 import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.core.MERCHANT_NAME
+import com.paydock.sample.feature.config.data.CheckoutConfigRepository
 import com.paydock.sample.feature.config.data.GlobalConfigRepository
+import com.paydock.sample.feature.config.data.WidgetConfigRepository
 import com.paydock.sample.feature.config.models.ConfigComponent
+import com.paydock.sample.feature.config.models.PaymentProcessor
+import com.paydock.sample.feature.config.models.ThreeDSService
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,22 +51,45 @@ import java.math.BigDecimal
 import javax.inject.Inject
 
 /**
- * Global configuration that applies to all widgets.
+ * ConfigViewModel manages three types of configurations:
+ *
+ * 1. **GlobalConfig** - Applies to all widgets and flows
+ *    - API Access Token
+ *
+ * 2. **CheckoutConfig** - Specific to checkout flow
+ *    - Payment Processor preferences (MPGS/CyberSource)
+ *    - Processor-specific settings (Service IDs, 3DS services)
+ *
+ * 3. **WidgetConfig** - Widget-specific settings
+ *    - Cart Amount & Currency
+ *
+ * 4. **Widget-specific configs** - Individual widget configurations
+ *    - Card Details, Gift Card, PayPal, Coles Pay, etc.
+ *    - Each widget has its own configuration state
  */
-data class GlobalConfig(
-    val apiAccessToken: String = BuildConfig.ACCESS_TOKEN_API,
-    val cartAmount: BigDecimal = BigDecimal(AMOUNT),
-    val cartCurrency: String = AU_CURRENCY_CODE
-)
-
 @HiltViewModel
 class ConfigViewModel @Inject constructor(
-    private val globalConfigRepository: GlobalConfigRepository
+    private val globalConfigRepository: GlobalConfigRepository,
+    private val checkoutConfigRepository: CheckoutConfigRepository,
+    private val widgetConfigRepository: WidgetConfigRepository
 ) : ViewModel() {
 
+    // ========== Global Config ==========
     // Global Config - delegate to repository
     val globalConfig: StateFlow<GlobalConfig> =
         globalConfigRepository.globalConfig
+
+    // ========== Checkout Config ==========
+    // Checkout Config - delegate to repository
+    val checkoutConfig: StateFlow<CheckoutConfig> =
+        checkoutConfigRepository.checkoutConfig
+
+    // ========== Widget Config ==========
+    // Widget Config - delegate to repository
+    val widgetConfig: StateFlow<WidgetConfig> =
+        widgetConfigRepository.widgetConfig
+
+    // ========== Widget-specific Configs ==========
 
     // Helper function to get access token for widget configs
     // Widgets default to ACCESS_TOKEN_WIDGET, but can use global config if set
@@ -123,12 +149,13 @@ class ConfigViewModel @Inject constructor(
     }
 
     private fun createDefaultAfterpayConfig(): AfterpaySDKConfig {
+        val widgetConfig = widgetConfigRepository.widgetConfig.value
         val globalConfig = globalConfigRepository.globalConfig.value
         return AfterpaySDKConfig(
             config = AfterpaySDKConfig.AfterpayConfiguration(
                 minimumAmount = "1.00",
-                maximumAmount = globalConfig.cartAmount.toString(),
-                currency = globalConfig.cartCurrency,
+                maximumAmount = widgetConfig.cartAmount.toString(),
+                currency = globalConfig.currencyCode,
                 language = "en",
                 country = AU_COUNTRY_CODE
             ),
@@ -174,9 +201,9 @@ class ConfigViewModel @Inject constructor(
         return GooglePayWidgetConfig(
             isReadyToPayRequest = PaymentsUtil.createIsReadyToPayRequest(),
             paymentRequest = PaymentsUtil.createGooglePayRequest(
-                amount = BigDecimal(AMOUNT),
+                amount = widgetConfig.value.cartAmount,
                 amountLabel = "Goodies",
-                currencyCode = AU_CURRENCY_CODE,
+                currencyCode = globalConfig.value.currencyCode,
                 countryCode = AU_COUNTRY_CODE,
                 merchantName = MERCHANT_NAME,
                 merchantIdentifier = BuildConfig.MERCHANT_ID_GOOGLE_PAY,
@@ -249,9 +276,9 @@ class ConfigViewModel @Inject constructor(
         updateConfigsWithGlobalAccessToken(newToken)
     }
 
-    fun updateGlobalCartAmount(amount: BigDecimal?) {
-        val newAmount = amount ?: BigDecimal(AMOUNT)
-        globalConfigRepository.updateCartAmount(newAmount)
+    fun updateWidgetCartAmount(amount: BigDecimal?) {
+        val newAmount = amount ?: BigDecimal(0)
+        widgetConfigRepository.updateCartAmount(newAmount)
         // Update Afterpay config with new cart amount
         _afterpayWidgetConfig.update { current ->
             current.copy(
@@ -269,6 +296,27 @@ class ConfigViewModel @Inject constructor(
                 config = current.config.copy(currency = newCurrency)
             )
         }
+    }
+
+    // --- Checkout Config methods ---
+    fun updateMpgsServiceId(serviceId: String) {
+        checkoutConfigRepository.updateMpgsServiceId(serviceId)
+    }
+
+    fun updateMpgsThreeDSService(service: ThreeDSService) {
+        checkoutConfigRepository.updateMpgsThreeDSService(service)
+    }
+
+    fun updateCyberSourceServiceId(serviceId: String) {
+        checkoutConfigRepository.updateCyberSourceServiceId(serviceId)
+    }
+
+    fun updateCyberSourceThreeDSService(service: ThreeDSService) {
+        checkoutConfigRepository.updateCyberSourceThreeDSService(service)
+    }
+
+    fun updatePreferredProcessor(processor: PaymentProcessor?) {
+        checkoutConfigRepository.updatePreferredProcessor(processor)
     }
 
     // Helper to update configs that should use global access token

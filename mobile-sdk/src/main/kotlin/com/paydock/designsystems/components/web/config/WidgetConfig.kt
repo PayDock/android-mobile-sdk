@@ -103,6 +103,36 @@ internal sealed class WidgetConfig {
     }
 
     /**
+     * Configuration for Cart widget.
+     *
+     * @property title Title for the Cart widget. Default is "Cart".
+     * @property jsLibraryUrl URL of the JavaScript library for Cart widget.
+     *                        Default is [ClientSDKConstants.CLIENT_SDK_JS_LIBRARY].
+     * @property environment Environment for the Cart widget. Default is the environment
+     *                        mapped from [MobileSDK.getInstance().environment].
+     * @property events List of events supported by the Cart widget.
+     *                  Default is an empty list as Cart is not a web widget.
+     * @property amount The cart amount value.
+     */
+    data class CartConfig(
+        override val title: String = "Cart",
+        override val jsLibraryUrl: String = MobileSDK.getInstance().environment.mapToClientSDKLibrary(),
+        override val environment: String = MobileSDK.getInstance().environment.mapToClientSDKEnv(),
+        override val events: List<String> = emptyList(),
+        val amount: String,
+    ) : WidgetConfig() {
+        /**
+         * Create the widget initialization script for Cart.
+         * Since Cart is not a web widget, this returns an empty string.
+         *
+         * @return Empty string as Cart doesn't require widget initialization.
+         */
+        override fun createWidget(): String {
+            return ""
+        }
+    }
+
+    /**
      * `ThreeDSConfigBase` is a sealed class that serves as the base configuration for 3D Secure authentication widgets.
      * It provides a common structure for different types of 3DS configurations, such as Integrated and Standalone.
      *
