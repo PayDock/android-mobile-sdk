@@ -111,9 +111,7 @@ internal fun SdkTextField(
                 // Use appearance.label directly to preserve custom styling in both focused and unfocused states
                 // Previously, unfocused state was overriding with MaterialTheme.typography.labelMedium,
                 // which prevented custom styling from being applied to the collapsed label
-                Box(modifier = Modifier.offset(y = 2.dp)) {
-                    TextFieldLabel(label, appearance.label)
-                }
+                TextFieldLabel(label, appearance.label)
             },
             placeholder = {
                 TextFieldPlaceholder(placeholder, appearance.placeholder)
