@@ -65,7 +65,10 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
             StyleAppearanceComponent.LOADER
         )
 
-        WidgetType.ZIP -> listOf()
+        WidgetType.ZIP -> listOf(
+            StyleAppearanceComponent.PROPERTIES,
+            StyleAppearanceComponent.LOADER
+        )
     }
 }
 

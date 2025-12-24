@@ -616,6 +616,11 @@ class StylingViewModel @Inject constructor() : ViewModel() {
             WidgetType.ZIP -> {
                 _zipWidgetAppearance.value?.let { current ->
                     val updatedAppearance = when (component) {
+                        StyleAppearanceComponent.PROPERTIES -> (newComponentAppearance as ZipWidgetAppearance).let {
+                            current.copy(
+                                buttonStyle = newComponentAppearance.buttonStyle
+                            )
+                        }
                         StyleAppearanceComponent.LOADER -> current.copy(loader = newComponentAppearance as LoaderAppearance)
                         else -> current
                     }
