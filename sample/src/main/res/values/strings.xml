@@ -59,6 +59,7 @@
     <string name="label_paypal_button_color">PayPal - Button Colour</string>
     <string name="label_paypal_button_label">PayPal - Button Label</string>
     <string name="label_paypal_button_shape">PayPal - Button Shape</string>
+    <string name="label_zip_button_style">Zip - Button Style</string>
     <string name="label_vertical_spacing">Vertical Spacing</string>
     <string name="label_horizontal_spacing">Horizontal Spacing</string>
     <string name="label_text_field_vertical_spacing">Text Field Vertical Spacing</string>

@@ -71,6 +71,8 @@ import com.paydock.feature.src.presentation.ClickToPayAppearanceDefaults
 import com.paydock.feature.src.presentation.ClickToPayWidgetAppearance
 import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSAppearanceDefaults
 import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSWidgetAppearance
+import com.paydock.feature.zip.presentation.ZipWidgetAppearance
+import com.paydock.feature.zip.presentation.ZipWidgetAppearanceDefaults
 import com.paydock.sample.designsystems.components.CenterAppTopBar
 import com.paydock.sample.designsystems.components.navigation.BottomNavigation
 import com.paydock.sample.designsystems.components.navigation.NavigationGraph
@@ -161,6 +163,7 @@ fun MainScreenView(
         ColesPayWidgetAppearanceDefaults.appearance()
     val integrated3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
     val standalone3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
+    val zipSdkDefaults: ZipWidgetAppearance = ZipWidgetAppearanceDefaults.appearance()
 
     // Effect to update ViewModel when theme or font scale changes
     // On first init: Apply full defaults
@@ -195,6 +198,7 @@ fun MainScreenView(
         stylingViewModel.updateInitialColesPayDefaults(colesPaySdkDefaults)
         stylingViewModel.updateInitialIntegrated3DSDefaults(integrated3DSSdkDefaults)
         stylingViewModel.updateInitialStandalone3DSDefaults(standalone3DSSdkDefaults)
+        stylingViewModel.updateInitialZipDefaults(zipSdkDefaults)
 
         // Config defaults are now initialized in ConfigViewModel constructor
         // No need to call updateInitial* methods here unless overriding defaults
@@ -224,6 +228,8 @@ fun MainScreenView(
         .collectAsState(initial = false)
     val isStandalone3DSWidgetAppearanceInitialized by stylingViewModel.standalone3DSWidgetAppearance.map { it != null }
         .collectAsState(initial = false)
+    val isZipWidgetAppearanceInitialized by stylingViewModel.zipWidgetAppearance.map { it != null }
+        .collectAsState(initial = false)
 
     // Combine all states using derivedStateOf to avoid recomposition when individual states don't change
     val isAllInitialized by remember {
@@ -238,7 +244,8 @@ fun MainScreenView(
                     isGooglePayWidgetAppearanceInitialized &&
                     isColesPayWidgetAppearanceInitialized &&
                     isIntegrated3DSWidgetAppearanceInitialized &&
-                    isStandalone3DSWidgetAppearanceInitialized
+                    isStandalone3DSWidgetAppearanceInitialized &&
+                    isZipWidgetAppearanceInitialized
         }
     }
 

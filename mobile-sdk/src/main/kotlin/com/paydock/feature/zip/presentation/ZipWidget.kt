@@ -1,8 +1,10 @@
 package com.paydock.feature.zip.presentation
 
+import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.BorderStroke
@@ -11,9 +13,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -202,7 +204,7 @@ private fun ZipPaymentButton(
             .fillMaxWidth()
             .semantics { contentDescription = zipButtonContentDescription },
         enabled = enabled,
-        shape = RoundedCornerShape(8.0.dp),
+        shape = MaterialTheme.shapes.small,
         colors = ButtonDefaults.buttonColors(
             containerColor = appearance.buttonStyle.backgroundColor,
             disabledContainerColor = appearance.buttonStyle.backgroundColor.copy(alpha = 0.8f)
@@ -239,7 +241,7 @@ private fun ZipLoadingButton(
             .fillMaxWidth()
             .semantics { contentDescription = zipLoadingContentDescription },
         enabled = false,
-        shape = RoundedCornerShape(8.0.dp),
+        shape = MaterialTheme.shapes.small,
         colors = ButtonDefaults.buttonColors(
             disabledContainerColor = appearance.buttonStyle.backgroundColor.copy(alpha = 0.8f)
         ),
@@ -264,11 +266,11 @@ private fun ZipLoadingButton(
  * Handles the current UI state of the Zip payment process.
  */
 private fun handleUiState(
-    context: android.content.Context,
+    context: Context,
     uiState: ZipUIState,
     viewModel: ZipViewModel,
     loadingDelegate: WidgetLoadingDelegate?,
-    resolvePaymentForResult: androidx.activity.result.ActivityResultLauncher<Intent>,
+    resolvePaymentForResult: ActivityResultLauncher<Intent>,
     completion: (Result<ZipResult>) -> Unit
 ) {
     when (uiState) {

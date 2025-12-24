@@ -34,6 +34,7 @@ import com.paydock.feature.card.presentation.CardDetailsWidgetAppearance
 import com.paydock.feature.card.presentation.GiftCardWidgetAppearance
 import com.paydock.feature.googlepay.presentation.GooglePayWidgetAppearance
 import com.paydock.feature.paypal.checkout.presentation.PayPalWidgetAppearance
+import com.paydock.feature.zip.presentation.ZipWidgetAppearance
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.components.button.AppButtonShape
@@ -54,6 +55,7 @@ import com.paydock.sample.feature.style.ui.components.section.StylePayPalMiscSec
 import com.paydock.sample.feature.style.ui.components.section.StyleTextFieldSection
 import com.paydock.sample.feature.style.ui.components.section.StyleTextSection
 import com.paydock.sample.feature.style.ui.components.section.StyleToggleSection
+import com.paydock.sample.feature.style.ui.components.section.StyleZipMiscSection
 import com.paydock.sample.feature.style.ui.components.section.TextButtonAppearanceStyleEditor
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
 
@@ -263,6 +265,22 @@ fun StylePropertiesScreen(
                                 StyleGiftCardMiscSection(
                                     currentAppearance = currentAppearance,
                                     onAppearanceChange = { newAppearance: GiftCardWidgetAppearance ->
+                                        stylingViewModel.updateWidgetComponentAppearance(
+                                            widgetContext,
+                                            styleItemName,
+                                            newAppearance
+                                        )
+                                    }
+                                )
+                            }
+                                ?: Text("$styleItemName appearance not available for $widgetContext")
+                        }
+
+                        WidgetType.ZIP -> {
+                            (componentAppearance as? ZipWidgetAppearance)?.let { currentAppearance ->
+                                StyleZipMiscSection(
+                                    currentAppearance = currentAppearance,
+                                    onAppearanceChange = { newAppearance ->
                                         stylingViewModel.updateWidgetComponentAppearance(
                                             widgetContext,
                                             styleItemName,
@@ -577,6 +595,7 @@ fun getAppearanceForWidgetComponent(
             remember(zipAppearance, styleItemName) {
                 derivedStateOf {
                     when (styleItemName) {
+                        StyleAppearanceComponent.PROPERTIES -> zipAppearance
                         StyleAppearanceComponent.LOADER -> zipAppearance?.loader
                         else -> null
                     }
