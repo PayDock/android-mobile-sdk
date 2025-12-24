@@ -123,7 +123,28 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
     NAME,
     ADDRESS_LINE1,
     ADDRESS_LINE2,
-    PHONE_NUMBER;
+    PHONE_NUMBER,
+
+    // Zip specific
+    AMOUNT,
+    ZIP_SHOPPER(hasSubComponents = true),
+    ZIP_BILLING_ADDRESS(hasSubComponents = true),
+
+    // Zip Shopper sub-components
+    SHOPPER_FIRST_NAME,
+    SHOPPER_LAST_NAME,
+    SHOPPER_EMAIL,
+    SHOPPER_PHONE,
+
+    // Zip Billing Address sub-components
+    ZIP_ADDRESS_FIRST_NAME,
+    ZIP_ADDRESS_LAST_NAME,
+    ZIP_ADDRESS_LINE1,
+    ZIP_ADDRESS_LINE2,
+    ZIP_ADDRESS_CITY,
+    ZIP_ADDRESS_STATE,
+    ZIP_ADDRESS_POSTAL_CODE,
+    ZIP_ADDRESS_COUNTRY_CODE;
 
     fun displayName(): String = when (this) {
         ACCESS_TOKEN -> "Access Token"
@@ -200,6 +221,21 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
         ADDRESS_LINE1 -> "Address Line 1"
         ADDRESS_LINE2 -> "Address Line 2"
         PHONE_NUMBER -> "Phone Number"
+        AMOUNT -> "Amount"
+        ZIP_SHOPPER -> "Shopper"
+        ZIP_BILLING_ADDRESS -> "Billing Address"
+        SHOPPER_FIRST_NAME -> "First Name"
+        SHOPPER_LAST_NAME -> "Last Name"
+        SHOPPER_EMAIL -> "Email"
+        SHOPPER_PHONE -> "Phone"
+        ZIP_ADDRESS_FIRST_NAME -> "First Name"
+        ZIP_ADDRESS_LAST_NAME -> "Last Name"
+        ZIP_ADDRESS_LINE1 -> "Address Line 1"
+        ZIP_ADDRESS_LINE2 -> "Address Line 2"
+        ZIP_ADDRESS_CITY -> "City"
+        ZIP_ADDRESS_STATE -> "State"
+        ZIP_ADDRESS_POSTAL_CODE -> "Postal Code"
+        ZIP_ADDRESS_COUNTRY_CODE -> "Country Code"
     }
 
     fun mapConfigComponentToSubComponents(): List<ConfigComponent>? = when (this) {
@@ -304,6 +340,24 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
         CUSTOMER_PHONE -> listOf(
             CUSTOMER_PHONE_COUNTRY_CODE,
             CUSTOMER_PHONE_NUMBER
+        )
+
+        ZIP_SHOPPER -> listOf(
+            SHOPPER_FIRST_NAME,
+            SHOPPER_LAST_NAME,
+            SHOPPER_EMAIL,
+            SHOPPER_PHONE
+        )
+
+        ZIP_BILLING_ADDRESS -> listOf(
+            ZIP_ADDRESS_FIRST_NAME,
+            ZIP_ADDRESS_LAST_NAME,
+            ZIP_ADDRESS_LINE1,
+            ZIP_ADDRESS_LINE2,
+            ZIP_ADDRESS_CITY,
+            ZIP_ADDRESS_STATE,
+            ZIP_ADDRESS_POSTAL_CODE,
+            ZIP_ADDRESS_COUNTRY_CODE
         )
 
         else -> null

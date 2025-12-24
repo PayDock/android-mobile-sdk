@@ -23,6 +23,7 @@ import com.paydock.sample.feature.config.ui.properties.colespay.ColesPayProperti
 import com.paydock.sample.feature.config.ui.properties.giftcard.GiftCardProperties
 import com.paydock.sample.feature.config.ui.properties.paypal.PayPalProperties
 import com.paydock.sample.feature.config.ui.properties.paypalvault.PayPalVaultProperties
+import com.paydock.sample.feature.config.ui.properties.zip.ZipProperties
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
 
 @Composable
@@ -134,6 +135,18 @@ fun ConfigPropertiesScreen(
                     widgetContext = widgetContext,
                     configViewModel = configViewModel
                 )
+            }
+
+            WidgetType.ZIP -> {
+                val config by configViewModel.zipWidgetConfig.collectAsState()
+                config?.let {
+                    ZipProperties(
+                        config = it,
+                        configItemName = configItemName,
+                        widgetContext = widgetContext,
+                        configViewModel = configViewModel
+                    )
+                }
             }
 
             else -> {

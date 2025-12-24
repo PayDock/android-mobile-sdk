@@ -174,11 +174,13 @@ class ConfigViewModel @Inject constructor(
     }
 
     private fun createDefaultZipConfig(): ZipWidgetConfig {
+        val widgetConfig = widgetConfigRepository.widgetConfig.value
+        val globalConfig = globalConfigRepository.globalConfig.value
         return ZipWidgetConfig(
             accessToken = getAccessToken(),
             gatewayId = BuildConfig.SERVICE_ID_ZIP,
-            amount = BigDecimal("50.00"),
-            currency = AU_CURRENCY_CODE,
+            amount = widgetConfig.cartAmount,
+            currency = globalConfig.currencyCode,
             shopper = ZipWidgetConfig.Shopper(
                 firstName = "John",
                 lastName = "Doe",
@@ -285,6 +287,10 @@ class ConfigViewModel @Inject constructor(
                 config = current.config.copy(maximumAmount = newAmount.toString())
             )
         }
+        // Update Zip config with new cart amount
+        _zipWidgetConfig.update { current ->
+            current.copy(amount = newAmount)
+        }
     }
 
     fun updateGlobalCartCurrency(currency: String?) {
@@ -295,6 +301,10 @@ class ConfigViewModel @Inject constructor(
             current.copy(
                 config = current.config.copy(currency = newCurrency)
             )
+        }
+        // Update Zip config with new cart currency
+        _zipWidgetConfig.update { current ->
+            current.copy(currency = newCurrency)
         }
     }
 
@@ -1107,6 +1117,99 @@ class ConfigViewModel @Inject constructor(
                         _addressConfig.value = updatedConfig
                     }
                 }
+            }
+
+            WidgetType.ZIP -> {
+                val current = _zipWidgetConfig.value
+                val updatedConfig = when (component) {
+                    ConfigComponent.ACCESS_TOKEN -> current.copy(accessToken = newValue as String)
+                    ConfigComponent.GATEWAY_ID -> current.copy(gatewayId = newValue as String)
+
+                    ConfigComponent.ZIP_SHOPPER -> {
+                        current.copy(shopper = newValue as ZipWidgetConfig.Shopper)
+                    }
+
+                    ConfigComponent.ZIP_BILLING_ADDRESS -> {
+                        current.copy(billing = newValue as? ZipWidgetConfig.Address)
+                    }
+
+                    // Handle individual shopper fields
+                    ConfigComponent.SHOPPER_FIRST_NAME -> {
+                        current.copy(
+                            shopper = current.shopper.copy(firstName = newValue as String)
+                        )
+                    }
+
+                    ConfigComponent.SHOPPER_LAST_NAME -> {
+                        current.copy(
+                            shopper = current.shopper.copy(lastName = newValue as String)
+                        )
+                    }
+
+                    ConfigComponent.SHOPPER_EMAIL -> {
+                        current.copy(
+                            shopper = current.shopper.copy(email = newValue as String)
+                        )
+                    }
+
+                    ConfigComponent.SHOPPER_PHONE -> {
+                        current.copy(
+                            shopper = current.shopper.copy(phone = newValue as? String)
+                        )
+                    }
+
+                    // Handle individual billing address fields
+                    ConfigComponent.ZIP_ADDRESS_FIRST_NAME -> {
+                        val currentBilling = current.billing ?: ZipWidgetConfig.Address()
+                        val updatedBilling = currentBilling.copy(firstName = newValue as? String)
+                        current.copy(billing = updatedBilling)
+                    }
+
+                    ConfigComponent.ZIP_ADDRESS_LAST_NAME -> {
+                        val currentBilling = current.billing ?: ZipWidgetConfig.Address()
+                        val updatedBilling = currentBilling.copy(lastName = newValue as? String)
+                        current.copy(billing = updatedBilling)
+                    }
+
+                    ConfigComponent.ZIP_ADDRESS_LINE1 -> {
+                        val currentBilling = current.billing ?: ZipWidgetConfig.Address()
+                        val updatedBilling = currentBilling.copy(line1 = newValue as? String)
+                        current.copy(billing = updatedBilling)
+                    }
+
+                    ConfigComponent.ZIP_ADDRESS_LINE2 -> {
+                        val currentBilling = current.billing ?: ZipWidgetConfig.Address()
+                        val updatedBilling = currentBilling.copy(line2 = newValue as? String)
+                        current.copy(billing = updatedBilling)
+                    }
+
+                    ConfigComponent.ZIP_ADDRESS_CITY -> {
+                        val currentBilling = current.billing ?: ZipWidgetConfig.Address()
+                        val updatedBilling = currentBilling.copy(city = newValue as? String)
+                        current.copy(billing = updatedBilling)
+                    }
+
+                    ConfigComponent.ZIP_ADDRESS_STATE -> {
+                        val currentBilling = current.billing ?: ZipWidgetConfig.Address()
+                        val updatedBilling = currentBilling.copy(state = newValue as? String)
+                        current.copy(billing = updatedBilling)
+                    }
+
+                    ConfigComponent.ZIP_ADDRESS_POSTAL_CODE -> {
+                        val currentBilling = current.billing ?: ZipWidgetConfig.Address()
+                        val updatedBilling = currentBilling.copy(postalCode = newValue as? String)
+                        current.copy(billing = updatedBilling)
+                    }
+
+                    ConfigComponent.ZIP_ADDRESS_COUNTRY_CODE -> {
+                        val currentBilling = current.billing ?: ZipWidgetConfig.Address()
+                        val updatedBilling = currentBilling.copy(countryCode = newValue as? String)
+                        current.copy(billing = updatedBilling)
+                    }
+
+                    else -> current
+                }
+                _zipWidgetConfig.value = updatedConfig
             }
 
             else -> {

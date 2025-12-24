@@ -88,7 +88,8 @@ private fun WidgetType.hasConfigurableProperties(): Boolean {
         WidgetType.PAY_PAL_VAULT,
         WidgetType.AFTER_PAY,
         WidgetType.COLES_PAY,
-        WidgetType.CLICK_TO_PAY -> true
+        WidgetType.CLICK_TO_PAY,
+        WidgetType.ZIP -> true
 
         else -> false
     }
