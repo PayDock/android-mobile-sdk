@@ -59,6 +59,7 @@
     <string name="label_paypal_button_color">PayPal - Button Colour</string>
     <string name="label_paypal_button_label">PayPal - Button Label</string>
     <string name="label_paypal_button_shape">PayPal - Button Shape</string>
+    <string name="label_zip_button_style">Zip - Button Style</string>
     <string name="label_vertical_spacing">Vertical Spacing</string>
     <string name="label_horizontal_spacing">Horizontal Spacing</string>
     <string name="label_text_field_vertical_spacing">Text Field Vertical Spacing</string>
@@ -196,6 +197,7 @@
     <string name="label_country_optional">Country (Optional)</string>
     <string name="label_address_line_1_optional">Address Line 1 (Optional)</string>
     <string name="label_address_line_2_optional">Address Line 2 (Optional)</string>
+    <string name="label_country_code_optional">Country Code (Optional)</string>
     <string name="label_dpa_presentation_name_optional_readonly">DPA Presentation Name (Optional, Read-only)</string>
     <string name="label_dpa_phone_number_country_code_optional">DPA Phone Number - Country Code (Optional)</string>
     <string name="label_dpa_phone_number_phone_number_optional">DPA Phone Number - Phone Number (Optional)</string>
