@@ -15,7 +15,8 @@ enum class PaymentMethod(val displayName: String, val iconRes: String) {
     PAYPAL("PayPal", "ic_paypal"),
     AFTERPAY("Afterpay", "ic_afterpay"),
     CLICK_TO_PAY("Click to Pay", "ic_src"),
-    COLES_PAY("Coles Pay", "ic_coles_pay");
+    COLES_PAY("Coles Pay", "ic_coles_pay"),
+    ZIP("Zip", "ic_zip_widget");
 
     companion object {
         fun getAllMethods(): List<PaymentMethod> = entries

@@ -34,10 +34,7 @@ fun ZipItem(
     val zipConfig by configViewModel.zipWidgetConfig.collectAsState()
 
     ZipWidget(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(80.0.dp)
-            .padding(16.dp),
+        modifier = Modifier.padding(16.dp),
         config = zipConfig,
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {

@@ -77,6 +77,7 @@ import com.paydock.sample.feature.checkout.ui.components.ClickToPayComponent
 import com.paydock.sample.feature.checkout.ui.components.ColesPayContent
 import com.paydock.sample.feature.checkout.ui.components.GooglePayContent
 import com.paydock.sample.feature.checkout.ui.components.PayPalContent
+import com.paydock.sample.feature.checkout.ui.components.ZipContent
 import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.shop.domain.model.AppliedGiftCard
@@ -147,6 +148,7 @@ fun PaymentStepView(
                                         "ic_afterpay" -> R.drawable.ic_afterpay
                                         "ic_src" -> R.drawable.ic_src
                                         "ic_coles_pay" -> R.drawable.ic_coles_pay
+                                        "ic_zip_widget" -> R.drawable.ic_zip_widget
                                         else -> R.drawable.ic_card_filled
                                     }
                                     Image(
@@ -623,6 +625,7 @@ private fun PaymentMethodRow(
                 "ic_afterpay" -> R.drawable.ic_afterpay
                 "ic_src" -> R.drawable.ic_src
                 "ic_coles_pay" -> R.drawable.ic_coles_pay
+                "ic_zip_widget" -> R.drawable.ic_zip_widget
                 else -> R.drawable.ic_card_filled
             }
 
@@ -812,6 +815,23 @@ fun PaymentWidgetView(
                                     }
                                     result.onFailure { _ -> viewModel.routeToFailure() }
                                 }
+                            )
+                        }
+
+                        PaymentMethod.ZIP -> {
+                            ZipContent(
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = true,
+                                loadingDelegate = object : WidgetLoadingDelegate {
+                                    override fun widgetLoadingDidStart() {
+                                        viewModel.setIsLoading(true)
+                                    }
+
+                                    override fun widgetLoadingDidFinish() {
+                                        viewModel.setIsLoading(false)
+                                    }
+                                },
+                                resultHandler = { result -> viewModel.handleZipResult(result) }
                             )
                         }
                     }
