@@ -12,9 +12,11 @@ import com.paydock.feature.threeDS.integrated.domain.model.integration.Integrate
 import com.paydock.feature.threeDS.integrated.domain.model.integration.enums.IntegratedEventType
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.StandaloneEventType
+import com.paydock.feature.zip.domain.model.ZipResult
 import com.paydock.sample.feature.account.data.UserProfileManager
 import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
 import com.paydock.sample.feature.card.domain.usecase.CreateCardSessionVaultTokenUseCase
+import com.paydock.sample.feature.zip.domain.usecase.CaptureZipChargeUseCase
 import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
 import com.paydock.sample.feature.checkout.domain.model.Address
 import com.paydock.sample.feature.checkout.domain.model.AddressType
@@ -37,6 +39,7 @@ import com.paydock.sample.feature.threeDS.domain.usecase.CreateIntegratedThreeDS
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateStandaloneThreeDSTokenUseCase
 import com.paydock.sample.feature.wallet.presentation.AddressData
 import com.paydock.sample.feature.wallet.presentation.CustomerData
+import com.paydock.sample.feature.zip.data.api.dto.CaptureZipChargeRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -57,6 +60,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
     private val createIntegratedThreeDSTokenUseCase: CreateIntegratedThreeDSTokenUseCase,
     private val createStandaloneThreeDSTokenUseCase: CreateStandaloneThreeDSTokenUseCase,
     private val captureThreeDSChargeTokenUseCase: CaptureThreeDSChargeTokenUseCase,
+    private val captureZipChargeUseCase: CaptureZipChargeUseCase,
     private val globalConfigRepository: GlobalConfigRepository,
 ) : ViewModel() {
 
@@ -377,6 +381,38 @@ class EnhancedCheckoutViewModel @Inject constructor(
             createSessionVaultToken(cardToken = it)
         }.onFailure {
             routeToFailure()
+        }
+    }
+
+    // --- Zip direct charge flow (POST /v1/charges with token) ---
+    fun handleZipResult(result: Result<ZipResult>) {
+        result.onSuccess {
+            createZipCharge(zipToken = it.token)
+        }.onFailure {
+            routeToFailure()
+        }
+    }
+
+    private fun createZipCharge(zipToken: String) {
+        viewModelScope.launch {
+            isLoading = true
+            val cartTotal = CartManager.shared.totalPrice
+            val currency = globalConfigRepository.globalConfig.value.currencyCode
+            val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
+            
+            val request = CaptureZipChargeRequest(
+                amount = BigDecimal(cartTotal),
+                currency = currency,
+                token = zipToken
+            )
+            
+            val result = captureZipChargeUseCase(accessToken, request)
+            result.onSuccess { chargeResponse ->
+                setThePaymentToken(chargeResponse.resource.data?.id ?: "zip_charge_success")
+                placeOrder()
+            }.onFailure {
+                routeToFailure()
+            }
         }
     }
 

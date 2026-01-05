@@ -12,6 +12,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -36,6 +37,7 @@ import com.paydock.core.domain.model.EventAction
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkLoader
@@ -202,6 +204,7 @@ private fun ZipPaymentButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
+            .height(ButtonAppearanceDefaults.ButtonHeight)
             .semantics { contentDescription = zipButtonContentDescription },
         enabled = enabled,
         shape = MaterialTheme.shapes.small,
@@ -239,6 +242,7 @@ private fun ZipLoadingButton(
         onClick = { },
         modifier = modifier
             .fillMaxWidth()
+            .height(56.dp)
             .semantics { contentDescription = zipLoadingContentDescription },
         enabled = false,
         shape = MaterialTheme.shapes.small,
