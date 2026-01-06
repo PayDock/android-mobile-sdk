@@ -16,7 +16,6 @@ import com.paydock.feature.zip.domain.model.ZipResult
 import com.paydock.sample.feature.account.data.UserProfileManager
 import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
 import com.paydock.sample.feature.card.domain.usecase.CreateCardSessionVaultTokenUseCase
-import com.paydock.sample.feature.zip.domain.usecase.CaptureZipChargeUseCase
 import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
 import com.paydock.sample.feature.checkout.domain.model.Address
 import com.paydock.sample.feature.checkout.domain.model.AddressType
@@ -40,6 +39,7 @@ import com.paydock.sample.feature.threeDS.domain.usecase.CreateStandaloneThreeDS
 import com.paydock.sample.feature.wallet.presentation.AddressData
 import com.paydock.sample.feature.wallet.presentation.CustomerData
 import com.paydock.sample.feature.zip.data.api.dto.CaptureZipChargeRequest
+import com.paydock.sample.feature.zip.domain.usecase.CaptureZipChargeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -399,13 +399,13 @@ class EnhancedCheckoutViewModel @Inject constructor(
             val cartTotal = CartManager.shared.totalPrice
             val currency = globalConfigRepository.globalConfig.value.currencyCode
             val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
-            
+
             val request = CaptureZipChargeRequest(
                 amount = BigDecimal(cartTotal),
                 currency = currency,
                 token = zipToken
             )
-            
+
             val result = captureZipChargeUseCase(accessToken, request)
             result.onSuccess { chargeResponse ->
                 setThePaymentToken(chargeResponse.resource.data?.id ?: "zip_charge_success")

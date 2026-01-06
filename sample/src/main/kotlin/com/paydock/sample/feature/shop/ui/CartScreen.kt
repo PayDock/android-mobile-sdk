@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -81,7 +82,8 @@ private fun EmptyCartView(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(32.dp)
+            .testTag("empty_cart_view"),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -98,20 +100,24 @@ private fun EmptyCartView(
             Text(
                 text = "Your cart is empty",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.testTag("empty_cart_title")
             )
 
             Text(
                 text = "Add some products to get started",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.testTag("empty_cart_message")
             )
 
             AppButton(
                 text = "Continue Shopping",
                 onClick = onContinueShopping,
                 shape = AppButtonShape.Pill,
-                modifier = Modifier.width(200.dp)
+                modifier = Modifier
+                    .width(200.dp)
+                    .testTag("empty_cart_continue_shopping_button")
             )
         }
     }
@@ -130,7 +136,9 @@ private fun CartContentView(
     ) {
         // Use LazyColumn for better performance with many items
         LazyColumn(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .testTag("cart_items_list"),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -175,7 +183,9 @@ private fun CartItemsSectionHeader(
         text = "Items (${cartManager.itemCount})",
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(bottom = 12.dp)
+        modifier = Modifier
+            .padding(bottom = 12.dp)
+            .testTag("cart_items_header")
     )
 }
 
@@ -187,7 +197,9 @@ private fun CartItemRowView(
     onRemove: (CartItem) -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("cart_item_${cartItem.product.id}"),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -206,7 +218,8 @@ private fun CartItemRowView(
                 modifier = Modifier
                     .size(80.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                    .testTag("cart_item_image_${cartItem.product.id}"),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
@@ -226,13 +239,15 @@ private fun CartItemRowView(
                     text = cartItem.product.name,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
-                    maxLines = 2
+                    maxLines = 2,
+                    modifier = Modifier.testTag("cart_item_name_${cartItem.product.id}")
                 )
 
                 Text(
                     text = CurrencyFormatter.format(cartItem.product.price, currencyCode),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag("cart_item_price_${cartItem.product.id}")
                 )
             }
 
@@ -253,7 +268,8 @@ private fun CartItemRowView(
                             } else {
                                 onQuantityChange(cartItem, newQuantity)
                             }
-                        }
+                        },
+                        modifier = Modifier.testTag("cart_item_decrease_${cartItem.product.id}")
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Remove,
@@ -265,13 +281,15 @@ private fun CartItemRowView(
                     Text(
                         text = cartItem.quantity.toString(),
                         style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.testTag("cart_item_quantity_${cartItem.product.id}")
                     )
 
                     IconButton(
                         onClick = {
                             onQuantityChange(cartItem, cartItem.quantity + 1)
-                        }
+                        },
+                        modifier = Modifier.testTag("cart_item_increase_${cartItem.product.id}")
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Add,
@@ -285,7 +303,8 @@ private fun CartItemRowView(
                     text = "Remove",
                     onClick = { onRemove(cartItem) },
                     style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.error),
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.testTag("cart_item_remove_${cartItem.product.id}")
                 )
             }
         }
@@ -310,19 +329,22 @@ private fun CheckoutButton(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .testTag("cart_subtotal_row"),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "Subtotal",
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.testTag("cart_subtotal_label")
             )
             Text(
                 text = formattedSubtotal,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.testTag("cart_subtotal_amount")
             )
         }
         AppButton(
@@ -331,6 +353,7 @@ private fun CheckoutButton(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
+                .testTag("cart_checkout_button")
         )
     }
 }

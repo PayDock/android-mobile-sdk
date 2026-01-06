@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -80,9 +81,13 @@ fun StylePropertiesScreen(
             .fillMaxWidth()
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
+            .testTag("style_properties_screen")
     ) {
         if (componentAppearance == null) {
-            Text("Appearance data not available for $styleItemName in $widgetContext. Ensure ViewModel is initialized.")
+            Text(
+                text = "Appearance data not available for $styleItemName in $widgetContext. Ensure ViewModel is initialized.",
+                modifier = Modifier.testTag("style_properties_error_message")
+            )
         } else {
             when (styleItemName) {
                 StyleAppearanceComponent.TITLE,
@@ -370,7 +375,8 @@ fun StylePropertiesScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 32.dp, top = 20.dp),
+                .padding(bottom = 32.dp, top = 20.dp)
+                .testTag("style_properties_reset_section"),
             verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -379,10 +385,13 @@ fun StylePropertiesScreen(
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 text = stringResource(R.string.disclaimer_reset_button),
+                modifier = Modifier.testTag("style_properties_reset_disclaimer")
             )
 
             AppButton(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("style_properties_reset_button"),
                 variant = AppButtonVariant.Outline,
                 shape = AppButtonShape.Rectangle,
                 enabled = hasChanges,

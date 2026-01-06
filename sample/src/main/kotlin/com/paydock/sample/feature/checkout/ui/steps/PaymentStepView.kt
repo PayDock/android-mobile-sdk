@@ -43,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -103,14 +104,16 @@ fun PaymentStepView(
     val sectionSpacing = 20.dp
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(sectionSpacing),
-        contentPadding = PaddingValues(bottom = 12.dp)
+        contentPadding = PaddingValues(bottom = 12.dp),
+        modifier = Modifier.testTag("payment_step_view")
     ) {
         // Title (scrolls with content)
         item {
             Text(
                 text = stringResource(R.string.label_payment_method),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.testTag("payment_method_title")
             )
         }
 
@@ -127,7 +130,9 @@ fun PaymentStepView(
                             .padding(bottom = sectionSpacing)
                     ) {
                         Card(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("payment_method_dropdown"),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surface
                             ),
@@ -163,7 +168,9 @@ fun PaymentStepView(
                                         ?: stringResource(R.string.label_select_payment_method),
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .testTag("payment_method_selected_text")
                                 )
                                 Icon(
                                     imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
@@ -181,7 +188,10 @@ fun PaymentStepView(
         // Expanded list lives as regular item(s) so it scrolls with content
         if (expanded) {
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.testTag("payment_method_list")
+                ) {
                     PaymentMethod.getAllMethods().forEach { method ->
                         PaymentMethodRow(
                             method = method,
@@ -245,29 +255,48 @@ private fun ReviewSummary(currencyCode: String) {
     // Collect to trigger recomposition when these change
     cartManager.selectedShipping.collectAsState().value
     cartManager.cartItems.collectAsState().value
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.testTag("review_summary_section")
+    ) {
         Text(
             text = "Order Summary",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.testTag("order_summary_title")
         )
         // Reuse minimal summary similar to ReviewStepView
         HorizontalDivider()
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("order_summary_subtotal_row"),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = "Subtotal",
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("order_summary_subtotal_label"),
                 style = MaterialTheme.typography.bodyMedium
             )
             Text(
                 text = CurrencyFormatter.format(cartManager.subtotal, currencyCode),
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag("order_summary_subtotal_amount")
             )
         }
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("order_summary_shipping_row"),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = "Shipping",
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("order_summary_shipping_label"),
                 style = MaterialTheme.typography.bodyMedium
             )
             Text(
@@ -275,16 +304,22 @@ private fun ReviewSummary(currencyCode: String) {
                     cartManager.shippingCost,
                     currencyCode
                 ),
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag("order_summary_shipping_amount")
             )
         }
         if (appliedGiftCards.isNotEmpty()) {
             Row(
-                modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("order_summary_discounts_row"),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "Discounts",
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("order_summary_discounts_label"),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
@@ -295,15 +330,23 @@ private fun ReviewSummary(currencyCode: String) {
                         )
                     }",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.testTag("order_summary_discounts_amount")
                 )
             }
         }
         HorizontalDivider()
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("order_summary_total_row"),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = "Total",
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("order_summary_total_label"),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -311,7 +354,8 @@ private fun ReviewSummary(currencyCode: String) {
                 text = CurrencyFormatter.format(cartManager.totalPrice, currencyCode),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.testTag("order_summary_total_amount")
             )
         }
     }
@@ -325,7 +369,10 @@ private fun GiftCardSection(
     onShowGiftCardEntry: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("gift_card_section"),
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
         )
     ) {
@@ -344,14 +391,18 @@ private fun GiftCardSection(
                 )
                 AppTextButton(
                     text = stringResource(R.string.label_add_gift_card),
-                    onClick = onShowGiftCardEntry
+                    onClick = onShowGiftCardEntry,
+                    modifier = Modifier.testTag("add_gift_card_button")
                 )
             }
 
             if (cartManager.hasGiftCards) {
                 appliedGiftCards.forEach { appliedGiftCard ->
                     Card(
-                        modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("applied_gift_card_${appliedGiftCard.giftCard.id}"),
+                        colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                         )
                     ) {
@@ -381,7 +432,9 @@ private fun GiftCardSection(
                             }
                             AppTextButton(
                                 text = stringResource(R.string.button_remove),
-                                onClick = { cartManager.removeGiftCard(appliedGiftCard) })
+                                onClick = { cartManager.removeGiftCard(appliedGiftCard) },
+                                modifier = Modifier.testTag("remove_gift_card_${appliedGiftCard.giftCard.id}")
+                            )
                         }
                     }
                 }
@@ -519,7 +572,10 @@ private fun ShippingSection(
     currencyCode: String
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("shipping_section"),
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
         )
     ) {
@@ -536,7 +592,12 @@ private fun ShippingSection(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { cartManager.setSelectedShipping(option) }
-                        .padding(vertical = 8.dp),
+                        .padding(vertical = 8.dp)
+                        .testTag(
+                            "shipping_option_${
+                                option.shippingNmae.replace(" ", "_").lowercase()
+                            }"
+                        ),
                     verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = if (selectedShipping == option) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
@@ -595,7 +656,8 @@ private fun PaymentMethodRow(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onSelect() },
+            .clickable { onSelect() }
+            .testTag("payment_method_option_${method.name.lowercase()}"),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected)
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
