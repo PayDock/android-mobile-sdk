@@ -28,6 +28,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -48,12 +49,15 @@ fun InformationStepView(
     val savedAddresses by viewModel.savedAddresses.collectAsState()
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+        modifier = Modifier.testTag("information_step_view")
     ) {
         // Profile Auto-fill Section
         if (viewModel.contactInfo.firstName.isNotEmpty()) {
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("profile_autofill_card"),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                 )
@@ -68,12 +72,15 @@ fun InformationStepView(
                     Text(
                         text = "Welcome back, ${viewModel.contactInfo.firstName}!",
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.testTag("profile_welcome_text")
                     )
 
                     AppTextButton(
                         text = "Use Profile Info",
-                        onClick = { viewModel.loadProfileData() })
+                        onClick = { viewModel.loadProfileData() },
+                        modifier = Modifier.testTag("profile_use_info_button")
+                    )
                 }
             }
         }
@@ -89,17 +96,21 @@ fun InformationStepView(
 
         // Use as Billing Address Toggle
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("use_shipping_as_billing_row"),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "Use as billing address",
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.testTag("use_shipping_as_billing_label")
             )
             Switch(
                 checked = viewModel.useShippingAsBilling,
-                onCheckedChange = { viewModel.setShippingAsBilling(it) }
+                onCheckedChange = { viewModel.setShippingAsBilling(it) },
+                modifier = Modifier.testTag("use_shipping_as_billing_switch")
             )
         }
 
@@ -118,12 +129,14 @@ private fun ContactInformationSection(
     viewModel: EnhancedCheckoutViewModel
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.testTag("contact_information_section")
     ) {
         Text(
             text = "Contact Information",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.testTag("contact_information_title")
         )
 
         Column(
@@ -136,14 +149,18 @@ private fun ContactInformationSection(
                     value = viewModel.contactInfo.firstName,
                     onValueChange = { viewModel.updateContactInfo(firstName = it) },
                     label = { Text("First Name") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("contact_first_name_field")
                 )
 
                 OutlinedTextField(
                     value = viewModel.contactInfo.lastName,
                     onValueChange = { viewModel.updateContactInfo(lastName = it) },
                     label = { Text("Last Name") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("contact_last_name_field")
                 )
             }
 
@@ -152,7 +169,9 @@ private fun ContactInformationSection(
                 onValueChange = { viewModel.updateContactInfo(email = it) },
                 label = { Text("Email") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("contact_email_field")
             )
 
             OutlinedTextField(
@@ -160,7 +179,9 @@ private fun ContactInformationSection(
                 onValueChange = { viewModel.updateContactInfo(phone = it) },
                 label = { Text("Phone") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("contact_phone_field")
             )
         }
     }
@@ -172,12 +193,14 @@ private fun ShippingAddressSection(
     savedAddresses: List<SavedAddress>
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.testTag("shipping_address_section")
     ) {
         Text(
             text = "Shipping Address",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.testTag("shipping_address_title")
         )
 
         // Saved Address Selection
@@ -227,12 +250,14 @@ private fun BillingAddressSection(
     savedAddresses: List<SavedAddress>
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.testTag("billing_address_section")
     ) {
         Text(
             text = "Billing Address",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.testTag("billing_address_title")
         )
 
         // Saved Address Selection for Billing
@@ -276,7 +301,9 @@ private fun SavedAddressesSection(
     onEditAddress: (SavedAddress) -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("saved_addresses_card"),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
         )
@@ -297,7 +324,8 @@ private fun SavedAddressesSection(
                 )
                 AppTextButton(
                     text = stringResource(R.string.button_add_address),
-                    onClick = onEnterNewAddress
+                    onClick = onEnterNewAddress,
+                    modifier = Modifier.testTag("add_new_address_button")
                 )
             }
 
@@ -324,7 +352,8 @@ private fun SavedAddressRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onSelect() }
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp)
+            .testTag("saved_address_row_${address.id}"),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -351,7 +380,10 @@ private fun SavedAddressRow(
                     DefaultBadge()
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                IconButton(onClick = onEdit) {
+                IconButton(
+                    onClick = onEdit,
+                    modifier = Modifier.testTag("saved_address_edit_${address.id}")
+                ) {
                     Icon(imageVector = Icons.Filled.Edit, contentDescription = "Edit address")
                 }
             }
@@ -386,7 +418,9 @@ private fun AddressInputSection(
     if (address.isComplete) {
         // Show filled address with edit option
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("address_display_card_${addressType.name.lowercase()}"),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
             )
@@ -394,7 +428,9 @@ private fun AddressInputSection(
             Box {
                 IconButton(
                     onClick = onEnterAddress,
-                    modifier = Modifier.align(Alignment.TopEnd)
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .testTag("address_edit_button_${addressType.name.lowercase()}")
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Edit,
@@ -409,12 +445,14 @@ private fun AddressInputSection(
                     Text(
                         text = "${if (addressType == AddressType.SHIPPING) "Shipping" else "Billing"} Address:",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.testTag("address_display_label_${addressType.name.lowercase()}")
                     )
 
                     Text(
                         text = address.formattedAddress,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.testTag("address_display_text_${addressType.name.lowercase()}")
                     )
                 }
             }
@@ -424,7 +462,9 @@ private fun AddressInputSection(
         AppButton(
             text = "Add ${if (addressType == AddressType.SHIPPING) "Shipping" else "Billing"} Address",
             onClick = onEnterAddress,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("add_address_button_${addressType.name.lowercase()}")
         )
     }
 }

@@ -26,12 +26,13 @@ import com.paydock.sample.feature.checkout.models.CheckoutType
 @Composable
 fun ListRowItem(
     title: String,
+    modifier: Modifier = Modifier,
     description: String? = null,
     iconResource: Int? = null,
-    onClicked: () -> Unit,
+    onClicked: () -> Unit
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable { onClicked.invoke() }
             .padding(vertical = 24.dp, horizontal = 16.dp),

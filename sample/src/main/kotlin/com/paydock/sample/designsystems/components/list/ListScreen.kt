@@ -15,10 +15,11 @@ fun <T : DisplayableListItem> ListScreen(
     items: List<T>,
     displaySubTitle: Boolean = false,
     displayIcon: Boolean = false,
-    onItemClick: (T) -> Unit
+    onItemClick: (T) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
         items(
             items = items,
@@ -27,7 +28,7 @@ fun <T : DisplayableListItem> ListScreen(
             ListRowItem(
                 title = item.displayName(),
                 description = if (displaySubTitle) item.displayDescription() else null,
-                iconResource = if (displayIcon) item.displayIcon() else null,
+                iconResource = if (displayIcon) item.displayIcon() else null
             ) {
                 onItemClick.invoke(item)
             }

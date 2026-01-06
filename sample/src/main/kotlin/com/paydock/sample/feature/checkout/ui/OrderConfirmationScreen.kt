@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -51,7 +52,8 @@ fun OrderConfirmationScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(24.dp)
+            .testTag("order_confirmation_screen"),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -62,6 +64,7 @@ fun OrderConfirmationScreen(
                 modifier = Modifier
                     .height(120.dp)
                     .fillMaxWidth()
+                    .testTag("order_confirmation_success_icon_container")
             ) {
                 Box(
                     contentAlignment = Alignment.Center,
@@ -87,20 +90,24 @@ fun OrderConfirmationScreen(
                 text = "Payment Successful!",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.testTag("order_confirmation_success_title")
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = "Your payment was successful and your order has been placed.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.testTag("order_confirmation_success_message")
             )
             Spacer(modifier = Modifier.height(32.dp))
             AppButton(
                 text = "Continue Shopping",
                 onClick = onContinueShopping,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("order_confirmation_success_continue_button"),
                 variant = AppButtonVariant.Filled
             )
         } else {
@@ -110,6 +117,7 @@ fun OrderConfirmationScreen(
                 modifier = Modifier
                     .height(120.dp)
                     .fillMaxWidth()
+                    .testTag("order_confirmation_failure_icon_container")
             ) {
                 Box(
                     contentAlignment = Alignment.Center,
@@ -135,14 +143,16 @@ fun OrderConfirmationScreen(
                 text = "Payment Failed",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.testTag("order_confirmation_failure_title")
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = "Your payment wasn't completed. You can retry now or cancel and try again later.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.testTag("order_confirmation_failure_message")
             )
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -150,7 +160,9 @@ fun OrderConfirmationScreen(
             AppButton(
                 text = "Retry Payment",
                 onClick = onRetryCheckout,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("order_confirmation_failure_retry_button"),
                 variant = AppButtonVariant.Filled
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -159,7 +171,9 @@ fun OrderConfirmationScreen(
             AppButton(
                 text = "Cancel",
                 onClick = onCancel,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("order_confirmation_failure_cancel_button"),
                 variant = AppButtonVariant.Outline
             )
         }

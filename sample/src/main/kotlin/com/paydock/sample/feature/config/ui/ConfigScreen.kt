@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,13 +49,18 @@ fun ConfigScreen(
     onCheckoutConfigSelected: () -> Unit = {},
     onWidgetsConfigSelected: () -> Unit = {}
 ) {
-    LazyColumn(modifier = Modifier.fillMaxWidth()) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("config_screen")
+    ) {
         // Caption text
         item {
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
+                    .testTag("config_caption_text"),
                 text = stringResource(R.string.label_config_screen_caption),
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontSize = 13.sp,
@@ -76,6 +82,7 @@ fun ConfigScreen(
         item {
             ListRowItem(
                 title = GlobalConfigListItem.displayName(),
+                modifier = Modifier.testTag("config_global_config_item"),
                 description = GlobalConfigListItem.displayDescription(),
                 iconResource = GlobalConfigListItem.displayIcon()
             ) {
@@ -91,6 +98,7 @@ fun ConfigScreen(
         item {
             ListRowItem(
                 title = CheckoutConfigListItem.displayName(),
+                modifier = Modifier.testTag("config_checkout_config_item"),
                 description = CheckoutConfigListItem.displayDescription(),
                 iconResource = CheckoutConfigListItem.displayIcon()
             ) {
@@ -106,6 +114,7 @@ fun ConfigScreen(
         item {
             ListRowItem(
                 title = WidgetsConfigListItem.displayName(),
+                modifier = Modifier.testTag("config_widgets_config_item"),
                 description = WidgetsConfigListItem.displayDescription(),
                 iconResource = WidgetsConfigListItem.displayIcon()
             ) {
@@ -127,7 +136,8 @@ fun ConfigScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
+                    .testTag("config_version_section"),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -135,18 +145,21 @@ fun ConfigScreen(
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.Medium
                     ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag("config_version_title")
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Version: ${BuildConfig.VERSION_NAME}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.testTag("config_version_name")
                 )
                 Text(
                     text = "Build: ${BuildConfig.VERSION_CODE}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.testTag("config_version_code")
                 )
             }
         }

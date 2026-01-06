@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -80,14 +81,17 @@ fun ProductListScreen(
         ),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("product_list_grid")
     ) {
         // Category Filter as first item
         item(span = { GridItemSpan(2) }) {
             Spacer(modifier = Modifier.height(8.dp))
             CategoryFilter(
                 selectedCategory = selectedCategory,
-                onCategorySelected = { selectedCategory = it }
+                onCategorySelected = { selectedCategory = it },
+                modifier = Modifier.testTag("category_filter")
             )
             Spacer(modifier = Modifier.height(20.dp))
         }
@@ -103,7 +107,9 @@ fun ProductListScreen(
                     cartManager.addToCart(product)
                 },
                 currencyCode = currencyCode,
-                modifier = Modifier.height(cardHeight)
+                modifier = Modifier
+                    .height(cardHeight)
+                    .testTag("product_card_${product.id}")
             )
         }
     }
