@@ -73,7 +73,7 @@ internal fun SaveCardToggle(
                 appearance = linkToggleAppearance
             )
             // Privacy Policy Label
-            if (config.privacyPolicyConfig != null) {
+            if (config.privacyPolicyConfig != null && config.privacyPolicyConfig.isValid()) {
                 SdkLinkText(
                     linkText = config.privacyPolicyConfig.privacyPolicyText,
                     appearance = linkTextAppearance
