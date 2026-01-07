@@ -21,5 +21,7 @@ data class SaveCardConfig(
     data class PrivacyPolicyConfig(
         val privacyPolicyText: String = MobileSDKConstants.CardDetailsConfig.DEFAULT_POLICY_TEXT,
         val privacyPolicyURL: String
-    )
+    ) {
+        fun isValid(): Boolean = privacyPolicyText.isNotBlank() && privacyPolicyURL.isNotBlank()
+    }
 }
