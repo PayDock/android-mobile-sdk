@@ -111,7 +111,8 @@ fun ZipWidget(
 
     // Determine loading state
     val isLoading = loadingDelegate == null && uiState is ZipUIState.Loading
-    val isEnabled = enabled && uiState !is ZipUIState.Loading && uiState !is ZipUIState.LaunchCheckout
+    val isEnabled =
+        enabled && uiState !is ZipUIState.Loading && uiState !is ZipUIState.LaunchCheckout
 
     // Render button or loading state
     if (isLoading) {
@@ -242,7 +243,7 @@ private fun ZipLoadingButton(
         onClick = { },
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp)
+            .height(ButtonAppearanceDefaults.ButtonHeight)
             .semantics { contentDescription = zipLoadingContentDescription },
         enabled = false,
         shape = MaterialTheme.shapes.small,
@@ -260,7 +261,7 @@ private fun ZipLoadingButton(
         ) {
             SdkLoader(
                 modifier = Modifier.size(24.dp),
-                appearance = appearance.loader.copy(color = appearance.buttonStyle.loaderColor)
+                appearance = appearance.loader
             )
         }
     }
@@ -359,6 +360,7 @@ object ZipWidgetAppearanceDefaults {
     fun appearance(): ZipWidgetAppearance = ZipWidgetAppearance(
         buttonStyle = ZipButtonStyle.WHITE_ON_BLACK,
         loader = LoaderAppearanceDefaults.appearance()
+            .copy(color = ZipButtonStyle.WHITE_ON_BLACK.loaderColor)
     )
 }
 
