@@ -181,20 +181,34 @@ class ConfigViewModel @Inject constructor(
             gatewayId = BuildConfig.SERVICE_ID_ZIP,
             amount = widgetConfig.cartAmount,
             currency = globalConfig.currencyCode,
-            shopper = ZipWidgetConfig.Shopper(
-                firstName = "John",
-                lastName = "Doe",
-                email = "john.doe@example.com",
-                phone = "+61412345678"
-            ),
+            firstName = "Joshua",
+            lastName = "Wood",
+            email = "joshuawood@hotmail.com.au",
+            phone = "+61412345678",
+            tokenize = true,
+            gender = "male",
+            dateOfBirth = null,
+            shippingType = "delivery",
+            hideShippingAddress = false,
             billing = ZipWidgetConfig.Address(
-                firstName = "John",
-                lastName = "Doe",
-                line1 = "123 Main Street",
+                firstName = "Joshua",
+                lastName = "Wood",
+                line1 = "Suite 660",
+                line2 = "test",
                 city = "Sydney",
-                state = "NSW",
-                postalCode = "2000",
-                countryCode = "AU"
+                state = "LA",
+                postcode = "3223",
+                country = "AU"
+            ),
+            shipping = ZipWidgetConfig.Address(
+                firstName = "Joshua",
+                lastName = "Wood",
+                line1 = "Suite 660",
+                line2 = "822 Ruiz Square",
+                city = "Sydney",
+                state = "LA",
+                postcode = "3223",
+                country = "AU"
             )
         )
     }
@@ -1124,87 +1138,90 @@ class ConfigViewModel @Inject constructor(
                 val updatedConfig = when (component) {
                     ConfigComponent.ACCESS_TOKEN -> current.copy(accessToken = newValue as String)
                     ConfigComponent.GATEWAY_ID -> current.copy(gatewayId = newValue as String)
-
-                    ConfigComponent.ZIP_SHOPPER -> {
-                        current.copy(shopper = newValue as ZipWidgetConfig.Shopper)
-                    }
-
-                    ConfigComponent.ZIP_BILLING_ADDRESS -> {
-                        current.copy(billing = newValue as? ZipWidgetConfig.Address)
-                    }
-
-                    // Handle individual shopper fields
-                    ConfigComponent.SHOPPER_FIRST_NAME -> {
-                        current.copy(
-                            shopper = current.shopper.copy(firstName = newValue as String)
-                        )
-                    }
-
-                    ConfigComponent.SHOPPER_LAST_NAME -> {
-                        current.copy(
-                            shopper = current.shopper.copy(lastName = newValue as String)
-                        )
-                    }
-
-                    ConfigComponent.SHOPPER_EMAIL -> {
-                        current.copy(
-                            shopper = current.shopper.copy(email = newValue as String)
-                        )
-                    }
-
-                    ConfigComponent.SHOPPER_PHONE -> {
-                        current.copy(
-                            shopper = current.shopper.copy(phone = newValue as? String)
-                        )
-                    }
-
-                    // Handle individual billing address fields
-                    ConfigComponent.ZIP_ADDRESS_FIRST_NAME -> {
+                    
+                    // Direct shopper fields (no nested Shopper object)
+                    ConfigComponent.ZIP_FIRST_NAME -> current.copy(firstName = newValue as String)
+                    ConfigComponent.ZIP_LAST_NAME -> current.copy(lastName = newValue as String)
+                    ConfigComponent.ZIP_EMAIL -> current.copy(email = newValue as String)
+                    ConfigComponent.ZIP_PHONE -> current.copy(phone = (newValue as? String)?.ifEmpty { null })
+                    ConfigComponent.ZIP_TOKENIZE -> current.copy(tokenize = newValue as Boolean)
+                    ConfigComponent.ZIP_GENDER -> current.copy(gender = (newValue as? String)?.ifEmpty { null })
+                    ConfigComponent.ZIP_DATE_OF_BIRTH -> current.copy(dateOfBirth = (newValue as? String)?.ifEmpty { null })
+                    ConfigComponent.ZIP_SHIPPING_TYPE -> current.copy(shippingType = (newValue as? String)?.ifEmpty { null })
+                    ConfigComponent.ZIP_HIDE_SHIPPING_ADDRESS -> current.copy(hideShippingAddress = newValue as? Boolean)
+                    
+                    // Billing address
+                    ConfigComponent.ZIP_BILLING_ADDRESS -> current.copy(billing = newValue as? ZipWidgetConfig.Address)
+                    
+                    // Individual billing address fields
+                    ConfigComponent.ZIP_BILLING_FIRST_NAME -> {
                         val currentBilling = current.billing ?: ZipWidgetConfig.Address()
-                        val updatedBilling = currentBilling.copy(firstName = newValue as? String)
-                        current.copy(billing = updatedBilling)
+                        current.copy(billing = currentBilling.copy(firstName = (newValue as? String)?.ifEmpty { null }))
                     }
-
-                    ConfigComponent.ZIP_ADDRESS_LAST_NAME -> {
+                    ConfigComponent.ZIP_BILLING_LAST_NAME -> {
                         val currentBilling = current.billing ?: ZipWidgetConfig.Address()
-                        val updatedBilling = currentBilling.copy(lastName = newValue as? String)
-                        current.copy(billing = updatedBilling)
+                        current.copy(billing = currentBilling.copy(lastName = (newValue as? String)?.ifEmpty { null }))
                     }
-
-                    ConfigComponent.ZIP_ADDRESS_LINE1 -> {
+                    ConfigComponent.ZIP_BILLING_LINE1 -> {
                         val currentBilling = current.billing ?: ZipWidgetConfig.Address()
-                        val updatedBilling = currentBilling.copy(line1 = newValue as? String)
-                        current.copy(billing = updatedBilling)
+                        current.copy(billing = currentBilling.copy(line1 = (newValue as? String)?.ifEmpty { null }))
                     }
-
-                    ConfigComponent.ZIP_ADDRESS_LINE2 -> {
+                    ConfigComponent.ZIP_BILLING_LINE2 -> {
                         val currentBilling = current.billing ?: ZipWidgetConfig.Address()
-                        val updatedBilling = currentBilling.copy(line2 = newValue as? String)
-                        current.copy(billing = updatedBilling)
+                        current.copy(billing = currentBilling.copy(line2 = (newValue as? String)?.ifEmpty { null }))
                     }
-
-                    ConfigComponent.ZIP_ADDRESS_CITY -> {
+                    ConfigComponent.ZIP_BILLING_CITY -> {
                         val currentBilling = current.billing ?: ZipWidgetConfig.Address()
-                        val updatedBilling = currentBilling.copy(city = newValue as? String)
-                        current.copy(billing = updatedBilling)
+                        current.copy(billing = currentBilling.copy(city = (newValue as? String)?.ifEmpty { null }))
                     }
-
-                    ConfigComponent.ZIP_ADDRESS_STATE -> {
+                    ConfigComponent.ZIP_BILLING_STATE -> {
                         val currentBilling = current.billing ?: ZipWidgetConfig.Address()
-                        val updatedBilling = currentBilling.copy(state = newValue as? String)
-                        current.copy(billing = updatedBilling)
+                        current.copy(billing = currentBilling.copy(state = (newValue as? String)?.ifEmpty { null }))
                     }
-
-                    ConfigComponent.ZIP_ADDRESS_POSTAL_CODE -> {
+                    ConfigComponent.ZIP_BILLING_POSTCODE -> {
                         val currentBilling = current.billing ?: ZipWidgetConfig.Address()
-                        val updatedBilling = currentBilling.copy(postalCode = newValue as? String)
-                        current.copy(billing = updatedBilling)
+                        current.copy(billing = currentBilling.copy(postcode = (newValue as? String)?.ifEmpty { null }))
                     }
-
-                    ConfigComponent.ZIP_ADDRESS_COUNTRY_CODE -> {
+                    ConfigComponent.ZIP_BILLING_COUNTRY -> {
                         val currentBilling = current.billing ?: ZipWidgetConfig.Address()
-                        val updatedBilling = currentBilling.copy(countryCode = newValue as? String)
-                        current.copy(billing = updatedBilling)
+                        current.copy(billing = currentBilling.copy(country = (newValue as? String)?.ifEmpty { null }))
+                    }
+                    
+                    // Shipping address
+                    ConfigComponent.ZIP_SHIPPING_ADDRESS -> current.copy(shipping = newValue as? ZipWidgetConfig.Address)
+                    
+                    // Individual shipping address fields
+                    ConfigComponent.ZIP_SHIPPING_FIRST_NAME -> {
+                        val currentShipping = current.shipping ?: ZipWidgetConfig.Address()
+                        current.copy(shipping = currentShipping.copy(firstName = (newValue as? String)?.ifEmpty { null }))
+                    }
+                    ConfigComponent.ZIP_SHIPPING_LAST_NAME -> {
+                        val currentShipping = current.shipping ?: ZipWidgetConfig.Address()
+                        current.copy(shipping = currentShipping.copy(lastName = (newValue as? String)?.ifEmpty { null }))
+                    }
+                    ConfigComponent.ZIP_SHIPPING_LINE1 -> {
+                        val currentShipping = current.shipping ?: ZipWidgetConfig.Address()
+                        current.copy(shipping = currentShipping.copy(line1 = (newValue as? String)?.ifEmpty { null }))
+                    }
+                    ConfigComponent.ZIP_SHIPPING_LINE2 -> {
+                        val currentShipping = current.shipping ?: ZipWidgetConfig.Address()
+                        current.copy(shipping = currentShipping.copy(line2 = (newValue as? String)?.ifEmpty { null }))
+                    }
+                    ConfigComponent.ZIP_SHIPPING_CITY -> {
+                        val currentShipping = current.shipping ?: ZipWidgetConfig.Address()
+                        current.copy(shipping = currentShipping.copy(city = (newValue as? String)?.ifEmpty { null }))
+                    }
+                    ConfigComponent.ZIP_SHIPPING_STATE -> {
+                        val currentShipping = current.shipping ?: ZipWidgetConfig.Address()
+                        current.copy(shipping = currentShipping.copy(state = (newValue as? String)?.ifEmpty { null }))
+                    }
+                    ConfigComponent.ZIP_SHIPPING_POSTCODE -> {
+                        val currentShipping = current.shipping ?: ZipWidgetConfig.Address()
+                        current.copy(shipping = currentShipping.copy(postcode = (newValue as? String)?.ifEmpty { null }))
+                    }
+                    ConfigComponent.ZIP_SHIPPING_COUNTRY -> {
+                        val currentShipping = current.shipping ?: ZipWidgetConfig.Address()
+                        current.copy(shipping = currentShipping.copy(country = (newValue as? String)?.ifEmpty { null }))
                     }
 
                     else -> current

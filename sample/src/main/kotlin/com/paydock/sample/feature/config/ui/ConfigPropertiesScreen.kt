@@ -42,86 +42,72 @@ fun ConfigPropertiesScreen(
         when (widgetContext) {
             WidgetType.CARD_DETAILS -> {
                 val config by configViewModel.cardDetailsWidgetConfig.collectAsState()
-                config?.let {
-                    CardDetailsProperties(
-                        config = it,
-                        configItemName = configItemName,
-                        widgetContext = widgetContext,
-                        configViewModel = configViewModel
-                    )
-                }
+                CardDetailsProperties(
+                    config = config,
+                    configItemName = configItemName,
+                    widgetContext = widgetContext,
+                    configViewModel = configViewModel
+                )
             }
 
             WidgetType.GIFT_CARD -> {
                 val config by configViewModel.giftCardWidgetConfig.collectAsState()
-                config?.let {
-                    GiftCardProperties(
-                        config = it,
-                        configItemName = configItemName,
-                        widgetContext = widgetContext,
-                        configViewModel = configViewModel
-                    )
-                }
+                GiftCardProperties(
+                    config = config,
+                    configItemName = configItemName,
+                    widgetContext = widgetContext,
+                    configViewModel = configViewModel
+                )
             }
 
             WidgetType.PAY_PAL -> {
                 val config by configViewModel.paypalWidgetConfig.collectAsState()
-                config?.let {
-                    PayPalProperties(
-                        config = it,
-                        configItemName = configItemName,
-                        widgetContext = widgetContext,
-                        configViewModel = configViewModel
-                    )
-                }
+                PayPalProperties(
+                    config = config,
+                    configItemName = configItemName,
+                    widgetContext = widgetContext,
+                    configViewModel = configViewModel
+                )
             }
 
             WidgetType.COLES_PAY -> {
                 val config by configViewModel.colesPayWidgetConfig.collectAsState()
-                config?.let {
-                    ColesPayProperties(
-                        config = it,
-                        configItemName = configItemName,
-                        widgetContext = widgetContext,
-                        configViewModel = configViewModel
-                    )
-                }
+                ColesPayProperties(
+                    config = config,
+                    configItemName = configItemName,
+                    widgetContext = widgetContext,
+                    configViewModel = configViewModel
+                )
             }
 
             WidgetType.CLICK_TO_PAY -> {
                 val config by configViewModel.clickToPayWidgetConfig.collectAsState()
-                config?.let {
-                    ClickToPayProperties(
-                        config = it,
-                        configItemName = configItemName,
-                        widgetContext = widgetContext,
-                        configViewModel = configViewModel
-                    )
-                }
+                ClickToPayProperties(
+                    config = config,
+                    configItemName = configItemName,
+                    widgetContext = widgetContext,
+                    configViewModel = configViewModel
+                )
             }
 
             WidgetType.AFTER_PAY -> {
                 val config by configViewModel.afterpayWidgetConfig.collectAsState()
-                config?.let {
-                    AfterpayProperties(
-                        config = it,
-                        configItemName = configItemName,
-                        widgetContext = widgetContext,
-                        configViewModel = configViewModel
-                    )
-                }
+                AfterpayProperties(
+                    config = config,
+                    configItemName = configItemName,
+                    widgetContext = widgetContext,
+                    configViewModel = configViewModel
+                )
             }
 
             WidgetType.PAY_PAL_VAULT -> {
                 val config by configViewModel.paypalVaultWidgetConfig.collectAsState()
-                config?.let {
-                    PayPalVaultProperties(
-                        config = it,
-                        configItemName = configItemName,
-                        widgetContext = widgetContext,
-                        configViewModel = configViewModel
-                    )
-                }
+                PayPalVaultProperties(
+                    config = config,
+                    configItemName = configItemName,
+                    widgetContext = widgetContext,
+                    configViewModel = configViewModel
+                )
             }
 
             WidgetType.ADDRESS_DETAILS -> {
@@ -139,14 +125,12 @@ fun ConfigPropertiesScreen(
 
             WidgetType.ZIP -> {
                 val config by configViewModel.zipWidgetConfig.collectAsState()
-                config?.let {
-                    ZipProperties(
-                        config = it,
-                        configItemName = configItemName,
-                        widgetContext = widgetContext,
-                        configViewModel = configViewModel
-                    )
-                }
+                ZipProperties(
+                    config = config,
+                    configItemName = configItemName,
+                    widgetContext = widgetContext,
+                    configViewModel = configViewModel
+                )
             }
 
             else -> {

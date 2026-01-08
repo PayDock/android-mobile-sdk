@@ -373,11 +373,9 @@ internal fun PreviewZipWidget() {
             gatewayId = "",
             amount = BigDecimal("100.00"),
             currency = "AUD",
-            shopper = ZipWidgetConfig.Shopper(
-                firstName = "John",
-                lastName = "Doe",
-                email = "john@example.com"
-            )
+            firstName = "John",
+            lastName = "Doe",
+            email = "john@example.com"
         ),
         completion = {}
     )

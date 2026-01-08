@@ -48,20 +48,18 @@ internal class ZipViewModelTest : BaseKoinUnitTest() {
         gatewayId = MobileSDKTestConstants.General.MOCK_GATEWAY_ID,
         amount = BigDecimal("100.00"),
         currency = "AUD",
-        shopper = ZipWidgetConfig.Shopper(
-            firstName = "John",
-            lastName = "Doe",
-            email = "john.doe@example.com",
-            phone = "+1234567890"
-        ),
+        firstName = "John",
+        lastName = "Doe",
+        email = "john.doe@example.com",
+        phone = "+1234567890",
         billing = ZipWidgetConfig.Address(
             firstName = "John",
             lastName = "Doe",
             line1 = "123 Main St",
             city = "Sydney",
             state = "NSW",
-            postalCode = "2000",
-            countryCode = "AU"
+            postcode = "2000",
+            country = "AU"
         )
     )
 
@@ -468,8 +466,8 @@ internal class ZipViewModelTest : BaseKoinUnitTest() {
         kotlin.test.assertEquals(testConfig.gatewayId, MobileSDKTestConstants.General.MOCK_GATEWAY_ID)
         kotlin.test.assertEquals(testConfig.amount, BigDecimal("100.00"))
         kotlin.test.assertEquals(testConfig.currency, "AUD")
-        kotlin.test.assertEquals(testConfig.shopper.firstName, "John")
-        kotlin.test.assertEquals(testConfig.shopper.lastName, "Doe")
-        kotlin.test.assertEquals(testConfig.shopper.email, "john.doe@example.com")
+        kotlin.test.assertEquals(testConfig.firstName, "John")
+        kotlin.test.assertEquals(testConfig.lastName, "Doe")
+        kotlin.test.assertEquals(testConfig.email, "john.doe@example.com")
     }
 }
