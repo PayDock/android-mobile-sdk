@@ -127,24 +127,37 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
 
     // Zip specific
     AMOUNT,
-    ZIP_SHOPPER(hasSubComponents = true),
+    ZIP_FIRST_NAME,
+    ZIP_LAST_NAME,
+    ZIP_EMAIL,
+    ZIP_PHONE,
+    ZIP_TOKENIZE,
+    ZIP_GENDER,
+    ZIP_DATE_OF_BIRTH,
+    ZIP_SHIPPING_TYPE,
+    ZIP_HIDE_SHIPPING_ADDRESS,
     ZIP_BILLING_ADDRESS(hasSubComponents = true),
-
-    // Zip Shopper sub-components
-    SHOPPER_FIRST_NAME,
-    SHOPPER_LAST_NAME,
-    SHOPPER_EMAIL,
-    SHOPPER_PHONE,
+    ZIP_SHIPPING_ADDRESS(hasSubComponents = true),
 
     // Zip Billing Address sub-components
-    ZIP_ADDRESS_FIRST_NAME,
-    ZIP_ADDRESS_LAST_NAME,
-    ZIP_ADDRESS_LINE1,
-    ZIP_ADDRESS_LINE2,
-    ZIP_ADDRESS_CITY,
-    ZIP_ADDRESS_STATE,
-    ZIP_ADDRESS_POSTAL_CODE,
-    ZIP_ADDRESS_COUNTRY_CODE;
+    ZIP_BILLING_FIRST_NAME,
+    ZIP_BILLING_LAST_NAME,
+    ZIP_BILLING_LINE1,
+    ZIP_BILLING_LINE2,
+    ZIP_BILLING_CITY,
+    ZIP_BILLING_STATE,
+    ZIP_BILLING_POSTCODE,
+    ZIP_BILLING_COUNTRY,
+
+    // Zip Shipping Address sub-components
+    ZIP_SHIPPING_FIRST_NAME,
+    ZIP_SHIPPING_LAST_NAME,
+    ZIP_SHIPPING_LINE1,
+    ZIP_SHIPPING_LINE2,
+    ZIP_SHIPPING_CITY,
+    ZIP_SHIPPING_STATE,
+    ZIP_SHIPPING_POSTCODE,
+    ZIP_SHIPPING_COUNTRY;
 
     fun displayName(): String = when (this) {
         ACCESS_TOKEN -> "Access Token"
@@ -222,20 +235,33 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
         ADDRESS_LINE2 -> "Address Line 2"
         PHONE_NUMBER -> "Phone Number"
         AMOUNT -> "Amount"
-        ZIP_SHOPPER -> "Shopper"
+        ZIP_FIRST_NAME -> "First Name"
+        ZIP_LAST_NAME -> "Last Name"
+        ZIP_EMAIL -> "Email"
+        ZIP_PHONE -> "Phone"
+        ZIP_TOKENIZE -> "Tokenize"
+        ZIP_GENDER -> "Gender"
+        ZIP_DATE_OF_BIRTH -> "Date of Birth"
+        ZIP_SHIPPING_TYPE -> "Shipping Type"
+        ZIP_HIDE_SHIPPING_ADDRESS -> "Hide Shipping Address"
         ZIP_BILLING_ADDRESS -> "Billing Address"
-        SHOPPER_FIRST_NAME -> "First Name"
-        SHOPPER_LAST_NAME -> "Last Name"
-        SHOPPER_EMAIL -> "Email"
-        SHOPPER_PHONE -> "Phone"
-        ZIP_ADDRESS_FIRST_NAME -> "First Name"
-        ZIP_ADDRESS_LAST_NAME -> "Last Name"
-        ZIP_ADDRESS_LINE1 -> "Address Line 1"
-        ZIP_ADDRESS_LINE2 -> "Address Line 2"
-        ZIP_ADDRESS_CITY -> "City"
-        ZIP_ADDRESS_STATE -> "State"
-        ZIP_ADDRESS_POSTAL_CODE -> "Postal Code"
-        ZIP_ADDRESS_COUNTRY_CODE -> "Country Code"
+        ZIP_SHIPPING_ADDRESS -> "Shipping Address"
+        ZIP_BILLING_FIRST_NAME -> "First Name"
+        ZIP_BILLING_LAST_NAME -> "Last Name"
+        ZIP_BILLING_LINE1 -> "Address Line 1"
+        ZIP_BILLING_LINE2 -> "Address Line 2"
+        ZIP_BILLING_CITY -> "City"
+        ZIP_BILLING_STATE -> "State"
+        ZIP_BILLING_POSTCODE -> "Postcode"
+        ZIP_BILLING_COUNTRY -> "Country"
+        ZIP_SHIPPING_FIRST_NAME -> "First Name"
+        ZIP_SHIPPING_LAST_NAME -> "Last Name"
+        ZIP_SHIPPING_LINE1 -> "Address Line 1"
+        ZIP_SHIPPING_LINE2 -> "Address Line 2"
+        ZIP_SHIPPING_CITY -> "City"
+        ZIP_SHIPPING_STATE -> "State"
+        ZIP_SHIPPING_POSTCODE -> "Postcode"
+        ZIP_SHIPPING_COUNTRY -> "Country"
     }
 
     fun mapConfigComponentToSubComponents(): List<ConfigComponent>? = when (this) {
@@ -342,22 +368,26 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
             CUSTOMER_PHONE_NUMBER
         )
 
-        ZIP_SHOPPER -> listOf(
-            SHOPPER_FIRST_NAME,
-            SHOPPER_LAST_NAME,
-            SHOPPER_EMAIL,
-            SHOPPER_PHONE
+        ZIP_BILLING_ADDRESS -> listOf(
+            ZIP_BILLING_FIRST_NAME,
+            ZIP_BILLING_LAST_NAME,
+            ZIP_BILLING_LINE1,
+            ZIP_BILLING_LINE2,
+            ZIP_BILLING_CITY,
+            ZIP_BILLING_STATE,
+            ZIP_BILLING_POSTCODE,
+            ZIP_BILLING_COUNTRY
         )
 
-        ZIP_BILLING_ADDRESS -> listOf(
-            ZIP_ADDRESS_FIRST_NAME,
-            ZIP_ADDRESS_LAST_NAME,
-            ZIP_ADDRESS_LINE1,
-            ZIP_ADDRESS_LINE2,
-            ZIP_ADDRESS_CITY,
-            ZIP_ADDRESS_STATE,
-            ZIP_ADDRESS_POSTAL_CODE,
-            ZIP_ADDRESS_COUNTRY_CODE
+        ZIP_SHIPPING_ADDRESS -> listOf(
+            ZIP_SHIPPING_FIRST_NAME,
+            ZIP_SHIPPING_LAST_NAME,
+            ZIP_SHIPPING_LINE1,
+            ZIP_SHIPPING_LINE2,
+            ZIP_SHIPPING_CITY,
+            ZIP_SHIPPING_STATE,
+            ZIP_SHIPPING_POSTCODE,
+            ZIP_SHIPPING_COUNTRY
         )
 
         else -> null

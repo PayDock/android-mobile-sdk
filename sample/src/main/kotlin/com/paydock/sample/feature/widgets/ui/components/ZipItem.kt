@@ -17,6 +17,7 @@ import com.paydock.core.domain.error.exceptions.ZipException
 import com.paydock.core.domain.error.toError
 import com.paydock.core.domain.model.Event
 import com.paydock.core.presentation.util.WidgetEventDelegate
+import com.paydock.feature.zip.domain.model.integration.ZipWidgetConfig
 import com.paydock.feature.zip.presentation.ZipWidget
 import com.paydock.feature.zip.presentation.ZipWidgetAppearanceDefaults
 import com.paydock.sample.feature.config.ConfigViewModel
@@ -33,9 +34,38 @@ fun ZipItem(
         zipAppearance ?: ZipWidgetAppearanceDefaults.appearance()
     val zipConfig by configViewModel.zipWidgetConfig.collectAsState()
 
+    // Add hardcoded items and statistics to the config
+    val enhancedZipConfig = zipConfig.copy(
+        items = listOf(
+            ZipWidgetConfig.Item(
+                name = "ACME Toolbox",
+                amount = "2",
+                quantity = 1,
+                reference = "Fuga consequuntur sint ab magnam"
+            ),
+            ZipWidgetConfig.Item(
+                name = "Device 42",
+                amount = "2",
+                quantity = 1,
+                reference = "Fuga consequuntur sint ab magnam"
+            )
+        ),
+        statistics = ZipWidgetConfig.Statistics(
+            accountCreated = "2017-05-05",
+            salesTotalNumber = "5",
+            salesTotalAmount = "4",
+            salesAvgValue = "45",
+            salesMaxValue = "400",
+            refundsTotalAmount = "21",
+            previousChargeback = "true",
+            currency = "AUD",
+            lastLogin = "2017-06-01"
+        )
+    )
+
     ZipWidget(
         modifier = Modifier.padding(16.dp),
-        config = zipConfig,
+        config = enhancedZipConfig,
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {
                 Log.d("[ZipWidget Event]", "[type=${event.type}] $event")

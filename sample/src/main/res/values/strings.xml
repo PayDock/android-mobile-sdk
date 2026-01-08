@@ -253,4 +253,12 @@
     <string name="content_desc_increase">Increase</string>
     <string name="content_desc_decrease">Decrease</string>
     <string name="content_desc_dropdown_arrow">Dropdown Arrow</string>
+
+    <!-- Zip Payment Labels -->
+    <string name="label_tokenize">Tokenize</string>
+    <string name="label_gender_optional">Gender (Optional)</string>
+    <string name="label_date_of_birth_optional">Date of Birth (Optional)</string>
+    <string name="label_shipping_type_optional">Shipping Type (Optional)</string>
+    <string name="label_hide_shipping_address">Hide Shipping Address</string>
+    <string name="label_postcode_optional">Postcode (Optional)</string>
 </resources>

@@ -56,8 +56,17 @@ fun WidgetType.mapWidgetTypeToConfigComponents(): List<ConfigComponent> {
         WidgetType.ZIP -> listOf(
             ConfigComponent.ACCESS_TOKEN,
             ConfigComponent.GATEWAY_ID,
-            ConfigComponent.ZIP_SHOPPER,
-            ConfigComponent.ZIP_BILLING_ADDRESS
+            ConfigComponent.ZIP_FIRST_NAME,
+            ConfigComponent.ZIP_LAST_NAME,
+            ConfigComponent.ZIP_EMAIL,
+            ConfigComponent.ZIP_PHONE,
+            ConfigComponent.ZIP_TOKENIZE,
+            ConfigComponent.ZIP_GENDER,
+            ConfigComponent.ZIP_DATE_OF_BIRTH,
+            ConfigComponent.ZIP_SHIPPING_TYPE,
+            ConfigComponent.ZIP_HIDE_SHIPPING_ADDRESS,
+            ConfigComponent.ZIP_BILLING_ADDRESS,
+            ConfigComponent.ZIP_SHIPPING_ADDRESS
         )
 
         WidgetType.INTEGRATED_3DS,

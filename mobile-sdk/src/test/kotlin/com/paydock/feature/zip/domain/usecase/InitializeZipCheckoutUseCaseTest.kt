@@ -30,11 +30,9 @@ internal class InitializeZipCheckoutUseCaseTest : BaseKoinUnitTest() {
         gatewayId = MobileSDKTestConstants.General.MOCK_GATEWAY_ID,
         amount = BigDecimal("100.00"),
         currency = "AUD",
-        shopper = ZipWidgetConfig.Shopper(
-            firstName = "John",
-            lastName = "Doe",
-            email = "john.doe@example.com"
-        )
+        firstName = "John",
+        lastName = "Doe",
+        email = "john.doe@example.com"
     )
 
     @BeforeTest
