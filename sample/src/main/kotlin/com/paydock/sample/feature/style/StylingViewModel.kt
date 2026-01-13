@@ -621,6 +621,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                                 buttonStyle = newComponentAppearance.buttonStyle
                             )
                         }
+
                         StyleAppearanceComponent.LOADER -> current.copy(loader = newComponentAppearance as LoaderAppearance)
                         else -> current
                     }

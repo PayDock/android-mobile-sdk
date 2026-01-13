@@ -7,8 +7,10 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.zip.domain.model.ZipResult
+import com.paydock.feature.zip.domain.model.integration.ZipWidgetConfig
 import com.paydock.feature.zip.presentation.ZipWidget
 import com.paydock.feature.zip.presentation.ZipWidgetAppearanceDefaults
+import com.paydock.sample.BuildConfig
 import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.shop.data.CartManager
 import java.math.BigDecimal
@@ -21,18 +23,22 @@ fun ZipContent(
     resultHandler: (Result<ZipResult>) -> Unit
 ) {
     val configViewModel: ConfigViewModel = hiltViewModel()
-    val zipConfig by configViewModel.zipWidgetConfig.collectAsState()
-    
+    val globalConfig by configViewModel.globalConfig.collectAsState()
     // Use actual cart total instead of configured amount
     val cartTotal = CartManager.shared.totalPrice
-    val checkoutZipConfig = zipConfig.copy(
-        amount = BigDecimal(cartTotal)
-    )
 
     ZipWidget(
         modifier = modifier,
         enabled = enabled,
-        config = checkoutZipConfig,
+        config = ZipWidgetConfig(
+            accessToken = globalConfig.apiAccessToken,
+            gatewayId = BuildConfig.SERVICE_ID_ZIP,
+            amount = BigDecimal(cartTotal),
+            currency = globalConfig.currencyCode,
+            firstName = "John",
+            lastName = "Doe",
+            email = "john.doe@example.com"
+        ),
         appearance = ZipWidgetAppearanceDefaults.appearance().copy(
             buttonStyle = ZipWidgetAppearanceDefaults.appearance().buttonStyle
         ),
