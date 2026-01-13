@@ -30,7 +30,8 @@ fun ConfigZipAddressSection(
             label = stringResource(R.string.label_first_name_optional),
             value = currentAddressForEditing.firstName ?: "",
             onValueChange = { newValue ->
-                val updatedAddress = currentAddressForEditing.copy(firstName = newValue.ifEmpty { null })
+                val updatedAddress =
+                    currentAddressForEditing.copy(firstName = newValue.ifEmpty { null })
                 onAddressChange(if (isZipAddressEmpty(updatedAddress)) null else updatedAddress)
             }
         )
@@ -41,7 +42,8 @@ fun ConfigZipAddressSection(
             label = stringResource(R.string.label_last_name_optional),
             value = currentAddressForEditing.lastName ?: "",
             onValueChange = { newValue ->
-                val updatedAddress = currentAddressForEditing.copy(lastName = newValue.ifEmpty { null })
+                val updatedAddress =
+                    currentAddressForEditing.copy(lastName = newValue.ifEmpty { null })
                 onAddressChange(if (isZipAddressEmpty(updatedAddress)) null else updatedAddress)
             }
         )
@@ -52,7 +54,8 @@ fun ConfigZipAddressSection(
             label = stringResource(R.string.label_address_line_1_optional),
             value = currentAddressForEditing.line1 ?: "",
             onValueChange = { newValue ->
-                val updatedAddress = currentAddressForEditing.copy(line1 = newValue.ifEmpty { null })
+                val updatedAddress =
+                    currentAddressForEditing.copy(line1 = newValue.ifEmpty { null })
                 onAddressChange(if (isZipAddressEmpty(updatedAddress)) null else updatedAddress)
             }
         )
@@ -63,7 +66,8 @@ fun ConfigZipAddressSection(
             label = stringResource(R.string.label_address_line_2_optional),
             value = currentAddressForEditing.line2 ?: "",
             onValueChange = { newValue ->
-                val updatedAddress = currentAddressForEditing.copy(line2 = newValue.ifEmpty { null })
+                val updatedAddress =
+                    currentAddressForEditing.copy(line2 = newValue.ifEmpty { null })
                 onAddressChange(if (isZipAddressEmpty(updatedAddress)) null else updatedAddress)
             }
         )
@@ -85,7 +89,8 @@ fun ConfigZipAddressSection(
             label = stringResource(R.string.label_state_optional),
             value = currentAddressForEditing.state ?: "",
             onValueChange = { newValue ->
-                val updatedAddress = currentAddressForEditing.copy(state = newValue.ifEmpty { null })
+                val updatedAddress =
+                    currentAddressForEditing.copy(state = newValue.ifEmpty { null })
                 onAddressChange(if (isZipAddressEmpty(updatedAddress)) null else updatedAddress)
             }
         )
@@ -96,7 +101,8 @@ fun ConfigZipAddressSection(
             label = stringResource(R.string.label_postcode_optional),
             value = currentAddressForEditing.postcode ?: "",
             onValueChange = { newValue ->
-                val updatedAddress = currentAddressForEditing.copy(postcode = newValue.ifEmpty { null })
+                val updatedAddress =
+                    currentAddressForEditing.copy(postcode = newValue.ifEmpty { null })
                 onAddressChange(if (isZipAddressEmpty(updatedAddress)) null else updatedAddress)
             }
         )
@@ -107,7 +113,8 @@ fun ConfigZipAddressSection(
             label = stringResource(R.string.label_country_optional),
             value = currentAddressForEditing.country ?: "",
             onValueChange = { newValue ->
-                val updatedAddress = currentAddressForEditing.copy(country = newValue.ifEmpty { null })
+                val updatedAddress =
+                    currentAddressForEditing.copy(country = newValue.ifEmpty { null })
                 onAddressChange(if (isZipAddressEmpty(updatedAddress)) null else updatedAddress)
             }
         )

@@ -23,13 +23,14 @@ internal fun ZipWidgetConfig.toExternalCheckoutRequest(): ExternalCheckoutReques
             email = email,
             phone = phone,
             gender = gender,
+            dateOfBirth = dateOfBirth,
             tokenize = tokenize,
             charge = ExternalCheckoutCharge(
                 amount = amount.toDouble(),
                 currency = currency,
                 shippingType = shippingType,
                 billingAddress = billing?.toExternalBillingAddress(),
-                shippingAddress = shipping?.toExternalBillingAddress(),
+                shippingAddress = if (hideShippingAddress == true) null else shipping?.toExternalBillingAddress(),
                 items = items?.map { it.toExternalCheckoutItem() }
             ),
             statistics = statistics?.toExternalCheckoutStatistics()

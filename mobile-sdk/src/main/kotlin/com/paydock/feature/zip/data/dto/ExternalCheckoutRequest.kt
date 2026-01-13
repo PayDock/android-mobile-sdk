@@ -47,6 +47,8 @@ internal data class ExternalCheckoutMeta(
     val email: String? = null,
     val phone: String? = null,
     val gender: String? = null,
+    @SerialName("date_of_birth")
+    val dateOfBirth: String? = null,
     @SerialName("tokenize")
     val tokenize: Boolean? = null,
     @SerialName("charge")
