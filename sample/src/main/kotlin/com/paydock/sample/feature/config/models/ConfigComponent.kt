@@ -91,14 +91,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
     CUSTOMER_PHONE_NUMBER,
 
     // Afterpay specific
-    AFTERPAY_CONFIGURATION,
     AFTERPAY_CHECKOUT_OPTIONS,
-
-    // Afterpay Configuration sub-components
-    MINIMUM_AMOUNT,
-    MAXIMUM_AMOUNT,
-    CURRENCY,
-    LANGUAGE,
 
     // Shared location fields
     COUNTRY,
@@ -214,12 +207,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
         CUSTOMER_PHONE -> "Phone"
         CUSTOMER_PHONE_COUNTRY_CODE -> "Country Code"
         CUSTOMER_PHONE_NUMBER -> "Phone Number"
-        AFTERPAY_CONFIGURATION -> "Configuration"
         AFTERPAY_CHECKOUT_OPTIONS -> "Checkout Options"
-        MINIMUM_AMOUNT -> "Minimum Amount"
-        MAXIMUM_AMOUNT -> "Maximum Amount"
-        CURRENCY -> "Currency"
-        LANGUAGE -> "Language"
         COUNTRY -> "Country"
         PICKUP -> "Pickup"
         BUY_NOW -> "Buy Now"
@@ -288,14 +276,6 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
             POSTAL_CODE,
             COUNTRY,
             PHONE_NUMBER
-        )
-
-        AFTERPAY_CONFIGURATION -> listOf(
-            MINIMUM_AMOUNT,
-            MAXIMUM_AMOUNT,
-            CURRENCY,
-            LANGUAGE,
-            COUNTRY
         )
 
         AFTERPAY_CHECKOUT_OPTIONS -> listOf(

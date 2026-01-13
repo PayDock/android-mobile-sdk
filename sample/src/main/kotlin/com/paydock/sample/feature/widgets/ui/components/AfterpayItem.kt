@@ -29,6 +29,7 @@ import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.wallet.presentation.WalletViewModel
 import java.util.Currency
+import java.util.Locale
 
 @Composable
 fun AfterpayItem(
@@ -53,7 +54,7 @@ fun AfterpayItem(
         },
         config = afterpayConfig,
         selectAddress = { _, provideShippingOptions ->
-            val currency = Currency.getInstance(afterpayConfig.config.currency)
+            val currency = Currency.getInstance(Locale.getDefault())
             val shippingOptions = listOf(
                 AfterpayShippingOption(
                     "standard",
@@ -77,7 +78,7 @@ fun AfterpayItem(
             provideShippingOptions(shippingOptions)
         },
         selectShippingOption = { shippingOption, provideShippingOptionUpdateResult ->
-            val currency = Currency.getInstance(afterpayConfig.config.currency)
+            val currency = Currency.getInstance(Locale.getDefault())
             // if standard shipping was selected, update the amounts
             // otherwise leave as is by passing null
             val result: AfterpayShippingOptionUpdate? =

@@ -35,6 +35,7 @@ import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.Currency
 import java.util.Locale
 
 /**
@@ -369,18 +370,23 @@ internal class AfterpayViewModel(
     }
 
     /**
-     * Configures the Afterpay SDK with the provided configuration details.
+     * Configures the Afterpay SDK with default configuration values.
      *
-     * @param configuration The configuration details required for Afterpay SDK setup.
+     * Note: minimumAmount, maximumAmount, currencyCode, and locale are set to default values.
+     * These values are configured in the Dashboard when setting up the payment gateway
+     * and don't affect the actual SDK behavior.
      */
-    fun configureAfterpaySdk(configuration: AfterpaySDKConfig.AfterpayConfiguration) {
+    fun configureAfterpaySdk() {
         launchOnIO {
             try {
                 Afterpay.setConfiguration(
-                    minimumAmount = configuration.minimumAmount,
-                    maximumAmount = configuration.maximumAmount,
-                    currencyCode = configuration.currency,
-                    locale = Locale.Builder().setLanguage(configuration.language).setRegion(configuration.country).build(),
+                    minimumAmount = "1",
+                    maximumAmount = "1000",
+                    currencyCode = Currency.getInstance(Locale.getDefault()).currencyCode,
+                    locale = Locale.Builder()
+                        .setLanguage(Locale.getDefault().language)
+                        .setRegion(Locale.getDefault().country)
+                        .build(),
                     environment = MobileSDK.getInstance().environment.mapToAfterpayEnv()
                 )
                 _isConfigured.value = true

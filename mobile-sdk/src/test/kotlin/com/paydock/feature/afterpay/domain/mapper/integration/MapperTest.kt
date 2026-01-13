@@ -193,12 +193,6 @@ internal class MapperTest : BaseUnitTest() {
     @Test
     fun testAfterpaySDKConfigOptionsMappingToAfterpayV2Options() {
         val configuration = AfterpaySDKConfig(
-            config = AfterpaySDKConfig.AfterpayConfiguration(
-                maximumAmount = "100",
-                currency = "AUD",
-                language = "en",
-                country = "AU"
-            ),
             options = AfterpaySDKConfig.CheckoutOptions(
                 shippingOptionRequired = true,
                 enableSingleShippingOptionUpdate = true
