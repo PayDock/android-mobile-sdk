@@ -67,11 +67,13 @@ internal fun SaveCardToggle(
             horizontalAlignment = Alignment.Start
         ) {
             // Consent Label
-            SdkText(
-                modifier = Modifier.fillMaxWidth(),
-                text = config.consentText,
-                appearance = linkToggleAppearance
-            )
+            if (config.consentText.isNotBlank()) {
+                SdkText(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = config.consentText,
+                    appearance = linkToggleAppearance
+                )
+            }
             // Privacy Policy Label
             if (config.privacyPolicyConfig != null && config.privacyPolicyConfig.isValid()) {
                 SdkLinkText(

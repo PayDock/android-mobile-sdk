@@ -9,6 +9,7 @@ import com.paydock.sample.designsystems.components.fields.TextField
 import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.config.models.ConfigComponent
 import com.paydock.sample.feature.config.ui.components.properties.card.ConfigCardSchemesField
+import com.paydock.sample.feature.config.ui.components.section.ConfigSaveCardSection
 import com.paydock.sample.feature.config.ui.components.section.ConfigSchemeSupportSection
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
 
@@ -62,43 +63,14 @@ fun CardDetailsProperties(
             )
         }
 
-        ConfigComponent.SAVE_CARD_CONSENT_TEXT -> {
-            TextField(
-                label = stringResource(R.string.label_consent_text),
-                value = config.allowSaveCard?.consentText ?: "",
-                onValueChange = { newValue ->
+        ConfigComponent.ALLOW_SAVE_CARD -> {
+            ConfigSaveCardSection(
+                currentSaveCardConfig = config.allowSaveCard,
+                onSaveCardConfigChange = { newSaveCardConfig ->
                     configViewModel.updateWidgetConfig(
                         widgetContext,
-                        ConfigComponent.SAVE_CARD_CONSENT_TEXT,
-                        newValue
-                    )
-                }
-            )
-        }
-
-        ConfigComponent.PRIVACY_POLICY_TEXT -> {
-            TextField(
-                label = stringResource(R.string.label_privacy_policy_text),
-                value = config.allowSaveCard?.privacyPolicyConfig?.privacyPolicyText ?: "",
-                onValueChange = { newValue ->
-                    configViewModel.updateWidgetConfig(
-                        widgetContext,
-                        ConfigComponent.PRIVACY_POLICY_TEXT,
-                        newValue
-                    )
-                }
-            )
-        }
-
-        ConfigComponent.PRIVACY_POLICY_URL -> {
-            TextField(
-                label = stringResource(R.string.label_privacy_policy_url),
-                value = config.allowSaveCard?.privacyPolicyConfig?.privacyPolicyURL ?: "",
-                onValueChange = { newValue ->
-                    configViewModel.updateWidgetConfig(
-                        widgetContext,
-                        ConfigComponent.PRIVACY_POLICY_URL,
-                        newValue
+                        ConfigComponent.ALLOW_SAVE_CARD,
+                        newSaveCardConfig
                     )
                 }
             )
