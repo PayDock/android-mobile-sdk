@@ -448,6 +448,13 @@ class ConfigViewModel @Inject constructor(
                         collectCardholderName = newValue as Boolean
                     )
 
+                    ConfigComponent.ENABLE_SAVE_CARD -> {
+                        val isEnabled = newValue as Boolean
+                        current.copy(
+                            allowSaveCard = if (isEnabled) SaveCardConfig() else null
+                        )
+                    }
+
                     ConfigComponent.ALLOW_SAVE_CARD -> current.copy(allowSaveCard = newValue as? SaveCardConfig)
                     ConfigComponent.SCHEME_SUPPORT -> current.copy(schemeSupport = newValue as SupportedSchemeConfig)
                     ConfigComponent.SAVE_CARD_CONSENT_TEXT -> {

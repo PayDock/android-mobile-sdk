@@ -12,6 +12,8 @@ data class SaveCardConfig(
     val consentText: String = MobileSDKConstants.CardDetailsConfig.DEFAULT_CONSENT_TEXT,
     val privacyPolicyConfig: PrivacyPolicyConfig? = null
 ) {
+    fun isValid() = consentText.isNotBlank() || privacyPolicyConfig?.isValid() == true
+
     /**
      * Configuration settings for the privacy policy.
      *

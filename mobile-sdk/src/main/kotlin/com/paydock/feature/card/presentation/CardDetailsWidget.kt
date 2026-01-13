@@ -136,7 +136,7 @@ fun CardDetailsWidget(
         )
 
         // Save card toggle switch (if configured)
-        if (config.allowSaveCard != null) {
+        if (config.allowSaveCard != null && config.allowSaveCard.isValid()) {
             SaveCardToggle(
                 enabled = uiState !is CardDetailsUIState.Loading && enabled,
                 saveCard = inputState.saveCard,

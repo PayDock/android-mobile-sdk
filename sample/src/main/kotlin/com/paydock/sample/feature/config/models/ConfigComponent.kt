@@ -7,10 +7,11 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
 
     // Card Details specific
     COLLECT_CARDHOLDER_NAME,
-    ALLOW_SAVE_CARD(hasSubComponents = true),
+    ALLOW_SAVE_CARD,
     SCHEME_SUPPORT(hasSubComponents = true),
 
-    // Save Card Config properties
+    // Save Card Config properties (kept for backward compatibility but not used in list)
+    ENABLE_SAVE_CARD,
     SAVE_CARD_CONSENT_TEXT,
     PRIVACY_POLICY(hasSubComponents = true),
 
@@ -163,6 +164,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
         ACCESS_TOKEN -> "Access Token"
         GATEWAY_ID -> "Gateway ID"
         COLLECT_CARDHOLDER_NAME -> "Collect Cardholder Name"
+        ENABLE_SAVE_CARD -> "Enable Save Card"
         ALLOW_SAVE_CARD -> "Allow Save Card"
         SCHEME_SUPPORT -> "Card Scheme Support"
         SAVE_CARD_CONSENT_TEXT -> "Consent Text"
@@ -265,11 +267,6 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
     }
 
     fun mapConfigComponentToSubComponents(): List<ConfigComponent>? = when (this) {
-        ALLOW_SAVE_CARD -> listOf(
-            SAVE_CARD_CONSENT_TEXT,
-            PRIVACY_POLICY
-        )
-
         PRIVACY_POLICY -> listOf(
             PRIVACY_POLICY_TEXT,
             PRIVACY_POLICY_URL
