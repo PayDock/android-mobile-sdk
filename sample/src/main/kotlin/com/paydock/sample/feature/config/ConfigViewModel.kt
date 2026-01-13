@@ -149,16 +149,7 @@ class ConfigViewModel @Inject constructor(
     }
 
     private fun createDefaultAfterpayConfig(): AfterpaySDKConfig {
-        val widgetConfig = widgetConfigRepository.widgetConfig.value
-        val globalConfig = globalConfigRepository.globalConfig.value
         return AfterpaySDKConfig(
-            config = AfterpaySDKConfig.AfterpayConfiguration(
-                minimumAmount = "1.00",
-                maximumAmount = widgetConfig.cartAmount.toString(),
-                currency = globalConfig.currencyCode,
-                language = "en",
-                country = AU_COUNTRY_CODE
-            ),
             options = AfterpaySDKConfig.CheckoutOptions(
                 shippingOptionRequired = true,
                 enableSingleShippingOptionUpdate = true
@@ -295,12 +286,6 @@ class ConfigViewModel @Inject constructor(
     fun updateWidgetCartAmount(amount: BigDecimal?) {
         val newAmount = amount ?: BigDecimal(0)
         widgetConfigRepository.updateCartAmount(newAmount)
-        // Update Afterpay config with new cart amount
-        _afterpayWidgetConfig.update { current ->
-            current.copy(
-                config = current.config.copy(maximumAmount = newAmount.toString())
-            )
-        }
         // Update Zip config with new cart amount
         _zipWidgetConfig.update { current ->
             current.copy(amount = newAmount)
@@ -310,12 +295,6 @@ class ConfigViewModel @Inject constructor(
     fun updateGlobalCartCurrency(currency: String?) {
         val newCurrency = currency?.takeIf { curr -> curr.isNotBlank() } ?: AU_CURRENCY_CODE
         globalConfigRepository.updateCartCurrency(newCurrency)
-        // Update Afterpay config with new cart currency
-        _afterpayWidgetConfig.update { current ->
-            current.copy(
-                config = current.config.copy(currency = newCurrency)
-            )
-        }
         // Update Zip config with new cart currency
         _zipWidgetConfig.update { current ->
             current.copy(currency = newCurrency)
@@ -1024,39 +1003,10 @@ class ConfigViewModel @Inject constructor(
             WidgetType.AFTER_PAY -> {
                 val current = _afterpayWidgetConfig.value
                 val updatedConfig = when (component) {
-                    ConfigComponent.AFTERPAY_CONFIGURATION -> {
-                        // Update the entire AfterpayConfiguration object
-                        current.copy(
-                            config = newValue as? AfterpaySDKConfig.AfterpayConfiguration
-                                ?: current.config
-                        )
-                    }
-
                     ConfigComponent.AFTERPAY_CHECKOUT_OPTIONS -> {
                         // Update the entire CheckoutOptions object
                         current.copy(options = newValue as? AfterpaySDKConfig.CheckoutOptions)
                     }
-
-                    // Handle sub-components (individual fields) for backward compatibility
-                    ConfigComponent.MINIMUM_AMOUNT -> current.copy(
-                        config = current.config.copy(minimumAmount = newValue as? String)
-                    )
-
-                    ConfigComponent.MAXIMUM_AMOUNT -> current.copy(
-                        config = current.config.copy(maximumAmount = newValue as String)
-                    )
-
-                    ConfigComponent.CURRENCY -> current.copy(
-                        config = current.config.copy(currency = newValue as String)
-                    )
-
-                    ConfigComponent.LANGUAGE -> current.copy(
-                        config = current.config.copy(language = newValue as String)
-                    )
-
-                    ConfigComponent.COUNTRY -> current.copy(
-                        config = current.config.copy(country = newValue as String)
-                    )
 
                     ConfigComponent.PICKUP -> {
                         val currentOptions =

@@ -6,6 +6,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
@@ -19,6 +20,7 @@ import com.paydock.sample.core.AU_COUNTRY_CODE
 import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.shop.data.CartManager
 import java.util.Currency
+import java.util.Locale
 
 @Composable
 fun AfterpayContent(
@@ -34,12 +36,6 @@ fun AfterpayContent(
     val cartTotal = cartManager.totalPrice
 
     val configuration = AfterpaySDKConfig(
-        config = AfterpaySDKConfig.AfterpayConfiguration(
-            maximumAmount = cartTotal.toString(),
-            currency = globalConfig.currencyCode,
-            language = "en",
-            country = AU_COUNTRY_CODE
-        ),
         options = AfterpaySDKConfig.CheckoutOptions(
             shippingOptionRequired = true,
             enableSingleShippingOptionUpdate = true
@@ -52,7 +48,7 @@ fun AfterpayContent(
         config = configuration,
         appearance = AfterpayAppearanceDefaults.appearance(),
         selectAddress = { _, provideShippingOptions ->
-            val currency = Currency.getInstance(configuration.config.currency)
+            val currency = Currency.getInstance(Locale.getDefault())
             val shippingOptions = listOf(
                 AfterpayShippingOption(
                     "standard",
@@ -76,7 +72,7 @@ fun AfterpayContent(
             provideShippingOptions(shippingOptions)
         },
         selectShippingOption = { shippingOption, provideShippingOptionUpdateResult ->
-            val currency = Currency.getInstance(configuration.config.currency)
+            val currency = Currency.getInstance(Locale.getDefault())
             // if standard shipping was selected, update the amounts
             // otherwise leave as is by passing null
             val result: AfterpayShippingOptionUpdate? =
