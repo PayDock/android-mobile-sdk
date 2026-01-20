@@ -3,6 +3,7 @@ package com.paydock.sample.feature.checkout.ui.components
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
@@ -11,21 +12,65 @@ import com.paydock.feature.zip.domain.model.integration.ZipWidgetConfig
 import com.paydock.feature.zip.presentation.ZipWidget
 import com.paydock.feature.zip.presentation.ZipWidgetAppearanceDefaults
 import com.paydock.sample.BuildConfig
+import com.paydock.sample.feature.checkout.presentation.EnhancedCheckoutViewModel
 import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.shop.data.CartManager
 import java.math.BigDecimal
+import java.util.Locale
 
 @Composable
 fun ZipContent(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     loadingDelegate: WidgetLoadingDelegate?,
+    viewModel: EnhancedCheckoutViewModel,
     resultHandler: (Result<ZipResult>) -> Unit
 ) {
     val configViewModel: ConfigViewModel = hiltViewModel()
     val globalConfig by configViewModel.globalConfig.collectAsState()
-    // Use actual cart total instead of configured amount
-    val cartTotal = CartManager.shared.totalPrice
+    
+    // Get cart information
+    val cartManager = remember { CartManager.shared }
+    val cartItems by cartManager.cartItems.collectAsState()
+    val cartTotal = cartManager.totalPrice
+    
+    // Convert cart items to Zip widget items
+    val zipItems = cartItems.map { cartItem ->
+        ZipWidgetConfig.Item(
+            name = cartItem.product.name,
+            amount = cartItem.product.price.toString(),
+            quantity = cartItem.quantity,
+            reference = cartItem.product.id
+        )
+    }
+    
+    // Convert billing address from checkout view model
+    val billingAddress = if (viewModel.billingAddress.isComplete) {
+        ZipWidgetConfig.Address(
+            firstName = viewModel.contactInfo.firstName,
+            lastName = viewModel.contactInfo.lastName,
+            line1 = viewModel.billingAddress.addressLine1,
+            line2 = viewModel.billingAddress.addressLine2?.takeIf { it.isNotBlank() },
+            city = viewModel.billingAddress.city,
+            state = viewModel.billingAddress.state,
+            postcode = viewModel.billingAddress.postalCode,
+            country = convertCountryNameToCode(viewModel.billingAddress.country)
+        )
+    } else null
+    
+    // Convert shipping address from checkout view model
+    val shippingAddress = if (viewModel.shippingAddress.isComplete) {
+        ZipWidgetConfig.Address(
+            firstName = viewModel.contactInfo.firstName,
+            lastName = viewModel.contactInfo.lastName,
+            line1 = viewModel.shippingAddress.addressLine1,
+            line2 = viewModel.shippingAddress.addressLine2?.takeIf { it.isNotBlank() },
+            city = viewModel.shippingAddress.city,
+            state = viewModel.shippingAddress.state,
+            postcode = viewModel.shippingAddress.postalCode,
+            country = convertCountryNameToCode(viewModel.shippingAddress.country)
+        )
+    } else null
 
     ZipWidget(
         modifier = modifier,
@@ -35,9 +80,13 @@ fun ZipContent(
             gatewayId = BuildConfig.SERVICE_ID_ZIP,
             amount = BigDecimal(cartTotal),
             currency = globalConfig.currencyCode,
-            firstName = "John",
-            lastName = "Doe",
-            email = "john.doe@example.com"
+            firstName = viewModel.contactInfo.firstName,
+            lastName = viewModel.contactInfo.lastName,
+            email = viewModel.contactInfo.email,
+            phone = viewModel.contactInfo.phone.takeIf { it.isNotBlank() },
+            billing = billingAddress,
+            shipping = shippingAddress,
+            items = zipItems.takeIf { it.isNotEmpty() }
         ),
         appearance = ZipWidgetAppearanceDefaults.appearance().copy(
             buttonStyle = ZipWidgetAppearanceDefaults.appearance().buttonStyle
@@ -47,3 +96,22 @@ fun ZipContent(
     )
 }
 
+/**
+ * Converts a country name to its ISO country code.
+ * If the country name is not recognized, returns the input as-is (assumes it might already be a code).
+ *
+ * @param countryName The full country name (e.g., "United States", "Australia")
+ * @return The ISO country code (e.g., "US", "AU") or the input if not found
+ */
+private fun convertCountryNameToCode(countryName: String): String {
+    if (countryName.isBlank()) return countryName
+    
+    // Check if it's already a 2-letter code
+    if (countryName.length == 2) return countryName.uppercase()
+    
+    // Find the ISO country code that matches the country name
+    return Locale.getISOCountries().find { countryCode ->
+        val locale = Locale.Builder().setRegion(countryCode).build()
+        locale.displayCountry.equals(countryName, ignoreCase = true)
+    } ?: countryName // Return original if not found
+}
