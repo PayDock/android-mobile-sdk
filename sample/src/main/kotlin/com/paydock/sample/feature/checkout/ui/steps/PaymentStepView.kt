@@ -893,6 +893,7 @@ fun PaymentWidgetView(
                                         viewModel.setIsLoading(false)
                                     }
                                 },
+                                viewModel = viewModel,
                                 resultHandler = { result -> viewModel.handleZipResult(result) }
                             )
                         }
