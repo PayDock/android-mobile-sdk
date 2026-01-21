@@ -14,6 +14,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import com.paydock.R
 import com.paydock.core.presentation.extensions.openBrowser
+import com.paydock.core.presentation.extensions.toast
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.link.LinkTextAppearance
 import com.paydock.designsystems.components.link.LinkTextAppearanceDefaults
@@ -82,7 +83,13 @@ internal fun SaveCardToggle(
                 ) {
                     if (enabled) {
                         onPrivacyPolicyClick?.invoke(config.privacyPolicyConfig.privacyPolicyURL)
-                        context.openBrowser(config.privacyPolicyConfig.privacyPolicyURL)
+                        context.openBrowser(
+                            urlString = config.privacyPolicyConfig.privacyPolicyURL,
+                            onError = { _, _ ->
+                                // Show consistent error message for both invalid URL and no handler cases
+                                context.toast(context.getString(R.string.toast_invalid_url))
+                            }
+                        )
                     }
                 }
             }
