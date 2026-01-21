@@ -50,4 +50,7 @@
     <string name="content_desc_zip_button">Pay with Zip</string>
     <string name="content_desc_zip_loading">Zip loading</string>
     <!-- endregion -->
+    <!-- region Toast Messages -->
+    <string name="toast_invalid_url">Invalid URL - unable to open</string>
+    <!-- endregion -->
 </resources>
