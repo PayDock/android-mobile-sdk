@@ -64,6 +64,7 @@ import com.paydock.feature.card.presentation.GiftCardAppearanceDefaults
 import com.paydock.feature.card.presentation.GiftCardWidget
 import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 import com.paydock.feature.wallet.domain.model.integration.WalletType
+import com.paydock.sample.BuildConfig
 import com.paydock.sample.R
 import com.paydock.sample.core.utils.CurrencyFormatter
 import com.paydock.sample.designsystems.components.button.AppButton
@@ -499,7 +500,7 @@ private fun GiftCardEntryView(
                     )
                     GiftCardWidget(
                         config = GiftCardWidgetConfig(
-                            accessToken = globalConfig.apiAccessToken, storePin = false
+                            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET, storePin = false
                         ),
                         appearance = GiftCardAppearanceDefaults.appearance().copy(
                             actionButton = ButtonAppearanceDefaults.outlineButtonAppearance().copy(

@@ -304,8 +304,6 @@ private fun SavedPaymentMethodsSection(
     viewModel: AccountViewModel,
     customer: Customer?,
 ) {
-    val configViewModel: ConfigViewModel = hiltViewModel()
-    val globalConfig by configViewModel.globalConfig.collectAsState()
     var isLoading by remember { mutableStateOf(false) }
     SectionCard(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -353,7 +351,7 @@ private fun SavedPaymentMethodsSection(
                         PayPalSavePaymentSourceWidget(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             config = PayPalVaultConfig(
-                                accessToken = globalConfig.apiAccessToken,
+                                accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
                                 gatewayId = BuildConfig.SERVICE_ID_PAYPAL
                             ),
                             appearance = PayPalPaymentSourceAppearanceDefaults.appearance().copy(
