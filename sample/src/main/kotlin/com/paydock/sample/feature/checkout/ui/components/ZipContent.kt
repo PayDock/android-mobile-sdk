@@ -29,6 +29,9 @@ fun ZipContent(
     val configViewModel: ConfigViewModel = hiltViewModel()
     val globalConfig by configViewModel.globalConfig.collectAsState()
     
+    // Get saved addresses to access firstName/lastName from selected addresses
+    val savedAddresses by viewModel.savedAddresses.collectAsState()
+    
     // Get cart information
     val cartManager = remember { CartManager.shared }
     val cartItems by cartManager.cartItems.collectAsState()
@@ -44,11 +47,44 @@ fun ZipContent(
         )
     }
     
+    // Get shipping address name from saved address if selected, otherwise use contact info
+    val selectedShippingAddress = viewModel.selectedShippingAddressId?.let { id ->
+        savedAddresses.find { it.id == id }
+    }
+    val shippingFirstName = selectedShippingAddress?.firstName?.takeIf { it.isNotBlank() }
+        ?: viewModel.contactInfo.firstName
+    val shippingLastName = selectedShippingAddress?.lastName?.takeIf { it.isNotBlank() }
+        ?: viewModel.contactInfo.lastName
+    
+    // Get billing address name:
+    // - If using shipping as billing, use shipping address name
+    // - Otherwise, use the selected billing address's saved address name if one is selected
+    // - If no saved billing address is selected (manually entered), fall back to contact info
+    val selectedBillingAddress = if (viewModel.useShippingAsBilling) {
+        // When using shipping as billing, billing address uses shipping address's name
+        selectedShippingAddress
+    } else {
+        // When NOT using shipping as billing, use billing address's own saved address name
+        // Only look up if we have a selected billing address ID
+        viewModel.selectedBillingAddressId?.let { id ->
+            savedAddresses.find { it.id == id }
+        }
+        // If selectedBillingAddressId is null (manually entered address), selectedBillingAddress will be null
+        // and we'll fall back to contact info below
+    }
+    
+    // Use saved address name if available, otherwise fall back to contact info
+    // Note: We only use shipping address name when useShippingAsBilling is true (handled above)
+    val billingFirstName = selectedBillingAddress?.firstName?.takeIf { it.isNotBlank() }
+        ?: viewModel.contactInfo.firstName
+    val billingLastName = selectedBillingAddress?.lastName?.takeIf { it.isNotBlank() }
+        ?: viewModel.contactInfo.lastName
+    
     // Convert billing address from checkout view model
     val billingAddress = if (viewModel.billingAddress.isComplete) {
         ZipWidgetConfig.Address(
-            firstName = viewModel.contactInfo.firstName,
-            lastName = viewModel.contactInfo.lastName,
+            firstName = billingFirstName,
+            lastName = billingLastName,
             line1 = viewModel.billingAddress.addressLine1,
             line2 = viewModel.billingAddress.addressLine2?.takeIf { it.isNotBlank() },
             city = viewModel.billingAddress.city,
@@ -61,8 +97,8 @@ fun ZipContent(
     // Convert shipping address from checkout view model
     val shippingAddress = if (viewModel.shippingAddress.isComplete) {
         ZipWidgetConfig.Address(
-            firstName = viewModel.contactInfo.firstName,
-            lastName = viewModel.contactInfo.lastName,
+            firstName = shippingFirstName,
+            lastName = shippingLastName,
             line1 = viewModel.shippingAddress.addressLine1,
             line2 = viewModel.shippingAddress.addressLine2?.takeIf { it.isNotBlank() },
             city = viewModel.shippingAddress.city,
