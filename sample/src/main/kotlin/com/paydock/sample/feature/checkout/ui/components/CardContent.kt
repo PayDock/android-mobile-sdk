@@ -16,6 +16,7 @@ import com.paydock.feature.card.domain.model.integration.SaveCardConfig
 import com.paydock.feature.card.presentation.CardDetailsAppearanceDefaults
 import com.paydock.feature.card.presentation.CardDetailsWidget
 import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
+import com.paydock.sample.BuildConfig
 import com.paydock.sample.R
 import com.paydock.sample.feature.config.ConfigViewModel
 
@@ -26,9 +27,6 @@ fun CardContent(
     loadingDelegate: WidgetLoadingDelegate?,
     resultHandler: (Result<CardResult>) -> Unit
 ) {
-    val configViewModel: ConfigViewModel = hiltViewModel()
-    val globalConfig by configViewModel.globalConfig.collectAsState()
-
     CardDetailsWidget(
         modifier = modifier,
         enabled = enabled,
@@ -39,7 +37,7 @@ fun CardContent(
             )
         ),
         config = CardDetailsWidgetConfig(
-            accessToken = globalConfig.apiAccessToken,
+            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
             collectCardholderName = false,
             allowSaveCard = SaveCardConfig(
                 consentText = "Save payment details",

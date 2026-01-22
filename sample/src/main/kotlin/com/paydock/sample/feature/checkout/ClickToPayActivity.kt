@@ -68,7 +68,6 @@ class ClickToPayActivity : ComponentActivity() {
 @Composable
 fun ClickToPayScreen(resultHandler: (Result<String>) -> Unit) {
     val configViewModel: ConfigViewModel = hiltViewModel()
-    val globalConfig by configViewModel.globalConfig.collectAsState()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -87,7 +86,7 @@ fun ClickToPayScreen(resultHandler: (Result<String>) -> Unit) {
                 .fillMaxWidth()
                 .padding(paddingValues),
             config = ClickToPayWidgetConfig(
-                accessToken = globalConfig.apiAccessToken,
+                accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
                 serviceId = BuildConfig.SERVICE_ID_CLICK_TO_PAY,
                 meta = ClickToPayMeta(disableSummaryScreen = true),
             ),

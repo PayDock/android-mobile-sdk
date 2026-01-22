@@ -37,7 +37,7 @@ fun ClickToPayItem(
         ClickToPayWidget(
             modifier = Modifier
                 .fillMaxWidth(),
-            config = clickToPayConfig!!,
+            config = clickToPayConfig,
             appearance = currentOrDefaultAppearance,
         ) { result ->
             result.onSuccess {
