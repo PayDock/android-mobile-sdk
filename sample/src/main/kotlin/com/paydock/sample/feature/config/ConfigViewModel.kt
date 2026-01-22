@@ -103,17 +103,22 @@ class ConfigViewModel @Inject constructor(
         }
     }
 
+    // Helper function to create default SaveCardConfig with privacy policy
+    private fun createDefaultSaveCardConfig(): SaveCardConfig {
+        return SaveCardConfig(
+            privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
+                privacyPolicyURL = "https://www.paydock.com/privacy"
+            )
+        )
+    }
+
     // Helper function to create default configs
     private fun createDefaultCardDetailsConfig(): CardDetailsWidgetConfig {
         return CardDetailsWidgetConfig(
             accessToken = getAccessToken(),
             gatewayId = BuildConfig.SERVICE_ID_MPGS,
             collectCardholderName = true,
-            allowSaveCard = SaveCardConfig(
-                privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
-                    privacyPolicyURL = "https://www.paydock.com/privacy"
-                )
-            ),
+            allowSaveCard = createDefaultSaveCardConfig(),
             schemeSupport = SupportedSchemeConfig(
                 supportedSchemes = CardType.entries.toSet(),
                 enableValidation = true
@@ -430,7 +435,7 @@ class ConfigViewModel @Inject constructor(
                     ConfigComponent.ENABLE_SAVE_CARD -> {
                         val isEnabled = newValue as Boolean
                         current.copy(
-                            allowSaveCard = if (isEnabled) SaveCardConfig() else null
+                            allowSaveCard = if (isEnabled) createDefaultSaveCardConfig() else null
                         )
                     }
 

@@ -33,7 +33,16 @@ fun ConfigSaveCardSection(
             value = currentSaveCardConfig != null,
             onValueChange = { isEnabled ->
                 onSaveCardConfigChange(
-                    if (isEnabled) SaveCardConfig() else null
+                    if (isEnabled) {
+                        // Create default SaveCardConfig with privacy policy URL when re-enabled
+                        SaveCardConfig(
+                            privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
+                                privacyPolicyURL = "https://www.paydock.com/privacy"
+                            )
+                        )
+                    } else {
+                        null
+                    }
                 )
             }
         )
