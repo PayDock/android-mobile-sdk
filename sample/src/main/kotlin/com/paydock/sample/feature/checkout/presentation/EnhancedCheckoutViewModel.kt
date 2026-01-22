@@ -689,16 +689,24 @@ class EnhancedCheckoutViewModel @Inject constructor(
 
             // Auto-select default address if available
             profile.savedAddresses.find { it.isDefault }?.let { defaultAddress ->
-                val checkoutAddress = Address(
-                    addressLine1 = defaultAddress.addressLine1,
-                    addressLine2 = defaultAddress.addressLine2,
-                    city = defaultAddress.city,
-                    state = defaultAddress.state,
-                    postalCode = defaultAddress.postalCode,
-                    country = defaultAddress.country
+                // Convert ProfileSavedAddress to SavedAddress for selection
+                val checkoutSavedAddress = SavedAddress(
+                    id = defaultAddress.id,
+                    label = defaultAddress.label,
+                    address = Address(
+                        addressLine1 = defaultAddress.addressLine1,
+                        addressLine2 = defaultAddress.addressLine2,
+                        city = defaultAddress.city,
+                        state = defaultAddress.state,
+                        postalCode = defaultAddress.postalCode,
+                        country = defaultAddress.country
+                    ),
+                    isDefault = defaultAddress.isDefault,
+                    firstName = defaultAddress.firstName,
+                    lastName = defaultAddress.lastName
                 )
-                shippingAddress = checkoutAddress
-                billingAddress = checkoutAddress
+                // Select shipping address (this will also set billing if useShippingAsBilling is true)
+                selectSavedAddress(checkoutSavedAddress, AddressType.SHIPPING)
             }
         }
     }
