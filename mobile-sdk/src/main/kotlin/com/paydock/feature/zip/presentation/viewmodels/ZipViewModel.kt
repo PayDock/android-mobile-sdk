@@ -1,6 +1,7 @@
 package com.paydock.feature.zip.presentation.viewmodels
 
 import androidx.lifecycle.SavedStateHandle
+import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.domain.error.exceptions.ZipException
@@ -98,12 +99,15 @@ internal class ZipViewModel(
             ZipStatus.DECLINED -> updateState(
                 ZipUIState.Error(ZipException.DeclinedException(callbackData.checkoutId))
             )
+
             ZipStatus.CANCELLED -> updateState(
                 ZipUIState.Error(ZipException.CancellationException(callbackData.checkoutId))
             )
+
             ZipStatus.REFERRED -> updateState(
                 ZipUIState.Error(ZipException.ReferredException(callbackData.checkoutId))
             )
+
             ZipStatus.UNEXPECTED, ZipStatus.UNEXPECTED_ERROR -> updateState(
                 ZipUIState.Error(
                     ZipException.UnexpectedStatusException(
@@ -121,7 +125,7 @@ internal class ZipViewModel(
     private fun handleApprovedCallback() {
         val checkoutToken = getCheckoutToken()
         if (checkoutToken == null) {
-            updateState(ZipUIState.Error(ZipException.UnknownException("Checkout token not found")))
+            updateState(ZipUIState.Error(ZipException.UnknownException(MobileSDKConstants.ZipConfig.Errors.ZIP_ERROR)))
             return
         }
 

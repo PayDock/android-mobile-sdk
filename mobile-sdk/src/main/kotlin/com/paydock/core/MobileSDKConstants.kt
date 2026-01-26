@@ -315,6 +315,7 @@ internal object MobileSDKConstants {
             const val DECLINED_ERROR = "Zip transaction was declined"
             const val REFERRED_ERROR = "Zip transaction requires review"
             const val UNKNOWN_ERROR = "An unknown error occurred. Please try again."
+            const val INVALID_URL = "Unsupported URL - unable to proceed."
         }
     }
 }
