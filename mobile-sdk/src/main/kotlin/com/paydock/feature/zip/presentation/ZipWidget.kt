@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.paydock.R
+import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.model.Event
 import com.paydock.core.domain.model.EventAction
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
@@ -268,6 +269,21 @@ private fun ZipLoadingButton(
 }
 
 /**
+ * Validates if a URL is valid for launching in a WebView.
+ *
+ * @param url The URL to validate.
+ * @return `true` if the URL is valid (not null, not empty, and starts with http:// or https://), otherwise `false`.
+ */
+private fun isValidWebViewUrl(url: String?): Boolean {
+    if (url.isNullOrBlank()) {
+        return false
+    }
+    val trimmedUrl = url.trim()
+    return trimmedUrl.startsWith("http://", ignoreCase = true) ||
+        trimmedUrl.startsWith("https://", ignoreCase = true)
+}
+
+/**
  * Handles the current UI state of the Zip payment process.
  */
 private fun handleUiState(
@@ -287,6 +303,14 @@ private fun handleUiState(
 
         is ZipUIState.LaunchCheckout -> {
             loadingDelegate?.widgetLoadingDidFinish()
+
+            // Validate URL before launching WebView
+            if (!isValidWebViewUrl(uiState.checkoutUrl)) {
+                // Pass error to merchant app via completion handler instead of showing toast
+                viewModel.handleWebViewError(null, MobileSDKConstants.ZipConfig.Errors.INVALID_URL)
+                return
+            }
+
             // Launch the Zip checkout activity
             val intent = Intent(context, ZipWebActivity::class.java)
                 .putCheckoutUrlExtra(uiState.checkoutUrl)
