@@ -8,6 +8,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
     // Card Details specific
     COLLECT_CARDHOLDER_NAME,
     ALLOW_SAVE_CARD,
+    STORE_SECURITY_CODE,
     SCHEME_SUPPORT(hasSubComponents = true),
 
     // Save Card Config properties (kept for backward compatibility but not used in list)
@@ -159,6 +160,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
         COLLECT_CARDHOLDER_NAME -> "Collect Cardholder Name"
         ENABLE_SAVE_CARD -> "Enable Save Card"
         ALLOW_SAVE_CARD -> "Allow Save Card"
+        STORE_SECURITY_CODE -> "Store Security Code"
         SCHEME_SUPPORT -> "Card Scheme Support"
         SAVE_CARD_CONSENT_TEXT -> "Consent Text"
         PRIVACY_POLICY -> "Privacy Policy"

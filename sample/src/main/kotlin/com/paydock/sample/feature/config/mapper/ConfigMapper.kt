@@ -10,6 +10,7 @@ fun WidgetType.mapWidgetTypeToConfigComponents(): List<ConfigComponent> {
             ConfigComponent.GATEWAY_ID,
             ConfigComponent.COLLECT_CARDHOLDER_NAME,
             ConfigComponent.ALLOW_SAVE_CARD,
+            ConfigComponent.STORE_SECURITY_CODE,
             ConfigComponent.SCHEME_SUPPORT
         )
 

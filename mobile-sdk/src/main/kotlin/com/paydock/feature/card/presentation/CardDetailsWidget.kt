@@ -84,6 +84,7 @@ fun CardDetailsWidget(
         parametersOf(config.accessToken, config.gatewayId, config.schemeSupport)
     })
     viewModel.setCollectCardholderName(config.collectCardholderName)
+    viewModel.setStoreSecurityCode(config.storeSecurityCode)
     val inputState by viewModel.inputStateFlow.collectAsState()
     val uiState by viewModel.stateFlow.collectAsState()
     val isDataValid by remember(uiState) { derivedStateOf { inputState.isDataValid } }

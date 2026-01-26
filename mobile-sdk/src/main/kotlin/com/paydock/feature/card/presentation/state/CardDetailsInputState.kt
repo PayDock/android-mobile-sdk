@@ -23,6 +23,8 @@ import java.util.TreeMap
  * @property code The entered security code (CVV/CVC). Defaults to an empty string.
  * @property collectCardholderName A flag indicating whether the cardholder name is required. Defaults to `true`.
  * @property saveCard A flag indicating whether the user wants to save the card details for future use. Defaults to `false`.
+ * @property storeSecurityCode Specifies whether the security code (CVV) should be saved when tokenizing a card.
+ * If `null`, the `store_ccv` parameter will not be sent in the tokenization request.
  * @property schemeConfig Configuration for supported card schemes and scheme validation behavior.
  * @property cardSchemas A [TreeMap] containing the available card schemas used for validation. Defaults to an empty map.
  */
@@ -33,6 +35,7 @@ internal data class CardDetailsInputState(
     val code: String = "",
     val collectCardholderName: Boolean = true,
     val saveCard: Boolean = false,
+    val storeSecurityCode: Boolean? = null,
     val schemeConfig: SupportedSchemeConfig = SupportedSchemeConfig(),
     val cardSchemas: TreeMap<Int, CardSchema> = TreeMap()
 ) {

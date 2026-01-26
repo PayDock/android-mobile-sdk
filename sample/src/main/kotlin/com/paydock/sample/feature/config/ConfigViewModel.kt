@@ -119,6 +119,7 @@ class ConfigViewModel @Inject constructor(
             gatewayId = BuildConfig.SERVICE_ID_MPGS,
             collectCardholderName = true,
             allowSaveCard = createDefaultSaveCardConfig(),
+            storeSecurityCode = true,
             schemeSupport = SupportedSchemeConfig(
                 supportedSchemes = CardType.entries.toSet(),
                 enableValidation = true
@@ -440,6 +441,11 @@ class ConfigViewModel @Inject constructor(
                     }
 
                     ConfigComponent.ALLOW_SAVE_CARD -> current.copy(allowSaveCard = newValue as? SaveCardConfig)
+
+                    ConfigComponent.STORE_SECURITY_CODE -> {
+                        current.copy(storeSecurityCode = newValue as Boolean)
+                    }
+
                     ConfigComponent.SCHEME_SUPPORT -> current.copy(schemeSupport = newValue as SupportedSchemeConfig)
                     ConfigComponent.SAVE_CARD_CONSENT_TEXT -> {
                         val saveCardConfig = current.allowSaveCard

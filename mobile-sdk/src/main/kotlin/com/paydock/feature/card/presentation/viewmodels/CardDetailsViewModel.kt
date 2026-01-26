@@ -118,6 +118,18 @@ internal class CardDetailsViewModel(
     }
 
     /**
+     * Sets whether to store the security code (CVV) when tokenizing the card.
+     *
+     * @param storeSecurityCode Boolean indicating whether to store the security code. If `null`,
+     * the `store_ccv` parameter will not be sent in the tokenization request.
+     */
+    fun setStoreSecurityCode(storeSecurityCode: Boolean?) {
+        _inputStateFlow.update { state ->
+            state.copy(storeSecurityCode = storeSecurityCode)
+        }
+    }
+
+    /**
      * Updates the cardholder's name in the input state.
      *
      * @param name The name of the cardholder to set.
@@ -202,6 +214,7 @@ internal class CardDetailsViewModel(
                 cardNumber = state.cardNumber,
                 expiryMonth = state.expiryMonth,
                 expiryYear = state.expiryYear,
+                storeCVV = state.storeSecurityCode,
                 gatewayId = gatewayId
             )
             createCardPaymentTokenUseCase(accessToken, request)
