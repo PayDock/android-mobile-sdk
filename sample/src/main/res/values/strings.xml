@@ -177,6 +177,8 @@
     <string name="label_dpa_application_type_optional">DPA Application Type (Optional)</string>
     <string name="label_collect_cardholder_name">Collect Cardholder Name</string>
     <string name="label_enable_save_card">Enable Save Card</string>
+    <string name="label_enable_store_security_code">Enable Store Security Code</string>
+    <string name="label_store_security_code">Store Security Code</string>
     <string name="label_show_card_title">Show Card Title</string>
     <string name="label_consent_text">Consent Text</string>
     <string name="label_privacy_policy_text">Privacy Policy Text</string>

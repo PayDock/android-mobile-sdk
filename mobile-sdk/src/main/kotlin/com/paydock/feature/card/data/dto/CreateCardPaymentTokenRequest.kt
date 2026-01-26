@@ -28,6 +28,7 @@ internal sealed class CreateCardPaymentTokenRequest {
          * @property expiryMonth The month the credit card expires.
          * @property expiryYear The year the credit card expires.
          * @property storeCVV A flag to be able to use a CCV value for the initial transaction.
+         * If `null`, the `store_ccv` parameter will not be sent in the request.
          * @property gatewayId The unique identifier for the payment gateway handling the request.
          */
         @Serializable
@@ -37,7 +38,7 @@ internal sealed class CreateCardPaymentTokenRequest {
             @SerialName("card_number") val cardNumber: String,
             @SerialName("expire_month") val expiryMonth: String,
             @SerialName("expire_year") val expiryYear: String,
-            @SerialName("store_ccv") val storeCVV: Boolean = true,
+            @SerialName("store_ccv") val storeCVV: Boolean? = null,
             @SerialName("gateway_id") val gatewayId: String?
         ) : TokeniseCardRequest()
 

@@ -45,6 +45,7 @@ fun CardContent(
                     privacyPolicyURL = "https://www.google.com"
                 )
             ),
+            storeSecurityCode = true,
         ),
         loadingDelegate = loadingDelegate,
         completion = resultHandler

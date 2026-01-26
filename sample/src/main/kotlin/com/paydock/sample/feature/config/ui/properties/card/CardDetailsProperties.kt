@@ -76,6 +76,20 @@ fun CardDetailsProperties(
             )
         }
 
+        ConfigComponent.STORE_SECURITY_CODE -> {
+            BooleanField(
+                label = stringResource(R.string.label_store_security_code),
+                value = config.storeSecurityCode ?: false,
+                onValueChange = { newValue ->
+                    configViewModel.updateWidgetConfig(
+                        widgetContext,
+                        ConfigComponent.STORE_SECURITY_CODE,
+                        newValue
+                    )
+                }
+            )
+        }
+
         ConfigComponent.SCHEME_SUPPORT -> {
             ConfigSchemeSupportSection(
                 currentSchemeSupport = config.schemeSupport,
