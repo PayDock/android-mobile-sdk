@@ -21,13 +21,6 @@ internal enum class Schema {
     AMEX,
 
     /**
-     * Australian Bankcard card schema.
-     * Historically used in Australia, though now obsolete.
-     */
-    @SerialName("ausbc")
-    AUSBC,
-
-    /**
      * Diners Club International card schema.
      * Recognized for its association with business and travel cards.
      */
@@ -54,13 +47,6 @@ internal enum class Schema {
      */
     @SerialName("mastercard")
     MASTERCARD,
-
-    /**
-     * Solo card schema.
-     * A debit card scheme formerly used in the UK, now largely discontinued.
-     */
-    @SerialName("solo")
-    SOLO,
 
     /**
      * Visa card schema.

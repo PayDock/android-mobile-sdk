@@ -41,10 +41,6 @@ internal class CardSchemeValidatorTest : BaseUnitTest() {
                 arrayOf("6011709089999627", CardType.DISCOVER),
                 arrayOf("6011820354558384", CardType.DISCOVER),
                 arrayOf("6011266475952146623", CardType.DISCOVER),
-                arrayOf("6334781999990013", CardType.SOLO), // 16 digits
-                arrayOf("67675678901234568698", CardType.SOLO), // 19 digits
-                arrayOf("5610254569871234", CardType.AUSBC),
-                arrayOf("5602237654321098", CardType.AUSBC),
                 arrayOf("6282123456789012", CardType.UNIONPAY), // 16 digits
                 arrayOf("6285987654321098", CardType.UNIONPAY), // 16 digits
                 arrayOf("8105123456789012", CardType.UNIONPAY), // 16 digits

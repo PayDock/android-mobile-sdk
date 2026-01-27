@@ -235,88 +235,12 @@ internal class CreditCardNumberValidatorTest {
     }
 
     @Test
-    fun validateCardNumberInput_solo_minInvalidLength_returnsInvalidLengthError() {
-        val cardNumber = "63347819" // Valid Luhn and supported scheme
-        val hasUserInteracted = true
-        val cardScheme = CardScheme(type = CardType.SOLO, code = CardCode(CodeType.CVC, 3))
-        val supportedSchemeConfig = SupportedSchemeConfig(
-            supportedSchemes = setOf(CardType.SOLO),
-            enableValidation = false
-        )
-        val expected = CardNumberError.InvalidLength
-        val actual = CreditCardNumberValidator.validateCardNumberInput(
-            cardNumber = cardNumber,
-            cardScheme = cardScheme,
-            schemeConfig = supportedSchemeConfig,
-            hasUserInteracted = hasUserInteracted
-        )
-        assertEquals(expected, actual)
-    }
-
-    @Test
-    fun validateCardNumberInput_solo_maxInvalidLength_returnsInvalidLengthError() {
-        val cardNumber = "676756789012345686971247271461787474" // Valid Luhn and supported scheme
-        val hasUserInteracted = true
-        val cardScheme = CardScheme(type = CardType.SOLO, code = CardCode(CodeType.CVC, 3))
-        val supportedSchemeConfig = SupportedSchemeConfig(
-            supportedSchemes = setOf(CardType.SOLO),
-            enableValidation = false
-        )
-        val expected = CardNumberError.InvalidLength
-        val actual = CreditCardNumberValidator.validateCardNumberInput(
-            cardNumber = cardNumber,
-            cardScheme = cardScheme,
-            schemeConfig = supportedSchemeConfig,
-            hasUserInteracted = hasUserInteracted
-        )
-        assertEquals(expected, actual)
-    }
-
-    @Test
-    fun validateCardNumberInput_ausbc_minInvalidLength_returnsInvalidLengthError() {
-        val cardNumber = "56102545698" // Valid Luhn and supported scheme
-        val hasUserInteracted = true
-        val cardScheme = CardScheme(type = CardType.AUSBC, code = CardCode(CodeType.CVC, 3))
-        val supportedSchemeConfig = SupportedSchemeConfig(
-            supportedSchemes = setOf(CardType.AUSBC),
-            enableValidation = false
-        )
-        val expected = CardNumberError.InvalidLength
-        val actual = CreditCardNumberValidator.validateCardNumberInput(
-            cardNumber = cardNumber,
-            cardScheme = cardScheme,
-            schemeConfig = supportedSchemeConfig,
-            hasUserInteracted = hasUserInteracted
-        )
-        assertEquals(expected, actual)
-    }
-
-    @Test
-    fun validateCardNumberInput_ausbc_maxInvalidLength_returnsInvalidLengthError() {
-        val cardNumber = "56102545698712342124626321" // Valid Luhn and supported scheme
-        val hasUserInteracted = true
-        val cardScheme = CardScheme(type = CardType.AUSBC, code = CardCode(CodeType.CVC, 3))
-        val supportedSchemeConfig = SupportedSchemeConfig(
-            supportedSchemes = setOf(CardType.AUSBC),
-            enableValidation = false
-        )
-        val expected = CardNumberError.InvalidLength
-        val actual = CreditCardNumberValidator.validateCardNumberInput(
-            cardNumber = cardNumber,
-            cardScheme = cardScheme,
-            schemeConfig = supportedSchemeConfig,
-            hasUserInteracted = hasUserInteracted
-        )
-        assertEquals(expected, actual)
-    }
-
-    @Test
     fun validateCardNumberInput_default_minInvalidLength_returnsInvalidLengthError() {
         val cardNumber = "11256377" // Valid Luhn and no scheme
         val hasUserInteracted = true
-        val cardScheme = CardScheme(type = CardType.AUSBC, code = CardCode(CodeType.CVC, 3))
+        val cardScheme = CardScheme(type = CardType.VISA, code = CardCode(CodeType.CVC, 3))
         val supportedSchemeConfig = SupportedSchemeConfig(
-            supportedSchemes = setOf(CardType.AUSBC),
+            supportedSchemes = setOf(CardType.VISA),
             enableValidation = false
         )
         val expected = CardNumberError.InvalidLength

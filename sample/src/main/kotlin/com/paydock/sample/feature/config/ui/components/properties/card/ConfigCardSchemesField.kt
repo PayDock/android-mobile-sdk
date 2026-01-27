@@ -90,12 +90,10 @@ fun ConfigCardSchemesField(
 private fun getCardTypeDisplayName(cardType: CardType): String {
     return when (cardType) {
         CardType.AMEX -> "American Express"
-        CardType.AUSBC -> "Australian Bank Card"
         CardType.DINERS -> "Diners Club"
         CardType.DISCOVER -> "Discover"
         CardType.JAPCB -> "JCB"
         CardType.MASTERCARD -> "MasterCard"
-        CardType.SOLO -> "Solo"
         CardType.VISA -> "Visa"
         CardType.UNIONPAY -> "UnionPay International"
     }

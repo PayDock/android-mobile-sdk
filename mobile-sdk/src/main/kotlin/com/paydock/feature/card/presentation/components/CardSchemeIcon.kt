@@ -60,12 +60,10 @@ internal fun CardSchemeIcon(cardType: CardType?, focused: Boolean = false) {
  */
 private fun mapSchemeToDrawable(scheme: CardType?): Int = when (scheme) {
     CardType.AMEX -> R.drawable.ic_amex
-    CardType.AUSBC -> R.drawable.ic_ausbc
     CardType.DINERS -> R.drawable.ic_diners_club
     CardType.DISCOVER -> R.drawable.ic_discover
     CardType.JAPCB -> R.drawable.ic_jcb
     CardType.MASTERCARD -> R.drawable.ic_mastercard
-    CardType.SOLO -> R.drawable.ic_solo
     CardType.VISA -> R.drawable.ic_visa
     CardType.UNIONPAY -> R.drawable.ic_union_pay
     else -> R.drawable.ic_credit_card
