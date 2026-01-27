@@ -215,6 +215,7 @@ internal class CardDetailsViewModel(
                 expiryMonth = state.expiryMonth,
                 expiryYear = state.expiryYear,
                 storeCVV = state.storeSecurityCode,
+                savedCardConsentAccepted = state.saveCard,
                 gatewayId = gatewayId
             )
             createCardPaymentTokenUseCase(accessToken, request)
