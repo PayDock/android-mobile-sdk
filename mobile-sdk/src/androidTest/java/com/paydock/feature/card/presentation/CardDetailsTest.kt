@@ -79,9 +79,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
                 { "bin": "324000", "schema": "amex" },
                 { "bin": "309", "schema": "diners" },
                 { "bin": "6011", "schema": "discover" },
-                { "bin": "180000~180099", "schema": "japcb" },
-                { "bin": "633454", "schema": "solo" },
-                { "bin": "5610", "schema": "ausbc" }
+                { "bin": "180000~180099", "schema": "japcb" }
               ]
             }
         """.trimIndent()
