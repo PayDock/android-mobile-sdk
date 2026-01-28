@@ -289,4 +289,60 @@ internal class CardSecurityCodeValidatorTest {
         assertEquals(expected, actual)
     }
 
+    @Test
+    fun validateEftposSecurityCodeInput_invalidCVV_CVCInput_returnsInvalidError() {
+        val securityCode = "12" // Invalid for CVV_CVC (requires 3 digits)
+        val cardCode = CardCode(CodeType.CVV_CVC, 3)
+        val hasUserInteracted = true
+        val expected = SecurityCodeError.Invalid
+        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(
+            securityCode,
+            cardCode,
+            hasUserInteracted
+        )
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateEftposSecurityCodeInput_validCVV_CVCInput_returnsNoneError() {
+        val securityCode = "123" // Valid for EFTPOS CVV_CVC
+        val cardCode = CardCode(CodeType.CVV_CVC, 3)
+        val hasUserInteracted = true
+        val expected = SecurityCodeError.None
+        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(
+            securityCode,
+            cardCode,
+            hasUserInteracted
+        )
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateEftposSecurityCodeInput_emptyInput_userInteracted_returnsEmptyError() {
+        val securityCode = ""
+        val cardCode = CardCode(CodeType.CVV_CVC, 3)
+        val hasUserInteracted = true
+        val expected = SecurityCodeError.Empty
+        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(
+            securityCode,
+            cardCode,
+            hasUserInteracted
+        )
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateEftposSecurityCodeInput_emptyInput_userNotInteracted_returnsNoneError() {
+        val securityCode = ""
+        val cardCode = CardCode(CodeType.CVV_CVC, 3)
+        val hasUserInteracted = false
+        val expected = SecurityCodeError.None
+        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(
+            securityCode,
+            cardCode,
+            hasUserInteracted
+        )
+        assertEquals(expected, actual)
+    }
+
 }

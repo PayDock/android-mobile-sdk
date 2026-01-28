@@ -60,6 +60,13 @@ internal object CardSchemeValidator {
         ),
 
         CardScheme(
+            type = CardType.EFTPOS,
+            gaps = listOf(4, 8, 12),
+            lengths = listOf(16),
+            code = CardCode(type = CodeType.CVV_CVC, size = MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH)
+        ),
+
+        CardScheme(
             type = CardType.UNIONPAY,
             gaps = listOf(4, 8, 12, 16),
             lengths = listOf(16, 17, 18, 19),
