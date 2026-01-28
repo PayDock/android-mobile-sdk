@@ -27,5 +27,12 @@ internal enum class CodeType {
      * Card Verification Number (CVN) security code type.
      * Required digits: 3
      */
-    CVN
+    CVN,
+
+    /**
+     * Card Verification Value / Card Verification Code (CVV / CVC) security code type.
+     * Dual networked cards that can use either CVV or CVC.
+     * Required digits: 3
+     */
+    CVV_CVC
 }

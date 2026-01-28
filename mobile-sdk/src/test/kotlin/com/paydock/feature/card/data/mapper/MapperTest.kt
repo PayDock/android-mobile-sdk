@@ -94,6 +94,11 @@ internal class MapperTest : BaseUnitTest() {
                     assertEquals(CardType.UNIONPAY, value.schema)
                 }
 
+                CardType.EFTPOS -> {
+                    // EFTPOS not in this test data
+                    fail("Unexpected EFTPOS schema in test data: bin: ${value.bin}")
+                }
+
                 null -> fail("Unknown schema: bin: ${value.bin}")
             }
         }
@@ -138,5 +143,25 @@ internal class MapperTest : BaseUnitTest() {
         assertEquals(1, cardSchemas.size)
         assertEquals("123456", cardSchemas.firstEntry()?.value?.bin)
         assertNull(cardSchemas.firstEntry()?.value?.schema) // Assuming NULL is your default
+    }
+
+    @Test
+    fun `asEntity should map EFTPOS schema correctly`() {
+        // Arrange
+        val json = """
+        {
+          "card_schemas": [
+            { "bin": "411111", "schema": "eftpos" }
+          ]
+        }
+        """.trimIndent()
+        val response = json.convertToDataClass<CardSchemasResponse>()
+        // Act
+        val cardSchemas = response.asEntity()
+        // Assert
+        assertEquals(1, cardSchemas.size)
+        val eftposSchema = cardSchemas.firstEntry()?.value
+        assertEquals("411111", eftposSchema?.bin)
+        assertEquals(CardType.EFTPOS, eftposSchema?.schema)
     }
 }

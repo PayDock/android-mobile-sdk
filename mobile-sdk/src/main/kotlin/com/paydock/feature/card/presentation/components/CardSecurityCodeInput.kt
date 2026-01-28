@@ -93,6 +93,12 @@ internal fun CardSecurityCodeInput(
         }
     }
 
+    // Get the display label for the security code type
+    val securityCodeLabel = when (securityCodeType) {
+        CodeType.CVV_CVC -> "CVV / CVC"
+        else -> securityCodeType.name
+    }
+
     // Render the security code input field with appropriate properties
     SdkTextField(
         modifier = modifier,
@@ -110,7 +116,7 @@ internal fun CardSecurityCodeInput(
             }
         },
         // Display the label according to the detected security code type
-        label = securityCodeType.name,
+        label = securityCodeLabel,
         // Show a placeholder with 'X' placeholders based on the required digits
         placeholder = placeholder,
         enabled = enabled,
@@ -181,6 +187,24 @@ internal fun PreviewCardSecurityCodeCIDInput() {
         CardSecurityCodeInput(
             value = "1234",
             cardCode = CardCode(CodeType.CID, MobileSDKConstants.CardDetailsConfig.CID_LENGTH),
+            enabled = true,
+            nextFocus = null
+        ) {
+
+        }
+    }
+}
+
+@SdkLightDarkPreviews
+@Composable
+internal fun PreviewCardSecurityCodeCVV_CVCInput() {
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        CardSecurityCodeInput(
+            value = "123",
+            cardCode = CardCode(
+                CodeType.CVV_CVC,
+                MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH
+            ),
             enabled = true,
             nextFocus = null
         ) {

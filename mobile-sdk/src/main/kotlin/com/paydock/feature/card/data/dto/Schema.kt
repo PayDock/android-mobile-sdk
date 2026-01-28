@@ -56,6 +56,13 @@ internal enum class Schema {
     VISA,
 
     /**
+     * EFTPOS card schema.
+     * Dual networked to Visa/Mastercard, commonly used in Australia.
+     */
+    @SerialName("eftpos")
+    EFTPOS,
+
+    /**
      * UnionPay card schema.
      * A card network widely used in China and accepted globally.
      */

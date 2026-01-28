@@ -52,7 +52,7 @@ internal data class ExternalCheckoutMeta(
     @SerialName("tokenize")
     val tokenize: Boolean? = null,
     @SerialName("charge")
-    val charge: ExternalCheckoutCharge? = null,
+    val charge: ExternalCheckoutCharge,
     @SerialName("statistics")
     val statistics: ExternalCheckoutStatistics? = null
 )
@@ -70,9 +70,9 @@ internal data class ExternalCheckoutMeta(
 @Serializable
 internal data class ExternalCheckoutCharge(
     @SerialName("amount")
-    val amount: Double? = null,
+    val amount: Double,
     @SerialName("currency")
-    val currency: String? = null,
+    val currency: String,
     @SerialName("shipping_type")
     val shippingType: String? = null,
     @SerialName("billing_address")
