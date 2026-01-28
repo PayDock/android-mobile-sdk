@@ -11,6 +11,7 @@ import com.paydock.sample.feature.config.models.ConfigComponent
 import com.paydock.sample.feature.config.ui.components.properties.card.ConfigCardSchemesField
 import com.paydock.sample.feature.config.ui.components.section.ConfigSaveCardSection
 import com.paydock.sample.feature.config.ui.components.section.ConfigSchemeSupportSection
+import com.paydock.sample.feature.config.ui.components.section.ConfigStoreSecurityCodeSection
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
 
 @Composable
@@ -77,14 +78,13 @@ fun CardDetailsProperties(
         }
 
         ConfigComponent.STORE_SECURITY_CODE -> {
-            BooleanField(
-                label = stringResource(R.string.label_store_security_code),
-                value = config.storeSecurityCode ?: false,
-                onValueChange = { newValue ->
+            ConfigStoreSecurityCodeSection(
+                currentStoreSecurityCode = config.storeSecurityCode,
+                onStoreSecurityCodeChange = { newStoreSecurityCode ->
                     configViewModel.updateWidgetConfig(
                         widgetContext,
                         ConfigComponent.STORE_SECURITY_CODE,
-                        newValue
+                        newStoreSecurityCode
                     )
                 }
             )

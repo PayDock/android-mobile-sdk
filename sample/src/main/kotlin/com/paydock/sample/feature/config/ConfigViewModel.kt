@@ -443,7 +443,7 @@ class ConfigViewModel @Inject constructor(
                     ConfigComponent.ALLOW_SAVE_CARD -> current.copy(allowSaveCard = newValue as? SaveCardConfig)
 
                     ConfigComponent.STORE_SECURITY_CODE -> {
-                        current.copy(storeSecurityCode = newValue as Boolean)
+                        current.copy(storeSecurityCode = newValue as? Boolean)
                     }
 
                     ConfigComponent.SCHEME_SUPPORT -> current.copy(schemeSupport = newValue as SupportedSchemeConfig)
