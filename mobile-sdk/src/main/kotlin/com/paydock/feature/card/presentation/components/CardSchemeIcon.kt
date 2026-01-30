@@ -27,14 +27,26 @@ import com.paydock.feature.card.domain.model.integration.enums.CardType.Companio
  * This determines the specific icon resource to be displayed.
  * @param focused A flag indicating whether the card input field is focused.
  * This affects the tint applied to the icon when the card scheme type is `OTHER`.
+ * @param hideFromAccessibility Whether to hide this icon from accessibility services.
+ * Defaults to false to allow TalkBack to announce the card scheme.
  */
 @Composable
-internal fun CardSchemeIcon(cardType: CardType?, focused: Boolean = false) {
+internal fun CardSchemeIcon(
+    cardType: CardType?,
+    focused: Boolean = false,
+    hideFromAccessibility: Boolean = false
+) {
     SdkIcon(
         modifier = Modifier
             .testTag("cardIcon")
             .width(24.dp)
-            .semantics { hideFromAccessibility() },
+            .then(
+                if (hideFromAccessibility) {
+                    Modifier.semantics { hideFromAccessibility() }
+                } else {
+                    Modifier
+                }
+            ),
         painter = painterResource(id = mapSchemeToDrawable(cardType)),
         contentDescription = cardType?.displayLabel(),
         appearance = IconAppearanceDefaults.appearance().copy(
