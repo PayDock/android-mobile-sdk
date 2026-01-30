@@ -22,7 +22,9 @@ import com.paydock.feature.card.domain.model.integration.enums.CardType.Companio
  *
  * This composable function renders a horizontal row of card scheme icons,
  * representing the payment methods accepted by the integration.
- * The icons are aligned to the right/end of the banner and spaced with 7.dp between each image.
+ * The icons are aligned to the left/start of the banner and spaced with 7.dp between each image.
+ * The entire banner acts as a single accessible element that announces all supported card schemes
+ * together when focused with TalkBack.
  *
  * @param supportedSchemes A list of [CardType] enums representing the supported card schemes.
  */

@@ -110,7 +110,7 @@ internal fun CreditCardNumberInput(
         enabled = enabled,
         label = stringResource(id = R.string.label_card_number),
         autofillType = ContentType.CreditCardNumber,
-        leadingIcon = { CardSchemeIcon(cardScheme?.type, focusedState) },
+        leadingIcon = { CardSchemeIcon(cardScheme?.type, focusedState, hideFromAccessibility = true) },
         error = errorMessage,
         visualTransformation = cardScheme?.let {
             CardNumberInputTransformation(
