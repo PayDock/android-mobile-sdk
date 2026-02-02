@@ -76,7 +76,6 @@ import com.paydock.sample.feature.account.AccountViewModel
 import com.paydock.sample.feature.account.data.UserProfileManager
 import com.paydock.sample.feature.account.domain.model.Customer
 import com.paydock.sample.feature.account.domain.model.SavedAddress
-import com.paydock.sample.feature.config.ConfigViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

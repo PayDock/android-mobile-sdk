@@ -16,9 +16,18 @@ import com.paydock.sample.feature.config.models.ConfigComponent
 fun ConfigSubComponentListScreen(
     subComponents: List<ConfigComponent>,
     onConfigComponentClicked: (ConfigComponent) -> Unit,
+    header: (@Composable () -> Unit)? = null
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            header?.let { headerContent ->
+                item {
+                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                        headerContent()
+                    }
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                }
+            }
             items(subComponents) { item ->
                 ListRowItem(
                     title = item.displayName()

@@ -64,7 +64,6 @@ fun WidgetType.mapWidgetTypeToConfigComponents(): List<ConfigComponent> {
             ConfigComponent.ZIP_GENDER,
             ConfigComponent.ZIP_DATE_OF_BIRTH,
             ConfigComponent.ZIP_SHIPPING_TYPE,
-            ConfigComponent.ZIP_HIDE_SHIPPING_ADDRESS,
             ConfigComponent.ZIP_BILLING_ADDRESS,
             ConfigComponent.ZIP_SHIPPING_ADDRESS
         )

@@ -21,7 +21,6 @@ import java.math.BigDecimal
  * @property gender Optional gender of the shopper ("male", "female", or other).
  * @property dateOfBirth Optional date of birth in format "YYYY-MM-DD".
  * @property shippingType Optional shipping type (e.g., "delivery", "pickup").
- * @property hideShippingAddress Optional flag to hide shipping address fields.
  * @property billing Optional billing address information.
  * @property shipping Optional shipping address information.
  * @property items Optional list of items in the order.
@@ -40,7 +39,6 @@ data class ZipWidgetConfig(
     val gender: String? = null,
     val dateOfBirth: String? = null,
     val shippingType: String? = null,
-    val hideShippingAddress: Boolean? = null,
     val billing: Address? = null,
     val shipping: Address? = null,
     val items: List<Item>? = null,

@@ -3,6 +3,8 @@ package com.paydock.sample.designsystems.components.navigation
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
@@ -28,6 +30,7 @@ import com.paydock.sample.feature.config.ui.ConfigSubComponentListScreen
 import com.paydock.sample.feature.config.ui.ConfigWidgetListScreen
 import com.paydock.sample.feature.config.ui.GlobalConfigScreen
 import com.paydock.sample.feature.config.ui.PaymentProcessorConfigScreen
+import com.paydock.sample.feature.config.ui.properties.zip.ZipShippingAddressHeader
 import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.shop.ui.CartScreen
 import com.paydock.sample.feature.shop.ui.ProductListScreen
@@ -306,6 +309,18 @@ fun NavigationGraph(
                             ?.sortedBy { it.displayName() } ?: emptyList()
                     }
 
+                val zipConfigHeader: (@Composable () -> Unit)? =
+                    if (configComponent == ConfigComponent.ZIP_SHIPPING_ADDRESS && widgetType == WidgetType.ZIP) {
+                        {
+                            val config by configViewModel.zipWidgetConfig.collectAsState()
+                            ZipShippingAddressHeader(
+                                config = config,
+                                widgetContext = widgetType,
+                                configViewModel = configViewModel
+                            )
+                        }
+                    } else null
+
                 ConfigSubComponentListScreen(
                     subComponents = items,
                     onConfigComponentClicked = { selectedItem ->
@@ -314,7 +329,8 @@ fun NavigationGraph(
                         } else {
                             navController.navigate("config_properties/${widgetType.name}/${selectedItem.name}")
                         }
-                    }
+                    },
+                    header = zipConfigHeader
                 )
             }
         }

@@ -30,7 +30,7 @@ internal fun ZipWidgetConfig.toExternalCheckoutRequest(): ExternalCheckoutReques
                 currency = currency,
                 shippingType = shippingType,
                 billingAddress = billing?.toExternalBillingAddress(),
-                shippingAddress = if (hideShippingAddress == true) null else shipping?.toExternalBillingAddress(),
+                shippingAddress = shipping?.toExternalBillingAddress(),
                 items = items?.map { it.toExternalCheckoutItem() }
             ),
             statistics = statistics?.toExternalCheckoutStatistics()

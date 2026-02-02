@@ -186,7 +186,6 @@ class ConfigViewModel @Inject constructor(
             gender = "male",
             dateOfBirth = null,
             shippingType = "delivery",
-            hideShippingAddress = false,
             billing = ZipWidgetConfig.Address(
                 firstName = "Joshua",
                 lastName = "Wood",
@@ -197,18 +196,21 @@ class ConfigViewModel @Inject constructor(
                 postcode = "3223",
                 country = "AU"
             ),
-            shipping = ZipWidgetConfig.Address(
-                firstName = "Joshua",
-                lastName = "Wood",
-                line1 = "Suite 660",
-                line2 = "822 Ruiz Square",
-                city = "Sydney",
-                state = "LA",
-                postcode = "3223",
-                country = "AU"
-            )
+            shipping = defaultZipShippingAddress()
         )
     }
+
+    private fun defaultZipShippingAddress(): ZipWidgetConfig.Address =
+        ZipWidgetConfig.Address(
+            firstName = "Joshua",
+            lastName = "Wood",
+            line1 = "Suite 660",
+            line2 = "822 Ruiz Square",
+            city = "Sydney",
+            state = "LA",
+            postcode = "3223",
+            country = "AU"
+        )
 
     private fun createDefaultGooglePayConfig(): GooglePayWidgetConfig {
         return GooglePayWidgetConfig(
@@ -1116,7 +1118,9 @@ class ConfigViewModel @Inject constructor(
                     ConfigComponent.ZIP_GENDER -> current.copy(gender = (newValue as? String)?.ifEmpty { null })
                     ConfigComponent.ZIP_DATE_OF_BIRTH -> current.copy(dateOfBirth = (newValue as? String)?.ifEmpty { null })
                     ConfigComponent.ZIP_SHIPPING_TYPE -> current.copy(shippingType = (newValue as? String)?.ifEmpty { null })
-                    ConfigComponent.ZIP_HIDE_SHIPPING_ADDRESS -> current.copy(hideShippingAddress = newValue as? Boolean)
+                    ConfigComponent.ZIP_USE_DEFAULT_SHIPPING_ADDRESS -> current.copy(
+                        shipping = if (newValue == true) defaultZipShippingAddress() else null
+                    )
 
                     // Billing address
                     ConfigComponent.ZIP_BILLING_ADDRESS -> current.copy(billing = newValue as? ZipWidgetConfig.Address)
