@@ -263,6 +263,6 @@
     <string name="label_gender_optional">Gender (Optional)</string>
     <string name="label_date_of_birth_optional">Date of Birth (Optional)</string>
     <string name="label_shipping_type_optional">Shipping Type (Optional)</string>
-    <string name="label_hide_shipping_address">Hide Shipping Address</string>
+    <string name="label_use_default_shipping_address">Use Default Shipping Address</string>
     <string name="label_postcode_optional">Postcode (Optional)</string>
 </resources>

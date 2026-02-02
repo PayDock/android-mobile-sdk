@@ -6,7 +6,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
@@ -16,7 +15,6 @@ import com.paydock.feature.afterpay.presentation.AfterpayAppearanceDefaults
 import com.paydock.feature.afterpay.presentation.AfterpayWidget
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
-import com.paydock.sample.core.AU_COUNTRY_CODE
 import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.shop.data.CartManager
 import java.util.Currency

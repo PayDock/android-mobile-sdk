@@ -26,15 +26,18 @@ class BigDecimalTypeAdapter : TypeAdapter<BigDecimal>() {
                 `in`.nextNull()
                 null
             }
+
             JsonToken.STRING -> {
                 val stringValue = `in`.nextString()
                 if (stringValue.isEmpty()) null else BigDecimal(stringValue)
             }
+
             JsonToken.NUMBER -> {
                 // Handle both integer and decimal numbers
                 val numberValue = `in`.nextString()
                 BigDecimal(numberValue)
             }
+
             else -> {
                 `in`.skipValue()
                 null

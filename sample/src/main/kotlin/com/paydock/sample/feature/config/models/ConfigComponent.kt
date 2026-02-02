@@ -130,7 +130,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
     ZIP_GENDER,
     ZIP_DATE_OF_BIRTH,
     ZIP_SHIPPING_TYPE,
-    ZIP_HIDE_SHIPPING_ADDRESS,
+    ZIP_USE_DEFAULT_SHIPPING_ADDRESS,
     ZIP_BILLING_ADDRESS(hasSubComponents = true),
     ZIP_SHIPPING_ADDRESS(hasSubComponents = true),
 
@@ -235,7 +235,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
         ZIP_GENDER -> "Gender"
         ZIP_DATE_OF_BIRTH -> "Date of Birth"
         ZIP_SHIPPING_TYPE -> "Shipping Type"
-        ZIP_HIDE_SHIPPING_ADDRESS -> "Hide Shipping Address"
+        ZIP_USE_DEFAULT_SHIPPING_ADDRESS -> "Use Default Shipping Address"
         ZIP_BILLING_ADDRESS -> "Billing Address"
         ZIP_SHIPPING_ADDRESS -> "Shipping Address"
         ZIP_BILLING_FIRST_NAME -> "First Name"

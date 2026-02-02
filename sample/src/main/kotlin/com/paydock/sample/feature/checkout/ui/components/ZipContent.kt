@@ -28,15 +28,15 @@ fun ZipContent(
 ) {
     val configViewModel: ConfigViewModel = hiltViewModel()
     val globalConfig by configViewModel.globalConfig.collectAsState()
-    
+
     // Get saved addresses to access firstName/lastName from selected addresses
     val savedAddresses by viewModel.savedAddresses.collectAsState()
-    
+
     // Get cart information
     val cartManager = remember { CartManager.shared }
     val cartItems by cartManager.cartItems.collectAsState()
     val cartTotal = cartManager.totalPrice
-    
+
     // Convert cart items to Zip widget items
     val zipItems = cartItems.map { cartItem ->
         ZipWidgetConfig.Item(
@@ -46,7 +46,7 @@ fun ZipContent(
             reference = cartItem.product.id
         )
     }
-    
+
     // Get shipping address name from saved address if selected, otherwise use contact info
     val selectedShippingAddress = viewModel.selectedShippingAddressId?.let { id ->
         savedAddresses.find { it.id == id }
@@ -55,7 +55,7 @@ fun ZipContent(
         ?: viewModel.contactInfo.firstName
     val shippingLastName = selectedShippingAddress?.lastName?.takeIf { it.isNotBlank() }
         ?: viewModel.contactInfo.lastName
-    
+
     // Get billing address name:
     // - If using shipping as billing, use shipping address name
     // - Otherwise, use the selected billing address's saved address name if one is selected
@@ -72,14 +72,14 @@ fun ZipContent(
         // If selectedBillingAddressId is null (manually entered address), selectedBillingAddress will be null
         // and we'll fall back to contact info below
     }
-    
+
     // Use saved address name if available, otherwise fall back to contact info
     // Note: We only use shipping address name when useShippingAsBilling is true (handled above)
     val billingFirstName = selectedBillingAddress?.firstName?.takeIf { it.isNotBlank() }
         ?: viewModel.contactInfo.firstName
     val billingLastName = selectedBillingAddress?.lastName?.takeIf { it.isNotBlank() }
         ?: viewModel.contactInfo.lastName
-    
+
     // Convert billing address from checkout view model
     val billingAddress = if (viewModel.billingAddress.isComplete) {
         ZipWidgetConfig.Address(
@@ -93,7 +93,7 @@ fun ZipContent(
             country = convertCountryNameToCode(viewModel.billingAddress.country)
         )
     } else null
-    
+
     // Convert shipping address from checkout view model
     val shippingAddress = if (viewModel.shippingAddress.isComplete) {
         ZipWidgetConfig.Address(
@@ -141,10 +141,10 @@ fun ZipContent(
  */
 private fun convertCountryNameToCode(countryName: String): String {
     if (countryName.isBlank()) return countryName
-    
+
     // Check if it's already a 2-letter code
     if (countryName.length == 2) return countryName.uppercase()
-    
+
     // Find the ISO country code that matches the country name
     return Locale.getISOCountries().find { countryCode ->
         val locale = Locale.Builder().setRegion(countryCode).build()
