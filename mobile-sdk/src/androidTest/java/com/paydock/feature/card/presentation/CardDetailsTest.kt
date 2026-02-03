@@ -20,8 +20,8 @@ import com.paydock.core.extensions.waitUntilTimeout
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.extensions.convertToDataClass
-import com.paydock.feature.card.data.dto.CardSchemasResponse
-import com.paydock.feature.card.data.mapper.asEntity
+import com.paydock.feature.card.data.cache.BinDataCacheManager
+import com.paydock.feature.card.data.dto.BinDataResponse
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.CardResult
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
@@ -72,21 +72,16 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
     private fun setupGetCardSchemasSuccess() {
         val json = """
             {
-              "card_schemas": [
-                { "bin": "400000~420317", "schema": "visa"},
-                { "bin": "420412", "schema": "visa"},
-                { "bin": "2221~2720", "schema": "mastercard" },
-                { "bin": "324000", "schema": "amex" },
-                { "bin": "309", "schema": "diners" },
-                { "bin": "6011", "schema": "discover" },
-                { "bin": "180000~180099", "schema": "japcb" }
-              ]
+              "2": { "4": "v", "42": "v", "22": "m", "34": "a", "37": "a", "51": "m", "62": "u", "60": "d" },
+              "4": { "4024": "v", "4208": "v", "2221": "m", "3480": "a", "3031": "c", "6011": "d", "6282": "u" },
+              "6": {},
+              "r": { "2": [], "4": [["2221", "2720", "m"]], "6": [] },
+              "s": { "m": "mastercard", "c": "diners", "j": "japcb", "a": "amex", "v": "visa", "e": "eftpos", "d": "discover", "u": "unionpay" },
+              "v": 1
             }
         """.trimIndent()
-        val response = json.convertToDataClass<CardSchemasResponse>()
-        // Act
-        val cardSchemas = response.asEntity()
-        val mockResult = Result.success(cardSchemas)
+        val binData = json.convertToDataClass<BinDataResponse>()
+        val mockResult = Result.success(binData)
         coEvery {
             getCardSchemasUseCase()
         } returns mockResult
@@ -101,6 +96,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
     private val createCardPaymentTokenUseCase: CreateCardPaymentTokenUseCase = mockk(relaxed = true)
     private val getCardSchemasUseCase: GetCardSchemasUseCase =
         mockk(relaxed = true)
+    private val binDataCacheManager: BinDataCacheManager = mockk(relaxed = true)
 
     override fun initialiseViewModel(): CardDetailsViewModel {
         setupGetCardSchemasSuccess()
@@ -114,7 +110,8 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             createCardPaymentTokenUseCase = createCardPaymentTokenUseCase,
             getCardSchemasUseCase = getCardSchemasUseCase,
             dispatchers = dispatchersProvider,
-            savedStateHandle = SavedStateHandle()
+            savedStateHandle = SavedStateHandle(),
+            binDataCacheManager = binDataCacheManager
         )
     }
 

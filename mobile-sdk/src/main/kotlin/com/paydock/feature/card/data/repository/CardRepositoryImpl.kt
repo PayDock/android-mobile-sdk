@@ -1,12 +1,11 @@
 package com.paydock.feature.card.data.repository
 
 import com.paydock.core.network.extensions.convertToDataClass
-import com.paydock.core.utils.reader.LocalFileReader
-import com.paydock.feature.card.data.dto.CardSchemasResponse
+import com.paydock.feature.card.data.cache.BinDataCacheManager
+import com.paydock.feature.card.data.dto.BinDataResponse
 import com.paydock.feature.card.data.dto.CardTokenResponse
 import com.paydock.feature.card.data.dto.CreateCardPaymentTokenRequest
 import com.paydock.feature.card.data.mapper.asEntity
-import com.paydock.feature.card.domain.model.ui.CardSchema
 import com.paydock.feature.card.domain.model.ui.TokenDetails
 import com.paydock.feature.card.domain.repository.CardRepository
 import io.ktor.client.HttpClient
@@ -21,7 +20,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
-import java.util.TreeMap
 
 /**
  * Implementation of the [CardRepository] interface for handling payment token operations
@@ -32,12 +30,12 @@ import java.util.TreeMap
  *
  * @param dispatcher The CoroutineDispatcher used for executing network calls.
  * @param client The [HttpClient] instance used to make HTTP requests.
- * @param jsonReader A reader for accessing local JSON files.
+ * @param binDataCacheManager The cache manager for BIN data files.
  */
 internal class CardRepositoryImpl(
     private val dispatcher: CoroutineDispatcher,
     private val client: HttpClient,
-    private val jsonReader: LocalFileReader
+    private val binDataCacheManager: BinDataCacheManager
 ) : CardRepository {
 
     /**
@@ -87,14 +85,13 @@ internal class CardRepositoryImpl(
     }.flowOn(dispatcher)
 
     /**
-     * Fetches the supported card schemas from the a local file.
+     * Fetches the BIN data from cache or bundled asset.
      *
-     * @return A [TreeMap] containing card schema information.
+     * @return A [BinDataResponse] containing BIN data for card scheme detection.
      */
-    override suspend fun getCardSchemas(): TreeMap<Int, CardSchema> =
+    override suspend fun getBinData(): BinDataResponse =
         withContext(dispatcher) {
-            val jsonString = jsonReader.readFileFromAssets("card_schemas.json")
-            val response = jsonString.convertToDataClass<CardSchemasResponse>()
-            response.asEntity()
+            val jsonString = binDataCacheManager.getBinDataFileContent()
+            jsonString.convertToDataClass<BinDataResponse>()
         }
 }

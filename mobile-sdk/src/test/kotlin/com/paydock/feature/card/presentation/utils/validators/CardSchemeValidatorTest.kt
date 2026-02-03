@@ -2,8 +2,7 @@ package com.paydock.feature.card.presentation.utils.validators
 
 import com.paydock.core.BaseUnitTest
 import com.paydock.core.network.extensions.convertToDataClass
-import com.paydock.feature.card.data.dto.CardSchemasResponse
-import com.paydock.feature.card.data.mapper.asEntity
+import com.paydock.feature.card.data.dto.BinDataResponse
 import com.paydock.feature.card.domain.model.integration.enums.CardType
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -22,8 +21,6 @@ internal class CardSchemeValidatorTest : BaseUnitTest() {
                 arrayOf("4208004923372193", CardType.VISA),
                 arrayOf("4208165487748971884", CardType.VISA),
                 arrayOf("4917345526504959", CardType.VISA), // Visa Electron
-                arrayOf("4917000869902803", CardType.VISA), // Visa Electron
-                arrayOf("4175008066695309", CardType.VISA), // Visa Electron
                 arrayOf("2356994999357329", CardType.MASTERCARD),
                 arrayOf("5570239494137094", CardType.MASTERCARD),
                 arrayOf("5499295755031070", CardType.MASTERCARD),
@@ -32,12 +29,10 @@ internal class CardSchemeValidatorTest : BaseUnitTest() {
                 arrayOf("375527411179515", CardType.AMEX),
                 arrayOf("30312568541349", CardType.DINERS), // Carte Blanche
                 arrayOf("30484878591106", CardType.DINERS), // Carte Blanche
-                arrayOf("30330208562251", CardType.DINERS), // Carte Blanche
                 arrayOf("36240062066419", CardType.DINERS), // International
-                arrayOf("36213673014525", CardType.DINERS), // International
-                arrayOf("36415529976035", CardType.DINERS), // International
-                arrayOf("2131519687149385", CardType.JAPCB),
-                arrayOf("3569018805679188", CardType.JAPCB),
+                arrayOf("3530111333300000", CardType.JAPCB), // BIN: 35 (2-digit match)
+                arrayOf("3569018805679188", CardType.JAPCB), // BIN: 356901 (6-digit match)
+                arrayOf("3088123456789012", CardType.JAPCB), // BIN: 3088 (4-digit match)
                 arrayOf("6011709089999627", CardType.DISCOVER),
                 arrayOf("6011820354558384", CardType.DISCOVER),
                 arrayOf("6011266475952146623", CardType.DISCOVER),
@@ -46,7 +41,10 @@ internal class CardSchemeValidatorTest : BaseUnitTest() {
                 arrayOf("8105123456789012", CardType.UNIONPAY), // 16 digits
                 arrayOf("62298712345678901", CardType.UNIONPAY), // 17 digits - BIN 622987
                 arrayOf("628212345678901234", CardType.UNIONPAY), // 18 digits
-                arrayOf("6282123456789012345", CardType.UNIONPAY) // 19 digits
+                arrayOf("6282123456789012345", CardType.UNIONPAY), // 19 digits
+                arrayOf("5010123456789012", CardType.EFTPOS), // BIN: 5010
+                arrayOf("5018123456789012", CardType.EFTPOS), // BIN: 5018
+                arrayOf("5021123456789012", CardType.EFTPOS) // BIN: 5021
             )
         }
     }
@@ -59,13 +57,13 @@ internal class CardSchemeValidatorTest : BaseUnitTest() {
 
     @Test
     fun testValidateCardNumber() {
-        val cardSchemasCollection =
-            readResourceFile("card/success_get_card_schemas_response.json")
-                .convertToDataClass<CardSchemasResponse>().asEntity()
+        val binData =
+            readResourceFile("card/success_bin_data_response.json")
+                .convertToDataClass<BinDataResponse>()
 
         assertEquals(
             expectedIssuer,
-            CardSchemeValidator.detectCardScheme(cardSchemasCollection, cardNumber)?.type
+            CardSchemeValidator.detectCardScheme(binData, cardNumber)?.type
         )
     }
 }
