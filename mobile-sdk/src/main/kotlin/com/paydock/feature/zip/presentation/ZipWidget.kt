@@ -304,9 +304,8 @@ private fun handleUiState(
         is ZipUIState.LaunchCheckout -> {
             loadingDelegate?.widgetLoadingDidFinish()
 
-            // Validate URL before launching WebView
+            // Validate URL before launching WebView; report error via completion for merchant to handle
             if (!isValidWebViewUrl(uiState.checkoutUrl)) {
-                // Pass error to merchant app via completion handler instead of showing toast
                 viewModel.handleWebViewError(null, MobileSDKConstants.ZipConfig.Errors.INVALID_URL)
                 return
             }

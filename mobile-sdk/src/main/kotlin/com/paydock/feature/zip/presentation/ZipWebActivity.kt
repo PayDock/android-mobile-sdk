@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.Modifier
+import com.paydock.core.MobileSDKConstants
 import com.paydock.feature.zip.domain.model.ZipCallbackData
 import com.paydock.feature.zip.domain.model.ZipStatus
 import com.paydock.feature.zip.presentation.components.ZipWebView
@@ -29,8 +30,7 @@ import com.paydock.feature.zip.presentation.utils.putResultStatusExtra
  * interaction between the user and the payment provider. It manages the lifecycle of the
  * payment process, including handling success, failure, and cancellation scenarios.
  *
- * The Zip WebView content already includes its own navigation UI, so no additional
- * TopAppBar is needed.
+ * The Zip WebView content includes its own navigation UI (e.g. close button on hosted pages).
  */
 internal class ZipWebActivity : ComponentActivity() {
 
@@ -38,10 +38,11 @@ internal class ZipWebActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val checkoutUrl = intent.getCheckoutUrlExtra()
-        if (checkoutUrl == null) {
-            finishWithError(null, "Checkout URL not provided")
+        if (!isValidWebViewUrl(checkoutUrl)) {
+            finishWithError(null, MobileSDKConstants.ZipConfig.Errors.INVALID_URL)
             return
         }
+        val url = checkoutUrl!!
 
         // Handle back press as user cancellation
         val onBackPressedCallback = object : OnBackPressedCallback(true) {
@@ -60,7 +61,7 @@ internal class ZipWebActivity : ComponentActivity() {
                     .navigationBarsPadding()
             ) {
                 ZipWebView(
-                    checkoutUrl = checkoutUrl,
+                    checkoutUrl = url,
                     onApprove = { callbackData ->
                         finishWithSuccess(callbackData)
                     },
@@ -118,5 +119,12 @@ internal class ZipWebActivity : ComponentActivity() {
                 .putResultStatusExtra(ZipStatus.CANCELLED.value)
         )
         finish()
+    }
+
+    private fun isValidWebViewUrl(url: String?): Boolean {
+        if (url.isNullOrBlank()) return false
+        val trimmed = url.trim()
+        return trimmed.startsWith("http://", ignoreCase = true) ||
+            trimmed.startsWith("https://", ignoreCase = true)
     }
 }

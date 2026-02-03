@@ -79,9 +79,11 @@ internal fun ZipWebView(
             urlString.startsWith(MobileSDKConstants.ZipConfig.ZIP_REDIRECT_URL)
     }
 
-    // WebView for displaying the Zip checkout URL
+    // WebView for displaying the Zip checkout URL.
+    // Open target="_blank" links (e.g. "Forgot password", "Apply now") in the same WebView so they load instead of a blank screen.
     SdkWebView(
         webUrl = checkoutUrl,
+        openTargetBlankInSameWebView = true,
         jsBridge = ZipJSBridge { url ->
             // Handle URL changes detected by JavaScript (React History API)
             if (isCallbackUrl(url) && url.contains("result=")) {
