@@ -190,14 +190,6 @@ private fun MockRequestHandleScope.handleSuccessRequest(request: HttpRequestData
             )
         }
 
-        request.url.encodedPath.endsWith("/bin-management/card_schemas") -> {
-            respondError(
-                content = MockResponseFileReader("card/success_get_card_schemas_response.json").content,
-                status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, "application/json")
-            )
-        }
-
         request.url.encodedPath.endsWith("/") -> {
             // This is purely for example purposes
             respond(
@@ -265,14 +257,6 @@ private fun MockRequestHandleScope.handleFailureRequest(request: HttpRequestData
         request.url.encodedPath.endsWith("/gateways/${MobileSDKTestConstants.General.MOCK_INVALID_GATEWAY_ID}/wallet-config") -> {
             respondError(
                 content = MockResponseFileReader("gateway/failure_wallet_config_response.json").content,
-                status = HttpStatusCode.BadRequest,
-                headers = headersOf(HttpHeaders.ContentType, "application/json")
-            )
-        }
-
-        request.url.encodedPath.endsWith("/bin-management/card_schemas") -> {
-            respondError(
-                content = MockResponseFileReader("card/failure_get_card_schemas_response.json").content,
                 status = HttpStatusCode.BadRequest,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
