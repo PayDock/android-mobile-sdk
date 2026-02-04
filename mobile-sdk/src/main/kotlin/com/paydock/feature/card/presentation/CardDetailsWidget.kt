@@ -39,6 +39,7 @@ import com.paydock.designsystems.core.WidgetDefaults
 import com.paydock.feature.card.domain.model.CardDetailsEventNames
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.CardResult
+import com.paydock.feature.card.domain.model.integration.enums.CardType
 import com.paydock.feature.card.presentation.components.CardInputFields
 import com.paydock.feature.card.presentation.components.SaveCardToggle
 import com.paydock.feature.card.presentation.components.SupportedCardBanner
@@ -112,9 +113,12 @@ fun CardDetailsWidget(
         verticalArrangement = Arrangement.spacedBy(appearance.verticalSpacing, Alignment.Top),
         horizontalAlignment = Alignment.Start
     ) {
-        if (!config.schemeSupport.supportedSchemes.isNullOrEmpty()) {
-            SupportedCardBanner(config.schemeSupport.supportedSchemes)
+        // Show card scheme icons: if null (allow all) or empty set, show all schemes; otherwise show selected schemes
+        val schemesToDisplay = when {
+            config.schemeSupport.supportedSchemes.isNullOrEmpty() -> CardType.entries.toSet()
+            else -> config.schemeSupport.supportedSchemes!!
         }
+        SupportedCardBanner(schemesToDisplay)
         CardInputFields(
             shouldCollectCardholderName = config.collectCardholderName,
             schemeConfig = config.schemeSupport,
