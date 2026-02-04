@@ -190,6 +190,7 @@
     <string name="label_maximum_amount">Maximum Amount</string>
     <string name="label_language">Language</string>
     <string name="label_country">Country</string>
+    <string name="label_afterpay_locale">Afterpay Locale (SDK initialisation)</string>
     <string name="label_pickup_optional">Pickup (Optional)</string>
     <string name="label_buy_now_optional">Buy Now (Optional)</string>
     <string name="label_shipping_option_required_optional">Shipping Option Required (Optional)</string>

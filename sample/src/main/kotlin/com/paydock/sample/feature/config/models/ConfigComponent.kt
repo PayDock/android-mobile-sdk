@@ -92,6 +92,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
     CUSTOMER_PHONE_NUMBER,
 
     // Afterpay specific
+    AFTERPAY_LOCALE,
     AFTERPAY_CHECKOUT_OPTIONS,
 
     // Shared location fields
@@ -209,6 +210,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
         CUSTOMER_PHONE -> "Phone"
         CUSTOMER_PHONE_COUNTRY_CODE -> "Country Code"
         CUSTOMER_PHONE_NUMBER -> "Phone Number"
+        AFTERPAY_LOCALE -> "Locale"
         AFTERPAY_CHECKOUT_OPTIONS -> "Checkout Options"
         COUNTRY -> "Country"
         PICKUP -> "Pickup"

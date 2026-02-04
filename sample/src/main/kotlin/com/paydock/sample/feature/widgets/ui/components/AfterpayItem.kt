@@ -54,7 +54,8 @@ fun AfterpayItem(
         },
         config = afterpayConfig,
         selectAddress = { _, provideShippingOptions ->
-            val currency = Currency.getInstance(Locale.getDefault())
+            val locale = afterpayConfig.locale ?: Locale.getDefault()
+            val currency = Currency.getInstance(locale)
             val shippingOptions = listOf(
                 AfterpayShippingOption(
                     "standard",
@@ -78,7 +79,8 @@ fun AfterpayItem(
             provideShippingOptions(shippingOptions)
         },
         selectShippingOption = { shippingOption, provideShippingOptionUpdateResult ->
-            val currency = Currency.getInstance(Locale.getDefault())
+            val locale = afterpayConfig.locale ?: Locale.getDefault()
+            val currency = Currency.getInstance(locale)
             // if standard shipping was selected, update the amounts
             // otherwise leave as is by passing null
             val result: AfterpayShippingOptionUpdate? =

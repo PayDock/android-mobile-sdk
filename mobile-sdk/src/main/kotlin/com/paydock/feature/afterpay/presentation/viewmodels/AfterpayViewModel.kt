@@ -370,29 +370,29 @@ internal class AfterpayViewModel(
     }
 
     /**
-     * Configures the Afterpay SDK with default configuration values.
+     * Configures the Afterpay SDK using the provided [config].
      *
-     * Note: minimumAmount, maximumAmount, currencyCode, and locale are set to default values.
-     * These values are configured in the Dashboard when setting up the payment gateway
-     * and don't affect the actual SDK behavior.
+     * Uses [AfterpaySDKConfig.locale] when set; otherwise [Locale.getDefault].
+     * minimumAmount, maximumAmount and currencyCode are derived from the effective locale.
      */
-    fun configureAfterpaySdk() {
+    fun configureAfterpaySdk(config: AfterpaySDKConfig) {
         launchOnIO {
+            val effectiveLocale = config.locale ?: Locale.getDefault()
             try {
                 Afterpay.setConfiguration(
                     minimumAmount = "1",
                     maximumAmount = "1000",
-                    currencyCode = Currency.getInstance(Locale.getDefault()).currencyCode,
+                    currencyCode = Currency.getInstance(effectiveLocale).currencyCode,
                     locale = Locale.Builder()
-                        .setLanguage(Locale.getDefault().language)
-                        .setRegion(Locale.getDefault().country)
+                        .setLanguage(effectiveLocale.language)
+                        .setRegion(effectiveLocale.country)
                         .build(),
                     environment = MobileSDK.getInstance().environment.mapToAfterpayEnv()
                 )
                 _isConfigured.value = true
             } catch (e: IllegalArgumentException) {
                 val errorMessage = e.message
-                    ?: "Afterpay: unsupported country: ${Locale.getDefault().displayCountry}"
+                    ?: "Afterpay: unsupported country: ${effectiveLocale.displayCountry}"
                 updateUiState(
                     AfterpayUIState.PendingDeclineOnError(
                         AfterpayException.ConfigurationException(errorMessage)

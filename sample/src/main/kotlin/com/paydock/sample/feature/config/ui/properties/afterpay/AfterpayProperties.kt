@@ -5,7 +5,9 @@ import androidx.compose.ui.res.stringResource
 import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.fields.BooleanField
+import com.paydock.sample.designsystems.components.fields.EnumDropdown
 import com.paydock.sample.feature.config.ConfigViewModel
+import com.paydock.sample.feature.config.models.AfterpayLocaleOption
 import com.paydock.sample.feature.config.models.ConfigComponent
 import com.paydock.sample.feature.config.ui.components.section.ConfigAfterpayCheckoutOptionsSection
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
@@ -18,6 +20,23 @@ fun AfterpayProperties(
     configViewModel: ConfigViewModel
 ) {
     when (configItemName) {
+        ConfigComponent.AFTERPAY_LOCALE -> {
+            val selectedOption = AfterpayLocaleOption.fromLocale(config.locale)
+            EnumDropdown(
+                label = stringResource(R.string.label_afterpay_locale),
+                options = AfterpayLocaleOption.entries,
+                selectedOption = selectedOption,
+                onOptionSelected = { newValue ->
+                    configViewModel.updateWidgetConfig(
+                        widgetContext,
+                        ConfigComponent.AFTERPAY_LOCALE,
+                        newValue.toLocale()
+                    )
+                },
+                displayText = { it.displayName }
+            )
+        }
+
         ConfigComponent.AFTERPAY_CHECKOUT_OPTIONS -> {
             ConfigAfterpayCheckoutOptionsSection(
                 currentOptions = config.options,

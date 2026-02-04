@@ -37,6 +37,7 @@ fun WidgetType.mapWidgetTypeToConfigComponents(): List<ConfigComponent> {
         )
 
         WidgetType.AFTER_PAY -> listOf(
+            ConfigComponent.AFTERPAY_LOCALE,
             ConfigComponent.AFTERPAY_CHECKOUT_OPTIONS
         )
 

@@ -48,6 +48,7 @@ import kotlinx.coroutines.flow.update
 import org.json.JSONArray
 import org.json.JSONObject
 import java.math.BigDecimal
+import java.util.Locale
 import javax.inject.Inject
 
 /**
@@ -1023,6 +1024,10 @@ class ConfigViewModel @Inject constructor(
             WidgetType.AFTER_PAY -> {
                 val current = _afterpayWidgetConfig.value
                 val updatedConfig = when (component) {
+                    ConfigComponent.AFTERPAY_LOCALE -> {
+                        current.copy(locale = newValue as? Locale)
+                    }
+
                     ConfigComponent.AFTERPAY_CHECKOUT_OPTIONS -> {
                         // Update the entire CheckoutOptions object
                         current.copy(options = newValue as? AfterpaySDKConfig.CheckoutOptions)
