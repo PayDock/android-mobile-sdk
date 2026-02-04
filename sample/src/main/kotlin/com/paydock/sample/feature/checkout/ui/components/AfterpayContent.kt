@@ -34,6 +34,7 @@ fun AfterpayContent(
     val cartTotal = cartManager.totalPrice
 
     val configuration = AfterpaySDKConfig(
+        locale = Locale("en", "AU"),
         options = AfterpaySDKConfig.CheckoutOptions(
             shippingOptionRequired = true,
             enableSingleShippingOptionUpdate = true
@@ -46,7 +47,7 @@ fun AfterpayContent(
         config = configuration,
         appearance = AfterpayAppearanceDefaults.appearance(),
         selectAddress = { _, provideShippingOptions ->
-            val currency = Currency.getInstance(Locale.getDefault())
+            val currency = Currency.getInstance(Locale("en", "AU"))
             val shippingOptions = listOf(
                 AfterpayShippingOption(
                     "standard",
@@ -70,7 +71,7 @@ fun AfterpayContent(
             provideShippingOptions(shippingOptions)
         },
         selectShippingOption = { shippingOption, provideShippingOptionUpdateResult ->
-            val currency = Currency.getInstance(Locale.getDefault())
+            val currency = Currency.getInstance(Locale("en", "AU"))
             // if standard shipping was selected, update the amounts
             // otherwise leave as is by passing null
             val result: AfterpayShippingOptionUpdate? =

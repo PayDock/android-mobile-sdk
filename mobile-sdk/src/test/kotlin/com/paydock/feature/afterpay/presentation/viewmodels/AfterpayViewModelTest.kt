@@ -16,6 +16,7 @@ import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.utils.MainDispatcherRule
+import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOptionUpdate
 import com.paydock.feature.afterpay.presentation.state.AfterpayUIState
@@ -129,7 +130,7 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     fun `configureAfterpaySdk should initialise AfterpaySDK`() = runTest {
         viewModel.uiState.test {
             // ACTION
-            viewModel.configureAfterpaySdk()
+            viewModel.configureAfterpaySdk(AfterpaySDKConfig())
             // CHECK
             // Initial state
             assertIs<AfterpayUIState.Idle>(awaitItem())
@@ -139,12 +140,12 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
 
     @Test
     fun `configureAfterpaySdk should throw exception using invalid Locale`() = runTest {
-        // Note: This test may need to be adjusted or removed since we now use Locale.getDefault()
+        // Note: This test may need to be adjusted or removed since we now use config.locale ?: Locale.getDefault()
         // and cannot inject a specific locale configuration
         // Keeping it for now but it may always pass with default locale
         viewModel.uiState.test {
             // ACTION
-            viewModel.configureAfterpaySdk()
+            viewModel.configureAfterpaySdk(AfterpaySDKConfig())
             // CHECK
             // Initial state
             assertIs<AfterpayUIState.Idle>(awaitItem())

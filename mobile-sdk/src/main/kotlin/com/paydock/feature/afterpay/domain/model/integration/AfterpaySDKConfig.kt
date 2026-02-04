@@ -1,11 +1,15 @@
 package com.paydock.feature.afterpay.domain.model.integration
 
+import java.util.Locale
+
 /**
  * Configuration class for Afterpay SDK settings.
  *
+ * @property locale Optional locale for SDK initialisation (currency/language). When null, [Locale.getDefault] is used.
  * @property options Additional checkout options for Afterpay.
  */
 data class AfterpaySDKConfig(
+    val locale: Locale? = null,
     val options: CheckoutOptions? = null
 ) {
 
