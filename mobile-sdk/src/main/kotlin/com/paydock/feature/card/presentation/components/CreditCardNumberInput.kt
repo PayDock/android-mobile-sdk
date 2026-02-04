@@ -97,11 +97,12 @@ internal fun CreditCardNumberInput(
         },
         appearance = appearance,
         value = value,
-        onValueChange = {
+        onValueChange = { newText ->
             hasUserInteracted = true
-            if (it.length <= MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH) {
-                // Parse the input text to ensure it is a valid card number before invoking the callback
-                CreditCardInputParser.parseNumber(it)?.let { number ->
+            // Strip spaces and other non-digits so pasted values (e.g. "6334 9000 0000 0005") are accepted
+            val digitsOnly = newText.replace(Regex("\\D"), "")
+            if (digitsOnly.length <= MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH) {
+                CreditCardInputParser.parseNumber(digitsOnly)?.let { number ->
                     onValueChange(number)
                 }
             }
