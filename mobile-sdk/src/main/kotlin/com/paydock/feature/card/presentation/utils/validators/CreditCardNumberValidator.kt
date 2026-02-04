@@ -14,6 +14,9 @@ import com.paydock.feature.card.presentation.utils.errors.CardNumberError
  */
 internal object CreditCardNumberValidator {
 
+    /** Minimum digit count for BIN-based scheme detection (2-digit prefix check). */
+    private const val MIN_DIGITS_FOR_SCHEME_DETECTION = 2
+
     /**
      * Checks if a given credit card number is valid.
      *
@@ -39,9 +42,10 @@ internal object CreditCardNumberValidator {
      * 2. Validates the input using the Luhn algorithm, returning [CardNumberError.InvalidLuhn] if invalid.
      * 3. Checks if the card number length is valid (12-19 digits for default, or scheme-specific if detected),
      *    returning [CardNumberError.InvalidLength] if invalid.
-     * 4. Checks if the card scheme is among the supported schemes (only if a scheme is detected and validation is enabled),
-     *    returning [CardNumberError.UnsupportedCardScheme] if unsupported.
-     *    Note: If no card scheme is detected, default validation (12-19 digits + Luhn) is used regardless of merchant settings.
+     * 4. Checks if the card scheme is among the supported schemes when validation is enabled:
+     *    - If a scheme is detected, it must be in the merchant's supported list; otherwise [CardNumberError.UnsupportedCardScheme].
+     *    - If no scheme is detected but the user has entered 2+ digits (enough for BIN detection), treats as unsupported
+     *      and returns [CardNumberError.UnsupportedCardScheme].
      * 5. If all validations pass, it returns [CardNumberError.None].
      *
      * @param cardNumber The credit card number to validate.
@@ -59,18 +63,19 @@ internal object CreditCardNumberValidator {
         val isLuhnValid = LuhnValidator.isLuhnValid(cardNumber)
         val isValidLength = validateCardNumberLength(cardScheme, cardNumber)
 
-        // If no card scheme is detected, use default validation (12-19 digits + Luhn)
-        // Merchant supported schemes only apply when a card scheme IS detected
-        val isCardSchemeSupported = if (cardScheme == null) {
-            // No card scheme detected - use default validation, always allow if passes length/Luhn
-            true
-        } else {
-            // Card scheme detected - check merchant supported schemes if validation is enabled
-            val supportedCardSchemes = getSupportedCardSchemes(schemeConfig)
-            supportedCardSchemes?.let {
-                // If merchant specified supported schemes, check if detected scheme is in the list
-                it.isNotEmpty() && it.contains(cardScheme.type)
-            } ?: true // If validation disabled or no schemes specified, allow all
+        // When merchant restricts supported schemes and validation is enabled:
+        // - If a scheme is detected, it must be in the supported list.
+        // - If no scheme is detected but the user has entered enough digits for BIN detection (2+),
+        //   treat as unsupported (card does not match any known/supported scheme).
+        val supportedCardSchemes = getSupportedCardSchemes(schemeConfig)
+        val isCardSchemeSupported = when {
+            supportedCardSchemes.isNullOrEmpty() -> true
+            cardScheme != null -> supportedCardSchemes.contains(cardScheme.type)
+            else -> {
+                val digitLength = cardNumber.replace(Regex("\\D"), "").length
+                // No scheme detected: invalid if we have enough digits for BIN detection (2+), else allow
+                digitLength < MIN_DIGITS_FOR_SCHEME_DETECTION
+            }
         }
 
         return when {
