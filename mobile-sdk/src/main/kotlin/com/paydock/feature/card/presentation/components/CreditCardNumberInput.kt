@@ -3,7 +3,6 @@ package com.paydock.feature.card.presentation.components
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,7 +30,6 @@ import com.paydock.feature.card.presentation.utils.errors.CardNumberError
 import com.paydock.feature.card.presentation.utils.transformations.CardNumberInputTransformation
 import com.paydock.feature.card.presentation.utils.validators.CreditCardInputParser
 import com.paydock.feature.card.presentation.utils.validators.CreditCardNumberValidator
-import kotlinx.coroutines.delay
 
 /**
  * A composable function for entering and validating a credit card number.
@@ -68,18 +66,13 @@ internal fun CreditCardNumberInput(
     var focusedState by remember { mutableStateOf(false) }
     var hasUserInteracted by remember { mutableStateOf(false) }
 
-    var debouncedValue by remember { mutableStateOf("") }
-    LaunchedEffect(value) {
-        delay(MobileSDKConstants.General.INPUT_DELAY)
-        debouncedValue = value
-    }
-
-    // Validate possible card number errors
+    // Validate using live value so we don't show Empty/Invalid during debounce (e.g. "4" → validator still saw "" → false error)
     val cardNumberError = CreditCardNumberValidator.validateCardNumberInput(
-        debouncedValue,
-        cardScheme,
-        schemeConfig,
-        hasUserInteracted
+        cardNumber = value,
+        cardScheme = cardScheme,
+        schemeConfig = schemeConfig,
+        hasUserInteracted = hasUserInteracted,
+        isCardNumberFocused = focusedState
     )
 
     val errorMessage = when (cardNumberError) {
