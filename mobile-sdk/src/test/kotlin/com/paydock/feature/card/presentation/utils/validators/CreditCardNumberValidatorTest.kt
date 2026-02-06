@@ -69,7 +69,8 @@ internal class CreditCardNumberValidatorTest {
 
     @Test
     fun validateCardNumberInput_invalidLuhn_returnsInvalidLuhnError() {
-        val cardNumber = "49927398717"
+        // 16 digits in default range [12,19]; invalid check digit so Luhn fails
+        val cardNumber = "4111111111111112"
         val hasUserInteracted = true
         val supportedSchemeConfig = SupportedSchemeConfig()
         val expected = CardNumberError.InvalidLuhn
@@ -83,8 +84,24 @@ internal class CreditCardNumberValidatorTest {
     }
 
     @Test
-    fun validateCardNumberInput_visa_minInvalidLength_returnsInvalidLengthError() {
-        val cardNumber = "41111" // Valid Luhn and supported scheme
+    fun validateCardNumberInput_belowMinDigits_invalidLuhn_returnsInvalidLengthWhenBlurred() {
+        // 11 digits: below default min (12), so InvalidLength not InvalidLuhn (Luhn only runs in [min,max])
+        val cardNumber = "49927398717"
+        val hasUserInteracted = true
+        val supportedSchemeConfig = SupportedSchemeConfig()
+        val actual = CreditCardNumberValidator.validateCardNumberInput(
+            cardNumber = cardNumber,
+            cardScheme = null,
+            hasUserInteracted = hasUserInteracted,
+            schemeConfig = supportedSchemeConfig,
+            isCardNumberFocused = false
+        )
+        assertEquals(CardNumberError.InvalidLength, actual)
+    }
+
+    @Test
+    fun validateCardNumberInput_visa_minInvalidLength_whenBlurred_returnsInvalidLengthError() {
+        val cardNumber = "41111" // Below Visa min (16)
         val cardScheme = CardScheme(type = CardType.VISA, code = CardCode(CodeType.CVV, 3))
         val hasUserInteracted = true
         val supportedSchemeConfig = SupportedSchemeConfig(
@@ -96,7 +113,28 @@ internal class CreditCardNumberValidatorTest {
             cardNumber = cardNumber,
             hasUserInteracted = hasUserInteracted,
             cardScheme = cardScheme,
-            schemeConfig = supportedSchemeConfig
+            schemeConfig = supportedSchemeConfig,
+            isCardNumberFocused = false // defocus: min length enforced
+        )
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateCardNumberInput_visa_belowMinLength_whenFocused_returnsNoneError() {
+        val cardNumber = "41111" // Below Visa min; while typing min not enforced
+        val cardScheme = CardScheme(type = CardType.VISA, code = CardCode(CodeType.CVV, 3))
+        val hasUserInteracted = true
+        val supportedSchemeConfig = SupportedSchemeConfig(
+            supportedSchemes = setOf(CardType.VISA),
+            enableValidation = false
+        )
+        val expected = CardNumberError.None
+        val actual = CreditCardNumberValidator.validateCardNumberInput(
+            cardNumber = cardNumber,
+            hasUserInteracted = hasUserInteracted,
+            cardScheme = cardScheme,
+            schemeConfig = supportedSchemeConfig,
+            isCardNumberFocused = true
         )
         assertEquals(expected, actual)
     }
