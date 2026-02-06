@@ -94,7 +94,9 @@ internal fun CreditCardNumberInput(
             hasUserInteracted = true
             // Strip spaces and other non-digits so pasted values (e.g. "6334 9000 0000 0005") are accepted
             val digitsOnly = newText.replace(Regex("\\D"), "")
-            if (digitsOnly.length <= MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH) {
+            val maxLength = cardScheme?.lengths?.maxOrNull()
+                ?: MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH
+            if (digitsOnly.length <= maxLength) {
                 CreditCardInputParser.parseNumber(digitsOnly)?.let { number ->
                     onValueChange(number)
                 }
