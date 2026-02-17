@@ -8,7 +8,7 @@ import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.list.DisplayableListItem
 
 enum class WidgetType : DisplayableListItem {
-    ADDRESS_DETAILS, AFTER_PAY, CARD_DETAILS, COLES_PAY, GOOGLE_PAY, GIFT_CARD, INTEGRATED_3DS, CLICK_TO_PAY, PAY_PAL, PAY_PAL_VAULT, STANDALONE_3DS, ZIP;
+    ADDRESS_DETAILS, AFTER_PAY, CARD_DETAILS, COLES_PAY, GOOGLE_PAY, GIFT_CARD, MPGS_3DS, CLICK_TO_PAY, PAY_PAL, PAY_PAL_VAULT, STANDALONE_3DS, ZIP;
 
     override fun displayIcon(): Int? = when (this) {
         ADDRESS_DETAILS -> R.drawable.ic_address_widget
@@ -18,7 +18,7 @@ enum class WidgetType : DisplayableListItem {
         COLES_PAY -> R.drawable.ic_coles_pay_widget
         GIFT_CARD -> R.drawable.ic_gift_card_widget
         GOOGLE_PAY -> R.drawable.ic_google_widget
-        INTEGRATED_3DS -> R.drawable.ic_integrated_3ds_widget
+        MPGS_3DS -> R.drawable.ic_integrated_3ds_widget
         PAY_PAL -> R.drawable.ic_paypal_widget
         PAY_PAL_VAULT -> R.drawable.ic_paypal_widget
         STANDALONE_3DS -> R.drawable.ic_standalone_3ds_widget
@@ -33,7 +33,7 @@ enum class WidgetType : DisplayableListItem {
         COLES_PAY -> "Coles Pay"
         GIFT_CARD -> "Gift Card"
         GOOGLE_PAY -> "Google Pay"
-        INTEGRATED_3DS -> "Integrated 3DS"
+        MPGS_3DS -> "MPGS 3DS"
         PAY_PAL -> "PayPal"
         PAY_PAL_VAULT -> "PayPal Vault"
         STANDALONE_3DS -> "Standalone 3DS"
@@ -48,7 +48,7 @@ enum class WidgetType : DisplayableListItem {
         COLES_PAY -> "Standalone Coles Pay button"
         GIFT_CARD -> "Tokensise card details"
         GOOGLE_PAY -> "Standalone Google Pay button"
-        INTEGRATED_3DS -> "Integrated 3DS flow"
+        MPGS_3DS -> "MPGS Integrated 3DS widget"
         PAY_PAL -> "Standalone PayPal button"
         PAY_PAL_VAULT -> "Link your Paypal account for faster checkout"
         STANDALONE_3DS -> "Standalone 3DS flow"

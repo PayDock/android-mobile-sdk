@@ -535,12 +535,12 @@ fun getAppearanceForWidgetComponent(
             }
         }
 
-        WidgetType.INTEGRATED_3DS -> {
-            val integrated3SDAppearance by stylingViewModel.integrated3DSWidgetAppearance.collectAsState()
-            remember(integrated3SDAppearance, styleItemName) {
+        WidgetType.MPGS_3DS -> {
+            val mpgs3dsAppearance by stylingViewModel.mpgs3dsWidgetAppearance.collectAsState()
+            remember(mpgs3dsAppearance, styleItemName) {
                 derivedStateOf {
                     when (styleItemName) {
-                        StyleAppearanceComponent.LOADER -> integrated3SDAppearance?.loader
+                        StyleAppearanceComponent.LOADER -> mpgs3dsAppearance?.loader
                         else -> null
                     }
                 }

@@ -27,9 +27,9 @@ val ErrorModel?.displayableMessage: String
                 exception.message
                     ?: MobileSDKConstants.Standalone3DSConfig.Errors.STANDALONE_3DS_ERROR
 
-            is ErrorModel.Integrated3DSError ->
+            is ErrorModel.MPGS3dsError ->
                 exception.message
-                    ?: MobileSDKConstants.Integrated3DSConfig.Errors.INTEGRATED_3DS_ERROR
+                    ?: MobileSDKConstants.MPGS3dsConfig.Errors.MPGS_3DS_ERROR
 
             is ErrorModel.PayPalError ->
                 exception.message

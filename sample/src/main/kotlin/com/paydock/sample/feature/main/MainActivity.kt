@@ -161,7 +161,7 @@ fun MainScreenView(
     val googlePaySdkDefaults: GooglePayWidgetAppearance = GooglePayAppearanceDefaults.appearance()
     val colesPaySdkDefaults: ColesPayWidgetAppearance =
         ColesPayWidgetAppearanceDefaults.appearance()
-    val integrated3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
+    val mpgs3dsSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
     val standalone3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
     val zipSdkDefaults: ZipWidgetAppearance = ZipWidgetAppearanceDefaults.appearance()
 
@@ -196,7 +196,7 @@ fun MainScreenView(
         stylingViewModel.updateInitialPayPalDefaults(payPalSdkDefaults)
         stylingViewModel.updateInitialGooglePayDefaults(googlePaySdkDefaults)
         stylingViewModel.updateInitialColesPayDefaults(colesPaySdkDefaults)
-        stylingViewModel.updateInitialIntegrated3DSDefaults(integrated3DSSdkDefaults)
+        stylingViewModel.updateInitialMPGS3dsDefaults(mpgs3dsSdkDefaults)
         stylingViewModel.updateInitialStandalone3DSDefaults(standalone3DSSdkDefaults)
         stylingViewModel.updateInitialZipDefaults(zipSdkDefaults)
 
@@ -224,7 +224,7 @@ fun MainScreenView(
         .collectAsState(initial = false)
     val isColesPayWidgetAppearanceInitialized by stylingViewModel.colesPayWidgetAppearance.map { it != null }
         .collectAsState(initial = false)
-    val isIntegrated3DSWidgetAppearanceInitialized by stylingViewModel.integrated3DSWidgetAppearance.map { it != null }
+    val isMPGS3dsWidgetAppearanceInitialized by stylingViewModel.mpgs3dsWidgetAppearance.map { it != null }
         .collectAsState(initial = false)
     val isStandalone3DSWidgetAppearanceInitialized by stylingViewModel.standalone3DSWidgetAppearance.map { it != null }
         .collectAsState(initial = false)
@@ -243,7 +243,7 @@ fun MainScreenView(
                     isPayPalVaultInitialized &&
                     isGooglePayWidgetAppearanceInitialized &&
                     isColesPayWidgetAppearanceInitialized &&
-                    isIntegrated3DSWidgetAppearanceInitialized &&
+                    isMPGS3dsWidgetAppearanceInitialized &&
                     isStandalone3DSWidgetAppearanceInitialized &&
                     isZipWidgetAppearanceInitialized
         }

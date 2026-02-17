@@ -1,13 +1,13 @@
 package com.paydock.core.domain.error.exceptions
 
 /**
- * Represents an exception related to Integrated 3D Secure operations.
+ * Represents an exception related to MPGS 3D Secure (3DS) operations.
  *
- * @constructor Creates a ThreeDSException with the specified displayable message.
+ * @constructor Creates a MPGS3dsException with the specified displayable message.
  * @param displayableMessage A user-friendly message explaining the cause of the event mapping failure.
  *                              This message is intended for display to the end-user or logging for debugging purposes
  */
-sealed class Integrated3DSException(displayableMessage: String) : SdkException(displayableMessage) {
+sealed class MPGS3dsException(displayableMessage: String) : SdkException(displayableMessage) {
 
     /**
      * Exception thrown when there is an error while communicating with a WebView.
@@ -17,7 +17,7 @@ sealed class Integrated3DSException(displayableMessage: String) : SdkException(d
      * @constructor Creates a WebViewException with the specified HTTP code and displayable message.
      */
     class WebViewException(val code: Int? = null, displayableMessage: String) :
-        Integrated3DSException(displayableMessage)
+        MPGS3dsException(displayableMessage)
 
     /**
      * Exception thrown when an operation is attempted with an invalid or expired token.
@@ -33,9 +33,9 @@ sealed class Integrated3DSException(displayableMessage: String) : SdkException(d
      * @param displayableMessage A user-friendly message describing the reason for the exception.
      *                           This message is intended to be displayed to the user if necessary.
      *
-     * @see Integrated3DSException The base class for exceptions related to the 3DS protocol.
+     * @see MPGS3dsException The base class for exceptions related to the MPGS 3DS protocol.
      */
-    class InvalidTokenException(displayableMessage: String) : Integrated3DSException(displayableMessage)
+    class InvalidTokenException(displayableMessage: String) : MPGS3dsException(displayableMessage)
 
     /**
      * Exception thrown when there is an issue mapping an event to a specific action or handling mechanism.
@@ -46,7 +46,7 @@ sealed class Integrated3DSException(displayableMessage: String) : SdkException(d
      *
      * @constructor Creates a new EventMappingException with a specified displayable message.
      * @param displayableMessage The user-friendly error message.
-     * @see Integrated3DSException
+     * @see MPGS3dsException
      */
-    class EventMappingException(displayableMessage: String) : Integrated3DSException(displayableMessage)
+    class EventMappingException(displayableMessage: String) : MPGS3dsException(displayableMessage)
 }

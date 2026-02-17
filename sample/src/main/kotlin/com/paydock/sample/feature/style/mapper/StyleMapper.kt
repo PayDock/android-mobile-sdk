@@ -48,7 +48,7 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
             StyleAppearanceComponent.LOADER
         )
 
-        WidgetType.INTEGRATED_3DS -> listOf(
+        WidgetType.MPGS_3DS -> listOf(
             StyleAppearanceComponent.LOADER
         )
 

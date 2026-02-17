@@ -10,7 +10,7 @@
 - Updated checkout implementation for ExampleApp (demo app - E2E flows)
 
 ### Changed
-- Updated internal libraries for `Integrated3DSWidget`, `Standalone3DSWidget` and `ClickToPayWidget`
+- Updated internal libraries for `MPGS3dsWidget`, `Standalone3DSWidget` and `ClickToPayWidget`
 - Updated PayPal SDK from version `2.0.0` to `2.3.0`
 - Configuration improvements: address moved to Config object for Address Widget; 
 - Text and Icon customisation moved into appearance objects for SDK button widgets (ie. `PayPalSavePaymentSourceWidget`, `CardDetailsWidget`, `AddressDetailsWidget` and `GiftCardWidget`)
@@ -74,7 +74,7 @@
 ## [4.0.0] - 2025-03-28
 
 ### Changed
-- Split ThreeDSWidget into Integrated3DS and Standalone3DS widgets
+- Split ThreeDSWidget into MPGS 3DS and Standalone3DS widgets
 - Updated dependencies and gradle version to `8.8.2`
 - SDK theme colours to be accessibility compliant
 - Content descriptions for implied buttons (Used by accessibility TalkBack)

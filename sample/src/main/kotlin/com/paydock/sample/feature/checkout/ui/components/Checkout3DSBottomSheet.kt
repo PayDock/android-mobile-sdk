@@ -7,7 +7,7 @@ import androidx.compose.ui.graphics.Color
 import com.paydock.designsystems.components.sheet.SdkBottomSheet
 import com.paydock.feature.threeDS.common.domain.integration.ThreeDSConfig
 import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSAppearanceDefaults
-import com.paydock.feature.threeDS.integrated.presentation.Integrated3DSWidget
+import com.paydock.feature.threeDS.integrated.presentation.MPGS3dsWidget
 import com.paydock.feature.threeDS.standalone.presentation.Standalone3DSWidget
 import com.paydock.sample.feature.checkout.models.ThreeDSType
 import com.paydock.sample.feature.checkout.presentation.EnhancedCheckoutViewModel
@@ -32,12 +32,12 @@ fun Checkout3DSBottomSheet(
             enableClose = showCloseButton
         ) {
             when (threeDSType) {
-                ThreeDSType.INTEGRATED -> {
-                    Integrated3DSWidget(
+                ThreeDSType.MPGS -> {
+                    MPGS3dsWidget(
                         config = ThreeDSConfig(token = threeDSToken),
                         appearance = ThreeDSAppearanceDefaults.appearance()
                     ) { result ->
-                        viewModel.handleIntegrated3DSResult(result)
+                        viewModel.handleMPGS3dsResult(result)
                     }
                 }
 

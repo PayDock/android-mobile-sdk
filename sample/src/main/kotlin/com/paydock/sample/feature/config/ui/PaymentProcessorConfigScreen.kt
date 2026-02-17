@@ -110,7 +110,7 @@ fun PaymentProcessorConfigScreen(
                     onOptionSelected = { viewModel.updateMpgsThreeDSService(it) },
                     displayText = { service ->
                         when (service) {
-                            ThreeDSService.INTEGRATED_3DS -> "Integrated 3DS"
+                            ThreeDSService.MPGS_3DS -> "MPGS 3DS"
                             ThreeDSService.GPAYMENTS -> "GPayments"
                         }
                     },
@@ -162,7 +162,7 @@ fun PaymentProcessorConfigScreen(
                     onOptionSelected = { viewModel.updateCyberSourceThreeDSService(it) },
                     displayText = { service ->
                         when (service) {
-                            ThreeDSService.INTEGRATED_3DS -> "Integrated 3DS"
+                            ThreeDSService.MPGS_3DS -> "MPGS 3DS"
                             ThreeDSService.GPAYMENTS -> "GPayments"
                         }
                     },

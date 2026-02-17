@@ -6,13 +6,13 @@ enum class PaymentProcessor {
 }
 
 enum class ThreeDSService {
-    INTEGRATED_3DS,
+    MPGS_3DS,
     GPAYMENTS
 }
 
 data class PaymentProcessorConfig(
     val processor: PaymentProcessor,
     val serviceId: String = "",
-    val threeDSService: ThreeDSService = ThreeDSService.INTEGRATED_3DS
+    val threeDSService: ThreeDSService = ThreeDSService.MPGS_3DS
 )
 
