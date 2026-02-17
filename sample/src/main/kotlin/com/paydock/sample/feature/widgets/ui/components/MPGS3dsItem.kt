@@ -17,7 +17,7 @@ import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
 import com.paydock.feature.threeDS.common.domain.integration.ThreeDSConfig
 import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSAppearanceDefaults
-import com.paydock.feature.threeDS.integrated.presentation.Integrated3DSWidget
+import com.paydock.feature.threeDS.integrated.presentation.MPGS3dsWidget
 import com.paydock.sample.core.THREE_DS_CARD_ERROR
 import com.paydock.sample.core.TOKENISE_CARD_ERROR
 import com.paydock.sample.feature.card.CardViewModel
@@ -25,7 +25,7 @@ import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.threeDS.presentation.ThreeDSViewModel
 
 @Composable
-fun Integrated3DSItem(
+fun MPGS3dsItem(
     context: Context,
     cardViewModel: CardViewModel = hiltViewModel(),
     threeDSViewModel: ThreeDSViewModel = hiltViewModel(),
@@ -41,22 +41,22 @@ fun Integrated3DSItem(
     LaunchedEffect(threeDSViewModel) {
         threeDSViewModel.resetResultState()
     }
-    val threeDSAppearance by stylingViewModel.integrated3DSWidgetAppearance.collectAsState()
+    val threeDSAppearance by stylingViewModel.mpgs3dsWidgetAppearance.collectAsState()
     val currentOrDefaultAppearance = threeDSAppearance ?: ThreeDSAppearanceDefaults.appearance()
     val cardToken = cardUIState.token
     val threeDSToken = threeDSUIState.token
     when {
         !threeDSToken.isNullOrBlank() -> {
-            Integrated3DSWidget(
+            MPGS3dsWidget(
                 config = ThreeDSConfig(token = threeDSToken),
                 appearance = currentOrDefaultAppearance
             ) { result ->
                 result.onSuccess {
-                    Log.d("[Integrated3DSWidget]", "Success: $it")
+                    Log.d("[MPGS3dsWidget]", "Success: $it")
                     Toast.makeText(context, "3DS Result returned [$it]", Toast.LENGTH_SHORT).show()
                 }.onFailure {
                     val error = it.toError()
-                    Log.d("[Integrated3DSWidget]", "Failure: ${error.displayableMessage}")
+                    Log.d("[MPGS3dsWidget]", "Failure: ${error.displayableMessage}")
                     Toast.makeText(
                         context,
                         "3DS Result failed! [${error.displayableMessage}]",
@@ -68,7 +68,7 @@ fun Integrated3DSItem(
 
         !cardToken.isNullOrBlank() -> {
             cardViewModel.resetResultState()
-            threeDSViewModel.createIntegrated3dsToken(cardToken)
+            threeDSViewModel.createMPGS3dsToken(cardToken)
         }
 
         !cardUIState.error.isNullOrBlank() -> {

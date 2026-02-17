@@ -29,7 +29,7 @@ internal class Standalone3DSJSBridge(
      * 3DS events and dispatches them to the provided callback.
      *
      * @param eventJson The JSON string representing the 3DS event. This string must conform to the
-     *                  structure expected by the [ThreeDSEvent.Integrated3DSEvent] data class. Any
+     *                  structure expected by the 3DS event data class. Any
      *                  deviation from this structure will result in an error.
      *
      * **Functionality:**

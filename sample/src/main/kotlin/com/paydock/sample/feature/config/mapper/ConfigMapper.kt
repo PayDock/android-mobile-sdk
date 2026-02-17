@@ -69,7 +69,7 @@ fun WidgetType.mapWidgetTypeToConfigComponents(): List<ConfigComponent> {
             ConfigComponent.ZIP_SHIPPING_ADDRESS
         )
 
-        WidgetType.INTEGRATED_3DS,
+        WidgetType.MPGS_3DS,
         WidgetType.STANDALONE_3DS -> emptyList()
     }.sortedBy { it.displayName() }
 }

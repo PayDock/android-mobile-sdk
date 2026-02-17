@@ -7,10 +7,10 @@ import com.paydock.sample.core.THREE_DS_NOT_SUPPORTED_ERROR
 import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
 import com.paydock.sample.feature.config.data.GlobalConfigRepository
 import com.paydock.sample.feature.config.data.WidgetConfigRepository
-import com.paydock.sample.feature.threeDS.data.api.dto.CreateIntegratedThreeDSTokenRequest
+import com.paydock.sample.feature.threeDS.data.api.dto.CreateMPGS3dsTokenRequest
 import com.paydock.sample.feature.threeDS.data.api.dto.CreateStandaloneThreeDSTokenRequest
 import com.paydock.sample.feature.threeDS.domain.model.ThreeDSToken
-import com.paydock.sample.feature.threeDS.domain.usecase.CreateIntegratedThreeDSTokenUseCase
+import com.paydock.sample.feature.threeDS.domain.usecase.CreateMPGS3dsTokenUseCase
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateStandaloneThreeDSTokenUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +21,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ThreeDSViewModel @Inject constructor(
-    private val createIntegratedThreeDSTokenUseCase: CreateIntegratedThreeDSTokenUseCase,
+    private val createMPGS3dsTokenUseCase: CreateMPGS3dsTokenUseCase,
     private val createStandaloneThreeDSTokenUseCase: CreateStandaloneThreeDSTokenUseCase,
     private val globalConfigRepository: GlobalConfigRepository,
     private val widgetConfigRepository: WidgetConfigRepository,
@@ -31,7 +31,7 @@ class ThreeDSViewModel @Inject constructor(
         MutableStateFlow(ThreeDSUIState())
     val stateFlow: StateFlow<ThreeDSUIState> = _stateFlow
 
-    fun createIntegrated3dsToken(cardToken: String) {
+    fun createMPGS3dsToken(cardToken: String) {
         viewModelScope.launch {
             _stateFlow.update { state ->
                 state.copy(isLoading = true)
@@ -39,12 +39,12 @@ class ThreeDSViewModel @Inject constructor(
             val amount = widgetConfigRepository.widgetConfig.value.cartAmount
             val currency = globalConfigRepository.globalConfig.value.currencyCode
             val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
-            val request = CreateIntegratedThreeDSTokenRequest(
+            val request = CreateMPGS3dsTokenRequest(
                 token = cardToken,
                 amount = amount,
                 currency = currency
             )
-            val result = createIntegratedThreeDSTokenUseCase(accessToken, request)
+            val result = createMPGS3dsTokenUseCase(accessToken, request)
             result.onSuccess { threeDSResult ->
                 when (threeDSResult.status) {
                     ThreeDSToken.ThreeDSStatus.PRE_AUTH_PENDING -> {

@@ -1,6 +1,6 @@
 package com.paydock.feature.threeDS.integrated.domain.utils
 
-import com.paydock.feature.threeDS.integrated.domain.model.ui.enums.IntegratedStatus
+import com.paydock.feature.threeDS.integrated.domain.model.ui.enums.MPGS3dsStatus
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -13,45 +13,45 @@ import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonNull
 
 /**
- * Serializer for the [IntegratedStatus] enum.
+ * Serializer for the [MPGS3dsStatus] enum.
  *
- * This object provides the logic for serializing and deserializing [IntegratedStatus] objects
- * to and from their string representations. It handles both valid [IntegratedStatus] values
+ * This object provides the logic for serializing and deserializing [MPGS3dsStatus] objects
+ * to and from their string representations. It handles both valid [MPGS3dsStatus] values
  * and `null` values.
  */
-internal object IntegratedStatusSerializer : KSerializer<IntegratedStatus?> {
+internal object MPGS3dsStatusSerializer : KSerializer<MPGS3dsStatus?> {
 
     /**
-     * The serial descriptor for the [IntegratedStatus] serializer.
-     * Represents the primitive type [IntegratedStatus] used to serialize and deserialize the enum.
+     * The serial descriptor for the [MPGS3dsStatus] serializer.
+     * Represents the primitive type [MPGS3dsStatus] used to serialize and deserialize the enum.
      */
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("Status", PrimitiveKind.STRING).nullable
 
     /**
-     * Deserializes a string value into a [IntegratedStatus] instance.
+     * Deserializes a string value into a [MPGS3dsStatus] instance.
      *
      * @param decoder The [Decoder] instance used to read the serialized string value.
-     * @return The corresponding [IntegratedStatus] instance if the value is valid, or `null` if no match is found.
+     * @return The corresponding [MPGS3dsStatus] instance if the value is valid, or `null` if no match is found.
      */
-    override fun deserialize(decoder: Decoder): IntegratedStatus? {
+    override fun deserialize(decoder: Decoder): MPGS3dsStatus? {
         return if (decoder is JsonDecoder && decoder.decodeJsonElement() is JsonNull) {
             null
         } else {
             val value = decoder.decodeString()
-            IntegratedStatus.fromValue(value)
+            MPGS3dsStatus.fromValue(value)
         }
     }
 
     /**
-     * Serializes a [IntegratedStatus] instance into its string representation.
+     * Serializes a [MPGS3dsStatus] instance into its string representation.
      * If the value is `null`, it encodes it as `null`.
      *
      * @param encoder The [Encoder] instance used to write the serialized string value.
-     * @param value The [IntegratedStatus] instance to serialize, or `null` if no value is present.
+     * @param value The [MPGS3dsStatus] instance to serialize, or `null` if no value is present.
      */
     @OptIn(ExperimentalSerializationApi::class)
-    override fun serialize(encoder: Encoder, value: IntegratedStatus?) {
+    override fun serialize(encoder: Encoder, value: MPGS3dsStatus?) {
         if (value != null) {
             encoder.encodeString(value.name)
         } else {

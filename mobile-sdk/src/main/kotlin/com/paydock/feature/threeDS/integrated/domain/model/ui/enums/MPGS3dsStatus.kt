@@ -1,6 +1,6 @@
 package com.paydock.feature.threeDS.integrated.domain.model.ui.enums
 
-import com.paydock.feature.threeDS.integrated.domain.utils.IntegratedStatusSerializer
+import com.paydock.feature.threeDS.integrated.domain.utils.MPGS3dsStatusSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -14,8 +14,8 @@ import kotlinx.serialization.Serializable
  * The [SerialName] annotation is used to define the string representation of each
  * status when serializing/deserializing using kotlinx.serialization.
  */
-@Serializable(with = IntegratedStatusSerializer::class)
-internal enum class IntegratedStatus {
+@Serializable(with = MPGS3dsStatusSerializer::class)
+internal enum class MPGS3dsStatus {
     @SerialName("rejected")
     REJECTED,
 
@@ -35,17 +35,17 @@ internal enum class IntegratedStatus {
     AUTHENTICATION_CANCELLED;
 
     /**
-     * Companion object providing utility methods for [IntegratedStatus].
+     * Companion object providing utility methods for [MPGS3dsStatus].
      */
-    companion object {
+    companion object Companion {
         /**
-         * Retrieves a [IntegratedStatus] based on its string representation.
+         * Retrieves a [MPGS3dsStatus] based on its string representation.
          *
          * @param value The string representation of the schema.
-         * @return The corresponding [IntegratedStatus] if found, or `UNKNOWN` if no match is found.
+         * @return The corresponding [MPGS3dsStatus] if found, or `UNKNOWN` if no match is found.
          */
-        fun fromValue(value: String): IntegratedStatus? {
-            return IntegratedStatus.entries.find {
+        fun fromValue(value: String): MPGS3dsStatus? {
+            return entries.find {
                 it.name.equals(
                     value,
                     ignoreCase = true

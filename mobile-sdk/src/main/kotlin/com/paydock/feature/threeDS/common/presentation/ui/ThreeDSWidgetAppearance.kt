@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
-import com.paydock.feature.threeDS.integrated.presentation.Integrated3DSWidget
 import com.paydock.feature.threeDS.standalone.presentation.Standalone3DSWidget
 
 /**
@@ -44,7 +43,7 @@ class ThreeDSWidgetAppearance(val loader: LoaderAppearance) {
  * Default appearance settings for the 3DS widget.
  *
  * This object provides a default [ThreeDSWidgetAppearance] which can be used
- * when a specific appearance is not provided for the [Integrated3DSWidget] and [Standalone3DSWidget].
+ * when a specific appearance is not provided for the [MPGS3dsWidget] and [Standalone3DSWidget].
  */
 object ThreeDSAppearanceDefaults {
 

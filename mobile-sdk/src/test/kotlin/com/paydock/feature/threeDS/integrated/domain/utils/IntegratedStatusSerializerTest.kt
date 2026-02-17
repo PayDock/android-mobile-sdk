@@ -1,6 +1,6 @@
 package com.paydock.feature.threeDS.integrated.domain.utils
 
-import com.paydock.feature.threeDS.integrated.domain.model.ui.enums.IntegratedStatus
+import com.paydock.feature.threeDS.integrated.domain.model.ui.enums.MPGS3dsStatus
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -16,9 +16,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 @OptIn(ExperimentalSerializationApi::class)
-class IntegratedStatusSerializerTest {
+class MPGS3dsStatusSerializerTest {
 
-    private val serializer = IntegratedStatusSerializer
+    private val serializer = MPGS3dsStatusSerializer
 
     @Test
     fun `descriptor should have correct name and kind`() {
@@ -29,13 +29,13 @@ class IntegratedStatusSerializerTest {
     }
 
     @Test
-    fun `deserialize should return correct IntegratedStatus for valid string`() {
+    fun `deserialize should return correct MPGS3dsStatus for valid string`() {
         val decoder: Decoder = mock()
         whenever(decoder.decodeString()).thenReturn("authenticated")
 
         val result = serializer.deserialize(decoder)
 
-        assertEquals(IntegratedStatus.AUTHENTICATED, result)
+        assertEquals(MPGS3dsStatus.AUTHENTICATED, result)
         verify(decoder).decodeString()
     }
 
@@ -62,9 +62,9 @@ class IntegratedStatusSerializerTest {
     }
 
     @Test
-    fun `serialize should encode IntegratedStatus name`() {
+    fun `serialize should encode MPGS3dsStatus name`() {
         val encoder: Encoder = mock()
-        val status = IntegratedStatus.AUTHENTICATED
+        val status = MPGS3dsStatus.AUTHENTICATED
 
         serializer.serialize(encoder, status)
 
@@ -82,17 +82,17 @@ class IntegratedStatusSerializerTest {
 
     @Test
     fun `serialize and deserialize with Json should work correctly for non-null value`() {
-        val status = IntegratedStatus.NOT_AUTHENTICATED
+        val status = MPGS3dsStatus.NOT_AUTHENTICATED
         val json = Json.encodeToJsonElement(serializer, status)
         val decodedStatus = Json.decodeFromJsonElement(serializer, json)
 
-        assertEquals(IntegratedStatus.NOT_AUTHENTICATED, decodedStatus)
+        assertEquals(MPGS3dsStatus.NOT_AUTHENTICATED, decodedStatus)
         assertEquals(JsonPrimitive("NOT_AUTHENTICATED"), json)
     }
 
     @Test
     fun `serialize and deserialize with Json should work correctly for null value`() {
-        val status: IntegratedStatus? = null
+        val status: MPGS3dsStatus? = null
         val json = Json.encodeToJsonElement(serializer, status)
         val decodedStatus = Json.decodeFromJsonElement(serializer, json)
 

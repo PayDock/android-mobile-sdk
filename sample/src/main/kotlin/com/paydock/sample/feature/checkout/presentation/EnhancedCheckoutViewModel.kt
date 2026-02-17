@@ -8,8 +8,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.paydock.feature.card.domain.model.integration.CardResult
-import com.paydock.feature.threeDS.integrated.domain.model.integration.Integrated3DSResult
-import com.paydock.feature.threeDS.integrated.domain.model.integration.enums.IntegratedEventType
+import com.paydock.feature.threeDS.integrated.domain.model.integration.MPGS3dsResult
+import com.paydock.feature.threeDS.integrated.domain.model.integration.enums.MPGS3dsEventType
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.StandaloneEventType
 import com.paydock.feature.zip.domain.model.ZipResult
@@ -30,11 +30,11 @@ import com.paydock.sample.feature.config.models.PaymentProcessor
 import com.paydock.sample.feature.config.models.ThreeDSService
 import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.threeDS.data.api.dto.Capture3DSChargeRequest
-import com.paydock.sample.feature.threeDS.data.api.dto.CreateIntegratedThreeDSTokenRequest
+import com.paydock.sample.feature.threeDS.data.api.dto.CreateMPGS3dsTokenRequest
 import com.paydock.sample.feature.threeDS.data.api.dto.CreateStandaloneThreeDSTokenRequest
 import com.paydock.sample.feature.threeDS.domain.model.ThreeDSToken
 import com.paydock.sample.feature.threeDS.domain.usecase.CaptureThreeDSChargeTokenUseCase
-import com.paydock.sample.feature.threeDS.domain.usecase.CreateIntegratedThreeDSTokenUseCase
+import com.paydock.sample.feature.threeDS.domain.usecase.CreateMPGS3dsTokenUseCase
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateStandaloneThreeDSTokenUseCase
 import com.paydock.sample.feature.wallet.presentation.AddressData
 import com.paydock.sample.feature.wallet.presentation.CustomerData
@@ -57,7 +57,7 @@ import com.paydock.sample.feature.account.domain.model.SavedAddress as ProfileSa
 class EnhancedCheckoutViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val createCardSessionVaultTokenUseCase: CreateCardSessionVaultTokenUseCase,
-    private val createIntegratedThreeDSTokenUseCase: CreateIntegratedThreeDSTokenUseCase,
+    private val createMPGS3dsTokenUseCase: CreateMPGS3dsTokenUseCase,
     private val createStandaloneThreeDSTokenUseCase: CreateStandaloneThreeDSTokenUseCase,
     private val captureThreeDSChargeTokenUseCase: CaptureThreeDSChargeTokenUseCase,
     private val captureZipChargeUseCase: CaptureZipChargeUseCase,
@@ -425,7 +425,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
             result.onSuccess { token ->
                 vaultToken = token
                 when (threeDSType.value) {
-                    ThreeDSType.INTEGRATED -> createIntegrated3dsToken(token)
+                    ThreeDSType.MPGS -> createMPGS3dsToken(token)
                     ThreeDSType.STANDALONE -> createStandalone3dsToken(token)
                 }
             }.onFailure {
@@ -434,13 +434,13 @@ class EnhancedCheckoutViewModel @Inject constructor(
         }
     }
 
-    private fun createIntegrated3dsToken(vaultToken: String) {
+    private fun createMPGS3dsToken(vaultToken: String) {
         viewModelScope.launch {
             val cartTotal = CartManager.shared.totalPrice
             val currency = globalConfigRepository.globalConfig.value.currencyCode
             val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
             val serviceId = getServiceIdFromConfig()
-            val request = CreateIntegratedThreeDSTokenRequest(
+            val request = CreateMPGS3dsTokenRequest(
                 amount = BigDecimal(cartTotal),
                 currency = currency,
                 customer = ChargesCustomerDTO(
@@ -450,7 +450,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
                     )
                 )
             )
-            val result = createIntegratedThreeDSTokenUseCase(accessToken, request)
+            val result = createMPGS3dsTokenUseCase(accessToken, request)
             handle3DSTokenResult(result)
         }
     }
@@ -482,7 +482,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 // Explicit NOT_SUPPORTED: proceed to capture if we have an id
                 status == ThreeDSToken.ThreeDSStatus.NOT_SUPPORTED && hasId -> {
                     when (threeDSType.value) {
-                        ThreeDSType.INTEGRATED -> captureIntegrated3DSCharge(threeDSResult.id)
+                        ThreeDSType.MPGS -> captureMPGS3dsCharge(threeDSResult.id)
                         ThreeDSType.STANDALONE -> captureStandalone3DSCharge(threeDSResult.id)
                     }
                 }
@@ -509,7 +509,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 // If no token but an id exists, attempt capture (provider completed silently)
                 hasId -> {
                     when (threeDSType.value) {
-                        ThreeDSType.INTEGRATED -> captureIntegrated3DSCharge(threeDSResult.id)
+                        ThreeDSType.MPGS -> captureMPGS3dsCharge(threeDSResult.id)
                         ThreeDSType.STANDALONE -> captureStandalone3DSCharge(threeDSResult.id)
                     }
                 }
@@ -524,12 +524,12 @@ class EnhancedCheckoutViewModel @Inject constructor(
         }
     }
 
-    fun handleIntegrated3DSResult(result: Result<Integrated3DSResult>) {
+    fun handleMPGS3dsResult(result: Result<MPGS3dsResult>) {
         result.onSuccess {
-            if (it.event == IntegratedEventType.CHARGE_AUTH_SUCCESS) {
-                it.charge3dsId?.let { id -> captureIntegrated3DSCharge(id) }
+            if (it.event == MPGS3dsEventType.CHARGE_AUTH_SUCCESS) {
+                it.charge3dsId?.let { id -> captureMPGS3dsCharge(id) }
                 threeDSToken = null
-            } else if (it.event == IntegratedEventType.CHARGE_AUTH_REJECT) {
+            } else if (it.event == MPGS3dsEventType.CHARGE_AUTH_REJECT) {
                 isLoading = false
                 threeDSToken = null
                 vaultToken = null
@@ -580,16 +580,16 @@ class EnhancedCheckoutViewModel @Inject constructor(
         }
     }
 
-    private fun captureIntegrated3DSCharge(threeDSChargeId: String) {
+    private fun captureMPGS3dsCharge(threeDSChargeId: String) {
         viewModelScope.launch {
             val cartTotal = CartManager.shared.totalPrice
             val currency = globalConfigRepository.globalConfig.value.currencyCode
             val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
             isLoading = true
-            val request = Capture3DSChargeRequest.CaptureIntegrated3DSChargeRequest(
+            val request = Capture3DSChargeRequest.CaptureMPGS3dsChargeRequest(
                 amount = BigDecimal(cartTotal),
                 currency = currency,
-                threeDSData = Capture3DSChargeRequest.CaptureIntegrated3DSChargeRequest.ThreeDSChargeData(
+                threeDSData = Capture3DSChargeRequest.CaptureMPGS3dsChargeRequest.ThreeDSChargeData(
                     threeDSChargeId
                 )
             )
@@ -759,7 +759,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
      * Gets the ThreeDSType from CheckoutConfig based on the preferred processor.
      * Maps ThreeDSService to ThreeDSType:
      * - GPAYMENTS -> STANDALONE
-     * - INTEGRATED_3DS -> INTEGRATED
+     * - MPGS 3DS -> INTEGRATED
      */
     private fun getThreeDSTypeFromConfig(): ThreeDSType {
         val preferredProcessor = checkoutConfig.preferredProcessor ?: PaymentProcessor.MPGS
@@ -771,7 +771,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
 
         return when (threeDSService) {
             ThreeDSService.GPAYMENTS -> ThreeDSType.STANDALONE
-            ThreeDSService.INTEGRATED_3DS -> ThreeDSType.INTEGRATED
+            ThreeDSService.MPGS_3DS -> ThreeDSType.MPGS
         }
     }
 

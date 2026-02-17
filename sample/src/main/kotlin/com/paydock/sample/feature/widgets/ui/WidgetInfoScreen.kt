@@ -15,7 +15,7 @@ import com.paydock.sample.feature.widgets.ui.components.ClickToPayItem
 import com.paydock.sample.feature.widgets.ui.components.ColesPayItem
 import com.paydock.sample.feature.widgets.ui.components.GiftCardItem
 import com.paydock.sample.feature.widgets.ui.components.GooglePayItem
-import com.paydock.sample.feature.widgets.ui.components.Integrated3DSItem
+import com.paydock.sample.feature.widgets.ui.components.MPGS3dsItem
 import com.paydock.sample.feature.widgets.ui.components.PayPalItem
 import com.paydock.sample.feature.widgets.ui.components.PayPalVaultItem
 import com.paydock.sample.feature.widgets.ui.components.StandaloneThreeDSItem
@@ -90,8 +90,8 @@ fun WidgetInfoScreen(
                 )
             }
 
-            WidgetType.INTEGRATED_3DS -> {
-                Integrated3DSItem(context = context, stylingViewModel = stylingViewModel)
+            WidgetType.MPGS_3DS -> {
+                MPGS3dsItem(context = context, stylingViewModel = stylingViewModel)
             }
 
             WidgetType.PAY_PAL -> {

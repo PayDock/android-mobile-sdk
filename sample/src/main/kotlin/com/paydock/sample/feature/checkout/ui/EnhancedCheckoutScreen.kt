@@ -356,8 +356,8 @@ fun EnhancedCheckoutScreen(
             onDismissRequest = {
                 // Handle dismiss (close button click) as 3DS failure/cancellation
                 when (threeDSType) {
-                    ThreeDSType.INTEGRATED -> {
-                        viewModel.handleIntegrated3DSResult(
+                    ThreeDSType.MPGS -> {
+                        viewModel.handleMPGS3dsResult(
                             Result.failure(Exception("3DS cancelled by user"))
                         )
                     }

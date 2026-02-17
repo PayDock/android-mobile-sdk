@@ -75,9 +75,9 @@ class StylingViewModel @Inject constructor() : ViewModel() {
     val clickToPayWidgetAppearance: StateFlow<ClickToPayWidgetAppearance?> =
         _clickToPayWidgetAppearance.asStateFlow()
 
-    private val _integrated3DSWidgetAppearance = MutableStateFlow<ThreeDSWidgetAppearance?>(null)
-    val integrated3DSWidgetAppearance: StateFlow<ThreeDSWidgetAppearance?> =
-        _integrated3DSWidgetAppearance.asStateFlow()
+    private val _mpgs3dsWidgetAppearance = MutableStateFlow<ThreeDSWidgetAppearance?>(null)
+    val mpgs3dsWidgetAppearance: StateFlow<ThreeDSWidgetAppearance?> =
+        _mpgs3dsWidgetAppearance.asStateFlow()
 
     private val _standalone3DSWidgetAppearance = MutableStateFlow<ThreeDSWidgetAppearance?>(null)
     val standalone3DSWidgetAppearance: StateFlow<ThreeDSWidgetAppearance?> =
@@ -195,8 +195,8 @@ class StylingViewModel @Inject constructor() : ViewModel() {
         _clickToPayWidgetAppearance.update { updatedDefaults }
     }
 
-    fun updateInitialIntegrated3DSDefaults(updatedDefaults: ThreeDSWidgetAppearance) {
-        _integrated3DSWidgetAppearance.update { updatedDefaults }
+    fun updateInitialMPGS3dsDefaults(updatedDefaults: ThreeDSWidgetAppearance) {
+        _mpgs3dsWidgetAppearance.update { updatedDefaults }
     }
 
     fun updateInitialStandalone3DSDefaults(updatedDefaults: ThreeDSWidgetAppearance) {
@@ -548,13 +548,13 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                 }
             }
 
-            WidgetType.INTEGRATED_3DS -> {
-                _integrated3DSWidgetAppearance.value?.let { current ->
+            WidgetType.MPGS_3DS -> {
+                _mpgs3dsWidgetAppearance.value?.let { current ->
                     val updatedAppearance = when (component) {
                         StyleAppearanceComponent.LOADER -> current.copy(loader = newComponentAppearance as LoaderAppearance)
                         else -> current
                     }
-                    _integrated3DSWidgetAppearance.value = updatedAppearance
+                    _mpgs3dsWidgetAppearance.value = updatedAppearance
                 }
             }
 

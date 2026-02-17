@@ -7,7 +7,7 @@ import com.paydock.core.domain.error.exceptions.ColesPayException
 import com.paydock.core.domain.error.exceptions.GenericException
 import com.paydock.core.domain.error.exceptions.GiftCardException
 import com.paydock.core.domain.error.exceptions.GooglePayException
-import com.paydock.core.domain.error.exceptions.Integrated3DSException
+import com.paydock.core.domain.error.exceptions.MPGS3dsException
 import com.paydock.core.domain.error.exceptions.PayPalDataCollectorException
 import com.paydock.core.domain.error.exceptions.PayPalException
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
@@ -56,11 +56,11 @@ sealed interface ErrorModel {
     data class Standalone3DSError(val exception: Standalone3DSException) : ErrorModel
 
     /**
-     * 3DS Error: Represents errors specific to Integrated 3DS functionality.
+     * 3DS Error: Represents errors specific to MPGS 3DS functionality.
      *
-     * @property exception The [Integrated3DSException] specific to 3DS.
+     * @property exception The [MPGS3dsException] specific to MPGS 3DS.
      */
-    data class Integrated3DSError(val exception: Integrated3DSException) : ErrorModel
+    data class MPGS3dsError(val exception: MPGS3dsException) : ErrorModel
 
     /**
      * PayPal Error: Represents errors specific to PayPal functionality.
@@ -144,7 +144,7 @@ fun Throwable.toError(): ErrorModel {
         is CardDetailsException -> ErrorModel.CardDetailsError(this)
         is GiftCardException -> ErrorModel.GiftCardError(this)
         is Standalone3DSException -> ErrorModel.Standalone3DSError(this)
-        is Integrated3DSException -> ErrorModel.Integrated3DSError(this)
+        is MPGS3dsException -> ErrorModel.MPGS3dsError(this)
         is PayPalException -> ErrorModel.PayPalError(this)
         is PayPalVaultException -> ErrorModel.PayPalVaultError(this)
         is PayPalDataCollectorException -> ErrorModel.PayPalDataCollectorError(this)

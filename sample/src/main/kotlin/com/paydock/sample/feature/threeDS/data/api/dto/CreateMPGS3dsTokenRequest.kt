@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
 import java.math.BigDecimal
 
-data class CreateIntegratedThreeDSTokenRequest(
+data class CreateMPGS3dsTokenRequest(
     val token: String? = null,
     val amount: BigDecimal,
     val currency: String,

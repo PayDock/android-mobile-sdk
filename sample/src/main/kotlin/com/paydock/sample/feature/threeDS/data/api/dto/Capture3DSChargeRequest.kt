@@ -6,7 +6,7 @@ import java.math.BigDecimal
 
 sealed class Capture3DSChargeRequest {
 
-    data class CaptureIntegrated3DSChargeRequest(
+    data class CaptureMPGS3dsChargeRequest(
         val amount: BigDecimal,
         val currency: String,
         val reference: String = "some_reference",

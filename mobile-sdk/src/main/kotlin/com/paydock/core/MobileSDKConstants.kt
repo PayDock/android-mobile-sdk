@@ -127,17 +127,17 @@ internal object MobileSDKConstants {
     }
 
     /**
-     * Constants related to 3D Secure (3DS) configuration.
+     * Constants related to MPGS 3D Secure (3DS) configuration.
      *
-     * This object holds constants specific to the 3DS verification process.
+     * This object holds constants specific to the MPGS 3DS verification process.
      */
-    object Integrated3DSConfig {
+    object MPGS3dsConfig {
         object Errors {
-            const val INTEGRATED_3DS_ERROR =
-                "An unexpected error occurred while processing Integrated 3DS verification. " +
+            const val MPGS_3DS_ERROR =
+                "An unexpected error occurred while processing MPGS 3DS verification. " +
                     "Please try again later or contact support for assistance."
-            const val INVALID_TOKEN_ERROR = "Invalid Integrated 3DS token!"
-            const val INVALID_TOKEN_FORMAT_ERROR = "Invalid Integrated 3DS token format!"
+            const val INVALID_TOKEN_ERROR = "Invalid MPGS 3DS token!"
+            const val INVALID_TOKEN_FORMAT_ERROR = "Invalid MPGS 3DS token format!"
         }
     }
 

@@ -18,10 +18,10 @@
 package com.paydock.feature.threeDS.integrated.domain.model.integration.enums
 
 /**
- * Enum class representing various event types related to Integrated 3D Secure (3DS) charge processing.
- * This enum includes events that occur in Integrated 3DS authentication flows.
+ * Enum class representing various event types related to MPGS 3D Secure (3DS) charge processing.
+ * This enum includes events that occur in MPGS 3DS authentication flows.
  */
-enum class IntegratedEventType {
+enum class MPGS3dsEventType {
     /**
      * Indicates that the 3DS charge authorization was successfully completed.
      */
