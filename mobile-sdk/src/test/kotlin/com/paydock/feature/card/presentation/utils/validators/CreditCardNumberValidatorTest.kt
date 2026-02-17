@@ -435,4 +435,63 @@ internal class CreditCardNumberValidatorTest {
         )
         assertEquals(expected, actual)
     }
+
+    @Test
+    fun validateCardNumberInput_unrecognizedCard_withSchemeValidationEnabled_allowsGenericValidation() {
+        // Test that unrecognized cards (no scheme detected) are allowed even when scheme validation is enabled
+        // They should be validated using generic 12-19 digit rules, not rejected as "unsupported"
+        val cardNumber = "1466366215019142" // Valid 16-digit number with valid Luhn, but unrecognized scheme
+        val hasUserInteracted = true
+        val supportedSchemeConfig = SupportedSchemeConfig(
+            supportedSchemes = setOf(CardType.VISA, CardType.MASTERCARD),
+            enableValidation = true // Scheme validation enabled, but should still allow unrecognized cards
+        )
+        val expected = CardNumberError.None // Should pass generic validation (length + Luhn)
+        val actual = CreditCardNumberValidator.validateCardNumberInput(
+            cardNumber = cardNumber,
+            cardScheme = null, // No scheme detected (unrecognized)
+            schemeConfig = supportedSchemeConfig,
+            hasUserInteracted = hasUserInteracted
+        )
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateCardNumberInput_unrecognizedCard_invalidLuhn_returnsInvalidLuhn() {
+        // Unrecognized card should still fail Luhn validation
+        val cardNumber = "1466366215019143" // 16 digits but invalid Luhn check digit
+        val hasUserInteracted = true
+        val supportedSchemeConfig = SupportedSchemeConfig(
+            supportedSchemes = setOf(CardType.VISA, CardType.MASTERCARD),
+            enableValidation = true
+        )
+        val expected = CardNumberError.InvalidLuhn
+        val actual = CreditCardNumberValidator.validateCardNumberInput(
+            cardNumber = cardNumber,
+            cardScheme = null, // No scheme detected
+            schemeConfig = supportedSchemeConfig,
+            hasUserInteracted = hasUserInteracted
+        )
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateCardNumberInput_unrecognizedCard_tooShort_returnsInvalidLength() {
+        // Unrecognized card with fewer than 12 digits should fail length validation
+        val cardNumber = "12345" // Only 5 digits
+        val hasUserInteracted = true
+        val supportedSchemeConfig = SupportedSchemeConfig(
+            supportedSchemes = setOf(CardType.VISA, CardType.MASTERCARD),
+            enableValidation = true
+        )
+        val expected = CardNumberError.InvalidLength
+        val actual = CreditCardNumberValidator.validateCardNumberInput(
+            cardNumber = cardNumber,
+            cardScheme = null, // No scheme detected
+            schemeConfig = supportedSchemeConfig,
+            hasUserInteracted = hasUserInteracted,
+            isCardNumberFocused = false // Blurred/defocused
+        )
+        assertEquals(expected, actual)
+    }
 }
