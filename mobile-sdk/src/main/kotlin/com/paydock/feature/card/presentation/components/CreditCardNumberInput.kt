@@ -76,7 +76,7 @@ internal fun CreditCardNumberInput(
     )
 
     val errorMessage = when (cardNumberError) {
-        CardNumberError.Empty,
+        CardNumberError.Empty -> null // Empty field should show no error (neutral state)
         CardNumberError.InvalidLuhn,
         CardNumberError.InvalidLength -> stringResource(id = R.string.error_card_number)
 

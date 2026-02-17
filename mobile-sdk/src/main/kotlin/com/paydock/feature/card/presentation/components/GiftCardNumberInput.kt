@@ -67,7 +67,7 @@ internal fun GiftCardNumberInput(
 
     // Define the error message to be shown if the card number is invalid
     val errorMessage = when (cardNumberError) {
-        GiftCardNumberError.Empty,
+        GiftCardNumberError.Empty -> null // Empty field should show no error (neutral state)
         GiftCardNumberError.Invalid -> stringResource(id = R.string.error_card_number)
         GiftCardNumberError.None -> null
     }
