@@ -206,39 +206,49 @@ increment_version:
     #   3. Updating the GitLab CI variables with the new versions.
     #   4. Updating the version number in the 'build.gradle.kts' file.
 
-# pull_bin_file:
-# Commented out – will be re-enabled with new bin file schema logic.
-# This job pulls a zip file from an AWS S3 bucket and extracts its contents.
-# pull_bin_file:
-#   stage: build # Runs in the 'build' stage.
-#   image: 412245956714.dkr.ecr.ap-southeast-2.amazonaws.com/ci:20241212-1584910654 # Uses a specific Docker image for this job.
-#   script: |
-#     mkdir -p bin_schema
-#     aws s3 cp s3://pd-app-bin-management-staging-11/bins.zip bin_schema/bins.zip
-#     cd bin_schema && unzip -o bins.zip && cd ..
-#   artifacts:
-#     paths:
-#       - bin_schema/ # Makes the 'bin_schema/' directory available as an artifact for subsequent jobs.
-#   rules:
-#     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
-#       when: on_success
+# fetch_bin_file:
+# Fetches the BIN validation file from CloudFront using HTTP caching headers.
+# Uses Last-Modified (preferred) or ETag to determine if the file has changed.
+# Mirrors the caching logic in BinDataCacheManager.kt for consistency.
+# Runs automatically on merge to default branch to keep card schemes up to date.
+fetch_bin_file:
+  stage: build
+  extends: .setup_bundler
+  script:
+    - bundle exec fastlane fetch_bin_file
+  artifacts:
+    paths:
+      - bin_schema/
+    expire_in: 1 day
+  rules:
+    # Run on merge requests targeting default branch (validates process before merge)
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+      when: on_success
+    # Run automatically when commits land on default branch (keeps file up to date)
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: on_success
 
 # commit_bin_file:
-# Commented out – will be re-enabled with new bin file schema logic.
-# This job commits the extracted card schemes file to the repository if it has changed.
-# commit_bin_file:
-#   stage: build # Runs in the 'build' stage after pull_bin_file.
-#   extends: .setup_bundler # Extends the '.setup_bundler' template for Ruby/Fastlane setup
-#   dependencies:
-#     - pull_bin_file # Depends on the pull_bin_file job
-#   needs:
-#     - job: pull_bin_file
-#       artifacts: true
-#   script:
-#     - bundle exec fastlane android commit_bin_file # Executes the 'commit_bin_file' lane in Fastlane
-#   rules:
-#     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
-#       when: on_success
+# Commits the fetched card schemes file to the repository if it has changed.
+# Updates BIN_FILE_LAST_MODIFIED and BIN_FILE_ETAG CI variables after successful commit.
+# Uses [skip ci] in commit message to prevent infinite pipeline loops.
+commit_bin_file:
+  stage: build
+  extends: .setup_bundler
+  dependencies:
+    - fetch_bin_file
+  needs:
+    - job: fetch_bin_file
+      artifacts: true
+  script:
+    - bundle exec fastlane commit_bin_file
+  rules:
+    # Run on merge requests targeting default branch (validates process before merge)
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+      when: on_success
+    # Run automatically when commits land on default branch (keeps file up to date)
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: on_success
 
 # .build_template:
 # This is a hidden job template for building the Android application.
