@@ -26,7 +26,7 @@ import com.paydock.feature.card.presentation.utils.validators.CreditCardNumberVa
  * @property storeSecurityCode Specifies whether the security code (CVV) should be saved when tokenizing a card.
  * If `null`, the `store_ccv` parameter will not be sent in the tokenization request.
  * @property schemeConfig Configuration for supported card schemes and scheme validation behavior.
- * @property binData The BIN data used for card scheme detection. Defaults to `null`.
+ * @property binData The BIN data used for card scheme detection (cache first, then bundled asset). Defaults to `null`.
  */
 internal data class CardDetailsInputState(
     val cardholderName: String? = null,

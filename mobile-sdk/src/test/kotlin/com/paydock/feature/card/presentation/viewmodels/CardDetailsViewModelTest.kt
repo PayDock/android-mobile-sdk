@@ -10,7 +10,6 @@ import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.utils.MainDispatcherRule
-import com.paydock.feature.card.data.cache.BinDataCacheManager
 import com.paydock.feature.card.data.dto.BinDataResponse
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.ui.TokenDetails
@@ -47,7 +46,6 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
     private lateinit var viewModel: CardDetailsViewModel
     private lateinit var getCardSchemasUseCaseTest: GetCardSchemasUseCase
     private lateinit var createCardPaymentUseCase: CreateCardPaymentTokenUseCase
-    private lateinit var binDataCacheManager: BinDataCacheManager
 
     private fun setupCreateCardPaymentUseCaseSuccess() {
         val mockToken = MobileSDKTestConstants.Card.MOCK_CARD_TOKEN
@@ -143,10 +141,9 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
             }
         """.trimIndent()
         val binData = json.convertToDataClass<BinDataResponse>()
-        val mockResult = Result.success(binData)
         coEvery {
             getCardSchemasUseCaseTest()
-        } returns mockResult
+        } returns Result.success(binData)
     }
 
     private fun setupCreateCardPaymentUseCasFailure() {
@@ -172,14 +169,8 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
     fun setup() {
         createCardPaymentUseCase = mockk()
         getCardSchemasUseCaseTest = mockk()
-        binDataCacheManager = mockk()
 
         setupGetCardSchemasSuccess()
-
-        // Mock the background download method to return success (non-blocking)
-        coEvery {
-            binDataCacheManager.downloadAndCacheBinData()
-        } returns Result.success("/path/to/cached/file.json")
 
         viewModel = CardDetailsViewModel(
             MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN,
@@ -188,8 +179,7 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
             getCardSchemasUseCaseTest,
             createCardPaymentUseCase,
             dispatchersProvider,
-            SavedStateHandle(),
-            binDataCacheManager
+            SavedStateHandle()
         )
     }
 

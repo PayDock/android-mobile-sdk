@@ -46,7 +46,7 @@ internal interface CardRepository {
     ): Flow<TokenDetails>
 
     /**
-     * Fetches the BIN data from cache or bundled asset.
+     * Fetches the BIN data. Uses cache first (CloudFront), then fallback to bundled asset.
      *
      * @return A [BinDataResponse] containing BIN data for card scheme detection.
      */

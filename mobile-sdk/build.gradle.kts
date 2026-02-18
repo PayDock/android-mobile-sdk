@@ -86,6 +86,8 @@ dependencies {
     api(libs.paydock.core.networking)
     // Android
     implementation(libs.bundles.androidx)
+    implementation(libs.androidx.lifecycle.ktx)
+    implementation(libs.androidx.lifecycle.process)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.ext)
     androidTestImplementation(libs.androidx.runner)
@@ -125,6 +127,7 @@ dependencies {
     testImplementation(libs.mockito)
     testImplementation(libs.turbine)
     testImplementation(libs.json)
+    testImplementation(libs.androidx.arch.core.testing)
     // UI Testing (General)
     androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.mockito.android)

@@ -20,7 +20,6 @@ import com.paydock.core.extensions.waitUntilTimeout
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.extensions.convertToDataClass
-import com.paydock.feature.card.data.cache.BinDataCacheManager
 import com.paydock.feature.card.data.dto.BinDataResponse
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.CardResult
@@ -96,7 +95,6 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
     private val createCardPaymentTokenUseCase: CreateCardPaymentTokenUseCase = mockk(relaxed = true)
     private val getCardSchemasUseCase: GetCardSchemasUseCase =
         mockk(relaxed = true)
-    private val binDataCacheManager: BinDataCacheManager = mockk(relaxed = true)
 
     override fun initialiseViewModel(): CardDetailsViewModel {
         setupGetCardSchemasSuccess()
@@ -107,11 +105,10 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
                 supportedSchemes = CardType.entries.toSet(),
                 enableValidation = true
             ),
-            createCardPaymentTokenUseCase = createCardPaymentTokenUseCase,
             getCardSchemasUseCase = getCardSchemasUseCase,
+            createCardPaymentTokenUseCase = createCardPaymentTokenUseCase,
             dispatchers = dispatchersProvider,
-            savedStateHandle = SavedStateHandle(),
-            binDataCacheManager = binDataCacheManager
+            savedStateHandle = SavedStateHandle()
         )
     }
 
