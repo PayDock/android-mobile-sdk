@@ -5,7 +5,6 @@ import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
-import com.paydock.feature.card.data.cache.BinDataCacheManager
 import com.paydock.feature.card.data.dto.CreateCardPaymentTokenRequest
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.usecase.CreateCardPaymentTokenUseCase
@@ -26,7 +25,6 @@ import kotlinx.coroutines.flow.update
  * @param getCardSchemasUseCase The use case responsible for retrieving supported card schemas.
  * @param createCardPaymentTokenUseCase The use case responsible for creating card payment tokens.
  * @param dispatchers The provider for coroutine dispatchers, used for handling asynchronous tasks.
- * @param binDataCacheManager The cache manager for downloading and caching BIN data.
  */
 internal class CardDetailsViewModel(
     private val accessToken: String,
@@ -36,7 +34,6 @@ internal class CardDetailsViewModel(
     private val createCardPaymentTokenUseCase: CreateCardPaymentTokenUseCase,
     dispatchers: DispatchersProvider,
     private val savedStateHandle: SavedStateHandle,
-    private val binDataCacheManager: BinDataCacheManager,
 ) : BaseViewModel(dispatchers) {
 
     /**
@@ -81,10 +78,9 @@ internal class CardDetailsViewModel(
 
     /**
      * Fetches the BIN data using the provided use case.
-     *
-     * - On success, updates the input state with the retrieved BIN data.
-     * - On failure, clears the BIN data in the input state.
-     * - Also triggers a background download of the latest BIN data (non-blocking).
+     * Always uses cache first (CloudFront download), then falls back to the bundled asset (card-schemes.json).
+     * BIN refresh runs at SDK init and on app foreground via [BinDataRefreshCoordinator];
+     * no BIN network request occurs during the tokenise flow.
      */
     private fun getCardSchemas() {
         launchOnIO {
@@ -93,32 +89,11 @@ internal class CardDetailsViewModel(
                     _inputStateFlow.update { state ->
                         state.copy(binData = binData)
                     }
-                    // Trigger background download of latest BIN data (non-blocking)
-                    downloadLatestBinData()
                 }
                 .onFailure {
                     _inputStateFlow.update { state ->
                         state.copy(binData = null)
                     }
-                }
-        }
-    }
-
-    /**
-     * Downloads the latest BIN data from CloudFront in the background.
-     * This operation is non-blocking and does not affect the current state.
-     * On success, the cached file will be used in subsequent calls to getBinData().
-     */
-    private fun downloadLatestBinData() {
-        launchOnIO {
-            binDataCacheManager.downloadAndCacheBinData()
-                .onSuccess {
-                    // Download successful, cached file will be used next time
-                    // No need to update state as the cached file will be read automatically
-                }
-                .onFailure {
-                    // Download failed, will continue using bundled asset
-                    // No action needed as fallback is automatic
                 }
         }
     }

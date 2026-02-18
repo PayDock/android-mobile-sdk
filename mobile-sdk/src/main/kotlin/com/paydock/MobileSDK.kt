@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import com.paydock.core.data.injection.MobileSDKKoinContext
 import com.paydock.core.domain.mapper.mapToBaseUrl
 import com.paydock.core.domain.model.Environment
+import com.paydock.feature.card.data.refresh.BinDataRefreshCoordinator
 
 /**
  * The main entry point for the Mobile SDK.
@@ -28,13 +29,15 @@ class MobileSDK(
     internal val baseUrl: String
 
     init {
+        // Map environment to corresponding base URL (needed before Koin resolves HttpClient)
+        baseUrl = environment.mapToBaseUrl()
+        // Register so getInstance() is available when Koin creates HttpClient/BinDataCacheManager
+        registerInstance(this)
         // Initialize Koin context if not already initialized
         if (koinContext == null) {
             koinContext = MobileSDKKoinContext(context)
+            koinContext?.koin?.get<BinDataRefreshCoordinator>()?.refreshAtSdkInit()
         }
-
-        // Map environment to corresponding base URL
-        baseUrl = environment.mapToBaseUrl()
     }
 
     /**
@@ -77,6 +80,12 @@ class MobileSDK(
 
     companion object {
         private var instance: MobileSDK? = null
+
+        /** Called from init so getInstance() is available when Koin creates HttpClient (which needs baseUrl). */
+        @JvmStatic
+        internal fun registerInstance(sdk: MobileSDK) {
+            instance = sdk
+        }
 
         /**
          * Initializes the MobileSDK with the provided configuration.

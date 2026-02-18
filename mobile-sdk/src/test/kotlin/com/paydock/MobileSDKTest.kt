@@ -1,14 +1,22 @@
 package com.paydock
 
-import android.content.Context
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.ProcessLifecycleOwner
 import com.paydock.core.BaseUnitTest
 import com.paydock.core.domain.model.Environment
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.koin.core.context.stopKoin
+import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -17,15 +25,40 @@ import kotlin.test.assertTrue
 
 internal class MobileSDKTest : BaseUnitTest() {
 
-    private lateinit var context: Context
+    @get:Rule
+    val instantTaskExecutorRule = InstantTaskExecutorRule()
+
+    private lateinit var context: Application
 
     @Before
     override fun setUpMocks() {
         super.setUpMocks()
-        // Mock the Context object
-        context = mockk()
-        // Configure the getApplicationContext() method to return the mock Context
+
+        // Mock ProcessLifecycleOwner for BinDataRefreshCoordinator
+        mockkObject(ProcessLifecycleOwner)
+        val processLifecycleOwner = mockk<ProcessLifecycleOwner>(relaxed = true)
+        val lifecycleRegistry = LifecycleRegistry(processLifecycleOwner)
+        lifecycleRegistry.currentState = Lifecycle.State.RESUMED
+        every { ProcessLifecycleOwner.get() } returns processLifecycleOwner
+        every { processLifecycleOwner.lifecycle } returns lifecycleRegistry
+
+        // Mock Application so Koin can resolve androidApplication() in presentationModule
+        context = mockk<Application>(relaxed = true)
         every { context.applicationContext } returns context
+
+        // Mock filesDir for BinDataCacheManager.getCachedBinDataPath()
+        val tempDir = File(System.getProperty("java.io.tmpdir"), "paydock_test")
+        tempDir.mkdirs()
+        every { context.filesDir } returns tempDir
+
+        // Mock SharedPreferences for BinDataCacheManager
+        val sharedPrefs = mockk<SharedPreferences>(relaxed = true)
+        val editor = mockk<SharedPreferences.Editor>(relaxed = true)
+        every { sharedPrefs.edit() } returns editor
+        every { editor.putString(any(), any()) } returns editor
+        every { editor.putLong(any(), any()) } returns editor
+        every { editor.apply() } returns Unit
+        every { context.getSharedPreferences(any(), any()) } returns sharedPrefs
     }
 
     @After

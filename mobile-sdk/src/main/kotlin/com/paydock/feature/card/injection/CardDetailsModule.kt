@@ -4,6 +4,7 @@ import android.content.Context
 import com.paydock.core.utils.decoder.injection.stringDecoderKoinModule
 import com.paydock.core.utils.reader.injection.fileReaderKoinModule
 import com.paydock.feature.card.data.cache.BinDataCacheManager
+import com.paydock.feature.card.data.refresh.BinDataRefreshCoordinator
 import com.paydock.feature.card.data.repository.CardRepositoryImpl
 import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
@@ -26,14 +27,22 @@ internal val cardDetailsModule = module {
     // Include other necessary modules
     includes(stringDecoderKoinModule, fileReaderKoinModule)
 
-    // Provide BinDataCacheManager for downloading and caching BIN data
+    // Provide BinDataCacheManager for downloading and caching BIN data (uses dedicated client for CloudFront)
     single<BinDataCacheManager> {
-        BinDataCacheManager(context = get<Context>(), httpClient = get())
+        BinDataCacheManager(context = get<Context>(), httpClient = get(named("binDataHttpClient")))
+    }
+
+    // App-scoped coordinator: BIN refresh at SDK init and on app foreground (1h throttle + HEAD/GET)
+    single {
+        BinDataRefreshCoordinator(
+            binDataCacheManager = get(),
+            scope = BinDataRefreshCoordinator.applicationScope()
+        )
     }
 
     // Factory methods for creating instances of ViewModels with access tokens
     viewModel { (accessToken: String, gatewayId: String?, schemeConfig: SupportedSchemeConfig) ->
-        CardDetailsViewModel(accessToken, gatewayId, schemeConfig, get(), get(), get(), get(), get())
+        CardDetailsViewModel(accessToken, gatewayId, schemeConfig, get(), get(), get(), get())
     }
     viewModel { (config: GiftCardWidgetConfig) ->
         GiftCardViewModel(config, get(), get())

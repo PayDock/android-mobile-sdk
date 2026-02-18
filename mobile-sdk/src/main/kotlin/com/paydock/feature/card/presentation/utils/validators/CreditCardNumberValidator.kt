@@ -11,6 +11,9 @@ import com.paydock.feature.card.presentation.utils.errors.CardNumberError
  *
  * Provides methods to validate the format, length, and correctness of credit card numbers,
  * including Luhn algorithm validation.
+ *
+ * **BIN data:** The [cardScheme] passed in is derived from BIN data that is always loaded
+ * cache-first, then fallback to the bundled asset (card-schemes.json).
  */
 internal object CreditCardNumberValidator {
 
