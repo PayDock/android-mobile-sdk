@@ -210,7 +210,7 @@ increment_version:
 # Fetches the BIN validation file from CloudFront using HTTP caching headers.
 # Uses Last-Modified (preferred) or ETag to determine if the file has changed.
 # Mirrors the caching logic in BinDataCacheManager.kt for consistency.
-# Runs automatically on merge to default branch to keep card schemes up to date.
+# Runs on all MRs to ensure branches have the latest bin file before merging.
 fetch_bin_file:
   stage: build
   extends: .setup_bundler
@@ -221,8 +221,8 @@ fetch_bin_file:
       - bin_schema/
     expire_in: 1 day
   rules:
-    # Run on merge requests targeting default branch (validates process before merge)
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+    # Run on any merge request (ensures bin file is up to date on all branches)
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: on_success
     # Run automatically when commits land on default branch (keeps file up to date)
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
@@ -243,8 +243,8 @@ commit_bin_file:
   script:
     - bundle exec fastlane commit_bin_file
   rules:
-    # Run on merge requests targeting default branch (validates process before merge)
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+    # Run on any merge request (commits updated bin file to source branch)
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: on_success
     # Run automatically when commits land on default branch (keeps file up to date)
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

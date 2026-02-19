@@ -46,8 +46,8 @@ internal object CardSchemeValidator {
 
         CardScheme(
             type = CardType.AMEX,
-            gaps = listOf(4, 10, 15),
-            lengths = listOf(15, 19),
+            gaps = listOf(4, 10),
+            lengths = listOf(15),
             code = CardCode(type = CodeType.CID, size = MobileSDKConstants.CardDetailsConfig.CID_LENGTH)
         ),
 

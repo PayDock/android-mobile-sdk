@@ -16,7 +16,7 @@ internal class CardSchemeValidatorTest : BaseUnitTest() {
     companion object {
         private val VISA_LENGTHS = listOf(16, 18, 19)
         private val MASTERCARD_LENGTHS = listOf(16)
-        private val AMEX_LENGTHS = listOf(15, 19)
+        private val AMEX_LENGTHS = listOf(15)
         private val DINERS_LENGTHS = listOf(14)
         private val DISCOVER_LENGTHS = listOf(16, 19)
         private val JAPCB_LENGTHS = listOf(16)
@@ -37,9 +37,6 @@ internal class CardSchemeValidatorTest : BaseUnitTest() {
                 arrayOf("348090808209082", CardType.AMEX, AMEX_LENGTHS),
                 arrayOf("371400194034655", CardType.AMEX, AMEX_LENGTHS),
                 arrayOf("375527411179515", CardType.AMEX, AMEX_LENGTHS),
-                arrayOf("3400000999005112345", CardType.AMEX, AMEX_LENGTHS), // 19 digits
-                arrayOf("3714001940346554321", CardType.AMEX, AMEX_LENGTHS), // 19 digits
-                arrayOf("3782822463100051234", CardType.AMEX, AMEX_LENGTHS), // 19 digits
                 arrayOf("30312568541349", CardType.DINERS, DINERS_LENGTHS), // Carte Blanche
                 arrayOf("30484878591106", CardType.DINERS, DINERS_LENGTHS), // Carte Blanche
                 arrayOf("36240062066419", CardType.DINERS, DINERS_LENGTHS), // International
