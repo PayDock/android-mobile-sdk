@@ -6,7 +6,7 @@ import com.paydock.feature.card.data.dto.BinDataResponse
  * Result of card scheme detection.
  *
  * @property scheme The detected scheme name (e.g., "visa", "mastercard")
- * @property detectedAt The number of digits at which the scheme was detected (1, 2, 4, or 6)
+ * @property detectedAt The number of digits at which the scheme was detected (1, 2, 4, 6, or 8)
  * @property length The length of the PAN that was checked
  */
 internal data class DetectionResult(
@@ -21,7 +21,10 @@ internal data class DetectionResult(
  * Implements the detection algorithm:
  * 1. Check 2-digit prefixes (minimum length)
  * 2. Check 4-digit prefixes (override if more specific)
- * 3. Check 6-digit BINs (FINAL - 100% accuracy, override if more specific)
+ * 3. Check 6-digit BINs (override if more specific)
+ * 4. Check 8-digit BINs (FINAL - highest precision)
+ *
+ * Detection is performed at the 2nd, 4th, 6th, and 8th digit positions.
  */
 internal class BinDataDetector(private val data: BinDataResponse) {
 
@@ -99,7 +102,7 @@ internal class BinDataDetector(private val data: BinDataResponse) {
             }
         }
 
-        // Step 3: Check 6-digit BINs (FINAL - 100% accuracy, override if more specific)
+        // Step 3: Check 6-digit BINs (override if more specific)
         if (length >= 6) {
             val prefix6 = cleanedPan.substring(0, 6)
 
@@ -111,12 +114,34 @@ internal class BinDataDetector(private val data: BinDataResponse) {
                     detectedAt = 6
                 }
             }
-            // Check 6-digit ranges (FINAL check)
+            // Check 6-digit ranges
             else {
                 val schemeCode = checkRanges(prefix6, data.ranges.range6)
                 if (schemeCode != null) {
                     detectedScheme = data.schemes[schemeCode]
                     detectedAt = 6
+                }
+            }
+        }
+
+        // Step 4: Check 8-digit BINs (FINAL - highest precision, override if more specific)
+        if (length >= 8) {
+            val prefix8 = cleanedPan.substring(0, 8)
+
+            // Check exact 8-digit match
+            if (data.prefix8.containsKey(prefix8)) {
+                val schemeCode = data.prefix8[prefix8]
+                if (schemeCode != null) {
+                    detectedScheme = data.schemes[schemeCode]
+                    detectedAt = 8
+                }
+            }
+            // Check 8-digit ranges (FINAL check)
+            else {
+                val schemeCode = checkRanges(prefix8, data.ranges.range8)
+                if (schemeCode != null) {
+                    detectedScheme = data.schemes[schemeCode]
+                    detectedAt = 8
                 }
             }
         }
@@ -140,24 +165,18 @@ internal class BinDataDetector(private val data: BinDataResponse) {
      * @return The scheme code if found in ranges, or null
      */
     private fun checkRanges(prefix: String, ranges: List<List<String>>): String? {
-        if (ranges.isEmpty()) {
-            return null
-        }
+        if (ranges.isEmpty()) return null
 
-        val prefixNum = prefix.toIntOrNull() ?: return null
+        val prefixNum = prefix.toLongOrNull() ?: return null
 
         for (range in ranges) {
             if (range.size < 3) continue
 
-            val startStr = range[0]
-            val endStr = range[1]
-            val schemeCode = range[2]
+            val startNum = range[0].toLongOrNull() ?: continue
+            val endNum = range[1].toLongOrNull() ?: continue
 
-            val startNum = startStr.toIntOrNull() ?: continue
-            val endNum = endStr.toIntOrNull() ?: continue
-
-            if (prefixNum >= startNum && prefixNum <= endNum) {
-                return schemeCode
+            if (prefixNum in startNum..endNum) {
+                return range[2]
             }
         }
 

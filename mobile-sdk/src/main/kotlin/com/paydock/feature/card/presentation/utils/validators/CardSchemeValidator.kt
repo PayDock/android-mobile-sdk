@@ -12,7 +12,7 @@ import com.paydock.feature.card.domain.model.ui.enums.CodeType
  * Result of card scheme detection for UI display (e.g. test/debug).
  *
  * @property schemeName The detected scheme name (e.g., "visa", "mastercard")
- * @property detectedAt The number of digits at which the scheme was detected (1, 2, 4, or 6)
+ * @property detectedAt The number of digits at which the scheme was detected (1, 2, 4, 6, or 8)
  * @property length The length of the PAN that was checked
  */
 internal data class CardSchemeDetectionResult(
@@ -23,7 +23,7 @@ internal data class CardSchemeDetectionResult(
 
 /**
  * An object responsible for validating and detecting the card scheme based on a given card number.
- * It uses BIN data with hierarchical prefix matching (2-digit → 4-digit → 6-digit BIN checks).
+ * It uses BIN data with hierarchical prefix matching (2-digit → 4-digit → 6-digit → 8-digit BIN checks).
  *
  * The `detectCardScheme` function is the main entry point to identify the card scheme for a given card number.
  */
@@ -90,7 +90,7 @@ internal object CardSchemeValidator {
     /**
      * Detects the card scheme for a given card number using BIN data.
      *
-     * This function uses hierarchical prefix matching (2-digit → 4-digit → 6-digit BIN checks)
+     * This function uses hierarchical prefix matching (2-digit → 4-digit → 6-digit → 8-digit BIN checks)
      * to identify the card scheme.
      *
      * @param binData The [BinDataResponse] containing BIN data for detection.
