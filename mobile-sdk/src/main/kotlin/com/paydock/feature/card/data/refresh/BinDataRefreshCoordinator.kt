@@ -1,5 +1,6 @@
 package com.paydock.feature.card.data.refresh
 
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -7,6 +8,7 @@ import com.paydock.feature.card.data.cache.BinDataCacheManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
@@ -47,6 +49,15 @@ internal class BinDataRefreshCoordinator(
         scope.launch {
             binDataCacheManager.refreshBinDataIfNeeded()
         }
+    }
+
+    /**
+     * Cancels all pending refresh operations. Used during testing to clean up
+     * background coroutines before SDK reset.
+     */
+    @VisibleForTesting
+    internal fun cancelPendingRefresh() {
+        scope.cancel()
     }
 
     companion object {

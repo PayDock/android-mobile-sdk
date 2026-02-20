@@ -13,9 +13,13 @@ import com.paydock.MobileSDK
 import com.paydock.core.BaseUnitTest
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.MobileSDKTestConstants
+import com.paydock.core.data.injection.modules.mockBinDataSuccessModule
+import com.paydock.core.data.injection.modules.mockSuccessNetworkModule
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.AfterpayException
 import com.paydock.core.domain.model.Environment
+import com.paydock.core.injection.sdkModule
+import com.paydock.core.injection.testSdkModule
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.exceptions.ApiException
@@ -25,6 +29,7 @@ import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOptionUpdate
 import com.paydock.feature.afterpay.presentation.state.AfterpayUIState
+import com.paydock.feature.card.data.refresh.BinDataRefreshCoordinator
 import com.paydock.feature.wallet.data.dto.CaptureChargeResponse
 import com.paydock.feature.wallet.data.dto.ChargeDeclineResponse
 import com.paydock.feature.wallet.data.dto.WalletCallbackResponse
@@ -50,7 +55,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
+import org.koin.dsl.module
 import org.koin.test.inject
 import org.mockito.junit.MockitoJUnitRunner
 import java.io.File
@@ -106,10 +114,25 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
         every { editor.apply() } returns Unit
         every { context.getSharedPreferences(any(), any()) } returns sharedPrefs
 
-        // We need to initialise the SDK to start Koin
-        context.initializeMobileSDK(
-            Environment.SANDBOX
-        )
+        // Start Koin with mock modules BEFORE initializeMobileSDK so that BinDataRefreshCoordinator
+        // and BinDataCacheManager resolve with mocked dependencies (no real CloudFront requests).
+        // MobileSDKKoinContext detects existing Koin and uses it instead of starting a new one.
+        startKoin {
+            allowOverride(true)
+            androidContext(context)
+            modules(
+                sdkModule,
+                testSdkModule,
+                mockSuccessNetworkModule,
+                mockBinDataSuccessModule,
+                module {
+                    single<BinDataRefreshCoordinator> { mockk(relaxed = true) }
+                    single { context }
+                }
+            )
+        }
+
+        context.initializeMobileSDK(Environment.SANDBOX)
 
         dispatchersProvider = inject<DispatchersProvider>().value
         captureWalletChargeUseCase = mockk()
@@ -128,13 +151,15 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
     }
 
     @After
-    fun resetMocks() {
-        MobileSDK.reset() // Reset MobileSDK before each test
-    }
-
-    @After
-    fun tearDownKoin() {
-        // As the SDK will startKoin, we need to ensure that after each test we stop koin to be able to restart it in each test
+    fun cleanupResources() {
+        // Cancel any pending BIN data refresh coroutines before reset to avoid "uncaught exceptions before test started"
+        try {
+            val coordinator = org.koin.java.KoinJavaComponent.getKoin().getOrNull<BinDataRefreshCoordinator>()
+            coordinator?.cancelPendingRefresh()
+        } catch (_: Exception) {
+            // Ignore if Koin is already stopped or coordinator is not available
+        }
+        MobileSDK.reset()
         stopKoin()
     }
 
