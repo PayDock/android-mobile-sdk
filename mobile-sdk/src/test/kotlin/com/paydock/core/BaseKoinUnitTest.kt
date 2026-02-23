@@ -1,10 +1,10 @@
 package com.paydock.core
 
+import com.paydock.binprocessor.data.refresh.BinDataRefreshCoordinator
 import com.paydock.core.data.injection.modules.mockBinDataSuccessModule
 import com.paydock.core.data.injection.modules.mockSuccessNetworkModule
 import com.paydock.core.injection.sdkModule
 import com.paydock.core.injection.testSdkModule
-import com.paydock.feature.card.data.refresh.BinDataRefreshCoordinator
 import io.mockk.mockk
 import org.junit.After
 import org.junit.Before
@@ -34,11 +34,6 @@ abstract class BaseKoinUnitTest : BaseUnitTest() {
         }
     }
 
-    @After
-    fun tearDownKoin() {
-        stopKoin()
-    }
-
     companion object {
         /**
          * Test module that provides a mock BinDataRefreshCoordinator.
@@ -49,5 +44,10 @@ abstract class BaseKoinUnitTest : BaseUnitTest() {
                 mockk(relaxed = true)
             }
         }
+    }
+
+    @After
+    fun tearDownKoin() {
+        stopKoin()
     }
 }

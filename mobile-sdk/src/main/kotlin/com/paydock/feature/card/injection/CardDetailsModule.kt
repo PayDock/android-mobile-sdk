@@ -1,10 +1,8 @@
 package com.paydock.feature.card.injection
 
-import android.content.Context
+import com.paydock.binprocessor.binProcessorModule
 import com.paydock.core.utils.decoder.injection.stringDecoderKoinModule
 import com.paydock.core.utils.reader.injection.fileReaderKoinModule
-import com.paydock.feature.card.data.cache.BinDataCacheManager
-import com.paydock.feature.card.data.refresh.BinDataRefreshCoordinator
 import com.paydock.feature.card.data.repository.CardRepositoryImpl
 import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
@@ -25,20 +23,7 @@ import org.koin.dsl.module
  **/
 internal val cardDetailsModule = module {
     // Include other necessary modules
-    includes(stringDecoderKoinModule, fileReaderKoinModule)
-
-    // Provide BinDataCacheManager for downloading and caching BIN data (uses dedicated client for CloudFront)
-    single<BinDataCacheManager> {
-        BinDataCacheManager(context = get<Context>(), httpClient = get(named("binDataHttpClient")))
-    }
-
-    // App-scoped coordinator: BIN refresh at SDK init and on app foreground (1h throttle + HEAD/GET)
-    single {
-        BinDataRefreshCoordinator(
-            binDataCacheManager = get(),
-            scope = BinDataRefreshCoordinator.applicationScope()
-        )
-    }
+    includes(stringDecoderKoinModule, fileReaderKoinModule, binProcessorModule)
 
     // Factory methods for creating instances of ViewModels with access tokens
     viewModel { (accessToken: String, gatewayId: String?, schemeConfig: SupportedSchemeConfig) ->
@@ -50,7 +35,7 @@ internal val cardDetailsModule = module {
 
     // Provide the repository for managing tokens
     single<CardRepository> {
-        CardRepositoryImpl(dispatcher = get(named("IO")), client = get(), binDataCacheManager = get())
+        CardRepositoryImpl(dispatcher = get(named("IO")), client = get(), binDataRepository = get())
     }
 
     // Token Based UseCases

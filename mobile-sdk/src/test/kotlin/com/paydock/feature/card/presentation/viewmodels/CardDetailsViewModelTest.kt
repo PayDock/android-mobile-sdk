@@ -2,6 +2,7 @@ package com.paydock.feature.card.presentation.viewmodels
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
+import com.paydock.binprocessor.data.dto.BinDataResponse
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
@@ -10,7 +11,6 @@ import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.utils.MainDispatcherRule
-import com.paydock.feature.card.data.dto.BinDataResponse
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.ui.TokenDetails
 import com.paydock.feature.card.domain.usecase.CreateCardPaymentTokenUseCase

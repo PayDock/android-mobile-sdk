@@ -10,6 +10,7 @@ import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.afterpay.android.CancellationStatus
 import com.paydock.MobileSDK
+import com.paydock.binprocessor.data.refresh.BinDataRefreshCoordinator
 import com.paydock.core.BaseUnitTest
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.MobileSDKTestConstants
@@ -29,7 +30,6 @@ import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOptionUpdate
 import com.paydock.feature.afterpay.presentation.state.AfterpayUIState
-import com.paydock.feature.card.data.refresh.BinDataRefreshCoordinator
 import com.paydock.feature.wallet.data.dto.CaptureChargeResponse
 import com.paydock.feature.wallet.data.dto.ChargeDeclineResponse
 import com.paydock.feature.wallet.data.dto.WalletCallbackResponse
@@ -56,6 +56,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.loadKoinModules
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
@@ -133,6 +134,9 @@ internal class AfterpayViewModelTest : BaseUnitTest() {
         }
 
         context.initializeMobileSDK(Environment.SANDBOX)
+
+        // Load mock BIN data HTTP client to prevent real network requests
+        loadKoinModules(mockBinDataSuccessModule)
 
         dispatchersProvider = inject<DispatchersProvider>().value
         captureWalletChargeUseCase = mockk()

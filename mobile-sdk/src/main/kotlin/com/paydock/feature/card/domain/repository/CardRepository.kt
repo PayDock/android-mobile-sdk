@@ -1,6 +1,6 @@
 package com.paydock.feature.card.domain.repository
 
-import com.paydock.feature.card.data.dto.BinDataResponse
+import com.paydock.binprocessor.data.dto.BinDataResponse
 import com.paydock.feature.card.data.dto.CreateCardPaymentTokenRequest
 import com.paydock.feature.card.domain.model.ui.TokenDetails
 import kotlinx.coroutines.flow.Flow

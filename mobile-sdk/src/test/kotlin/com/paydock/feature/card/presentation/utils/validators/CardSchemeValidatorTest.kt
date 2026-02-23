@@ -1,8 +1,8 @@
 package com.paydock.feature.card.presentation.utils.validators
 
+import com.paydock.binprocessor.data.dto.BinDataResponse
 import com.paydock.core.BaseUnitTest
 import com.paydock.core.network.extensions.convertToDataClass
-import com.paydock.feature.card.data.dto.BinDataResponse
 import com.paydock.feature.card.domain.model.integration.enums.CardType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

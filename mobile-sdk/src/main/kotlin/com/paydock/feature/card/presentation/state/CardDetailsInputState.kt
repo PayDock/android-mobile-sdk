@@ -1,7 +1,7 @@
 package com.paydock.feature.card.presentation.state
 
+import com.paydock.binprocessor.data.dto.BinDataResponse
 import com.paydock.core.MobileSDKConstants
-import com.paydock.feature.card.data.dto.BinDataResponse
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.ui.CardScheme
 import com.paydock.feature.card.presentation.utils.validators.CardExpiryValidator

@@ -84,6 +84,8 @@ kotlin {
 dependencies {
     // Paydock Modules (Libs)
     api(libs.paydock.core.networking)
+    // BIN Processor Module
+    implementation(project(":bin-processor"))
     // Android
     implementation(libs.bundles.androidx)
     implementation(libs.androidx.lifecycle.ktx)

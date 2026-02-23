@@ -1,29 +1,32 @@
-package com.paydock.feature.card.data.cache
+package com.paydock.binprocessor.data.cache
 
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.res.AssetManager
-import com.paydock.core.BaseKoinUnitTest
-import com.paydock.core.data.injection.modules.BinDataTestConstants
-import com.paydock.core.data.injection.modules.mockBinDataEtagOnlyModule
-import com.paydock.core.data.injection.modules.mockBinDataFailureModule
-import com.paydock.core.data.injection.modules.mockBinDataSuccessModule
+import com.paydock.binprocessor.BaseUnitTest
+import com.paydock.binprocessor.BinDataTestConstants
+import com.paydock.binprocessor.mockBinDataEtagOnlyModule
+import com.paydock.binprocessor.mockBinDataFailureModule
+import com.paydock.binprocessor.mockBinDataSuccessModule
 import io.ktor.client.HttpClient
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeTrue
+import org.junit.Assume
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.koin.core.context.loadKoinModules
+import org.koin.core.context.startKoin
+import org.koin.core.context.stopKoin
 import org.koin.core.qualifier.named
 import org.koin.test.inject
 import java.io.ByteArrayInputStream
@@ -38,7 +41,7 @@ import java.io.File
  * - Download and cache persistence
  * - Foreground refresh timing logic
  */
-internal class BinDataCacheManagerTest : BaseKoinUnitTest() {
+internal class BinDataCacheManagerTest : BaseUnitTest() {
 
     @get:Rule
     val tempFolder = TemporaryFolder()
@@ -49,10 +52,12 @@ internal class BinDataCacheManagerTest : BaseKoinUnitTest() {
     private lateinit var mockAssetManager: AssetManager
     private lateinit var filesDir: File
 
-    private val assetBinDataContent = """{"version":0,"schemes":{"v":"visa-asset"},"prefix2":{},"prefix4":{},"prefix6":{},"prefix8":{},"ranges":{"range2":[],"range4":[],"range6":[],"range8":[]}}"""
+    private val assetBinDataContent = """{"v":0,"s":{"v":"visa-asset"},"2":{},"4":{},"6":{},"r":{"2":[],"4":[],"6":[]}}"""
 
     @Before
-    fun setUp() {
+    override fun setUpMocks() {
+        super.setUpMocks()
+
         filesDir = tempFolder.newFolder("files")
 
         mockPrefsEditor = mockk(relaxed = true) {
@@ -76,6 +81,13 @@ internal class BinDataCacheManagerTest : BaseKoinUnitTest() {
             every { getSharedPreferences("paydock_bin_cache", Context.MODE_PRIVATE) } returns mockPrefs
             every { assets } returns mockAssetManager
         }
+
+        startKoin { modules(emptyList()) }
+    }
+
+    @After
+    fun tearDown() {
+        stopKoin()
     }
 
     private fun createCacheManagerWithSuccessClient(): BinDataCacheManager {
@@ -163,12 +175,13 @@ internal class BinDataCacheManagerTest : BaseKoinUnitTest() {
     fun `getBinDataFileContent returns asset content when cache file is corrupted or unreadable`() {
         val cachedFile = File(filesDir, "card-schemes-cached.json")
         cachedFile.writeText(BinDataTestConstants.MOCK_BIN_DATA_CONTENT)
-        // Use chmod 000 for reliable unreadable state on Linux CI (PosixFilePermissions/setReadable can be flaky)
-        val chmodSuccess = runCatching {
-            Runtime.getRuntime().exec(arrayOf("chmod", "000", cachedFile.absolutePath)).waitFor() == 0
-        }.getOrElse { false }
-        assumeTrue("chmod 000 not supported (e.g. Windows)", chmodSuccess)
-        assumeTrue("File still readable after chmod", runCatching { cachedFile.readText() }.isFailure)
+        cachedFile.setReadable(false)
+
+        // Skip when running as root (e.g. CI): setReadable(false) doesn't prevent root from reading
+        Assume.assumeTrue(
+            "Skipping: file remains readable after setReadable(false) - likely running as root",
+            !cachedFile.canRead()
+        )
 
         val cacheManager = createCacheManagerWithSuccessClient()
 
@@ -176,8 +189,7 @@ internal class BinDataCacheManagerTest : BaseKoinUnitTest() {
 
         assertEquals(assetBinDataContent, result)
 
-        // Restore permissions so temp folder cleanup can succeed
-        Runtime.getRuntime().exec(arrayOf("chmod", "644", cachedFile.absolutePath)).waitFor()
+        cachedFile.setReadable(true)
     }
 
     // ===========================================
