@@ -25,6 +25,12 @@ internal sealed class CardExpiryError {
     data object InvalidFormat : CardExpiryError()
 
     /**
+     * Represents the state where the month (first two digits) is invalid.
+     * For example, 00 or 13.
+     */
+    data object InvalidMonth : CardExpiryError()
+
+    /**
      * Represents the state where no error is present, indicating a valid expiry date.
      */
     data object None : CardExpiryError()
