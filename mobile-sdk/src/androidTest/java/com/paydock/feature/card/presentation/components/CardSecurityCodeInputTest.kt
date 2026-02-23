@@ -1,8 +1,13 @@
 package com.paydock.feature.card.presentation.components
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
@@ -155,21 +160,34 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
         var securityCode by mutableStateOf("")
         val cardCode = CardCode(CodeType.CID, 4)
 
-        // Start composable with valid card security code
+        // Start composable with security code input and a sibling to defocus onto
         composeTestRule.setContent {
-            CardSecurityCodeInput(
-                value = securityCode,
-                cardCode = cardCode,
-                onValueChange = {
-                    securityCode = it
-                }
-            )
+            Column(modifier = Modifier.fillMaxSize()) {
+                CardSecurityCodeInput(
+                    value = securityCode,
+                    cardCode = cardCode,
+                    onValueChange = {
+                        securityCode = it
+                    }
+                )
+                Column(
+                    modifier = Modifier
+                        .testTag("clickToDefocus")
+                        .fillMaxSize()
+                        .clickable { }
+                ) {}
+            }
         }
 
-        // Invalid security code exceeds expected expected digits (CVC = 4)
+        // Type invalid security code (3 digits for CID which expects 4)
+        composeTestRule.onNodeWithTag("sdkInput").performClick()
         composeTestRule.onNodeWithTag("sdkInput").performTextInput("123")
 
-        // Assert that an error message is displayed
+        // Error only appears on defocus - click outside to defocus
+        composeTestRule.onNodeWithTag("clickToDefocus").performClick()
+        composeTestRule.waitForIdle()
+
+        // Assert that an error message is displayed after defocus
         composeTestRule.onNodeWithTag("successIcon", true).assertDoesNotExist()
         composeTestRule.onNodeWithTag("errorIcon", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithTag("errorLabel").assertIsDisplayed()

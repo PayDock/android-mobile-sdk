@@ -23,6 +23,7 @@ internal object CardSecurityCodeValidator {
      * Validates the user input for a security code.
      *
      * The validation considers the following cases:
+     * - If the field is focused ([isSecurityCodeFocused] is true), returns [SecurityCodeError.None] (no error shown while typing).
      * - If the input is blank and the user has interacted with the field, it returns [SecurityCodeError.Empty].
      * - If the input is not blank but doesn't match the required length (or range when no cardCode is provided),
      *   it returns [SecurityCodeError.Invalid].
@@ -32,13 +33,16 @@ internal object CardSecurityCodeValidator {
      * @param securityCode The security code input provided by the user.
      * @param cardCode The expected security code configuration for the given card scheme.
      * @param hasUserInteracted A flag indicating whether the user has interacted with the input field.
+     * @param isSecurityCodeFocused True while the security code field is focused. When true, returns [SecurityCodeError.None] to suppress inline errors.
      * @return A [SecurityCodeError] representing the validation state.
      */
     fun validateSecurityCodeInput(
         securityCode: String,
         cardCode: CardCode?,
-        hasUserInteracted: Boolean
+        hasUserInteracted: Boolean,
+        isSecurityCodeFocused: Boolean = false
     ): SecurityCodeError {
+        if (isSecurityCodeFocused) return SecurityCodeError.None
         return when {
             securityCode.isBlank() && hasUserInteracted -> SecurityCodeError.Empty
             securityCode.isNotBlank() -> {

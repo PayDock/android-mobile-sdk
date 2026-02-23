@@ -9,6 +9,22 @@ import org.junit.Test
 internal class CardSecurityCodeValidatorTest {
 
     @Test
+    fun validateSecurityCodeInput_focused_returnsNoneEvenForInvalidInput() {
+        val securityCode = "12" // Invalid for CVV (requires 3 digits)
+        val cardCode = CardCode(CodeType.CVV, 3)
+        val hasUserInteracted = true
+        val isSecurityCodeFocused = true
+        val expected = SecurityCodeError.None
+        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(
+            securityCode,
+            cardCode,
+            hasUserInteracted,
+            isSecurityCodeFocused
+        )
+        assertEquals(expected, actual)
+    }
+
+    @Test
     fun validateSecurityCodeInput_emptyInput_userInteracted_returnsEmptyError() {
         val securityCode = ""
         val cardCode = CardCode(CodeType.CVV, 3)
