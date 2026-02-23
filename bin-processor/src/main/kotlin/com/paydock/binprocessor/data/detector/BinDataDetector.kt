@@ -1,19 +1,7 @@
-package com.paydock.feature.card.data.detector
+package com.paydock.binprocessor.data.detector
 
-import com.paydock.feature.card.data.dto.BinDataResponse
-
-/**
- * Result of card scheme detection.
- *
- * @property scheme The detected scheme name (e.g., "visa", "mastercard")
- * @property detectedAt The number of digits at which the scheme was detected (1, 2, 4, 6, or 8)
- * @property length The length of the PAN that was checked
- */
-internal data class DetectionResult(
-    val scheme: String,
-    val detectedAt: Int,
-    val length: Int
-)
+import com.paydock.binprocessor.data.dto.BinDataResponse
+import com.paydock.binprocessor.domain.model.DetectionResult
 
 /**
  * Detector for card schemes using BIN data with hierarchical prefix matching.
@@ -26,7 +14,7 @@ internal data class DetectionResult(
  *
  * Detection is performed at the 2nd, 4th, 6th, and 8th digit positions.
  */
-internal class BinDataDetector(private val data: BinDataResponse) {
+class BinDataDetector(private val data: BinDataResponse) {
 
     /**
      * Detects the card scheme for a given PAN (Primary Account Number).
@@ -39,7 +27,6 @@ internal class BinDataDetector(private val data: BinDataResponse) {
             return null
         }
 
-        // Remove any non-digit characters
         val cleanedPan = pan.replace(Regex("\\D"), "")
         if (cleanedPan.length < 2) {
             return null

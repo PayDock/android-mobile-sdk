@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Permissions (INTERNET, ACCESS_NETWORK_STATE) must be declared by the consuming app.
+         Libraries should not merge permissions into apps; the app controls its permission surface. -->
+</manifest>

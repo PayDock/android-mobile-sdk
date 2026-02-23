@@ -1,8 +1,7 @@
 package com.paydock.feature.card.data.repository
 
-import com.paydock.core.network.extensions.convertToDataClass
-import com.paydock.feature.card.data.cache.BinDataCacheManager
-import com.paydock.feature.card.data.dto.BinDataResponse
+import com.paydock.binprocessor.data.dto.BinDataResponse
+import com.paydock.binprocessor.domain.repository.BinDataRepository
 import com.paydock.feature.card.data.dto.CardTokenResponse
 import com.paydock.feature.card.data.dto.CreateCardPaymentTokenRequest
 import com.paydock.feature.card.data.mapper.asEntity
@@ -30,12 +29,12 @@ import kotlinx.coroutines.withContext
  *
  * @param dispatcher The CoroutineDispatcher used for executing network calls.
  * @param client The [HttpClient] instance used to make HTTP requests.
- * @param binDataCacheManager The cache manager for BIN data files.
+ * @param binDataRepository The repository for accessing BIN data.
  */
 internal class CardRepositoryImpl(
     private val dispatcher: CoroutineDispatcher,
     private val client: HttpClient,
-    private val binDataCacheManager: BinDataCacheManager
+    private val binDataRepository: BinDataRepository
 ) : CardRepository {
 
     /**
@@ -91,7 +90,6 @@ internal class CardRepositoryImpl(
      */
     override suspend fun getBinData(): BinDataResponse =
         withContext(dispatcher) {
-            val jsonString = binDataCacheManager.getBinDataFileContent()
-            jsonString.convertToDataClass<BinDataResponse>()
+            binDataRepository.getBinData()
         }
 }

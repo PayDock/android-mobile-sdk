@@ -1,8 +1,8 @@
 package com.paydock.feature.card.domain.usecase
 
+import com.paydock.binprocessor.data.dto.BinDataResponse
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.network.extensions.convertToDataClass
-import com.paydock.feature.card.data.dto.BinDataResponse
 import com.paydock.feature.card.domain.repository.CardRepository
 import io.mockk.coEvery
 import io.mockk.coVerify

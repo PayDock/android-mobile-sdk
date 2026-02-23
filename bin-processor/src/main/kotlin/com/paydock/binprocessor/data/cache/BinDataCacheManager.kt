@@ -1,7 +1,6 @@
-package com.paydock.feature.card.data.cache
+package com.paydock.binprocessor.data.cache
 
 import android.content.Context
-import com.paydock.core.presentation.extensions.readTextFromAsset
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -34,7 +33,7 @@ internal class BinDataCacheManager(
 ) {
     companion object {
         private const val CLOUDFRONT_URL = "https://d192wsfqzdoj1n.cloudfront.net/bin-data-au-v1.json"
-        private const val ASSET_FILENAME = "card-schemes.json"
+        internal const val ASSET_FILENAME = "card-schemes.json"
         private const val CACHED_FILENAME = "card-schemes-cached.json"
         private const val PREFS_NAME = "paydock_bin_cache"
         private const val KEY_LAST_MODIFIED = "bin_last_modified"
@@ -74,7 +73,19 @@ internal class BinDataCacheManager(
                 // Fall through to asset if cache read fails
             }
         }
-        return context.readTextFromAsset(ASSET_FILENAME)
+        return readTextFromAsset(ASSET_FILENAME)
+    }
+
+    /**
+     * Reads text content from an asset file.
+     *
+     * @param fileName The name of the asset file
+     * @return The text content of the asset file
+     */
+    private fun readTextFromAsset(fileName: String): String {
+        return context.assets.open(fileName).bufferedReader().use {
+            it.readText()
+        }
     }
 
     /**

@@ -2,8 +2,8 @@ package com.paydock.core.data.injection
 
 import android.content.Context
 import com.paydock.BuildConfig
+import com.paydock.binprocessor.data.refresh.BinDataRefreshCoordinator
 import com.paydock.core.injection.sdkModule
-import com.paydock.feature.card.data.refresh.BinDataRefreshCoordinator
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.Koin

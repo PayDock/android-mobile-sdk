@@ -11,6 +11,12 @@ plugins {
     // Dependency Validation Plugins
     alias(libs.plugins.dependency.analysis) apply true
     alias(libs.plugins.dependency.guard) apply false
+    // JaCoCo for merged coverage report
+    id("jacoco")
+}
+
+jacoco {
+    toolVersion = libs.versions.jacoco.get()
 }
 
 buildscript {
@@ -30,6 +36,87 @@ configurations.all {
 
 tasks.register("clean").configure {
     delete("build")
+}
+
+// Merged JaCoCo report aggregating bin-processor and mobile-sdk coverage
+// Run: ./gradlew jacocoMergedReport
+tasks.register<org.gradle.testing.jacoco.tasks.JacocoReport>("jacocoMergedReport") {
+    group = "verification"
+    description = "Generates a merged JaCoCo coverage report from bin-processor and mobile-sdk"
+
+    dependsOn(
+        ":bin-processor:testDebugUnitTest",
+        ":mobile-sdk:testDebugUnitTest"
+    )
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        xml.outputLocation.set(file("${layout.buildDirectory.get().asFile}/reports/jacoco/merged/jacocoMergedReport.xml"))
+        html.outputLocation.set(file("${layout.buildDirectory.get().asFile}/reports/jacoco/merged/html"))
+    }
+
+    val excludes = listOf(
+        "**/R.class",
+        "**/R$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*",
+        "**/*Test*.*",
+        "**/Hilt_*.*",
+        "**/Dagger*.*",
+        "**/*_Factory.*",
+        "**/*_MembersInjector.*",
+        "**/*\$Lambda\$*.*",
+        "**/*\$inlined\$*.*",
+        "**/*Module*.class",
+        "**/*KoinModule*.class",
+        "**/injection/**/*.class",
+        "**/presentation/components/**/*.class",
+        "**/*Widget*.class",
+        "**/*Activity*.class",
+        "**/*Fragment*.class",
+        "**/presentation/viewmodels/**/*.class",
+        "**/*ViewModel*.class",
+        "**/designsystems/**/*.class",
+        "**/core/presentation/ui/**/*.class",
+        "**/core/presentation/extensions/**/*.class",
+        "**/core/utils/reader/**/*.class",
+        "**/core/utils/decoder/**/*.class"
+    )
+
+    val binProcessorBuild = file("${rootDir}/bin-processor/build")
+    val mobileSdkBuild = file("${rootDir}/mobile-sdk/build")
+
+    val binProcessorClasses = files(
+        fileTree("${binProcessorBuild}/intermediates/javac/debug") { exclude(excludes) },
+        fileTree("${binProcessorBuild}/tmp/kotlin-classes/debug") { exclude(excludes) },
+        fileTree("${binProcessorBuild}/intermediates/runtime_library_classes_dir/debug") { exclude(excludes) }
+    )
+    val mobileSdkClasses = files(
+        fileTree("${mobileSdkBuild}/intermediates/javac/debug") { exclude(excludes) },
+        fileTree("${mobileSdkBuild}/tmp/kotlin-classes/debug") { exclude(excludes) },
+        fileTree("${mobileSdkBuild}/intermediates/runtime_library_classes_dir/debug") { exclude(excludes) }
+    )
+
+    classDirectories.setFrom(files(binProcessorClasses, mobileSdkClasses))
+    sourceDirectories.setFrom(
+        files(
+            file("${rootDir}/bin-processor/src/main/java"),
+            file("${rootDir}/bin-processor/src/main/kotlin"),
+            file("${rootDir}/mobile-sdk/src/main/java"),
+            file("${rootDir}/mobile-sdk/src/main/kotlin")
+        )
+    )
+    executionData.setFrom(
+        fileTree(rootDir) {
+            include(
+                "bin-processor/build/jacoco/*.exec",
+                "bin-processor/build/outputs/unit_test_code_coverage/**/*.exec",
+                "mobile-sdk/build/jacoco/*.exec",
+                "mobile-sdk/build/outputs/unit_test_code_coverage/**/*.exec"
+            )
+        }
+    )
 }
 
 tasks.register("copyGitHooks", Copy::class.java) {

@@ -14,13 +14,13 @@ import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.paydock.binprocessor.data.dto.BinDataResponse
 import com.paydock.core.BaseViewModelKoinTest
 import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.extensions.waitUntilTimeout
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.extensions.convertToDataClass
-import com.paydock.feature.card.data.dto.BinDataResponse
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.CardResult
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig

@@ -1,7 +1,7 @@
 package com.paydock.feature.card.domain.usecase
 
+import com.paydock.binprocessor.data.dto.BinDataResponse
 import com.paydock.core.extensions.suspendRunCatching
-import com.paydock.feature.card.data.dto.BinDataResponse
 import com.paydock.feature.card.domain.repository.CardRepository
 
 /**

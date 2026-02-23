@@ -22,6 +22,7 @@ platform :android do
         gradle(task: "detektAll")
         
         # Generate reports for all modules
+        gradle(task: ":bin-processor:detekt")
         gradle(task: ":mobile-sdk:detekt")
         
         # Create code quality directory if it doesn't exist
@@ -36,7 +37,8 @@ platform :android do
         # Try to copy detekt reports from various possible locations
         possible_reports = [
             "mobile-sdk/build/reports/detekt.sarif",
-            "mobile-sdk/build/reports/detekt-all.sarif", 
+            "mobile-sdk/build/reports/detekt-all.sarif",
+            "bin-processor/build/reports/detekt.sarif",
             "build/reports/detekt.sarif",
             "convention-plugins/build/reports/detekt.sarif"
         ]
@@ -146,8 +148,8 @@ platform :android do
     BIN_DATA_URL = "https://d192wsfqzdoj1n.cloudfront.net/bin-data-au-v1.json"
     # Local asset filename (same as BinDataCacheManager.ASSET_FILENAME)
     BIN_LOCAL_FILENAME = "card-schemes.json"
-    # Asset path relative to repository root
-    BIN_ASSET_PATH = "mobile-sdk/src/main/assets/#{BIN_LOCAL_FILENAME}"
+    # Asset path relative to repository root (bin-processor module)
+    BIN_ASSET_PATH = "bin-processor/src/main/assets/#{BIN_LOCAL_FILENAME}"
 
     desc "Fetch BIN validation file from CloudFront using HTTP caching headers"
     lane :fetch_bin_file do
@@ -348,7 +350,7 @@ platform :android do
         UI.message("Bin file size: #{File.size(bin_file_path)} bytes")
         UI.message("Target branch: #{ENV['CI_COMMIT_REF_NAME']}")
 
-        # Determine the correct path for mobile-sdk assets (check if exists locally)
+        # Determine the correct path for bin-processor assets (check if exists locally)
         UI.header("Checking Existing Asset File")
         assets_file_path = nil
         if File.exist?(BIN_ASSET_PATH)
@@ -470,7 +472,7 @@ platform :android do
             UI.message("Getting current file info from GitLab API...")
             
             # Get the current file content and SHA
-            file_path_encoded = "mobile-sdk%2Fsrc%2Fmain%2Fassets%2Fcard-schemes.json"
+            file_path_encoded = "bin-processor%2Fsrc%2Fmain%2Fassets%2Fcard-schemes.json"
             api_url = "#{ENV['CI_API_V4_URL']}/projects/#{ENV['CI_PROJECT_ID']}/repository/files/#{file_path_encoded}?ref=#{ENV['CI_COMMIT_REF_NAME']}"
 
             # Make call
@@ -518,7 +520,7 @@ platform :android do
                     
                     # Commit the file update via GitLab API
                     UI.message("Updating file via GitLab API...")
-                    update_url = "#{ENV['CI_API_V4_URL']}/projects/#{ENV['CI_PROJECT_ID']}/repository/files/mobile-sdk%2Fsrc%2Fmain%2Fassets%2Fcard-schemes.json"
+                    update_url = "#{ENV['CI_API_V4_URL']}/projects/#{ENV['CI_PROJECT_ID']}/repository/files/bin-processor%2Fsrc%2Fmain%2Fassets%2Fcard-schemes.json"
                     
                     update_data = {
                         branch: ENV['CI_COMMIT_REF_NAME'],
@@ -581,7 +583,7 @@ platform :android do
         else
             # Create new file
             UI.message("Creating file via GitLab API...")
-            create_url = "#{ENV['CI_API_V4_URL']}/projects/#{ENV['CI_PROJECT_ID']}/repository/files/mobile-sdk%2Fsrc%2Fmain%2Fassets%2Fcard-schemes.json"
+            create_url = "#{ENV['CI_API_V4_URL']}/projects/#{ENV['CI_PROJECT_ID']}/repository/files/bin-processor%2Fsrc%2Fmain%2Fassets%2Fcard-schemes.json"
             
             create_data = {
                 branch: ENV['CI_COMMIT_REF_NAME'],
@@ -816,16 +818,14 @@ platform :android do
          flavor = options[:flavor] || "staging" # Default to staging if no flavor is provided
          build_type = options[:build_type] || "Debug" # Default to Debug if no build type is provided
 
-        # Run unit tests and generate JaCoCo XML report for the library module
-        unit_test_task = ":mobile-sdk:test#{build_type.capitalize}UnitTest"
-        coverage_task = ":mobile-sdk:jacoco#{build_type.capitalize}UnitTestReport"
+        # Run merged coverage report (runs bin-processor + mobile-sdk tests, generates single report)
         gradle(
-            task: "#{unit_test_task} #{coverage_task}",
+            task: "jacocoMergedReport",
             flags: "--console=plain --continue"
         )
 
         # Emit a single-line total coverage percentage for GitLab 'coverage' parsing
-        coverage_xml_path = File.expand_path("../mobile-sdk/build/reports/jacoco/jacoco#{build_type.capitalize}UnitTestReport/jacoco#{build_type.capitalize}UnitTestReport.xml", __dir__)
+        coverage_xml_path = File.expand_path("../build/reports/jacoco/merged/jacocoMergedReport.xml", __dir__)
         if File.exist?(coverage_xml_path)
           xml = File.read(coverage_xml_path)
           # Look for the report-level LINE counter (last occurrence in XML)

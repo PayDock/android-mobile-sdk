@@ -1,12 +1,12 @@
 package com.paydock.feature.card.data.repository
 
+import com.paydock.binprocessor.data.dto.BinDataResponse
+import com.paydock.binprocessor.domain.repository.BinDataRepository
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.injection.modules.mockFailureNetworkModule
 import com.paydock.core.data.injection.modules.mockSuccessNetworkModule
 import com.paydock.core.network.extensions.convertToDataClass
-import com.paydock.feature.card.data.cache.BinDataCacheManager
-import com.paydock.feature.card.data.dto.BinDataResponse
 import com.paydock.feature.card.data.dto.CardTokenResponse
 import com.paydock.feature.card.data.dto.CreateCardPaymentTokenRequest
 import com.paydock.feature.card.data.mapper.asEntity
@@ -33,13 +33,13 @@ class CardRepositoryTest : BaseKoinUnitTest() {
 
     private val testScope: TestScope by inject()
     private lateinit var repository: CardRepository
-    private val binDataCacheManager: BinDataCacheManager = mockk()
+    private val binDataRepository: BinDataRepository = mockk()
 
     @Test
     fun `GIVEN valid credit card request WHEN tokenising card THEN should succeed with card token response resource`() =
         testScope.runTest {
             // GIVEN
-            repository = CardRepositoryImpl(get(), httpMockClient, binDataCacheManager)
+            repository = CardRepositoryImpl(get(), httpMockClient, binDataRepository)
 
             val request =
                 readResourceFile("card/valid_tokenise_credit_card_request.json")
@@ -64,7 +64,7 @@ class CardRepositoryTest : BaseKoinUnitTest() {
             unloadKoinModules(mockSuccessNetworkModule)
             loadKoinModules(mockFailureNetworkModule)
             // GIVEN
-            repository = CardRepositoryImpl(get(), httpMockClient, binDataCacheManager)
+            repository = CardRepositoryImpl(get(), httpMockClient, binDataRepository)
             val request =
                 readResourceFile("card/invalid_tokenise_credit_card_request.json")
                     .convertToDataClass<CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard>()
@@ -81,7 +81,7 @@ class CardRepositoryTest : BaseKoinUnitTest() {
     fun `GIVEN valid credit card request WHEN tokenising card THEN should emits TokenisedCardDetails successfully using flow`() =
         testScope.runTest {
             // GIVEN
-            repository = CardRepositoryImpl(get(), httpMockClient, binDataCacheManager)
+            repository = CardRepositoryImpl(get(), httpMockClient, binDataRepository)
             val request =
                 readResourceFile("card/valid_tokenise_credit_card_request.json")
                     .convertToDataClass<CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard>()
@@ -109,7 +109,7 @@ class CardRepositoryTest : BaseKoinUnitTest() {
             unloadKoinModules(mockSuccessNetworkModule)
             loadKoinModules(mockFailureNetworkModule)
             // GIVEN
-            repository = CardRepositoryImpl(get(), httpMockClient, binDataCacheManager)
+            repository = CardRepositoryImpl(get(), httpMockClient, binDataRepository)
             val request =
                 readResourceFile("card/invalid_tokenise_credit_card_request.json")
                     .convertToDataClass<CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard>()
@@ -130,7 +130,7 @@ class CardRepositoryTest : BaseKoinUnitTest() {
     fun `GIVEN valid gift card request WHEN tokenising card THEN should succeed with card token response resource`() =
         testScope.runTest {
             // GIVEN
-            repository = CardRepositoryImpl(get(), httpMockClient, binDataCacheManager)
+            repository = CardRepositoryImpl(get(), httpMockClient, binDataRepository)
 
             val request =
                 readResourceFile("card/valid_tokenise_gift_card_request.json")
@@ -155,7 +155,7 @@ class CardRepositoryTest : BaseKoinUnitTest() {
             unloadKoinModules(mockSuccessNetworkModule)
             loadKoinModules(mockFailureNetworkModule)
             // GIVEN
-            repository = CardRepositoryImpl(get(), httpMockClient, binDataCacheManager)
+            repository = CardRepositoryImpl(get(), httpMockClient, binDataRepository)
             val request =
                 readResourceFile("card/invalid_tokenise_gift_card_request.json")
                     .convertToDataClass<CreateCardPaymentTokenRequest.TokeniseCardRequest.GiftCard>()
@@ -173,16 +173,16 @@ class CardRepositoryTest : BaseKoinUnitTest() {
         testScope.runTest {
             // GIVEN
             val mockResource = readResourceFile("card/success_bin_data_response.json")
+            val expectedResult = mockResource.convertToDataClass<BinDataResponse>()
             every {
-                binDataCacheManager.getBinDataFileContent()
-            } returns mockResource
+                binDataRepository.getBinData()
+            } returns expectedResult
 
             repository = CardRepositoryImpl(
                 get(),
                 httpMockClient,
-                binDataCacheManager
+                binDataRepository
             )
-            val expectedResult = mockResource.convertToDataClass<BinDataResponse>()
             // WHEN - Call the method to be tested
             val result = repository.getBinData()
             // THEN - Verify the result
@@ -197,15 +197,15 @@ class CardRepositoryTest : BaseKoinUnitTest() {
             unloadKoinModules(mockSuccessNetworkModule)
             loadKoinModules(mockFailureNetworkModule)
             // GIVEN
-            val expectedResult = IllegalArgumentException("Unable to parse json file.")
+            val expectedException = IllegalArgumentException("Unable to parse json file.")
             every {
-                binDataCacheManager.getBinDataFileContent()
-            } throws expectedResult
+                binDataRepository.getBinData()
+            } throws expectedException
 
             repository = CardRepositoryImpl(
                 get(),
                 httpMockClient,
-                binDataCacheManager
+                binDataRepository
             )
 
             // WHEN - Call the method to be tested

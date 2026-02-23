@@ -4,10 +4,10 @@ import android.content.Context
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.paydock.binprocessor.data.refresh.BinDataRefreshCoordinator
 import com.paydock.core.data.injection.MobileSDKKoinContext
 import com.paydock.core.domain.mapper.mapToBaseUrl
 import com.paydock.core.domain.model.Environment
-import com.paydock.feature.card.data.refresh.BinDataRefreshCoordinator
 
 /**
  * The main entry point for the Mobile SDK.

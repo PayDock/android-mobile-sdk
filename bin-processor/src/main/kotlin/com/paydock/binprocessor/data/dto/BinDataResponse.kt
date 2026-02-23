@@ -1,4 +1,4 @@
-package com.paydock.feature.card.data.dto
+package com.paydock.binprocessor.data.dto
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -15,7 +15,7 @@ import kotlinx.serialization.Serializable
  * @property version Version number of the BIN data
  */
 @Serializable
-internal data class BinDataResponse(
+data class BinDataResponse(
     @SerialName("2") val prefix2: Map<String, String> = emptyMap(),
     @SerialName("4") val prefix4: Map<String, String> = emptyMap(),
     @SerialName("6") val prefix6: Map<String, String> = emptyMap(),
@@ -34,7 +34,7 @@ internal data class BinDataResponse(
  * @property range8 List of 8-digit ranges [[start, end, schemeCode], ...]
  */
 @Serializable
-internal data class BinRanges(
+data class BinRanges(
     @SerialName("2") val range2: List<List<String>> = emptyList(),
     @SerialName("4") val range4: List<List<String>> = emptyList(),
     @SerialName("6") val range6: List<List<String>> = emptyList(),

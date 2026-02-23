@@ -1,10 +1,10 @@
-package com.paydock.feature.card.data.refresh
+package com.paydock.binprocessor.data.refresh
 
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
-import com.paydock.feature.card.data.cache.BinDataCacheManager
+import com.paydock.binprocessor.data.cache.BinDataCacheManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,14 +23,18 @@ import kotlinx.coroutines.launch
  *
  * @param binDataCacheManager Cache manager that performs HEAD/GET and persistence
  * @param scope Coroutine scope for launching refresh (application-scoped)
+ * @param registerLifecycle Whether to register with ProcessLifecycleOwner (false for tests)
  */
-internal class BinDataRefreshCoordinator(
+class BinDataRefreshCoordinator internal constructor(
     private val binDataCacheManager: BinDataCacheManager,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    registerLifecycle: Boolean = true
 ) : DefaultLifecycleObserver {
 
     init {
-        ProcessLifecycleOwner.get().lifecycle.addObserver(this)
+        if (registerLifecycle) {
+            ProcessLifecycleOwner.get().lifecycle.addObserver(this)
+        }
     }
 
     override fun onStart(owner: LifecycleOwner) {
@@ -56,7 +60,7 @@ internal class BinDataRefreshCoordinator(
      * background coroutines before SDK reset.
      */
     @VisibleForTesting
-    internal fun cancelPendingRefresh() {
+    fun cancelPendingRefresh() {
         scope.cancel()
     }
 
