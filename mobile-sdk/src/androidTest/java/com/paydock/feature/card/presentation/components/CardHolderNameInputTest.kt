@@ -124,7 +124,7 @@ internal class CardHolderNameInputTest : BaseUITest() {
     }
 
     @Test
-    fun testCardHolderNameInputDisplaysLuhnErrorWhen12Digits() {
+    fun testCardHolderNameInputDisplaysLuhnErrorWhenCardNumberEntered() {
         var cardHolderName by mutableStateOf("")
 
         composeTestRule.setContent {
@@ -135,7 +135,7 @@ internal class CardHolderNameInputTest : BaseUITest() {
         }
 
         composeTestRule.onNodeWithTag("sdkInput").performClick()
-        composeTestRule.onNodeWithTag("sdkInput").performTextInput("222240000000")
+        composeTestRule.onNodeWithTag("sdkInput").performTextInput("4532015112830366")
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithTag("successIcon", true).assertDoesNotExist()

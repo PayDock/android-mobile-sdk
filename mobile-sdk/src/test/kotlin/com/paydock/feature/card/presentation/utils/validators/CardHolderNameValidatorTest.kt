@@ -327,7 +327,7 @@ internal class CardHolderNameValidatorTest {
         assertEquals(expected, actual)
     }
 
-    // --- Tests for Luhn Check (only when exactly 12 digits) ---
+    // --- Tests for Luhn Check (when 12-19 digits) ---
 
     @Test
     fun `validateHolderNameInput given 12 digits Luhn valid returns InvalidLuhn error`() {
@@ -351,6 +351,14 @@ internal class CardHolderNameValidatorTest {
         val hasUserInteracted = true
         val actual = CardHolderNameValidator.validateHolderNameInput(cardNumberLikeString, hasUserInteracted)
         assertEquals(CardHolderNameError.InvalidFormat, actual)
+    }
+
+    @Test
+    fun `validateHolderNameInput given 16 digits Luhn valid returns InvalidLuhn error`() {
+        val cardNumberLikeString = "4532015112830366" // 16 digits, Luhn valid (Visa test card)
+        val hasUserInteracted = true
+        val actual = CardHolderNameValidator.validateHolderNameInput(cardNumberLikeString, hasUserInteracted)
+        assertEquals(CardHolderNameError.InvalidLuhn, actual)
     }
 
     @Test
