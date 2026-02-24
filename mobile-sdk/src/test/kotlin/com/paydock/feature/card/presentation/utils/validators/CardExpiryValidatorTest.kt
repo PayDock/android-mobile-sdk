@@ -78,8 +78,35 @@ internal class CardExpiryValidatorTest {
     }
 
     @Test
+    fun validateExpiryInput_invalidMonth_length2_returnsInvalidMonthError() {
+        val expiry = "13"
+        val hasUserInteracted = true
+        val expected = CardExpiryError.InvalidMonth
+        val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateExpiryInput_invalidMonth_length3_returnsInvalidMonthError() {
+        val expiry = "001"
+        val hasUserInteracted = true
+        val expected = CardExpiryError.InvalidMonth
+        val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateExpiryInput_validMonth_length2_returnsNoneError() {
+        val expiry = "12"
+        val hasUserInteracted = true
+        val expected = CardExpiryError.None
+        val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted)
+        assertEquals(expected, actual)
+    }
+
+    @Test
     fun validateExpiryInput_invalidFormat_returnsInvalidFormatError() {
-        val expiry = "123"
+        val expiry = "0012"
         val hasUserInteracted = true
         val expected = CardExpiryError.InvalidFormat
         val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted)

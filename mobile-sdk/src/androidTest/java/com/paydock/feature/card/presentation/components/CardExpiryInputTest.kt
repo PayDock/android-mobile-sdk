@@ -11,6 +11,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.paydock.R
 import com.paydock.core.BaseUITest
@@ -80,25 +81,66 @@ internal class CardExpiryInputTest : BaseUITest() {
     }
 
     @Test
-    fun testCardExpiryInputDisplaysInvalidError() {
+    fun testCardExpiryInputDisplaysInvalidMonthError() {
         var cardExpiry by mutableStateOf("")
 
-        // Start composable with valid card security code
         composeTestRule.setContent {
             CardExpiryInput(
                 value = cardExpiry,
-                onValueChange = {
-                    cardExpiry = it
-                }
+                onValueChange = { cardExpiry = it }
             )
         }
-        // Invalid expiry entry (too short)
-        composeTestRule.onNodeWithTag("sdkInput").performTextInput("05")
+        // Invalid month (13)
+        composeTestRule.onNodeWithTag("sdkInput").performTextInput("13")
 
-        // Assert that an error message is displayed
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("successIcon", true).assertDoesNotExist()
+        composeTestRule.onNodeWithTag("errorIcon", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithTag("errorLabel").assertIsDisplayed()
+            .assertTextEquals(getStringRes(R.string.error_expiry_month))
+    }
+
+    @Test
+    fun testCardExpiryInputDisplaysInvalidFormatError() {
+        var cardExpiry by mutableStateOf("")
+
+        composeTestRule.setContent {
+            CardExpiryInput(
+                value = cardExpiry,
+                onValueChange = { cardExpiry = it }
+            )
+        }
+        // Invalid format (4 digits: month 00)
+        composeTestRule.onNodeWithTag("sdkInput").performTextInput("0012")
+
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("successIcon", true).assertDoesNotExist()
         composeTestRule.onNodeWithTag("errorIcon", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithTag("errorLabel").assertIsDisplayed()
             .assertTextEquals(getStringRes(R.string.error_expiry_date))
+    }
+
+    @Test
+    fun testCardExpiryInputClearingRemovesError() {
+        var cardExpiry by mutableStateOf("")
+
+        composeTestRule.setContent {
+            CardExpiryInput(
+                value = cardExpiry,
+                onValueChange = { cardExpiry = it }
+            )
+        }
+        // Enter invalid expiry
+        composeTestRule.onNodeWithTag("sdkInput").performTextInput("0012")
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("errorIcon", useUnmergedTree = true).assertIsDisplayed()
+
+        // Clear the field
+        composeTestRule.onNodeWithTag("sdkInput").performTextReplacement("")
+        composeTestRule.waitForIdle()
+
+        // Error should be cleared
+        composeTestRule.onNodeWithTag("errorIcon", useUnmergedTree = true).assertDoesNotExist()
+        composeTestRule.onNodeWithTag("errorLabel").assertDoesNotExist()
     }
 }

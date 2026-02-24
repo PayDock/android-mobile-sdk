@@ -69,6 +69,7 @@ internal fun CardHolderNameInput(
             val justGainedFocus = it.isFocused && !previousFocus.value
             previousFocus.value = it.isFocused
             if (justGainedFocus) suppressErrorUntilNextInput = true
+            if (!it.isFocused) suppressErrorUntilNextInput = false
         },
         appearance = appearance,
         value = value,
