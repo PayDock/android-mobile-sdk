@@ -84,6 +84,7 @@ internal fun CardHolderNameInput(
         label = stringResource(id = R.string.label_cardholder_name),
         enabled = enabled,
         error = errorMessage,
+        showValidIcon = cardHolderError == CardHolderNameError.None,
         autofillType = ContentType.PersonFullName,
         // Use keyboard options and actions for a more user-friendly input experience
         keyboardOptions = KeyboardOptions(
