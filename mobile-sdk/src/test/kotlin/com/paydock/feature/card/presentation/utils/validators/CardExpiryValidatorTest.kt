@@ -79,6 +79,15 @@ internal class CardExpiryValidatorTest {
 
     @Test
     fun validateExpiryInput_invalidMonth_length2_returnsInvalidMonthError() {
+        val expiry = "00"
+        val hasUserInteracted = true
+        val expected = CardExpiryError.InvalidMonth
+        val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateExpiryInput_invalidMonth_length2_month13_returnsInvalidMonthError() {
         val expiry = "13"
         val hasUserInteracted = true
         val expected = CardExpiryError.InvalidMonth
@@ -88,7 +97,7 @@ internal class CardExpiryValidatorTest {
 
     @Test
     fun validateExpiryInput_invalidMonth_length3_returnsInvalidMonthError() {
-        val expiry = "001"
+        val expiry = "130"
         val hasUserInteracted = true
         val expected = CardExpiryError.InvalidMonth
         val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted)
@@ -98,6 +107,15 @@ internal class CardExpiryValidatorTest {
     @Test
     fun validateExpiryInput_validMonth_length2_returnsNoneError() {
         val expiry = "12"
+        val hasUserInteracted = true
+        val expected = CardExpiryError.None
+        val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateExpiryInput_validMonth_length3_returnsNoneError() {
+        val expiry = "123"
         val hasUserInteracted = true
         val expected = CardExpiryError.None
         val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted)

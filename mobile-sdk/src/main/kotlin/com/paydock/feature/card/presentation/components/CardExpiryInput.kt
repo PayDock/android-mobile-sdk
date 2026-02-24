@@ -49,7 +49,6 @@ internal fun CardExpiryInput(
     nextFocus: FocusRequester? = null,
     onValueChange: (String) -> Unit
 ) {
-    // Tracks if the user has interacted with the field
     var hasUserInteracted by remember { mutableStateOf(false) }
     var suppressErrorUntilNextInput by remember { mutableStateOf(false) }
     val previousFocus = remember { object { var value = false } }

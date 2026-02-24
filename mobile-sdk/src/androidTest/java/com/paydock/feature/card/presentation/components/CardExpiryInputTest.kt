@@ -1,8 +1,13 @@
 package com.paydock.feature.card.presentation.components
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
@@ -70,10 +75,10 @@ internal class CardExpiryInputTest : BaseUITest() {
                 }
             )
         }
-        // Invalid expiry expired
+        composeTestRule.onNodeWithTag("sdkInput").performClick()
         composeTestRule.onNodeWithTag("sdkInput").performTextInput("0521")
 
-        // Assert that an error message is displayed
+        // Assert that an error message is displayed (Expired maps to error_expiry_expired)
         composeTestRule.onNodeWithTag("successIcon", true).assertDoesNotExist()
         composeTestRule.onNodeWithTag("errorIcon", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithTag("errorLabel").assertIsDisplayed()
@@ -90,7 +95,7 @@ internal class CardExpiryInputTest : BaseUITest() {
                 onValueChange = { cardExpiry = it }
             )
         }
-        // Invalid month (13)
+        composeTestRule.onNodeWithTag("sdkInput").performClick()
         composeTestRule.onNodeWithTag("sdkInput").performTextInput("13")
 
         composeTestRule.waitForIdle()
@@ -110,7 +115,7 @@ internal class CardExpiryInputTest : BaseUITest() {
                 onValueChange = { cardExpiry = it }
             )
         }
-        // Invalid format (4 digits: month 00)
+        composeTestRule.onNodeWithTag("sdkInput").performClick()
         composeTestRule.onNodeWithTag("sdkInput").performTextInput("0012")
 
         composeTestRule.waitForIdle()
@@ -130,17 +135,73 @@ internal class CardExpiryInputTest : BaseUITest() {
                 onValueChange = { cardExpiry = it }
             )
         }
-        // Enter invalid expiry
+        composeTestRule.onNodeWithTag("sdkInput").performClick()
         composeTestRule.onNodeWithTag("sdkInput").performTextInput("0012")
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("errorIcon", useUnmergedTree = true).assertIsDisplayed()
 
-        // Clear the field
         composeTestRule.onNodeWithTag("sdkInput").performTextReplacement("")
         composeTestRule.waitForIdle()
 
-        // Error should be cleared
         composeTestRule.onNodeWithTag("errorIcon", useUnmergedTree = true).assertDoesNotExist()
+        composeTestRule.onNodeWithTag("errorLabel").assertDoesNotExist()
+    }
+
+    @Test
+    fun testCardExpiryInputClearsErrorOnRefocus() {
+        var cardExpiry by mutableStateOf("")
+
+        composeTestRule.setContent {
+            Column(modifier = Modifier.fillMaxSize().testTag("root")) {
+                CardExpiryInput(
+                    value = cardExpiry,
+                    onValueChange = { cardExpiry = it }
+                )
+                Column(
+                    modifier = Modifier
+                        .testTag("clickToDefocus")
+                        .fillMaxSize()
+                        .clickable { }
+                ) {}
+            }
+        }
+
+        composeTestRule.onNodeWithTag("sdkInput").performClick()
+        composeTestRule.onNodeWithTag("sdkInput").performTextInput("13")
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("errorLabel").assertIsDisplayed()
+
+        composeTestRule.onNodeWithTag("clickToDefocus").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("errorLabel").assertIsDisplayed()
+
+        composeTestRule.onNodeWithTag("sdkInput").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag("errorLabel").assertDoesNotExist()
+    }
+
+    @Test
+    fun testCardExpiryInputNoErrorWhenEmptyOnDefocus() {
+        var cardExpiry by mutableStateOf("")
+
+        composeTestRule.setContent {
+            Column(modifier = Modifier.fillMaxSize().testTag("root")) {
+                CardExpiryInput(
+                    value = cardExpiry,
+                    onValueChange = { cardExpiry = it }
+                )
+                Column(
+                    modifier = Modifier
+                        .testTag("clickToDefocus")
+                        .fillMaxSize()
+                        .clickable { }
+                ) {}
+            }
+        }
+
+        composeTestRule.onNodeWithTag("sdkInput").performClick()
+        composeTestRule.onNodeWithTag("clickToDefocus").performClick()
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("errorLabel").assertDoesNotExist()
     }
 }
