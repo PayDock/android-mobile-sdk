@@ -48,10 +48,10 @@ internal object CardHolderNameValidator {
      */
     fun validateHolderNameInput(name: String, hasUserInteracted: Boolean): CardHolderNameError {
         val trimmedName = name.trim()
-        val digitCount = name.count { it.isDigit() }
+        val digitsOnly = name.filter { it.isDigit() }
         val isLuhnValid =
-            digitCount in MobileSDKConstants.CardDetailsConfig.MIN_CREDIT_CARD_LENGTH..MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH &&
-                LuhnValidator.isLuhnValid(name)
+            digitsOnly.length in MobileSDKConstants.CardDetailsConfig.MIN_CREDIT_CARD_LENGTH..MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH &&
+                LuhnValidator.isLuhnValid(digitsOnly)
         return when {
             // 1. Check for blank input if the user has interacted
             trimmedName.isBlank() && hasUserInteracted -> CardHolderNameError.Empty
