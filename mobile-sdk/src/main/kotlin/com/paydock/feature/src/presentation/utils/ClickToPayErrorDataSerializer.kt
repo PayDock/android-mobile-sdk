@@ -61,7 +61,6 @@ private object UserErrorDataFlexibleSerializer : KSerializer<ErrorData.UserError
         require(decoder is JsonDecoder)
         val element = decoder.decodeJsonElement()
         val jsonObject = element.jsonObject
-        val type = jsonObject["type"]?.jsonPrimitive?.contentOrNull ?: "UserError"
         val dataElement = jsonObject["data"] ?: throw SerializationException("Missing 'data' in UserError")
         val dataString = when (dataElement) {
             is JsonPrimitive -> dataElement.content

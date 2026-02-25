@@ -108,6 +108,7 @@ internal class ClickToPayEventSerializerTest {
         assertEquals("Client specified an invalid argument.", result.data.data)
     }
 
+    @Test
     fun `test click to pay data serializer with CheckoutErrorEvent - CriticalError`() {
         // Arrange
         val eventJson =
