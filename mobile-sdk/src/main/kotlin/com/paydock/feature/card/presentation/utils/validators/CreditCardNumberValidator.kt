@@ -48,9 +48,9 @@ internal object CreditCardNumberValidator {
      * - **Length:** Too few digits → [CardNumberError.InvalidLength] (inline "Invalid card number") only when focus leaves
      *   the card number field (e.g. user taps expiry or CVV). Min/max use [CardScheme.lengths] when a scheme is detected,
      *   otherwise 12–19. Too many digits → [CardNumberError.InvalidLength]. No length/scheme errors while typing below [minLength].
-     * - **Scheme:** Unsupported scheme → [CardNumberError.UnsupportedCardScheme] only when a recognized scheme is
-     *   not in the merchant's supported list. Unrecognized cards (no scheme detected) are allowed and validated
-     *   using generic 12-19 digit rules.
+     * - **Scheme:** When scheme validation is enabled and supported schemes are configured:
+     *   - No scheme detected after 8 digits → [CardNumberError.UnsupportedCardScheme] ("Card type not accepted").
+     *   - Detected scheme not in supported list → [CardNumberError.UnsupportedCardScheme] ("Card type not accepted").
      *
      * @param cardNumber The credit card number to validate (digits only in practice).
      * @param cardScheme The detected card scheme, if available. Supplies [CardScheme.lengths] for min/max; else 12–19.
@@ -73,17 +73,19 @@ internal object CreditCardNumberValidator {
         if (cardNumber.isBlank() && hasUserInteracted) return CardNumberError.Empty
 
         // 2. Early unsupported scheme check: BIN detection completes at 8 digits, so show "Card type not accepted"
-        //    as soon as we can determine the scheme is not supported OR no scheme is detected at all
-        //    (only when scheme validation is enabled).
+        //    as soon as we can determine the scheme is not supported (only when scheme validation is enabled).
+        //    If no scheme is detected after 8 digits and validation is enabled, the card is not accepted.
         if (digitLength >= 8 && schemeConfig.enableValidation) {
             val supportedCardSchemes = getSupportedCardSchemes(schemeConfig)
-            // If no scheme detected at 8+ digits, the card is unrecognized
-            if (cardScheme == null) {
-                return CardNumberError.UnsupportedCardScheme
-            }
-            // If scheme is detected but not in the supported list
-            if (!supportedCardSchemes.isNullOrEmpty() && !supportedCardSchemes.contains(cardScheme.type)) {
-                return CardNumberError.UnsupportedCardScheme
+            if (!supportedCardSchemes.isNullOrEmpty()) {
+                // No scheme detected after 8 digits = unrecognized card type
+                if (cardScheme == null) {
+                    return CardNumberError.UnsupportedCardScheme
+                }
+                // Scheme detected but not in the supported list
+                if (!supportedCardSchemes.contains(cardScheme.type)) {
+                    return CardNumberError.UnsupportedCardScheme
+                }
             }
         }
 
