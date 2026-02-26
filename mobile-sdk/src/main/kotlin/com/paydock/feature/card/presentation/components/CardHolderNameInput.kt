@@ -53,6 +53,7 @@ internal fun CardHolderNameInput(
 ) {
     var hasUserInteracted by remember { mutableStateOf(false) }
     var suppressErrorUntilNextInput by remember { mutableStateOf(false) }
+    var focusedState by remember { mutableStateOf(false) }
     val previousFocus = remember { object { var value = false } }
 
     val cardHolderError = CardHolderNameValidator.validateHolderNameInput(value, hasUserInteracted)
@@ -66,6 +67,7 @@ internal fun CardHolderNameInput(
 
     SdkTextField(
         modifier = modifier.onFocusChanged {
+            focusedState = it.isFocused
             val justGainedFocus = it.isFocused && !previousFocus.value
             previousFocus.value = it.isFocused
             if (justGainedFocus) suppressErrorUntilNextInput = true
@@ -84,7 +86,7 @@ internal fun CardHolderNameInput(
         label = stringResource(id = R.string.label_cardholder_name),
         enabled = enabled,
         error = errorMessage,
-        showValidIcon = cardHolderError == CardHolderNameError.None && value.isNotBlank(),
+        showValidIcon = cardHolderError == CardHolderNameError.None && value.isNotBlank() && !focusedState,
         autofillType = ContentType.PersonFullName,
         // Use keyboard options and actions for a more user-friendly input experience
         keyboardOptions = KeyboardOptions(

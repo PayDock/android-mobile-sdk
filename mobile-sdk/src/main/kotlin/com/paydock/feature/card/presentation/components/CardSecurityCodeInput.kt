@@ -114,6 +114,9 @@ internal fun CardSecurityCodeInput(
         placeholder = placeholder,
         enabled = enabled,
         error = errorMessage,
+        showValidIcon = securityCodeError == SecurityCodeError.None &&
+            value.length >= (cardCode?.size ?: MobileSDKConstants.CardDetailsConfig.MAX_SECURITY_CODE_LENGTH) &&
+            !focusedState,
         autofillType = ContentType.CreditCardSecurityCode,
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(

@@ -96,7 +96,10 @@ internal fun CreditCardNumberInput(
             val digitsOnly = newText.replace(Regex("\\D"), "")
             val maxLength = cardScheme?.lengths?.maxOrNull()
                 ?: MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH
-            if (digitsOnly.length <= maxLength) {
+            // Always accept deletions to prevent "unable to delete" bug after paste/format operations
+            val isDeletion = digitsOnly.length < value.length
+            val withinLength = digitsOnly.length <= maxLength
+            if (isDeletion || withinLength) {
                 CreditCardInputParser.parseNumber(digitsOnly)?.let { number ->
                     onValueChange(number)
                 }
@@ -107,6 +110,7 @@ internal fun CreditCardNumberInput(
         label = stringResource(id = R.string.label_card_number),
         autofillType = ContentType.CreditCardNumber,
         leadingIcon = { CardSchemeIcon(cardScheme?.type, focusedState, hideFromAccessibility = true) },
+        showValidIcon = !focusedState && cardNumberError == CardNumberError.None && value.isNotBlank(),
         error = errorMessage,
         visualTransformation = cardScheme?.let {
             CardNumberInputTransformation(

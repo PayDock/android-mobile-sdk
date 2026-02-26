@@ -72,24 +72,27 @@ internal object CreditCardNumberValidator {
         // 1. Empty
         if (cardNumber.isBlank() && hasUserInteracted) return CardNumberError.Empty
 
-        // 2. Below min length: activate min-digit check only when focus leaves (e.g. user taps expiry/CVV).
+        // 2. Early unsupported scheme check: BIN detection completes at 8 digits, so show "Card type not accepted"
+        //    as soon as we can determine the scheme is not supported OR no scheme is detected at all
+        //    (only when scheme validation is enabled).
+        if (digitLength >= 8 && schemeConfig.enableValidation) {
+            val supportedCardSchemes = getSupportedCardSchemes(schemeConfig)
+            // If no scheme detected at 8+ digits, the card is unrecognized
+            if (cardScheme == null) {
+                return CardNumberError.UnsupportedCardScheme
+            }
+            // If scheme is detected but not in the supported list
+            if (!supportedCardSchemes.isNullOrEmpty() && !supportedCardSchemes.contains(cardScheme.type)) {
+                return CardNumberError.UnsupportedCardScheme
+            }
+        }
+
+        // 3. Below min length: activate min-digit check only when focus leaves (e.g. user taps expiry/CVV).
         //    Uses scheme min/max if detected, else 12–19; shows inline "Invalid card number".
         if (digitLength < minLength) {
             if (!isCardNumberFocused && hasUserInteracted) return CardNumberError.InvalidLength
             return CardNumberError.None
         }
-
-        // 3. Unsupported scheme (only once we have at least min digits)
-        // Only check scheme support when:
-        // - A scheme is detected AND merchant has scheme restrictions enabled
-        // - If no scheme detected (unrecognized card), allow it to proceed to generic validation
-        val supportedCardSchemes = getSupportedCardSchemes(schemeConfig)
-        val isCardSchemeSupported = when {
-            supportedCardSchemes.isNullOrEmpty() -> true // No scheme validation enabled
-            cardScheme != null -> supportedCardSchemes.contains(cardScheme.type) // Check if detected scheme is supported
-            else -> true // No scheme detected (unrecognized card) - allow generic validation
-        }
-        if (!isCardSchemeSupported) return CardNumberError.UnsupportedCardScheme
 
         // 4. Too many digits
         if (digitLength > maxLength) return CardNumberError.InvalidLength

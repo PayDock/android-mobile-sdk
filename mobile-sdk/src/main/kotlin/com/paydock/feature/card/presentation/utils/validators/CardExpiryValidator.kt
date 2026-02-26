@@ -12,27 +12,49 @@ import java.util.Calendar
  */
 internal object CardExpiryValidator {
 
-    fun isExpiryValid(expiry: String): Boolean = validateExpiryInput(expiry, true) == CardExpiryError.None
+    fun isExpiryValid(expiry: String): Boolean = validateExpiryInput(
+        expiry = expiry,
+        hasUserInteracted = true,
+        isExpiryFocused = false
+    ) == CardExpiryError.None
 
     /**
      * Validates the expiry date input and determines the type of validation error.
      *
-     * Digit-phase validation:
+     * Digit-phase validation (while focused):
      * - Length 2 or 3: Validate month only (first two digits). Returns [CardExpiryError.InvalidMonth] if invalid.
-     * - Length 4: Validate full expiry (format + expiration). Returns [CardExpiryError.InvalidFormat],
+     * - Length 4+: Validate full expiry (format + expiration). Returns [CardExpiryError.InvalidFormat],
      *   [CardExpiryError.Expired], or [CardExpiryError.None].
+     *
+     * On defocus validation:
+     * - Length 1-3: Returns [CardExpiryError.InvalidFormat] (incomplete input).
+     * - Length 4+: Validate full expiry.
+     * - Empty: Returns [CardExpiryError.Empty] if user has interacted.
      *
      * @param expiry The expiry date string to validate (digits only, e.g. "MMYY").
      * @param hasUserInteracted Flag indicating if the user has interacted with the input field.
+     * @param isExpiryFocused True while the expiry field is focused. Affects which validations are applied.
      * @return A [CardExpiryError] representing the validation result.
      */
-    fun validateExpiryInput(expiry: String, hasUserInteracted: Boolean): CardExpiryError {
+    fun validateExpiryInput(
+        expiry: String,
+        hasUserInteracted: Boolean,
+        isExpiryFocused: Boolean = false
+    ): CardExpiryError {
         return when {
+            // No error if empty (neutral state)
             expiry.isBlank() && hasUserInteracted -> CardExpiryError.Empty
-            expiry.length in 2..3 -> {
+
+            // While focused: validate month at length 2-3
+            expiry.length in 2..3 && isExpiryFocused -> {
                 val month = expiry.take(MobileSDKConstants.CardDetailsConfig.EXPIRY_CHUNK_SIZE).toIntOrNull()
                 if (!isMonthValid(month)) CardExpiryError.InvalidMonth else CardExpiryError.None
             }
+
+            // On defocus with incomplete input (length 1-3): invalid expiry date
+            expiry.length in 1..3 && !isExpiryFocused && hasUserInteracted -> CardExpiryError.InvalidFormat
+
+            // Length 4+: validate full expiry (both while focused and on defocus)
             expiry.length >= MobileSDKConstants.CardDetailsConfig.MAX_EXPIRY_LENGTH -> {
                 val isValid = validateExpiryFormat(expiry)
                 val isExpired = isCardExpired(expiry)
@@ -42,6 +64,7 @@ internal object CardExpiryValidator {
                     else -> CardExpiryError.None
                 }
             }
+
             else -> CardExpiryError.None
         }
     }

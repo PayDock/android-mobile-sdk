@@ -51,10 +51,12 @@ internal fun CardExpiryInput(
 ) {
     var hasUserInteracted by remember { mutableStateOf(false) }
     var suppressErrorUntilNextInput by remember { mutableStateOf(false) }
+    var focusedState by remember { mutableStateOf(false) }
     val previousFocus = remember { object { var value = false } }
 
     // Validate possible expiry errors (digit-phase: month on 2-3 digits, full on 4)
-    val expiryError = CardExpiryValidator.validateExpiryInput(value, hasUserInteracted)
+    // Pass focusedState to enable focus-aware validation (month while typing, full on defocus)
+    val expiryError = CardExpiryValidator.validateExpiryInput(value, hasUserInteracted, focusedState)
 
     // Map the validation result to an error message
     // Empty -> null: no error when field is defocused if empty
@@ -70,6 +72,7 @@ internal fun CardExpiryInput(
     // Input field configuration
     SdkTextField(
         modifier = modifier.onFocusChanged {
+            focusedState = it.isFocused
             val justGainedFocus = it.isFocused && !previousFocus.value
             previousFocus.value = it.isFocused
             if (justGainedFocus) suppressErrorUntilNextInput = true
@@ -91,7 +94,8 @@ internal fun CardExpiryInput(
         enabled = enabled,
         error = errorMessage, // Dynamically show error messages if validation fails
         showValidIcon = expiryError == CardExpiryError.None &&
-            value.length >= MobileSDKConstants.CardDetailsConfig.MAX_EXPIRY_LENGTH,
+            value.length >= MobileSDKConstants.CardDetailsConfig.MAX_EXPIRY_LENGTH &&
+            !focusedState,
         autofillType = ContentType.CreditCardExpirationDate,
         visualTransformation = ExpiryInputTransformation(), // Format input as MM/YY
         keyboardOptions = KeyboardOptions(
