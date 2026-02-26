@@ -75,7 +75,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
               "4": { "4024": "v", "4208": "v", "2221": "m", "3480": "a", "3031": "c", "6011": "d", "6282": "u" },
               "6": {},
               "r": { "2": [], "4": [["2221", "2720", "m"]], "6": [] },
-              "s": { "m": "mastercard", "c": "diners", "j": "japcb", "a": "amex", "v": "visa", "e": "eftpos", "d": "discover", "u": "unionpay" },
+              "s": { "m": "mastercard", "c": "diners", "j": "japcb", "a": "amex", "v": "visa", "d": "discover", "u": "unionpay" },
               "v": 1
             }
         """.trimIndent()

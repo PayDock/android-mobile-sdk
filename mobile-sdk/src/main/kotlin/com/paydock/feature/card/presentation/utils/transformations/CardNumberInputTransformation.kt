@@ -93,13 +93,14 @@ internal class CardNumberInputTransformation(
      */
     private fun originalToTransformedOffset(offset: Int, subSectionSizes: List<Int>, originalLength: Int): Int {
         if (subSectionSizes.isEmpty()) return offset.coerceIn(0, originalLength)
-        val safeOffset = offset.coerceIn(0, originalLength)
         val maxTransformedLength = formatCardNumber(
             buildString { repeat(originalLength) { append("x") } },
             subSectionSizes
         ).length
-        if (safeOffset >= originalLength) return maxTransformedLength
+        // Handle out-of-bounds offset (past original length)
+        if (offset > originalLength) return maxTransformedLength
 
+        val safeOffset = offset.coerceAtLeast(0)
         var spacesAdded = 0
         for (subSectionSize in subSectionSizes) {
             if (safeOffset > subSectionSize) {

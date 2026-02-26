@@ -77,7 +77,6 @@ private fun mapSchemeToDrawable(scheme: CardType?): Int = when (scheme) {
     CardType.JAPCB -> R.drawable.ic_jcb
     CardType.MASTERCARD -> R.drawable.ic_mastercard
     CardType.VISA -> R.drawable.ic_visa
-    CardType.EFTPOS -> R.drawable.ic_eftpos
     CardType.UNIONPAY -> R.drawable.ic_union_pay
     else -> R.drawable.ic_credit_card
 }

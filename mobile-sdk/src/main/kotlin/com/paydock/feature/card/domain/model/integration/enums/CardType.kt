@@ -34,12 +34,6 @@ enum class CardType {
      */
     VISA,
 
-    /**
-     * EFTPOS card scheme.
-     * Dual networked to Visa/Mastercard.
-     */
-    EFTPOS,
-
     /*
      * UnionPay card scheme
      */
@@ -69,7 +63,6 @@ enum class CardType {
                 JAPCB -> "JCB"
                 MASTERCARD -> "MasterCard"
                 VISA -> "Visa"
-                EFTPOS -> "Eftpos"
                 UNIONPAY -> "UnionPay International"
             }
         }

@@ -127,7 +127,6 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
                 "j": "japcb",
                 "a": "amex",
                 "v": "visa",
-                "e": "eftpos",
                 "d": "discover",
                 "u": "unionpay"
               },

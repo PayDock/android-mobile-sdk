@@ -20,7 +20,6 @@ internal class CardSchemeValidatorTest : BaseUnitTest() {
         private val DINERS_LENGTHS = listOf(14)
         private val DISCOVER_LENGTHS = listOf(16, 19)
         private val JAPCB_LENGTHS = listOf(16)
-        private val EFTPOS_LENGTHS = listOf(16)
         private val UNIONPAY_LENGTHS = listOf(16, 17, 18, 19)
 
         @JvmStatic
@@ -51,10 +50,7 @@ internal class CardSchemeValidatorTest : BaseUnitTest() {
                 arrayOf("8105123456789012", CardType.UNIONPAY, UNIONPAY_LENGTHS), // 16 digits
                 arrayOf("62298712345678901", CardType.UNIONPAY, UNIONPAY_LENGTHS), // 17 digits - BIN 622987
                 arrayOf("628212345678901234", CardType.UNIONPAY, UNIONPAY_LENGTHS), // 18 digits
-                arrayOf("6282123456789012345", CardType.UNIONPAY, UNIONPAY_LENGTHS), // 19 digits
-                arrayOf("5010123456789012", CardType.EFTPOS, EFTPOS_LENGTHS), // BIN: 5010
-                arrayOf("5018123456789012", CardType.EFTPOS, EFTPOS_LENGTHS), // BIN: 5018
-                arrayOf("5021123456789012", CardType.EFTPOS, EFTPOS_LENGTHS) // BIN: 5021
+                arrayOf("6282123456789012345", CardType.UNIONPAY, UNIONPAY_LENGTHS) // 19 digits
             )
         }
     }

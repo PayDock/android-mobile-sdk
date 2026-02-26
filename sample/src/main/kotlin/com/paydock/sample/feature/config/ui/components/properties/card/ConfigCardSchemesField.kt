@@ -95,7 +95,6 @@ private fun getCardTypeDisplayName(cardType: CardType): String {
         CardType.JAPCB -> "JCB"
         CardType.MASTERCARD -> "MasterCard"
         CardType.VISA -> "Visa"
-        CardType.EFTPOS -> "Eftpos"
         CardType.UNIONPAY -> "UnionPay International"
     }
 }

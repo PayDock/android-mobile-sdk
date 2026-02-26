@@ -306,7 +306,7 @@ internal class CardSecurityCodeValidatorTest {
     }
 
     @Test
-    fun validateEftposSecurityCodeInput_invalidCVV_CVCInput_returnsInvalidError() {
+    fun validateSecurityCodeInput_invalidCVV_CVCInput_returnsInvalidError() {
         val securityCode = "12" // Invalid for CVV_CVC (requires 3 digits)
         val cardCode = CardCode(CodeType.CVV_CVC, 3)
         val hasUserInteracted = true
@@ -320,8 +320,8 @@ internal class CardSecurityCodeValidatorTest {
     }
 
     @Test
-    fun validateEftposSecurityCodeInput_validCVV_CVCInput_returnsNoneError() {
-        val securityCode = "123" // Valid for EFTPOS CVV_CVC
+    fun validateSecurityCodeInput_validCVV_CVCInput_returnsNoneError() {
+        val securityCode = "123" // Valid for CVV_CVC
         val cardCode = CardCode(CodeType.CVV_CVC, 3)
         val hasUserInteracted = true
         val expected = SecurityCodeError.None
@@ -334,7 +334,7 @@ internal class CardSecurityCodeValidatorTest {
     }
 
     @Test
-    fun validateEftposSecurityCodeInput_emptyInput_userInteracted_returnsEmptyError() {
+    fun validateSecurityCodeInput_CVV_CVC_emptyInput_userInteracted_returnsEmptyError() {
         val securityCode = ""
         val cardCode = CardCode(CodeType.CVV_CVC, 3)
         val hasUserInteracted = true
@@ -348,7 +348,7 @@ internal class CardSecurityCodeValidatorTest {
     }
 
     @Test
-    fun validateEftposSecurityCodeInput_emptyInput_userNotInteracted_returnsNoneError() {
+    fun validateSecurityCodeInput_CVV_CVC_emptyInput_userNotInteracted_returnsNoneError() {
         val securityCode = ""
         val cardCode = CardCode(CodeType.CVV_CVC, 3)
         val hasUserInteracted = false
