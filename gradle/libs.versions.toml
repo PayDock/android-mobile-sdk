@@ -70,6 +70,7 @@ androidx-runner = { module = "androidx.test:runner", version.ref = "runner" }
 androidx-test-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-junit" }
 androidx-test-ext = { module = "androidx.test.ext:junit-ktx", version.ref = "androidx-test-junit" }
 androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-test-espresso" }
+androidx-test-espresso-accessibility = { module = "androidx.test.espresso:espresso-accessibility", version.ref = "androidx-test-espresso" }
 androidx-arch-core-testing = { module = "androidx.arch.core:core-testing", version.ref = "androidx-arch-core-testing" }
 # Compose
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBOM" }

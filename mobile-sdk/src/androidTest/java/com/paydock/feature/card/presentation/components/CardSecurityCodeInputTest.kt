@@ -1,12 +1,14 @@
 package com.paydock.feature.card.presentation.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
@@ -126,15 +128,27 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
     @Test
     fun testValidSecurityCode() {
         var securityCode by mutableStateOf("")
+        val cardCode = CardCode(CodeType.CVV, 3)
+        val defocusRequester = FocusRequester()
 
         // Start composable with valid card security code
         composeTestRule.setContent {
-            CardSecurityCodeInput(
-                value = securityCode,
-                onValueChange = {
-                    securityCode = it
-                }
-            )
+            Column(modifier = Modifier.fillMaxSize()) {
+                CardSecurityCodeInput(
+                    value = securityCode,
+                    cardCode = cardCode,
+                    onValueChange = {
+                        securityCode = it
+                    }
+                )
+                BasicTextField(
+                    value = "",
+                    onValueChange = {},
+                    modifier = Modifier
+                        .testTag("defocusField")
+                        .focusRequester(defocusRequester)
+                )
+            }
         }
 
         // Asset default empty state
@@ -149,6 +163,10 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
         // Allow some time for the UI to update
         composeTestRule.waitForIdle()
 
+        // Defocus by requesting focus on another field - this reliably triggers onFocusChanged
+        composeTestRule.runOnIdle { defocusRequester.requestFocus() }
+        composeTestRule.waitForIdle()
+
         // Assert the content of the TextField
         composeTestRule.onNodeWithTag("sdkInput").assert(hasText("123"))
         composeTestRule.onNodeWithTag("successIcon", true).assertIsDisplayed()
@@ -159,23 +177,23 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
     fun testCardSecurityCodeInputDisplaysError() {
         var securityCode by mutableStateOf("")
         val cardCode = CardCode(CodeType.CID, 4)
+        val defocusRequester = FocusRequester()
 
-        // Start composable with security code input and a sibling to defocus onto
+        // Start composable with security code input and a focusable sibling to defocus onto
         composeTestRule.setContent {
             Column(modifier = Modifier.fillMaxSize()) {
                 CardSecurityCodeInput(
                     value = securityCode,
                     cardCode = cardCode,
-                    onValueChange = {
-                        securityCode = it
-                    }
+                    onValueChange = { securityCode = it }
                 )
-                Column(
+                BasicTextField(
+                    value = "",
+                    onValueChange = {},
                     modifier = Modifier
-                        .testTag("clickToDefocus")
-                        .fillMaxSize()
-                        .clickable { }
-                ) {}
+                        .testTag("defocusField")
+                        .focusRequester(defocusRequester)
+                )
             }
         }
 
@@ -183,8 +201,8 @@ internal class CardSecurityCodeInputTest : BaseUITest() {
         composeTestRule.onNodeWithTag("sdkInput").performClick()
         composeTestRule.onNodeWithTag("sdkInput").performTextInput("123")
 
-        // Error only appears on defocus - click outside to defocus
-        composeTestRule.onNodeWithTag("clickToDefocus").performClick()
+        // Defocus by requesting focus on another field - this reliably triggers onFocusChanged
+        composeTestRule.runOnIdle { defocusRequester.requestFocus() }
         composeTestRule.waitForIdle()
 
         // Assert that an error message is displayed after defocus

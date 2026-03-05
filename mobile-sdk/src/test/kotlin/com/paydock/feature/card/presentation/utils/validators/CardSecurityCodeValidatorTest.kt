@@ -150,6 +150,24 @@ internal class CardSecurityCodeValidatorTest {
         assertEquals(expected, actual)
     }
 
+    /**
+     * Edge case: Security code validation after changing card type.
+     * 4 digits valid for Amex CID becomes invalid when card scheme changes to Visa (3-digit CVV).
+     */
+    @Test
+    fun validateSecurityCodeInput_fourDigitsInvalidForVisaCvv_returnsInvalidError() {
+        val securityCode = "1234" // Was valid for Amex CID, now invalid for Visa CVV (3 digits)
+        val cardCode = CardCode(CodeType.CVV, 3)
+        val hasUserInteracted = true
+        val expected = SecurityCodeError.Invalid
+        val actual = CardSecurityCodeValidator.validateSecurityCodeInput(
+            securityCode,
+            cardCode,
+            hasUserInteracted
+        )
+        assertEquals(expected, actual)
+    }
+
     @Test
     fun validateDiscoverSecurityCodeInput_validCIDInput_returnsNoneError() {
         val securityCode = "123" // Valid for Discover CID

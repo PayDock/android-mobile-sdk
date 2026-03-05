@@ -43,7 +43,7 @@ internal object CardSecurityCodeValidator {
         isSecurityCodeFocused: Boolean = false
     ): SecurityCodeError {
         if (isSecurityCodeFocused) return SecurityCodeError.None
-        return when {
+        val result = when {
             securityCode.isBlank() && hasUserInteracted -> SecurityCodeError.Empty
             securityCode.isNotBlank() -> {
                 val isValidLength = if (cardCode != null) {
@@ -57,5 +57,6 @@ internal object CardSecurityCodeValidator {
             }
             else -> SecurityCodeError.None
         }
+        return result
     }
 }

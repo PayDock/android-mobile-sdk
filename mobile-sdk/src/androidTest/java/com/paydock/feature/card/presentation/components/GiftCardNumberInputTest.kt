@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -59,10 +60,9 @@ internal class GiftCardNumberInputTest : BaseUITest() {
 
     @Test
     fun testCardNumberInputDisplaysError() {
-        // Invalid card number length > 25
+        // Invalid card number length - too short (min 14 for gift cards)
         var cardNumber by mutableStateOf("")
 
-        // Start composable with valid card number
         composeTestRule.setContent {
             GiftCardNumberInput(
                 value = cardNumber,
@@ -72,12 +72,21 @@ internal class GiftCardNumberInputTest : BaseUITest() {
             )
         }
 
-        composeTestRule.onNodeWithTag("sdkInput").performTextInput("411111111111111111111111111111111")
+        composeTestRule.onNodeWithTag("sdkInput").performClick()
+        composeTestRule.onNodeWithTag("sdkInput").performTextInput("1234")
+        composeTestRule.waitForIdle()
+
+        // Wait for debounced validation to complete (INPUT_DELAY = 300ms).
+        // On slower devices (e.g. Firebase Test Lab), debounce can take longer.
+        val errorText = getStringRes(R.string.error_card_number)
+        composeTestRule.waitUntil(timeoutMillis = 3000) {
+            composeTestRule.onAllNodesWithText(errorText, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
 
         // Assert that an error message is displayed
         composeTestRule.onNodeWithTag("successIcon", true).assertDoesNotExist()
         composeTestRule.onNodeWithTag("errorIcon", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithTag("errorLabel").assertIsDisplayed()
-            .assertTextEquals(getStringRes(R.string.error_card_number))
+            .assertTextEquals(errorText)
     }
 }

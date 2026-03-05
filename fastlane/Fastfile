@@ -811,7 +811,174 @@ platform :android do
         gradle(task: "assemble", flavor: flavor.capitalize, build_type: "Release")
     end
 
-    # --- Test Lane ---
+    # --- Test Lanes ---
+
+    desc "Runs UI tests on Firebase Test Lab"
+    lane :ui_test_firebase do |options|
+        require 'json'
+        require 'tempfile'
+
+        UI.header("Firebase Test Lab - Starting UI Tests")
+        UI.message("=" * 60)
+
+        # Configuration options
+        # MediumPhone.arm is a reliable virtual device available in Firebase Test Lab
+        device_model = options[:device] || "MediumPhone.arm"
+        api_level = options[:api] || "34"
+        locale = options[:locale] || "en"
+        orientation = options[:orientation] || "portrait"
+        timeout = options[:timeout] || "15m"
+        test_targets = options[:test_targets] # Optional: specific test classes/methods
+
+        # Google Cloud project (use Firebase project ID)
+        gcp_project = ENV["GCP_PROJECT_ID"] || ENV["FIREBASE_PROJECT_ID"]
+        unless gcp_project
+            UI.user_error!("Missing GCP_PROJECT_ID or FIREBASE_PROJECT_ID environment variable")
+        end
+
+        UI.message("GCP Project: #{gcp_project}")
+        UI.message("Device: #{device_model}, API: #{api_level}")
+        UI.message("Timeout: #{timeout}")
+
+        # Build the APKs if not already built
+        UI.header("Building APKs")
+
+        # For library modules, we need:
+        # 1. A host app (sample app) that includes the library
+        # 2. The androidTest APK for instrumentation tests
+
+        # Determine which flavor to use (default to sandbox)
+        flavor = options[:flavor] || "sandbox"
+
+        # Build the sample app (which includes the SDK library)
+        gradle(task: ":sample:assemble#{flavor.capitalize}Debug", flags: "-x lint -x detekt")
+
+        # Build the test APK
+        gradle(task: ":mobile-sdk:assembleDebugAndroidTest", flags: "-x lint -x detekt")
+
+        # Locate the APKs
+        # App APK: sample app that hosts the library
+        app_apk = Dir.glob("../sample/build/outputs/apk/#{flavor}/debug/*.apk").first
+        # Test APK: instrumentation tests for the library
+        test_apk = Dir.glob("../mobile-sdk/build/outputs/apk/androidTest/debug/*.apk").first
+
+        unless app_apk && File.exist?(app_apk)
+            UI.user_error!("App APK not found. Expected at: sample/build/outputs/apk/#{flavor}/debug/*.apk")
+        end
+        unless test_apk && File.exist?(test_apk)
+            UI.user_error!("Test APK not found. Expected at: mobile-sdk/build/outputs/apk/androidTest/debug/*.apk")
+        end
+
+        UI.message("App APK (sample): #{app_apk}")
+        UI.message("Test APK (library): #{test_apk}")
+
+        # Set up Google Cloud authentication
+        UI.header("Setting up Google Cloud Authentication")
+
+        credentials_file = ENV["GOOGLE_CREDENTIALS_FILE_PATH"]
+        if credentials_file && File.exist?(credentials_file)
+            UI.message("Using credentials file: #{credentials_file}")
+            sh("gcloud auth activate-service-account --key-file=#{credentials_file}")
+        else
+            UI.message("Attempting to use application default credentials")
+        end
+
+        # Set the project
+        sh("gcloud config set project #{gcp_project}")
+
+        # Build the gcloud command
+        UI.header("Running Tests on Firebase Test Lab")
+
+        # Create results directory for downloaded artifacts
+        results_dir = "../mobile-sdk/build/test-results/firebase-test-lab"
+        FileUtils.mkdir_p(results_dir)
+
+        # Generate a unique results directory name
+        results_gcs_dir = "ui-tests-#{Time.now.strftime('%Y%m%d-%H%M%S')}"
+
+        # Use custom bucket if specified, otherwise let Firebase use its default bucket
+        results_bucket = options[:results_bucket] || ENV["FIREBASE_TEST_RESULTS_BUCKET"]
+
+        gcloud_cmd = [
+            "gcloud firebase test android run",
+            "--type instrumentation",
+            "--app #{app_apk}",
+            "--test #{test_apk}",
+            "--device model=#{device_model},version=#{api_level},locale=#{locale},orientation=#{orientation}",
+            "--timeout #{timeout}",
+            "--use-orchestrator",
+            "--client-details matrixLabel=\"CI-#{ENV['CI_PIPELINE_ID'] || 'local'}\""
+        ]
+
+        # Add results bucket if specified (otherwise Firebase uses default)
+        if results_bucket
+            gcloud_cmd << "--results-bucket=gs://#{results_bucket}"
+            gcloud_cmd << "--results-dir=#{results_gcs_dir}"
+        end
+
+        # Add test targets if specified (e.g., specific test class)
+        if test_targets
+            gcloud_cmd << "--test-targets \"#{test_targets}\""
+        end
+
+        # Add sharding for parallel execution (if more than one shard requested)
+        num_shards = (options[:shards] || 1).to_i
+        if num_shards > 1
+            gcloud_cmd << "--num-uniform-shards=#{num_shards}"
+        end
+
+        test_passed = false
+        begin
+            # Run the tests
+            sh(gcloud_cmd.join(" \\\n  "), log: true)
+            test_passed = true
+            UI.success("✅ Firebase Test Lab tests completed successfully!")
+        rescue => ex
+            UI.error("❌ Firebase Test Lab tests failed: #{ex.message}")
+
+            # Exit code 10 means tests ran but some failed - we still want to download results
+            if ex.message.include?("exit status 10")
+                UI.message("Tests ran but some failed. Downloading results for reporting...")
+            else
+                raise ex
+            end
+        end
+
+        # Download test results from GCS for CI reporting (only if custom bucket specified)
+        UI.header("Downloading Test Results")
+        if results_bucket
+            begin
+                # Download JUnit XML results
+                sh("gsutil -m cp -r gs://#{results_bucket}/#{results_gcs_dir}/**/test_result_*.xml #{results_dir}/ 2>/dev/null || true")
+
+                # Also try to get the merged results
+                sh("gsutil -m cp gs://#{results_bucket}/#{results_gcs_dir}/**/merged_results.xml #{results_dir}/ 2>/dev/null || true")
+
+                # List downloaded files
+                downloaded_files = Dir.glob("#{results_dir}/**/*.xml")
+                if downloaded_files.any?
+                    UI.success("Downloaded #{downloaded_files.count} result files")
+                    downloaded_files.each { |f| UI.message("  - #{f}") }
+                else
+                    UI.message("No XML result files found to download")
+                end
+            rescue => download_ex
+                UI.message("⚠️ Could not download results: #{download_ex.message}")
+            end
+
+            UI.message("Results bucket: gs://#{results_bucket}/#{results_gcs_dir}")
+        else
+            UI.message("Using Firebase default results bucket - check Firebase Console for results")
+        end
+
+        # Raise the error if tests failed (after downloading results)
+        unless test_passed
+            raise "Firebase Test Lab tests failed. Check results in Firebase Console."
+        end
+
+        UI.header("Firebase Test Lab - Complete")
+        UI.message("View results in Firebase Console: https://console.firebase.google.com/project/#{gcp_project}/testlab")
+    end
 
     desc "Runs all unit tests for specified flavor"
     lane :test do |options|

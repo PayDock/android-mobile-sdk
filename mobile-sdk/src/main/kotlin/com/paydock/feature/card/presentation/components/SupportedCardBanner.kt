@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -33,7 +34,9 @@ internal fun SupportedCardBanner(supportedSchemes: Set<CardType>) {
     val schemeDescriptions = supportedSchemes.joinToString(separator = ", ") { it.displayLabel() }
     val fullContentDescription = stringResource(R.string.label_supported_card_schemes, schemeDescriptions)
     Row(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("supportedCardBanner")
             .semantics(mergeDescendants = true) {
                 contentDescription = fullContentDescription
             },

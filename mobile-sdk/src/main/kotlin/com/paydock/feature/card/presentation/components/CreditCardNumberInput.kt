@@ -94,8 +94,8 @@ internal fun CreditCardNumberInput(
             hasUserInteracted = true
             // Strip spaces and other non-digits so pasted values (e.g. "6334 9000 0000 0005") are accepted
             val digitsOnly = newText.replace(Regex("\\D"), "")
-            val maxLength = cardScheme?.lengths?.maxOrNull()
-                ?: MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH
+            // Use MAX so paste across schemes works (e.g. Amex 15→Visa 16). Scheme length enforced by validator.
+            val maxLength = MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH
             // Always accept deletions to prevent "unable to delete" bug after paste/format operations
             val isDeletion = digitsOnly.length < value.length
             val withinLength = digitsOnly.length <= maxLength
