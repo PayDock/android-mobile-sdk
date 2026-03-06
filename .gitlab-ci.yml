@@ -182,20 +182,16 @@ test:
 .firebase_test_template:
   stage: firebase_test
   extends: .deploy_template
-  variables:
-    GCP_PROJECT_ID: $GCP_PROJECT_ID
-    FIREBASE_PROJECT_ID: $GCP_PROJECT_ID
+  # Do NOT set GCP_PROJECT_ID here - it overwrites the project CI/CD variable with empty.
+  # Inherit GCP_PROJECT_ID directly from Settings → CI/CD → Variables.
   script:
-    - |
-      if ! command -v gcloud &> /dev/null; then
-        echo "Installing Google Cloud SDK..."
-        curl -sSL https://sdk.cloud.google.com | bash -s -- --disable-prompts --install-dir=$HOME
-        export PATH=$PATH:$HOME/google-cloud-sdk/bin
-        source $HOME/google-cloud-sdk/path.bash.inc
-      fi
+    - '[ -z "$GCP_PROJECT_ID" ] && [ -n "$GOOGLE_CREDENTIALS_FILE_PATH" ] && export GCP_PROJECT_ID=$(grep -o "\"project_id\"[[:space:]]*:[[:space:]]*\"[^\"]*\"" "$GOOGLE_CREDENTIALS_FILE_PATH" | head -1 | sed "s/.*\"\([^\"]*\)\".*/\1/")'
+    - export FIREBASE_PROJECT_ID="${FIREBASE_PROJECT_ID:-$GCP_PROJECT_ID}"
+    - '[ -n "$GCP_PROJECT_ID" ] || (echo "ERROR: GCP_PROJECT_ID is not set. Add it in GitLab CI/CD Variables." && exit 1)'
+    - 'if ! command -v gcloud &>/dev/null; then curl -sSL https://sdk.cloud.google.com | bash -s -- --disable-prompts --install-dir=$HOME; export PATH=$PATH:$HOME/google-cloud-sdk/bin; source $HOME/google-cloud-sdk/path.bash.inc; fi'
     - gcloud auth activate-service-account --key-file=$GOOGLE_CREDENTIALS_FILE_PATH
     - gcloud config set project $GCP_PROJECT_ID
-    - bundle exec fastlane ui_test_firebase device:MediumPhone.arm api:34 timeout:20m flavor:${FLAVOR}
+    - "bundle exec fastlane ui_test_firebase device:MediumPhone.arm api:34 timeout:20m flavor:${FLAVOR}"
   artifacts:
     when: always
     expire_in: 7 days
@@ -212,6 +208,8 @@ ui_tests_firebase_staging:
   extends: .firebase_test_template
   variables:
     FLAVOR: staging
+  environment:
+    name: staging
   needs:
     - deploy_staging
   rules:
@@ -224,6 +222,8 @@ ui_tests_firebase_sandbox:
   extends: .firebase_test_template
   variables:
     FLAVOR: sandbox
+  environment:
+    name: sandbox
   needs:
     - deploy_sandbox
   rules:

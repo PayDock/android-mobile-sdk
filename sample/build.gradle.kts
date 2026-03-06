@@ -156,21 +156,20 @@ fun ApplicationProductFlavor.configureFlavorBuildConfig(
 
 fun readBuildVariable(variable: BuildVariable, flavor: String): String {
     val envName = variable.getEnvName(flavor)
-    // Read the environment variable value, trimming any leading/trailing whitespace
     var envValue = System.getenv(envName)?.trim()
-    val configValue: String = if (!envValue.isNullOrEmpty()) {
-        // CI/CD environment - Remove excessive double quotes if present
-        // Remove surrounding double quotes if present
-        if (envValue.startsWith("\"") && envValue.endsWith("\"")) {
-            envValue = envValue.substring(1, envValue.length - 1)
-        }
-        return "\"$envValue\""
+    val rawValue = if (!envValue.isNullOrEmpty()) {
+        envValue
     } else {
-        // Config properties fallback
         val props = getLocalConfigProps(flavor)
         props.getProperty(variable.name) ?: ""
     }
-    return configValue
+    // Strip surrounding quotes (config.properties uses key="value", env vars may too)
+    val trimmed = if (rawValue.startsWith("\"") && rawValue.endsWith("\"")) {
+        rawValue.substring(1, rawValue.length - 1)
+    } else {
+        rawValue
+    }
+    return "\"$trimmed\""
 }
 
 fun getLocalConfigProps(flavor: String): Properties {
