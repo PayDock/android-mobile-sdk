@@ -11,7 +11,7 @@ import org.koin.dsl.module
 internal val BIN_DATA_HTTP_CLIENT_QUALIFIER = named("binDataHttpClient")
 
 /** Base URL for BIN data (CloudFront); must match host used by [BinDataCacheManager]. */
-private const val BIN_DATA_BASE_URL = "https://d192wsfqzdoj1n.cloudfront.net"
+private const val BIN_DATA_BASE_URL = "https://d25lng5khxpk7i.cloudfront.net"
 
 /**
  * Network-based module for handling network components using Ktor.

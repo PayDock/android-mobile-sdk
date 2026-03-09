@@ -32,7 +32,7 @@ internal class BinDataCacheManager(
     private val httpClient: HttpClient
 ) {
     companion object {
-        private const val CLOUDFRONT_URL = "https://d192wsfqzdoj1n.cloudfront.net/bin-data-au-v1.json"
+        private const val CLOUDFRONT_URL = "https://d25lng5khxpk7i.cloudfront.net/bin-data-au-v1.json"
         internal const val ASSET_FILENAME = "card-schemes.json"
         private const val CACHED_FILENAME = "card-schemes-cached.json"
         private const val PREFS_NAME = "paydock_bin_cache"

@@ -51,7 +51,7 @@ internal object InstrumentationTestKoinModules {
                 }
             }
             NetworkClientBuilder.create()
-                .setBaseUrl("https://d192wsfqzdoj1n.cloudfront.net")
+                .setBaseUrl("https://d25lng5khxpk7i.cloudfront.net")
                 .setMockEngine(mockEngine)
                 .build()
         }

@@ -145,7 +145,7 @@ platform :android do
     # Mirrors caching logic from BinDataCacheManager.kt: Last-Modified preferred, ETag fallback
 
     # CloudFront URL for BIN validation file (same as BinDataCacheManager.CLOUDFRONT_URL)
-    BIN_DATA_URL = "https://d192wsfqzdoj1n.cloudfront.net/bin-data-au-v1.json"
+    BIN_DATA_URL = "https://d25lng5khxpk7i.cloudfront.net/bin-data-au-v1.json"
     # Local asset filename (same as BinDataCacheManager.ASSET_FILENAME)
     BIN_LOCAL_FILENAME = "card-schemes.json"
     # Asset path relative to repository root (bin-processor module)

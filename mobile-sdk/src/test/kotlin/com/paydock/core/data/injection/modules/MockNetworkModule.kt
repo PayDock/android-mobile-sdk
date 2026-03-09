@@ -134,7 +134,7 @@ internal val mockBinDataSuccessModule = module {
             }
         }
         NetworkClientBuilder.create()
-            .setBaseUrl("https://d192wsfqzdoj1n.cloudfront.net")
+            .setBaseUrl("https://d25lng5khxpk7i.cloudfront.net")
             .setMockEngine(mockEngine)
             .build()
     }
@@ -166,7 +166,7 @@ internal val mockBinDataEtagOnlyModule = module {
             }
         }
         NetworkClientBuilder.create()
-            .setBaseUrl("https://d192wsfqzdoj1n.cloudfront.net")
+            .setBaseUrl("https://d25lng5khxpk7i.cloudfront.net")
             .setMockEngine(mockEngine)
             .build()
     }
@@ -181,7 +181,7 @@ internal val mockBinDataFailureModule = module {
             respondError(HttpStatusCode.InternalServerError)
         }
         NetworkClientBuilder.create()
-            .setBaseUrl("https://d192wsfqzdoj1n.cloudfront.net")
+            .setBaseUrl("https://d25lng5khxpk7i.cloudfront.net")
             .setMockEngine(mockEngine)
             .build()
     }
