@@ -15,7 +15,6 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import com.paydock.R
 import com.paydock.core.presentation.extensions.openBrowser
-import com.paydock.core.presentation.extensions.toast
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.link.LinkTextAppearance
 import com.paydock.designsystems.components.link.LinkTextAppearanceDefaults

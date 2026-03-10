@@ -56,7 +56,7 @@ fun ZipItem(
             salesMaxValue = "400",
             refundsTotalAmount = "21",
             previousChargeback = "true",
-            currency = "AUD",
+            currency = zipConfig.currency,
             lastLogin = "2017-06-01"
         )
     )
