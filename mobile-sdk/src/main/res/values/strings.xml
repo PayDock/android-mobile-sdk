@@ -53,5 +53,6 @@
     <!-- endregion -->
     <!-- region Toast Messages -->
     <string name="toast_invalid_url">Invalid URL - unable to open</string>
+    <string name="toast_no_handler">No application found to open URL</string>
     <!-- endregion -->
 </resources>

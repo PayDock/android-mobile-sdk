@@ -655,22 +655,21 @@ internal fun SdkButton(
     // Calculate adjusted height with a scaling factor
     val adjustedButtonHeight = appearance.height.scaled(fontScale)
 
-    val disabledIconOrLoaderTint = ButtonDefaults.buttonColors().disabledContentColor
     val runtimeAppearance = remember(appearance, isEnabled) {
         if (isEnabled) {
             appearance
         } else {
             appearance.copy(
                 iconAppearance = appearance.iconAppearance.copy( // Assuming iconAppearance is not null
-                    tint = disabledIconOrLoaderTint
+                    tint = appearance.colors.disabledContentColor
                 ),
                 textAppearance = appearance.textAppearance.copy(
                     style = appearance.textAppearance.style.copy(
-                        color = disabledIconOrLoaderTint
+                        color = appearance.colors.disabledContentColor
                     )
                 ),
                 loaderAppearance = appearance.loaderAppearance.copy(
-                    color = disabledIconOrLoaderTint
+                    color = appearance.colors.disabledContentColor
                 )
             )
         }

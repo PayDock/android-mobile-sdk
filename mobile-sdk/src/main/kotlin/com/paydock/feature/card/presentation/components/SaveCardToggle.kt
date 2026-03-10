@@ -87,11 +87,7 @@ internal fun SaveCardToggle(
                     if (enabled) {
                         onPrivacyPolicyClick?.invoke(config.privacyPolicyConfig.privacyPolicyURL)
                         context.openBrowser(
-                            urlString = config.privacyPolicyConfig.privacyPolicyURL,
-                            onError = { _, _ ->
-                                // Show consistent error message for both invalid URL and no handler cases
-                                context.toast(context.getString(R.string.toast_invalid_url))
-                            }
+                            urlString = config.privacyPolicyConfig.privacyPolicyURL
                         )
                     }
                 }
