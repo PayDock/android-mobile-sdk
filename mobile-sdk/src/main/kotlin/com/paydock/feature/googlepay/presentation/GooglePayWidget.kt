@@ -51,7 +51,6 @@ import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.presentation.viewmodels.GooglePayViewModel
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
-import org.json.JSONObject
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -90,7 +89,7 @@ fun GooglePayWidget(
         val transactionInfo = config.paymentRequest.optJSONObject("transactionInfo")
         val amount = transactionInfo?.optString("totalPrice", "") ?: ""
         val currency = transactionInfo?.optString("currencyCode", "") ?: ""
-        "googlepay_${amount}_${currency}"
+        "googlepay_${amount}_$currency"
     }
     val viewModel: GooglePayViewModel = koinViewModel(
         key = viewModelKey,
