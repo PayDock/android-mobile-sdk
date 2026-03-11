@@ -11,6 +11,7 @@ import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.presentation.GooglePayAppearanceDefaults
 import com.paydock.feature.googlepay.presentation.GooglePayWidget
+import com.paydock.core.utils.toSafeAmount
 import com.paydock.feature.googlepay.util.PaymentsUtil
 import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
 import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
@@ -48,7 +49,7 @@ fun GooglePayContent(
         config = GooglePayWidgetConfig(
             isReadyToPayRequest = PaymentsUtil.createIsReadyToPayRequest(),
             paymentRequest = PaymentsUtil.createGooglePayRequest(
-                amount = BigDecimal(cartTotal),
+                amount = cartTotal.toSafeAmount(),
                 amountLabel = "Goodies",
                 currencyCode = globalConfig.currencyCode,
                 countryCode = AU_COUNTRY_CODE,

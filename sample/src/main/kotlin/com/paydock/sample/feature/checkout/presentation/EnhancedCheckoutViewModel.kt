@@ -36,6 +36,7 @@ import com.paydock.sample.feature.threeDS.domain.model.ThreeDSToken
 import com.paydock.sample.feature.threeDS.domain.usecase.CaptureThreeDSChargeTokenUseCase
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateMPGS3dsTokenUseCase
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateStandaloneThreeDSTokenUseCase
+import com.paydock.core.utils.toSafeAmount
 import com.paydock.sample.feature.wallet.presentation.AddressData
 import com.paydock.sample.feature.wallet.presentation.CustomerData
 import com.paydock.sample.feature.zip.data.api.dto.CaptureZipChargeRequest
@@ -401,7 +402,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
             val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
 
             val request = CaptureZipChargeRequest(
-                amount = BigDecimal(cartTotal),
+                amount = cartTotal.toSafeAmount(),
                 currency = currency,
                 token = zipToken
             )
@@ -441,7 +442,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
             val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
             val serviceId = getServiceIdFromConfig()
             val request = CreateMPGS3dsTokenRequest(
-                amount = BigDecimal(cartTotal),
+                amount = cartTotal.toSafeAmount(),
                 currency = currency,
                 customer = ChargesCustomerDTO(
                     paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
@@ -461,7 +462,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
             val currency = globalConfigRepository.globalConfig.value.currencyCode
             val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
             val request = CreateStandaloneThreeDSTokenRequest(
-                amount = BigDecimal(cartTotal),
+                amount = cartTotal.toSafeAmount(),
                 currency = currency,
                 customer = ChargesCustomerDTO(
                     paymentSource = ChargesCustomerDTO.PaymentSourceDTO(vaultToken = vaultToken)
@@ -587,7 +588,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
             val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
             isLoading = true
             val request = Capture3DSChargeRequest.CaptureMPGS3dsChargeRequest(
-                amount = BigDecimal(cartTotal),
+                amount = cartTotal.toSafeAmount(),
                 currency = currency,
                 threeDSData = Capture3DSChargeRequest.CaptureMPGS3dsChargeRequest.ThreeDSChargeData(
                     threeDSChargeId
@@ -620,7 +621,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
             val vault = vaultToken
             val request = Capture3DSChargeRequest.CaptureStandalone3DSChargeRequest(
                 threeDSChargeId = threeDSChargeId,
-                amount = BigDecimal(cartTotal),
+                amount = cartTotal.toSafeAmount(),
                 currency = currency,
                 customer = ChargesCustomerDTO(
                     paymentSource = ChargesCustomerDTO.PaymentSourceDTO(

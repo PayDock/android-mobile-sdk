@@ -1,5 +1,6 @@
 package com.paydock.core.utils.serializer
 
+import com.paydock.core.utils.toSafeAmount
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -21,21 +22,25 @@ internal object BigDecimalSerializer : KSerializer<BigDecimal> {
     /**
      * If decoding JSON uses [JsonDecoder.decodeJsonElement] to get the raw content,
      * otherwise decodes using [Decoder.decodeString].
+     * Normalizes to 2 decimal places to avoid floating-point precision issues from JSON numbers.
      */
     override fun deserialize(decoder: Decoder): BigDecimal =
         when (decoder) {
-            is JsonDecoder -> decoder.decodeJsonElement().jsonPrimitive.content.toBigDecimal()
-            else -> decoder.decodeString().toBigDecimal()
+            is JsonDecoder -> decoder.decodeJsonElement().jsonPrimitive.content.toBigDecimal().toSafeAmount()
+            else -> decoder.decodeString().toBigDecimal().toSafeAmount()
         }
 
     /**
-     * If encoding JSON uses [JsonUnquotedLiteral] to encode the exact [BigDecimal] value.
+     * If encoding JSON uses [JsonUnquotedLiteral] to encode the [BigDecimal] value.
+     * Normalizes to 2 decimal places before encoding to avoid floating-point precision issues.
      *
-     * Otherwise, [value] is encoded using encodes using [Encoder.encodeString].
+     * Otherwise, [value] is encoded using [Encoder.encodeString].
      */
-    override fun serialize(encoder: Encoder, value: BigDecimal) =
+    override fun serialize(encoder: Encoder, value: BigDecimal) {
+        val normalized = value.toSafeAmount().toPlainString()
         when (encoder) {
-            is JsonEncoder -> encoder.encodeJsonElement(JsonUnquotedLiteral(value.toPlainString()))
-            else -> encoder.encodeString(value.toPlainString())
+            is JsonEncoder -> encoder.encodeJsonElement(JsonUnquotedLiteral(normalized))
+            else -> encoder.encodeString(normalized)
         }
+    }
 }

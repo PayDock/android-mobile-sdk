@@ -216,21 +216,29 @@ class ConfigViewModel @Inject constructor(
     private fun createDefaultGooglePayConfig(): GooglePayWidgetConfig {
         return GooglePayWidgetConfig(
             isReadyToPayRequest = PaymentsUtil.createIsReadyToPayRequest(),
-            paymentRequest = PaymentsUtil.createGooglePayRequest(
+            paymentRequest = createGooglePayPaymentRequest(
                 amount = widgetConfig.value.cartAmount,
-                amountLabel = "Goodies",
-                currencyCode = globalConfig.value.currencyCode,
-                countryCode = AU_COUNTRY_CODE,
-                merchantName = MERCHANT_NAME,
-                merchantIdentifier = BuildConfig.MERCHANT_ID_GOOGLE_PAY,
-                shippingAddressRequired = true,
-                shippingAddressParameters = JSONObject().apply {
-                    put("phoneNumberRequired", false)
-                    put("allowedCountryCodes", JSONArray(listOf("US", "GB", "AU")))
-                }
+                currencyCode = globalConfig.value.currencyCode
             )
         )
     }
+
+    private fun createGooglePayPaymentRequest(
+        amount: BigDecimal,
+        currencyCode: String
+    ): JSONObject = PaymentsUtil.createGooglePayRequest(
+        amount = amount,
+        amountLabel = "Goodies",
+        currencyCode = currencyCode,
+        countryCode = AU_COUNTRY_CODE,
+        merchantName = MERCHANT_NAME,
+        merchantIdentifier = BuildConfig.MERCHANT_ID_GOOGLE_PAY,
+        shippingAddressRequired = true,
+        shippingAddressParameters = JSONObject().apply {
+            put("phoneNumberRequired", false)
+            put("allowedCountryCodes", JSONArray(listOf("US", "GB", "AU")))
+        }
+    )
 
     // Card Details Config - initialized with defaults
     private val _cardDetailsWidgetConfig = MutableStateFlow(createDefaultCardDetailsConfig())
@@ -299,6 +307,15 @@ class ConfigViewModel @Inject constructor(
         _zipWidgetConfig.update { current ->
             current.copy(amount = newAmount)
         }
+        // Update Google Pay config paymentRequest with new amount (used by Google Pay SDK for display)
+        _googlePayWidgetConfig.update { current ->
+            current.copy(
+                paymentRequest = createGooglePayPaymentRequest(
+                    amount = newAmount,
+                    currencyCode = globalConfig.value.currencyCode
+                )
+            )
+        }
     }
 
     fun updateGlobalCartCurrency(currency: String?) {
@@ -307,6 +324,15 @@ class ConfigViewModel @Inject constructor(
         // Update Zip config with new cart currency
         _zipWidgetConfig.update { current ->
             current.copy(currency = newCurrency)
+        }
+        // Update Google Pay config paymentRequest with new currency (used by Google Pay SDK for display)
+        _googlePayWidgetConfig.update { current ->
+            current.copy(
+                paymentRequest = createGooglePayPaymentRequest(
+                    amount = widgetConfig.value.cartAmount,
+                    currencyCode = newCurrency
+                )
+            )
         }
     }
 

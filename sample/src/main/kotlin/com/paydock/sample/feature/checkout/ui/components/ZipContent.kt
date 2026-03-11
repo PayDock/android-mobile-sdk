@@ -7,6 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.core.utils.toSafeAmount
 import com.paydock.feature.zip.domain.model.ZipResult
 import com.paydock.feature.zip.domain.model.integration.ZipWidgetConfig
 import com.paydock.feature.zip.presentation.ZipWidget
@@ -114,7 +115,7 @@ fun ZipContent(
         config = ZipWidgetConfig(
             accessToken = globalConfig.apiAccessToken,
             gatewayId = BuildConfig.SERVICE_ID_ZIP,
-            amount = BigDecimal(cartTotal),
+            amount = cartTotal.toSafeAmount(),
             currency = globalConfig.currencyCode,
             firstName = viewModel.contactInfo.firstName,
             lastName = viewModel.contactInfo.lastName,

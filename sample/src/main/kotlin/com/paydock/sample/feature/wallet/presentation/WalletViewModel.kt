@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.paydock.core.utils.toSafeAmount
 import java.math.BigDecimal
 import javax.inject.Inject
 
@@ -173,9 +174,9 @@ class WalletViewModel @Inject constructor(
         useGlobalConfig: Boolean = true,
         overrideAmount: BigDecimal? = null,
     ): InitiateWalletRequest {
-        val amount = customerData?.amount?.let { BigDecimal(it) }
+        val amount = customerData?.amount?.let { it.toSafeAmount() }
             ?: overrideAmount
-            ?: if (useGlobalConfig) getCartAmount() else BigDecimal(CartManager.shared.totalPrice)
+            ?: if (useGlobalConfig) getCartAmount() else CartManager.shared.totalPrice.toSafeAmount()
         val currency = getCartCurrency()
         return InitiateWalletRequest(
             amount = amount,
@@ -222,9 +223,9 @@ class WalletViewModel @Inject constructor(
         useGlobalConfig: Boolean = true,
         overrideAmount: BigDecimal? = null
     ): InitiateWalletRequest {
-        val amount = customerData?.amount?.let { BigDecimal(it) }
+        val amount = customerData?.amount?.let { it.toSafeAmount() }
             ?: overrideAmount
-            ?: if (useGlobalConfig) getCartAmount() else BigDecimal(CartManager.shared.totalPrice)
+            ?: if (useGlobalConfig) getCartAmount() else CartManager.shared.totalPrice.toSafeAmount()
         val currency = getCartCurrency()
         return InitiateWalletRequest(
             amount = amount,
@@ -272,9 +273,9 @@ class WalletViewModel @Inject constructor(
         overrideAmount: BigDecimal? = null,
         overrideCurrency: String? = null
     ): InitiateWalletRequest {
-        val amount = customerData?.amount?.let { BigDecimal(it) }
+        val amount = customerData?.amount?.let { it.toSafeAmount() }
             ?: overrideAmount
-            ?: if (useGlobalConfig) getCartAmount() else BigDecimal(CartManager.shared.totalPrice)
+            ?: if (useGlobalConfig) getCartAmount() else CartManager.shared.totalPrice.toSafeAmount()
         val currency = overrideCurrency ?: getCartCurrency()
         return InitiateWalletRequest(
             amount = amount,
@@ -322,9 +323,9 @@ class WalletViewModel @Inject constructor(
         useGlobalConfig: Boolean = true,
         overrideAmount: BigDecimal? = null,
     ): InitiateWalletRequest {
-        val amount = customerData?.amount?.let { BigDecimal(it) }
+        val amount = customerData?.amount?.let { it.toSafeAmount() }
             ?: overrideAmount
-            ?: if (useGlobalConfig) getCartAmount() else BigDecimal(CartManager.shared.totalPrice)
+            ?: if (useGlobalConfig) getCartAmount() else CartManager.shared.totalPrice.toSafeAmount()
         val currency = getCartCurrency()
         return InitiateWalletRequest(
             amount = amount,
@@ -352,9 +353,9 @@ class WalletViewModel @Inject constructor(
                 errorUrl = "https://paydock-integration.netlify.app/error"
             ),
             shippingDTO = customerData?.shippingAddress?.let {
-                val shippingAmount = customerData.amount?.let { amount -> BigDecimal(amount) }
+                val shippingAmount = customerData.amount?.let { it.toSafeAmount() }
                     ?: overrideAmount
-                    ?: if (useGlobalConfig) getCartAmount() else BigDecimal(CartManager.shared.totalPrice)
+                    ?: if (useGlobalConfig) getCartAmount() else CartManager.shared.totalPrice.toSafeAmount()
                 InitiateWalletRequest.ShippingDTO(
                     addressLine1 = it.addressLine1,
                     addressLine2 = it.addressLine2,
