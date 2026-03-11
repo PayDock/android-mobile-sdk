@@ -83,15 +83,10 @@ internal fun GiftCardNumberInput(
             // Strip spaces and other non-digits so pasted values (e.g. "1234 5678 9012 3456") are accepted
             val digitsOnly = newText.replace(Regex("\\D"), "")
             val maxLength = MobileSDKConstants.CardDetailsConfig.MAX_GIFT_CARD_LENGTH
-            // Always accept deletions to prevent "unable to delete" bug after paste/format operations
-            val isDeletion = digitsOnly.length < value.length
-            val withinLength = digitsOnly.length <= maxLength
-            // When pasting exceeds max, trim to maxLength digits so paste is accepted
+            // take(maxLength) handles truncation when pasting exceeds max digits
             val valueToUse = digitsOnly.take(maxLength)
-            if (isDeletion || withinLength || digitsOnly.length > maxLength) {
-                GiftCardInputParser.parseNumber(valueToUse)?.let { number ->
-                    onValueChange(number)
-                }
+            GiftCardInputParser.parseNumber(valueToUse)?.let { number ->
+                onValueChange(number)
             }
         },
         placeholder = stringResource(id = R.string.placeholder_card_number),

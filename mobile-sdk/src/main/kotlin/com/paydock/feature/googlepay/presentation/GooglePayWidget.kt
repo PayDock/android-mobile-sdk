@@ -83,9 +83,9 @@ fun GooglePayWidget(
     eventDelegate: WidgetEventDelegate? = null,
     completion: (Result<ChargeResponse>) -> Unit
 ) {
-    // Use transactionInfo (amount/currency) as key so ViewModel is recreated when config changes.
-    // Koin caches ViewModels by default; without this, config updates wouldn't reach the ViewModel.
-    val viewModelKey = remember(config.paymentRequest) {
+    // Use content-based key so ViewModel is recreated when config changes.
+    // JSONObject uses reference equality; toString() provides content-based invalidation for remember.
+    val viewModelKey = remember(config.paymentRequest.toString()) {
         val transactionInfo = config.paymentRequest.optJSONObject("transactionInfo")
         val amount = transactionInfo?.optString("totalPrice", "") ?: ""
         val currency = transactionInfo?.optString("currencyCode", "") ?: ""
