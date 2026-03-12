@@ -13,6 +13,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
 import com.paydock.feature.src.domain.model.integration.ClickToPayWidgetConfig
@@ -22,6 +23,7 @@ import com.paydock.feature.src.presentation.ClickToPayWidget
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.CenterAppTopBar
+import com.paydock.sample.feature.config.ConfigViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -63,6 +65,8 @@ class ClickToPayActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClickToPayScreen(resultHandler: (Result<String>) -> Unit) {
+    val configViewModel: ConfigViewModel = hiltViewModel()
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {

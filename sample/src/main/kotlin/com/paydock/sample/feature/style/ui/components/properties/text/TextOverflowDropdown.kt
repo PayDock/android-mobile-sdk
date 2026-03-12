@@ -6,7 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.paydock.sample.R
-import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paydock.sample.designsystems.components.fields.StringDropdown
 
 @Composable
 fun TextOverflowDropdown(
@@ -26,7 +26,7 @@ fun TextOverflowDropdown(
         options.find { it.second == currentOverflow }?.first ?: TextOverflow.Ellipsis.toString()
     }
 
-    DropdownSelector(
+    StringDropdown(
         modifier = modifier,
         title = stringResource(R.string.label_text_overflow),
         options = options.map { it.first },

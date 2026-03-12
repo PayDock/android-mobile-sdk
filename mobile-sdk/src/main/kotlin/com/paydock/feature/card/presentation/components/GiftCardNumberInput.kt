@@ -67,7 +67,7 @@ internal fun GiftCardNumberInput(
 
     // Define the error message to be shown if the card number is invalid
     val errorMessage = when (cardNumberError) {
-        GiftCardNumberError.Empty,
+        GiftCardNumberError.Empty -> null // Empty field should show no error (neutral state)
         GiftCardNumberError.Invalid -> stringResource(id = R.string.error_card_number)
         GiftCardNumberError.None -> null
     }
@@ -78,13 +78,15 @@ internal fun GiftCardNumberInput(
         },
         appearance = appearance,
         value = value,
-        onValueChange = {
+        onValueChange = { newText ->
             hasUserInteracted = true
-            if (it.length <= MobileSDKConstants.CardDetailsConfig.MAX_GIFT_CARD_LENGTH) {
-                // Parse the input text to ensure it is a valid card number before invoking the callback
-                GiftCardInputParser.parseNumber(it)?.let { number ->
-                    onValueChange(number)
-                }
+            // Strip spaces and other non-digits so pasted values (e.g. "1234 5678 9012 3456") are accepted
+            val digitsOnly = newText.replace(Regex("\\D"), "")
+            val maxLength = MobileSDKConstants.CardDetailsConfig.MAX_GIFT_CARD_LENGTH
+            // take(maxLength) handles truncation when pasting exceeds max digits
+            val valueToUse = digitsOnly.take(maxLength)
+            GiftCardInputParser.parseNumber(valueToUse)?.let { number ->
+                onValueChange(number)
             }
         },
         placeholder = stringResource(id = R.string.placeholder_card_number),

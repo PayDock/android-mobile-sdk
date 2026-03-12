@@ -14,28 +14,28 @@ class Create3DSChargeRequestAdapterFactory : TypeAdapterFactory {
         if (rawType != Capture3DSChargeRequest::class.java) {
             return null
         }
-        val integrated3DSChargeAdapter = gson.getDelegateAdapter(
+        val mpgs3dsChargeAdapter = gson.getDelegateAdapter(
             this,
-            TypeToken.get(Capture3DSChargeRequest.CaptureIntegrated3DSChargeRequest::class.java)
+            TypeToken.get(Capture3DSChargeRequest.CaptureMPGS3dsChargeRequest::class.java)
         )
         val standalone3DSChargeAdapter = gson.getDelegateAdapter(
             this,
             TypeToken.get(Capture3DSChargeRequest.CaptureStandalone3DSChargeRequest::class.java)
         )
         return Create3DSChargeRequestAdapter(
-            integrated3DSChargeAdapter,
+            mpgs3dsChargeAdapter,
             standalone3DSChargeAdapter
         ) as TypeAdapter<T>
     }
 
     private class Create3DSChargeRequestAdapter(
-        private val integrated3DSChargeAdapter: TypeAdapter<Capture3DSChargeRequest.CaptureIntegrated3DSChargeRequest>,
+        private val mpgs3dsChargeAdapter: TypeAdapter<Capture3DSChargeRequest.CaptureMPGS3dsChargeRequest>,
         private val standalone3DSChargeAdapter: TypeAdapter<Capture3DSChargeRequest.CaptureStandalone3DSChargeRequest>,
     ) : TypeAdapter<Capture3DSChargeRequest>() {
 
         override fun write(out: JsonWriter, value: Capture3DSChargeRequest) {
             when (value) {
-                is Capture3DSChargeRequest.CaptureIntegrated3DSChargeRequest -> integrated3DSChargeAdapter.write(
+                is Capture3DSChargeRequest.CaptureMPGS3dsChargeRequest -> mpgs3dsChargeAdapter.write(
                     out,
                     value
                 )

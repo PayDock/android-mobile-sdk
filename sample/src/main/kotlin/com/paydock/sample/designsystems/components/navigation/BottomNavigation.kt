@@ -6,6 +6,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -18,17 +19,23 @@ import com.paydock.sample.designsystems.theme.SampleTheme
 
 @Composable
 fun BottomNavigation(navController: NavController) {
-    val items = listOf(
-        BottomNavItem.Shop,
-        BottomNavItem.Widgets,
-        BottomNavItem.Style
-    )
+    // Cache items list to avoid recreation on every recomposition
+    val items = remember {
+        listOf(
+            BottomNavItem.Shop,
+            BottomNavItem.Widgets,
+            BottomNavItem.Style,
+            BottomNavItem.Config
+        )
+    }
 
     NavigationBar {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination
+
         items.forEach { item ->
             val selected = currentRoute?.hierarchy?.any { it.route == item.route } == true
+
             NavigationBarItem(
                 icon = {
                     Icon(

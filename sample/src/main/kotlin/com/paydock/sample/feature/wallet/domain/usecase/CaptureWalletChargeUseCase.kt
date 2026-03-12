@@ -6,8 +6,8 @@ import javax.inject.Inject
 
 class CaptureWalletChargeUseCase @Inject constructor(private val repository: WalletRepository) {
 
-    suspend operator fun invoke(chargeId: String) =
+    suspend operator fun invoke(accessToken: String, chargeId: String) =
         suspendRunCatching {
-            repository.captureWalletCharge(chargeId)
+            repository.captureWalletCharge(accessToken, chargeId)
         }
 }

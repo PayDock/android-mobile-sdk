@@ -1,6 +1,12 @@
 package com.paydock.feature.paypal.fraud.utils
 
+import android.app.Application
 import android.content.Context
+import android.content.SharedPreferences
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.ProcessLifecycleOwner
 import com.paydock.MobileSDK
 import com.paydock.core.BaseUnitTest
 import com.paydock.core.MobileSDKTestConstants
@@ -15,6 +21,7 @@ import com.paydock.initializeMobileSDK
 import com.paypal.android.fraudprotection.PayPalDataCollectorRequest
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.slot
 import io.mockk.verify
 import junit.framework.TestCase.assertNotNull
@@ -25,6 +32,7 @@ import org.junit.Rule
 import org.koin.core.context.loadKoinModules
 import org.koin.core.context.stopKoin
 import org.koin.core.context.unloadKoinModules
+import java.io.File
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -34,7 +42,10 @@ internal class PayPalDataCollectorUtilTest : BaseUnitTest() {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private lateinit var context: Context
+    @get:Rule
+    val instantTaskExecutorRule = InstantTaskExecutorRule()
+
+    private lateinit var context: Application
     private val config = PayPalDataCollectorConfig(
         accessToken = MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN,
         gatewayId = MobileSDKTestConstants.General.MOCK_GATEWAY_ID
@@ -42,10 +53,32 @@ internal class PayPalDataCollectorUtilTest : BaseUnitTest() {
 
     @Before
     fun setup() {
-        // Mock the Context object
-        context = mockk()
-        // Configure the getApplicationContext() method to return the mock Context
+        // Mock ProcessLifecycleOwner for BinDataRefreshCoordinator
+        mockkObject(ProcessLifecycleOwner)
+        val processLifecycleOwner = mockk<ProcessLifecycleOwner>(relaxed = true)
+        val lifecycleRegistry = LifecycleRegistry(processLifecycleOwner)
+        lifecycleRegistry.currentState = Lifecycle.State.RESUMED
+        every { ProcessLifecycleOwner.get() } returns processLifecycleOwner
+        every { processLifecycleOwner.lifecycle } returns lifecycleRegistry
+
+        // Mock Application so Koin can resolve androidApplication() in presentationModule
+        context = mockk<Application>(relaxed = true)
         every { context.applicationContext } returns context
+
+        // Mock filesDir and cacheDir for BinDataCacheManager file operations
+        val tempDir = File(System.getProperty("java.io.tmpdir"), "paydock_test")
+        tempDir.mkdirs()
+        every { context.filesDir } returns tempDir
+        every { context.cacheDir } returns tempDir
+
+        // Mock SharedPreferences for BinDataCacheManager
+        val sharedPrefs = mockk<SharedPreferences>(relaxed = true)
+        val editor = mockk<SharedPreferences.Editor>(relaxed = true)
+        every { sharedPrefs.edit() } returns editor
+        every { editor.putString(any(), any()) } returns editor
+        every { editor.putLong(any(), any()) } returns editor
+        every { editor.apply() } returns Unit
+        every { context.getSharedPreferences(any(), any()) } returns sharedPrefs
 
         val environment = Environment.SANDBOX
         context.initializeMobileSDK(environment)

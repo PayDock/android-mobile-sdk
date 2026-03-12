@@ -75,6 +75,7 @@ internal fun ManualAddressEntry(
         )
     ) {
         Column(
+            modifier = Modifier.testTag("manualAddress"),
             verticalArrangement = Arrangement.spacedBy(verticalSpacing, Alignment.Top),
             horizontalAlignment = Alignment.Start
         ) {

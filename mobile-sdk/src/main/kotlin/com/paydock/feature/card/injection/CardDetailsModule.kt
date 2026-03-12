@@ -1,5 +1,6 @@
 package com.paydock.feature.card.injection
 
+import com.paydock.binprocessor.binProcessorModule
 import com.paydock.core.utils.decoder.injection.stringDecoderKoinModule
 import com.paydock.core.utils.reader.injection.fileReaderKoinModule
 import com.paydock.feature.card.data.repository.CardRepositoryImpl
@@ -22,7 +23,7 @@ import org.koin.dsl.module
  **/
 internal val cardDetailsModule = module {
     // Include other necessary modules
-    includes(stringDecoderKoinModule, fileReaderKoinModule)
+    includes(stringDecoderKoinModule, fileReaderKoinModule, binProcessorModule)
 
     // Factory methods for creating instances of ViewModels with access tokens
     viewModel { (accessToken: String, gatewayId: String?, schemeConfig: SupportedSchemeConfig) ->
@@ -34,7 +35,7 @@ internal val cardDetailsModule = module {
 
     // Provide the repository for managing tokens
     single<CardRepository> {
-        CardRepositoryImpl(dispatcher = get(named("IO")), client = get(), jsonReader = get())
+        CardRepositoryImpl(dispatcher = get(named("IO")), client = get(), binDataRepository = get())
     }
 
     // Token Based UseCases

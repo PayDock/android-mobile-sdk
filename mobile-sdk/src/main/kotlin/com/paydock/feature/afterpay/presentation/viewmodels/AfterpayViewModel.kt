@@ -35,6 +35,7 @@ import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.Currency
 import java.util.Locale
 
 /**
@@ -369,24 +370,29 @@ internal class AfterpayViewModel(
     }
 
     /**
-     * Configures the Afterpay SDK with the provided configuration details.
+     * Configures the Afterpay SDK using the provided [config].
      *
-     * @param configuration The configuration details required for Afterpay SDK setup.
+     * Uses [AfterpaySDKConfig.locale] when set; otherwise [Locale.getDefault].
+     * minimumAmount, maximumAmount and currencyCode are derived from the effective locale.
      */
-    fun configureAfterpaySdk(configuration: AfterpaySDKConfig.AfterpayConfiguration) {
+    fun configureAfterpaySdk(config: AfterpaySDKConfig) {
         launchOnIO {
+            val effectiveLocale = config.locale ?: Locale.getDefault()
             try {
                 Afterpay.setConfiguration(
-                    minimumAmount = configuration.minimumAmount,
-                    maximumAmount = configuration.maximumAmount,
-                    currencyCode = configuration.currency,
-                    locale = Locale.Builder().setLanguage(configuration.language).setRegion(configuration.country).build(),
+                    minimumAmount = "1",
+                    maximumAmount = "1000",
+                    currencyCode = Currency.getInstance(effectiveLocale).currencyCode,
+                    locale = Locale.Builder()
+                        .setLanguage(effectiveLocale.language)
+                        .setRegion(effectiveLocale.country)
+                        .build(),
                     environment = MobileSDK.getInstance().environment.mapToAfterpayEnv()
                 )
                 _isConfigured.value = true
             } catch (e: IllegalArgumentException) {
                 val errorMessage = e.message
-                    ?: "Afterpay: unsupported country: ${Locale.getDefault().displayCountry}"
+                    ?: "Afterpay: unsupported country: ${effectiveLocale.displayCountry}"
                 updateUiState(
                     AfterpayUIState.PendingDeclineOnError(
                         AfterpayException.ConfigurationException(errorMessage)

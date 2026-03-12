@@ -96,6 +96,19 @@ internal class ClickToPayEventSerializerTest {
 
     @Suppress("MaxLineLength")
     @Test
+    fun `test click to pay data serializer with CheckoutErrorEvent - UserError array format`() {
+        // Arrange - Web SDK sends UserError with data as array
+        val eventJson =
+            """{"event":"checkoutError","data":{"type":"UserError","data":[{"field":"unknown","message":"Client specified an invalid argument.","originalError":{"reason":"INVALID_PARAMETER","message":"Client specified an invalid argument.","status":400,"sourceType":"CARD_ENROLLMENT"}}]}}"""
+
+        val result = eventJson.convertToDataClass<ClickToPayEvent>()
+
+        assertIs<ClickToPayEvent.CheckoutErrorEvent>(result)
+        assertIs<ErrorData.UserErrorData>(result.data)
+        assertEquals("Client specified an invalid argument.", result.data.data)
+    }
+
+    @Test
     fun `test click to pay data serializer with CheckoutErrorEvent - CriticalError`() {
         // Arrange
         val eventJson =

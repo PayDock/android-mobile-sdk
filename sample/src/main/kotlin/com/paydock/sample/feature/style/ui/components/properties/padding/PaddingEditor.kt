@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
-import com.paydock.sample.feature.style.ui.components.core.counter.NumberCounter
+import com.paydock.sample.designsystems.components.fields.NumberCounter
 
 enum class PaddingSide {
     TOP, BOTTOM, START, END

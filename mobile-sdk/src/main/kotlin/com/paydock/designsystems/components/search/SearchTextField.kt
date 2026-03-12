@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
@@ -232,6 +233,7 @@ internal fun <T : SearchViewModel<*>> SearchTextField(
 
         AnimatedVisibility(visible = isDropdownVisible) {
             Card(
+                modifier = Modifier.testTag("searchResultsDropDown"),
                 shape = appearance.dropdown.shape,
                 elevation = CardDefaults.elevatedCardElevation()
             ) {

@@ -22,6 +22,7 @@ platform :android do
         gradle(task: "detektAll")
         
         # Generate reports for all modules
+        gradle(task: ":bin-processor:detekt")
         gradle(task: ":mobile-sdk:detekt")
         
         # Create code quality directory if it doesn't exist
@@ -36,7 +37,8 @@ platform :android do
         # Try to copy detekt reports from various possible locations
         possible_reports = [
             "mobile-sdk/build/reports/detekt.sarif",
-            "mobile-sdk/build/reports/detekt-all.sarif", 
+            "mobile-sdk/build/reports/detekt-all.sarif",
+            "bin-processor/build/reports/detekt.sarif",
             "build/reports/detekt.sarif",
             "convention-plugins/build/reports/detekt.sarif"
         ]
@@ -140,79 +142,337 @@ platform :android do
     end
 
     # --- Bin File Management Lanes ---
+    # Mirrors caching logic from BinDataCacheManager.kt: Last-Modified preferred, ETag fallback
+
+    # CloudFront URL for BIN validation file (same as BinDataCacheManager.CLOUDFRONT_URL)
+    BIN_DATA_URL = "https://d25lng5khxpk7i.cloudfront.net/bin-data-au-v1.json"
+    # Local asset filename (same as BinDataCacheManager.ASSET_FILENAME)
+    BIN_LOCAL_FILENAME = "card-schemes.json"
+    # Asset path relative to repository root (bin-processor module)
+    BIN_ASSET_PATH = "bin-processor/src/main/assets/#{BIN_LOCAL_FILENAME}"
+
+    desc "Fetch BIN validation file from CloudFront using HTTP caching headers"
+    lane :fetch_bin_file do
+        require 'net/http'
+        require 'uri'
+        require 'fileutils'
+
+        UI.header("BIN File Fetch - Starting")
+        UI.message("=" * 60)
+        UI.message("CloudFront URL: #{BIN_DATA_URL}")
+        UI.message("Local filename: #{BIN_LOCAL_FILENAME}")
+        UI.message("Asset path: #{BIN_ASSET_PATH}")
+        UI.message("Working directory: #{Dir.pwd}")
+        UI.message("=" * 60)
+
+        # Get stored cache headers from CI variables (may be empty on first run)
+        stored_last_modified = ENV['BIN_FILE_LAST_MODIFIED']
+        stored_etag = ENV['BIN_FILE_ETAG']
+
+        UI.header("Stored CI Variables")
+        UI.message("BIN_FILE_LAST_MODIFIED: #{stored_last_modified || '(not set)'}")
+        UI.message("BIN_FILE_ETAG: #{stored_etag || '(not set)'}")
+
+        uri = URI.parse(BIN_DATA_URL)
+        UI.message("Connecting to: #{uri.host}:#{uri.port} (SSL: true)")
+        
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = true
+        http.open_timeout = 30
+        http.read_timeout = 60
+
+        # HEAD request to check cache headers (mirrors BinDataCacheManager.fetchRemoteCacheHeaders)
+        UI.header("HEAD Request")
+        UI.message("Performing HEAD request to: #{uri.request_uri}")
+        head_request = Net::HTTP::Head.new(uri.request_uri)
+        head_response = http.request(head_request)
+
+        UI.message("HEAD Response Code: #{head_response.code}")
+        UI.message("HEAD Response Headers:")
+        head_response.each_header { |k, v| UI.message("  #{k}: #{v}") }
+
+        if head_response.code != "200"
+            UI.error("HEAD request failed with status #{head_response.code}")
+            raise "Failed to check remote BIN file status"
+        end
+
+        remote_last_modified = head_response['Last-Modified']
+        remote_etag = head_response['ETag']
+
+        UI.header("Cache Header Comparison")
+        UI.message("Remote Last-Modified: #{remote_last_modified || '(none)'}")
+        UI.message("Stored Last-Modified: #{stored_last_modified || '(none)'}")
+        UI.message("Remote ETag: #{remote_etag || '(none)'}")
+        UI.message("Stored ETag: #{stored_etag || '(none)'}")
+
+        # Determine if download is needed (mirrors BinDataCacheManager.shouldDownloadFullFile logic)
+        UI.header("Download Decision Logic")
+        should_download = false
+        decision_reason = ""
+        
+        if remote_last_modified
+            # Last-Modified preferred
+            should_download = (remote_last_modified != stored_last_modified)
+            decision_reason = "Last-Modified comparison: '#{remote_last_modified}' != '#{stored_last_modified}' => #{should_download}"
+            UI.message("Using Last-Modified (preferred)")
+            UI.message("  Remote: '#{remote_last_modified}'")
+            UI.message("  Stored: '#{stored_last_modified}'")
+            UI.message("  Match: #{remote_last_modified == stored_last_modified}")
+        elsif remote_etag
+            # ETag fallback
+            should_download = (remote_etag != stored_etag)
+            decision_reason = "ETag comparison: '#{remote_etag}' != '#{stored_etag}' => #{should_download}"
+            UI.message("Using ETag (fallback, no Last-Modified)")
+            UI.message("  Remote: '#{remote_etag}'")
+            UI.message("  Stored: '#{stored_etag}'")
+            UI.message("  Match: #{remote_etag == stored_etag}")
+        else
+            # No headers available, download if no stored values
+            should_download = stored_last_modified.nil? && stored_etag.nil?
+            decision_reason = "No remote headers, stored values nil: #{should_download}"
+            UI.message("No cache headers from remote")
+            UI.message("  Stored Last-Modified nil: #{stored_last_modified.nil?}")
+            UI.message("  Stored ETag nil: #{stored_etag.nil?}")
+        end
+
+        UI.important("DECISION: should_download = #{should_download}")
+        UI.message("Reason: #{decision_reason}")
+
+        # Create bin_schema directory for artifacts at repository root (not in fastlane/)
+        # Fastlane runs from fastlane/ directory, so we need to go up one level
+        bin_schema_dir = "../bin_schema"
+        FileUtils.mkdir_p(bin_schema_dir)
+        UI.message("Created bin_schema directory at: #{File.expand_path(bin_schema_dir)}")
+
+        if should_download
+            UI.header("Downloading BIN File")
+            UI.message("Performing GET request...")
+            get_request = Net::HTTP::Get.new(uri.request_uri)
+            get_response = http.request(get_request)
+
+            UI.message("GET Response Code: #{get_response.code}")
+
+            if get_response.code != "200"
+                UI.error("GET request failed with status #{get_response.code}")
+                raise "Failed to download BIN file"
+            end
+
+            # Save the downloaded file
+            bin_content = get_response.body
+            bin_file_path = "#{bin_schema_dir}/#{BIN_LOCAL_FILENAME}"
+            File.write(bin_file_path, bin_content)
+            UI.message("Saved BIN file to: #{File.expand_path(bin_file_path)}")
+            UI.message("File size: #{bin_content.length} bytes")
+
+            # Save the cache headers for the commit lane
+            # These will be updated in CI variables after successful commit
+            File.write("#{bin_schema_dir}/last_modified.txt", remote_last_modified || "")
+            File.write("#{bin_schema_dir}/etag.txt", remote_etag || "")
+            File.write("#{bin_schema_dir}/should_commit.txt", "true")
+
+            UI.message("Saved metadata files:")
+            UI.message("  last_modified.txt: '#{remote_last_modified || ''}'")
+            UI.message("  etag.txt: '#{remote_etag || ''}'")
+            UI.message("  should_commit.txt: 'true'")
+
+            UI.success("BIN file downloaded successfully (#{bin_content.length} bytes)")
+        else
+            UI.header("Skipping Download")
+            UI.message("Remote file unchanged, no download needed")
+            # Still save current headers for reference
+            File.write("#{bin_schema_dir}/last_modified.txt", stored_last_modified || "")
+            File.write("#{bin_schema_dir}/etag.txt", stored_etag || "")
+            File.write("#{bin_schema_dir}/should_commit.txt", "false")
+
+            UI.message("Saved metadata files:")
+            UI.message("  last_modified.txt: '#{stored_last_modified || ''}'")
+            UI.message("  etag.txt: '#{stored_etag || ''}'")
+            UI.message("  should_commit.txt: 'false'")
+        end
+
+        UI.header("BIN File Fetch - Complete")
+    end
 
     desc "Commit card schemes file to repository if it has changed"
     lane :commit_bin_file do
-        # Check if we have the extracted file in current directory or parent directory
-        bin_file_path = nil
-        if File.exist?("bin_schema/card-schemes.json")
-            bin_file_path = "bin_schema/card-schemes.json"
-            UI.message("Found bin file in current directory: #{bin_file_path}")
-        elsif File.exist?("../bin_schema/card-schemes.json")
-            bin_file_path = "../bin_schema/card-schemes.json"
-            UI.message("Found bin file in parent directory: #{bin_file_path}")
-        else
-            UI.error("Error: card-schemes.json not found in bin_schema/ directory in current or parent directory.")
-            raise "Required file bin_schema/card-schemes.json not found"
-        end
+        require 'fileutils'
 
-        # Context
-        UI.message("Preparing to commit card schemes if changed (branch: #{ENV['CI_COMMIT_REF_NAME']})")
+        UI.header("BIN File Commit - Starting")
+        UI.message("=" * 60)
+        UI.message("Working directory: #{Dir.pwd}")
+        UI.message("Branch: #{ENV['CI_COMMIT_REF_NAME']}")
+        UI.message("Project ID: #{ENV['CI_PROJECT_ID']}")
+        UI.message("=" * 60)
 
-        # Determine the correct path for mobile-sdk assets
-        assets_file_path = nil
-        if File.exist?("mobile-sdk/src/main/assets/card_schemas.json")
-            assets_file_path = "mobile-sdk/src/main/assets/card_schemas.json"
-        elsif File.exist?("../mobile-sdk/src/main/assets/card_schemas.json")
-            assets_file_path = "../mobile-sdk/src/main/assets/card_schemas.json"
-        end
-
-        # Check if the extracted file has changed and commit via GitLab API
-        if assets_file_path && File.exist?(assets_file_path)
-            # Compare files using system command and check exit status
-            files_different = false
-            begin
-                sh("diff -q #{bin_file_path} #{assets_file_path}")
-                # If we get here, diff returned 0 (files are the same)
-                files_different = false
-            rescue => e
-                # diff returns non-zero exit code when files are different
-                if e.message.include?("differ")
-                    files_different = true
-                else
-                    # Some other error occurred
-                    raise e
-                end
+        # Check if fetch indicated a commit is needed
+        # bin_schema is at repository root, Fastlane runs from fastlane/ directory
+        UI.header("Checking Fetch Artifacts")
+        bin_schema_dir = "../bin_schema"
+        should_commit_file = "#{bin_schema_dir}/should_commit.txt"
+        
+        UI.message("Looking for artifacts in: #{File.expand_path(bin_schema_dir)}")
+        
+        unless File.exist?(should_commit_file)
+            UI.error("#{should_commit_file} not found. Did fetch_bin_file run?")
+            UI.message("Checking directory...")
+            UI.message("  #{bin_schema_dir}/ exists: #{File.directory?(bin_schema_dir)}")
+            if File.directory?(bin_schema_dir)
+                UI.message("  Contents: #{Dir.glob("#{bin_schema_dir}/*").join(', ')}")
             end
+            raise "Required artifact not found"
+        end
+        
+        UI.message("Found should_commit.txt at: #{File.expand_path(should_commit_file)}")
+
+        should_commit_value = File.read(should_commit_file).strip
+        should_commit = should_commit_value == "true"
+        UI.message("should_commit.txt content: '#{should_commit_value}'")
+        UI.message("should_commit (parsed): #{should_commit}")
+
+        unless should_commit
+            UI.important("No changes to commit (remote file unchanged)")
+            UI.header("BIN File Commit - Skipped")
+            next
+        end
+
+        # Locate the fetched bin file
+        UI.header("Locating Downloaded BIN File")
+        bin_file_path = "#{bin_schema_dir}/#{BIN_LOCAL_FILENAME}"
+        
+        unless File.exist?(bin_file_path)
+            UI.error("Error: #{BIN_LOCAL_FILENAME} not found at #{bin_file_path}")
+            UI.message("Directory contents of #{bin_schema_dir}/:")
+            Dir.glob("#{bin_schema_dir}/*").each { |f| UI.message("  #{f}") } rescue nil
+            raise "Required file #{bin_file_path} not found"
+        end
+
+        UI.message("Found bin file: #{File.expand_path(bin_file_path)}")
+        UI.message("Bin file size: #{File.size(bin_file_path)} bytes")
+        UI.message("Target branch: #{ENV['CI_COMMIT_REF_NAME']}")
+
+        # Determine the correct path for bin-processor assets (check if exists locally)
+        UI.header("Checking Existing Asset File")
+        assets_file_path = nil
+        if File.exist?(BIN_ASSET_PATH)
+            assets_file_path = BIN_ASSET_PATH
+            UI.message("Found existing asset at: #{BIN_ASSET_PATH}")
+        elsif File.exist?("../#{BIN_ASSET_PATH}")
+            assets_file_path = "../#{BIN_ASSET_PATH}"
+            UI.message("Found existing asset at: ../#{BIN_ASSET_PATH}")
+        else
+            UI.message("No existing asset file found locally")
+            UI.message("  Checked: #{BIN_ASSET_PATH}")
+            UI.message("  Checked: ../#{BIN_ASSET_PATH}")
+        end
+
+        # Check if the file has changed or needs to be created
+        if assets_file_path && File.exist?(assets_file_path)
+            UI.message("Existing asset file size: #{File.size(assets_file_path)} bytes")
+            
+            # Compare files using Ruby's FileUtils (avoids shell exit code issues)
+            UI.header("Comparing Files")
+            bin_content = File.read(bin_file_path)
+            asset_content = File.read(assets_file_path)
+            files_different = (bin_content != asset_content)
+            
+            UI.message("Downloaded file size: #{bin_content.length} bytes")
+            UI.message("Existing asset size: #{asset_content.length} bytes")
+            UI.message("Files are #{files_different ? 'DIFFERENT' : 'IDENTICAL'}")
             
             if files_different
-                UI.message("Card schemes file has changed, committing the update via GitLab API...")
-                commit_file_via_api(file_path: bin_file_path, commit_message: "Update card schemes from AWS S3 [skip ci]")
+                UI.header("Committing Update")
+                UI.message("Card schemes file has changed, committing update via GitLab API...")
+                commit_file_via_api(
+                    file_path: bin_file_path,
+                    commit_message: "Update card schemes from CloudFront [skip ci]"
+                )
+                update_bin_cache_variables
+                UI.success("Update committed successfully")
             else
-                UI.message("Card schemes file is up to date, no changes to commit")
+                UI.important("Card schemes file content is identical, no commit needed")
             end
         else
-            UI.message("Card schemes file not found in assets, creating it via GitLab API...")
-            commit_file_via_api(file_path: bin_file_path, commit_message: "Add card schemes file from AWS S3 [skip ci]")
+            UI.header("Creating New Asset File")
+            UI.message("Card schemes file not found in assets, creating via GitLab API...")
+            commit_file_via_api(
+                file_path: bin_file_path,
+                commit_message: "Add card schemes file from CloudFront [skip ci]"
+            )
+            update_bin_cache_variables
+            UI.success("New file created successfully")
         end
+
+        UI.header("BIN File Commit - Complete")
+    end
+
+    # Updates the BIN_FILE_LAST_MODIFIED and BIN_FILE_ETAG CI variables
+    # after a successful commit
+    private_lane :update_bin_cache_variables do
+        UI.header("Updating CI Cache Variables")
+        
+        # bin_schema is at repository root, Fastlane runs from fastlane/ directory
+        bin_schema_dir = "../bin_schema"
+        last_modified_file = "#{bin_schema_dir}/last_modified.txt"
+        etag_file = "#{bin_schema_dir}/etag.txt"
+
+        UI.message("Reading metadata files:")
+        UI.message("  last_modified.txt: #{File.expand_path(last_modified_file)}")
+        UI.message("  etag.txt: #{File.expand_path(etag_file)}")
+
+        new_last_modified = File.read(last_modified_file).strip rescue ""
+        new_etag = File.read(etag_file).strip rescue ""
+
+        UI.message("Values to update:")
+        UI.message("  BIN_FILE_LAST_MODIFIED: '#{new_last_modified}'")
+        UI.message("  BIN_FILE_ETAG: '#{new_etag}'")
+
+        if new_last_modified.length > 0
+            UI.message("Updating BIN_FILE_LAST_MODIFIED CI variable...")
+            begin
+                update_gitlab_ci_variable(key: "BIN_FILE_LAST_MODIFIED", value: new_last_modified)
+                UI.success("BIN_FILE_LAST_MODIFIED updated to: #{new_last_modified}")
+            rescue => e
+                UI.error("Failed to update BIN_FILE_LAST_MODIFIED: #{e.message}")
+                UI.message("Note: Variable may not exist yet. Create it manually in GitLab CI/CD settings.")
+            end
+        else
+            UI.message("Skipping BIN_FILE_LAST_MODIFIED update (empty value)")
+        end
+
+        if new_etag.length > 0
+            UI.message("Updating BIN_FILE_ETAG CI variable...")
+            begin
+                update_gitlab_ci_variable(key: "BIN_FILE_ETAG", value: new_etag)
+                UI.success("BIN_FILE_ETAG updated to: #{new_etag}")
+            rescue => e
+                UI.error("Failed to update BIN_FILE_ETAG: #{e.message}")
+                UI.message("Note: Variable may not exist yet. Create it manually in GitLab CI/CD settings.")
+            end
+        else
+            UI.message("Skipping BIN_FILE_ETAG update (empty value)")
+        end
+
+        UI.message("CI variable update complete")
     end
 
     private_lane :commit_file_via_api do |options|
         file_path = options[:file_path]
         commit_message = options[:commit_message]
         
-        # Base64 encode the new file content
-        new_content = sh("base64 -w 0 #{file_path}").strip
+        UI.message("Encoding file to base64: #{file_path}")
+        # Base64 encode the new file content (log: false to avoid filling CI logs)
+        new_content = sh("base64 -w 0 #{file_path}", log: false).strip
+        UI.message("Base64 encoded content length: #{new_content.length} characters")
 
         # Check if assets file exists (in current or parent directory)
-        assets_exists = File.exist?("mobile-sdk/src/main/assets/card_schemas.json") || File.exist?("../mobile-sdk/src/main/assets/card_schemas.json")
+        assets_exists = File.exist?(BIN_ASSET_PATH) || File.exist?("../#{BIN_ASSET_PATH}")
         
         if assets_exists
             # Update existing file
             UI.message("Getting current file info from GitLab API...")
             
             # Get the current file content and SHA
-            file_path_encoded = "mobile-sdk%2Fsrc%2Fmain%2Fassets%2Fcard_schemas.json"
+            file_path_encoded = "bin-processor%2Fsrc%2Fmain%2Fassets%2Fcard-schemes.json"
             api_url = "#{ENV['CI_API_V4_URL']}/projects/#{ENV['CI_PROJECT_ID']}/repository/files/#{file_path_encoded}?ref=#{ENV['CI_COMMIT_REF_NAME']}"
 
             # Make call
@@ -260,7 +520,7 @@ platform :android do
                     
                     # Commit the file update via GitLab API
                     UI.message("Updating file via GitLab API...")
-                    update_url = "#{ENV['CI_API_V4_URL']}/projects/#{ENV['CI_PROJECT_ID']}/repository/files/mobile-sdk%2Fsrc%2Fmain%2Fassets%2Fcard_schemas.json"
+                    update_url = "#{ENV['CI_API_V4_URL']}/projects/#{ENV['CI_PROJECT_ID']}/repository/files/bin-processor%2Fsrc%2Fmain%2Fassets%2Fcard-schemes.json"
                     
                     update_data = {
                         branch: ENV['CI_COMMIT_REF_NAME'],
@@ -270,17 +530,44 @@ platform :android do
                         last_commit_id: current_sha
                     }.to_json
                     
-                    update_response = sh("curl -s --request PUT --header \"PRIVATE-TOKEN: #{gitlab_token}\" --header 'Content-Type: application/json' --data '#{update_data}' '#{update_url}'").strip
+                    # Write JSON to temp file to avoid embedding large base64 in shell command
+                    # This prevents CI log overflow (4MB limit)
+                    require 'tempfile'
+                    update_tmp = Tempfile.new(["gitlab_update_", ".json"])
+                    begin
+                        update_tmp.write(update_data)
+                        update_tmp.flush
+                        update_response_raw = sh("curl -s -w '\\nHTTP_CODE:%{http_code}' --request PUT --header \"PRIVATE-TOKEN: #{gitlab_token}\" --header 'Content-Type: application/json' --data @#{update_tmp.path} '#{update_url}'", log: false).strip
+                    ensure
+                        update_tmp.close!
+                    end
                     
-                    # Minimal response logging retained
+                    # Split response and HTTP code
+                    update_parts = update_response_raw.split("\nHTTP_CODE:")
+                    update_response = update_parts[0]
+                    update_http_code = update_parts[1] if update_parts.length > 1
+                    
+                    UI.message("Update HTTP Status Code: #{update_http_code}")
+                    
+                    # Check for HTTP errors first
+                    if update_http_code != "200"
+                        UI.error("GitLab API returned HTTP #{update_http_code} for file update")
+                        UI.error("Response: #{update_response}")
+                        raise "GitLab API error: HTTP #{update_http_code}"
+                    end
                     
                     # Check if the update was successful
+                    # GitLab API returns file_path and branch on success (not commit_id)
                     begin
                         response_data = JSON.parse(update_response)
-                        if response_data['commit_id']
+                        if response_data['file_path'] && response_data['branch']
                             UI.success("Card schemes file updated and committed successfully via GitLab API")
+                            UI.message("Updated file: #{response_data['file_path']} on branch: #{response_data['branch']}")
+                        elsif response_data['error'] || response_data['message']
+                            UI.error("Error: GitLab API error. Response: #{update_response}")
+                            raise "GitLab API error: #{response_data['error'] || response_data['message']}"
                         else
-                            UI.error("Error: Failed to update file. Response: #{update_response}")
+                            UI.error("Error: Unexpected response format. Response: #{update_response}")
                             raise "Failed to update file"
                         end
                     rescue JSON::ParserError
@@ -296,7 +583,7 @@ platform :android do
         else
             # Create new file
             UI.message("Creating file via GitLab API...")
-            create_url = "#{ENV['CI_API_V4_URL']}/projects/#{ENV['CI_PROJECT_ID']}/repository/files/mobile-sdk%2Fsrc%2Fmain%2Fassets%2Fcard_schemas.json"
+            create_url = "#{ENV['CI_API_V4_URL']}/projects/#{ENV['CI_PROJECT_ID']}/repository/files/bin-processor%2Fsrc%2Fmain%2Fassets%2Fcard-schemes.json"
             
             create_data = {
                 branch: ENV['CI_COMMIT_REF_NAME'],
@@ -306,7 +593,18 @@ platform :android do
             }.to_json
             
             gitlab_token = ENV['GITLAB_TOKEN']
-            create_response = sh("curl -s -w '\\nHTTP_CODE:%{http_code}' --request POST --header \"PRIVATE-TOKEN: #{gitlab_token}\" --header 'Content-Type: application/json' --data '#{create_data}' '#{create_url}'").strip
+            
+            # Write JSON to temp file to avoid embedding large base64 in shell command
+            # This prevents CI log overflow (4MB limit)
+            require 'tempfile'
+            create_tmp = Tempfile.new(["gitlab_create_", ".json"])
+            begin
+                create_tmp.write(create_data)
+                create_tmp.flush
+                create_response = sh("curl -s -w '\\nHTTP_CODE:%{http_code}' --request POST --header \"PRIVATE-TOKEN: #{gitlab_token}\" --header 'Content-Type: application/json' --data @#{create_tmp.path} '#{create_url}'", log: false).strip
+            ensure
+                create_tmp.close!
+            end
             
             # Split response and HTTP code for create operation
             create_parts = create_response.split("\nHTTP_CODE:")
@@ -326,12 +624,17 @@ platform :android do
             end
             
             # Check if the creation was successful
+            # GitLab API returns file_path and branch on success (not commit_id)
             begin
                 response_data = JSON.parse(create_body)
-                if response_data['commit_id']
+                if response_data['file_path'] && response_data['branch']
                     UI.success("Card schemes file created and committed successfully via GitLab API")
+                    UI.message("Created file: #{response_data['file_path']} on branch: #{response_data['branch']}")
+                elsif response_data['error'] || response_data['message']
+                    UI.error("Error: GitLab API error. Response: #{create_body}")
+                    raise "GitLab API error: #{response_data['error'] || response_data['message']}"
                 else
-                    UI.error("Error: Failed to create file. Response: #{create_body}")
+                    UI.error("Error: Unexpected response format. Response: #{create_body}")
                     raise "Failed to create file"
                 end
             rescue JSON::ParserError
@@ -415,10 +718,21 @@ platform :android do
 
         api_url = "#{api_endpoint}/projects/#{project_id}/variables/#{key}"
 
-        # We now use -s and --show-error to remove the extra output
-        response = sh("curl -s --show-error --request PUT --header 'Content-Type: application/json' --header 'PRIVATE-TOKEN: #{gitlab_token}' \
-            --data '{\"value\":\"#{value}\", \"variable_type\":\"env_var\"}' \
-            '#{api_url}'")
+        # Build JSON payload properly to handle special characters (e.g., quotes in ETag values)
+        payload = { "value" => value.to_s, "variable_type" => "env_var" }.to_json
+        
+        # Write payload to temp file to avoid shell escaping issues
+        require 'tempfile'
+        tmp = Tempfile.new(["gitlab_var_", ".json"])
+        begin
+            tmp.write(payload)
+            tmp.flush
+            response = sh("curl -s --show-error --request PUT --header 'Content-Type: application/json' --header 'PRIVATE-TOKEN: #{gitlab_token}' \
+                --data @#{tmp.path} \
+                '#{api_url}'")
+        ensure
+            tmp.close!
+        end
 
         # check if the command was successful.
         parsed_response = JSON.parse(response)
@@ -497,23 +811,188 @@ platform :android do
         gradle(task: "assemble", flavor: flavor.capitalize, build_type: "Release")
     end
 
-    # --- Test Lane ---
+    # --- Test Lanes ---
+
+    desc "Runs UI tests on Firebase Test Lab"
+    lane :ui_test_firebase do |options|
+        require 'json'
+        require 'tempfile'
+
+        UI.header("Firebase Test Lab - Starting UI Tests")
+        UI.message("=" * 60)
+
+        # Configuration options
+        # MediumPhone.arm is a reliable virtual device available in Firebase Test Lab
+        device_model = options[:device] || "MediumPhone.arm"
+        api_level = options[:api] || "34"
+        locale = options[:locale] || "en"
+        orientation = options[:orientation] || "portrait"
+        timeout = options[:timeout] || "15m"
+        test_targets = options[:test_targets] # Optional: specific test classes/methods
+
+        # Google Cloud project (use Firebase project ID)
+        gcp_project = ENV["GCP_PROJECT_ID"] || ENV["FIREBASE_PROJECT_ID"]
+        unless gcp_project
+            UI.user_error!("Missing GCP_PROJECT_ID or FIREBASE_PROJECT_ID environment variable")
+        end
+
+        UI.message("GCP Project: #{gcp_project}")
+        UI.message("Device: #{device_model}, API: #{api_level}")
+        UI.message("Timeout: #{timeout}")
+
+        # Build the APKs if not already built
+        UI.header("Building APKs")
+
+        # For library modules, we need:
+        # 1. A host app (sample app) that includes the library
+        # 2. The androidTest APK for instrumentation tests
+
+        # Determine which flavor to use (default to sandbox)
+        flavor = options[:flavor] || "sandbox"
+
+        # Build the sample app (which includes the SDK library)
+        gradle(task: ":sample:assemble#{flavor.capitalize}Debug", flags: "-x lint -x detekt")
+
+        # Build the test APK
+        gradle(task: ":mobile-sdk:assembleDebugAndroidTest", flags: "-x lint -x detekt")
+
+        # Locate the APKs
+        # App APK: sample app that hosts the library
+        app_apk = Dir.glob("../sample/build/outputs/apk/#{flavor}/debug/*.apk").first
+        # Test APK: instrumentation tests for the library
+        test_apk = Dir.glob("../mobile-sdk/build/outputs/apk/androidTest/debug/*.apk").first
+
+        unless app_apk && File.exist?(app_apk)
+            UI.user_error!("App APK not found. Expected at: sample/build/outputs/apk/#{flavor}/debug/*.apk")
+        end
+        unless test_apk && File.exist?(test_apk)
+            UI.user_error!("Test APK not found. Expected at: mobile-sdk/build/outputs/apk/androidTest/debug/*.apk")
+        end
+
+        UI.message("App APK (sample): #{app_apk}")
+        UI.message("Test APK (library): #{test_apk}")
+
+        # Set up Google Cloud authentication
+        UI.header("Setting up Google Cloud Authentication")
+
+        credentials_file = ENV["GOOGLE_CREDENTIALS_FILE_PATH"]
+        if credentials_file && File.exist?(credentials_file)
+            UI.message("Using credentials file: #{credentials_file}")
+            sh("gcloud auth activate-service-account --key-file=#{credentials_file}")
+        else
+            UI.message("Attempting to use application default credentials")
+        end
+
+        # Set the project
+        sh("gcloud config set project #{gcp_project}")
+
+        # Build the gcloud command
+        UI.header("Running Tests on Firebase Test Lab")
+
+        # Create results directory for downloaded artifacts
+        results_dir = "../mobile-sdk/build/test-results/firebase-test-lab"
+        FileUtils.mkdir_p(results_dir)
+
+        # Generate a unique results directory name
+        results_gcs_dir = "ui-tests-#{Time.now.strftime('%Y%m%d-%H%M%S')}"
+
+        # Use custom bucket if specified, otherwise let Firebase use its default bucket
+        results_bucket = options[:results_bucket] || ENV["FIREBASE_TEST_RESULTS_BUCKET"]
+
+        gcloud_cmd = [
+            "gcloud firebase test android run",
+            "--type instrumentation",
+            "--app #{app_apk}",
+            "--test #{test_apk}",
+            "--device model=#{device_model},version=#{api_level},locale=#{locale},orientation=#{orientation}",
+            "--timeout #{timeout}",
+            "--use-orchestrator",
+            "--client-details matrixLabel=\"CI-#{ENV['CI_PIPELINE_ID'] || 'local'}\""
+        ]
+
+        # Add results bucket if specified (otherwise Firebase uses default)
+        if results_bucket
+            gcloud_cmd << "--results-bucket=gs://#{results_bucket}"
+            gcloud_cmd << "--results-dir=#{results_gcs_dir}"
+        end
+
+        # Add test targets if specified (e.g., specific test class)
+        if test_targets
+            gcloud_cmd << "--test-targets \"#{test_targets}\""
+        end
+
+        # Add sharding for parallel execution (if more than one shard requested)
+        num_shards = (options[:shards] || 1).to_i
+        if num_shards > 1
+            gcloud_cmd << "--num-uniform-shards=#{num_shards}"
+        end
+
+        test_passed = false
+        begin
+            # Run the tests
+            sh(gcloud_cmd.join(" \\\n  "), log: true)
+            test_passed = true
+            UI.success("✅ Firebase Test Lab tests completed successfully!")
+        rescue => ex
+            UI.error("❌ Firebase Test Lab tests failed: #{ex.message}")
+
+            # Exit code 10 means tests ran but some failed - we still want to download results
+            if ex.message.include?("exit status 10")
+                UI.message("Tests ran but some failed. Downloading results for reporting...")
+            else
+                raise ex
+            end
+        end
+
+        # Download test results from GCS for CI reporting (only if custom bucket specified)
+        UI.header("Downloading Test Results")
+        if results_bucket
+            begin
+                # Download JUnit XML results
+                sh("gsutil -m cp -r gs://#{results_bucket}/#{results_gcs_dir}/**/test_result_*.xml #{results_dir}/ 2>/dev/null || true")
+
+                # Also try to get the merged results
+                sh("gsutil -m cp gs://#{results_bucket}/#{results_gcs_dir}/**/merged_results.xml #{results_dir}/ 2>/dev/null || true")
+
+                # List downloaded files
+                downloaded_files = Dir.glob("#{results_dir}/**/*.xml")
+                if downloaded_files.any?
+                    UI.success("Downloaded #{downloaded_files.count} result files")
+                    downloaded_files.each { |f| UI.message("  - #{f}") }
+                else
+                    UI.message("No XML result files found to download")
+                end
+            rescue => download_ex
+                UI.message("⚠️ Could not download results: #{download_ex.message}")
+            end
+
+            UI.message("Results bucket: gs://#{results_bucket}/#{results_gcs_dir}")
+        else
+            UI.message("Using Firebase default results bucket - check Firebase Console for results")
+        end
+
+        # Raise the error if tests failed (after downloading results)
+        unless test_passed
+            raise "Firebase Test Lab tests failed. Check results in Firebase Console."
+        end
+
+        UI.header("Firebase Test Lab - Complete")
+        UI.message("View results in Firebase Console: https://console.firebase.google.com/project/#{gcp_project}/testlab")
+    end
 
     desc "Runs all unit tests for specified flavor"
     lane :test do |options|
          flavor = options[:flavor] || "staging" # Default to staging if no flavor is provided
          build_type = options[:build_type] || "Debug" # Default to Debug if no build type is provided
 
-        # Run unit tests and generate JaCoCo XML report for the library module
-        unit_test_task = ":mobile-sdk:test#{build_type.capitalize}UnitTest"
-        coverage_task = ":mobile-sdk:jacoco#{build_type.capitalize}UnitTestReport"
+        # Run merged coverage report (runs bin-processor + mobile-sdk tests, generates single report)
         gradle(
-            task: "#{unit_test_task} #{coverage_task}",
+            task: "jacocoMergedReport",
             flags: "--console=plain --continue"
         )
 
         # Emit a single-line total coverage percentage for GitLab 'coverage' parsing
-        coverage_xml_path = File.expand_path("../mobile-sdk/build/reports/jacoco/jacoco#{build_type.capitalize}UnitTestReport/jacoco#{build_type.capitalize}UnitTestReport.xml", __dir__)
+        coverage_xml_path = File.expand_path("../build/reports/jacoco/merged/jacocoMergedReport.xml", __dir__)
         if File.exist?(coverage_xml_path)
           xml = File.read(coverage_xml_path)
           # Look for the report-level LINE counter (last occurrence in XML)

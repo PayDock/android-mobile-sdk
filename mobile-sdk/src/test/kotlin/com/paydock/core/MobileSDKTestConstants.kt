@@ -86,6 +86,14 @@ internal object MobileSDKTestConstants {
         const val MOCK_ORDER_ID = "721hnve4yh6fdf"
     }
 
+    object Zip {
+        const val MOCK_CHECKOUT_URL = "https://checkout.zip.co/checkout?token=test_checkout_token_123"
+        const val MOCK_CHECKOUT_TOKEN = "test_checkout_token_123"
+        const val MOCK_PAYMENT_SOURCE_TOKEN = "f6301700-dcfe-4640-aabf-eff4ee3d96a6"
+        const val MOCK_CHECKOUT_ID = "checkout_id_789"
+        const val MOCK_ORDER_ID = "order_id_101"
+    }
+
     object ClickToPay {
         const val MOCK_CHECKOUT_TOKEN = "6627a531c6eca636271113f7"
     }

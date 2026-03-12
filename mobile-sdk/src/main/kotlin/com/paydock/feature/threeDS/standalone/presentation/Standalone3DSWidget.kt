@@ -25,7 +25,7 @@ import org.koin.androidx.compose.koinViewModel
  * This widget displays a WebView for the 3DS authentication process and manages UI state changes
  * using a `ThreeDSViewModel`. It supports theming, back button handling, and error reporting.
  *
- * @param config The configuration for the Integrated 3DS process, including the token.
+ * @param config The configuration for the 3DS process, including the token.
  * @param completion A callback invoked with the result of the 3DS process, either success or failure.
  */
 @Composable

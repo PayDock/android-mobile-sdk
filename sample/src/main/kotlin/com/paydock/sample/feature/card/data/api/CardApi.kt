@@ -1,6 +1,5 @@
 package com.paydock.sample.feature.card.data.api
 
-import com.paydock.sample.BuildConfig
 import com.paydock.sample.feature.card.data.api.dto.CaptureCardChargeRequest
 import com.paydock.sample.feature.card.data.api.dto.PaymentOTTResponse
 import com.paydock.sample.feature.card.data.api.dto.TokeniseCardRequest
@@ -15,19 +14,19 @@ interface CardApi {
 
     @POST("/v1/payment_sources/tokens")
     suspend fun tokeniseCardDetails(
-        @Header("X-Access-Token") accessToken: String = BuildConfig.ACCESS_TOKEN_WIDGET,
+        @Header("X-Access-Token") accessToken: String,
         @Body request: TokeniseCardRequest,
     ): PaymentOTTResponse
 
     @POST("/v1/charges")
     suspend fun captureCharge(
-        @Header("X-Access-Token") accessToken: String = BuildConfig.ACCESS_TOKEN_API,
+        @Header("X-Access-Token") accessToken: String,
         @Body request: CaptureCardChargeRequest,
     ): CaptureChargeResponse
 
     @POST("/v1/vault/payment_sources")
     suspend fun createVaultToken(
-        @Header("X-Access-Token") accessToken: String = BuildConfig.ACCESS_TOKEN_API,
+        @Header("X-Access-Token") accessToken: String,
         @Body request: VaultTokenRequest,
     ): VaultTokenResponse
 }

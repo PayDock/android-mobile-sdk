@@ -19,38 +19,27 @@ import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
 import com.paydock.core.domain.model.Event
 import com.paydock.core.presentation.util.WidgetEventDelegate
-import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOptionUpdate
 import com.paydock.feature.afterpay.presentation.AfterpayAppearanceDefaults
 import com.paydock.feature.afterpay.presentation.AfterpayWidget
 import com.paydock.feature.wallet.domain.model.integration.WalletType
-import com.paydock.sample.core.AU_COUNTRY_CODE
-import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
+import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.wallet.presentation.WalletViewModel
 import java.util.Currency
+import java.util.Locale
 
 @Composable
 fun AfterpayItem(
     context: Context,
     walletViewModel: WalletViewModel = hiltViewModel(),
-    stylingViewModel: StylingViewModel
+    stylingViewModel: StylingViewModel,
+    configViewModel: ConfigViewModel
 ) {
     val uiState by walletViewModel.stateFlow.collectAsState()
-    val configuration = AfterpaySDKConfig(
-        config = AfterpaySDKConfig.AfterpayConfiguration(
-            maximumAmount = "100",
-            currency = AU_CURRENCY_CODE,
-            language = "en",
-            country = AU_COUNTRY_CODE
-        ),
-        options = AfterpaySDKConfig.CheckoutOptions(
-            shippingOptionRequired = true,
-            enableSingleShippingOptionUpdate = true
-        )
-    )
+    val afterpayConfig by configViewModel.afterpayWidgetConfig.collectAsState()
     val afterpayAppearance by stylingViewModel.afterpayWidgetAppearance.collectAsState()
     val currentOrDefaultAppearance = afterpayAppearance ?: AfterpayAppearanceDefaults.appearance()
     AfterpayWidget(
@@ -63,9 +52,10 @@ fun AfterpayItem(
                 Log.d("[AfterpayWidget Event]", "[type=${event.type}] $event")
             }
         },
-        config = configuration,
+        config = afterpayConfig,
         selectAddress = { _, provideShippingOptions ->
-            val currency = Currency.getInstance(configuration.config.currency)
+            val locale = afterpayConfig.locale ?: Locale.getDefault()
+            val currency = Currency.getInstance(locale)
             val shippingOptions = listOf(
                 AfterpayShippingOption(
                     "standard",
@@ -89,7 +79,8 @@ fun AfterpayItem(
             provideShippingOptions(shippingOptions)
         },
         selectShippingOption = { shippingOption, provideShippingOptionUpdateResult ->
-            val currency = Currency.getInstance(configuration.config.currency)
+            val locale = afterpayConfig.locale ?: Locale.getDefault()
+            val currency = Currency.getInstance(locale)
             // if standard shipping was selected, update the amounts
             // otherwise leave as is by passing null
             val result: AfterpayShippingOptionUpdate? =

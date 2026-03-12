@@ -6,7 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.afterpay.android.view.AfterpayColorScheme
 import com.paydock.sample.R
-import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paydock.sample.designsystems.components.fields.StringDropdown
 
 @Composable
 fun ColorSchemeDropdown(
@@ -28,7 +28,7 @@ fun ColorSchemeDropdown(
             ?: AfterpayColorScheme.BLACK_ON_MINT.name
     }
 
-    DropdownSelector(
+    StringDropdown(
         modifier = modifier,
         title = stringResource(R.string.label_afterpay_color_scheme),
         options = options.map { it.first },

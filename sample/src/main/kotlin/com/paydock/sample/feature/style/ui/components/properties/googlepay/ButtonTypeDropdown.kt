@@ -6,7 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.google.pay.button.ButtonType
 import com.paydock.sample.R
-import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paydock.sample.designsystems.components.fields.StringDropdown
 
 @Composable
 fun ButtonTypeDropdown(
@@ -32,7 +32,7 @@ fun ButtonTypeDropdown(
             ?: ButtonType.Pay.name
     }
 
-    DropdownSelector(
+    StringDropdown(
         modifier = modifier,
         title = stringResource(R.string.label_googlepay_button_type),
         options = options.map { it.first },

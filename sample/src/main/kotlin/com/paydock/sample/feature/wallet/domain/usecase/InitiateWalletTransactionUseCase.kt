@@ -7,8 +7,12 @@ import javax.inject.Inject
 
 class InitiateWalletTransactionUseCase @Inject constructor(private val repository: WalletRepository) {
 
-    suspend operator fun invoke(manualCapture: Boolean = false, request: InitiateWalletRequest) =
+    suspend operator fun invoke(
+        accessToken: String,
+        manualCapture: Boolean = false,
+        request: InitiateWalletRequest
+    ) =
         suspendRunCatching {
-            repository.initiateWalletTransaction(manualCapture, request)
+            repository.initiateWalletTransaction(accessToken, manualCapture, request)
         }
 }

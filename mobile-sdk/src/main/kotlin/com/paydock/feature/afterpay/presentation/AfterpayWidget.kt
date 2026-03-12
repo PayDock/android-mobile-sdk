@@ -93,7 +93,7 @@ fun AfterpayWidget(
     }
 
     // Configure the Afterpay SDK and set up the checkout handler
-    viewModel.configureAfterpaySdk(config.config)
+    viewModel.configureAfterpaySdk(config)
     val checkoutHandler = remember {
         CheckoutHandler(
             onDidCommenceCheckout = { viewModel.loadCheckoutToken() },

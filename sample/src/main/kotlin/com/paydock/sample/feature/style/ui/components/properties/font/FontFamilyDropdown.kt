@@ -9,7 +9,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.toFontFamily
 import com.paydock.sample.R
-import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paydock.sample.designsystems.components.fields.StringDropdown
 import com.paydock.sample.feature.style.utils.FontHelper
 
 @Composable
@@ -45,20 +45,26 @@ fun FontFamilyDropdown(
             } else {
                 defaultAppFontDisplayName?.let { options.add(it) }
                 options.addAll(systemFontDetails.map { it.displayName }
-                    .filterNot { name -> name == defaultAppFontDisplayName })
+                    .filterNot { name ->
+                        // Filter out the default font and its variants (e.g., "Roboto", "Roboto Regular", "Roboto Bold")
+                        name == defaultAppFontDisplayName ||
+                                (defaultAppFontDisplayName != null && name.startsWith("$defaultAppFontDisplayName "))
+                    })
                 if (options.isEmpty()) {
                     options.add(noFontsAvailableText)
                 }
             }
-            if (isLoadingFonts || (options.size == 1 && (options.first() == loadingText || options.first() == noFontsAvailableText))) {
-                options
-            } else {
-                options.distinct().sorted()
-            }
+            val finalOptions =
+                if (isLoadingFonts || (options.size == 1 && (options.first() == loadingText || options.first() == noFontsAvailableText))) {
+                    options
+                } else {
+                    options.distinct().sorted()
+                }
+            finalOptions
         }
     }
 
-    DropdownSelector(
+    StringDropdown(
         modifier = modifier,
         title = stringResource(R.string.label_font_family),
         options = dropdownOptions,
@@ -66,7 +72,7 @@ fun FontFamilyDropdown(
         selectedOption = currentDisplaySelectedName,
         onOptionSelected = { selectedDisplayName ->
             if (selectedDisplayName == loadingText || selectedDisplayName == noFontsAvailableText) {
-                return@DropdownSelector
+                return@StringDropdown
             }
 
             val newFontToSelect: FontFamily? =
@@ -78,7 +84,8 @@ fun FontFamilyDropdown(
                         systemFontDetails.find { it.displayName == selectedDisplayName }
                     // Use its fileName to get the font
                     selectedFontInfo?.let {
-                        fontHelper.findSystemFontByFileName(it.fileName)?.toFontFamily()
+                        val font = fontHelper.findSystemFontByFileName(it.fileName)?.toFontFamily()
+                        font
                     }
                 }
 

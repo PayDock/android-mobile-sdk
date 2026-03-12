@@ -7,6 +7,7 @@ import com.paydock.sample.feature.card.data.api.dto.TokeniseCardRequest
 import com.paydock.sample.feature.card.data.api.dto.VaultTokenRequest
 import com.paydock.sample.feature.card.domain.usecase.CreateCardVaultTokenUseCase
 import com.paydock.sample.feature.card.domain.usecase.TokeniseCardUseCase
+import com.paydock.sample.feature.config.data.GlobalConfigRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +19,7 @@ import javax.inject.Inject
 class CardViewModel @Inject constructor(
     private val tokeniseCardUseCase: TokeniseCardUseCase,
     private val createCardVaultTokenUseCase: CreateCardVaultTokenUseCase,
+    private val globalConfigRepository: GlobalConfigRepository,
 ) : ViewModel() {
 
     private val _stateFlow: MutableStateFlow<CardUIState> =
@@ -29,7 +31,8 @@ class CardViewModel @Inject constructor(
             _stateFlow.update { state ->
                 state.copy(isLoading = true)
             }
-            val result = tokeniseCardUseCase(TokeniseCardRequest())
+            val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
+            val result = tokeniseCardUseCase(accessToken, TokeniseCardRequest())
             result.onSuccess { token ->
                 _stateFlow.update { state ->
                     state.copy(token = token, isLoading = false, error = null)
@@ -52,8 +55,12 @@ class CardViewModel @Inject constructor(
             _stateFlow.update { state ->
                 state.copy(isLoading = true)
             }
+            val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
             val result =
-                createCardVaultTokenUseCase(VaultTokenRequest.CreateCardVaultTokenRequest())
+                createCardVaultTokenUseCase(
+                    accessToken,
+                    VaultTokenRequest.CreateCardVaultTokenRequest()
+                )
             result.onSuccess { token ->
                 _stateFlow.update { state ->
                     state.copy(token = token, isLoading = false, error = null)

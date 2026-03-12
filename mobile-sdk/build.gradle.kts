@@ -59,6 +59,18 @@ android {
     }
     testOptions {
         unitTests.isReturnDefaultValues = true
+        // Disable window animations during instrumented tests (command-line) to reduce flakiness
+        animationsDisabled = true
+    }
+    // Gradle Managed Devices for instrumentation tests (CI-friendly aosp-atd image)
+    testOptions.managedDevices {
+        devices {
+            maybeCreate<com.android.build.api.dsl.ManagedVirtualDevice>("pixel6Api35").apply {
+                device = "Pixel 6"
+                apiLevel = 35
+                systemImageSource = "aosp-atd"
+            }
+        }
     }
     testOptions.unitTests.all {
         it.jvmArgs(
@@ -84,11 +96,16 @@ kotlin {
 dependencies {
     // Paydock Modules (Libs)
     api(libs.paydock.core.networking)
+    // BIN Processor Module
+    implementation(project(":bin-processor"))
     // Android
     implementation(libs.bundles.androidx)
+    implementation(libs.androidx.lifecycle.ktx)
+    implementation(libs.androidx.lifecycle.process)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.ext)
     androidTestImplementation(libs.androidx.runner)
+    androidTestImplementation(libs.androidx.test.espresso.accessibility)
     // Compose - BOM 2025.06.01 (Compose 1.8.3)
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
@@ -125,6 +142,7 @@ dependencies {
     testImplementation(libs.mockito)
     testImplementation(libs.turbine)
     testImplementation(libs.json)
+    testImplementation(libs.androidx.arch.core.testing)
     // UI Testing (General)
     androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.mockito.android)

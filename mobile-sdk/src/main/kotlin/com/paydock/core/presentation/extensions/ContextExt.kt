@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ComponentActivity
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import com.paydock.R
 
 /**
  * Extension function for checking if a particular permission is granted.
@@ -65,8 +66,8 @@ internal fun Context.openBrowser(
     urlString: String,
     onError: (failedUrl: String, errorType: UrlErrorType) -> Unit = { failedUrl, errorType ->
         val message = when (errorType) {
-            UrlErrorType.INVALID_URL -> "Invalid URL format: $failedUrl"
-            UrlErrorType.NO_HANDLER -> "No application found to open URL: $failedUrl"
+            UrlErrorType.INVALID_URL -> getString(R.string.toast_invalid_url)
+            UrlErrorType.NO_HANDLER -> getString(R.string.toast_no_handler)
         }
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
@@ -95,7 +96,7 @@ internal fun Context.openBrowser(
     onError: (failedUri: Uri) -> Unit = { failedUri ->
         Toast.makeText(
             this,
-            "No application found to open URI: $failedUri", // Consider using a string resource
+            getString(R.string.toast_no_handler),
             Toast.LENGTH_LONG
         ).show()
     }

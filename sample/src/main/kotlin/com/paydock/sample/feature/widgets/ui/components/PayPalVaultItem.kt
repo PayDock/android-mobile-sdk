@@ -13,23 +13,25 @@ import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
 import com.paydock.core.domain.model.Event
 import com.paydock.core.presentation.util.WidgetEventDelegate
-import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.presentation.PayPalPaymentSourceAppearanceDefaults
 import com.paydock.feature.paypal.vault.presentation.PayPalSavePaymentSourceWidget
-import com.paydock.sample.BuildConfig
+import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.style.StylingViewModel
 
 @Composable
-fun PayPalVaultItem(context: Context, stylingViewModel: StylingViewModel) {
+fun PayPalVaultItem(
+    context: Context,
+    stylingViewModel: StylingViewModel,
+    configViewModel: ConfigViewModel
+) {
     val paypalVaultAppearance by stylingViewModel.paypalVaultWidgetAppearance.collectAsState()
     val currentOrDefaultAppearance =
         paypalVaultAppearance ?: PayPalPaymentSourceAppearanceDefaults.appearance()
+    val paypalVaultConfig by configViewModel.paypalVaultWidgetConfig.collectAsState()
+
     PayPalSavePaymentSourceWidget(
         modifier = Modifier.padding(16.dp),
-        config = PayPalVaultConfig(
-            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
-            gatewayId = BuildConfig.SERVICE_ID_PAYPAL
-        ),
+        config = paypalVaultConfig,
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {
                 Log.d("[PayPalSavePaymentSourceWidget Event]", "[type=${event.type}] $event")
@@ -39,7 +41,8 @@ fun PayPalVaultItem(context: Context, stylingViewModel: StylingViewModel) {
     ) { result ->
         result.onSuccess {
             Log.d("[PayPalSavePaymentSourceWidget]", "Success: $it")
-            Toast.makeText(context, "PayPal Vault Result returned [$it]", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "PayPal Vault Result returned [$it]", Toast.LENGTH_SHORT)
+                .show()
         }.onFailure {
             val error = it.toError()
             Log.d("[PayPalSavePaymentSourceWidget]", "Failure: ${error.displayableMessage}")

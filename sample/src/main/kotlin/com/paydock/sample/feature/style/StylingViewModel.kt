@@ -20,6 +20,7 @@ import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 import com.paydock.feature.paypal.vault.presentation.PayPalPaymentSourceWidgetAppearance
 import com.paydock.feature.src.presentation.ClickToPayWidgetAppearance
 import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSWidgetAppearance
+import com.paydock.feature.zip.presentation.ZipWidgetAppearance
 import com.paydock.sample.feature.style.models.StyleAppearanceComponent
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,7 +37,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
     private val hasCardDetailsCustomizations = MutableStateFlow(false)
     private val hasGiftCardCustomizations = MutableStateFlow(false)
     private val hasPayPalVaultCustomizations = MutableStateFlow(false)
-    
+
     private val _addressWidgetAppearance = MutableStateFlow<AddressDetailsWidgetAppearance?>(null)
     val addressWidgetAppearance: StateFlow<AddressDetailsWidgetAppearance?> =
         _addressWidgetAppearance.asStateFlow()
@@ -74,23 +75,33 @@ class StylingViewModel @Inject constructor() : ViewModel() {
     val clickToPayWidgetAppearance: StateFlow<ClickToPayWidgetAppearance?> =
         _clickToPayWidgetAppearance.asStateFlow()
 
-    private val _integrated3DSWidgetAppearance = MutableStateFlow<ThreeDSWidgetAppearance?>(null)
-    val integrated3DSWidgetAppearance: StateFlow<ThreeDSWidgetAppearance?> =
-        _integrated3DSWidgetAppearance.asStateFlow()
+    private val _mpgs3dsWidgetAppearance = MutableStateFlow<ThreeDSWidgetAppearance?>(null)
+    val mpgs3dsWidgetAppearance: StateFlow<ThreeDSWidgetAppearance?> =
+        _mpgs3dsWidgetAppearance.asStateFlow()
 
     private val _standalone3DSWidgetAppearance = MutableStateFlow<ThreeDSWidgetAppearance?>(null)
     val standalone3DSWidgetAppearance: StateFlow<ThreeDSWidgetAppearance?> =
         _standalone3DSWidgetAppearance.asStateFlow()
 
+    private val _zipWidgetAppearance = MutableStateFlow<ZipWidgetAppearance?>(null)
+    val zipWidgetAppearance: StateFlow<ZipWidgetAppearance?> =
+        _zipWidgetAppearance.asStateFlow()
+
     // --- Initialization ---
-    fun updateInitialAddressDefaults(updatedDefaults: AddressDetailsWidgetAppearance, preserveCustomizations: Boolean = false) {
+    fun updateInitialAddressDefaults(
+        updatedDefaults: AddressDetailsWidgetAppearance,
+        preserveCustomizations: Boolean = false
+    ) {
         _addressWidgetAppearance.update { current ->
             if (preserveCustomizations && current != null && hasAddressCustomizations.value) {
                 // Preserve user customizations (structural changes like icons, text, spacing)
                 // but update theme-dependent properties (colors from defaults)
                 updatedDefaults.copy(
+                    title = current.title, // Preserve custom title text appearance
                     actionButton = current.actionButton, // Preserve custom button (icon, text)
                     linkButton = current.linkButton,
+                    textField = current.textField, // Preserve custom text field appearance
+                    searchDropdown = current.searchDropdown, // Preserve custom search dropdown appearance
                     verticalSpacing = current.verticalSpacing,
                     horizontalSpacing = current.horizontalSpacing,
                     textFieldVerticalSpacing = current.textFieldVerticalSpacing,
@@ -102,12 +113,19 @@ class StylingViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun updateInitialCardDetailsDefaults(updatedDefaults: CardDetailsWidgetAppearance, preserveCustomizations: Boolean = false) {
+    fun updateInitialCardDetailsDefaults(
+        updatedDefaults: CardDetailsWidgetAppearance,
+        preserveCustomizations: Boolean = false
+    ) {
         _cardDetailsWidgetAppearance.update { current ->
             if (preserveCustomizations && current != null && hasCardDetailsCustomizations.value) {
-                // Preserve user customizations
+                // Preserve user customizations (text appearances, buttons, spacing)
+                // but update theme-dependent properties (colors from defaults)
                 updatedDefaults.copy(
                     actionButton = current.actionButton,
+                    textField = current.textField, // Preserve custom text field appearance
+                    toggleText = current.toggleText, // Preserve custom toggle text appearance
+                    linkText = current.linkText, // Preserve custom link text appearance
                     verticalSpacing = current.verticalSpacing,
                     horizontalSpacing = current.horizontalSpacing,
                     textFieldVerticalSpacing = current.textFieldVerticalSpacing,
@@ -119,12 +137,17 @@ class StylingViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun updateInitialGiftCardDetailsDefaults(updatedDefaults: GiftCardWidgetAppearance, preserveCustomizations: Boolean = false) {
+    fun updateInitialGiftCardDetailsDefaults(
+        updatedDefaults: GiftCardWidgetAppearance,
+        preserveCustomizations: Boolean = false
+    ) {
         _giftCardWidgetAppearance.update { current ->
             if (preserveCustomizations && current != null && hasGiftCardCustomizations.value) {
-                // Preserve user customizations
+                // Preserve user customizations (text appearances, buttons, spacing)
+                // but update theme-dependent properties (colors from defaults)
                 updatedDefaults.copy(
                     actionButton = current.actionButton,
+                    textField = current.textField, // Preserve custom text field appearance
                     verticalSpacing = current.verticalSpacing,
                     horizontalSpacing = current.horizontalSpacing,
                     textFieldVerticalSpacing = current.textFieldVerticalSpacing,
@@ -140,7 +163,10 @@ class StylingViewModel @Inject constructor() : ViewModel() {
         _paypalWidgetAppearance.update { updatedDefaults }
     }
 
-    fun updateInitialPayPalVaultDefaults(updatedDefaults: PayPalPaymentSourceWidgetAppearance, preserveCustomizations: Boolean = false) {
+    fun updateInitialPayPalVaultDefaults(
+        updatedDefaults: PayPalPaymentSourceWidgetAppearance,
+        preserveCustomizations: Boolean = false
+    ) {
         _paypalVaultWidgetAppearance.update { current ->
             if (preserveCustomizations && current != null && hasPayPalVaultCustomizations.value) {
                 // Preserve user customizations (actionButton)
@@ -169,12 +195,16 @@ class StylingViewModel @Inject constructor() : ViewModel() {
         _clickToPayWidgetAppearance.update { updatedDefaults }
     }
 
-    fun updateInitialIntegrated3DSDefaults(updatedDefaults: ThreeDSWidgetAppearance) {
-        _integrated3DSWidgetAppearance.update { updatedDefaults }
+    fun updateInitialMPGS3dsDefaults(updatedDefaults: ThreeDSWidgetAppearance) {
+        _mpgs3dsWidgetAppearance.update { updatedDefaults }
     }
 
     fun updateInitialStandalone3DSDefaults(updatedDefaults: ThreeDSWidgetAppearance) {
         _standalone3DSWidgetAppearance.update { updatedDefaults }
+    }
+
+    fun updateInitialZipDefaults(updatedDefaults: ZipWidgetAppearance) {
+        _zipWidgetAppearance.update { updatedDefaults }
     }
 
     // --- Update methods for specific appearances ---
@@ -195,9 +225,10 @@ class StylingViewModel @Inject constructor() : ViewModel() {
             WidgetType.CARD_DETAILS -> hasCardDetailsCustomizations.value = true
             WidgetType.GIFT_CARD -> hasGiftCardCustomizations.value = true
             WidgetType.PAY_PAL_VAULT -> hasPayPalVaultCustomizations.value = true
-            else -> { /* Other widgets don't have customization tracking yet */ }
+            else -> { /* Other widgets don't have customization tracking yet */
+            }
         }
-        
+
         when (widgetType) {
             WidgetType.ADDRESS_DETAILS -> {
                 _addressWidgetAppearance.value?.let { current ->
@@ -332,7 +363,6 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                             )
                         }
 
-                        StyleAppearanceComponent.TITLE -> current.copy(title = newComponentAppearance as TextAppearance)
                         StyleAppearanceComponent.TOGGLE_TEXT -> current.copy(toggleText = newComponentAppearance as TextAppearance)
                         StyleAppearanceComponent.SUB_TEXT_FIELD_PROPERTIES -> (newComponentAppearance as TextFieldAppearance).let {
                             current.copy(
@@ -518,13 +548,13 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                 }
             }
 
-            WidgetType.INTEGRATED_3DS -> {
-                _integrated3DSWidgetAppearance.value?.let { current ->
+            WidgetType.MPGS_3DS -> {
+                _mpgs3dsWidgetAppearance.value?.let { current ->
                     val updatedAppearance = when (component) {
                         StyleAppearanceComponent.LOADER -> current.copy(loader = newComponentAppearance as LoaderAppearance)
                         else -> current
                     }
-                    _integrated3DSWidgetAppearance.value = updatedAppearance
+                    _mpgs3dsWidgetAppearance.value = updatedAppearance
                 }
             }
 
@@ -580,6 +610,22 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                         else -> current
                     }
                     _standalone3DSWidgetAppearance.value = updatedAppearance
+                }
+            }
+
+            WidgetType.ZIP -> {
+                _zipWidgetAppearance.value?.let { current ->
+                    val updatedAppearance = when (component) {
+                        StyleAppearanceComponent.PROPERTIES -> (newComponentAppearance as ZipWidgetAppearance).let {
+                            current.copy(
+                                buttonStyle = newComponentAppearance.buttonStyle
+                            )
+                        }
+
+                        StyleAppearanceComponent.LOADER -> current.copy(loader = newComponentAppearance as LoaderAppearance)
+                        else -> current
+                    }
+                    _zipWidgetAppearance.value = updatedAppearance
                 }
             }
         }

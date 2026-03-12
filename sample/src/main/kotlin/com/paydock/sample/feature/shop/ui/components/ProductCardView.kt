@@ -26,12 +26,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.paydock.sample.core.utils.CurrencyFormatter
 import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.theme.SampleTheme
 import com.paydock.sample.feature.shop.data.CartManager
@@ -43,6 +45,7 @@ import com.paydock.sample.feature.shop.domain.model.ProductImage
 fun ProductCardView(
     product: Product,
     onAddToCart: () -> Unit,
+    currencyCode: String = "USD",
     modifier: Modifier = Modifier
 ) {
     val cartManager = remember { CartManager.shared }
@@ -79,6 +82,7 @@ fun ProductCardView(
                         shape = RoundedCornerShape(8.dp)
                     )
                     .clip(RoundedCornerShape(8.dp))
+                    .testTag("product_image_${product.id}")
             ) {
                 // Square image, centered and sized to fit within the container
                 Image(
@@ -100,7 +104,9 @@ fun ProductCardView(
                 lineHeight = 20.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("product_name_${product.id}")
             )
 
             Spacer(modifier = Modifier.height(spacing))
@@ -113,19 +119,22 @@ fun ProductCardView(
                 lineHeight = 16.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("product_description_${product.id}")
             )
 
             Spacer(modifier = Modifier.height(spacing))
 
             // Price - Flexible height, respects font scaling
             Text(
-                text = product.formattedPrice,
+                text = CurrencyFormatter.format(product.price, currencyCode),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.testTag("product_price_${product.id}")
             )
 
             // Flexible spacer - pushes button to bottom of card
@@ -148,7 +157,9 @@ fun ProductCardView(
                         modifier = Modifier.size(14.dp)
                     )
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("product_add_to_cart_${product.id}")
             )
         }
     }

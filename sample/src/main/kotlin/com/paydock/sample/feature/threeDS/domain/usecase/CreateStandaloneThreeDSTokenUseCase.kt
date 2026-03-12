@@ -7,7 +7,8 @@ import javax.inject.Inject
 
 class CreateStandaloneThreeDSTokenUseCase @Inject constructor(private val repository: ThreeDSRepository) {
 
-    suspend operator fun invoke(request: CreateStandaloneThreeDSTokenRequest) = suspendRunCatching {
-        repository.createStandalone3dsToken(request)
-    }
+    suspend operator fun invoke(accessToken: String, request: CreateStandaloneThreeDSTokenRequest) =
+        suspendRunCatching {
+            repository.createStandalone3dsToken(accessToken, request)
+        }
 }

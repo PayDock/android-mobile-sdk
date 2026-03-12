@@ -3,7 +3,6 @@ package com.paydock.feature.card.presentation.components
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -12,6 +11,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -25,7 +25,6 @@ import com.paydock.feature.card.presentation.utils.errors.CardExpiryError
 import com.paydock.feature.card.presentation.utils.transformations.ExpiryInputTransformation
 import com.paydock.feature.card.presentation.utils.validators.CardExpiryValidator
 import com.paydock.feature.card.presentation.utils.validators.CreditCardInputParser
-import kotlinx.coroutines.delay
 
 /**
  * A composable function for inputting and validating a credit card expiry date.
@@ -50,36 +49,40 @@ internal fun CardExpiryInput(
     nextFocus: FocusRequester? = null,
     onValueChange: (String) -> Unit
 ) {
-    // Tracks if the user has interacted with the field
     var hasUserInteracted by remember { mutableStateOf(false) }
+    var suppressErrorUntilNextInput by remember { mutableStateOf(false) }
+    var focusedState by remember { mutableStateOf(false) }
+    val previousFocus = remember { object { var value = false } }
 
-    // Debounced value to prevent rapid updates
-    var debouncedValue by remember { mutableStateOf("") }
-    LaunchedEffect(value) {
-        delay(MobileSDKConstants.General.INPUT_DELAY)
-        debouncedValue = value
-    }
-
-    // Parse the expiry value for display purposes and validate it
-    val expiry = CreditCardInputParser.parseExpiry(debouncedValue)
-    // Validate possible expiry errors
-    val expiryError = CardExpiryValidator.validateExpiryInput(debouncedValue, hasUserInteracted)
+    // Validate possible expiry errors (digit-phase: month on 2-3 digits, full on 4)
+    // Pass focusedState to enable focus-aware validation (month while typing, full on defocus)
+    val expiryError = CardExpiryValidator.validateExpiryInput(value, hasUserInteracted, focusedState)
 
     // Map the validation result to an error message
-    val errorMessage = when (expiryError) {
+    // Empty -> null: no error when field is defocused if empty
+    val mappedError = when (expiryError) {
         CardExpiryError.Empty,
+        CardExpiryError.None -> null
+        CardExpiryError.InvalidMonth -> stringResource(id = R.string.error_expiry_month)
         CardExpiryError.InvalidFormat -> stringResource(id = R.string.error_expiry_date)
         CardExpiryError.Expired -> stringResource(id = R.string.error_expiry_expired)
-        CardExpiryError.None -> null
     }
+    val errorMessage = if (suppressErrorUntilNextInput) null else mappedError
 
     // Input field configuration
     SdkTextField(
-        modifier = modifier,
+        modifier = modifier.onFocusChanged {
+            focusedState = it.isFocused
+            val justGainedFocus = it.isFocused && !previousFocus.value
+            previousFocus.value = it.isFocused
+            if (justGainedFocus) suppressErrorUntilNextInput = true
+            if (!it.isFocused) suppressErrorUntilNextInput = false
+        },
         appearance = appearance,
         value = value,
         onValueChange = {
             hasUserInteracted = true
+            suppressErrorUntilNextInput = false
             // Format and validate expiry date
             val formattedExpiry = CardExpiryValidator.formatExpiry(it)
             CreditCardInputParser.parseExpiry(formattedExpiry)?.let { expiry ->
@@ -90,6 +93,9 @@ internal fun CardExpiryInput(
         placeholder = stringResource(id = R.string.placeholder_expiry), // Placeholder text
         enabled = enabled,
         error = errorMessage, // Dynamically show error messages if validation fails
+        showValidIcon = expiryError == CardExpiryError.None &&
+            value.length >= MobileSDKConstants.CardDetailsConfig.MAX_EXPIRY_LENGTH &&
+            !focusedState,
         autofillType = ContentType.CreditCardExpirationDate,
         visualTransformation = ExpiryInputTransformation(), // Format input as MM/YY
         keyboardOptions = KeyboardOptions(

@@ -1,23 +1,23 @@
 package com.paydock.feature.card.domain.usecase
 
+import com.paydock.binprocessor.data.dto.BinDataResponse
 import com.paydock.core.extensions.suspendRunCatching
-import com.paydock.feature.card.domain.model.ui.CardSchema
 import com.paydock.feature.card.domain.repository.CardRepository
-import java.util.TreeMap
 
 /**
- * Use case for retrieving the supported card schemas from the repository.
+ * Use case for retrieving the BIN data from the repository.
  *
- * @param repository The repository responsible for fetching card schemas from the remote source.
+ * @param repository The repository responsible for fetching BIN data from cache or asset.
  */
 internal class GetCardSchemasUseCase(private val repository: CardRepository) {
 
     /**
-     * Invoke the use case to fetch list of local card schemas.
+     * Invoke the use case to fetch BIN data.
      *
-     * @return A `Result` object containing either a `TreeMap` of card schemas if successful,
+     * @return A `Result` object containing either a [BinDataResponse] if successful,
+     * or an error if the operation fails.
      */
-    suspend operator fun invoke(): Result<TreeMap<Int, CardSchema>> = suspendRunCatching {
-        repository.getCardSchemas()
+    suspend operator fun invoke(): Result<BinDataResponse> = suspendRunCatching {
+        repository.getBinData()
     }
 }

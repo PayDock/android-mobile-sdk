@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -73,6 +74,7 @@ import com.paydock.sample.feature.checkout.ui.components.Checkout3DSBottomSheet
 import com.paydock.sample.feature.checkout.ui.steps.InformationStepView
 import com.paydock.sample.feature.checkout.ui.steps.PaymentStepView
 import com.paydock.sample.feature.checkout.ui.steps.PaymentWidgetView
+import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.account.domain.model.SavedAddress as ProfileSavedAddress
 import com.paydock.sample.feature.checkout.domain.model.SavedAddress as CheckoutSavedAddress
 
@@ -82,9 +84,16 @@ fun EnhancedCheckoutScreen(
     onDismiss: () -> Unit = {},
     onOrderComplete: (isSuccess: Boolean) -> Unit = {},
     viewModel: EnhancedCheckoutViewModel = hiltViewModel(),
+    configViewModel: ConfigViewModel = hiltViewModel(),
     initialStep: CheckoutStep? = null
 ) {
     val currentStep by viewModel.currentStep.collectAsState()
+    val checkoutConfig by configViewModel.checkoutConfig.collectAsState()
+
+    // Update checkout config in ViewModel when it changes
+    LaunchedEffect(checkoutConfig) {
+        viewModel.updateCheckoutConfig(checkoutConfig)
+    }
 
     // Listen for order completion and navigate to confirmation screen
     LaunchedEffect(viewModel.orderCompleted, viewModel.orderFailed) {
@@ -100,6 +109,8 @@ fun EnhancedCheckoutScreen(
     LaunchedEffect(initialStep) {
         initialStep?.let { viewModel.setCurrentStep(it) }
         viewModel.loadProfileData()
+        // Initialize checkout config on first load
+        viewModel.updateCheckoutConfig(checkoutConfig)
     }
 
     // Bind toolbar back handler for checkout route
@@ -130,16 +141,19 @@ fun EnhancedCheckoutScreen(
     val scrollState = rememberScrollState()
 
     // Sync navigation bar color with payment footer visibility
-    val selectedMethodForSystemBar = viewModel.selectedPaymentMethod
+    // Use derivedStateOf to avoid recomposition when other state changes
+    val selectedMethodForSystemBar by remember {
+        derivedStateOf { viewModel.selectedPaymentMethod }
+    }
+    val backgroundColor = MaterialTheme.colorScheme.background
     val navBarColor = if (selectedMethodForSystemBar != null) {
         MaterialTheme.colorScheme.surface
     } else {
-        MaterialTheme.colorScheme.background
+        backgroundColor
     }
-    val backgroundColor = MaterialTheme.colorScheme.background
     val view = LocalView.current
     val activity = remember(view) { view.context.findActivity() }
-    DisposableEffect(selectedMethodForSystemBar, navBarColor, activity) {
+    DisposableEffect(selectedMethodForSystemBar, activity) {
         val window = activity?.window
         if (window != null) {
             val controller = WindowCompat.getInsetsController(window, view)
@@ -204,7 +218,12 @@ fun EnhancedCheckoutScreen(
                 currentStep = currentStep
             )
 
-            CheckoutStep.PAYMENT -> PaymentFooter(viewModel = viewModel) { _ -> /* reserved for measurement if needed */ }
+            CheckoutStep.PAYMENT -> {
+                // Use key to force recomposition when payment method changes
+                key(viewModel.selectedPaymentMethod, viewModel.paymentWidgetResetKey) {
+                    PaymentFooter(viewModel = viewModel) { _ -> /* reserved for measurement if needed */ }
+                }
+            }
         }
     }
 
@@ -331,14 +350,14 @@ fun EnhancedCheckoutScreen(
             }
         )
         val isLoading = viewModel.isLoading
+        val threeDSType by viewModel.threeDSType.collectAsState()
         Checkout3DSBottomSheet(
             bottom3DSSheetState = bottom3DSSheetState,
             onDismissRequest = {
                 // Handle dismiss (close button click) as 3DS failure/cancellation
-                val type = viewModel.threeDSType
-                when (type) {
-                    ThreeDSType.INTEGRATED -> {
-                        viewModel.handleIntegrated3DSResult(
+                when (threeDSType) {
+                    ThreeDSType.MPGS -> {
+                        viewModel.handleMPGS3dsResult(
                             Result.failure(Exception("3DS cancelled by user"))
                         )
                     }
@@ -352,6 +371,7 @@ fun EnhancedCheckoutScreen(
             },
             vaultToken = vaultToken,
             threeDSToken = threeDSToken,
+            threeDSType = threeDSType,
             showCloseButton = !isLoading,
             viewModel = viewModel
         )
@@ -474,7 +494,10 @@ private fun PaymentFooter(
     viewModel: EnhancedCheckoutViewModel,
     onHeightChange: (Dp) -> Unit
 ) {
-    val selectedMethod = viewModel.selectedPaymentMethod
+    // Use derivedStateOf to avoid unnecessary recompositions
+    val selectedMethod by remember {
+        derivedStateOf { viewModel.selectedPaymentMethod }
+    }
     AnimatedVisibility(
         visible = selectedMethod != null,
         enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
@@ -510,7 +533,8 @@ private fun PaymentFooter(
                         if (method != null) {
                             // Use key with both method and resetKey to force fresh widget instance
                             // This ensures a new instance when method changes OR when resetKey changes
-                            key(method, viewModel.paymentWidgetResetKey) {
+                            val resetKey = viewModel.paymentWidgetResetKey
+                            key(method, resetKey) {
                                 PaymentWidgetView(
                                     method = method,
                                     viewModel = viewModel

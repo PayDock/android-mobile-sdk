@@ -8,6 +8,7 @@ import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.sample.feature.account.data.api.dto.CreateCustomerOTTRequest
 import com.paydock.sample.feature.account.domain.model.Customer
 import com.paydock.sample.feature.account.domain.usecase.CreateCustomerOTTUseCase
+import com.paydock.sample.feature.config.data.GlobalConfigRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +19,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AccountViewModel @Inject constructor(
     private val createCustomerOTTUseCase: CreateCustomerOTTUseCase,
+    private val globalConfigRepository: GlobalConfigRepository,
 ) : ViewModel(), WidgetLoadingDelegate {
 
     private val _stateFlow: MutableStateFlow<AccountUIState> = MutableStateFlow(AccountUIState())
@@ -38,7 +40,8 @@ class AccountViewModel @Inject constructor(
                 state.copy(isLoading = true, customer = null)
             }
             val request = CreateCustomerOTTRequest(vaultToken)
-            createCustomerOTTUseCase(request).onSuccess { result ->
+            val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
+            createCustomerOTTUseCase(accessToken, request).onSuccess { result ->
                 _stateFlow.update { state ->
                     state.copy(isLoading = false, customer = result)
                 }

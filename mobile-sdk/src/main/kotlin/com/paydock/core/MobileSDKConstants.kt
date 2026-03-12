@@ -127,17 +127,17 @@ internal object MobileSDKConstants {
     }
 
     /**
-     * Constants related to 3D Secure (3DS) configuration.
+     * Constants related to MPGS 3D Secure (3DS) configuration.
      *
-     * This object holds constants specific to the 3DS verification process.
+     * This object holds constants specific to the MPGS 3DS verification process.
      */
-    object Integrated3DSConfig {
+    object MPGS3dsConfig {
         object Errors {
-            const val INTEGRATED_3DS_ERROR =
-                "An unexpected error occurred while processing Integrated 3DS verification. " +
+            const val MPGS_3DS_ERROR =
+                "An unexpected error occurred while processing MPGS 3DS verification. " +
                     "Please try again later or contact support for assistance."
-            const val INVALID_TOKEN_ERROR = "Invalid Integrated 3DS token!"
-            const val INVALID_TOKEN_FORMAT_ERROR = "Invalid Integrated 3DS token format!"
+            const val INVALID_TOKEN_ERROR = "Invalid MPGS 3DS token!"
+            const val INVALID_TOKEN_FORMAT_ERROR = "Invalid MPGS 3DS token format!"
         }
     }
 
@@ -295,6 +295,27 @@ internal object MobileSDKConstants {
         object Errors {
             const val CLICK_TO_PAY_ERROR =
                 "An unexpected error occurred while processing ClickToPay. Please try again later or contact support for assistance."
+        }
+    }
+
+    /**
+     * Constants related to Zip configuration.
+     */
+    object ZipConfig {
+        /**
+         * Redirect URL used for Zip callbacks.
+         * This URL is used to capture the result of the Zip checkout flow.
+         */
+        internal const val ZIP_REDIRECT_URL = "https://paydock.com/zip/response"
+
+        object Errors {
+            const val ZIP_ERROR =
+                "An unexpected error occurred while processing Zip"
+            const val CANCELLATION_ERROR = "Zip tokenisation was cancelled"
+            const val DECLINED_ERROR = "Zip transaction was declined"
+            const val REFERRED_ERROR = "Zip transaction requires review"
+            const val UNKNOWN_ERROR = "An unknown error occurred. Please try again."
+            const val INVALID_URL = "Unsupported URL - unable to proceed."
         }
     }
 }

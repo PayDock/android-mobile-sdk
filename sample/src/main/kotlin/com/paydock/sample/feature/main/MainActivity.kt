@@ -30,8 +30,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
@@ -43,11 +43,13 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.paydock.feature.address.presentation.AddressDetailsAppearanceDefaults
 import com.paydock.feature.address.presentation.AddressDetailsWidgetAppearance
@@ -69,6 +71,8 @@ import com.paydock.feature.src.presentation.ClickToPayAppearanceDefaults
 import com.paydock.feature.src.presentation.ClickToPayWidgetAppearance
 import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSAppearanceDefaults
 import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSWidgetAppearance
+import com.paydock.feature.zip.presentation.ZipWidgetAppearance
+import com.paydock.feature.zip.presentation.ZipWidgetAppearanceDefaults
 import com.paydock.sample.designsystems.components.CenterAppTopBar
 import com.paydock.sample.designsystems.components.navigation.BottomNavigation
 import com.paydock.sample.designsystems.components.navigation.NavigationGraph
@@ -77,10 +81,10 @@ import com.paydock.sample.designsystems.components.navigation.showBackButton
 import com.paydock.sample.designsystems.components.navigation.showTitle
 import com.paydock.sample.designsystems.theme.AppTheme
 import com.paydock.sample.designsystems.theme.SampleTheme
+import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.style.StylingViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
 
 @AndroidEntryPoint
@@ -94,7 +98,7 @@ class MainActivity : ComponentActivity() {
             )
 
             var currentAppTheme by rememberSaveable(
-                stateSaver = Saver<AppTheme, String>(
+                stateSaver = Saver(
                     save = { it.name },
                     restore = { AppTheme.valueOf(it) }
                 )
@@ -129,15 +133,21 @@ private fun getSystemBarStyle(): SystemBarStyle = SystemBarStyle.run {
 @Composable
 fun MainScreenView(
     stylingViewModel: StylingViewModel = hiltViewModel(),
+    configViewModel: ConfigViewModel = hiltViewModel(),
     isActuallyDark: Boolean,
     onThemeSelected: (AppTheme) -> Unit
 ) {
     val context = LocalContext.current
-    val navController = rememberNavController()// Hoist these states outside the composable function
+    val navController = rememberNavController()
     val actionBarDetails = rememberActionBarDetails(navController, context)
 
+    // Track font scale to respond to accessibility settings changes
+    val configuration = LocalConfiguration.current
+    val fontScale = configuration.fontScale
+
     // *** Call @Composable defaults here, in the Composable scope ***
-    // These will re-evaluate if MainScreenView recomposes due to isActuallyDark changing
+    // These will re-evaluate if MainScreenView recomposes due to isActuallyDark or fontScale changing
+    // Call composable functions first, then remember the result
     val addressSdkDefaults: AddressDetailsWidgetAppearance =
         AddressDetailsAppearanceDefaults.appearance()
     val cardSdkDefaults: CardDetailsWidgetAppearance = CardDetailsAppearanceDefaults.appearance()
@@ -151,34 +161,51 @@ fun MainScreenView(
     val googlePaySdkDefaults: GooglePayWidgetAppearance = GooglePayAppearanceDefaults.appearance()
     val colesPaySdkDefaults: ColesPayWidgetAppearance =
         ColesPayWidgetAppearanceDefaults.appearance()
-    // For 3DS, ensure ThreeDSAppearanceDefaults.appearance() is also @Composable if its internals depend on theme
-    val integrated3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
+    val mpgs3dsSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
     val standalone3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
+    val zipSdkDefaults: ZipWidgetAppearance = ZipWidgetAppearanceDefaults.appearance()
 
-    // Effect to update ViewModel when theme changes
+    // Effect to update ViewModel when theme or font scale changes
     // On first init: Apply full defaults
-    // On theme change: Update theme-dependent properties while preserving user customizations
-    LaunchedEffect(isActuallyDark) {
+    // On theme/font scale change: Update theme-dependent properties while preserving user customizations
+    LaunchedEffect(isActuallyDark, fontScale) {
         val isInitialized = stylingViewModel.addressWidgetAppearance.value != null
-        
+
         // Update all widget appearances with theme-appropriate defaults
         // If already initialized, preserve user customizations
-        stylingViewModel.updateInitialAddressDefaults(addressSdkDefaults, preserveCustomizations = isInitialized)
-        stylingViewModel.updateInitialCardDetailsDefaults(cardSdkDefaults, preserveCustomizations = isInitialized)
-        stylingViewModel.updateInitialGiftCardDetailsDefaults(giftCardSdkDefaults, preserveCustomizations = isInitialized)
-        stylingViewModel.updateInitialPayPalVaultDefaults(payPalVaultSdkDefaults, preserveCustomizations = isInitialized)
-        
+        stylingViewModel.updateInitialAddressDefaults(
+            addressSdkDefaults,
+            preserveCustomizations = isInitialized
+        )
+        stylingViewModel.updateInitialCardDetailsDefaults(
+            cardSdkDefaults,
+            preserveCustomizations = isInitialized
+        )
+        stylingViewModel.updateInitialGiftCardDetailsDefaults(
+            giftCardSdkDefaults,
+            preserveCustomizations = isInitialized
+        )
+        stylingViewModel.updateInitialPayPalVaultDefaults(
+            payPalVaultSdkDefaults,
+            preserveCustomizations = isInitialized
+        )
+
         // Widgets without customization tracking - always update (these typically only have theme colors)
         stylingViewModel.updateInitialClickToPayDefaults(clickToPaySdkDefaults)
         stylingViewModel.updateInitialAfterpayDefaults(afterpaySdkDefaults)
         stylingViewModel.updateInitialPayPalDefaults(payPalSdkDefaults)
         stylingViewModel.updateInitialGooglePayDefaults(googlePaySdkDefaults)
         stylingViewModel.updateInitialColesPayDefaults(colesPaySdkDefaults)
-        stylingViewModel.updateInitialIntegrated3DSDefaults(integrated3DSSdkDefaults)
+        stylingViewModel.updateInitialMPGS3dsDefaults(mpgs3dsSdkDefaults)
         stylingViewModel.updateInitialStandalone3DSDefaults(standalone3DSSdkDefaults)
+        stylingViewModel.updateInitialZipDefaults(zipSdkDefaults)
+
+        // Config defaults are now initialized in ConfigViewModel constructor
+        // No need to call updateInitial* methods here unless overriding defaults
     }
 
-    // Observe a combined state or a specific one to gate the UI
+    // Optimize: Collect all initialization states in a single combined flow to reduce recompositions
+    // Use separate state collections and combine them
     val isAddressInitialized by stylingViewModel.addressWidgetAppearance.map { it != null }
         .collectAsState(initial = false)
     val isCardInitialized by stylingViewModel.cardDetailsWidgetAppearance.map { it != null }
@@ -197,10 +224,30 @@ fun MainScreenView(
         .collectAsState(initial = false)
     val isColesPayWidgetAppearanceInitialized by stylingViewModel.colesPayWidgetAppearance.map { it != null }
         .collectAsState(initial = false)
-    val isIntegrated3DSWidgetAppearanceInitialized by stylingViewModel.integrated3DSWidgetAppearance.map { it != null }
+    val isMPGS3dsWidgetAppearanceInitialized by stylingViewModel.mpgs3dsWidgetAppearance.map { it != null }
         .collectAsState(initial = false)
     val isStandalone3DSWidgetAppearanceInitialized by stylingViewModel.standalone3DSWidgetAppearance.map { it != null }
         .collectAsState(initial = false)
+    val isZipWidgetAppearanceInitialized by stylingViewModel.zipWidgetAppearance.map { it != null }
+        .collectAsState(initial = false)
+
+    // Combine all states using derivedStateOf to avoid recomposition when individual states don't change
+    val isAllInitialized by remember {
+        derivedStateOf {
+            isAddressInitialized &&
+                    isCardInitialized &&
+                    isGiftCardInitialized &&
+                    isClickToPayInitialized &&
+                    isAfterpayInitialized &&
+                    isPayPalInitialized &&
+                    isPayPalVaultInitialized &&
+                    isGooglePayWidgetAppearanceInitialized &&
+                    isColesPayWidgetAppearanceInitialized &&
+                    isMPGS3dsWidgetAppearanceInitialized &&
+                    isStandalone3DSWidgetAppearanceInitialized &&
+                    isZipWidgetAppearanceInitialized
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -223,16 +270,7 @@ fun MainScreenView(
                             ),
                             label = "toolbarBadgeScale"
                         )
-                        var lastCount by remember { mutableIntStateOf(itemCount) }
                         val haptic = LocalHapticFeedback.current
-                        LaunchedEffect(itemCount) {
-                            if (itemCount > lastCount) {
-                                pulse = true
-                                delay(300)
-                                pulse = false
-                            }
-                            lastCount = itemCount
-                        }
 
                         // Cart button with badge (uses default ripple)
                         BadgedBox(
@@ -312,10 +350,11 @@ fun MainScreenView(
                     NavigationGraph(
                         navController = navController,
                         stylingViewModel,
+                        configViewModel,
                         onThemeSelected
                     )
 
-                    if (!(isAddressInitialized && isCardInitialized && isGiftCardInitialized && isClickToPayInitialized && isAfterpayInitialized && isPayPalInitialized && isPayPalVaultInitialized && isGooglePayWidgetAppearanceInitialized && isColesPayWidgetAppearanceInitialized && isIntegrated3DSWidgetAppearanceInitialized && isStandalone3DSWidgetAppearanceInitialized)) {
+                    if (!isAllInitialized) {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -342,23 +381,23 @@ class ActionBarDetails(
 // Function to calculate action bar details, remember the result
 @Composable
 fun rememberActionBarDetails(navController: NavHostController, context: Context): ActionBarDetails {
-    var actionBarTitle by rememberSaveable { mutableStateOf("") }
-    var showBackButton by rememberSaveable { mutableStateOf(false) }
-    var showTitle by rememberSaveable { mutableStateOf(true) }
-    var route by rememberSaveable { mutableStateOf("") }
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
 
-    LaunchedEffect(navController) {
-        navController.currentBackStackEntryFlow.collect { backStackEntry ->
-            actionBarTitle = backStackEntry.getRouteTitle(context)
-            showBackButton = backStackEntry.showBackButton()
-            showTitle = backStackEntry.showTitle()
-            route = backStackEntry.destination.route ?: ""
+    // Use derivedStateOf to compute values only when route changes, reducing recompositions
+    // derivedStateOf automatically tracks navBackStackEntry changes
+    val actionBarDetails by remember {
+        derivedStateOf {
+            val backStackEntry = navBackStackEntry
+            ActionBarDetails(
+                title = backStackEntry?.getRouteTitle(context) ?: "",
+                showBackButton = backStackEntry?.showBackButton() ?: false,
+                showTitle = backStackEntry?.showTitle() ?: true,
+                route = backStackEntry?.destination?.route ?: ""
+            )
         }
     }
 
-    return remember(actionBarTitle, showBackButton, showTitle, route) {
-        ActionBarDetails(actionBarTitle, showBackButton, showTitle, route)
-    }
+    return actionBarDetails
 }
 
 @PreviewLightDark

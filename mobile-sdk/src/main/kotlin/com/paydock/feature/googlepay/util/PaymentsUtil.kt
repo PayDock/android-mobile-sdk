@@ -7,6 +7,7 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 /**
  * Utility object responsible for handling Google Pay logic and configuration.
@@ -58,7 +59,7 @@ object PaymentsUtil {
             put(
                 "transactionInfo",
                 getTransactionInfo(
-                    amount.toPlainString(),
+                    formatAmountForGooglePay(amount),
                     amountLabel,
                     countryCode,
                     currencyCode
@@ -74,6 +75,15 @@ object PaymentsUtil {
             put("shippingAddressParameters", shippingAddressParameters)
             put("shippingAddressRequired", shippingAddressRequired)
         }
+    }
+
+    /**
+     * Formats amount for Google Pay API totalPrice field.
+     * Google Pay requires format: ^[0-9]+(.[0-9][0-9])?$ (max 2 decimal places).
+     * Amounts from Double or imprecise BigDecimal can produce invalid strings; this normalizes them.
+     */
+    private fun formatAmountForGooglePay(amount: BigDecimal): String {
+        return amount.setScale(2, RoundingMode.HALF_UP).toPlainString()
     }
 
     /**

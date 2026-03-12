@@ -1,5 +1,28 @@
 # Changelog
 
+## [5.3.0] - 2026-03-12
+
+### Added
+- Implemented `ZipWidget` for Zip Money support
+- Disabled state alpha configurable for image button appearance (`ImageButtonAppearance.disabledImageAlpha`)
+- Added config page to sample app (Global Config, Checkout Config, Widgets Config)
+
+### Changed
+- Updated bin processing for `CardDetailsWidget` (BIN file loading, validation, and scheme detection)
+- Updated form validations for `CardDetailsWidget` and `GiftCardWidget`
+- Security code and PIN code entry in `CardDetailsWidget` and `GiftCardWidget` now use secure text fields (`PasswordVisualTransformation`)
+- Saving of CVV now configurable for `CardDetailsWidget` via `storeSecurityCode` in `CardDetailsWidgetConfig`
+- Removed legacy "Solo" and "AUSBC" from supported card schemes for `CardDetailsWidget`
+- Removed autocorrect for cardholder name for `CardDetailsWidget`
+- Updated Amex card scheme icon for `CardDetailsWidget`
+- Font for widgets now defaults to system font (`MaterialTheme.typography`)
+- Improved error mappings to readable strings
+
+### Fixed
+- Action buttons disabled state styling
+- Gift Card and Card number input field pasting options
+- Incorrect fallback validation for unrecognised card schemes
+
 ## [5.2.0] - 2025-11-28
 
 ### Added
@@ -10,7 +33,7 @@
 - Updated checkout implementation for ExampleApp (demo app - E2E flows)
 
 ### Changed
-- Updated internal libraries for `Integrated3DSWidget`, `Standalone3DSWidget` and `ClickToPayWidget`
+- Updated internal libraries for `MPGS3dsWidget`, `Standalone3DSWidget` and `ClickToPayWidget`
 - Updated PayPal SDK from version `2.0.0` to `2.3.0`
 - Configuration improvements: address moved to Config object for Address Widget; 
 - Text and Icon customisation moved into appearance objects for SDK button widgets (ie. `PayPalSavePaymentSourceWidget`, `CardDetailsWidget`, `AddressDetailsWidget` and `GiftCardWidget`)
@@ -74,7 +97,7 @@
 ## [4.0.0] - 2025-03-28
 
 ### Changed
-- Split ThreeDSWidget into Integrated3DS and Standalone3DS widgets
+- Split ThreeDSWidget into MPGS 3DS and Standalone3DS widgets
 - Updated dependencies and gradle version to `8.8.2`
 - SDK theme colours to be accessibility compliant
 - Content descriptions for implied buttons (Used by accessibility TalkBack)

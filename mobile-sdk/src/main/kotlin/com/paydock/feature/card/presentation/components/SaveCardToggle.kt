@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -59,7 +60,9 @@ internal fun SaveCardToggle(
     }
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("saveCardToggle"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
@@ -67,20 +70,24 @@ internal fun SaveCardToggle(
             horizontalAlignment = Alignment.Start
         ) {
             // Consent Label
-            SdkText(
-                modifier = Modifier.fillMaxWidth(),
-                text = config.consentText,
-                appearance = linkToggleAppearance
-            )
+            if (config.consentText.isNotBlank()) {
+                SdkText(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = config.consentText,
+                    appearance = linkToggleAppearance
+                )
+            }
             // Privacy Policy Label
-            if (config.privacyPolicyConfig != null) {
+            if (config.privacyPolicyConfig != null && config.privacyPolicyConfig.isValid()) {
                 SdkLinkText(
                     linkText = config.privacyPolicyConfig.privacyPolicyText,
                     appearance = linkTextAppearance
                 ) {
                     if (enabled) {
                         onPrivacyPolicyClick?.invoke(config.privacyPolicyConfig.privacyPolicyURL)
-                        context.openBrowser(config.privacyPolicyConfig.privacyPolicyURL)
+                        context.openBrowser(
+                            urlString = config.privacyPolicyConfig.privacyPolicyURL
+                        )
                     }
                 }
             }
@@ -89,6 +96,7 @@ internal fun SaveCardToggle(
         SdkToggle(
             modifier = Modifier
                 .align(Alignment.CenterVertically)
+                .testTag("saveCardToggleSwitch")
                 .semantics {
                     contentDescription = "$descriptionText. $currentToggleState"
                     role = Role.Switch

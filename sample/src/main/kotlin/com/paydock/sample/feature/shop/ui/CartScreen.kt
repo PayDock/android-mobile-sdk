@@ -5,15 +5,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
@@ -34,14 +35,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.paydock.sample.core.utils.CurrencyFormatter
 import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.components.button.AppButtonShape
 import com.paydock.sample.designsystems.components.button.AppTextButton
 import com.paydock.sample.designsystems.theme.SampleTheme
+import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.shop.domain.model.CartItem
 
@@ -49,8 +54,11 @@ import com.paydock.sample.feature.shop.domain.model.CartItem
 @Composable
 fun CartScreen(
     onCheckout: () -> Unit = {},
-    onContinueShopping: () -> Unit = {}
+    onContinueShopping: () -> Unit = {},
+    configViewModel: ConfigViewModel = hiltViewModel()
 ) {
+    val globalConfig by configViewModel.globalConfig.collectAsState()
+    val currencyCode = globalConfig.currencyCode
     val cartManager = remember { CartManager.shared }
     val cartItems by cartManager.cartItems.collectAsState()
 
@@ -60,6 +68,7 @@ fun CartScreen(
         CartContentView(
             cartManager = cartManager,
             cartItems = cartItems,
+            currencyCode = currencyCode,
             onCheckout = onCheckout
         )
     }
@@ -73,7 +82,8 @@ private fun EmptyCartView(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(32.dp)
+            .testTag("empty_cart_view"),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -90,20 +100,24 @@ private fun EmptyCartView(
             Text(
                 text = "Your cart is empty",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.testTag("empty_cart_title")
             )
 
             Text(
                 text = "Add some products to get started",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.testTag("empty_cart_message")
             )
 
             AppButton(
                 text = "Continue Shopping",
                 onClick = onContinueShopping,
                 shape = AppButtonShape.Pill,
-                modifier = Modifier.width(200.dp)
+                modifier = Modifier
+                    .width(200.dp)
+                    .testTag("empty_cart_continue_shopping_button")
             )
         }
     }
@@ -113,69 +127,79 @@ private fun EmptyCartView(
 private fun CartContentView(
     cartManager: CartManager,
     cartItems: List<CartItem>,
+    currencyCode: String,
     onCheckout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        Column(
+        // Use LazyColumn for better performance with many items
+        LazyColumn(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .testTag("cart_items_list"),
+            contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Cart Items Section
-            CartItemsSection(
-                cartItems = cartItems,
-                cartManager = cartManager
-            )
+            // Cart Items Section Header
+            item {
+                CartItemsSectionHeader(cartManager = cartManager)
+            }
 
-            // Gift Card, Shipping, and Order Summary moved to Payment step
+            // Cart Items - lazy loaded for better performance
+            items(
+                items = cartItems,
+                key = { it.product.id } // Use product ID as key for stable recomposition
+            ) { cartItem ->
+                CartItemRowView(
+                    cartItem = cartItem,
+                    currencyCode = currencyCode,
+                    onQuantityChange = { updatedItem, newQuantity ->
+                        cartManager.updateQuantity(updatedItem, newQuantity)
+                    },
+                    onRemove = { itemToRemove ->
+                        cartManager.removeFromCart(itemToRemove)
+                    }
+                )
+            }
         }
 
         // Checkout Button fixed at bottom with safe padding and cost summary
-        CheckoutButton(cartManager = cartManager, onCheckout = onCheckout)
+        CheckoutButton(
+            cartItems = cartItems,
+            cartManager = cartManager,
+            currencyCode = currencyCode,
+            onCheckout = onCheckout
+        )
     }
 }
 
 @Composable
-private fun CartItemsSection(
-    cartItems: List<CartItem>,
+private fun CartItemsSectionHeader(
     cartManager: CartManager
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = "Items (${cartManager.itemCount})",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-
-        cartItems.forEach { cartItem ->
-            CartItemRowView(
-                cartItem = cartItem,
-                onQuantityChange = { updatedItem, newQuantity ->
-                    cartManager.updateQuantity(updatedItem, newQuantity)
-                },
-                onRemove = { itemToRemove ->
-                    cartManager.removeFromCart(itemToRemove)
-                }
-            )
-        }
-    }
+    Text(
+        text = "Items (${cartManager.itemCount})",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier
+            .padding(bottom = 12.dp)
+            .testTag("cart_items_header")
+    )
 }
 
 @Composable
 private fun CartItemRowView(
     cartItem: CartItem,
+    currencyCode: String,
     onQuantityChange: (CartItem, Int) -> Unit,
     onRemove: (CartItem) -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("cart_item_${cartItem.product.id}"),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -194,7 +218,8 @@ private fun CartItemRowView(
                 modifier = Modifier
                     .size(80.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                    .testTag("cart_item_image_${cartItem.product.id}"),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
@@ -214,13 +239,15 @@ private fun CartItemRowView(
                     text = cartItem.product.name,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
-                    maxLines = 2
+                    maxLines = 2,
+                    modifier = Modifier.testTag("cart_item_name_${cartItem.product.id}")
                 )
 
                 Text(
-                    text = cartItem.product.formattedPrice,
+                    text = CurrencyFormatter.format(cartItem.product.price, currencyCode),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag("cart_item_price_${cartItem.product.id}")
                 )
             }
 
@@ -241,7 +268,8 @@ private fun CartItemRowView(
                             } else {
                                 onQuantityChange(cartItem, newQuantity)
                             }
-                        }
+                        },
+                        modifier = Modifier.testTag("cart_item_decrease_${cartItem.product.id}")
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Remove,
@@ -253,13 +281,15 @@ private fun CartItemRowView(
                     Text(
                         text = cartItem.quantity.toString(),
                         style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.testTag("cart_item_quantity_${cartItem.product.id}")
                     )
 
                     IconButton(
                         onClick = {
                             onQuantityChange(cartItem, cartItem.quantity + 1)
-                        }
+                        },
+                        modifier = Modifier.testTag("cart_item_increase_${cartItem.product.id}")
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Add,
@@ -273,7 +303,8 @@ private fun CartItemRowView(
                     text = "Remove",
                     onClick = { onRemove(cartItem) },
                     style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.error),
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.testTag("cart_item_remove_${cartItem.product.id}")
                 )
             }
         }
@@ -282,14 +313,14 @@ private fun CartItemRowView(
 
 @Composable
 private fun CheckoutButton(
+    cartItems: List<CartItem>,
     cartManager: CartManager,
+    currencyCode: String,
     onCheckout: () -> Unit
 ) {
-    // Collect cart items to trigger recomposition when they change
-    val cartItems by cartManager.cartItems.collectAsState()
-    // Calculate subtotal based on the current cart items
-    val formattedSubtotal = remember(cartItems) {
-        cartManager.formattedSubtotal
+    // Calculate subtotal based on the current cart items - use remember to cache
+    val formattedSubtotal = remember(cartItems, currencyCode) {
+        CurrencyFormatter.format(cartManager.subtotal, currencyCode)
     }
 
     Column {
@@ -298,19 +329,22 @@ private fun CheckoutButton(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .testTag("cart_subtotal_row"),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "Subtotal",
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.testTag("cart_subtotal_label")
             )
             Text(
                 text = formattedSubtotal,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.testTag("cart_subtotal_amount")
             )
         }
         AppButton(
@@ -319,6 +353,7 @@ private fun CheckoutButton(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
+                .testTag("cart_checkout_button")
         )
     }
 }

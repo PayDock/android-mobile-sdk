@@ -1,8 +1,10 @@
 package com.paydock.feature.address.presentation
 
 import android.location.Geocoder
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -18,12 +20,17 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.compose.LocalKoinApplication
+import org.koin.compose.LocalKoinScope
+import org.koin.core.annotation.KoinInternalApi
 import org.koin.core.context.loadKoinModules
 import org.koin.core.context.unloadKoinModules
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
+import org.koin.mp.KoinPlatformTools
 
+@OptIn(KoinInternalApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class AddressWidgetTest : BaseViewModelKoinTest<AddressDetailsViewModel>() {
 
@@ -120,7 +127,8 @@ internal class AddressWidgetTest : BaseViewModelKoinTest<AddressDetailsViewModel
 
         // Step 4: Verify "No address found" error message appears
         try {
-            composeTestRule.onNodeWithText("No address found").assertIsDisplayed()
+            composeTestRule.onAllNodesWithText("No address found", useUnmergedTree = true)[0]
+                .assertIsDisplayed()
             println("✅ 'No address found' error message is displayed")
         } catch (e: Exception) {
             println("❌ 'No address found' error message not found: ${e.message}")
@@ -194,13 +202,18 @@ internal class AddressWidgetTest : BaseViewModelKoinTest<AddressDetailsViewModel
         println("=== Setting up Address Widget Directly ===")
 
         try {
-            // Set the widget content directly
+            // Set the widget content directly with Koin scope for ViewModel resolution
             composeTestRule.setContent {
-                AddressDetailsWidget(
-                    completion = { billingAddress ->
-                        println("Address completion result: $billingAddress")
-                    }
-                )
+                CompositionLocalProvider(
+                    LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
+                    LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
+                ) {
+                    AddressDetailsWidget(
+                        completion = { billingAddress ->
+                            println("Address completion result: $billingAddress")
+                        }
+                    )
+                }
             }
 
             println("✅ Address widget set up successfully")

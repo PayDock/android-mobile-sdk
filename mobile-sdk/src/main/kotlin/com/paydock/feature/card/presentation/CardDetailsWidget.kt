@@ -31,7 +31,6 @@ import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.designsystems.components.link.LinkTextAppearance
 import com.paydock.designsystems.components.link.LinkTextAppearanceDefaults
-import com.paydock.designsystems.components.text.SdkText
 import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.text.TextAppearanceDefaults
 import com.paydock.designsystems.components.toggle.ToggleAppearance
@@ -40,6 +39,7 @@ import com.paydock.designsystems.core.WidgetDefaults
 import com.paydock.feature.card.domain.model.CardDetailsEventNames
 import com.paydock.feature.card.domain.model.integration.CardDetailsWidgetConfig
 import com.paydock.feature.card.domain.model.integration.CardResult
+import com.paydock.feature.card.domain.model.integration.enums.CardType
 import com.paydock.feature.card.presentation.components.CardInputFields
 import com.paydock.feature.card.presentation.components.SaveCardToggle
 import com.paydock.feature.card.presentation.components.SupportedCardBanner
@@ -85,6 +85,7 @@ fun CardDetailsWidget(
         parametersOf(config.accessToken, config.gatewayId, config.schemeSupport)
     })
     viewModel.setCollectCardholderName(config.collectCardholderName)
+    viewModel.setStoreSecurityCode(config.storeSecurityCode)
     val inputState by viewModel.inputStateFlow.collectAsState()
     val uiState by viewModel.stateFlow.collectAsState()
     val isDataValid by remember(uiState) { derivedStateOf { inputState.isDataValid } }
@@ -112,17 +113,12 @@ fun CardDetailsWidget(
         verticalArrangement = Arrangement.spacedBy(appearance.verticalSpacing, Alignment.Top),
         horizontalAlignment = Alignment.Start
     ) {
-        // Title for the card information section
-        if (config.showCardTitle) {
-            SdkText(
-                modifier = Modifier.fillMaxWidth(),
-                text = stringResource(id = R.string.label_card_information),
-                appearance = appearance.title
-            )
+        // Show card scheme icons: if null (allow all) or empty set, show all schemes; otherwise show selected schemes
+        val schemesToDisplay = when {
+            config.schemeSupport.supportedSchemes.isNullOrEmpty() -> CardType.entries.toSet()
+            else -> config.schemeSupport.supportedSchemes!!
         }
-        if (!config.schemeSupport.supportedSchemes.isNullOrEmpty()) {
-            SupportedCardBanner(config.schemeSupport.supportedSchemes)
-        }
+        SupportedCardBanner(schemesToDisplay)
         CardInputFields(
             shouldCollectCardholderName = config.collectCardholderName,
             schemeConfig = config.schemeSupport,
@@ -145,7 +141,7 @@ fun CardDetailsWidget(
         )
 
         // Save card toggle switch (if configured)
-        if (config.allowSaveCard != null) {
+        if (config.allowSaveCard != null && config.allowSaveCard.isValid()) {
             SaveCardToggle(
                 enabled = uiState !is CardDetailsUIState.Loading && enabled,
                 saveCard = inputState.saveCard,
@@ -211,7 +207,6 @@ fun CardDetailsWidget(
  * @property horizontalSpacing The horizontal spacing within composite elements (e.g., text fields).
  * @property textFieldVerticalSpacing The vertical spacing between text input fields.
  * @property textFieldHorizontalSpacing The horizontal spacing between text input fields.
- * @property title The text appearance for the widget's title.
  * @property textField The appearance settings for the text input fields (e.g., card number, expiry).
  * @property actionButton A composable lambda that provides the [ButtonAppearance] based on whether the button is enabled.
  * @property toggle The appearance settings for the toggle switch (e.g., save card option).
@@ -224,7 +219,6 @@ class CardDetailsWidgetAppearance(
     val horizontalSpacing: Dp,
     val textFieldVerticalSpacing: Dp,
     val textFieldHorizontalSpacing: Dp,
-    val title: TextAppearance,
     val textField: TextFieldAppearance,
     val actionButton: ButtonAppearance,
     val toggle: ToggleAppearance,
@@ -243,7 +237,6 @@ class CardDetailsWidgetAppearance(
      * @param horizontalSpacing The horizontal spacing to use. Defaults to the original horizontal spacing.
      * @param textFieldVerticalSpacing The vertical spacing between text fields. Defaults to the original text field vertical spacing.
      * @param textFieldHorizontalSpacing The horizontal spacing between text fields. Defaults to the original text field horizontal spacing.
-     * @param title The text appearance for the title. Defaults to the original title appearance.
      * @param textField The appearance for text fields. Defaults to the original text field appearance.
      * @param actionButton A composable lambda that defines the appearance of the action button based on its enabled state.
      *   Defaults to the original action button appearance.
@@ -257,7 +250,6 @@ class CardDetailsWidgetAppearance(
         horizontalSpacing: Dp = this.horizontalSpacing,
         textFieldVerticalSpacing: Dp = this.textFieldVerticalSpacing,
         textFieldHorizontalSpacing: Dp = this.textFieldHorizontalSpacing,
-        title: TextAppearance = this.title,
         textField: TextFieldAppearance = this.textField,
         actionButton: ButtonAppearance = this.actionButton,
         switch: ToggleAppearance = this.toggle,
@@ -269,7 +261,6 @@ class CardDetailsWidgetAppearance(
             horizontalSpacing = horizontalSpacing.takeOrElse { this.horizontalSpacing },
             textFieldVerticalSpacing = textFieldVerticalSpacing.takeOrElse { this.textFieldVerticalSpacing },
             textFieldHorizontalSpacing = textFieldHorizontalSpacing.takeOrElse { this.textFieldHorizontalSpacing },
-            title = title.copy(),
             textField = textField.copy(),
             actionButton = when (actionButton) {
                 is ButtonAppearance.FilledButtonAppearance -> actionButton.copy()
@@ -292,7 +283,6 @@ class CardDetailsWidgetAppearance(
         if (horizontalSpacing != other.horizontalSpacing) return false
         if (textFieldVerticalSpacing != other.textFieldVerticalSpacing) return false
         if (textFieldHorizontalSpacing != other.textFieldHorizontalSpacing) return false
-        if (title != other.title) return false
         if (textField != other.textField) return false
         if (actionButton != other.actionButton) return false
         if (toggle != other.toggle) return false
@@ -307,7 +297,6 @@ class CardDetailsWidgetAppearance(
         result = 31 * result + horizontalSpacing.hashCode()
         result = 31 * result + textFieldVerticalSpacing.hashCode()
         result = 31 * result + textFieldHorizontalSpacing.hashCode()
-        result = 31 * result + title.hashCode()
         result = 31 * result + textField.hashCode()
         result = 31 * result + actionButton.hashCode()
         result = 31 * result + toggle.hashCode()
@@ -342,9 +331,6 @@ object CardDetailsAppearanceDefaults {
         horizontalSpacing = WidgetDefaults.Spacing,
         textFieldVerticalSpacing = WidgetDefaults.Spacing,
         textFieldHorizontalSpacing = WidgetDefaults.Spacing,
-        title = TextAppearanceDefaults.appearance().copy(
-            style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
-        ),
         textField = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
         actionButton = ButtonAppearanceDefaults.filledButtonAppearance().copy(
             text = stringResource(R.string.button_submit)

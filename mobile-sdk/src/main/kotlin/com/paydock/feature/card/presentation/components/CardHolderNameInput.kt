@@ -3,7 +3,6 @@ package com.paydock.feature.card.presentation.components
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -12,11 +11,11 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import com.paydock.R
-import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.components.input.TextFieldAppearance
@@ -24,7 +23,6 @@ import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.presentation.utils.errors.CardHolderNameError
 import com.paydock.feature.card.presentation.utils.validators.CardHolderNameValidator
 import com.paydock.feature.card.presentation.utils.validators.CreditCardInputParser
-import kotlinx.coroutines.delay
 
 /**
  * Composable that displays an input field for the cardholder name.
@@ -54,31 +52,32 @@ internal fun CardHolderNameInput(
     onValueChange: (String) -> Unit
 ) {
     var hasUserInteracted by remember { mutableStateOf(false) }
+    var suppressErrorUntilNextInput by remember { mutableStateOf(false) }
+    var focusedState by remember { mutableStateOf(false) }
+    val previousFocus = remember { object { var value = false } }
 
-    var debouncedValue by remember { mutableStateOf("") }
-    LaunchedEffect(value) {
-        delay(MobileSDKConstants.General.INPUT_DELAY)
-        debouncedValue = value
-    }
-
-    // Validate possible cardholder errors
-    val cardHolderError = CardHolderNameValidator.validateHolderNameInput(debouncedValue, hasUserInteracted)
-
-    // Define the error message to be shown if the cardholder name is invalid
-    val errorMessage = when (cardHolderError) {
-        CardHolderNameError.InvalidLuhn -> stringResource(id = R.string.error_luhn_card_holder_name)
-        CardHolderNameError.InvalidFormat,
-        CardHolderNameError.Empty -> stringResource(id = R.string.error_card_holder_name)
+    val cardHolderError = CardHolderNameValidator.validateHolderNameInput(value, hasUserInteracted)
+    val mappedError = when (cardHolderError) {
+        CardHolderNameError.Empty,
         CardHolderNameError.None -> null
+        CardHolderNameError.InvalidLuhn -> stringResource(id = R.string.error_luhn_card_holder_name)
+        CardHolderNameError.InvalidFormat -> stringResource(id = R.string.error_card_holder_name)
     }
+    val errorMessage = if (suppressErrorUntilNextInput) null else mappedError
 
-    // Use AppTextField from the AppCompat library with the specified properties
     SdkTextField(
-        modifier = modifier,
+        modifier = modifier.onFocusChanged {
+            focusedState = it.isFocused
+            val justGainedFocus = it.isFocused && !previousFocus.value
+            previousFocus.value = it.isFocused
+            if (justGainedFocus) suppressErrorUntilNextInput = true
+            if (!it.isFocused) suppressErrorUntilNextInput = false
+        },
         appearance = appearance,
         value = value,
         onValueChange = { newValue ->
             hasUserInteracted = true
+            suppressErrorUntilNextInput = false
             // Validate and parse the input when the value changes
             CreditCardInputParser.parseHolderName(newValue)?.let { parsedName ->
                 onValueChange(parsedName)
@@ -87,6 +86,7 @@ internal fun CardHolderNameInput(
         label = stringResource(id = R.string.label_cardholder_name),
         enabled = enabled,
         error = errorMessage,
+        showValidIcon = cardHolderError == CardHolderNameError.None && value.isNotBlank() && !focusedState,
         autofillType = ContentType.PersonFullName,
         // Use keyboard options and actions for a more user-friendly input experience
         keyboardOptions = KeyboardOptions(

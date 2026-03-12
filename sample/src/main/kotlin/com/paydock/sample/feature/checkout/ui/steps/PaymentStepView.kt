@@ -43,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -65,6 +66,7 @@ import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.R
+import com.paydock.sample.core.utils.CurrencyFormatter
 import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.components.button.AppTextButton
 import com.paydock.sample.designsystems.components.sheets.AppBottomSheet
@@ -77,6 +79,8 @@ import com.paydock.sample.feature.checkout.ui.components.ClickToPayComponent
 import com.paydock.sample.feature.checkout.ui.components.ColesPayContent
 import com.paydock.sample.feature.checkout.ui.components.GooglePayContent
 import com.paydock.sample.feature.checkout.ui.components.PayPalContent
+import com.paydock.sample.feature.checkout.ui.components.ZipContent
+import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.shop.domain.model.AppliedGiftCard
 import com.paydock.sample.feature.shop.domain.model.GiftCard
@@ -86,10 +90,13 @@ import com.paydock.sample.feature.wallet.presentation.WalletViewModel
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PaymentStepView(
-    viewModel: EnhancedCheckoutViewModel
+    viewModel: EnhancedCheckoutViewModel,
+    configViewModel: ConfigViewModel = hiltViewModel()
 ) {
     // Shared cart manager for shipping/gift card sections
     val cartManager = remember { CartManager.shared }
+    val globalConfig by configViewModel.globalConfig.collectAsState()
+    val currencyCode = globalConfig.currencyCode
 
     var expanded by remember { mutableStateOf(false) }
     var showGiftCardEntry by remember { mutableStateOf(false) }
@@ -98,14 +105,16 @@ fun PaymentStepView(
     val sectionSpacing = 20.dp
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(sectionSpacing),
-        contentPadding = PaddingValues(bottom = 12.dp)
+        contentPadding = PaddingValues(bottom = 12.dp),
+        modifier = Modifier.testTag("payment_step_view")
     ) {
         // Title (scrolls with content)
         item {
             Text(
                 text = stringResource(R.string.label_payment_method),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.testTag("payment_method_title")
             )
         }
 
@@ -122,7 +131,9 @@ fun PaymentStepView(
                             .padding(bottom = sectionSpacing)
                     ) {
                         Card(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("payment_method_dropdown"),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surface
                             ),
@@ -143,6 +154,7 @@ fun PaymentStepView(
                                         "ic_afterpay" -> R.drawable.ic_afterpay
                                         "ic_src" -> R.drawable.ic_src
                                         "ic_coles_pay" -> R.drawable.ic_coles_pay
+                                        "ic_zip_widget" -> R.drawable.ic_zip_widget
                                         else -> R.drawable.ic_card_filled
                                     }
                                     Image(
@@ -157,7 +169,9 @@ fun PaymentStepView(
                                         ?: stringResource(R.string.label_select_payment_method),
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .testTag("payment_method_selected_text")
                                 )
                                 Icon(
                                     imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
@@ -175,7 +189,10 @@ fun PaymentStepView(
         // Expanded list lives as regular item(s) so it scrolls with content
         if (expanded) {
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.testTag("payment_method_list")
+                ) {
                     PaymentMethod.getAllMethods().forEach { method ->
                         PaymentMethodRow(
                             method = method,
@@ -194,6 +211,7 @@ fun PaymentStepView(
             GiftCardSection(
                 appliedGiftCards = cartManager.appliedGiftCards.collectAsState().value,
                 cartManager = cartManager,
+                currencyCode = currencyCode,
                 onShowGiftCardEntry = {
                     giftCardSheetKey++
                     showGiftCardEntry = true
@@ -207,7 +225,8 @@ fun PaymentStepView(
         item {
             ShippingSection(
                 selectedShipping = cartManager.selectedShipping.collectAsState().value,
-                cartManager = cartManager
+                cartManager = cartManager,
+                currencyCode = currencyCode
             )
         }
 
@@ -216,7 +235,7 @@ fun PaymentStepView(
         }
 
         item {
-            ReviewSummary()
+            ReviewSummary(currencyCode = currencyCode)
         }
     }
 
@@ -231,68 +250,113 @@ fun PaymentStepView(
 }
 
 @Composable
-private fun ReviewSummary() {
+private fun ReviewSummary(currencyCode: String) {
     val cartManager = CartManager.shared
     val appliedGiftCards = cartManager.appliedGiftCards.collectAsState().value
     // Collect to trigger recomposition when these change
     cartManager.selectedShipping.collectAsState().value
     cartManager.cartItems.collectAsState().value
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.testTag("review_summary_section")
+    ) {
         Text(
             text = "Order Summary",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.testTag("order_summary_title")
         )
         // Reuse minimal summary similar to ReviewStepView
         HorizontalDivider()
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("order_summary_subtotal_row"),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = "Subtotal",
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("order_summary_subtotal_label"),
                 style = MaterialTheme.typography.bodyMedium
             )
-            Text(text = cartManager.formattedSubtotal, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = CurrencyFormatter.format(cartManager.subtotal, currencyCode),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag("order_summary_subtotal_amount")
+            )
         }
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("order_summary_shipping_row"),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = "Shipping",
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("order_summary_shipping_label"),
                 style = MaterialTheme.typography.bodyMedium
             )
             Text(
-                text = cartManager.formattedShippingCost,
-                style = MaterialTheme.typography.bodyMedium
+                text = if (cartManager.shippingCost == 0.0) "Free" else CurrencyFormatter.format(
+                    cartManager.shippingCost,
+                    currencyCode
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag("order_summary_shipping_amount")
             )
         }
         if (appliedGiftCards.isNotEmpty()) {
             Row(
-                modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("order_summary_discounts_row"),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "Discounts",
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("order_summary_discounts_label"),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = cartManager.formattedTotalGiftCardAmount,
+                    text = "-${
+                        CurrencyFormatter.format(
+                            cartManager.totalGiftCardAmount,
+                            currencyCode
+                        )
+                    }",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.testTag("order_summary_discounts_amount")
                 )
             }
         }
         HorizontalDivider()
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("order_summary_total_row"),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = "Total",
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("order_summary_total_label"),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = cartManager.formattedTotal,
+                text = CurrencyFormatter.format(cartManager.totalPrice, currencyCode),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.testTag("order_summary_total_amount")
             )
         }
     }
@@ -302,10 +366,14 @@ private fun ReviewSummary() {
 private fun GiftCardSection(
     appliedGiftCards: List<AppliedGiftCard>,
     cartManager: CartManager,
+    currencyCode: String,
     onShowGiftCardEntry: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("gift_card_section"),
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
         )
     ) {
@@ -322,13 +390,20 @@ private fun GiftCardSection(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                AppTextButton(text = stringResource(R.string.label_add_gift_card), onClick = onShowGiftCardEntry)
+                AppTextButton(
+                    text = stringResource(R.string.label_add_gift_card),
+                    onClick = onShowGiftCardEntry,
+                    modifier = Modifier.testTag("add_gift_card_button")
+                )
             }
 
             if (cartManager.hasGiftCards) {
                 appliedGiftCards.forEach { appliedGiftCard ->
                     Card(
-                        modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("applied_gift_card_${appliedGiftCard.giftCard.id}"),
+                        colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                         )
                     ) {
@@ -346,14 +421,21 @@ private fun GiftCardSection(
                                     fontWeight = FontWeight.Medium
                                 )
                                 Text(
-                                    text = "Applied: ${appliedGiftCard.formattedAppliedAmount}",
+                                    text = "Applied: ${
+                                        CurrencyFormatter.format(
+                                            appliedGiftCard.appliedAmount,
+                                            currencyCode
+                                        )
+                                    }",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
                             AppTextButton(
                                 text = stringResource(R.string.button_remove),
-                                onClick = { cartManager.removeGiftCard(appliedGiftCard) })
+                                onClick = { cartManager.removeGiftCard(appliedGiftCard) },
+                                modifier = Modifier.testTag("remove_gift_card_${appliedGiftCard.giftCard.id}")
+                            )
                         }
                     }
                 }
@@ -366,6 +448,8 @@ private fun GiftCardSection(
 private fun GiftCardEntryView(
     cartManager: CartManager, onDismiss: () -> Unit
 ) {
+    val configViewModel: ConfigViewModel = hiltViewModel()
+    val globalConfig by configViewModel.globalConfig.collectAsState()
     var showAlert by remember { mutableStateOf(false) }
     var alertMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -484,10 +568,15 @@ private fun GiftCardEntryView(
 
 @Composable
 private fun ShippingSection(
-    selectedShipping: ShippingOption, cartManager: CartManager
+    selectedShipping: ShippingOption,
+    cartManager: CartManager,
+    currencyCode: String
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("shipping_section"),
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
         )
     ) {
@@ -504,7 +593,12 @@ private fun ShippingSection(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { cartManager.setSelectedShipping(option) }
-                        .padding(vertical = 8.dp),
+                        .padding(vertical = 8.dp)
+                        .testTag(
+                            "shipping_option_${
+                                option.shippingNmae.replace(" ", "_").lowercase()
+                            }"
+                        ),
                     verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = if (selectedShipping == option) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
@@ -525,7 +619,10 @@ private fun ShippingSection(
                         )
                     }
                     Text(
-                        text = option.formattedPrice,
+                        text = if (option.price == 0.0) "Free" else CurrencyFormatter.format(
+                            option.price,
+                            currencyCode
+                        ),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -560,7 +657,8 @@ private fun PaymentMethodRow(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onSelect() },
+            .clickable { onSelect() }
+            .testTag("payment_method_option_${method.name.lowercase()}"),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected)
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
@@ -590,6 +688,7 @@ private fun PaymentMethodRow(
                 "ic_afterpay" -> R.drawable.ic_afterpay
                 "ic_src" -> R.drawable.ic_src
                 "ic_coles_pay" -> R.drawable.ic_coles_pay
+                "ic_zip_widget" -> R.drawable.ic_zip_widget
                 else -> R.drawable.ic_card_filled
             }
 
@@ -666,7 +765,8 @@ fun PaymentWidgetView(
                                 modifier = Modifier.fillMaxWidth(),
                                 tokenHandler = walletViewModel.getWalletTokenResultCallback(
                                     walletType = WalletType.GOOGLE,
-                                    customerData = customerData
+                                    customerData = customerData,
+                                    useGlobalConfig = false // Checkout uses BuildConfig defaults
                                 ),
                                 loadingDelegate = object : WidgetLoadingDelegate {
                                     override fun widgetLoadingDidStart() {
@@ -695,7 +795,8 @@ fun PaymentWidgetView(
                                 enabled = true,
                                 tokenHandler = walletViewModel.getWalletTokenResultCallback(
                                     walletType = WalletType.PAY_PAL,
-                                    customerData = customerData
+                                    customerData = customerData,
+                                    useGlobalConfig = false // Checkout uses BuildConfig defaults
                                 ),
                                 loadingDelegate = object : WidgetLoadingDelegate {
                                     override fun widgetLoadingDidStart() {
@@ -723,7 +824,8 @@ fun PaymentWidgetView(
                                 modifier = Modifier.fillMaxWidth(),
                                 tokenHandler = walletViewModel.getWalletTokenResultCallback(
                                     walletType = WalletType.AFTER_PAY,
-                                    customerData = customerData
+                                    customerData = customerData,
+                                    useGlobalConfig = false // Checkout uses BuildConfig defaults
                                 ),
                                 loadingDelegate = object : WidgetLoadingDelegate {
                                     override fun widgetLoadingDidStart() {
@@ -757,7 +859,8 @@ fun PaymentWidgetView(
                                 modifier = Modifier.fillMaxWidth(),
                                 tokenHandler = walletViewModel.getWalletTokenResultCallback(
                                     walletType = WalletType.COLES_PAY,
-                                    customerData = customerData
+                                    customerData = customerData,
+                                    useGlobalConfig = false // Checkout uses BuildConfig defaults
                                 ),
                                 loadingDelegate = object : WidgetLoadingDelegate {
                                     override fun widgetLoadingDidStart() {
@@ -775,6 +878,24 @@ fun PaymentWidgetView(
                                     }
                                     result.onFailure { _ -> viewModel.routeToFailure() }
                                 }
+                            )
+                        }
+
+                        PaymentMethod.ZIP -> {
+                            ZipContent(
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = true,
+                                loadingDelegate = object : WidgetLoadingDelegate {
+                                    override fun widgetLoadingDidStart() {
+                                        viewModel.setIsLoading(true)
+                                    }
+
+                                    override fun widgetLoadingDidFinish() {
+                                        viewModel.setIsLoading(false)
+                                    }
+                                },
+                                viewModel = viewModel,
+                                resultHandler = { result -> viewModel.handleZipResult(result) }
                             )
                         }
                     }

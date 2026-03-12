@@ -32,4 +32,12 @@ sealed class BottomNavItem(
             R.drawable.ic_style_selected,
             "style"
         )
+
+    data object Config :
+        BottomNavItem(
+            R.string.nav_config,
+            R.drawable.ic_config,
+            R.drawable.ic_config_selected,
+            "config"
+        )
 }

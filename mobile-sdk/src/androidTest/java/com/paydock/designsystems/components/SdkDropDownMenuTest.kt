@@ -1,5 +1,6 @@
 package com.paydock.designsystems.components
 
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -34,10 +35,10 @@ internal class SdkDropDownMenuTest {
                     selectedItem = it
                 },
                 onDismissed = { },
-                modifier = TODO(),
-                selectedIndex = TODO(),
-                dismissOnClickOutside = TODO(),
-                isClickEnabled = TODO()
+                modifier = Modifier,
+                selectedIndex = 0,
+                dismissOnClickOutside = true,
+                isClickEnabled = true
             )
         }
 

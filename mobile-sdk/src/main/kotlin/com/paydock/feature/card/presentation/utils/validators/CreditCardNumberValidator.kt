@@ -11,14 +11,15 @@ import com.paydock.feature.card.presentation.utils.errors.CardNumberError
  *
  * Provides methods to validate the format, length, and correctness of credit card numbers,
  * including Luhn algorithm validation.
+ *
+ * **BIN data:** The [cardScheme] passed in is derived from BIN data that is always loaded
+ * cache-first, then fallback to the bundled asset (card-schemes.json).
  */
 internal object CreditCardNumberValidator {
 
     /**
-     * Checks if a given credit card number is valid.
-     *
-     * This function validates the card number by checking its format, length,
-     * and Luhn algorithm correctness.
+     * Checks if a given credit card number is valid (e.g. for submit button).
+     * Uses full validation with min length enforced (as on defocus).
      *
      * @param cardNumber The credit card number to validate.
      * @param cardScheme The detected card scheme, if available.
@@ -29,25 +30,33 @@ internal object CreditCardNumberValidator {
         cardNumber: String,
         cardScheme: CardScheme?,
         schemeConfig: SupportedSchemeConfig
-    ) = validateCardNumberInput(cardNumber, cardScheme, schemeConfig, true) == CardNumberError.None
+    ) = validateCardNumberInput(
+        cardNumber = cardNumber,
+        cardScheme = cardScheme,
+        schemeConfig = schemeConfig,
+        hasUserInteracted = true,
+        isCardNumberFocused = false
+    ) == CardNumberError.None
 
     /**
      * Validates the credit card number input and determines the type of validation error.
      *
-     * This function applies the following validations in order:
-     * 1. Checks if the input is blank and the user has interacted, returning [CardNumberError.Empty].
-     * 2. Validates the input using the Luhn algorithm, returning [CardNumberError.InvalidLuhn] if invalid.
-     * 3. Checks if the card number length is valid (12-19 digits for default, or scheme-specific if detected),
-     *    returning [CardNumberError.InvalidLength] if invalid.
-     * 4. Checks if the card scheme is among the supported schemes (only if a scheme is detected and validation is enabled),
-     *    returning [CardNumberError.UnsupportedCardScheme] if unsupported.
-     *    Note: If no card scheme is detected, default validation (12-19 digits + Luhn) is used regardless of merchant settings.
-     * 5. If all validations pass, it returns [CardNumberError.None].
+     * Validation behaviour:
+     * - **Empty:** Blank input and user has interacted → [CardNumberError.Empty].
+     * - **Luhn:** Only run when digit count is within [min, max] for the scheme (or 12–19 if no scheme).
+     *   Outside that range no Luhn error is shown (avoids false positives while typing).
+     * - **Length:** Too few digits → [CardNumberError.InvalidLength] (inline "Invalid card number") only when focus leaves
+     *   the card number field (e.g. user taps expiry or CVV). Min/max use [CardScheme.lengths] when a scheme is detected,
+     *   otherwise 12–19. Too many digits → [CardNumberError.InvalidLength]. No length/scheme errors while typing below [minLength].
+     * - **Scheme:** When scheme validation is enabled and supported schemes are configured:
+     *   - No scheme detected after 8 digits → [CardNumberError.UnsupportedCardScheme] ("Card type not accepted").
+     *   - Detected scheme not in supported list → [CardNumberError.UnsupportedCardScheme] ("Card type not accepted").
      *
-     * @param cardNumber The credit card number to validate.
-     * @param cardScheme The detected card scheme, if available. If null, default validation (12-19 digits + Luhn) is applied.
+     * @param cardNumber The credit card number to validate (digits only in practice).
+     * @param cardScheme The detected card scheme, if available. Supplies [CardScheme.lengths] for min/max; else 12–19.
      * @param schemeConfig The configuration defining the supported card schemes and validation settings.
      * @param hasUserInteracted Flag indicating if the user has interacted with the input field.
+     * @param isCardNumberFocused True while the card number field is focused. Min-length error is only reported when false (on defocus).
      * @return A [CardNumberError] representing the validation result.
      */
     fun validateCardNumberInput(
@@ -55,44 +64,45 @@ internal object CreditCardNumberValidator {
         cardScheme: CardScheme?,
         schemeConfig: SupportedSchemeConfig,
         hasUserInteracted: Boolean,
+        isCardNumberFocused: Boolean = false,
     ): CardNumberError {
-        val isLuhnValid = LuhnValidator.isLuhnValid(cardNumber)
-        val isValidLength = validateCardNumberLength(cardScheme, cardNumber)
-
-        // If no card scheme is detected, use default validation (12-19 digits + Luhn)
-        // Merchant supported schemes only apply when a card scheme IS detected
-        val isCardSchemeSupported = if (cardScheme == null) {
-            // No card scheme detected - use default validation, always allow if passes length/Luhn
-            true
-        } else {
-            // Card scheme detected - check merchant supported schemes if validation is enabled
-            val supportedCardSchemes = getSupportedCardSchemes(schemeConfig)
-            supportedCardSchemes?.let {
-                // If merchant specified supported schemes, check if detected scheme is in the list
-                it.isNotEmpty() && it.contains(cardScheme.type)
-            } ?: true // If validation disabled or no schemes specified, allow all
-        }
-
-        return when {
-            cardNumber.isBlank() && hasUserInteracted -> CardNumberError.Empty
-            cardNumber.isNotBlank() && !isLuhnValid -> CardNumberError.InvalidLuhn
-            cardNumber.isNotBlank() && !isValidLength -> CardNumberError.InvalidLength
-            cardNumber.isNotBlank() && !isCardSchemeSupported -> CardNumberError.UnsupportedCardScheme
-            else -> CardNumberError.None
-        }
-    }
-
-    /**
-     * Validates the length of a credit card number based on its card scheme.
-     *
-     * @param cardScheme The detected card scheme, if available.
-     * @param cardNumber The credit card number to validate.
-     * @return `true` if the card number length is valid for the given scheme, `false` otherwise.
-     */
-    private fun validateCardNumberLength(cardScheme: CardScheme?, cardNumber: String): Boolean {
-        val length = cardNumber.length
+        val digitLength = cardNumber.replace(Regex("\\D"), "").length
         val (minLength, maxLength) = getCardSchemeLengthRange(cardScheme?.lengths ?: emptyList())
-        return length in minLength..maxLength
+
+        // 1. Empty
+        if (cardNumber.isBlank() && hasUserInteracted) return CardNumberError.Empty
+
+        // 2. Early unsupported scheme check: BIN detection completes at 8 digits, so show "Card type not accepted"
+        //    as soon as we can determine the scheme is not supported (only when scheme validation is enabled).
+        //    If no scheme is detected after 8 digits and validation is enabled, the card is not accepted.
+        if (digitLength >= 8 && schemeConfig.enableValidation) {
+            val supportedCardSchemes = getSupportedCardSchemes(schemeConfig)
+            if (!supportedCardSchemes.isNullOrEmpty()) {
+                // No scheme detected after 8 digits = unrecognized card type
+                if (cardScheme == null) {
+                    return CardNumberError.UnsupportedCardScheme
+                }
+                // Scheme detected but not in the supported list
+                if (!supportedCardSchemes.contains(cardScheme.type)) {
+                    return CardNumberError.UnsupportedCardScheme
+                }
+            }
+        }
+
+        // 3. Below min length: activate min-digit check only when focus leaves (e.g. user taps expiry/CVV).
+        //    Uses scheme min/max if detected, else 12–19; shows inline "Invalid card number".
+        if (digitLength < minLength) {
+            if (!isCardNumberFocused && hasUserInteracted) return CardNumberError.InvalidLength
+            return CardNumberError.None
+        }
+
+        // 4. Too many digits
+        if (digitLength > maxLength) return CardNumberError.InvalidLength
+
+        // 5. Within [min, max]: run Luhn
+        if (!LuhnValidator.isLuhnValid(cardNumber)) return CardNumberError.InvalidLuhn
+
+        return CardNumberError.None
     }
 
     /**

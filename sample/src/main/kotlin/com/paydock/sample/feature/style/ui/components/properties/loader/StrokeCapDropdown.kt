@@ -6,7 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
 import com.paydock.sample.R
-import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paydock.sample.designsystems.components.fields.StringDropdown
 
 @Composable
 fun StrokeCapDropdown(
@@ -26,7 +26,7 @@ fun StrokeCapDropdown(
         options.find { it.second == currentStrokeCap }?.first ?: StrokeCap.Round.toString()
     }
 
-    DropdownSelector(
+    StringDropdown(
         modifier = modifier,
         title = stringResource(R.string.label_text_overflow),
         options = options.map { it.first },

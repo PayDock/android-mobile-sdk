@@ -103,26 +103,56 @@ internal sealed class WidgetConfig {
     }
 
     /**
+     * Configuration for Cart widget.
+     *
+     * @property title Title for the Cart widget. Default is "Cart".
+     * @property jsLibraryUrl URL of the JavaScript library for Cart widget.
+     *                        Default is [ClientSDKConstants.CLIENT_SDK_JS_LIBRARY].
+     * @property environment Environment for the Cart widget. Default is the environment
+     *                        mapped from [MobileSDK.getInstance().environment].
+     * @property events List of events supported by the Cart widget.
+     *                  Default is an empty list as Cart is not a web widget.
+     * @property amount The cart amount value.
+     */
+    data class CartConfig(
+        override val title: String = "Cart",
+        override val jsLibraryUrl: String = MobileSDK.getInstance().environment.mapToClientSDKLibrary(),
+        override val environment: String = MobileSDK.getInstance().environment.mapToClientSDKEnv(),
+        override val events: List<String> = emptyList(),
+        val amount: String,
+    ) : WidgetConfig() {
+        /**
+         * Create the widget initialization script for Cart.
+         * Since Cart is not a web widget, this returns an empty string.
+         *
+         * @return Empty string as Cart doesn't require widget initialization.
+         */
+        override fun createWidget(): String {
+            return ""
+        }
+    }
+
+    /**
      * `ThreeDSConfigBase` is a sealed class that serves as the base configuration for 3D Secure authentication widgets.
-     * It provides a common structure for different types of 3DS configurations, such as Integrated and Standalone.
+     * It provides a common structure for different types of 3DS configurations, such as MPGS and Standalone.
      *
      * This class inherits from `WidgetConfig`, indicating that it represents the configuration for a widget.
      *
-     * Each concrete subclass (e.g., `Integrated3DSConfig`, `Standalone3DSConfig`) defines specific properties
+     * Each concrete subclass (e.g., `MPGS3dsConfig`, `Standalone3DSConfig`) defines specific properties
      * and behaviors for its respective 3DS implementation.
      *
-     * @see Integrated3DSConfig
+     * @see MPGS3dsConfig
      * @see Standalone3DSConfig
      * @see WidgetConfig
      */
     sealed class ThreeDSConfigBase : WidgetConfig() {
 
         /**
-         * Configuration class for the Integrated 3DS (3D Secure) authentication flow.
+         * Configuration class for the MPGS 3DS (3D Secure) authentication flow.
          *
-         * This class encapsulates the necessary parameters to configure and initialize the 3DS authentication widget
+         * This class encapsulates the necessary parameters to configure and initialize the MPGS 3DS authentication widget
          * within a mobile application. It extends `ThreeDSConfigBase` and provides specific configuration for
-         * the integrated 3DS experience.
+         * the MPGS 3DS experience.
          *
          * @property title The title displayed for the 3DS authentication process. Defaults to "3d secure authentication".
          * @property jsLibraryUrl The URL of the JavaScript library required for the client-side 3DS integration.
@@ -139,9 +169,9 @@ internal sealed class WidgetConfig {
          * @property token The unique token required to initialize the 3DS widget. This token is typically provided
          *                 by the backend server and is essential for the authentication process.
          *
-         * @constructor Creates an instance of [Integrated3DSConfig].
+         * @constructor Creates an instance of [MPGS3dsConfig].
          */
-        data class Integrated3DSConfig(
+        data class MPGS3dsConfig(
             override val title: String = "3D Secure Authentication",
             override val jsLibraryUrl: String = MobileSDK.getInstance().environment.mapToClientSDKLibrary(),
             override val environment: String = MobileSDK.getInstance().environment.mapToClientSDKEnv(),
@@ -155,7 +185,7 @@ internal sealed class WidgetConfig {
             val token: String,
         ) : ThreeDSConfigBase() {
             /**
-             * Creates the widget initialization script for integrated 3D Secure.
+             * Creates the widget initialization script for MPGS 3D Secure.
              *
              * This script initializes the 3D Secure widget using the provided token.
              *

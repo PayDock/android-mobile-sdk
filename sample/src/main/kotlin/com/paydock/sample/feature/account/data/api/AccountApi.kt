@@ -1,6 +1,5 @@
 package com.paydock.sample.feature.account.data.api
 
-import com.paydock.sample.BuildConfig
 import com.paydock.sample.feature.account.data.api.dto.CreateCustomerOTTRequest
 import com.paydock.sample.feature.account.data.api.dto.CustomerResponse
 import retrofit2.http.Body
@@ -11,7 +10,7 @@ interface AccountApi {
 
     @POST("/v1/customers")
     suspend fun createCustomer(
-        @Header("X-Access-Token") accessToken: String = BuildConfig.ACCESS_TOKEN_API,
+        @Header("X-Access-Token") accessToken: String,
         @Body request: CreateCustomerOTTRequest,
     ): CustomerResponse
 

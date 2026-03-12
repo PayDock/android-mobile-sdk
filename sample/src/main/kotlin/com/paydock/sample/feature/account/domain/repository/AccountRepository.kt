@@ -6,6 +6,7 @@ import com.paydock.sample.feature.account.domain.model.Customer
 interface AccountRepository {
 
     suspend fun createCustomer(
+        accessToken: String,
         request: CreateCustomerOTTRequest,
     ): Customer
 

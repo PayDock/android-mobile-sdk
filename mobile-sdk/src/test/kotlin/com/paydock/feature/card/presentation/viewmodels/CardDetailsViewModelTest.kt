@@ -2,6 +2,7 @@ package com.paydock.feature.card.presentation.viewmodels
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
+import com.paydock.binprocessor.data.dto.BinDataResponse
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
@@ -10,8 +11,6 @@ import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.core.utils.MainDispatcherRule
-import com.paydock.feature.card.data.dto.CardSchemasResponse
-import com.paydock.feature.card.data.mapper.asEntity
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.ui.TokenDetails
 import com.paydock.feature.card.domain.usecase.CreateCardPaymentTokenUseCase
@@ -67,25 +66,83 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
     private fun setupGetCardSchemasSuccess() {
         val json = """
             {
-              "card_schemas": [
-                {"bin": "420412", "schema": "visa"},
-                { "bin": "2221~2720", "schema": "mastercard" },
-                { "bin": "324000", "schema": "amex" },
-                { "bin": "309", "schema": "diners" },
-                { "bin": "6011", "schema": "discover" },
-                { "bin": "180000~180099", "schema": "japcb" },
-                { "bin": "633454", "schema": "solo" },
-                { "bin": "5610", "schema": "ausbc" }
-              ]
+              "2": {
+                "4": "v",
+                "41": "v",
+                "34": "a",
+                "37": "a",
+                "51": "m",
+                "55": "m",
+                "62": "u",
+                "60": "d"
+              },
+              "4": {
+                "4024": "v",
+                "4208": "v",
+                "4917": "v",
+                "2356": "m",
+                "5570": "m",
+                "5499": "m",
+                "3480": "a",
+                "3714": "a",
+                "3755": "a",
+                "3031": "c",
+                "3048": "c",
+                "3624": "c",
+                "2131": "j",
+                "3569": "j",
+                "6011": "d",
+                "6018": "d",
+                "6282": "u",
+                "6285": "u",
+                "8105": "u"
+              },
+              "6": {
+                "402400": "v",
+                "420800": "v",
+                "491734": "v",
+                "235699": "m",
+                "557023": "m",
+                "549929": "m",
+                "348090": "a",
+                "371400": "a",
+                "375527": "a",
+                "303125": "c",
+                "304848": "c",
+                "362400": "c",
+                "213151": "j",
+                "356901": "j",
+                "601170": "d",
+                "601182": "d",
+                "601126": "d",
+                "628212": "u",
+                "628598": "u",
+                "810512": "u",
+                "622987": "u"
+              },
+              "v": 1,
+              "s": {
+                "m": "mastercard",
+                "c": "diners",
+                "j": "japcb",
+                "a": "amex",
+                "v": "visa",
+                "d": "discover",
+                "u": "unionpay"
+              },
+              "r": {
+                "2": [],
+                "4": [
+                  ["2221", "2720", "m"]
+                ],
+                "6": []
+              }
             }
         """.trimIndent()
-        val response = json.convertToDataClass<CardSchemasResponse>()
-        // Act
-        val cardSchemas = response.asEntity()
-        val mockResult = Result.success(cardSchemas)
+        val binData = json.convertToDataClass<BinDataResponse>()
         coEvery {
             getCardSchemasUseCaseTest()
-        } returns mockResult
+        } returns Result.success(binData)
     }
 
     private fun setupCreateCardPaymentUseCasFailure() {

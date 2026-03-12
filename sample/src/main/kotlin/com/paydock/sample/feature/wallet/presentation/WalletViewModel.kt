@@ -5,27 +5,50 @@ import androidx.lifecycle.viewModelScope
 import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.BuildConfig
-import com.paydock.sample.core.AMOUNT
-import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.core.EMAIL
 import com.paydock.sample.core.FIRST_NAME
 import com.paydock.sample.core.LAST_NAME
 import com.paydock.sample.core.MERCHANT_NAME
 import com.paydock.sample.feature.checkout.data.api.dto.ChargesCustomerDTO
+import com.paydock.sample.feature.config.data.GlobalConfigRepository
+import com.paydock.sample.feature.config.data.WidgetConfigRepository
+import com.paydock.sample.feature.shop.data.CartManager
 import com.paydock.sample.feature.wallet.data.api.dto.InitiateWalletRequest
 import com.paydock.sample.feature.wallet.data.model.WalletCharge
 import com.paydock.sample.feature.wallet.domain.usecase.InitiateWalletTransactionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.paydock.core.utils.toSafeAmount
 import java.math.BigDecimal
 import javax.inject.Inject
 
 @HiltViewModel
-class WalletViewModel @Inject constructor(private val initiateWalletTransactionUseCase: InitiateWalletTransactionUseCase) :
-    ViewModel() {
+class WalletViewModel @Inject constructor(
+    private val initiateWalletTransactionUseCase: InitiateWalletTransactionUseCase,
+    // GlobalConfigRepository provides access to global config values (access token)
+    private val globalConfigRepository: GlobalConfigRepository,
+    // WidgetConfigRepository provides access to widget config values (cart amount, currency)
+    private val widgetConfigRepository: WidgetConfigRepository
+) : ViewModel() {
+
+    // Get access token from global config
+    private suspend fun getAccessToken(): String {
+        return globalConfigRepository.globalConfig.first().apiAccessToken
+    }
+
+    // Get cart amount from widget config (defaults to AMOUNT if not set)
+    private suspend fun getCartAmount(): BigDecimal {
+        return widgetConfigRepository.widgetConfig.first().cartAmount
+    }
+
+    // Get cart currency from global config (defaults to AU_CURRENCY_CODE if not set)
+    private suspend fun getCartCurrency(): String {
+        return globalConfigRepository.globalConfig.first().currencyCode
+    }
 
     private val _stateFlow: MutableStateFlow<WalletTransactionUIState> =
         MutableStateFlow(WalletTransactionUIState())
@@ -38,6 +61,7 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
     }
 
     private fun initiateWalletTransactionResult(
+        accessToken: String,
         manualCapture: Boolean = false,
         request: InitiateWalletRequest,
         callback: (Result<WalletTokenResult>) -> Unit,
@@ -48,7 +72,11 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
 //                state.copy(isLoading = true)
 //            }
             val result =
-                initiateWalletTransactionUseCase(manualCapture = manualCapture, request = request)
+                initiateWalletTransactionUseCase(
+                    accessToken = accessToken,
+                    manualCapture = manualCapture,
+                    request = request
+                )
             result.onSuccess { charge ->
                 charge.walletToken?.let { callback(Result.success(WalletTokenResult(token = it))) }
                 _stateFlow.update { state ->
@@ -61,52 +89,98 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
         }
     }
 
+    /**
+     * Creates a callback for wallet token requests.
+     *
+     * @param walletType The type of wallet payment method
+     * @param customerData Optional customer data for the request
+     * @param useGlobalConfig If true, uses global config values (access token, cart amount, currency).
+     *                        If false, uses BuildConfig defaults. Defaults to true for widget flows.
+     * @param overrideAccessToken Optional access token override. If provided, takes precedence over global config/defaults.
+     * @param overrideAmount Optional amount override. If provided, takes precedence over global config/defaults.
+     * @param overrideCurrency Optional currency override. If provided, takes precedence over global config/defaults.
+     */
     fun getWalletTokenResultCallback(
         walletType: WalletType,
-        customerData: CustomerData? = null
+        customerData: CustomerData? = null,
+        useGlobalConfig: Boolean = true,
+        overrideAccessToken: String? = null,
+        overrideAmount: BigDecimal? = null,
+        overrideCurrency: String? = null
     ): (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit =
         { onTokenReceived ->
             resetResultState()
-            when (walletType) {
-                WalletType.AFTER_PAY -> {
-                    val request = createAfterpayWalletRequest(customerData)
-                    initiateWalletTransactionResult(
-                        request = request,
-                        callback = onTokenReceived
-                    )
-                }
+            viewModelScope.launch {
+                when (walletType) {
+                    WalletType.AFTER_PAY -> {
+                        val request = createAfterpayWalletRequest(
+                            customerData = customerData,
+                            useGlobalConfig = useGlobalConfig,
+                            overrideAmount = overrideAmount,
+                        )
+                        initiateWalletTransactionResult(
+                            accessToken = getAccessToken(),
+                            request = request,
+                            callback = onTokenReceived
+                        )
+                    }
 
-                WalletType.GOOGLE -> {
-                    val request = createGoogleWalletRequest(customerData)
-                    initiateWalletTransactionResult(
-                        request = request,
-                        callback = onTokenReceived
-                    )
-                }
+                    WalletType.GOOGLE -> {
+                        val request = createGoogleWalletRequest(
+                            customerData = customerData,
+                            useGlobalConfig = useGlobalConfig,
+                            overrideAmount = overrideAmount,
+                            overrideCurrency = overrideCurrency
+                        )
+                        initiateWalletTransactionResult(
+                            accessToken = getAccessToken(),
+                            request = request,
+                            callback = onTokenReceived
+                        )
+                    }
 
-                WalletType.COLES_PAY -> {
-                    val request = createColesPayWalletRequest(customerData)
-                    initiateWalletTransactionResult(
-                        manualCapture = true,
-                        request = request,
-                        callback = onTokenReceived
-                    )
-                }
+                    WalletType.COLES_PAY -> {
+                        val request = createColesPayWalletRequest(
+                            customerData = customerData,
+                            useGlobalConfig = useGlobalConfig,
+                            overrideAmount = overrideAmount,
+                        )
+                        initiateWalletTransactionResult(
+                            accessToken = getAccessToken(),
+                            manualCapture = true,
+                            request = request,
+                            callback = onTokenReceived
+                        )
+                    }
 
-                WalletType.PAY_PAL -> {
-                    val request = createPayPalWalletRequest(customerData)
-                    initiateWalletTransactionResult(
-                        request = request,
-                        callback = onTokenReceived
-                    )
+                    WalletType.PAY_PAL -> {
+                        val request = createPayPalWalletRequest(
+                            customerData = customerData,
+                            useGlobalConfig = useGlobalConfig,
+                            overrideAmount = overrideAmount
+                        )
+                        initiateWalletTransactionResult(
+                            accessToken = getAccessToken(),
+                            request = request,
+                            callback = onTokenReceived
+                        )
+                    }
                 }
             }
         }
 
-    private fun createPayPalWalletRequest(customerData: CustomerData? = null): InitiateWalletRequest {
+    private suspend fun createPayPalWalletRequest(
+        customerData: CustomerData? = null,
+        useGlobalConfig: Boolean = true,
+        overrideAmount: BigDecimal? = null,
+    ): InitiateWalletRequest {
+        val amount = customerData?.amount?.let { it.toSafeAmount() }
+            ?: overrideAmount
+            ?: if (useGlobalConfig) getCartAmount() else CartManager.shared.totalPrice.toSafeAmount()
+        val currency = getCartCurrency()
         return InitiateWalletRequest(
-            amount = customerData?.amount?.let { BigDecimal(it) } ?: BigDecimal(AMOUNT),
-            currency = AU_CURRENCY_CODE,
+            amount = amount,
+            currency = currency,
             customer = ChargesCustomerDTO(
                 firstName = customerData?.firstName ?: "Annaanna",
                 lastName = customerData?.lastName ?: "Annaanna",
@@ -132,6 +206,8 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                     state = it.state,
                     countryCode = it.countryCode,
                     postalCode = it.postalCode,
+                    amount = amount,
+                    currency = currency,
                     contact = InitiateWalletRequest.ShippingDTO.ContactDTO(
                         firstName = customerData.firstName,
                         lastName = customerData.lastName,
@@ -142,10 +218,18 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
         )
     }
 
-    private fun createColesPayWalletRequest(customerData: CustomerData? = null): InitiateWalletRequest {
+    private suspend fun createColesPayWalletRequest(
+        customerData: CustomerData? = null,
+        useGlobalConfig: Boolean = true,
+        overrideAmount: BigDecimal? = null
+    ): InitiateWalletRequest {
+        val amount = customerData?.amount?.let { it.toSafeAmount() }
+            ?: overrideAmount
+            ?: if (useGlobalConfig) getCartAmount() else CartManager.shared.totalPrice.toSafeAmount()
+        val currency = getCartCurrency()
         return InitiateWalletRequest(
-            amount = customerData?.amount?.let { BigDecimal(it) } ?: BigDecimal(AMOUNT),
-            currency = AU_CURRENCY_CODE,
+            amount = amount,
+            currency = currency,
             customer = ChargesCustomerDTO(
                 firstName = customerData?.firstName ?: FIRST_NAME,
                 lastName = customerData?.lastName ?: LAST_NAME,
@@ -171,6 +255,8 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                     state = it.state,
                     countryCode = it.countryCode,
                     postalCode = it.postalCode,
+                    amount = amount,
+                    currency = currency,
                     contact = InitiateWalletRequest.ShippingDTO.ContactDTO(
                         firstName = customerData.firstName,
                         lastName = customerData.lastName,
@@ -181,10 +267,19 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
         )
     }
 
-    private fun createGoogleWalletRequest(customerData: CustomerData? = null): InitiateWalletRequest {
+    private suspend fun createGoogleWalletRequest(
+        customerData: CustomerData? = null,
+        useGlobalConfig: Boolean = true,
+        overrideAmount: BigDecimal? = null,
+        overrideCurrency: String? = null
+    ): InitiateWalletRequest {
+        val amount = customerData?.amount?.let { it.toSafeAmount() }
+            ?: overrideAmount
+            ?: if (useGlobalConfig) getCartAmount() else CartManager.shared.totalPrice.toSafeAmount()
+        val currency = overrideCurrency ?: getCartCurrency()
         return InitiateWalletRequest(
-            amount = customerData?.amount?.let { BigDecimal(it) } ?: BigDecimal(AMOUNT),
-            currency = AU_CURRENCY_CODE,
+            amount = amount,
+            currency = currency,
             customer = ChargesCustomerDTO(
                 firstName = customerData?.firstName ?: FIRST_NAME,
                 lastName = customerData?.lastName ?: LAST_NAME,
@@ -210,6 +305,8 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                     state = it.state,
                     countryCode = it.countryCode,
                     postalCode = it.postalCode,
+                    amount = amount,
+                    currency = currency,
                     contact = InitiateWalletRequest.ShippingDTO.ContactDTO(
                         firstName = customerData.firstName,
                         lastName = customerData.lastName,
@@ -221,10 +318,18 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
 
     }
 
-    private fun createAfterpayWalletRequest(customerData: CustomerData? = null): InitiateWalletRequest {
+    private suspend fun createAfterpayWalletRequest(
+        customerData: CustomerData? = null,
+        useGlobalConfig: Boolean = true,
+        overrideAmount: BigDecimal? = null,
+    ): InitiateWalletRequest {
+        val amount = customerData?.amount?.let { it.toSafeAmount() }
+            ?: overrideAmount
+            ?: if (useGlobalConfig) getCartAmount() else CartManager.shared.totalPrice.toSafeAmount()
+        val currency = getCartCurrency()
         return InitiateWalletRequest(
-            amount = customerData?.amount?.let { BigDecimal(it) } ?: BigDecimal(AMOUNT),
-            currency = AU_CURRENCY_CODE,
+            amount = amount,
+            currency = currency,
             customer = ChargesCustomerDTO(
                 firstName = customerData?.firstName ?: "David",
                 lastName = customerData?.lastName ?: "Cameron",
@@ -248,6 +353,9 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                 errorUrl = "https://paydock-integration.netlify.app/error"
             ),
             shippingDTO = customerData?.shippingAddress?.let {
+                val shippingAmount = customerData.amount?.let { it.toSafeAmount() }
+                    ?: overrideAmount
+                    ?: if (useGlobalConfig) getCartAmount() else CartManager.shared.totalPrice.toSafeAmount()
                 InitiateWalletRequest.ShippingDTO(
                     addressLine1 = it.addressLine1,
                     addressLine2 = it.addressLine2,
@@ -256,16 +364,23 @@ class WalletViewModel @Inject constructor(private val initiateWalletTransactionU
                     state = it.state,
                     countryCode = it.countryCode,
                     postalCode = it.postalCode,
-                    amount = customerData.amount?.let { amount -> BigDecimal(amount) }
-                        ?: BigDecimal(AMOUNT),
+                    amount = shippingAmount,
+                    currency = currency,
                     contact = InitiateWalletRequest.ShippingDTO.ContactDTO(
                         firstName = customerData.firstName,
                         lastName = customerData.lastName,
                         phone = customerData.phone
                     )
                 )
-            } ?: InitiateWalletRequest.ShippingDTO(),
-            itemDTOS = listOf(InitiateWalletRequest.ItemDTO()),
+            } ?: InitiateWalletRequest.ShippingDTO(
+                amount = amount,
+                currency = currency
+            ),
+            itemDTOS = listOf(
+                InitiateWalletRequest.ItemDTO(
+                    amount = amount
+                )
+            ),
         )
     }
 }

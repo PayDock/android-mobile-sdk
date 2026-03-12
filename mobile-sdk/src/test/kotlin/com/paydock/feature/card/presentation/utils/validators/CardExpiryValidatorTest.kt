@@ -78,8 +78,108 @@ internal class CardExpiryValidatorTest {
     }
 
     @Test
-    fun validateExpiryInput_invalidFormat_returnsInvalidFormatError() {
+    fun validateExpiryInput_length1_focused_returnsNoneError() {
+        val expiry = "1"
+        val hasUserInteracted = true
+        val isExpiryFocused = true
+        val expected = CardExpiryError.None
+        val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted, isExpiryFocused)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateExpiryInput_length1_defocused_returnsInvalidFormatError() {
+        val expiry = "1"
+        val hasUserInteracted = true
+        val isExpiryFocused = false
+        val expected = CardExpiryError.InvalidFormat
+        val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted, isExpiryFocused)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateExpiryInput_invalidMonth_length2_focused_returnsInvalidMonthError() {
+        val expiry = "00"
+        val hasUserInteracted = true
+        val isExpiryFocused = true
+        val expected = CardExpiryError.InvalidMonth
+        val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted, isExpiryFocused)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateExpiryInput_invalidMonth_length2_defocused_returnsInvalidMonthError() {
+        val expiry = "00"
+        val hasUserInteracted = true
+        val isExpiryFocused = false
+        val expected = CardExpiryError.InvalidMonth
+        val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted, isExpiryFocused)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateExpiryInput_invalidMonth_length2_month13_returnsInvalidMonthError() {
+        val expiry = "13"
+        val hasUserInteracted = true
+        val isExpiryFocused = true
+        val expected = CardExpiryError.InvalidMonth
+        val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted, isExpiryFocused)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateExpiryInput_invalidMonth_length3_returnsInvalidMonthError() {
+        val expiry = "130"
+        val hasUserInteracted = true
+        val isExpiryFocused = true
+        val expected = CardExpiryError.InvalidMonth
+        val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted, isExpiryFocused)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateExpiryInput_validMonth_length2_focused_returnsNoneError() {
+        val expiry = "12"
+        val hasUserInteracted = true
+        val isExpiryFocused = true
+        val expected = CardExpiryError.None
+        val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted, isExpiryFocused)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateExpiryInput_validMonth_length2_defocused_returnsInvalidFormatError() {
+        val expiry = "12"
+        val hasUserInteracted = true
+        val isExpiryFocused = false
+        val expected = CardExpiryError.InvalidFormat
+        val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted, isExpiryFocused)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateExpiryInput_validMonth_length3_focused_returnsNoneError() {
         val expiry = "123"
+        val hasUserInteracted = true
+        val isExpiryFocused = true
+        val expected = CardExpiryError.None
+        val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted, isExpiryFocused)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateExpiryInput_validMonth_length3_defocused_returnsInvalidFormatError() {
+        val expiry = "123"
+        val hasUserInteracted = true
+        val isExpiryFocused = false
+        val expected = CardExpiryError.InvalidFormat
+        val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted, isExpiryFocused)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun validateExpiryInput_invalidFormat_returnsInvalidFormatError() {
+        val expiry = "0012"
         val hasUserInteracted = true
         val expected = CardExpiryError.InvalidFormat
         val actual = CardExpiryValidator.validateExpiryInput(expiry, hasUserInteracted)

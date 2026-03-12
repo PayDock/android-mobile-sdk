@@ -1,15 +1,14 @@
 package com.paydock.feature.card.presentation.state
 
+import com.paydock.binprocessor.data.dto.BinDataResponse
 import com.paydock.core.MobileSDKConstants
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
-import com.paydock.feature.card.domain.model.ui.CardSchema
 import com.paydock.feature.card.domain.model.ui.CardScheme
 import com.paydock.feature.card.presentation.utils.validators.CardExpiryValidator
 import com.paydock.feature.card.presentation.utils.validators.CardHolderNameValidator
 import com.paydock.feature.card.presentation.utils.validators.CardSchemeValidator
 import com.paydock.feature.card.presentation.utils.validators.CardSecurityCodeValidator
 import com.paydock.feature.card.presentation.utils.validators.CreditCardNumberValidator
-import java.util.TreeMap
 
 /**
  * Represents the input state for card details, including validation and metadata extraction.
@@ -23,8 +22,11 @@ import java.util.TreeMap
  * @property code The entered security code (CVV/CVC). Defaults to an empty string.
  * @property collectCardholderName A flag indicating whether the cardholder name is required. Defaults to `true`.
  * @property saveCard A flag indicating whether the user wants to save the card details for future use. Defaults to `false`.
+ * This value is used directly for the `saved_card_consent_accepted` field in the tokenization request.
+ * @property storeSecurityCode Specifies whether the security code (CVV) should be saved when tokenizing a card.
+ * If `null`, the `store_ccv` parameter will not be sent in the tokenization request.
  * @property schemeConfig Configuration for supported card schemes and scheme validation behavior.
- * @property cardSchemas A [TreeMap] containing the available card schemas used for validation. Defaults to an empty map.
+ * @property binData The BIN data used for card scheme detection (cache first, then bundled asset). Defaults to `null`.
  */
 internal data class CardDetailsInputState(
     val cardholderName: String? = null,
@@ -33,8 +35,9 @@ internal data class CardDetailsInputState(
     val code: String = "",
     val collectCardholderName: Boolean = true,
     val saveCard: Boolean = false,
+    val storeSecurityCode: Boolean? = null,
     val schemeConfig: SupportedSchemeConfig = SupportedSchemeConfig(),
-    val cardSchemas: TreeMap<Int, CardSchema> = TreeMap()
+    val binData: BinDataResponse? = null
 ) {
 
     /**
@@ -43,7 +46,7 @@ internal data class CardDetailsInputState(
      * Uses the `CardSchemeValidator` utility to identify the type of card (e.g., Visa, Mastercard, etc.).
      */
     val cardScheme: CardScheme?
-        get() = CardSchemeValidator.detectCardScheme(cardSchemas, cardNumber)
+        get() = CardSchemeValidator.detectCardScheme(binData, cardNumber)
 
     /**
      * Extracts the expiry month from the entered expiry string.

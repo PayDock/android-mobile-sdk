@@ -4,7 +4,6 @@ import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
-import com.paydock.feature.threeDS.integrated.presentation.state.Integrated3DSUIState
 import com.paydock.feature.threeDS.standalone.domain.mapper.asEntity
 import com.paydock.feature.threeDS.standalone.domain.model.ui.Standalone3DSEvent
 import com.paydock.feature.threeDS.standalone.presentation.state.Standalone3DSUIState
@@ -30,7 +29,7 @@ internal class Standalone3DSViewModel(dispatchers: DispatchersProvider) :
     BaseViewModel(dispatchers) {
 
     /**
-     * A [MutableSharedFlow] used to emit events related to the Integrated 3DS UI state.
+     * A [MutableSharedFlow] used to emit events related to the 3DS UI state.
      *
      * This flow is used internally to communicate changes in the 3DS UI state to any
      * components that are observing it.  It's designed for one-way communication,
@@ -39,7 +38,7 @@ internal class Standalone3DSViewModel(dispatchers: DispatchersProvider) :
     private val _eventFlow = MutableSharedFlow<Standalone3DSUIState>(replay = 0)
 
     /**
-     * A shared flow of [Standalone3DSUIState] events emitted by the integrated 3DS UI.
+     * A shared flow of [Standalone3DSUIState] events emitted by the 3DS UI.
      *
      * This flow allows multiple collectors to receive updates about the state changes of the 3DS UI.
      * It is typically used to observe events like the start of the challenge,
@@ -81,7 +80,7 @@ internal class Standalone3DSViewModel(dispatchers: DispatchersProvider) :
     /**
      * Processes an Standalone 3DS event and updates the UI state accordingly.
      *
-     * This method handles various Integrated 3DS events, such as authentication success,
+     * This method handles various 3DS events, such as authentication success,
      * rejection, or errors, and updates the UI state to reflect the corresponding
      * result. Each event type maps to a specific [Standalone3DSUIState].
      *
@@ -108,7 +107,7 @@ internal class Standalone3DSViewModel(dispatchers: DispatchersProvider) :
      * @see Result
      * @see Standalone3DSEvent
      * @see SdkException
-     * @see Integrated3DSUIState
+     * @see Standalone3DSUIState
      * @see updateThreeDSEvent
      * @see updateState
      * @see safeCastAs

@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,6 +35,7 @@ import com.paydock.feature.card.presentation.CardDetailsWidgetAppearance
 import com.paydock.feature.card.presentation.GiftCardWidgetAppearance
 import com.paydock.feature.googlepay.presentation.GooglePayWidgetAppearance
 import com.paydock.feature.paypal.checkout.presentation.PayPalWidgetAppearance
+import com.paydock.feature.zip.presentation.ZipWidgetAppearance
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.button.AppButton
 import com.paydock.sample.designsystems.components.button.AppButtonShape
@@ -54,6 +56,7 @@ import com.paydock.sample.feature.style.ui.components.section.StylePayPalMiscSec
 import com.paydock.sample.feature.style.ui.components.section.StyleTextFieldSection
 import com.paydock.sample.feature.style.ui.components.section.StyleTextSection
 import com.paydock.sample.feature.style.ui.components.section.StyleToggleSection
+import com.paydock.sample.feature.style.ui.components.section.StyleZipMiscSection
 import com.paydock.sample.feature.style.ui.components.section.TextButtonAppearanceStyleEditor
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
 
@@ -78,9 +81,13 @@ fun StylePropertiesScreen(
             .fillMaxWidth()
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
+            .testTag("style_properties_screen")
     ) {
         if (componentAppearance == null) {
-            Text("Appearance data not available for $styleItemName in $widgetContext. Ensure ViewModel is initialized.")
+            Text(
+                text = "Appearance data not available for $styleItemName in $widgetContext. Ensure ViewModel is initialized.",
+                modifier = Modifier.testTag("style_properties_error_message")
+            )
         } else {
             when (styleItemName) {
                 StyleAppearanceComponent.TITLE,
@@ -274,6 +281,22 @@ fun StylePropertiesScreen(
                                 ?: Text("$styleItemName appearance not available for $widgetContext")
                         }
 
+                        WidgetType.ZIP -> {
+                            (componentAppearance as? ZipWidgetAppearance)?.let { currentAppearance ->
+                                StyleZipMiscSection(
+                                    currentAppearance = currentAppearance,
+                                    onAppearanceChange = { newAppearance ->
+                                        stylingViewModel.updateWidgetComponentAppearance(
+                                            widgetContext,
+                                            styleItemName,
+                                            newAppearance
+                                        )
+                                    }
+                                )
+                            }
+                                ?: Text("$styleItemName appearance not available for $widgetContext")
+                        }
+
                         else -> Text("$styleItemName appearance not available for $widgetContext")
                     }
                 }
@@ -352,7 +375,8 @@ fun StylePropertiesScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 32.dp, top = 20.dp),
+                .padding(bottom = 32.dp, top = 20.dp)
+                .testTag("style_properties_reset_section"),
             verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -361,10 +385,13 @@ fun StylePropertiesScreen(
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 text = stringResource(R.string.disclaimer_reset_button),
+                modifier = Modifier.testTag("style_properties_reset_disclaimer")
             )
 
             AppButton(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("style_properties_reset_button"),
                 variant = AppButtonVariant.Outline,
                 shape = AppButtonShape.Rectangle,
                 enabled = hasChanges,
@@ -429,7 +456,6 @@ fun getAppearanceForWidgetComponent(
                 derivedStateOf {
                     when (styleItemName) {
                         StyleAppearanceComponent.PROPERTIES -> cardAppearance
-                        StyleAppearanceComponent.TITLE -> cardAppearance?.title
                         StyleAppearanceComponent.TOGGLE_TEXT -> cardAppearance?.toggleText
                         StyleAppearanceComponent.SUB_ACTION_BUTTON_PROPERTIES -> cardAppearance?.actionButton
                         StyleAppearanceComponent.SUB_BUTTON_ICON -> cardAppearance?.actionButton?.iconAppearance
@@ -509,12 +535,12 @@ fun getAppearanceForWidgetComponent(
             }
         }
 
-        WidgetType.INTEGRATED_3DS -> {
-            val integrated3SDAppearance by stylingViewModel.integrated3DSWidgetAppearance.collectAsState()
-            remember(integrated3SDAppearance, styleItemName) {
+        WidgetType.MPGS_3DS -> {
+            val mpgs3dsAppearance by stylingViewModel.mpgs3dsWidgetAppearance.collectAsState()
+            remember(mpgs3dsAppearance, styleItemName) {
                 derivedStateOf {
                     when (styleItemName) {
-                        StyleAppearanceComponent.LOADER -> integrated3SDAppearance?.loader
+                        StyleAppearanceComponent.LOADER -> mpgs3dsAppearance?.loader
                         else -> null
                     }
                 }
@@ -567,6 +593,19 @@ fun getAppearanceForWidgetComponent(
                 derivedStateOf {
                     when (styleItemName) {
                         StyleAppearanceComponent.LOADER -> standalone3SDAppearance?.loader
+                        else -> null
+                    }
+                }
+            }
+        }
+
+        WidgetType.ZIP -> {
+            val zipAppearance by stylingViewModel.zipWidgetAppearance.collectAsState()
+            remember(zipAppearance, styleItemName) {
+                derivedStateOf {
+                    when (styleItemName) {
+                        StyleAppearanceComponent.PROPERTIES -> zipAppearance
+                        StyleAppearanceComponent.LOADER -> zipAppearance?.loader
                         else -> null
                     }
                 }

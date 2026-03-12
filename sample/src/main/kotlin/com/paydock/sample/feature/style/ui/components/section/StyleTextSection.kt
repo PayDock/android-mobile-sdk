@@ -14,15 +14,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
-import com.paydock.sample.designsystems.theme.appFontFamily
+import com.paydock.sample.designsystems.components.fields.BooleanField
+import com.paydock.sample.designsystems.components.fields.NumberCounter
 import com.paydock.sample.feature.style.ui.components.core.color.ColorPickerField
-import com.paydock.sample.feature.style.ui.components.core.counter.NumberCounter
-import com.paydock.sample.feature.style.ui.components.core.toggle.StyleableToggleRow
 import com.paydock.sample.feature.style.ui.components.properties.font.FontFamilyDropdown
 import com.paydock.sample.feature.style.ui.components.properties.text.TextOverflowDropdown
 import com.paydock.sample.feature.style.utils.FontHelper
@@ -78,7 +78,7 @@ fun StyleTextSection(
                 systemFontDetails = systemFontDetailsList,
                 isLoadingFonts = isLoadingSystemFonts,
                 defaultAppFontDisplayName = FontHelper.DEFAULT_APP_FONT_DISPLAY_NAME,
-                appDefaultFontFamily = appFontFamily,
+                appDefaultFontFamily = FontFamily.SansSerif, // Material 3 uses SansSerif (Roboto) by default
                 onFontFamilySelected = { newFontFamily ->
                     onAppearanceChange(
                         currentAppearance.copy(
@@ -112,10 +112,10 @@ fun StyleTextSection(
 
         HorizontalDivider()
 
-        StyleableToggleRow(
+        BooleanField(
             label = stringResource(R.string.label_soft_wrap),
-            isChecked = currentSoftWrap,
-            onCheckedChange = { newCheckedState ->
+            value = currentSoftWrap,
+            onValueChange = { newCheckedState ->
                 onAppearanceChange(currentAppearance.copy(softWrap = newCheckedState))
             }
         )

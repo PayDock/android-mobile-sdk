@@ -92,23 +92,22 @@ internal class CardNumberInputTransformation(
      * @return The transformed offset.
      */
     private fun originalToTransformedOffset(offset: Int, subSectionSizes: List<Int>, originalLength: Int): Int {
-        if (subSectionSizes.isEmpty()) return offset
-        if (offset > originalLength) {
-            return formatCardNumber(
-                buildString {
-                    repeat(originalLength) { append("x") }
-                },
-                subSectionSizes
-            ).length
-        }
+        if (subSectionSizes.isEmpty()) return offset.coerceIn(0, originalLength)
+        val maxTransformedLength = formatCardNumber(
+            buildString { repeat(originalLength) { append("x") } },
+            subSectionSizes
+        ).length
+        // Handle out-of-bounds offset (past original length)
+        if (offset > originalLength) return maxTransformedLength
 
+        val safeOffset = offset.coerceAtLeast(0)
         var spacesAdded = 0
         for (subSectionSize in subSectionSizes) {
-            if (offset > subSectionSize) {
+            if (safeOffset > subSectionSize) {
                 spacesAdded++
             }
         }
-        return offset + spacesAdded
+        return (safeOffset + spacesAdded).coerceIn(0, maxTransformedLength)
     }
 
     /**
@@ -120,10 +119,15 @@ internal class CardNumberInputTransformation(
      * @return The original offset.
      */
     private fun transformedToOriginalOffset(offset: Int, subSectionSizes: List<Int>, originalLength: Int): Int {
-        if (subSectionSizes.isEmpty()) return offset
+        if (subSectionSizes.isEmpty()) return offset.coerceIn(0, originalLength)
+        val maxTransformedLength = formatCardNumber(
+            buildString { repeat(originalLength) { append("x") } },
+            subSectionSizes
+        ).length
+        val safeOffset = offset.coerceIn(0, maxTransformedLength)
 
         var spaces = 0
-        var originalOffset = offset
+        var originalOffset = safeOffset
         for (subSectionSize in subSectionSizes) {
             if (originalOffset > subSectionSize + spaces) {
                 spaces++

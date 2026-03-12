@@ -21,7 +21,6 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
 
         WidgetType.CARD_DETAILS -> listOf(
             StyleAppearanceComponent.PROPERTIES,
-            StyleAppearanceComponent.TITLE,
             StyleAppearanceComponent.TEXT_FIELD,
             StyleAppearanceComponent.COMPLETE_ACTION_BUTTON,
             StyleAppearanceComponent.TOGGLE,
@@ -49,7 +48,7 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
             StyleAppearanceComponent.LOADER
         )
 
-        WidgetType.INTEGRATED_3DS -> listOf(
+        WidgetType.MPGS_3DS -> listOf(
             StyleAppearanceComponent.LOADER
         )
 
@@ -63,6 +62,11 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
         )
 
         WidgetType.STANDALONE_3DS -> listOf(
+            StyleAppearanceComponent.LOADER
+        )
+
+        WidgetType.ZIP -> listOf(
+            StyleAppearanceComponent.PROPERTIES,
             StyleAppearanceComponent.LOADER
         )
     }

@@ -27,14 +27,26 @@ import com.paydock.feature.card.domain.model.integration.enums.CardType.Companio
  * This determines the specific icon resource to be displayed.
  * @param focused A flag indicating whether the card input field is focused.
  * This affects the tint applied to the icon when the card scheme type is `OTHER`.
+ * @param hideFromAccessibility Whether to hide this icon from accessibility services.
+ * Defaults to false to allow TalkBack to announce the card scheme.
  */
 @Composable
-internal fun CardSchemeIcon(cardType: CardType?, focused: Boolean = false) {
+internal fun CardSchemeIcon(
+    cardType: CardType?,
+    focused: Boolean = false,
+    hideFromAccessibility: Boolean = false
+) {
     SdkIcon(
         modifier = Modifier
             .testTag("cardIcon")
             .width(24.dp)
-            .semantics { hideFromAccessibility() },
+            .then(
+                if (hideFromAccessibility) {
+                    Modifier.semantics { hideFromAccessibility() }
+                } else {
+                    Modifier
+                }
+            ),
         painter = painterResource(id = mapSchemeToDrawable(cardType)),
         contentDescription = cardType?.displayLabel(),
         appearance = IconAppearanceDefaults.appearance().copy(
@@ -60,12 +72,10 @@ internal fun CardSchemeIcon(cardType: CardType?, focused: Boolean = false) {
  */
 private fun mapSchemeToDrawable(scheme: CardType?): Int = when (scheme) {
     CardType.AMEX -> R.drawable.ic_amex
-    CardType.AUSBC -> R.drawable.ic_ausbc
     CardType.DINERS -> R.drawable.ic_diners_club
     CardType.DISCOVER -> R.drawable.ic_discover
     CardType.JAPCB -> R.drawable.ic_jcb
     CardType.MASTERCARD -> R.drawable.ic_mastercard
-    CardType.SOLO -> R.drawable.ic_solo
     CardType.VISA -> R.drawable.ic_visa
     CardType.UNIONPAY -> R.drawable.ic_union_pay
     else -> R.drawable.ic_credit_card

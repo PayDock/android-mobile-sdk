@@ -6,7 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.afterpay.android.view.AfterpayPaymentButton
 import com.paydock.sample.R
-import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paydock.sample.designsystems.components.fields.StringDropdown
 
 @Composable
 fun ButtonTextDropdown(
@@ -28,7 +28,7 @@ fun ButtonTextDropdown(
             ?: AfterpayPaymentButton.ButtonText.PAY_NOW.name
     }
 
-    DropdownSelector(
+    StringDropdown(
         modifier = modifier,
         title = stringResource(R.string.label_afterpay_button_text),
         options = options.map { it.first },

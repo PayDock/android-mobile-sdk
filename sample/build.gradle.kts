@@ -117,12 +117,14 @@ enum class BuildVariable(private val baseEnvName: String) {
     ACCESS_TOKEN_API("ACCESS_TOKEN_API"),
     SERVICE_ID_MPGS("SERVICE_ID_MPGS"),
     SERVICE_ID_MPGS_TEST("SERVICE_ID_MPGS_TEST"),
+    SERVICE_ID_CYBERSOURCE("SERVICE_ID_CYBERSOURCE"),
     SERVICE_ID_PAYPAL("SERVICE_ID_PAYPAL"),
     SERVICE_ID_COLES_PAY("SERVICE_ID_COLES_PAY"),
     SERVICE_ID_AFTERPAY("SERVICE_ID_AFTERPAY"),
     SERVICE_ID_CLICK_TO_PAY("SERVICE_ID_CLICK_TO_PAY"),
     SERVICE_ID_GOOGLE_PAY_MPGS("SERVICE_ID_GOOGLE_PAY_MPGS"),
-    SERVICE_ID_GPAYMENTS("SERVICE_ID_GPAYMENTS");
+    SERVICE_ID_GPAYMENTS("SERVICE_ID_GPAYMENTS"),
+    SERVICE_ID_ZIP("SERVICE_ID_ZIP");
 
     fun getEnvName(flavor: String): String {
         return when {
@@ -154,21 +156,20 @@ fun ApplicationProductFlavor.configureFlavorBuildConfig(
 
 fun readBuildVariable(variable: BuildVariable, flavor: String): String {
     val envName = variable.getEnvName(flavor)
-    // Read the environment variable value, trimming any leading/trailing whitespace
     var envValue = System.getenv(envName)?.trim()
-    val configValue: String = if (!envValue.isNullOrEmpty()) {
-        // CI/CD environment - Remove excessive double quotes if present
-        // Remove surrounding double quotes if present
-        if (envValue.startsWith("\"") && envValue.endsWith("\"")) {
-            envValue = envValue.substring(1, envValue.length - 1)
-        }
-        return "\"$envValue\""
+    val rawValue = if (!envValue.isNullOrEmpty()) {
+        envValue
     } else {
-        // Config properties fallback
         val props = getLocalConfigProps(flavor)
         props.getProperty(variable.name) ?: ""
     }
-    return configValue
+    // Strip surrounding quotes (config.properties uses key="value", env vars may too)
+    val trimmed = if (rawValue.startsWith("\"") && rawValue.endsWith("\"")) {
+        rawValue.substring(1, rawValue.length - 1)
+    } else {
+        rawValue
+    }
+    return "\"$trimmed\""
 }
 
 fun getLocalConfigProps(flavor: String): Properties {

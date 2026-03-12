@@ -19,12 +19,11 @@ import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
 import com.paydock.core.domain.model.Event
 import com.paydock.core.presentation.util.WidgetEventDelegate
-import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
 import com.paydock.feature.paypal.checkout.presentation.PayPalAppearanceDefaults
 import com.paydock.feature.paypal.checkout.presentation.PayPalWidget
 import com.paydock.feature.wallet.domain.model.integration.WalletType
-import com.paydock.sample.BuildConfig
 import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
+import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.style.StylingViewModel
 import com.paydock.sample.feature.wallet.presentation.WalletViewModel
 
@@ -32,20 +31,19 @@ import com.paydock.sample.feature.wallet.presentation.WalletViewModel
 fun PayPalItem(
     context: Context,
     walletViewModel: WalletViewModel = hiltViewModel(),
-    stylingViewModel: StylingViewModel
+    stylingViewModel: StylingViewModel,
+    configViewModel: ConfigViewModel
 ) {
     val uiState by walletViewModel.stateFlow.collectAsState()
     val paypalAppearance by stylingViewModel.paypalWidgetAppearance.collectAsState()
     val currentOrDefaultAppearance = paypalAppearance ?: PayPalAppearanceDefaults.appearance()
+    val paypalConfig by configViewModel.paypalWidgetConfig.collectAsState()
+
     PayPalWidget(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        config = PayPalWidgetConfig(
-            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
-            gatewayId = BuildConfig.SERVICE_ID_PAYPAL,
-            fundingSource = PayPalWidgetConfig.PayPalFundingSource.PAYPAL
-        ),
+        config = paypalConfig,
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {
                 Log.d("[PayPalWidget Event]", "[type=${event.type}] $event")

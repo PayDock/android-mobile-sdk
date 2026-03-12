@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -22,7 +23,9 @@ import com.paydock.feature.card.domain.model.integration.enums.CardType.Companio
  *
  * This composable function renders a horizontal row of card scheme icons,
  * representing the payment methods accepted by the integration.
- * The icons are aligned to the right/end of the banner and spaced with 7.dp between each image.
+ * The icons are aligned to the left/start of the banner and spaced with 7.dp between each image.
+ * The entire banner acts as a single accessible element that announces all supported card schemes
+ * together when focused with TalkBack.
  *
  * @param supportedSchemes A list of [CardType] enums representing the supported card schemes.
  */
@@ -31,7 +34,9 @@ internal fun SupportedCardBanner(supportedSchemes: Set<CardType>) {
     val schemeDescriptions = supportedSchemes.joinToString(separator = ", ") { it.displayLabel() }
     val fullContentDescription = stringResource(R.string.label_supported_card_schemes, schemeDescriptions)
     Row(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("supportedCardBanner")
             .semantics(mergeDescendants = true) {
                 contentDescription = fullContentDescription
             },

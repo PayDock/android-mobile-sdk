@@ -48,6 +48,13 @@ internal class LuhnValidatorTest {
     }
 
     @Test
+    fun test12DigitLuhnValidNumber() {
+        val twelveDigitNumber = "222240000000"
+        val result = LuhnValidator.isLuhnValid(twelveDigitNumber)
+        assertEquals(true, result)
+    }
+
+    @Test
     fun testCardHolderName() {
         val cardHolderName = "John Doe"
         val result = LuhnValidator.isLuhnValid(cardHolderName)

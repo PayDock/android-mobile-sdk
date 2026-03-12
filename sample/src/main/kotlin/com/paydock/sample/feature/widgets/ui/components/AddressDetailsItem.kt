@@ -16,10 +16,15 @@ import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.feature.address.domain.model.integration.AddressDetailsWidgetConfig
 import com.paydock.feature.address.presentation.AddressDetailsAppearanceDefaults
 import com.paydock.feature.address.presentation.AddressDetailsWidget
+import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.style.StylingViewModel
 
 @Composable
-fun AddressDetailsItem(context: Context, stylingViewModel: StylingViewModel) {
+fun AddressDetailsItem(
+    context: Context,
+    stylingViewModel: StylingViewModel,
+    configViewModel: ConfigViewModel
+) {
     // Showcase pre-filled address
 //    val mockAddress = BillingAddress(
 //        addressLine1 = "1 Park Avenue",
@@ -31,12 +36,14 @@ fun AddressDetailsItem(context: Context, stylingViewModel: StylingViewModel) {
     val addressAppearance by stylingViewModel.addressWidgetAppearance.collectAsState()
     val currentOrDefaultAppearance =
         addressAppearance ?: AddressDetailsAppearanceDefaults.appearance()
+    val addressConfig by configViewModel.addressConfig.collectAsState()
+
     AddressDetailsWidget(
         modifier = Modifier
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
         config = AddressDetailsWidgetConfig(
-            address = null
+            address = addressConfig
         ),
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {

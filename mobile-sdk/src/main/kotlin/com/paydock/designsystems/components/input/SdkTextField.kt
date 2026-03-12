@@ -4,10 +4,8 @@ package com.paydock.designsystems.components.input
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -111,9 +109,7 @@ internal fun SdkTextField(
                 // Use appearance.label directly to preserve custom styling in both focused and unfocused states
                 // Previously, unfocused state was overriding with MaterialTheme.typography.labelMedium,
                 // which prevented custom styling from being applied to the collapsed label
-                Box(modifier = Modifier.offset(y = 2.dp)) {
-                    TextFieldLabel(label, appearance.label)
-                }
+                TextFieldLabel(label, appearance.label)
             },
             placeholder = {
                 TextFieldPlaceholder(placeholder, appearance.placeholder)

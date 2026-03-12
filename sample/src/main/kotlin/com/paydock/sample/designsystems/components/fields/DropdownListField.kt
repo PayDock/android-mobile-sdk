@@ -34,8 +34,10 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.paydock.sample.R
 
 /**
  * A basic implementation of the Exposed Dropdown Menu component
@@ -91,7 +93,7 @@ fun DropdownListField(
                     val rotation by animateFloatAsState(if (expanded) 180F else 0F, label = "")
                     Icon(
                         rememberVectorPainter(Icons.Default.ArrowDropDown),
-                        contentDescription = "Dropdown Arrow",
+                        contentDescription = stringResource(R.string.content_desc_dropdown_arrow),
                         Modifier.rotate(rotation),
                     )
                 }

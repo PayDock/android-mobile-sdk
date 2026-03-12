@@ -1,10 +1,9 @@
 package com.paydock.feature.card.domain.repository
 
+import com.paydock.binprocessor.data.dto.BinDataResponse
 import com.paydock.feature.card.data.dto.CreateCardPaymentTokenRequest
-import com.paydock.feature.card.domain.model.ui.CardSchema
 import com.paydock.feature.card.domain.model.ui.TokenDetails
 import kotlinx.coroutines.flow.Flow
-import java.util.TreeMap
 
 /**
  * A repository interface for handling payment token operations related to payment gateways.
@@ -47,9 +46,9 @@ internal interface CardRepository {
     ): Flow<TokenDetails>
 
     /**
-     * Fetches the supported card schemas from a local file.
+     * Fetches the BIN data. Uses cache first (CloudFront), then fallback to bundled asset.
      *
-     * @return A [TreeMap] containing card schema information.
+     * @return A [BinDataResponse] containing BIN data for card scheme detection.
      */
-    suspend fun getCardSchemas(): TreeMap<Int, CardSchema>
+    suspend fun getBinData(): BinDataResponse
 }

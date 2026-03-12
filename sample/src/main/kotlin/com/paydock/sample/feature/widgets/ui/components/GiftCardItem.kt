@@ -15,24 +15,26 @@ import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
 import com.paydock.core.domain.model.Event
 import com.paydock.core.presentation.util.WidgetEventDelegate
-import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
 import com.paydock.feature.card.presentation.GiftCardAppearanceDefaults
 import com.paydock.feature.card.presentation.GiftCardWidget
-import com.paydock.sample.BuildConfig
+import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.style.StylingViewModel
 
 @Composable
-fun GiftCardItem(context: Context, stylingViewModel: StylingViewModel) {
+fun GiftCardItem(
+    context: Context,
+    stylingViewModel: StylingViewModel,
+    configViewModel: ConfigViewModel
+) {
     val giftCardAppearance by stylingViewModel.giftCardWidgetAppearance.collectAsState()
     val currentOrDefaultAppearance = giftCardAppearance ?: GiftCardAppearanceDefaults.appearance()
+    val giftCardConfig by configViewModel.giftCardWidgetConfig.collectAsState()
+
     GiftCardWidget(
         modifier = Modifier
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
-        config = GiftCardWidgetConfig(
-            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
-            storePin = true
-        ),
+        config = giftCardConfig,
         appearance = currentOrDefaultAppearance,
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {
@@ -42,7 +44,11 @@ fun GiftCardItem(context: Context, stylingViewModel: StylingViewModel) {
         completion = { result ->
             result.onSuccess {
                 Log.d("[GiftCardWidget]", "Success: $it")
-                Toast.makeText(context, "Tokenised card was successful! [$it]", Toast.LENGTH_SHORT)
+                Toast.makeText(
+                    context,
+                    "Tokenised card was successful! [$it]",
+                    Toast.LENGTH_SHORT
+                )
                     .show()
             }.onFailure {
                 val error = it.toError()

@@ -30,6 +30,7 @@
     <string name="error_unsupported_card_scheme">Card type not accepted</string>
     <string name="error_expiry_date">Invalid expiry date</string>
     <string name="error_expiry_expired">Card expired</string>
+    <string name="error_expiry_month">Invalid month</string>
     <string name="error_security_code">Invalid security code</string>
     <string name="error_pin">Invalid PIN number</string>
     <string name="error_input_default">Input invalid</string>
@@ -41,5 +42,17 @@
     <string name="button_submit">Submit</string>
     <string name="button_pay_with">Pay with</string>
     <string name="button_link_paypal_account">Link PayPal account</string>
+    <!-- endregion -->
+    <!-- region Accessibility -->
+    <string name="accessibility_button_loading">Loading</string>
+    <string name="accessibility_webview_loading">Loading</string>
+    <string name="accessibility_overlay_loading">Loading, please wait.</string>
+    <string name="accessibility_overlay_still_loading">Still loading, this might take a few moments.</string>
+    <string name="content_desc_zip_button">Pay with Zip</string>
+    <string name="content_desc_zip_loading">Zip loading</string>
+    <!-- endregion -->
+    <!-- region Toast Messages -->
+    <string name="toast_invalid_url">Invalid URL - unable to open</string>
+    <string name="toast_no_handler">No application found to open URL</string>
     <!-- endregion -->
 </resources>

@@ -26,9 +26,11 @@ import com.paydock.designsystems.components.web.extensions.setup
  * @param onPageFinished Callback triggered when a page finishes loading in the WebView.
  * @param onWebViewError Callback triggered when a WebView encounters an error, providing the error code and message.
  * @param openExternalLink Callback triggered when an external link is encountered and needs to be opened outside of the WebView.
+ * @param openTargetBlankInSameWebView When true, do not create a new window for target="_blank" links; the URL loads in the current WebView.
  */
 internal class SdkWebChromeClient(
     private val context: Context,
+    private val openTargetBlankInSameWebView: Boolean = false,
     private val onOpenWebView: (WebView) -> Unit,
     private val onPageFinished: (WebView) -> Unit,
     private val onWebViewError: (Int, String) -> Unit,
@@ -121,6 +123,10 @@ internal class SdkWebChromeClient(
         isUserGesture: Boolean,
         resultMsg: Message?,
     ): Boolean {
+        // When enabled, let target="_blank" links load in the current WebView instead of opening a blank new window.
+        if (openTargetBlankInSameWebView) {
+            return false
+        }
         // Create a new WebView instance for the new window.
         val webView = WebView(context).apply {
             visibility = View.INVISIBLE

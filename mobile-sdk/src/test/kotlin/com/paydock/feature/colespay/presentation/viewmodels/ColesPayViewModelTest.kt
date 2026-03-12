@@ -15,6 +15,7 @@ import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
 import com.paydock.feature.colespay.presentation.state.ColesPayUIState
 import com.paydock.feature.wallet.data.dto.WalletCallbackResponse
 import com.paydock.feature.wallet.data.mapper.asEntity
+import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import com.paydock.feature.wallet.domain.model.ui.WalletCallback
 import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
@@ -159,4 +160,50 @@ internal class ColesPayViewModelTest : BaseKoinUnitTest() {
         }
     }
 
+    @Test
+    fun `startColesPayFlow success triggers wallet callback and emits LaunchIntent`() = runTest {
+        // GIVEN token success, wallet callback success
+        val tokenResult = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
+        val response =
+            readResourceFile("wallet/success_colespay_wallet_callback_response.json")
+                .convertToDataClass<WalletCallbackResponse>()
+        val mockResult = Result.success(response.asEntity())
+        coEvery { getWalletCallbackUseCase(any(), any()) } returns mockResult
+
+        viewModel.uiState.test {
+            // ACTION: simulate flow start providing token success via callback
+            viewModel.startColesPayFlow { callback ->
+                callback(Result.success(WalletTokenResult(tokenResult)))
+            }
+            // Initial Idle
+            assertIs<ColesPayUIState.Idle>(awaitItem())
+            // Loading from startColesPayFlow
+            assertIs<ColesPayUIState.Loading>(awaitItem())
+            // Result LaunchIntent
+            awaitItem().let { state ->
+                assertIs<ColesPayUIState.LaunchIntent>(state)
+                assertEquals(MobileSDKTestConstants.ColesPay.MOCK_ORDER_ID, state.callbackData.callbackId)
+            }
+        }
+    }
+
+    @Test
+    fun `startColesPayFlow failure emits InitialisationWalletTokenException`() = runTest {
+        viewModel.uiState.test {
+            // ACTION: simulate tokenization failure via callback
+            viewModel.startColesPayFlow { callback ->
+                callback(Result.failure(Exception(MobileSDKTestConstants.Errors.MOCK_TOKENIZATION_ERROR)))
+            }
+            // Initial Idle
+            assertIs<ColesPayUIState.Idle>(awaitItem())
+            // Loading
+            assertIs<ColesPayUIState.Loading>(awaitItem())
+            // Error
+            awaitItem().let { state ->
+                assertIs<ColesPayUIState.Error>(state)
+                assertIs<ColesPayException.InitialisationWalletTokenException>(state.exception)
+                assertEquals(MobileSDKTestConstants.Errors.MOCK_TOKENIZATION_ERROR, state.exception.message)
+            }
+        }
+    }
 }

@@ -27,6 +27,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.paydock.R
 import com.paydock.core.MobileSDKConstants
@@ -38,6 +39,7 @@ import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.core.presentation.util.webviewLoadingAccessibility
 import com.paydock.designsystems.components.button.ImageButtonAppearance
 import com.paydock.designsystems.components.button.ImageButtonDefaults
 import com.paydock.designsystems.components.button.SdkImageButton
@@ -136,7 +138,12 @@ fun ColesPayWidget(
         Box(
             modifier = modifier
                 .aspectRatio(imageAspectRatio)
-                .clip(appearance.imageButton.shape),
+                .clip(appearance.imageButton.shape)
+                .webviewLoadingAccessibility(isLoading = isLoading)
+                .semantics(mergeDescendants = false) {
+                    // mergeDescendants = false ensures our contentDescription from webviewLoadingAccessibility
+                    // is announced when tapping anywhere on the Box
+                },
             contentAlignment = Alignment.Center
         ) {
             Image(

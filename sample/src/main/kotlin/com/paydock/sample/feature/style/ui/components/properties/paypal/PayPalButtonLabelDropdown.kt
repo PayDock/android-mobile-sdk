@@ -5,7 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.paydock.sample.R
-import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paydock.sample.designsystems.components.fields.StringDropdown
 import com.paypal.android.paymentbuttons.PayPalButtonLabel
 
 @Composable
@@ -28,7 +28,7 @@ fun PayPalButtonLabelDropdown(
         options.find { it.second == currentLabel }?.first ?: PayPalButtonLabel.PAYPAL.name
     }
 
-    DropdownSelector(
+    StringDropdown(
         modifier = modifier,
         title = stringResource(R.string.label_paypal_button_label),
         options = options.map { it.first },

@@ -3,7 +3,6 @@ package com.paydock.feature.card.presentation.components
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,7 +30,6 @@ import com.paydock.feature.card.presentation.utils.errors.CardNumberError
 import com.paydock.feature.card.presentation.utils.transformations.CardNumberInputTransformation
 import com.paydock.feature.card.presentation.utils.validators.CreditCardInputParser
 import com.paydock.feature.card.presentation.utils.validators.CreditCardNumberValidator
-import kotlinx.coroutines.delay
 
 /**
  * A composable function for entering and validating a credit card number.
@@ -68,22 +66,17 @@ internal fun CreditCardNumberInput(
     var focusedState by remember { mutableStateOf(false) }
     var hasUserInteracted by remember { mutableStateOf(false) }
 
-    var debouncedValue by remember { mutableStateOf("") }
-    LaunchedEffect(value) {
-        delay(MobileSDKConstants.General.INPUT_DELAY)
-        debouncedValue = value
-    }
-
-    // Validate possible card number errors
+    // Validate using live value so we don't show Empty/Invalid during debounce (e.g. "4" → validator still saw "" → false error)
     val cardNumberError = CreditCardNumberValidator.validateCardNumberInput(
-        debouncedValue,
-        cardScheme,
-        schemeConfig,
-        hasUserInteracted
+        cardNumber = value,
+        cardScheme = cardScheme,
+        schemeConfig = schemeConfig,
+        hasUserInteracted = hasUserInteracted,
+        isCardNumberFocused = focusedState
     )
 
     val errorMessage = when (cardNumberError) {
-        CardNumberError.Empty,
+        CardNumberError.Empty -> null // Empty field should show no error (neutral state)
         CardNumberError.InvalidLuhn,
         CardNumberError.InvalidLength -> stringResource(id = R.string.error_card_number)
 
@@ -97,11 +90,17 @@ internal fun CreditCardNumberInput(
         },
         appearance = appearance,
         value = value,
-        onValueChange = {
+        onValueChange = { newText ->
             hasUserInteracted = true
-            if (it.length <= MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH) {
-                // Parse the input text to ensure it is a valid card number before invoking the callback
-                CreditCardInputParser.parseNumber(it)?.let { number ->
+            // Strip spaces and other non-digits so pasted values (e.g. "6334 9000 0000 0005") are accepted
+            val digitsOnly = newText.replace(Regex("\\D"), "")
+            // Use MAX so paste across schemes works (e.g. Amex 15→Visa 16). Scheme length enforced by validator.
+            val maxLength = MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH
+            // Always accept deletions to prevent "unable to delete" bug after paste/format operations
+            val isDeletion = digitsOnly.length < value.length
+            val withinLength = digitsOnly.length <= maxLength
+            if (isDeletion || withinLength) {
+                CreditCardInputParser.parseNumber(digitsOnly)?.let { number ->
                     onValueChange(number)
                 }
             }
@@ -110,7 +109,8 @@ internal fun CreditCardNumberInput(
         enabled = enabled,
         label = stringResource(id = R.string.label_card_number),
         autofillType = ContentType.CreditCardNumber,
-        leadingIcon = { CardSchemeIcon(cardScheme?.type, focusedState) },
+        leadingIcon = { CardSchemeIcon(cardScheme?.type, focusedState, hideFromAccessibility = true) },
+        showValidIcon = !focusedState && cardNumberError == CardNumberError.None && value.isNotBlank(),
         error = errorMessage,
         visualTransformation = cardScheme?.let {
             CardNumberInputTransformation(

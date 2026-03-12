@@ -1,3 +1,4 @@
+:bin-processor
 androidx.activity:activity-compose:1.11.0
 androidx.activity:activity-ktx:1.11.0
 androidx.activity:activity:1.11.0
@@ -131,8 +132,8 @@ com.google.android.material:material:1.11.0
 com.google.errorprone:error_prone_annotations:2.15.0
 com.google.guava:listenablefuture:1.0
 com.google.pay.button:compose-pay-button:1.1.0
-com.paydock.core:network-android:1.4.0
-com.paydock.core:network:1.4.0
+com.paydock.core:network-android:1.5.0
+com.paydock.core:network:1.5.0
 com.paypal.android:core-payments:2.3.0
 com.paypal.android:fraud-protection:2.3.0
 com.paypal.android:payment-buttons:2.3.0

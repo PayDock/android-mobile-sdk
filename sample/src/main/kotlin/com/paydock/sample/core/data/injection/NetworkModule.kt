@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder
 import com.paydock.MobileSDK
 import com.paydock.core.domain.model.Environment
 import com.paydock.sample.BuildConfig
+import com.paydock.sample.core.data.utils.BigDecimalTypeAdapter
 import com.paydock.sample.feature.card.data.utils.CreateVaultTokenRequestAdapterFactory
 import com.paydock.sample.feature.threeDS.data.utils.Create3DSChargeRequestAdapterFactory
 import dagger.Module
@@ -15,6 +16,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
@@ -34,6 +36,7 @@ class NetworkModule {
     @Singleton
     @Provides
     fun provideGson(): Gson = GsonBuilder()
+        .registerTypeAdapter(BigDecimal::class.java, BigDecimalTypeAdapter())
         .registerTypeAdapterFactory(CreateVaultTokenRequestAdapterFactory())
         .registerTypeAdapterFactory(Create3DSChargeRequestAdapterFactory())
         .create()

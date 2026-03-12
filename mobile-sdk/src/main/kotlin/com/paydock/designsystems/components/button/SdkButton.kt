@@ -11,7 +11,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -38,6 +37,7 @@ import androidx.compose.ui.unit.takeOrElse
 import com.paydock.R
 import com.paydock.core.presentation.extensions.scaled
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
+import com.paydock.core.presentation.util.buttonLoadingAccessibility
 import com.paydock.designsystems.components.icon.IconAppearance
 import com.paydock.designsystems.components.icon.IconAppearanceDefaults
 import com.paydock.designsystems.components.icon.SdkIcon
@@ -655,22 +655,21 @@ internal fun SdkButton(
     // Calculate adjusted height with a scaling factor
     val adjustedButtonHeight = appearance.height.scaled(fontScale)
 
-    val disabledIconOrLoaderTint = ButtonDefaults.buttonColors().disabledContentColor
     val runtimeAppearance = remember(appearance, isEnabled) {
         if (isEnabled) {
             appearance
         } else {
             appearance.copy(
                 iconAppearance = appearance.iconAppearance.copy( // Assuming iconAppearance is not null
-                    tint = disabledIconOrLoaderTint
+                    tint = appearance.colors.disabledContentColor
                 ),
                 textAppearance = appearance.textAppearance.copy(
                     style = appearance.textAppearance.style.copy(
-                        color = disabledIconOrLoaderTint
+                        color = appearance.colors.disabledContentColor
                     )
                 ),
                 loaderAppearance = appearance.loaderAppearance.copy(
-                    color = disabledIconOrLoaderTint
+                    color = appearance.colors.disabledContentColor
                 )
             )
         }
@@ -678,7 +677,9 @@ internal fun SdkButton(
 
     Button(
         onClick = onClick,
-        modifier = modifier.heightIn(min = adjustedButtonHeight),
+        modifier = modifier
+            .heightIn(min = adjustedButtonHeight)
+            .buttonLoadingAccessibility(isLoading = isLoading, buttonText = text),
         enabled = isEnabled,
         content = {
             ButtonContent(
@@ -773,7 +774,9 @@ internal fun SdkOutlineButton(
 
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.heightIn(min = adjustedButtonHeight),
+        modifier = modifier
+            .heightIn(min = adjustedButtonHeight)
+            .buttonLoadingAccessibility(isLoading = isLoading, buttonText = text),
         enabled = isEnabled,
         content = {
             ButtonContent(
@@ -862,7 +865,9 @@ internal fun SdkTextButton(
 
     TextButton(
         onClick = onClick,
-        modifier = modifier.heightIn(min = adjustedButtonHeight),
+        modifier = modifier
+            .heightIn(min = adjustedButtonHeight)
+            .buttonLoadingAccessibility(isLoading = isLoading, buttonText = text),
         enabled = isEnabled,
         shape = appearance.shape,
         content = {
@@ -916,7 +921,9 @@ internal fun SdkIconButton(
         }
     }
     Button(
-        modifier = modifier.heightIn(min = ButtonAppearanceDefaults.ButtonHeight),
+        modifier = modifier
+            .heightIn(min = ButtonAppearanceDefaults.ButtonHeight)
+            .buttonLoadingAccessibility(isLoading = isLoading),
         onClick = onClick,
         enabled = isEnabled,
         colors = runtimeAppearance.colors,
@@ -943,13 +950,13 @@ internal fun SdkIconButton(
             exit = fadeOut() + shrinkOut(shrinkTowards = Alignment.Center),
             label = "iconVisibilityAnimation"
         ) {
-            when (val buttonIcon = effectiveIcon) {
+            when (effectiveIcon) {
                 is ButtonIcon.Vector -> SdkIcon(
-                    imageVector = buttonIcon.icon,
+                    imageVector = effectiveIcon.icon,
                     contentDescription = contentDescription
                 )
                 is ButtonIcon.DrawableRes -> SdkIcon(
-                    painter = painterResource(buttonIcon.drawable),
+                    painter = painterResource(effectiveIcon.drawable),
                     contentDescription = contentDescription
                 )
                 null -> Unit

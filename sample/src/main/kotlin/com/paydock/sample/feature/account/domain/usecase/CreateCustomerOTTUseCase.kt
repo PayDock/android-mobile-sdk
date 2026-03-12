@@ -7,8 +7,8 @@ import javax.inject.Inject
 
 class CreateCustomerOTTUseCase @Inject constructor(private val repository: AccountRepository) {
 
-    suspend operator fun invoke(request: CreateCustomerOTTRequest) =
+    suspend operator fun invoke(accessToken: String, request: CreateCustomerOTTRequest) =
         suspendRunCatching {
-            repository.createCustomer(request)
+            repository.createCustomer(accessToken, request)
         }
 }

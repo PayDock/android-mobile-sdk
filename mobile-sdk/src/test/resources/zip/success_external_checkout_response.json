@@ -1,0 +1,12 @@
+{
+  "status": 200,
+  "resource": {
+    "type": "external_checkout",
+    "data": {
+      "link": "https://checkout.zip.co/checkout?token=test_checkout_token_123",
+      "token": "test_checkout_token_123"
+    }
+  }
+}
+
+

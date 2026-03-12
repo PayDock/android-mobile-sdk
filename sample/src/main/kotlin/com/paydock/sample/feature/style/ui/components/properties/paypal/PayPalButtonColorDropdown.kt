@@ -5,7 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.paydock.sample.R
-import com.paydock.sample.feature.style.ui.components.core.dropdown.DropdownSelector
+import com.paydock.sample.designsystems.components.fields.StringDropdown
 import com.paypal.android.paymentbuttons.PayPalButtonColor
 
 @Composable
@@ -28,7 +28,7 @@ fun PayPalButtonColorDropdown(
         options.find { it.second == currentColor }?.first ?: PayPalButtonColor.GOLD.name
     }
 
-    DropdownSelector(
+    StringDropdown(
         modifier = modifier,
         title = stringResource(R.string.label_paypal_button_color),
         options = options.map { it.first },

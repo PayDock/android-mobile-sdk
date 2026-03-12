@@ -10,11 +10,6 @@ enum class CardType {
     AMEX,
 
     /**
-     * Australian Bankcard card scheme.
-     */
-    AUSBC,
-
-    /**
      * Diners Club International card scheme.
      */
     DINERS,
@@ -33,11 +28,6 @@ enum class CardType {
      * Mastercard card scheme.
      */
     MASTERCARD,
-
-    /**
-     * Solo card scheme, typically used in the UK.
-     */
-    SOLO,
 
     /**
      * Visa card scheme.
@@ -68,12 +58,10 @@ enum class CardType {
         internal fun CardType.displayLabel(): String {
             return when (this) {
                 AMEX -> "American Express"
-                AUSBC -> "Australian Bank Card"
                 DINERS -> "Diners Club"
                 DISCOVER -> "Discover"
                 JAPCB -> "JCB"
                 MASTERCARD -> "MasterCard"
-                SOLO -> "Solo"
                 VISA -> "Visa"
                 UNIONPAY -> "UnionPay International"
             }

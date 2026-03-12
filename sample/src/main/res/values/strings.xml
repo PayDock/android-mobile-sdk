@@ -4,10 +4,12 @@
     <string name="nav_checkout">Checkout</string>
     <string name="nav_widgets">Widgets</string>
     <string name="nav_style">Style</string>
+    <string name="nav_config">Config</string>
 
     <!-- Titles -->
     <string name="title_my_account">My Account</string>
     <string name="title_profile">Profile</string>
+    <string name="title_cart">Cart</string>
 
     <!-- Labels -->
     <string name="label_colours">Colours</string>
@@ -25,8 +27,8 @@
     <string name="label_link_paypal_desc">Link your PayPal account to use method next time you shop</string>
     <string name="label_select_widget">Select Widget</string>
     <string name="label_checkout_with_click_to_pay">Checkout with Click to Pay</string>
-    <!-- Style Screen Labels -->
-    <string name="label_style_screen_caption">Customise the look and feel of the widgets. These styles apply to the widgets based on your phone\'s dark or light mode setting.</string>
+    <string name="label_config_screen_caption">Configure global settings and widget properties. Set app-wide defaults like API access token and cart configuration, or customize individual widget settings and behavior.</string>
+    <string name="label_config_widget_list_title">Select a Widget to Configure</string>
     <string name="label_text_style">Text Style</string>
     <string name="label_text_colour">Text Colour</string>
     <string name="label_font_family">Font Family</string>
@@ -57,6 +59,7 @@
     <string name="label_paypal_button_color">PayPal - Button Colour</string>
     <string name="label_paypal_button_label">PayPal - Button Label</string>
     <string name="label_paypal_button_shape">PayPal - Button Shape</string>
+    <string name="label_zip_button_style">Zip - Button Style</string>
     <string name="label_vertical_spacing">Vertical Spacing</string>
     <string name="label_horizontal_spacing">Horizontal Spacing</string>
     <string name="label_text_field_vertical_spacing">Text Field Vertical Spacing</string>
@@ -132,6 +135,83 @@
     <string name="label_add_gift_card">Add Gift Card</string>
     <string name="label_shipping_options">Shipping Options</string>
     <string name="label_select_payment_method">Select a payment method</string>
+    <string name="label_global_configuration">Global Configuration</string>
+    <string name="label_global_config_description">These settings will be applied to all widgets as defaults.</string>
+    <string name="label_test_cart_configuration">Test Cart Configuration</string>
+    <string name="label_api_access_token">API Access Token</string>
+    <string name="label_total_amount">Total Amount</string>
+    <string name="label_currency">Currency</string>
+    <string name="label_gateway_id">Gateway ID</string>
+    <string name="label_gateway_id_optional">Gateway ID (Optional)</string>
+    <string name="label_client_id">Client ID</string>
+    <string name="label_service_id">Service ID</string>
+    <string name="label_store_pin">Store PIN</string>
+    <string name="label_request_shipping">Request Shipping</string>
+    <string name="label_funding_source">Funding Source</string>
+    <string name="label_disable_summary_screen_optional">Disable Summary Screen (Optional)</string>
+    <string name="label_checkout_experience_optional">Checkout Experience (Optional)</string>
+    <string name="label_services_optional">Services (Optional)</string>
+    <string name="label_unaccepted_card_type_optional">Unaccepted Card Type (Optional)</string>
+    <string name="label_card_brands_optional">Card Brands (Optional)</string>
+    <string name="label_co_brand_names_optional">Co-Brand Names (Optional)</string>
+    <string name="label_dpa_billing_preference_optional">DPA Billing Preference (Optional)</string>
+    <string name="label_order_type_optional">Order Type (Optional)</string>
+    <string name="label_3ds_preference_optional">3DS Preference (Optional)</string>
+    <string name="label_confirm_payment_optional">Confirm Payment (Optional)</string>
+    <string name="label_payment_options_optional">Payment Options (Optional)</string>
+    <string name="label_transaction_amount_optional">Transaction Amount (Optional)</string>
+    <string name="label_transaction_currency_code_optional">Transaction Currency Code (Optional)</string>
+    <string name="label_email_optional">Email (Optional)</string>
+    <string name="label_first_name_optional">First Name (Optional)</string>
+    <string name="label_last_name_optional">Last Name (Optional)</string>
+    <string name="label_phone_country_code_optional">Phone Country Code (Optional)</string>
+    <string name="label_phone_number_optional">Phone Number (Optional)</string>
+    <string name="label_dpa_address_optional">DPA Address (Optional)</string>
+    <string name="label_dpa_email_address_optional">DPA Email Address (Optional)</string>
+    <string name="label_dpa_phone_country_code_optional">DPA Phone Country Code (Optional)</string>
+    <string name="label_dpa_phone_number_optional">DPA Phone Number (Optional)</string>
+    <string name="label_dpa_logo_uri_optional">DPA Logo URI (Optional)</string>
+    <string name="label_dpa_supported_email_address_optional">DPA Supported Email Address (Optional)</string>
+    <string name="label_dpa_uri_optional">DPA URI (Optional)</string>
+    <string name="label_dpa_support_uri_optional">DPA Support URI (Optional)</string>
+    <string name="label_dpa_application_type_optional">DPA Application Type (Optional)</string>
+    <string name="label_collect_cardholder_name">Collect Cardholder Name</string>
+    <string name="label_enable_save_card">Enable Save Card</string>
+    <string name="label_enable_store_security_code">Enable Store Security Code</string>
+    <string name="label_store_security_code">Store Security Code</string>
+    <string name="label_saved_card_consent_accepted">Saved Card Consent Accepted</string>
+    <string name="label_show_card_title">Show Card Title</string>
+    <string name="label_consent_text">Consent Text</string>
+    <string name="label_privacy_policy_text">Privacy Policy Text</string>
+    <string name="label_privacy_policy_url">Privacy Policy URL</string>
+    <string name="label_enable_scheme_validation">Enable Scheme Validation</string>
+    <string name="label_supported_card_schemes">Supported Card Schemes</string>
+    <string name="label_minimum_amount_optional">Minimum Amount (Optional)</string>
+    <string name="label_maximum_amount">Maximum Amount</string>
+    <string name="label_language">Language</string>
+    <string name="label_country">Country</string>
+    <string name="label_afterpay_locale">Afterpay Locale (SDK initialisation)</string>
+    <string name="label_pickup_optional">Pickup (Optional)</string>
+    <string name="label_buy_now_optional">Buy Now (Optional)</string>
+    <string name="label_shipping_option_required_optional">Shipping Option Required (Optional)</string>
+    <string name="label_enable_single_shipping_option_update_optional">Enable Single Shipping Option Update (Optional)</string>
+    <string name="label_full_name_optional">Full Name (Optional)</string>
+    <string name="label_city_optional">City (Optional)</string>
+    <string name="label_state_optional">State (Optional)</string>
+    <string name="label_postal_code_optional">Postal Code (Optional)</string>
+    <string name="label_country_optional">Country (Optional)</string>
+    <string name="label_address_line_1_optional">Address Line 1 (Optional)</string>
+    <string name="label_address_line_2_optional">Address Line 2 (Optional)</string>
+    <string name="label_country_code_optional">Country Code (Optional)</string>
+    <string name="label_dpa_presentation_name_optional_readonly">DPA Presentation Name (Optional, Read-only)</string>
+    <string name="label_dpa_phone_number_country_code_optional">DPA Phone Number - Country Code (Optional)</string>
+    <string name="label_dpa_phone_number_phone_number_optional">DPA Phone Number - Phone Number (Optional)</string>
+    <string name="label_dpa_supported_phone_number_country_code_optional">DPA Supported Phone Number - Country Code (Optional)</string>
+    <string name="label_dpa_supported_phone_number_phone_number_optional">DPA Supported Phone Number - Phone Number (Optional)</string>
+    <string name="label_dynamic_data_type">Dynamic Data Type</string>
+
+    <!-- Style Screen Labels -->
+    <string name="label_style_screen_caption">Customise the look and feel of the widgets. These styles apply to the widgets based on your phone\'s dark or light mode setting.</string>
 
     <string name="disclaimer_rounded_shape_defaults">Note: Initial radius/percentage values are component defaults, not necessarily reflecting the current shape\'s exact creation parameters. Please adjust to define the desired corners.</string>
     <string name="disclaimer_elevation_defaults">Note: These are predefined elevation styles for demonstration purposes. Granular elevation control is not enabled in this demo.</string>
@@ -160,6 +240,7 @@
     <string name="button_link_account">Link Account</string>
     <string name="button_back">Back</string>
     <string name="button_remove">Remove</string>
+    <string name="button_add_payment_option">+ Add Payment Option</string>
 
     <!-- Messages -->
     <string name="msg_profile_updated">Profile updated successfully!</string>
@@ -172,4 +253,17 @@
     <string name="type_home">Home</string>
     <string name="type_work">Work</string>
     <string name="type_other">Other</string>
+
+    <!-- Component Accessibility Labels -->
+    <string name="content_desc_increase">Increase</string>
+    <string name="content_desc_decrease">Decrease</string>
+    <string name="content_desc_dropdown_arrow">Dropdown Arrow</string>
+
+    <!-- Zip Payment Labels -->
+    <string name="label_tokenize">Tokenize</string>
+    <string name="label_gender_optional">Gender (Optional)</string>
+    <string name="label_date_of_birth_optional">Date of Birth (Optional)</string>
+    <string name="label_shipping_type_optional">Shipping Type (Optional)</string>
+    <string name="label_use_default_shipping_address">Use Default Shipping Address</string>
+    <string name="label_postcode_optional">Postcode (Optional)</string>
 </resources>

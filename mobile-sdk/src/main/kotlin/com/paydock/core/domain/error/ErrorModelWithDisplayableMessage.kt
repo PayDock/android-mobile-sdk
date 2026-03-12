@@ -27,9 +27,9 @@ val ErrorModel?.displayableMessage: String
                 exception.message
                     ?: MobileSDKConstants.Standalone3DSConfig.Errors.STANDALONE_3DS_ERROR
 
-            is ErrorModel.Integrated3DSError ->
+            is ErrorModel.MPGS3dsError ->
                 exception.message
-                    ?: MobileSDKConstants.Integrated3DSConfig.Errors.INTEGRATED_3DS_ERROR
+                    ?: MobileSDKConstants.MPGS3dsConfig.Errors.MPGS_3DS_ERROR
 
             is ErrorModel.PayPalError ->
                 exception.message
@@ -58,6 +58,10 @@ val ErrorModel?.displayableMessage: String
             is ErrorModel.AfterpayError ->
                 exception.message
                     ?: MobileSDKConstants.AfterpayConfig.Errors.AFTER_PAY_ERROR
+
+            is ErrorModel.ZipError ->
+                exception.message
+                    ?: MobileSDKConstants.ZipConfig.Errors.ZIP_ERROR
 
             is ErrorModel.UnknownError ->
                 throwable.message

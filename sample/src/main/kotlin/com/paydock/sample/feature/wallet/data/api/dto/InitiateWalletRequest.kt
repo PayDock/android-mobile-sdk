@@ -1,9 +1,7 @@
 package com.paydock.sample.feature.wallet.data.api.dto
 
 import com.google.gson.annotations.SerializedName
-import com.paydock.sample.core.AMOUNT
 import com.paydock.sample.core.AU_COUNTRY_CODE
-import com.paydock.sample.core.AU_CURRENCY_CODE
 import com.paydock.sample.core.FIRST_NAME
 import com.paydock.sample.core.LAST_NAME
 import com.paydock.sample.core.MERCHANT_NAME
@@ -13,7 +11,7 @@ import java.math.BigDecimal
 import java.util.UUID
 
 data class InitiateWalletRequest(
-    val amount: BigDecimal = BigDecimal(AMOUNT),
+    val amount: BigDecimal,
     val currency: String,
     val customer: ChargesCustomerDTO,
     val description: String = "description007",
@@ -31,9 +29,9 @@ data class InitiateWalletRequest(
         @SerializedName("address_state") val state: String = "shipstate",
         @SerializedName("address_country") val countryCode: String = AU_COUNTRY_CODE,
         @SerializedName("address_postcode") val postalCode: String = "123456",
-        val amount: BigDecimal = BigDecimal(AMOUNT),
+        val amount: BigDecimal,
         val contact: ContactDTO = ContactDTO(),
-        val currency: String = AU_CURRENCY_CODE,
+        val currency: String,
     ) {
         data class ContactDTO(
             @SerializedName("first_name") val firstName: String = FIRST_NAME,
@@ -43,7 +41,7 @@ data class InitiateWalletRequest(
     }
 
     data class ItemDTO(
-        val amount: BigDecimal = BigDecimal(AMOUNT),
+        val amount: BigDecimal,
         @SerializedName("image_uri") val imageUri: String = "https://johndoesupplies.com/image",
         @SerializedName("item_uri") val itemUri: String = "https://johndoesupplies.com/1",
         val name: String = "itemname",

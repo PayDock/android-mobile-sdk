@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Enum class representing different types of events related to integrated 3D Secure (3DS)
+ * Enum class representing different types of events related to MPGS 3D Secure (3DS)
  * charge processing and additional data collection.
  *
  * These events cover various outcomes of 3DS authentication and data collection processes,

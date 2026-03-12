@@ -18,6 +18,13 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".feature.zip.presentation.ZipWebActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/SdkDialog"
+            android:configChanges="orientation|screenSize"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".feature.paypal.vault.presentation.PayPalVaultActivity"
             android:exported="true"
             android:launchMode="singleTop"

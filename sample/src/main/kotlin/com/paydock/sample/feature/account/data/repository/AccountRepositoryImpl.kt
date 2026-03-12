@@ -12,8 +12,11 @@ class AccountRepositoryImpl(
     private val dispatcher: CoroutineDispatcher,
     private val accountApi: AccountApi,
 ) : AccountRepository {
-    override suspend fun createCustomer(request: CreateCustomerOTTRequest): Customer =
+    override suspend fun createCustomer(
+        accessToken: String,
+        request: CreateCustomerOTTRequest
+    ): Customer =
         withContext(dispatcher) {
-            accountApi.createCustomer(request = request).toDomain()
+            accountApi.createCustomer(accessToken, request = request).toDomain()
         }
 }

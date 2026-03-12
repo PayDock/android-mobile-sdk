@@ -29,6 +29,24 @@ internal class ClickToPayErrorDataSerializerTest {
     }
 
     @Test
+    fun `test error data serializer with UserErrorData array format`() {
+        // Arrange - Web SDK sends data as array of error objects
+        val eventJson =
+            """{"type":"UserError","data":[{"field":"unknown","message":"Client specified an invalid argument. Check error message and error details for more information.","originalError":{"reason":"INVALID_PARAMETER","message":"Client specified an invalid argument. Check error message and error details for more information.","status":400,"sourceType":"CARD_ENROLLMENT"}}]}"""
+
+        // Act
+        val result = eventJson.convertToDataClass<ErrorData>()
+
+        // Assert
+        assertIs<ErrorData.UserErrorData>(result)
+        assertEquals(EventDataType.USER_ERROR, result.type)
+        assertEquals(
+            "Client specified an invalid argument. Check error message and error details for more information.",
+            result.data
+        )
+    }
+
+    @Test
     fun `test error data serializer with CriticalErrorData`() {
         // Arrange
         val eventJson =

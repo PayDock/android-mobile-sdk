@@ -31,13 +31,13 @@ internal object CardHolderNameValidator {
      *
      * The validation checks the following conditions in order:
      * 1. If `name` is blank (empty or whitespace only) and `hasUserInteracted` is true, it returns `CardHolderNameError.Empty`.
-     * 2. If `name` (after trimming) does not match the `validCardHolderNameRegex`,
+     * 2. If `name` has 12–19 digits and passes Luhn (card number in wrong field),
+     *    it returns `CardHolderNameError.InvalidLuhn`.
+     * 3. If `name` (after trimming) does not match the `validCardHolderNameRegex`,
      *    it returns `CardHolderNameError.InvalidFormat`. This single check now covers aspects like:
      *    - Not starting with a letter.
      *    - Containing disallowed characters.
      *    - Invalid structure (e.g. not matching the pattern for single letters or multi-part names).
-     * 3. If `name` is not blank and is considered Luhn valid (which is typically an error for names),
-     *    it returns `CardHolderNameError.InvalidLuhn`.
      * 4. If none of the above conditions are met, it returns `CardHolderNameError.None`, indicating the name is valid.
      *
      * @param name The cardholder name string to be validated.
@@ -48,11 +48,14 @@ internal object CardHolderNameValidator {
      */
     fun validateHolderNameInput(name: String, hasUserInteracted: Boolean): CardHolderNameError {
         val trimmedName = name.trim()
-        val isLuhnValid = LuhnValidator.isLuhnValid(name) // Using original name for Luhn as per original code
+        val digitsOnly = name.filter { it.isDigit() }
+        val isLuhnValid =
+            digitsOnly.length in MobileSDKConstants.CardDetailsConfig.MIN_CREDIT_CARD_LENGTH..MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH &&
+                LuhnValidator.isLuhnValid(digitsOnly)
         return when {
             // 1. Check for blank input if the user has interacted
             trimmedName.isBlank() && hasUserInteracted -> CardHolderNameError.Empty
-            // 2. Luhn check (often indicates card number mistakenly entered in name field)
+            // 2. Luhn check when 12–19 digits (card number in wrong field)
             trimmedName.isNotBlank() && isLuhnValid -> CardHolderNameError.InvalidLuhn
             // 3. Comprehensive format check using the new regex.
             trimmedName.isNotBlank() && !trimmedName.matches(MobileSDKConstants.Regex.CARD_HOLDER_NAME) -> {

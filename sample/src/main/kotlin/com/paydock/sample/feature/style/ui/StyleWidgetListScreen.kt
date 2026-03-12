@@ -13,9 +13,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -33,24 +35,36 @@ fun StyleWidgetListScreen(
     onThemeSelected: (AppTheme) -> Unit,
     onWidgetSelected: (WidgetType) -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("style_widget_list_screen")
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(end = 16.dp, start = 16.dp),
+                .padding(end = 16.dp, start = 16.dp)
+                .testTag("style_mode_row"),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                modifier = Modifier.weight(1.0f),
+                modifier = Modifier
+                    .weight(1.0f)
+                    .testTag("style_mode_title"),
                 text = "Mode",
                 style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
             )
-            Row(modifier = Modifier.padding(vertical = 17.dp)) {
+            Row(
+                modifier = Modifier
+                    .padding(vertical = 17.dp)
+                    .testTag("style_theme_buttons")
+            ) {
                 Icon(
                     modifier = Modifier
                         .clickable(role = Role.Button) {
                             onThemeSelected(AppTheme.LIGHT)
-                        },
+                        }
+                        .testTag("style_theme_light_button"),
                     painter = painterResource(id = R.drawable.ic_light),
                     contentDescription = null,
                     tint = Color.Unspecified
@@ -60,7 +74,8 @@ fun StyleWidgetListScreen(
                     modifier = Modifier
                         .clickable(role = Role.Button) {
                             onThemeSelected(AppTheme.DARK)
-                        },
+                        }
+                        .testTag("style_theme_dark_button"),
                     painter = painterResource(id = R.drawable.ic_dark),
                     contentDescription = null,
                     tint = Color.Unspecified
@@ -71,7 +86,8 @@ fun StyleWidgetListScreen(
         Text(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp)
+                .testTag("style_caption_text"),
             text = stringResource(R.string.label_style_screen_caption), // TODO: Need to implement hyperlink for Settings screen navigation
             style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp),
         )
@@ -85,15 +101,17 @@ fun StyleWidgetListScreen(
         Text(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 16.dp, end = 16.dp, start = 16.dp),
+                .padding(top = 16.dp, end = 16.dp, start = 16.dp)
+                .testTag("style_select_widget_title"),
             text = stringResource(R.string.label_select_widget),
             style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
         )
         Spacer(modifier = Modifier.height(14.dp))
         ListScreen(
-            items = WidgetType.entries.sortedBy { it.displayName() },
+            items = remember { WidgetType.entries.sortedBy { it.displayName() } },
             displayIcon = true,
-            onItemClick = onWidgetSelected
+            onItemClick = onWidgetSelected,
+            modifier = Modifier.testTag("style_widget_list")
         )
     }
 }

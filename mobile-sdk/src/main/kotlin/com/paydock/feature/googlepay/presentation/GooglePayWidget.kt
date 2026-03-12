@@ -19,6 +19,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -82,8 +83,18 @@ fun GooglePayWidget(
     eventDelegate: WidgetEventDelegate? = null,
     completion: (Result<ChargeResponse>) -> Unit
 ) {
-    // Retrieve the GooglePayViewModel using Koin
-    val viewModel: GooglePayViewModel = koinViewModel(parameters = { parametersOf(config) })
+    // Use content-based key so ViewModel is recreated when config changes.
+    // JSONObject uses reference equality; toString() provides content-based invalidation for remember.
+    val viewModelKey = remember(config.paymentRequest.toString()) {
+        val transactionInfo = config.paymentRequest.optJSONObject("transactionInfo")
+        val amount = transactionInfo?.optString("totalPrice", "") ?: ""
+        val currency = transactionInfo?.optString("currencyCode", "") ?: ""
+        "googlepay_${amount}_$currency"
+    }
+    val viewModel: GooglePayViewModel = koinViewModel(
+        key = viewModelKey,
+        parameters = { parametersOf(config) }
+    )
 
     // Collect the UI state from the ViewModel
     val uiState by viewModel.uiState.collectAsState()

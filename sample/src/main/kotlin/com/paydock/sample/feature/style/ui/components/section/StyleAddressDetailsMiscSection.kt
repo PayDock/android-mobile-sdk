@@ -11,7 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.paydock.feature.address.presentation.AddressDetailsWidgetAppearance
 import com.paydock.sample.R
-import com.paydock.sample.feature.style.ui.components.core.counter.NumberCounter
+import com.paydock.sample.designsystems.components.fields.NumberCounter
 
 @Composable
 fun StyleAddressDetailsMiscSection(

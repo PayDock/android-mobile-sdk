@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import java.util.TreeMap
 
 /**
  * ViewModel for managing the state and operations of card details input and tokenization.
@@ -78,22 +77,22 @@ internal class CardDetailsViewModel(
     }
 
     /**
-     * Fetches the supported card schemas using the provided use case.
-     *
-     * - On success, updates the input state with the retrieved card schemas.
-     * - On failure, clears the card schemas in the input state.
+     * Fetches the BIN data using the provided use case.
+     * Always uses cache first (CloudFront download), then falls back to the bundled asset (card-schemes.json).
+     * BIN refresh runs at SDK init and on app foreground via [BinDataRefreshCoordinator];
+     * no BIN network request occurs during the tokenise flow.
      */
     private fun getCardSchemas() {
         launchOnIO {
             getCardSchemasUseCase()
-                .onSuccess { schemas ->
+                .onSuccess { binData ->
                     _inputStateFlow.update { state ->
-                        state.copy(cardSchemas = schemas)
+                        state.copy(binData = binData)
                     }
                 }
                 .onFailure {
                     _inputStateFlow.update { state ->
-                        state.copy(cardSchemas = TreeMap())
+                        state.copy(binData = null)
                     }
                 }
         }
@@ -114,6 +113,18 @@ internal class CardDetailsViewModel(
     fun setCollectCardholderName(collectCardHolderName: Boolean) {
         _inputStateFlow.update { state ->
             state.copy(collectCardholderName = collectCardHolderName)
+        }
+    }
+
+    /**
+     * Sets whether to store the security code (CVV) when tokenizing the card.
+     *
+     * @param storeSecurityCode Boolean indicating whether to store the security code. If `null`,
+     * the `store_ccv` parameter will not be sent in the tokenization request.
+     */
+    fun setStoreSecurityCode(storeSecurityCode: Boolean?) {
+        _inputStateFlow.update { state ->
+            state.copy(storeSecurityCode = storeSecurityCode)
         }
     }
 
@@ -202,6 +213,8 @@ internal class CardDetailsViewModel(
                 cardNumber = state.cardNumber,
                 expiryMonth = state.expiryMonth,
                 expiryYear = state.expiryYear,
+                storeCVV = state.storeSecurityCode,
+                savedCardConsentAccepted = state.saveCard,
                 gatewayId = gatewayId
             )
             createCardPaymentTokenUseCase(accessToken, request)

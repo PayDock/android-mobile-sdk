@@ -2,16 +2,20 @@ package com.paydock.feature.address.presentation.components
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.paydock.core.BaseViewModelKoinTest
 import com.paydock.core.extensions.waitUntilTimeout
+import com.paydock.designsystems.components.search.SearchDropdownAppearanceDefaults
 import com.paydock.feature.address.injection.addressDetailsModule
 import com.paydock.feature.address.presentation.viewmodels.CountryAutoCompleteViewModel
 import io.mockk.Runs
@@ -70,11 +74,11 @@ internal class CountryInputAutoCompleteTest :
                 LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
             ) {
                 CountryInputAutoComplete(
-                    modifier = TODO(),
-                    appearance = TODO(),
-                    currentCountryValue = TODO(),
-                    autofillType = TODO(),
-                    viewModel = TODO()
+                    modifier = Modifier,
+                    appearance = SearchDropdownAppearanceDefaults.appearance(),
+                    currentCountryValue = "",
+                    autofillType = ContentType.AddressCountry,
+                    viewModel = viewModel
                 ) {}
             }
         }
@@ -94,11 +98,11 @@ internal class CountryInputAutoCompleteTest :
                 LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
             ) {
                 CountryInputAutoComplete(
-                    modifier = TODO(),
-                    appearance = TODO(),
-                    currentCountryValue = TODO(),
-                    autofillType = TODO(),
-                    viewModel = TODO()
+                    modifier = Modifier,
+                    appearance = SearchDropdownAppearanceDefaults.appearance(),
+                    currentCountryValue = "",
+                    autofillType = ContentType.AddressCountry,
+                    viewModel = viewModel
                 ) {
                     selectedItem = it
                 }
@@ -121,7 +125,7 @@ internal class CountryInputAutoCompleteTest :
         // Trigger delay for UI to update
         composeTestRule.waitUntilTimeout(500L)
 
-        composeTestRule.onNode(hasText(mockCountry), true)
+        composeTestRule.onAllNodesWithText(mockCountry, useUnmergedTree = true)[0]
             .assertIsDisplayed()
             .performClick()
 
@@ -144,11 +148,11 @@ internal class CountryInputAutoCompleteTest :
                 LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
             ) {
                 CountryInputAutoComplete(
-                    modifier = TODO(),
-                    appearance = TODO(),
-                    currentCountryValue = TODO(),
-                    autofillType = TODO(),
-                    viewModel = TODO(),
+                    modifier = Modifier,
+                    appearance = SearchDropdownAppearanceDefaults.appearance(),
+                    currentCountryValue = "",
+                    autofillType = ContentType.AddressCountry,
+                    viewModel = viewModel,
                     onCountryConfirmed = onCountrySelected
                 )
 
@@ -171,7 +175,7 @@ internal class CountryInputAutoCompleteTest :
         // Trigger delay for UI to update
         composeTestRule.waitUntilTimeout(500L)
 
-        composeTestRule.onNode(hasText(mockCountry), true)
+        composeTestRule.onAllNodesWithText(mockCountry, useUnmergedTree = true)[0]
             .assertIsDisplayed()
             .performClick()
 

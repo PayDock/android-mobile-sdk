@@ -7,6 +7,7 @@ if (!System.getenv().containsKey("JITPACK")) {
     include(":sample")
 }
 include(":mobile-sdk")
+include(":bin-processor")
 
 pluginManagement {
     repositories {
@@ -19,5 +20,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        mavenLocal()
     }
 }

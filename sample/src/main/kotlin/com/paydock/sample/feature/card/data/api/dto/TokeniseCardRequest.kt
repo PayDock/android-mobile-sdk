@@ -9,6 +9,7 @@ data class TokeniseCardRequest(
     @SerializedName("card_number") val cardNumber: String = "5123450000000008",
     @SerializedName("expire_month") val expiryMonth: String = "08",
     @SerializedName("expire_year") val expiryYear: String = "29",
-    @SerializedName("store_ccv") val storeCVV: Boolean = true,
+    @SerializedName("store_ccv") val storeCVV: Boolean? = null,
+    @SerializedName("saved_card_consent_accepted") val savedCardConsentAccepted: Boolean = false,
     @SerializedName("gateway_id") val gatewayId: String = BuildConfig.SERVICE_ID_MPGS_TEST,
 )

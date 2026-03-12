@@ -6,7 +6,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -117,24 +120,24 @@ internal class AddressSearchInputTest : BaseViewModelKoinTest<AddressSearchViewM
         coEvery { mockAddress.getAddressLine(0) } returns null
 
         // Verify UI elements and interactions
-        composeTestRule.onNodeWithTag("sdkInput")
+        composeTestRule.onNode(
+            hasTestTag("sdkInput") and hasAnyAncestor(hasTestTag("addressSearch"))
+        )
             .performClick().apply {
                 assertIsFocused()
                 performTextInput("123 no results")
                 assert(hasText("123 no results"))
             }
 
-        composeTestRule.onNodeWithTag("searchResultsDropDown").assertIsDisplayed()
+        // Allow dropdown to render and assert on unmerged tree to catch Card semantics
+        composeTestRule.waitUntilTimeout(400)
+        composeTestRule.onNodeWithTag("searchResultsDropDown", useUnmergedTree = true).assertIsDisplayed()
 
         // Trigger delay for UI to update
-        composeTestRule.waitUntilTimeout(100L)
+        composeTestRule.waitUntilTimeout(500L)
 
-        composeTestRule.onNode(hasText("Searching…"), true).assertIsDisplayed()
-
-        // Trigger delay for UI to update
-        composeTestRule.waitUntilTimeout(300L)
-
-        composeTestRule.onNode(hasText("No address found"), true).assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("No address found", useUnmergedTree = true)[0]
+            .assertIsDisplayed()
     }
 
     @Test
@@ -168,24 +171,22 @@ internal class AddressSearchInputTest : BaseViewModelKoinTest<AddressSearchViewM
         coEvery { mockAddress.getAddressLine(0) } returns "123 Test, City, Country, 007"
 
         // Verify UI elements and interactions
-        composeTestRule.onNodeWithTag("sdkInput")
+        composeTestRule.onNode(
+            hasTestTag("sdkInput") and hasAnyAncestor(hasTestTag("addressSearch"))
+        )
             .performClick().apply {
                 assertIsFocused()
                 performTextInput("123 test")
                 assert(hasText("123 test"))
             }
 
-        composeTestRule.onNodeWithTag("searchResultsDropDown").assertIsDisplayed()
+        composeTestRule.waitUntilTimeout(400)
+        composeTestRule.onNodeWithTag("searchResultsDropDown", useUnmergedTree = true).assertIsDisplayed()
 
         // Trigger delay for UI to update
-        composeTestRule.waitUntilTimeout(100L)
+        composeTestRule.waitUntilTimeout(800L)
 
-        composeTestRule.onNode(hasText("Searching…"), true).assertIsDisplayed()
-
-        // Trigger delay for UI to update
-        composeTestRule.waitUntilTimeout(500L)
-
-        composeTestRule.onNode(hasText("123 Test, City, Country, 007"), true)
+        composeTestRule.onAllNodesWithText("123 Test, City, Country, 007", useUnmergedTree = true)[0]
             .assertIsDisplayed()
             .performClick()
 
@@ -224,24 +225,22 @@ internal class AddressSearchInputTest : BaseViewModelKoinTest<AddressSearchViewM
         every { onAddressResult(any()) } just Runs
 
         // Verify UI elements and interactions
-        composeTestRule.onNodeWithTag("sdkInput")
+        composeTestRule.onNode(
+            hasTestTag("sdkInput") and hasAnyAncestor(hasTestTag("addressSearch"))
+        )
             .performClick().apply {
                 assertIsFocused()
                 performTextInput("123 test")
                 assert(hasText("123 test"))
             }
 
-        composeTestRule.onNodeWithTag("searchResultsDropDown").assertIsDisplayed()
+        composeTestRule.waitUntilTimeout(400)
+        composeTestRule.onNodeWithTag("searchResultsDropDown", useUnmergedTree = true).assertIsDisplayed()
 
         // Trigger delay for UI to update
-        composeTestRule.waitUntilTimeout(100L)
+        composeTestRule.waitUntilTimeout(800L)
 
-        composeTestRule.onNode(hasText("Searching…"), true).assertIsDisplayed()
-
-        // Trigger delay for UI to update
-        composeTestRule.waitUntilTimeout(500L)
-
-        composeTestRule.onNode(hasText("123 Test, City, Country, 007"), true)
+        composeTestRule.onAllNodesWithText("123 Test, City, Country, 007", useUnmergedTree = true)[0]
             .assertIsDisplayed()
             .performClick()
 

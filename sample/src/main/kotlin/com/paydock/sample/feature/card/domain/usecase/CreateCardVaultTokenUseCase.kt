@@ -7,8 +7,11 @@ import javax.inject.Inject
 
 class CreateCardVaultTokenUseCase @Inject constructor(private val repository: CardRepository) {
 
-    suspend operator fun invoke(request: VaultTokenRequest.CreateCardVaultTokenRequest) =
+    suspend operator fun invoke(
+        accessToken: String,
+        request: VaultTokenRequest.CreateCardVaultTokenRequest
+    ) =
         suspendRunCatching {
-            repository.createCardVaultToken(request)
+            repository.createCardVaultToken(accessToken, request)
         }
 }
