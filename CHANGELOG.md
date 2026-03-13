@@ -1,5 +1,10 @@
 # Changelog
 
+## [5.3.1] - 2026-03-13
+
+### Fixed
+- `bin-processor` module issue for publishing (moved to sourceSets - WIP)
+
 ## [5.3.0] - 2026-03-12
 
 ### Added

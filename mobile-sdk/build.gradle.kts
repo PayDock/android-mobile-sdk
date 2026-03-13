@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.ManagedVirtualDevice
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -51,6 +52,14 @@ android {
     sourceSets {
         getByName("main") {
             kotlin.srcDir("src/main/kotlin")
+
+            // TODO: TEMPORARY WORKAROUND
+            // Including 'bin-processor' source code directly until it is published
+            // as a standalone library to Maven/JitPack.
+            // Link to issue: [Insert Jira/GitHub Link if applicable]
+            manifest.srcFile("../bin-processor/src/main/AndroidManifest.xml")
+            kotlin.srcDir("../bin-processor/src/main/kotlin")
+            res.srcDir("../bin-processor/src/main/res") // Added in case there are UI resources
         }
     }
     compileOptions {
@@ -65,7 +74,7 @@ android {
     // Gradle Managed Devices for instrumentation tests (CI-friendly aosp-atd image)
     testOptions.managedDevices {
         devices {
-            maybeCreate<com.android.build.api.dsl.ManagedVirtualDevice>("pixel6Api35").apply {
+            maybeCreate<ManagedVirtualDevice>("pixel6Api35").apply {
                 device = "Pixel 6"
                 apiLevel = 35
                 systemImageSource = "aosp-atd"
@@ -96,8 +105,11 @@ kotlin {
 dependencies {
     // Paydock Modules (Libs)
     api(libs.paydock.core.networking)
-    // BIN Processor Module
-    implementation(project(":bin-processor"))
+    // The 'bin-processor' is currently included via sourceSets (above) to avoid
+    // "unspecified" dependency errors in the published SDK.
+    // Uncomment and use remote coordinates once the module is published independently.
+    // implementation(project(":bin-processor"))
+    // implementation("com.paydock:bin-processor:1.0.0")
     // Android
     implementation(libs.bundles.androidx)
     implementation(libs.androidx.lifecycle.ktx)

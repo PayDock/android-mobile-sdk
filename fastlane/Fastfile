@@ -22,7 +22,7 @@ platform :android do
         gradle(task: "detektAll")
         
         # Generate reports for all modules
-        gradle(task: ":bin-processor:detekt")
+#         gradle(task: ":bin-processor:detekt")
         gradle(task: ":mobile-sdk:detekt")
         
         # Create code quality directory if it doesn't exist
