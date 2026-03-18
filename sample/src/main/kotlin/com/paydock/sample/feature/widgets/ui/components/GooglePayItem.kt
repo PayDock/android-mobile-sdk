@@ -7,12 +7,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
@@ -21,7 +25,6 @@ import com.paydock.core.domain.model.Event
 import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.feature.googlepay.presentation.GooglePayAppearanceDefaults
 import com.paydock.feature.googlepay.presentation.GooglePayWidget
-import com.paydock.feature.wallet.domain.model.integration.WalletType
 import com.paydock.sample.core.CHARGE_TRANSACTION_ERROR
 import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.style.StylingViewModel
@@ -50,19 +53,30 @@ fun GooglePayItem(
             }
         },
         appearance = currentOrDefaultAppearance,
-        tokenRequest = walletViewModel.getWalletTokenResultCallback(WalletType.GOOGLE),
-    ) { result ->
-        result.onSuccess {
-            Log.d("[GooglePayWidget]", "Success: $it")
-            Toast.makeText(context, "Google Pay Result returned [$it]", Toast.LENGTH_SHORT).show()
-        }.onFailure {
-            val error = it.toError()
-            Log.d("[GooglePayWidget]", "Failure: ${error.displayableMessage}")
-            Toast.makeText(
-                context,
-                "Google Pay Result failed! [${error.displayableMessage}]",
-                Toast.LENGTH_SHORT
-            ).show()
+        completion = { result ->
+            result.onSuccess { tokenDetails ->
+                Log.d("[GooglePayWidget]", "Success: $tokenDetails")
+                Toast.makeText(
+                    context,
+                    "Google Pay Token created: ${tokenDetails.token}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }.onFailure {
+                val error = it.toError()
+                Log.d("[GooglePayWidget]", "Failure: ${error.displayableMessage}")
+                Toast.makeText(
+                    context,
+                    "Google Pay Result failed! [${error.displayableMessage}]",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    ) {
+        Button(
+            onClick = { /* No effect on click as requested */ },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Fallback Button")
         }
     }
     when {

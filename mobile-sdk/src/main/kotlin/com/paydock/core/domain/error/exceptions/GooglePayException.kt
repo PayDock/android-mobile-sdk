@@ -13,13 +13,13 @@ import com.paydock.core.network.dto.error.displayableMessage
 sealed class GooglePayException(displayableMessage: String) : SdkException(displayableMessage) {
 
     /**
-     * Exception thrown when there is an error capturing the charge for Google Pay.
+     * Exception thrown when there is an error creating a payment token for Google Pay.
      *
      * @property error The underlying error response causing this exception.
-     * @constructor Creates a CapturingChargeException with the specified error response.
+     * @constructor Creates a CreateTokenException with the specified error response.
      *              The displayable message is derived from the error response.
      */
-    data class CapturingChargeException(
+    data class TokenisingGooglePayException(
         val error: ApiErrorResponse
     ) : GooglePayException(error.displayableMessage)
 
@@ -31,6 +31,16 @@ sealed class GooglePayException(displayableMessage: String) : SdkException(displ
      */
     class InitialisationException(
         displayableMessage: String = MobileSDKConstants.GooglePayConfig.Errors.INITIALISATION_ERROR
+    ) : GooglePayException(displayableMessage)
+
+    /**
+     * Exception thrown when the "Is Ready to Pay" check fails or returns false.
+     *
+     * @param displayableMessage A human-readable message describing the error.
+     * @constructor Creates an IsReadyToPayException with the specified displayable message.
+     */
+    class IsReadyToPayException(
+        displayableMessage: String = MobileSDKConstants.GooglePayConfig.Errors.IS_READY_TO_PAY_ERROR
     ) : GooglePayException(displayableMessage)
 
     /**

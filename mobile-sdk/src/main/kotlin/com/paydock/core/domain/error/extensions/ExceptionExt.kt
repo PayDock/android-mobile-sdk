@@ -333,8 +333,8 @@ internal fun Throwable.mapGooglePayApiException(exceptionClass: KClass<out Googl
     when (this) {
         is ApiException -> {
             when (exceptionClass) {
-                GooglePayException.CapturingChargeException::class ->
-                    GooglePayException.CapturingChargeException(error = this.error)
+                GooglePayException.TokenisingGooglePayException::class ->
+                    GooglePayException.TokenisingGooglePayException(error = this.error)
 
                 else -> GooglePayException.UnknownException(
                     displayableMessage = this.message ?: MobileSDKConstants.General.Errors.DEFAULT_ERROR

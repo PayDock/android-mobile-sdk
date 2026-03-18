@@ -74,7 +74,7 @@ The sample app uses a `config.properties` file to manage environment-specific se
    *   **`SERVICE_ID_COLES_PAY`:** Your Paydock service ID for the Coles Pay gateway. This ID is required to enable Coles Pay as a payment method.
    *   **`SERVICE_ID_AFTERPAY`:** Your Paydock service ID for the Afterpay gateway. This ID is required to enable Afterpay as a payment method.
    *   **`SERVICE_ID_CLICK_TO_PAY`:** Your Paydock service ID for the ClickToPay gateway. This ID is required to enable ClickToPay as a payment method.
-   *   **`SERVICE_ID_GOOGLE_PAY_MPGS`:** Your Paydock service ID for the Google Pay gateway. This ID is required to enable Google Pay as a payment method.
+   *   **`SERVICE_ID_GOOGLE_PAY`:** Your Paydock service ID for the Google Pay gateway. This ID is required to enable Google Pay as a payment method.
    *   **`SERVICE_ID_GPAYMENTS`:** The Paydock service ID for Standalone 3DS (3D Secure) authentication, specifically using the GPayments service. This ID is used when you need to perform 3DS authentication outside of a regular payment flow.
    *   **`MERCHANT_ID_GOOGLE_PAY`:** Your Paydock merchant identifier, which is required for Google Pay. This identifier is used to associate your transactions with your Google Pay merchant account.
    *   **`WALLET_ID_COLES_PAY`:** The walled ID provided to Coles Pay. The wallet id is used to tag the wallet that is being used (e.g. Beem).
@@ -89,7 +89,7 @@ SERVICE_ID_MPGS="your_gateway_id_mpgs"
 # AFTERPAY
 SERVICE_ID_AFTERPAY="your_gateway_id_after_pay"
 # GOOGLE PAY
-SERVICE_ID_GOOGLE_PAY_MPGS="your_gateway_id_google_pay"
+SERVICE_ID_GOOGLE_PAY="your_gateway_id_google_pay"
 MERCHANT_ID_GOOGLE_PAY="your_merchant_id_google_pay"
 # CLICK TO PAY
 SERVICE_ID_CLICK_TO_PAY="your_service_id_click_to_pay"

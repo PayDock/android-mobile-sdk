@@ -8,6 +8,8 @@ import org.json.JSONObject
  * This configuration includes the necessary JSON objects for determining readiness to pay and
  * the actual payment request.
  *
+ * @property accessToken The access token required for authenticating API requests to create payment tokens.
+ * @property serviceId The service ID for Google Pay (SERVICE_ID_GOOGLE_PAY).
  * @property isReadyToPayRequest A [JSONObject] containing the parameters for checking
  * readiness to pay with Google Pay. This typically includes information about supported payment
  * methods and allowed networks.
@@ -16,6 +18,8 @@ import org.json.JSONObject
  * as well as supported payment methods and billing/shipping address requirements.
  */
 data class GooglePayWidgetConfig(
+    val accessToken: String,
+    val serviceId: String,
     val isReadyToPayRequest: JSONObject,
     val paymentRequest: JSONObject
 )

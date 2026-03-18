@@ -96,17 +96,13 @@ class WalletViewModel @Inject constructor(
      * @param customerData Optional customer data for the request
      * @param useGlobalConfig If true, uses global config values (access token, cart amount, currency).
      *                        If false, uses BuildConfig defaults. Defaults to true for widget flows.
-     * @param overrideAccessToken Optional access token override. If provided, takes precedence over global config/defaults.
      * @param overrideAmount Optional amount override. If provided, takes precedence over global config/defaults.
-     * @param overrideCurrency Optional currency override. If provided, takes precedence over global config/defaults.
      */
     fun getWalletTokenResultCallback(
         walletType: WalletType,
         customerData: CustomerData? = null,
         useGlobalConfig: Boolean = true,
-        overrideAccessToken: String? = null,
         overrideAmount: BigDecimal? = null,
-        overrideCurrency: String? = null
     ): (onTokenReceived: (Result<WalletTokenResult>) -> Unit) -> Unit =
         { onTokenReceived ->
             resetResultState()
@@ -117,20 +113,6 @@ class WalletViewModel @Inject constructor(
                             customerData = customerData,
                             useGlobalConfig = useGlobalConfig,
                             overrideAmount = overrideAmount,
-                        )
-                        initiateWalletTransactionResult(
-                            accessToken = getAccessToken(),
-                            request = request,
-                            callback = onTokenReceived
-                        )
-                    }
-
-                    WalletType.GOOGLE -> {
-                        val request = createGoogleWalletRequest(
-                            customerData = customerData,
-                            useGlobalConfig = useGlobalConfig,
-                            overrideAmount = overrideAmount,
-                            overrideCurrency = overrideCurrency
                         )
                         initiateWalletTransactionResult(
                             accessToken = getAccessToken(),
@@ -174,7 +156,7 @@ class WalletViewModel @Inject constructor(
         useGlobalConfig: Boolean = true,
         overrideAmount: BigDecimal? = null,
     ): InitiateWalletRequest {
-        val amount = customerData?.amount?.let { it.toSafeAmount() }
+        val amount = customerData?.amount?.toSafeAmount()
             ?: overrideAmount
             ?: if (useGlobalConfig) getCartAmount() else CartManager.shared.totalPrice.toSafeAmount()
         val currency = getCartCurrency()
@@ -265,57 +247,6 @@ class WalletViewModel @Inject constructor(
                 )
             },
         )
-    }
-
-    private suspend fun createGoogleWalletRequest(
-        customerData: CustomerData? = null,
-        useGlobalConfig: Boolean = true,
-        overrideAmount: BigDecimal? = null,
-        overrideCurrency: String? = null
-    ): InitiateWalletRequest {
-        val amount = customerData?.amount?.let { it.toSafeAmount() }
-            ?: overrideAmount
-            ?: if (useGlobalConfig) getCartAmount() else CartManager.shared.totalPrice.toSafeAmount()
-        val currency = overrideCurrency ?: getCartCurrency()
-        return InitiateWalletRequest(
-            amount = amount,
-            currency = currency,
-            customer = ChargesCustomerDTO(
-                firstName = customerData?.firstName ?: FIRST_NAME,
-                lastName = customerData?.lastName ?: LAST_NAME,
-                email = customerData?.email ?: EMAIL,
-                paymentSource = ChargesCustomerDTO.PaymentSourceDTO(
-                    gatewayId = BuildConfig.SERVICE_ID_GOOGLE_PAY_MPGS,
-                    addressLine1 = customerData?.billingAddress?.addressLine1 ?: "asd1",
-                    addressLine2 = customerData?.billingAddress?.addressLine2,
-                    addressLine3 = customerData?.billingAddress?.addressLine3,
-                    city = customerData?.billingAddress?.city ?: "city",
-                    state = customerData?.billingAddress?.state ?: "state",
-                    countryCode = customerData?.billingAddress?.countryCode ?: "US",
-                    postalCode = customerData?.billingAddress?.postalCode ?: "12345",
-                    walletType = WalletType.GOOGLE.type
-                )
-            ),
-            shippingDTO = customerData?.shippingAddress?.let {
-                InitiateWalletRequest.ShippingDTO(
-                    addressLine1 = it.addressLine1,
-                    addressLine2 = it.addressLine2,
-                    addressLine3 = it.addressLine3,
-                    city = it.city,
-                    state = it.state,
-                    countryCode = it.countryCode,
-                    postalCode = it.postalCode,
-                    amount = amount,
-                    currency = currency,
-                    contact = InitiateWalletRequest.ShippingDTO.ContactDTO(
-                        firstName = customerData.firstName,
-                        lastName = customerData.lastName,
-                        phone = customerData.phone
-                    )
-                )
-            },
-        )
-
     }
 
     private suspend fun createAfterpayWalletRequest(

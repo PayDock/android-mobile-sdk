@@ -763,11 +763,6 @@ fun PaymentWidgetView(
                         PaymentMethod.GOOGLE_PAY -> {
                             GooglePayContent(
                                 modifier = Modifier.fillMaxWidth(),
-                                tokenHandler = walletViewModel.getWalletTokenResultCallback(
-                                    walletType = WalletType.GOOGLE,
-                                    customerData = customerData,
-                                    useGlobalConfig = false // Checkout uses BuildConfig defaults
-                                ),
                                 loadingDelegate = object : WidgetLoadingDelegate {
                                     override fun widgetLoadingDidStart() {
                                         viewModel.setIsLoading(true)
@@ -778,13 +773,7 @@ fun PaymentWidgetView(
                                     }
                                 },
                                 resultHandler = { result ->
-                                    result.onSuccess { chargeResponse ->
-                                        viewModel.setThePaymentToken(
-                                            chargeResponse.resource.data?.id ?: "google_pay_success"
-                                        )
-                                        viewModel.placeOrder()
-                                    }
-                                    result.onFailure { _ -> viewModel.routeToFailure() }
+                                    viewModel.handleGooglePayResult(result)
                                 }
                             )
                         }

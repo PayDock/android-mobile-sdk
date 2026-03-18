@@ -37,6 +37,7 @@ import com.paydock.sample.feature.threeDS.domain.usecase.CaptureThreeDSChargeTok
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateMPGS3dsTokenUseCase
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateStandaloneThreeDSTokenUseCase
 import com.paydock.core.utils.toSafeAmount
+import com.paydock.feature.card.domain.model.ui.TokenDetails
 import com.paydock.sample.feature.wallet.presentation.AddressData
 import com.paydock.sample.feature.wallet.presentation.CustomerData
 import com.paydock.sample.feature.zip.data.api.dto.CaptureZipChargeRequest
@@ -380,6 +381,19 @@ class EnhancedCheckoutViewModel @Inject constructor(
     fun handleClickToPayResult(result: Result<String>) {
         result.onSuccess {
             createSessionVaultToken(cardToken = it)
+        }.onFailure {
+            routeToFailure()
+        }
+    }
+
+    // --- Google Pay + 3DS flow ---
+    fun handleGooglePayResult(result: Result<TokenDetails>) {
+        result.onSuccess { tokenDetails ->
+            tokenDetails.token?.let { token ->
+                createSessionVaultToken(cardToken = token)
+            } ?: run {
+                routeToFailure()
+            }
         }.onFailure {
             routeToFailure()
         }

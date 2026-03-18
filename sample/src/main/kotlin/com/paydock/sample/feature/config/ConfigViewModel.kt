@@ -215,6 +215,8 @@ class ConfigViewModel @Inject constructor(
 
     private fun createDefaultGooglePayConfig(): GooglePayWidgetConfig {
         return GooglePayWidgetConfig(
+            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
+            serviceId = BuildConfig.SERVICE_ID_GOOGLE_PAY,
             isReadyToPayRequest = PaymentsUtil.createIsReadyToPayRequest(),
             paymentRequest = createGooglePayPaymentRequest(
                 amount = widgetConfig.value.cartAmount,

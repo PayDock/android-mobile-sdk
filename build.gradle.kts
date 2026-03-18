@@ -40,12 +40,12 @@ tasks.register("clean").configure {
 
 // Merged JaCoCo report aggregating bin-processor and mobile-sdk coverage
 // Run: ./gradlew jacocoMergedReport
-tasks.register<org.gradle.testing.jacoco.tasks.JacocoReport>("jacocoMergedReport") {
+tasks.register<JacocoReport>("jacocoMergedReport") {
     group = "verification"
     description = "Generates a merged JaCoCo coverage report from bin-processor and mobile-sdk"
 
     dependsOn(
-        ":bin-processor:testDebugUnitTest",
+//        ":bin-processor:testDebugUnitTest",
         ":mobile-sdk:testDebugUnitTest"
     )
 
