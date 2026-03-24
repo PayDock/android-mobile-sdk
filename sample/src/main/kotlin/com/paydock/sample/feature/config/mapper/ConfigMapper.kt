@@ -26,6 +26,13 @@ fun WidgetType.mapWidgetTypeToConfigComponents(): List<ConfigComponent> {
             ConfigComponent.FUNDING_SOURCE
         )
 
+        WidgetType.GOOGLE_PAY -> listOf(
+            ConfigComponent.ACCESS_TOKEN,
+            ConfigComponent.SERVICE_ID,
+            ConfigComponent.EMAIL_REQUIRED,
+            ConfigComponent.PHONE_NUMBER_REQUIRED
+        )
+
         WidgetType.COLES_PAY -> listOf(
             ConfigComponent.CLIENT_ID
         )

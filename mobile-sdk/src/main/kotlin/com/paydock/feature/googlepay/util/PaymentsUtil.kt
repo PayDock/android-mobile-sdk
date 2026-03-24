@@ -42,9 +42,12 @@ object PaymentsUtil {
         allowedCardNetworks: List<String> = MobileSDKConstants.GooglePayConfig.ALLOWED_CARD_NETWORKS,
         billingAddressRequired: Boolean = true,
         shippingAddressRequired: Boolean = false,
-        shippingAddressParameters: JSONObject? = null
+        shippingAddressParameters: JSONObject? = null,
+        emailRequired: Boolean = false, // Add this
+        phoneNumberRequired: Boolean = false // Add this
     ): JSONObject {
         return baseRequest().apply {
+            put("emailRequired", emailRequired) // Set email requirement at root
             put(
                 "allowedPaymentMethods",
                 JSONArray().put(
@@ -52,7 +55,8 @@ object PaymentsUtil {
                         merchantIdentifier,
                         JSONArray(allowedCardAuthMethods),
                         JSONArray(allowedCardNetworks),
-                        billingAddressRequired
+                        billingAddressRequired,
+                        phoneNumberRequired // Pass phone requirement
                     )
                 )
             )
@@ -72,8 +76,14 @@ object PaymentsUtil {
                     put("merchantId", merchantIdentifier)
                 }
             )
-            put("shippingAddressParameters", shippingAddressParameters)
-            put("shippingAddressRequired", shippingAddressRequired)
+            // Update shipping parameters if phone is required there
+            val shippingParams = shippingAddressParameters ?: JSONObject()
+            if (phoneNumberRequired) {
+                shippingParams.put("phoneNumberRequired", true)
+            }
+
+            put("shippingAddressParameters", if (shippingParams.length() > 0) shippingParams else null)
+            put("shippingAddressRequired", shippingAddressRequired || phoneNumberRequired)
         }
     }
 
@@ -160,13 +170,15 @@ object PaymentsUtil {
         merchantIdentifier: String,
         allowedCardAuthMethods: JSONArray,
         allowedCardNetworks: JSONArray,
-        billingAddressRequired: Boolean
+        billingAddressRequired: Boolean,
+        phoneNumberRequired: Boolean // Add this
     ): JSONObject {
         val cardPaymentMethod =
             baseCardPaymentMethod(
                 allowedCardAuthMethods,
                 allowedCardNetworks,
-                billingAddressRequired
+                billingAddressRequired,
+                phoneNumberRequired // Pass it down
             )
         cardPaymentMethod.put(
             "tokenizationSpecification",
@@ -217,10 +229,10 @@ object PaymentsUtil {
     private fun baseCardPaymentMethod(
         allowedCardAuthMethods: JSONArray,
         allowedCardNetworks: JSONArray,
-        billingAddressRequired: Boolean
+        billingAddressRequired: Boolean,
+        phoneNumberRequired: Boolean = false
     ): JSONObject {
         return JSONObject().apply {
-
             val parameters = JSONObject().apply {
                 put("allowedAuthMethods", allowedCardAuthMethods)
                 put("allowedCardNetworks", allowedCardNetworks)
@@ -229,6 +241,7 @@ object PaymentsUtil {
                     "billingAddressParameters",
                     JSONObject().apply {
                         put("format", MobileSDKConstants.GooglePayConfig.BILLING_ADDRESS_FORMAT)
+                        put("phoneNumberRequired", phoneNumberRequired) // Set phone requirement in billing
                     }
                 )
             }

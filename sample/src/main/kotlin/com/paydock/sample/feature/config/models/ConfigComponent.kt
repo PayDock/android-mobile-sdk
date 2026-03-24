@@ -110,6 +110,10 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
     // PayPal Vault specific
     BUTTON_ICON,
 
+    // GooglePay
+    EMAIL_REQUIRED,
+    PHONE_NUMBER_REQUIRED,
+
     // Address Details specific
     BILLING_ADDRESS,
 
@@ -256,6 +260,8 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
         ZIP_SHIPPING_STATE -> "State"
         ZIP_SHIPPING_POSTCODE -> "Postcode"
         ZIP_SHIPPING_COUNTRY -> "Country"
+        EMAIL_REQUIRED -> "Email Required"
+        PHONE_NUMBER_REQUIRED -> "Phone Number Required"
     }
 
     fun mapConfigComponentToSubComponents(): List<ConfigComponent>? = when (this) {

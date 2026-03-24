@@ -237,9 +237,10 @@ class ConfigViewModel @Inject constructor(
         merchantIdentifier = BuildConfig.MERCHANT_ID_GOOGLE_PAY,
         shippingAddressRequired = true,
         shippingAddressParameters = JSONObject().apply {
-            put("phoneNumberRequired", false)
             put("allowedCountryCodes", JSONArray(listOf("US", "GB", "AU")))
-        }
+        },
+        emailRequired = true,
+        phoneNumberRequired = true
     )
 
     // Card Details Config - initialized with defaults
@@ -613,6 +614,39 @@ class ConfigViewModel @Inject constructor(
                     else -> current
                 }
                 _paypalWidgetConfig.value = updatedConfig
+            }
+
+            WidgetType.GOOGLE_PAY -> {
+                val current = _googlePayWidgetConfig.value
+                val updatedConfig = when (component) {
+                    ConfigComponent.ACCESS_TOKEN -> current.copy(accessToken = newValue as String)
+                    ConfigComponent.SERVICE_ID -> current.copy(serviceId = newValue as String)
+                    ConfigComponent.EMAIL_REQUIRED -> {
+                        val root = JSONObject(current.paymentRequest.toString()).apply {
+                            put("emailRequired", newValue as Boolean)
+                        }
+                        current.copy(
+                            paymentRequest = root
+                        )
+                    }
+
+                    ConfigComponent.PHONE_NUMBER_REQUIRED -> {
+                        val root = JSONObject(current.paymentRequest.toString()).apply {
+                            val billingAddress = optJSONObject("billingAddressParameters") ?: JSONObject()
+                            billingAddress.put("phoneNumberRequired", newValue as Boolean)
+                            put("billingAddressParameters", billingAddress)
+                            val shippingAddress = optJSONObject("shippingAddressParameters") ?: JSONObject()
+                            shippingAddress.put("phoneNumberRequired", newValue as Boolean)
+                            put("shippingAddressParameters", shippingAddress)
+                        }
+                        current.copy(
+                            paymentRequest = root
+                        )
+                    }
+
+                    else -> current
+                }
+                _googlePayWidgetConfig.value = updatedConfig
             }
 
             WidgetType.COLES_PAY -> {

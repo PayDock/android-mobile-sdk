@@ -55,7 +55,8 @@ internal class GooglePayViewModel(
     /**
      * Mutable state flow to hold the UI state.
      */
-    private val _uiState: MutableStateFlow<GooglePayUIState> = MutableStateFlow(GooglePayUIState.Idle)
+    private val _uiState: MutableStateFlow<GooglePayUIState> =
+        MutableStateFlow(GooglePayUIState.Idle)
     //endregion
 
     /**
@@ -108,22 +109,12 @@ internal class GooglePayViewModel(
                     handleIsReadyToPayError(MobileSDKConstants.GooglePayConfig.Errors.IS_READY_TO_PAY_ERROR)
                 }
             } catch (exception: ApiException) {
-                handleIsReadyToPayError(exception.message ?: MobileSDKConstants.GooglePayConfig.Errors.IS_READY_TO_PAY_ERROR)
+                handleIsReadyToPayError(
+                    exception.message
+                        ?: MobileSDKConstants.GooglePayConfig.Errors.IS_READY_TO_PAY_ERROR
+                )
             }
         }
-    }
-
-    /**
-     * Handles errors during Google Pay initialization.
-     *
-     * @param errorMessage The error message to be displayed.
-     */
-    private fun handleGooglePayInitializationError(errorMessage: String) {
-        updateUiState(
-            GooglePayUIState.Error(
-                GooglePayException.InitialisationException(errorMessage)
-            )
-        )
     }
 
     /**
@@ -218,7 +209,8 @@ internal class GooglePayViewModel(
         val paymentJson = JSONObject(jsonString)
         val paymentMethodData = paymentJson.getJSONObject("paymentMethodData")
         val info = paymentMethodData.optJSONObject("info")
-        val tokenizationData = paymentMethodData.getJSONObject(MobileSDKConstants.GooglePayConfig.TOKENIZATION_DATA_KEY)
+        val tokenizationData =
+            paymentMethodData.getJSONObject(MobileSDKConstants.GooglePayConfig.TOKENIZATION_DATA_KEY)
         val refToken = tokenizationData.getString(MobileSDKConstants.GooglePayConfig.TOKEN_KEY)
 
         // Extract billing address
@@ -298,16 +290,36 @@ internal class GooglePayViewModel(
      */
     fun processGooglePayPaymentResult(paymentData: PaymentData) {
         updateUiState(GooglePayUIState.Loading)
-        runCatching { mapGooglePayData(paymentData) }
-            .onSuccess { tokenRequest ->
-                createPaymentToken(tokenRequest)
-            }
-            .onFailure { exception ->
-                handleErrorResult(
-                    exception.message
-                        ?: MobileSDKConstants.GooglePayConfig.Errors.TOKEN_ERROR
-                )
-            }
+
+        runCatching {
+            val paymentJson = JSONObject(paymentData.toJson())
+
+            // Extract optional contact info
+            val email = paymentJson.optString("email").takeIf { it.isNotBlank() }
+
+            // Extract phone (can be in shippingAddress or billingAddress info)
+            val billingAddress = paymentJson.optJSONObject("paymentMethodData")
+                ?.optJSONObject("info")
+                ?.optJSONObject("billingAddress")
+
+            val shippingAddress = paymentJson.optJSONObject("shippingAddress")
+
+            val phoneNumber = (
+                shippingAddress?.optString("phoneNumber")
+                    ?: billingAddress?.optString("phoneNumber")
+                ).takeIf { !it.isNullOrBlank() }
+
+            // Map and create token
+            val tokenRequest = mapGooglePayData(paymentData)
+            tokenRequest to (email to phoneNumber)
+        }.onSuccess { (tokenRequest, contactInfo) ->
+            val (email, phone) = contactInfo
+            createPaymentToken(tokenRequest, email, phone)
+        }.onFailure { exception ->
+            handleErrorResult(
+                exception.message ?: MobileSDKConstants.GooglePayConfig.Errors.TOKEN_ERROR
+            )
+        }
     }
 
     /**
@@ -315,11 +327,22 @@ internal class GooglePayViewModel(
      *
      * @param tokenRequest The [CreateGooglePayTokenRequest] containing the Google Pay token and related data.
      */
-    private fun createPaymentToken(tokenRequest: CreateGooglePayTokenRequest) {
+    private fun createPaymentToken(
+        tokenRequest: CreateGooglePayTokenRequest,
+        email: String?,
+        phoneNumber: String?
+    ) {
         launchOnIO {
             createGooglePayTokenUseCase(config.accessToken, tokenRequest)
                 .onSuccess { tokenDetails ->
-                    updateUiState(GooglePayUIState.Success(tokenDetails))
+                    updateUiState(
+                        GooglePayUIState.Success(
+                            tokenDetails.copy(
+                                email = email,
+                                phoneNumber = phoneNumber
+                            )
+                        )
+                    )
                 }
                 .onFailure { exception ->
                     handleErrorResult(
@@ -339,16 +362,31 @@ internal class GooglePayViewModel(
     fun handleGooglePayResultErrors(statusCode: Int) {
         val exception = when (statusCode) {
             CommonStatusCodes.CANCELED,
-            WalletConstants.ERROR_CODE_USER_CANCELLED -> GooglePayException.SDKException.CancelledBySdk(statusCodeString = "CANCELED")
-            CommonStatusCodes.NETWORK_ERROR -> GooglePayException.SDKException.NetworkError(statusCodeString = "NETWORK_ERROR")
+            WalletConstants.ERROR_CODE_USER_CANCELLED -> GooglePayException.SDKException.CancelledBySdk(
+                statusCodeString = "CANCELED"
+            )
+
+            CommonStatusCodes.NETWORK_ERROR -> GooglePayException.SDKException.NetworkError(
+                statusCodeString = "NETWORK_ERROR"
+            )
+
             CommonStatusCodes.TIMEOUT -> GooglePayException.SDKException.Timeout(statusCodeString = "TIMEOUT")
             CommonStatusCodes.DEVELOPER_ERROR,
-            WalletConstants.ERROR_CODE_DEVELOPER_ERROR -> GooglePayException.SDKException.DeveloperError(statusCodeString = "DEVELOPER_ERROR")
-            CommonStatusCodes.SIGN_IN_REQUIRED -> GooglePayException.SDKException.PlayServicesError(statusCodeString = "SIGN_IN_REQUIRED")
+            WalletConstants.ERROR_CODE_DEVELOPER_ERROR -> GooglePayException.SDKException.DeveloperError(
+                statusCodeString = "DEVELOPER_ERROR"
+            )
+
+            CommonStatusCodes.SIGN_IN_REQUIRED -> GooglePayException.SDKException.PlayServicesError(
+                statusCodeString = "SIGN_IN_REQUIRED"
+            )
+
             CommonStatusCodes.INTERNAL_ERROR,
             CommonStatusCodes.ERROR,
             CommonStatusCodes.INTERRUPTED,
-            WalletConstants.ERROR_CODE_INTERNAL_ERROR -> GooglePayException.SDKException.ServiceError(statusCodeString = statusCode.toString())
+            WalletConstants.ERROR_CODE_INTERNAL_ERROR -> GooglePayException.SDKException.ServiceError(
+                statusCodeString = statusCode.toString()
+            )
+
             else -> {
                 val statusString = "unknown status code: $statusCode"
                 GooglePayException.SDKException.UnknownSdkException(
