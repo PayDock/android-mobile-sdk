@@ -30,7 +30,8 @@ fun WidgetType.mapWidgetTypeToConfigComponents(): List<ConfigComponent> {
             ConfigComponent.ACCESS_TOKEN,
             ConfigComponent.SERVICE_ID,
             ConfigComponent.EMAIL_REQUIRED,
-            ConfigComponent.PHONE_NUMBER_REQUIRED
+            ConfigComponent.PHONE_NUMBER_REQUIRED,
+            ConfigComponent.SHIPPING_REQUIRED
         )
 
         WidgetType.COLES_PAY -> listOf(

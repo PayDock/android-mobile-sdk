@@ -78,6 +78,20 @@ fun GooglePayProperties(
             )
         }
 
+        ConfigComponent.SHIPPING_REQUIRED -> {
+            BooleanField(
+                label = stringResource(R.string.label_shipping_required),
+                value = config.paymentRequest.get("shippingAddressRequired") as Boolean,
+                onValueChange = { newValue ->
+                    configViewModel.updateWidgetConfig(
+                        widgetContext,
+                        ConfigComponent.SHIPPING_REQUIRED,
+                        newValue
+                    )
+                }
+            )
+        }
+
         else -> {}
     }
 }

@@ -644,6 +644,15 @@ class ConfigViewModel @Inject constructor(
                         )
                     }
 
+                    ConfigComponent.SHIPPING_REQUIRED -> {
+                        val root = JSONObject(current.paymentRequest.toString()).apply {
+                            put("shippingAddressRequired", newValue as Boolean)
+                        }
+                        current.copy(
+                            paymentRequest = root
+                        )
+                    }
+
                     else -> current
                 }
                 _googlePayWidgetConfig.value = updatedConfig

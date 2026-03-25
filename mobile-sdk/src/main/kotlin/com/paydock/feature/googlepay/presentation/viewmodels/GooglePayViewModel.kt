@@ -297,24 +297,20 @@ internal class GooglePayViewModel(
             // Extract optional contact info
             val email = paymentJson.optString("email").takeIf { it.isNotBlank() }
 
-            // Extract phone (can be in shippingAddress or billingAddress info)
+            // Extract billing address
             val billingAddress = paymentJson.optJSONObject("paymentMethodData")
                 ?.optJSONObject("info")
                 ?.optJSONObject("billingAddress")
 
+            // Extract shipping address
             val shippingAddress = paymentJson.optJSONObject("shippingAddress")
-
-            val phoneNumber = (
-                shippingAddress?.optString("phoneNumber")
-                    ?: billingAddress?.optString("phoneNumber")
-                ).takeIf { !it.isNullOrBlank() }
 
             // Map and create token
             val tokenRequest = mapGooglePayData(paymentData)
-            tokenRequest to (email to phoneNumber)
+            tokenRequest to (email to shippingAddress)
         }.onSuccess { (tokenRequest, contactInfo) ->
-            val (email, phone) = contactInfo
-            createPaymentToken(tokenRequest, email, phone)
+            val (email, shippingAddress) = contactInfo
+            createPaymentToken(tokenRequest, email, shippingAddress)
         }.onFailure { exception ->
             handleErrorResult(
                 exception.message ?: MobileSDKConstants.GooglePayConfig.Errors.TOKEN_ERROR
@@ -330,7 +326,7 @@ internal class GooglePayViewModel(
     private fun createPaymentToken(
         tokenRequest: CreateGooglePayTokenRequest,
         email: String?,
-        phoneNumber: String?
+        shippingAddress: JSONObject?
     ) {
         launchOnIO {
             createGooglePayTokenUseCase(config.accessToken, tokenRequest)
@@ -339,7 +335,7 @@ internal class GooglePayViewModel(
                         GooglePayUIState.Success(
                             tokenDetails.copy(
                                 email = email,
-                                phoneNumber = phoneNumber
+                                shippingAddress = shippingAddress
                             )
                         )
                     )

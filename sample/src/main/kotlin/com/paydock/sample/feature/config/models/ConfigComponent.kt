@@ -113,6 +113,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
     // GooglePay
     EMAIL_REQUIRED,
     PHONE_NUMBER_REQUIRED,
+    SHIPPING_REQUIRED,
 
     // Address Details specific
     BILLING_ADDRESS,
@@ -262,6 +263,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
         ZIP_SHIPPING_COUNTRY -> "Country"
         EMAIL_REQUIRED -> "Email Required"
         PHONE_NUMBER_REQUIRED -> "Phone Number Required"
+        SHIPPING_REQUIRED -> "Shipping Required"
     }
 
     fun mapConfigComponentToSubComponents(): List<ConfigComponent>? = when (this) {
