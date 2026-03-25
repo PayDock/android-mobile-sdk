@@ -51,15 +51,12 @@ android {
     // Ensure to include the sourceSets
     sourceSets {
         getByName("main") {
-            kotlin.srcDir("src/main/kotlin")
-
             // TODO: TEMPORARY WORKAROUND
             // Including 'bin-processor' source code directly until it is published
             // as a standalone library to Maven/JitPack.
             // Link to issue: [Insert Jira/GitHub Link if applicable]
-            manifest.srcFile("../bin-processor/src/main/AndroidManifest.xml")
-            kotlin.srcDir("../bin-processor/src/main/kotlin")
-            res.srcDir("../bin-processor/src/main/res") // Added in case there are UI resources
+            kotlin.srcDirs("src/main/kotlin", "../bin-processor/src/main/kotlin")
+            res.srcDirs("src/main/res", "../bin-processor/src/main/res") // Added in case there are UI resources
         }
     }
     compileOptions {
