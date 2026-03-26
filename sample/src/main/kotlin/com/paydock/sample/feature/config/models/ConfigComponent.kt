@@ -114,6 +114,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
     EMAIL_REQUIRED,
     PHONE_NUMBER_REQUIRED,
     SHIPPING_REQUIRED,
+    BILLING_REQUIRED,
 
     // Address Details specific
     BILLING_ADDRESS,
@@ -264,6 +265,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
         EMAIL_REQUIRED -> "Email Required"
         PHONE_NUMBER_REQUIRED -> "Phone Number Required"
         SHIPPING_REQUIRED -> "Shipping Required"
+        BILLING_REQUIRED -> "Billing Required"
     }
 
     fun mapConfigComponentToSubComponents(): List<ConfigComponent>? = when (this) {

@@ -294,23 +294,27 @@ internal class GooglePayViewModel(
         runCatching {
             val paymentJson = JSONObject(paymentData.toJson())
 
-            // Extract optional contact info
+            // 1. Extract Email (Root level)
             val email = paymentJson.optString("email").takeIf { it.isNotBlank() }
 
-            // Extract billing address
+            // 2. Extract Billing Address (Inside paymentMethodData -> info)
             val billingAddress = paymentJson.optJSONObject("paymentMethodData")
                 ?.optJSONObject("info")
                 ?.optJSONObject("billingAddress")
 
-            // Extract shipping address
+            // 3. Extract Shipping Address (Root level)
             val shippingAddress = paymentJson.optJSONObject("shippingAddress")
 
-            // Map and create token
+            // 4. Map the payload for the Paydock OTT request
             val tokenRequest = mapGooglePayData(paymentData)
-            tokenRequest to (email to shippingAddress)
-        }.onSuccess { (tokenRequest, contactInfo) ->
-            val (email, shippingAddress) = contactInfo
-            createPaymentToken(tokenRequest, email, shippingAddress)
+
+            // Return all extracted data as a result of the runCatching block
+            // Using a data class or a Triple to pass values to onSuccess
+            Triple(tokenRequest, email, billingAddress to shippingAddress)
+        }.onSuccess { (tokenRequest, email, addresses) ->
+            val (billing, shipping) = addresses
+            // billingAddress and shippingAddress are now correctly passed
+            createPaymentToken(tokenRequest, email, billing, shipping)
         }.onFailure { exception ->
             handleErrorResult(
                 exception.message ?: MobileSDKConstants.GooglePayConfig.Errors.TOKEN_ERROR
@@ -326,6 +330,7 @@ internal class GooglePayViewModel(
     private fun createPaymentToken(
         tokenRequest: CreateGooglePayTokenRequest,
         email: String?,
+        billingAddress: JSONObject?,
         shippingAddress: JSONObject?
     ) {
         launchOnIO {
@@ -335,6 +340,7 @@ internal class GooglePayViewModel(
                         GooglePayUIState.Success(
                             tokenDetails.copy(
                                 email = email,
+                                billingAddress = billingAddress,
                                 shippingAddress = shippingAddress
                             )
                         )

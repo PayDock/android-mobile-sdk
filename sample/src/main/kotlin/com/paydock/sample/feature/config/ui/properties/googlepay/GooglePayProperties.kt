@@ -11,6 +11,7 @@ import com.paydock.sample.designsystems.components.fields.TextField
 import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.config.models.ConfigComponent
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
+import org.json.JSONArray
 import org.json.JSONObject
 
 @Composable
@@ -78,6 +79,20 @@ fun GooglePayProperties(
             )
         }
 
+        ConfigComponent.BILLING_REQUIRED -> {
+            BooleanField(
+                label = stringResource(R.string.label_billing_required),
+                value = config.paymentRequest.extractCardBillingRequired(),
+                onValueChange = { newValue ->
+                    configViewModel.updateWidgetConfig(
+                        widgetContext,
+                        ConfigComponent.BILLING_REQUIRED,
+                        newValue
+                    )
+                }
+            )
+        }
+
         ConfigComponent.SHIPPING_REQUIRED -> {
             BooleanField(
                 label = stringResource(R.string.label_shipping_required),
@@ -94,5 +109,24 @@ fun GooglePayProperties(
 
         else -> {}
     }
+}
+
+private fun JSONObject.extractCardBillingRequired(): Boolean {
+    return optJSONArray("allowedPaymentMethods")
+        .findCardMethod()
+        ?.optJSONObject("parameters")
+        ?.optBoolean("billingAddressRequired")
+        ?: false
+}
+
+private fun JSONArray?.findCardMethod(): JSONObject? {
+    if (this == null) return null
+    for (index in 0 until length()) {
+        val method = optJSONObject(index) ?: continue
+        if (method.optString("type") == "CARD") {
+            return method
+        }
+    }
+    return null
 }
 

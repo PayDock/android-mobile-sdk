@@ -235,12 +235,12 @@ class ConfigViewModel @Inject constructor(
         countryCode = AU_COUNTRY_CODE,
         merchantName = MERCHANT_NAME,
         merchantIdentifier = BuildConfig.MERCHANT_ID_GOOGLE_PAY,
-        shippingAddressRequired = true,
+        shippingAddressRequired = false,
         shippingAddressParameters = JSONObject().apply {
             put("allowedCountryCodes", JSONArray(listOf("US", "GB", "AU")))
         },
-        emailRequired = true,
-        phoneNumberRequired = true
+        emailRequired = false,
+        phoneNumberRequired = false
     )
 
     // Card Details Config - initialized with defaults
@@ -647,6 +647,24 @@ class ConfigViewModel @Inject constructor(
                     ConfigComponent.SHIPPING_REQUIRED -> {
                         val root = JSONObject(current.paymentRequest.toString()).apply {
                             put("shippingAddressRequired", newValue as Boolean)
+                        }
+                        current.copy(
+                            paymentRequest = root
+                        )
+                    }
+
+                    ConfigComponent.BILLING_REQUIRED -> {
+                        val root = JSONObject(current.paymentRequest.toString()).apply {
+                            val allowedPaymentMethods = optJSONArray("allowedPaymentMethods") ?: JSONArray()
+                            for (index in 0 until allowedPaymentMethods.length()) {
+                                val method = allowedPaymentMethods.optJSONObject(index) ?: continue
+                                if (method.optString("type") == "CARD") {
+                                    val parameters = method.optJSONObject("parameters") ?: JSONObject()
+                                    parameters.put("billingAddressRequired", newValue as Boolean)
+                                    method.put("parameters", parameters)
+                                }
+                            }
+                            put("allowedPaymentMethods", allowedPaymentMethods)
                         }
                         current.copy(
                             paymentRequest = root

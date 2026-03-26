@@ -36,7 +36,7 @@ fun GooglePayContent(
     val cartTotal = cartManager.totalPrice
 
     val shippingAddressParameters = JSONObject().apply {
-        put("phoneNumberRequired", false)
+        put("phoneNumberRequired", true)
         put("allowedCountryCodes", JSONArray(COUNTRY_CODE_LIST))
     }
     GooglePayWidget(
@@ -54,7 +54,9 @@ fun GooglePayContent(
                 merchantName = MERCHANT_NAME,
                 merchantIdentifier = BuildConfig.MERCHANT_ID_GOOGLE_PAY,
                 shippingAddressRequired = true,
-                shippingAddressParameters = shippingAddressParameters
+                shippingAddressParameters = shippingAddressParameters,
+                emailRequired = true,
+                phoneNumberRequired = true
             )
         ),
         loadingDelegate = loadingDelegate,

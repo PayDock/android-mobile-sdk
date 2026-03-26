@@ -16,5 +16,6 @@ data class TokenDetails(
     val token: String?,
     val type: String,
     val email: String? = null,
+    val billingAddress: JSONObject? = null,
     val shippingAddress: JSONObject? = null
 )

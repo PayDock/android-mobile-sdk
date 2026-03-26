@@ -31,6 +31,7 @@ fun WidgetType.mapWidgetTypeToConfigComponents(): List<ConfigComponent> {
             ConfigComponent.SERVICE_ID,
             ConfigComponent.EMAIL_REQUIRED,
             ConfigComponent.PHONE_NUMBER_REQUIRED,
+            ConfigComponent.BILLING_REQUIRED,
             ConfigComponent.SHIPPING_REQUIRED
         )
 
@@ -58,10 +59,6 @@ fun WidgetType.mapWidgetTypeToConfigComponents(): List<ConfigComponent> {
             ConfigComponent.BILLING_ADDRESS
         )
 
-        WidgetType.GOOGLE_PAY -> listOf(
-            // Google Pay uses JSONObject config, not editable via simple fields
-        )
-
         WidgetType.ZIP -> listOf(
             ConfigComponent.ACCESS_TOKEN,
             ConfigComponent.GATEWAY_ID,
@@ -79,7 +76,8 @@ fun WidgetType.mapWidgetTypeToConfigComponents(): List<ConfigComponent> {
 
         WidgetType.MPGS_3DS,
         WidgetType.STANDALONE_3DS -> emptyList()
-    }.sortedBy { it.displayName() }
+    }.distinctBy { it.name }
+        .sortedBy { it.displayName() }
 }
 
 

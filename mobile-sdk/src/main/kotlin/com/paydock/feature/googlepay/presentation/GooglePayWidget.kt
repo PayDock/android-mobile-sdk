@@ -86,11 +86,13 @@ fun GooglePayWidget(
 ) {
     // Use content-based key so ViewModel is recreated when config changes.
     // JSONObject uses reference equality; toString() provides content-based invalidation for remember.
-    val viewModelKey = remember(config.paymentRequest.toString()) {
-        val transactionInfo = config.paymentRequest.optJSONObject("transactionInfo")
-        val amount = transactionInfo?.optString("totalPrice", "") ?: ""
-        val currency = transactionInfo?.optString("currencyCode", "") ?: ""
-        "googlepay_${amount}_$currency"
+    val viewModelKey = remember(
+        config.accessToken,
+        config.serviceId,
+        config.isReadyToPayRequest.toString(),
+        config.paymentRequest.toString()
+    ) {
+        "googlepay_${config.serviceId}_${config.paymentRequest.toString().hashCode()}"
     }
     val viewModel: GooglePayViewModel = koinViewModel(
         key = viewModelKey,

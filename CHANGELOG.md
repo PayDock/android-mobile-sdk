@@ -1,5 +1,11 @@
 # Changelog
 
+## [5.3.2] - 2026-03-25
+
+### Fixed
+- `build.gradle.kts` _sourcesets_ overriding SDK `AndroidManifest.xml`
+
+
 ## [5.3.1] - 2026-03-13
 
 ### Fixed

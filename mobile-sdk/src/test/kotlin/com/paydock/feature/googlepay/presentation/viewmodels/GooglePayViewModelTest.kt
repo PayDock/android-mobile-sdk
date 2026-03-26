@@ -262,7 +262,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
         val methods = viewModel.extractAllowedPaymentMethods(validRequest)
         println(methods)
         assertEquals(
-            """[{"type":"CARD","parameters":{"allowedAuthMethods":["PAN_ONLY","CRYPTOGRAM_3DS"],"billingAddressRequired":true,"billingAddressParameters":{"format":"FULL","phoneNumberRequired":false},"allowedCardNetworks":["AMEX","DISCOVER","JCB","MASTERCARD","VISA"]},"tokenizationSpecification":{"type":"PAYMENT_GATEWAY","parameters":{"gatewayMerchantId":"unit_test","gateway":"paydock"}}}]""",
+            """[{"type":"CARD","parameters":{"allowedAuthMethods":["PAN_ONLY","CRYPTOGRAM_3DS"],"billingAddressRequired":true,"allowedCardNetworks":["AMEX","DISCOVER","JCB","MASTERCARD","VISA"]},"tokenizationSpecification":{"type":"PAYMENT_GATEWAY","parameters":{"gatewayMerchantId":"unit_test","gateway":"paydock"}}}]""",
             methods
         )
     }

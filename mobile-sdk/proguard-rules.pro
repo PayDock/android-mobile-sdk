@@ -20,11 +20,12 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 -dontwarn java.lang.invoke.StringConcatFactory
-
 -keepattributes Signature, InnerClasses, EnclosingMethod, *Annotation*, SourceFile, LineNumberTable
 # Keep source file name and line number
 -keeppackagenames com.paydock
 -keepdirectories
+# Prevent R8 from renaming activities used by the SDK
+-keep public class com.paydock.feature.**.presentation.*Activity extends android.app.Activity
 -keep class com.paydock.**{ *; }
 # Keep all methods in a specific package and its subpackages
 -keepclassmembers class com.paydock.** {
