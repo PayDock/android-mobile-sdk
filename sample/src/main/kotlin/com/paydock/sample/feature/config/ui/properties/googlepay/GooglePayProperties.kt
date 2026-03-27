@@ -2,7 +2,7 @@ package com.paydock.sample.feature.config.ui.properties.googlepay
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
-import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayWidgetConfig
 import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.fields.BooleanField
@@ -11,8 +11,6 @@ import com.paydock.sample.designsystems.components.fields.TextField
 import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.config.models.ConfigComponent
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
-import org.json.JSONArray
-import org.json.JSONObject
 
 @Composable
 fun GooglePayProperties(
@@ -53,7 +51,7 @@ fun GooglePayProperties(
         ConfigComponent.EMAIL_REQUIRED -> {
             BooleanField(
                 label = stringResource(R.string.label_email_required),
-                value = config.paymentRequest.get("emailRequired") as Boolean,
+                value = config.paymentRequest.emailRequired,
                 onValueChange = { newValue ->
                     configViewModel.updateWidgetConfig(
                         widgetContext,
@@ -65,10 +63,9 @@ fun GooglePayProperties(
         }
 
         ConfigComponent.PHONE_NUMBER_REQUIRED -> {
-            val shippingParams = config.paymentRequest.getJSONObject("shippingAddressParameters")
             BooleanField(
                 label = stringResource(R.string.label_phone_number_required),
-                value = shippingParams.get("phoneNumberRequired") as Boolean,
+                value = config.paymentRequest.shippingAddressParameters?.phoneNumberRequired ?: false,
                 onValueChange = { newValue ->
                     configViewModel.updateWidgetConfig(
                         widgetContext,
@@ -82,7 +79,10 @@ fun GooglePayProperties(
         ConfigComponent.BILLING_REQUIRED -> {
             BooleanField(
                 label = stringResource(R.string.label_billing_required),
-                value = config.paymentRequest.extractCardBillingRequired(),
+                value = config.paymentRequest.allowedPaymentMethods
+                    .firstOrNull()
+                    ?.parameters
+                    ?.billingAddressRequired ?: false,
                 onValueChange = { newValue ->
                     configViewModel.updateWidgetConfig(
                         widgetContext,
@@ -96,7 +96,7 @@ fun GooglePayProperties(
         ConfigComponent.SHIPPING_REQUIRED -> {
             BooleanField(
                 label = stringResource(R.string.label_shipping_required),
-                value = config.paymentRequest.get("shippingAddressRequired") as Boolean,
+                value = config.paymentRequest.shippingAddressRequired,
                 onValueChange = { newValue ->
                     configViewModel.updateWidgetConfig(
                         widgetContext,
@@ -109,24 +109,5 @@ fun GooglePayProperties(
 
         else -> {}
     }
-}
-
-private fun JSONObject.extractCardBillingRequired(): Boolean {
-    return optJSONArray("allowedPaymentMethods")
-        .findCardMethod()
-        ?.optJSONObject("parameters")
-        ?.optBoolean("billingAddressRequired")
-        ?: false
-}
-
-private fun JSONArray?.findCardMethod(): JSONObject? {
-    if (this == null) return null
-    for (index in 0 until length()) {
-        val method = optJSONObject(index) ?: continue
-        if (method.optString("type") == "CARD") {
-            return method
-        }
-    }
-    return null
 }
 

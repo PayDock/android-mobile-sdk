@@ -9,7 +9,7 @@ import com.paydock.feature.card.domain.model.integration.SaveCardConfig
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.integration.enums.CardType
 import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
-import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.util.PaymentsUtil
 import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
@@ -45,8 +45,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import org.json.JSONArray
-import org.json.JSONObject
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayBillingAddressParameters
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayShippingAddressParameters
 import java.math.BigDecimal
 import java.util.Locale
 import javax.inject.Inject
@@ -228,19 +228,19 @@ class ConfigViewModel @Inject constructor(
     private fun createGooglePayPaymentRequest(
         amount: BigDecimal,
         currencyCode: String
-    ): JSONObject = PaymentsUtil.createGooglePayRequest(
+    ) = PaymentsUtil.createGooglePayRequest(
         amount = amount,
         amountLabel = "Goodies",
         currencyCode = currencyCode,
         countryCode = AU_COUNTRY_CODE,
         merchantName = MERCHANT_NAME,
         merchantIdentifier = BuildConfig.MERCHANT_ID_GOOGLE_PAY,
-        shippingAddressRequired = false,
-        shippingAddressParameters = JSONObject().apply {
-            put("allowedCountryCodes", JSONArray(listOf("US", "GB", "AU")))
-        },
-        emailRequired = false,
-        phoneNumberRequired = false
+        shippingAddressRequired = true,
+        shippingAddressParameters = GooglePayShippingAddressParameters(
+            allowedCountryCodes = listOf("US", "GB", "AU")
+        ),
+        emailRequired = true,
+        phoneNumberRequired = true
     )
 
     // Card Details Config - initialized with defaults
@@ -253,7 +253,7 @@ class ConfigViewModel @Inject constructor(
     val giftCardWidgetConfig: StateFlow<GiftCardWidgetConfig> =
         _giftCardWidgetConfig.asStateFlow()
 
-    // Google Pay Config - nullable as it uses JSONObject
+    // Google Pay Config
     private val _googlePayWidgetConfig =
         MutableStateFlow<GooglePayWidgetConfig>(createDefaultGooglePayConfig())
     val googlePayWidgetConfig: StateFlow<GooglePayWidgetConfig> =
@@ -313,9 +313,10 @@ class ConfigViewModel @Inject constructor(
         // Update Google Pay config paymentRequest with new amount (used by Google Pay SDK for display)
         _googlePayWidgetConfig.update { current ->
             current.copy(
-                paymentRequest = createGooglePayPaymentRequest(
-                    amount = newAmount,
-                    currencyCode = globalConfig.value.currencyCode
+                paymentRequest = current.paymentRequest.copy(
+                    transactionInfo = current.paymentRequest.transactionInfo.copy(
+                        totalPrice = PaymentsUtil.formatAmountForGooglePay(newAmount)
+                    )
                 )
             )
         }
@@ -331,9 +332,10 @@ class ConfigViewModel @Inject constructor(
         // Update Google Pay config paymentRequest with new currency (used by Google Pay SDK for display)
         _googlePayWidgetConfig.update { current ->
             current.copy(
-                paymentRequest = createGooglePayPaymentRequest(
-                    amount = widgetConfig.value.cartAmount,
-                    currencyCode = newCurrency
+                paymentRequest = current.paymentRequest.copy(
+                    transactionInfo = current.paymentRequest.transactionInfo.copy(
+                        currencyCode = newCurrency
+                    )
                 )
             )
         }
@@ -622,52 +624,66 @@ class ConfigViewModel @Inject constructor(
                     ConfigComponent.ACCESS_TOKEN -> current.copy(accessToken = newValue as String)
                     ConfigComponent.SERVICE_ID -> current.copy(serviceId = newValue as String)
                     ConfigComponent.EMAIL_REQUIRED -> {
-                        val root = JSONObject(current.paymentRequest.toString()).apply {
-                            put("emailRequired", newValue as Boolean)
-                        }
                         current.copy(
-                            paymentRequest = root
+                            paymentRequest = current.paymentRequest.copy(
+                                emailRequired = newValue as Boolean
+                            )
                         )
                     }
 
                     ConfigComponent.PHONE_NUMBER_REQUIRED -> {
-                        val root = JSONObject(current.paymentRequest.toString()).apply {
-                            val billingAddress = optJSONObject("billingAddressParameters") ?: JSONObject()
-                            billingAddress.put("phoneNumberRequired", newValue as Boolean)
-                            put("billingAddressParameters", billingAddress)
-                            val shippingAddress = optJSONObject("shippingAddressParameters") ?: JSONObject()
-                            shippingAddress.put("phoneNumberRequired", newValue as Boolean)
-                            put("shippingAddressParameters", shippingAddress)
-                        }
+                        val phoneNumberRequired = newValue as Boolean
+
+                        val updatedShippingAddressParameters =
+                            current.paymentRequest.shippingAddressParameters?.copy(
+                                phoneNumberRequired = phoneNumberRequired
+                            ) ?: GooglePayShippingAddressParameters(
+                                phoneNumberRequired = phoneNumberRequired
+                            )
+
+                        val updatedAllowedPaymentMethods =
+                            current.paymentRequest.allowedPaymentMethods.map { method ->
+                                val updatedBillingAddressParameters =
+                                    method.parameters.billingAddressParameters?.copy(
+                                        phoneNumberRequired = phoneNumberRequired
+                                    ) ?: GooglePayBillingAddressParameters(
+                                        phoneNumberRequired = phoneNumberRequired
+                                    )
+
+                                method.copy(
+                                    parameters = method.parameters.copy(
+                                        billingAddressParameters = updatedBillingAddressParameters
+                                    )
+                                )
+                            }
+
                         current.copy(
-                            paymentRequest = root
+                            paymentRequest = current.paymentRequest.copy(
+                                shippingAddressParameters = updatedShippingAddressParameters,
+                                allowedPaymentMethods = updatedAllowedPaymentMethods
+                            )
                         )
                     }
 
                     ConfigComponent.SHIPPING_REQUIRED -> {
-                        val root = JSONObject(current.paymentRequest.toString()).apply {
-                            put("shippingAddressRequired", newValue as Boolean)
-                        }
                         current.copy(
-                            paymentRequest = root
+                            paymentRequest = current.paymentRequest.copy(
+                                shippingAddressRequired = newValue as Boolean
+                            )
                         )
                     }
 
                     ConfigComponent.BILLING_REQUIRED -> {
-                        val root = JSONObject(current.paymentRequest.toString()).apply {
-                            val allowedPaymentMethods = optJSONArray("allowedPaymentMethods") ?: JSONArray()
-                            for (index in 0 until allowedPaymentMethods.length()) {
-                                val method = allowedPaymentMethods.optJSONObject(index) ?: continue
-                                if (method.optString("type") == "CARD") {
-                                    val parameters = method.optJSONObject("parameters") ?: JSONObject()
-                                    parameters.put("billingAddressRequired", newValue as Boolean)
-                                    method.put("parameters", parameters)
-                                }
-                            }
-                            put("allowedPaymentMethods", allowedPaymentMethods)
-                        }
                         current.copy(
-                            paymentRequest = root
+                            paymentRequest = current.paymentRequest.copy(
+                                allowedPaymentMethods = current.paymentRequest.allowedPaymentMethods.map { method ->
+                                    method.copy(
+                                        parameters = method.parameters.copy(
+                                            billingAddressRequired = newValue as Boolean
+                                        )
+                                    )
+                                }
+                            )
                         )
                     }
 

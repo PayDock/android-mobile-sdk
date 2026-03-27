@@ -1,11 +1,18 @@
 package com.paydock.feature.googlepay.util
 
-import com.google.android.gms.wallet.IsReadyToPayRequest
-import com.google.android.gms.wallet.PaymentDataRequest
+import com.google.android.gms.wallet.PaymentData
 import com.paydock.core.MobileSDKConstants
-import org.json.JSONArray
-import org.json.JSONException
-import org.json.JSONObject
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayBillingAddressParameters
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayCardParameters
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayCardPaymentMethod
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayIsReadyToPayRequest
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayMerchantInfo
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayPaymentDataRequest
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayPaymentMethodTokenizationParameters
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayPaymentMethodTokenizationSpecification
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayPaymentResponse
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayShippingAddressParameters
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayTransactionInfo
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -26,10 +33,13 @@ object PaymentsUtil {
      * @param allowedCardAuthMethods List of allowed card authentication methods.
      * @param allowedCardNetworks List of allowed card networks.
      * @param billingAddressRequired Indicates whether billing address is required.
+     * @param billingAddressParameters Detailed parameters for the billing address.
      * @param shippingAddressRequired Indicates whether shipping address is required.
-     * @param shippingAddressParameters Parameters for shipping address, if required.
-     * @return JSON object representing the Google Pay payment request.
-     * @see [PaymentDataRequest](https://developers.google.com/pay/api/android/reference/request-objects#PaymentDataRequest)
+     * @param allowedShippingCountryCodes List of country codes allowed for shipping.
+     * @param shippingAddressParameters Detailed parameters for the shipping address.
+     * @param emailRequired Indicates whether an email address is required.
+     * @param phoneNumberRequired Indicates whether a phone number is required.
+     * @return Typed object representing the Google Pay payment request.
      */
     fun createGooglePayRequest(
         amount: BigDecimal,
@@ -41,69 +51,75 @@ object PaymentsUtil {
         allowedCardAuthMethods: List<String> = MobileSDKConstants.GooglePayConfig.ALLOWED_CARD_AUTH_METHODS,
         allowedCardNetworks: List<String> = MobileSDKConstants.GooglePayConfig.ALLOWED_CARD_NETWORKS,
         billingAddressRequired: Boolean = true,
-        billingAddressParameters: JSONObject? = null,
+        billingAddressParameters: GooglePayBillingAddressParameters? = null,
         shippingAddressRequired: Boolean = false,
         allowedShippingCountryCodes: List<String>? = null,
-        shippingAddressParameters: JSONObject? = null,
+        shippingAddressParameters: GooglePayShippingAddressParameters? = null,
         emailRequired: Boolean = false,
         phoneNumberRequired: Boolean = false
-    ): JSONObject {
-        return baseRequest().apply {
-            put("emailRequired", emailRequired) // Set email requirement at root
-            put("shippingAddressRequired", shippingAddressRequired)
-            put(
-                "allowedPaymentMethods",
-                JSONArray().put(
-                    cardPaymentMethod(
-                        merchantIdentifier,
-                        JSONArray(allowedCardAuthMethods),
-                        JSONArray(allowedCardNetworks),
-                        billingAddressRequired,
-                        billingAddressParameters,
-                        phoneNumberRequired
-                    )
+    ): GooglePayPaymentDataRequest {
+        val resolvedBillingAddressParameters =
+            if (billingAddressRequired) {
+                billingAddressParameters ?: GooglePayBillingAddressParameters(
+                    phoneNumberRequired = phoneNumberRequired
                 )
-            )
-            put(
-                "transactionInfo",
-                getTransactionInfo(
-                    formatAmountForGooglePay(amount),
-                    amountLabel,
-                    countryCode,
-                    currencyCode
-                )
-            )
-            put(
-                "merchantInfo",
-                JSONObject().apply {
-                    put("merchantName", merchantName ?: "")
-                    put("merchantId", merchantIdentifier)
-                }
-            )
-            // Setup Shipping Parameters
-            val shippingParams = shippingAddressParameters ?: JSONObject()
-            if (shippingAddressRequired) {
-                val shippingParams = JSONObject().apply {
-                    put("phoneNumberRequired", phoneNumberRequired)
-                    if (!allowedShippingCountryCodes.isNullOrEmpty()) {
-                        put("allowedCountryCodes", JSONArray(allowedShippingCountryCodes))
-                    }
-                }
-                put("shippingAddressParameters", shippingParams)
+            } else {
+                null
             }
 
-            put("shippingAddressParameters", if (shippingParams.length() > 0) shippingParams else null)
-        }
+        val cardParameters = GooglePayCardParameters(
+            allowedAuthMethods = allowedCardAuthMethods,
+            allowedCardNetworks = allowedCardNetworks,
+            billingAddressRequired = billingAddressRequired,
+            billingAddressParameters = resolvedBillingAddressParameters
+        )
+
+        val cardPaymentMethod = GooglePayCardPaymentMethod(
+            parameters = cardParameters,
+            tokenizationSpecification = GooglePayPaymentMethodTokenizationSpecification(
+                parameters = GooglePayPaymentMethodTokenizationParameters(
+                    gatewayMerchantId = merchantIdentifier
+                )
+            )
+        )
+
+        val shippingParams =
+            if (shippingAddressRequired) {
+                val allowedCountryCodes =
+                    shippingAddressParameters?.allowedCountryCodes ?: allowedShippingCountryCodes
+                val resolvedPhoneNumberRequired =
+                    shippingAddressParameters?.phoneNumberRequired ?: phoneNumberRequired
+                val resolvedFormat = shippingAddressParameters?.format
+
+                GooglePayShippingAddressParameters(
+                    allowedCountryCodes = allowedCountryCodes,
+                    phoneNumberRequired = resolvedPhoneNumberRequired,
+                    format = resolvedFormat
+                )
+            } else {
+                null
+            }
+
+        return GooglePayPaymentDataRequest(
+            emailRequired = emailRequired,
+            shippingAddressRequired = shippingAddressRequired,
+            allowedPaymentMethods = listOf(cardPaymentMethod),
+            transactionInfo = GooglePayTransactionInfo(
+                totalPrice = formatAmountForGooglePay(amount),
+                totalPriceLabel = amountLabel,
+                countryCode = countryCode.uppercase(),
+                currencyCode = currencyCode.uppercase()
+            ),
+            merchantInfo = GooglePayMerchantInfo(
+                merchantName = merchantName ?: "",
+                merchantId = merchantIdentifier
+            ),
+            shippingAddressParameters = shippingParams
+        )
     }
 
-    /**
-     * Formats amount for Google Pay API totalPrice field.
-     * Google Pay requires format: ^[0-9]+(.[0-9][0-9])?$ (max 2 decimal places).
-     * Amounts from Double or imprecise BigDecimal can produce invalid strings; this normalizes them.
-     */
-    private fun formatAmountForGooglePay(amount: BigDecimal): String {
-        return amount.setScale(2, RoundingMode.HALF_UP).toPlainString()
-    }
+    fun formatAmountForGooglePay(amount: BigDecimal): String =
+        amount.setScale(2, RoundingMode.HALF_UP).toPlainString()
 
     /**
      * Create a request to check if the user is ready to pay with Google Pay.
@@ -111,165 +127,47 @@ object PaymentsUtil {
      * @param allowedCardAuthMethods List of allowed card authentication methods.
      * @param allowedCardNetworks List of allowed card networks.
      * @param billingAddressRequired Indicates whether billing address is required.
-     * @return JSON object representing the readiness to pay request.
-     * @see [IsReadyToPayRequest](https://developers.google.com/pay/api/android/reference/request-objects#IsReadyToPayRequest)
+     * @return Typed object representing the readiness to pay request.
      */
-    @Suppress("SwallowedException")
     fun createIsReadyToPayRequest(
         allowedCardAuthMethods: List<String> = MobileSDKConstants.GooglePayConfig.ALLOWED_CARD_AUTH_METHODS,
         allowedCardNetworks: List<String> = MobileSDKConstants.GooglePayConfig.ALLOWED_CARD_NETWORKS,
         billingAddressRequired: Boolean = true,
-        billingAddressParameters: JSONObject? = null,
+        billingAddressParameters: GooglePayBillingAddressParameters? = null,
         phoneNumberRequired: Boolean = true
-    ): JSONObject {
-        return baseRequest().apply {
-            put(
-                "allowedPaymentMethods",
-                JSONArray().put(
-                    baseCardPaymentMethod(
-                        JSONArray(allowedCardAuthMethods),
-                        JSONArray(allowedCardNetworks),
-                        billingAddressRequired,
-                        billingAddressParameters,
-                        phoneNumberRequired
-                    )
-                )
-            )
-        }
-    }
+    ): GooglePayIsReadyToPayRequest {
+        val resolvedBillingAddressParameters =
+            if (billingAddressRequired) {
+                billingAddressParameters
+                    ?: GooglePayBillingAddressParameters(phoneNumberRequired = phoneNumberRequired)
+            } else {
+                null
+            }
 
-    /**
-     * Create a Google Pay API base request object with properties used in all requests.
-     *
-     * @return Google Pay API base request object.
-     * @throws JSONException
-     */
-    private fun baseRequest() = JSONObject().apply {
-        put("apiVersion", 2)
-        put("apiVersionMinor", 0)
-    }
-
-    /**
-     * Provide Google Pay API with a payment amount, currency, and amount status.
-     *
-     * @return information about the requested payment.
-     * @throws JSONException
-     * See [TransactionInfo](https://developers.google.com/pay/api/android/reference/request-objects#TransactionInfo)
-     */
-    @Throws(JSONException::class)
-    private fun getTransactionInfo(
-        amount: String,
-        amountLabel: String,
-        countryCode: String,
-        currencyCode: String
-    ): JSONObject {
-        return JSONObject().apply {
-            put("totalPrice", amount)
-            put("totalPriceLabel", amountLabel)
-            put("totalPriceStatus", MobileSDKConstants.GooglePayConfig.TRANSACTION_PRICE_STATUS)
-            put("countryCode", countryCode.uppercase())
-            put("currencyCode", currencyCode.uppercase())
-        }
-    }
-
-    /**
-     * Describe the expected returned payment data for the CARD payment method
-     *
-     * @return A CARD PaymentMethod describing accepted cards and optional fields.
-     * @throws JSONException
-     * See [PaymentMethod](https://developers.google.com/pay/api/android/reference/request-objects#PaymentMethod)
-     */
-    private fun cardPaymentMethod(
-        merchantIdentifier: String,
-        allowedCardAuthMethods: JSONArray,
-        allowedCardNetworks: JSONArray,
-        billingAddressRequired: Boolean,
-        billingAddressParameters: JSONObject?,
-        phoneNumberRequired: Boolean
-    ): JSONObject {
-        val cardPaymentMethod =
-            baseCardPaymentMethod(
-                allowedCardAuthMethods,
-                allowedCardNetworks,
-                billingAddressRequired,
-                billingAddressParameters,
-                phoneNumberRequired
-            )
-        cardPaymentMethod.put(
-            "tokenizationSpecification",
-            gatewayTokenizationSpecification(merchantIdentifier)
+        val cardParameters = GooglePayCardParameters(
+            allowedAuthMethods = allowedCardAuthMethods,
+            allowedCardNetworks = allowedCardNetworks,
+            billingAddressRequired = billingAddressRequired,
+            billingAddressParameters = resolvedBillingAddressParameters
         )
 
-        return cardPaymentMethod
+        val cardPaymentMethod = GooglePayCardPaymentMethod(
+            parameters = cardParameters,
+            tokenizationSpecification = null
+        )
+
+        return GooglePayIsReadyToPayRequest(
+            allowedPaymentMethods = listOf(cardPaymentMethod)
+        )
     }
 
     /**
-     * Gateway Integration: Identify your gateway and your app's gateway merchant identifier.
+     * Parses the payment data returned from the Google Pay API into a [GooglePayPaymentResponse].
      *
-     * The Google Pay API response will return an encrypted payment method capable of being charged
-     * by a supported gateway after payer authorization.
-     *
-     * @return Payment data tokenization for the CARD payment method.
-     * @throws JSONException
-     * @see [PaymentMethodTokenizationSpecification](https://developers.google.com/pay/api/android/reference/request-objects#PaymentMethodTokenizationSpecification)
-     * @see [PaymentTokenProvider](https://developers.google.com/pay/api/android/guides/tutorial#tokenization)
+     * @param paymentData The [PaymentData] object returned by Google Pay.
+     * @return A [GooglePayPaymentResponse] containing the structured payment details.
      */
-    private fun gatewayTokenizationSpecification(merchantIdentifier: String): JSONObject {
-        return JSONObject().apply {
-            put("type", MobileSDKConstants.GooglePayConfig.TOKENIZATION_TYPE)
-            put(
-                "parameters",
-                JSONObject(
-                    mapOf(
-                        "gateway" to MobileSDKConstants.GooglePayConfig.GATEWAY,
-                        "gatewayMerchantId" to merchantIdentifier
-                    )
-                )
-            )
-        }
-    }
-
-    /**
-     * Describe your app's support for the CARD payment method.
-     *
-     *
-     * The provided properties are applicable to both an IsReadyToPayRequest and a
-     * PaymentDataRequest.
-     *
-     * @return A CARD PaymentMethod object describing accepted cards.
-     * @throws JSONException
-     * See [PaymentMethod](https://developers.google.com/pay/api/android/reference/request-objects#PaymentMethod)
-     */
-    // Optionally, you can add billing address/phone number associated with a CARD payment method.
-    private fun baseCardPaymentMethod(
-        allowedCardAuthMethods: JSONArray,
-        allowedCardNetworks: JSONArray,
-        billingAddressRequired: Boolean,
-        billingAddressParameters: JSONObject?,
-        phoneNumberRequired: Boolean
-    ): JSONObject {
-        return JSONObject().apply {
-            val parameters = JSONObject().apply {
-                put("allowedAuthMethods", allowedCardAuthMethods)
-                put("allowedCardNetworks", allowedCardNetworks)
-                put("billingAddressRequired", billingAddressRequired)
-                val billingParams = billingAddressParameters ?: JSONObject()
-                if (billingAddressRequired) {
-                    val billingParams = JSONObject().apply {
-                        put(
-                            "billingAddressParameters",
-                            JSONObject().apply {
-                                put("format", MobileSDKConstants.GooglePayConfig.BILLING_ADDRESS_FORMAT)
-                                put("phoneNumberRequired", phoneNumberRequired)
-                            }
-                        )
-                    }
-                    put("billingAddressParameters", billingParams)
-                }
-                put("billingAddressParameters", if (billingParams.length() > 0) billingParams else null)
-            }
-            put("type", MobileSDKConstants.GooglePayConfig.CARD_PAYMENT_TYPE)
-            put("parameters", parameters)
-        }
+    internal fun parsePaymentResponse(paymentData: PaymentData): GooglePayPaymentResponse {
+        return GooglePayPaymentResponse.fromJson(paymentData.toJson())
     }
 }

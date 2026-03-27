@@ -1,9 +1,9 @@
-package com.paydock.feature.googlepay.domain.model
+package com.paydock.feature.googlepay.domain.model.ui
 
 /**
  * Event names for the Google Pay Widget.
  */
-object GooglePayEventNames {
+internal object GooglePayEventNames {
     /**
      * Event name for the Google Pay checkout button click.
      */

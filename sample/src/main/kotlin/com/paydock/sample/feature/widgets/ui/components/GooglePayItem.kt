@@ -52,11 +52,11 @@ fun GooglePayItem(
         },
         appearance = currentOrDefaultAppearance,
         completion = { result ->
-            result.onSuccess { tokenDetails ->
-                Log.d("[GooglePayWidget]", "Success: $tokenDetails")
+            result.onSuccess { result ->
+                Log.d("[GooglePayWidget]", "Success: $result")
                 Toast.makeText(
                     context,
-                    "Google Pay Token created: ${tokenDetails.token}",
+                    "Google Pay Token created: ${result.token}",
                     Toast.LENGTH_SHORT
                 ).show()
             }.onFailure {

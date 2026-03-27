@@ -9,8 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.core.utils.toSafeAmount
-import com.paydock.feature.card.domain.model.ui.TokenDetails
-import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayResult
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.presentation.GooglePayAppearanceDefaults
 import com.paydock.feature.googlepay.presentation.GooglePayWidget
 import com.paydock.feature.googlepay.util.PaymentsUtil
@@ -20,25 +20,24 @@ import com.paydock.sample.core.COUNTRY_CODE_LIST
 import com.paydock.sample.core.MERCHANT_NAME
 import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.shop.data.CartManager
-import org.json.JSONArray
-import org.json.JSONObject
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayShippingAddressParameters
 
 @Composable
 fun GooglePayContent(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     loadingDelegate: WidgetLoadingDelegate? = null,
-    resultHandler: (Result<TokenDetails>) -> Unit,
+    resultHandler: (Result<GooglePayResult>) -> Unit,
     configViewModel: ConfigViewModel = hiltViewModel(),
 ) {
     val globalConfig by configViewModel.globalConfig.collectAsState()
     val cartManager = remember { CartManager.shared }
     val cartTotal = cartManager.totalPrice
 
-    val shippingAddressParameters = JSONObject().apply {
-        put("phoneNumberRequired", true)
-        put("allowedCountryCodes", JSONArray(COUNTRY_CODE_LIST))
-    }
+    val shippingAddressParameters = GooglePayShippingAddressParameters(
+        phoneNumberRequired = false,
+        allowedCountryCodes = COUNTRY_CODE_LIST
+    )
     GooglePayWidget(
         modifier = modifier.fillMaxWidth(),
         enabled = enabled,
@@ -54,9 +53,7 @@ fun GooglePayContent(
                 merchantName = MERCHANT_NAME,
                 merchantIdentifier = BuildConfig.MERCHANT_ID_GOOGLE_PAY,
                 shippingAddressRequired = true,
-                shippingAddressParameters = shippingAddressParameters,
-                emailRequired = true,
-                phoneNumberRequired = true
+                shippingAddressParameters = shippingAddressParameters
             )
         ),
         loadingDelegate = loadingDelegate,

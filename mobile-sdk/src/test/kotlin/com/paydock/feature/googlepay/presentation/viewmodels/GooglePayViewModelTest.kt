@@ -13,7 +13,7 @@ import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.GooglePayException
 import com.paydock.core.utils.MainDispatcherRule
-import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.domain.usecase.CreateGooglePayTokenUseCase
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.util.PaymentsUtil
@@ -25,7 +25,7 @@ import junit.framework.TestCase.assertNull
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import org.json.JSONObject
+import org.json.JSONArray
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -57,6 +57,15 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
         val mockAccessToken = MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN
         val mockServiceId = MobileSDKTestConstants.General.MOCK_GATEWAY_ID
         val isReadyToPayRequestJson = PaymentsUtil.createIsReadyToPayRequest()
+        val paymentRequest =
+            PaymentsUtil.createGooglePayRequest(
+                amount = BigDecimal(10),
+                amountLabel = "Goodies",
+                currencyCode = "AUD",
+                countryCode = "AU",
+                merchantName = "unit_test",
+                merchantIdentifier = "unit_test"
+            )
 
         // This is to ensure we are able to mock the init function
         coEvery { paymentsClient.isReadyToPay(any()) } returns Tasks.forResult(true)
@@ -67,7 +76,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
                 mockAccessToken,
                 mockServiceId,
                 isReadyToPayRequestJson,
-                JSONObject()
+                paymentRequest
             ),
             createGooglePayTokenUseCase,
             dispatchersProvider
@@ -83,6 +92,15 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
             val mockAccessToken = MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN
             val mockServiceId = MobileSDKTestConstants.General.MOCK_GATEWAY_ID
             val isReadyToPayRequestJson = PaymentsUtil.createIsReadyToPayRequest()
+            val paymentRequest =
+                PaymentsUtil.createGooglePayRequest(
+                    amount = BigDecimal(10),
+                    amountLabel = "Goodies",
+                    currencyCode = "AUD",
+                    countryCode = "AU",
+                    merchantName = "unit_test",
+                    merchantIdentifier = "unit_test"
+                )
 
             viewModel = GooglePayViewModel(
                 paymentsClient,
@@ -90,7 +108,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
                     mockAccessToken,
                     mockServiceId,
                     isReadyToPayRequestJson,
-                    JSONObject()
+                    paymentRequest
                 ),
                 createGooglePayTokenUseCase,
                 dispatchersProvider
@@ -260,16 +278,52 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
             merchantIdentifier = "unit_test"
         )
         val methods = viewModel.extractAllowedPaymentMethods(validRequest)
-        println(methods)
+        val json = JSONArray(methods)
+        assertEquals(1, json.length())
+        val cardMethod = json.getJSONObject(0)
+        assertEquals(MobileSDKConstants.GooglePayConfig.CARD_PAYMENT_TYPE, cardMethod.getString("type"))
+
+        val parameters = cardMethod.getJSONObject("parameters")
+        assertEquals(true, parameters.getBoolean("billingAddressRequired"))
+        val billingAddressParameters = parameters.getJSONObject("billingAddressParameters")
         assertEquals(
-            """[{"type":"CARD","parameters":{"allowedAuthMethods":["PAN_ONLY","CRYPTOGRAM_3DS"],"billingAddressRequired":true,"allowedCardNetworks":["AMEX","DISCOVER","JCB","MASTERCARD","VISA"]},"tokenizationSpecification":{"type":"PAYMENT_GATEWAY","parameters":{"gatewayMerchantId":"unit_test","gateway":"paydock"}}}]""",
-            methods
+            MobileSDKConstants.GooglePayConfig.BILLING_ADDRESS_FORMAT,
+            billingAddressParameters.getString("format")
         )
+
+        // Default `phoneNumberRequired` in PaymentsUtil.createGooglePayRequest is false in this test.
+        assertEquals(false, billingAddressParameters.getBoolean("phoneNumberRequired"))
+
+        assertEquals(
+            MobileSDKConstants.GooglePayConfig.ALLOWED_CARD_NETWORKS,
+            (
+                parameters.getJSONArray("allowedCardNetworks").let { arr ->
+                    List(arr.length()) { i -> arr.getString(i) }
+                }
+                )
+        )
+
+        val tokenizationSpecification = cardMethod.getJSONObject("tokenizationSpecification")
+        assertEquals(
+            MobileSDKConstants.GooglePayConfig.TOKENIZATION_TYPE,
+            tokenizationSpecification.getString("type")
+        )
+        val tokenParams = tokenizationSpecification.getJSONObject("parameters")
+        assertEquals("unit_test", tokenParams.getString("gatewayMerchantId"))
+        assertEquals(MobileSDKConstants.GooglePayConfig.GATEWAY, tokenParams.getString("gateway"))
     }
 
     @Test
     fun `extractAllowedPaymentMethods sets error state on invalid request`() = runTest {
-        val invalidRequest = JSONObject("{}")
+        val validRequest = PaymentsUtil.createGooglePayRequest(
+            amount = BigDecimal(10),
+            amountLabel = "Goodies",
+            currencyCode = "AUD",
+            countryCode = "AU",
+            merchantName = "unit_test",
+            merchantIdentifier = "unit_test"
+        )
+        val invalidRequest = validRequest.copy(allowedPaymentMethods = emptyList())
 
         val methods = viewModel.extractAllowedPaymentMethods(invalidRequest)
         assertNull(methods)

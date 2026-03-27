@@ -46,8 +46,9 @@ import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.feature.card.domain.model.ui.TokenDetails
-import com.paydock.feature.googlepay.domain.model.GooglePayEventNames
-import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayResult
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.domain.model.ui.GooglePayEventNames
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.presentation.viewmodels.GooglePayViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -69,7 +70,7 @@ import org.koin.core.parameter.parametersOf
  * If provided, the widget will not display its internal loader.
  * @param eventDelegate An optional [WidgetEventDelegate] for tracking widget events such as button clicks.
  * @param completion A callback to handle the result of the Google Pay operation, either success or failure.
- * On success, returns a [TokenDetails] containing the Paydock OTT token. On failure, returns a [GooglePayException].
+ * On success, returns a [GooglePayResult] containing the Paydock OTT token. On failure, returns a [GooglePayException].
  * @param fallbackUi An optional Composable to be displayed if the Google Pay API is not available
  * on the device or if the button fails to load.
  */
@@ -81,18 +82,17 @@ fun GooglePayWidget(
     appearance: GooglePayWidgetAppearance = GooglePayAppearanceDefaults.appearance(),
     loadingDelegate: WidgetLoadingDelegate? = null,
     eventDelegate: WidgetEventDelegate? = null,
-    completion: (Result<TokenDetails>) -> Unit,
+    completion: (Result<GooglePayResult>) -> Unit,
     fallbackUi: @Composable (() -> Unit)? = null
 ) {
     // Use content-based key so ViewModel is recreated when config changes.
-    // JSONObject uses reference equality; toString() provides content-based invalidation for remember.
     val viewModelKey = remember(
         config.accessToken,
         config.serviceId,
-        config.isReadyToPayRequest.toString(),
-        config.paymentRequest.toString()
+        config.isReadyToPayRequest.hashCode(),
+        config.paymentRequest.hashCode()
     ) {
-        "googlepay_${config.serviceId}_${config.paymentRequest.toString().hashCode()}"
+        "googlepay_${config.serviceId}_${config.paymentRequest.hashCode()}"
     }
     val viewModel: GooglePayViewModel = koinViewModel(
         key = viewModelKey,
@@ -337,7 +337,7 @@ private fun handleUIState(
     viewModel: GooglePayViewModel,
     paymentDataLauncher: ManagedActivityResultLauncher<Task<PaymentData>, ApiTaskResult<PaymentData>>,
     loadingDelegate: WidgetLoadingDelegate?,
-    completion: (Result<TokenDetails>) -> Unit,
+    completion: (Result<GooglePayResult>) -> Unit,
 ) {
     when (uiState) {
         is GooglePayUIState.Idle -> Unit

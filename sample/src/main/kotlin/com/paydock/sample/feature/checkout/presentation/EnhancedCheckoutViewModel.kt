@@ -7,7 +7,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.paydock.core.utils.toSafeAmount
 import com.paydock.feature.card.domain.model.integration.CardResult
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayResult
 import com.paydock.feature.threeDS.integrated.domain.model.integration.MPGS3dsResult
 import com.paydock.feature.threeDS.integrated.domain.model.integration.enums.MPGS3dsEventType
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
@@ -36,8 +38,6 @@ import com.paydock.sample.feature.threeDS.domain.model.ThreeDSToken
 import com.paydock.sample.feature.threeDS.domain.usecase.CaptureThreeDSChargeTokenUseCase
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateMPGS3dsTokenUseCase
 import com.paydock.sample.feature.threeDS.domain.usecase.CreateStandaloneThreeDSTokenUseCase
-import com.paydock.core.utils.toSafeAmount
-import com.paydock.feature.card.domain.model.ui.TokenDetails
 import com.paydock.sample.feature.wallet.presentation.AddressData
 import com.paydock.sample.feature.wallet.presentation.CustomerData
 import com.paydock.sample.feature.zip.data.api.dto.CaptureZipChargeRequest
@@ -50,7 +50,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.math.BigDecimal
 import java.util.Locale
 import javax.inject.Inject
 import com.paydock.sample.feature.account.domain.model.SavedAddress as ProfileSavedAddress
@@ -387,9 +386,9 @@ class EnhancedCheckoutViewModel @Inject constructor(
     }
 
     // --- Google Pay + 3DS flow ---
-    fun handleGooglePayResult(result: Result<TokenDetails>) {
-        result.onSuccess { tokenDetails ->
-            tokenDetails.token?.let { token ->
+    fun handleGooglePayResult(result: Result<GooglePayResult>) {
+        result.onSuccess { result ->
+            result.token?.let { token ->
                 createSessionVaultToken(cardToken = token)
             } ?: run {
                 routeToFailure()

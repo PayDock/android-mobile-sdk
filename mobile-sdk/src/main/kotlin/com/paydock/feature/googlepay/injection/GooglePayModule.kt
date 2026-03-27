@@ -5,7 +5,7 @@ import com.google.android.gms.wallet.Wallet
 import com.paydock.MobileSDK
 import com.paydock.core.domain.mapper.mapToGooglePayEnv
 import com.paydock.feature.googlepay.data.repository.GooglePayRepositoryImpl
-import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.domain.repository.GooglePayRepository
 import com.paydock.feature.googlepay.domain.usecase.CreateGooglePayTokenUseCase
 import com.paydock.feature.googlepay.presentation.viewmodels.GooglePayViewModel

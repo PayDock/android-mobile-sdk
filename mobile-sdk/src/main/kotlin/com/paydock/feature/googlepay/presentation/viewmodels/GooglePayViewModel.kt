@@ -14,11 +14,17 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.GooglePayException
 import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.googlepay.data.dto.CreateGooglePayTokenRequest
 import com.paydock.feature.googlepay.data.dto.GooglePayPayloadData
-import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayBillingAddress
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayIsReadyToPayRequest
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayPaymentDataRequest
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayResult
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.domain.usecase.CreateGooglePayTokenUseCase
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
+import com.paydock.feature.googlepay.util.PaymentsUtil
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -99,10 +105,11 @@ internal class GooglePayViewModel(
      * - Configuration: Invalid payment method configuration
      * - Device: Device doesn't support Google Pay or user not signed in
      */
-    private fun fetchCanUseGooglePay(isReadyToPayJson: JSONObject) {
+    private fun fetchCanUseGooglePay(isReadyToPayRequest: GooglePayIsReadyToPayRequest) {
         launchOnIO {
             try {
-                val request = IsReadyToPayRequest.fromJson(isReadyToPayJson.toString())
+                val request =
+                    IsReadyToPayRequest.fromJson(isReadyToPayRequest.toJsonString())
                 val isReadyToPay = paymentsClient.isReadyToPay(request).await()
                 _googlePayAvailable.value = isReadyToPay
                 if (!isReadyToPay) {
@@ -178,10 +185,13 @@ internal class GooglePayViewModel(
      *
      * @return A string representing the allowed payment methods, or null if extraction fails.
      */
-    fun extractAllowedPaymentMethods(request: JSONObject = config.paymentRequest): String? {
+    fun extractAllowedPaymentMethods(request: GooglePayPaymentDataRequest = config.paymentRequest): String? {
         return runCatching {
-            request.getJSONArray(MobileSDKConstants.GooglePayConfig.ALLOWED_PAYMENT_METHODS_KEY)
-                .toString()
+            val json = request.allowedPaymentMethodsJsonArrayString()
+            if (json.isBlank() || json == "[]") {
+                throw IllegalArgumentException("Allowed payment methods missing")
+            }
+            json
         }.getOrElse {
             updateUiState(
                 GooglePayUIState.Error(
@@ -279,7 +289,8 @@ internal class GooglePayViewModel(
      * @return A [Task] with the payment information.
      */
     private fun getLoadPaymentDataTask(): Task<PaymentData> {
-        val request = PaymentDataRequest.fromJson(config.paymentRequest.toString())
+        val request =
+            PaymentDataRequest.fromJson(config.paymentRequest.toJsonString())
         return paymentsClient.loadPaymentData(request)
     }
 
@@ -292,28 +303,19 @@ internal class GooglePayViewModel(
         updateUiState(GooglePayUIState.Loading)
 
         runCatching {
-            val paymentJson = JSONObject(paymentData.toJson())
+            val response = PaymentsUtil.parsePaymentResponse(paymentData)
 
-            // 1. Extract Email (Root level)
-            val email = paymentJson.optString("email").takeIf { it.isNotBlank() }
+            val email = response.email.takeIf { !it.isNullOrBlank() }
+            val billingAddress = response.paymentMethodData.info?.billingAddress
+            val shippingAddress = response.shippingAddress
 
-            // 2. Extract Billing Address (Inside paymentMethodData -> info)
-            val billingAddress = paymentJson.optJSONObject("paymentMethodData")
-                ?.optJSONObject("info")
-                ?.optJSONObject("billingAddress")
-
-            // 3. Extract Shipping Address (Root level)
-            val shippingAddress = paymentJson.optJSONObject("shippingAddress")
-
-            // 4. Map the payload for the Paydock OTT request
+            // mapGooglePayData still needed for the raw Base64 payload required by Paydock OTT API
             val tokenRequest = mapGooglePayData(paymentData)
 
-            // Return all extracted data as a result of the runCatching block
-            // Using a data class or a Triple to pass values to onSuccess
+            // Pass structured data to createPaymentToken
             Triple(tokenRequest, email, billingAddress to shippingAddress)
         }.onSuccess { (tokenRequest, email, addresses) ->
             val (billing, shipping) = addresses
-            // billingAddress and shippingAddress are now correctly passed
             createPaymentToken(tokenRequest, email, billing, shipping)
         }.onFailure { exception ->
             handleErrorResult(
@@ -330,15 +332,17 @@ internal class GooglePayViewModel(
     private fun createPaymentToken(
         tokenRequest: CreateGooglePayTokenRequest,
         email: String?,
-        billingAddress: JSONObject?,
-        shippingAddress: JSONObject?
+        billingAddress: GooglePayBillingAddress?,
+        shippingAddress: GooglePayBillingAddress?
     ) {
         launchOnIO {
             createGooglePayTokenUseCase(config.accessToken, tokenRequest)
                 .onSuccess { tokenDetails ->
                     updateUiState(
                         GooglePayUIState.Success(
-                            tokenDetails.copy(
+                            GooglePayResult(
+                                token = tokenDetails.token,
+                                type = tokenDetails.type,
                                 email = email,
                                 billingAddress = billingAddress,
                                 shippingAddress = shippingAddress
@@ -417,4 +421,18 @@ internal class GooglePayViewModel(
         updateUiState(GooglePayUIState.Idle)
     }
     //endregion
+
+    private fun mapToBillingAddress(json: JSONObject?): BillingAddress? {
+        if (json == null) return null
+        return BillingAddress(
+            addressLine1 = json.optString("address1"),
+            addressLine2 = json.optString("address2"),
+            city = json.optString("locality"),
+            state = json.optString("administrativeArea"),
+            postalCode = json.optString("postalCode"),
+            country = json.optString("countryCode"),
+            firstName = json.optString("name").substringBeforeLast(" "),
+            lastName = json.optString("name").substringAfterLast(" ")
+        )
+    }
 }
