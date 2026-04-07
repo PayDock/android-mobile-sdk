@@ -94,7 +94,7 @@ internal object MobileSDKConstants {
      * Constants related to card details.
      */
     object CardDetailsConfig {
-        internal const val MIN_CREDIT_CARD_LENGTH = 12
+        internal const val MIN_CREDIT_CARD_LENGTH = 13
         internal const val MAX_CREDIT_CARD_LENGTH = 19
         internal const val MIN_GIFT_CARD_LENGTH = 14
         internal const val GIFT_CARD_PIN_LENGTH = 4
