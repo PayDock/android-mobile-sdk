@@ -1,5 +1,15 @@
 # Changelog
 
+## [5.4.0] - TBC
+
+### Changed
+- Split GooglePay MPGS for Google Wallet Service
+- Updated `GooglePayWidget` flow for tokenization result
+- Updated GooglePay JSONObjects into data classes
+
+### Added
+- New `GooglePayResult` object including token, email, shipping and billing details 
+
 ## [5.3.2] - 2026-03-25
 
 ### Fixed
