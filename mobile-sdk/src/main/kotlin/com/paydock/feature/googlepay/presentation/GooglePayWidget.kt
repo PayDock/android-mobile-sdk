@@ -45,12 +45,12 @@ import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkLoader
-import com.paydock.feature.googlepay.domain.model.GooglePayEventNames
-import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
+import com.paydock.feature.card.domain.model.ui.TokenDetails
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayResult
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.domain.model.ui.GooglePayEventNames
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.presentation.viewmodels.GooglePayViewModel
-import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
-import com.paydock.feature.wallet.domain.model.integration.WalletTokenResult
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -59,18 +59,20 @@ import org.koin.core.parameter.parametersOf
  *
  * This Composable integrates with Google Pay, providing a button to initiate payment requests,
  * handles user interactions, and manages the payment lifecycle through state management.
+ * The widget creates a Paydock OTT (One-Time Transaction) token from the Google Pay token.
  *
  * @param modifier Modifier for customizing the appearance and behavior of the Composable.
  * @param enabled A boolean indicating whether the Google Pay button is enabled. Defaults to `true`.
- * @param config The configuration for the Google Pay widget.
+ * @param config The configuration for the Google Pay widget, containing payment request details.
  * @param appearance The appearance configuration for the Google Pay widget, including button theme,
  * type, corner radius, and loader appearance. Defaults to [GooglePayAppearanceDefaults.appearance].
- * @param tokenRequest A callback to asynchronously retrieve the wallet token. This callback should call
- * the provided `onTokenReceived` lambda with the retrieved token.
  * @param loadingDelegate An optional delegate to manage loading indicators externally.
  * If provided, the widget will not display its internal loader.
  * @param eventDelegate An optional [WidgetEventDelegate] for tracking widget events such as button clicks.
  * @param completion A callback to handle the result of the Google Pay operation, either success or failure.
+ * On success, returns a [GooglePayResult] containing the Paydock OTT token. On failure, returns a [GooglePayException].
+ * @param fallbackUi An optional Composable to be displayed if the Google Pay API is not available
+ * on the device or if the button fails to load.
  */
 @Composable
 fun GooglePayWidget(
@@ -78,18 +80,19 @@ fun GooglePayWidget(
     enabled: Boolean = true,
     config: GooglePayWidgetConfig,
     appearance: GooglePayWidgetAppearance = GooglePayAppearanceDefaults.appearance(),
-    tokenRequest: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit,
     loadingDelegate: WidgetLoadingDelegate? = null,
     eventDelegate: WidgetEventDelegate? = null,
-    completion: (Result<ChargeResponse>) -> Unit
+    completion: (Result<GooglePayResult>) -> Unit,
+    fallbackUi: @Composable (() -> Unit)? = null
 ) {
     // Use content-based key so ViewModel is recreated when config changes.
-    // JSONObject uses reference equality; toString() provides content-based invalidation for remember.
-    val viewModelKey = remember(config.paymentRequest.toString()) {
-        val transactionInfo = config.paymentRequest.optJSONObject("transactionInfo")
-        val amount = transactionInfo?.optString("totalPrice", "") ?: ""
-        val currency = transactionInfo?.optString("currencyCode", "") ?: ""
-        "googlepay_${amount}_$currency"
+    val viewModelKey = remember(
+        config.accessToken,
+        config.serviceId,
+        config.isReadyToPayRequest.hashCode(),
+        config.paymentRequest.hashCode()
+    ) {
+        "googlepay_${config.serviceId}_${config.paymentRequest.hashCode()}"
     }
     val viewModel: GooglePayViewModel = koinViewModel(
         key = viewModelKey,
@@ -147,20 +150,21 @@ fun GooglePayWidget(
                                 action = EventAction.CLICK
                             )
                         )
-                        viewModel.startGooglePayPaymentFlow(tokenRequest)
+                        viewModel.startGooglePayPaymentFlow()
                     }, radius = appearance.cornerRadius,
                     allowedPaymentMethods = allowedPaymentMethods,
                     onError = {
                         completion(
                             Result.failure(
-                                GooglePayException.InitialisationException(
+                                GooglePayException.IsReadyToPayException(
                                     it.message
-                                        ?: MobileSDKConstants.GooglePayConfig.Errors.INITIALISATION_ERROR
+                                        ?: MobileSDKConstants.GooglePayConfig.Errors.IS_READY_TO_PAY_ERROR
                                 )
                             )
                         )
                     },
                     enabled = uiState !is GooglePayUIState.Loading && uiState !is GooglePayUIState.LaunchGooglePayTask && enabled,
+                    fallbackUi = fallbackUi
                 )
             }
         }
@@ -316,20 +320,24 @@ private fun handleGooglePayResult(
  * Handles the UI state for Google Pay.
  *
  * This function processes the current UI state of Google Pay, invoking loading delegates, launching Google Pay tasks, and
- * completing the payment transaction with success or error results as appropriate.
+ * completing the token creation with success or error results as appropriate.
+ * On success, returns a [TokenDetails] containing the Paydock OTT token. On failure, returns token-specific errors.
+ *
+ * Note: Error states are only set during the payment flow (after user interaction), not during initialization.
+ * Initialization errors are handled by setting googlePayAvailable to false, which hides the button.
  *
  * @param uiState The current UI state of the Google Pay operation.
  * @param viewModel The ViewModel managing Google Pay state and operations.
  * @param paymentDataLauncher A launcher for the Google Pay payment data task.
  * @param loadingDelegate An optional delegate to manage loading indicators externally.
- * @param completion A callback to complete the Google Pay transaction with success or error.
+ * @param completion A callback to complete the Google Pay token creation with success or error.
  */
 private fun handleUIState(
     uiState: GooglePayUIState,
     viewModel: GooglePayViewModel,
-    paymentDataLauncher: ManagedActivityResultLauncher<Task<PaymentData>, ApiTaskResult<PaymentData>>, // Updated parameter
+    paymentDataLauncher: ManagedActivityResultLauncher<Task<PaymentData>, ApiTaskResult<PaymentData>>,
     loadingDelegate: WidgetLoadingDelegate?,
-    completion: (Result<ChargeResponse>) -> Unit,
+    completion: (Result<GooglePayResult>) -> Unit,
 ) {
     when (uiState) {
         is GooglePayUIState.Idle -> Unit
@@ -340,18 +348,19 @@ private fun handleUIState(
             loadingDelegate?.widgetLoadingDidFinish()
             uiState.paymentDataTask.addOnCompleteListener(paymentDataLauncher::launch)
         }
-        // Handle success state, notify the loading delegate, and complete the transaction with success
+        // Handle success state, notify the loading delegate, and complete the token creation with success
         is GooglePayUIState.Success -> {
             loadingDelegate?.widgetLoadingDidFinish()
-            completion(Result.success(uiState.chargeData))
-            // Reset the state to ensure it’s not reused
+            completion(Result.success(uiState.tokenDetails))
+            // Reset the state to ensure it's not reused
             viewModel.resetResultState()
         }
-        // Handle error state, notify the loading delegate, and complete the transaction with failure
+        // Handle error state, notify the loading delegate, and complete the token creation with failure
+        // Note: This will only be triggered for errors during the payment flow, not initialization errors
         is GooglePayUIState.Error -> {
             loadingDelegate?.widgetLoadingDidFinish()
             completion(Result.failure(uiState.exception))
-            // Reset the state to ensure it’s not reused
+            // Reset the state to ensure it's not reused
             viewModel.resetResultState()
         }
 

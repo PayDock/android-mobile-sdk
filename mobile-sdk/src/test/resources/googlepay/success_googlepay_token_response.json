@@ -1,0 +1,11 @@
+{
+  "status": 201,
+  "error": null,
+  "resource": {
+    "type": "token",
+    "data": {
+      "temp_token": "1a082082-d1b0-4758-a576-8d5a12b3a031",
+      "token_type": "card_scheme_token"
+    }
+  }
+}

@@ -4,10 +4,15 @@ import android.content.Context
 import com.google.android.gms.wallet.Wallet
 import com.paydock.MobileSDK
 import com.paydock.core.domain.mapper.mapToGooglePayEnv
-import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.data.repository.GooglePayRepositoryImpl
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.domain.repository.GooglePayRepository
+import com.paydock.feature.googlepay.domain.usecase.CreateGooglePayTokenUseCase
 import com.paydock.feature.googlepay.presentation.viewmodels.GooglePayViewModel
 import com.paydock.feature.wallet.injection.walletModule
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModel
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 /**
@@ -27,15 +32,20 @@ internal val googlePayModule = module {
         Wallet.getPaymentsClient(get() as Context, walletOptions)
     }
 
+    // Provide the repository for managing Google Pay tokens
+    single<GooglePayRepository> {
+        GooglePayRepositoryImpl(dispatcher = get(named("IO")), client = get())
+    }
+
+    // Token Based UseCases
+    factoryOf(::CreateGooglePayTokenUseCase)
+
     // Define a view model for GooglePayViewModel
     // SavedStateHandle is auto-injected by Koin when not in the lambda parameters
     viewModel { (config: GooglePayWidgetConfig) ->
         GooglePayViewModel(
             get(),
             config,
-            get(),
-            get(),
-            get(),
             get(),
             get()
         )

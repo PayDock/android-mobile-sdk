@@ -1,6 +1,5 @@
 package com.paydock.feature.googlepay.presentation.viewmodels
 
-import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.common.api.Status
@@ -13,20 +12,12 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.GooglePayException
-import com.paydock.core.network.dto.error.ApiErrorResponse
-import com.paydock.core.network.dto.error.ErrorSummary
-import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.utils.MainDispatcherRule
-import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.domain.usecase.CreateGooglePayTokenUseCase
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.util.PaymentsUtil
-import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
-import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
-import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
-import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
-import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
@@ -34,7 +25,7 @@ import junit.framework.TestCase.assertNull
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import org.json.JSONObject
+import org.json.JSONArray
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -56,34 +47,40 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
 
     private lateinit var viewModel: GooglePayViewModel
     private lateinit var paymentsClient: PaymentsClient
-    private lateinit var captureWalletChargeUseCase: CaptureWalletChargeUseCase
-    private lateinit var declineWalletChargeUseCase: DeclineWalletChargeUseCase
-    private lateinit var getWalletCallbackUseCase: GetWalletCallbackUseCase
+    private lateinit var createGooglePayTokenUseCase: CreateGooglePayTokenUseCase
 
     @Before
     fun setup() {
-        captureWalletChargeUseCase = mockk()
-        declineWalletChargeUseCase = mockk()
-        getWalletCallbackUseCase = mockk()
+        createGooglePayTokenUseCase = mockk()
         paymentsClient = mockk()
 
+        val mockAccessToken = MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN
+        val mockServiceId = MobileSDKTestConstants.General.MOCK_GATEWAY_ID
         val isReadyToPayRequestJson = PaymentsUtil.createIsReadyToPayRequest()
+        val paymentRequest =
+            PaymentsUtil.createGooglePayRequest(
+                amount = BigDecimal(10),
+                amountLabel = "Goodies",
+                currencyCode = "AUD",
+                countryCode = "AU",
+                merchantName = "unit_test",
+                merchantIdentifier = "unit_test"
+            )
+
+        // This is to ensure we are able to mock the init function
+        coEvery { paymentsClient.isReadyToPay(any()) } returns Tasks.forResult(true)
+
         viewModel = GooglePayViewModel(
             paymentsClient,
             GooglePayWidgetConfig(
+                mockAccessToken,
+                mockServiceId,
                 isReadyToPayRequestJson,
-                JSONObject()
+                paymentRequest
             ),
-            SavedStateHandle(),
-            captureWalletChargeUseCase,
-            declineWalletChargeUseCase,
-            getWalletCallbackUseCase,
+            createGooglePayTokenUseCase,
             dispatchersProvider
         )
-        val mockToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
-        viewModel.setWalletToken(mockToken)
-        // This is to ensure we are able to mock the init function
-        coEvery { paymentsClient.isReadyToPay(any()) } returns Tasks.forResult(true)
     }
 
     @Test
@@ -92,22 +89,42 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
             // Re-initialize ViewModel with specific mock behavior for this test
             coEvery { paymentsClient.isReadyToPay(any()) } returns Tasks.forResult(false)
 
-            viewModel = GooglePayViewModel( // Recreate to trigger init with new mock
+            val mockAccessToken = MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN
+            val mockServiceId = MobileSDKTestConstants.General.MOCK_GATEWAY_ID
+            val isReadyToPayRequestJson = PaymentsUtil.createIsReadyToPayRequest()
+            val paymentRequest =
+                PaymentsUtil.createGooglePayRequest(
+                    amount = BigDecimal(10),
+                    amountLabel = "Goodies",
+                    currencyCode = "AUD",
+                    countryCode = "AU",
+                    merchantName = "unit_test",
+                    merchantIdentifier = "unit_test"
+                )
+
+            viewModel = GooglePayViewModel(
                 paymentsClient,
-                GooglePayWidgetConfig(PaymentsUtil.createIsReadyToPayRequest(), JSONObject()),
-                SavedStateHandle(),
-                captureWalletChargeUseCase,
-                declineWalletChargeUseCase,
-                getWalletCallbackUseCase,
+                GooglePayWidgetConfig(
+                    mockAccessToken,
+                    mockServiceId,
+                    isReadyToPayRequestJson,
+                    paymentRequest
+                ),
+                createGooglePayTokenUseCase,
                 dispatchersProvider
-            ).apply { setWalletToken(MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN) }
+            )
 
             viewModel.googlePayAvailable.test {
                 assertEquals(false, awaitItem())
             }
             viewModel.uiState.test {
-                // Assuming no specific error state is set, just availability changes
-                assertIs<GooglePayUIState.Idle>(awaitItem())
+                // Skip initial Idle state
+                assertEquals(GooglePayUIState.Idle, awaitItem())
+                // Now sets specific IsReadyToPayException error state
+                awaitItem().let { state ->
+                    assertIs<GooglePayUIState.Error>(state)
+                    assertIs<GooglePayException.IsReadyToPayException>(state.exception)
+                }
             }
         }
 
@@ -124,7 +141,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
                     actualException.message
                 )
                 assertEquals(
-                    CommonStatusCodes.getStatusCodeString(CommonStatusCodes.TIMEOUT),
+                    "TIMEOUT",
                     actualException.statusCodeString
                 )
 
@@ -146,7 +163,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
                         actualException.message
                     )
                     assertEquals(
-                        CommonStatusCodes.getStatusCodeString(CommonStatusCodes.SIGN_IN_REQUIRED),
+                        "SIGN_IN_REQUIRED",
                         actualException.statusCodeString
                     )
                 }
@@ -185,7 +202,7 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
                     MobileSDKConstants.GooglePayConfig.Errors.DEV_ERROR
                 )
                 assertEquals(
-                    CommonStatusCodes.getStatusCodeString(CommonStatusCodes.DEVELOPER_ERROR),
+                    "DEVELOPER_ERROR",
                     actualException.statusCodeString
                 )
 
@@ -215,34 +232,37 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
         viewModel.uiState.test {
             awaitItem().let { state ->
                 assertIs<GooglePayUIState.Error>(state)
-                assertIs<GooglePayException.CancellationException>(state.exception)
-                assertEquals(state.exception.message, "User cancelled request")
+                // Now mapped specifically to SDKException.CancelledBySdk when originating from SDK
+                assertIs<GooglePayException.SDKException.CancelledBySdk>(state.exception)
+                assertEquals("CANCELED", (state.exception as GooglePayException.SDKException.CancelledBySdk).statusCodeString)
             }
         }
     }
 
     @Test
-    fun `handleGooglePayResultErrors sets cancellation state on ERROR_CODE_DEVELOPER_ERROR`() = runTest {
+    fun `handleGooglePayResultErrors sets result state on ERROR_CODE_DEVELOPER_ERROR`() = runTest {
         val status = Status(WalletConstants.ERROR_CODE_DEVELOPER_ERROR, "Developer error occurred")
         viewModel.handleWalletResultErrors(status)
         viewModel.uiState.test {
             awaitItem().let { state ->
                 assertIs<GooglePayUIState.Error>(state)
-                assertIs<GooglePayException.ResultException>(state.exception)
-                assertEquals(state.exception.message, "Developer error occurred")
+                // Now mapped specifically to SDKException.DeveloperError
+                assertIs<GooglePayException.SDKException.DeveloperError>(state.exception)
+                assertEquals("DEVELOPER_ERROR", (state.exception as GooglePayException.SDKException.DeveloperError).statusCodeString)
             }
         }
     }
 
     @Test
-    fun `handleGooglePayResultErrors sets cancellation state on all other errors`() = runTest {
+    fun `handleGooglePayResultErrors sets result state on all other errors`() = runTest {
         val status = Status(WalletConstants.ERROR_CODE_INTERNAL_ERROR, "An unexpected error occurred!")
         viewModel.handleWalletResultErrors(status)
         viewModel.uiState.test {
             awaitItem().let { state ->
                 assertIs<GooglePayUIState.Error>(state)
-                assertIs<GooglePayException.ResultException>(state.exception)
-                assertEquals(state.exception.message, "An unexpected error occurred!")
+                // Now mapped specifically to SDKException.ServiceError
+                assertIs<GooglePayException.SDKException.ServiceError>(state.exception)
+                assertEquals("8", state.exception.statusCodeString)
             }
         }
     }
@@ -258,15 +278,52 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
             merchantIdentifier = "unit_test"
         )
         val methods = viewModel.extractAllowedPaymentMethods(validRequest)
+        val json = JSONArray(methods)
+        assertEquals(1, json.length())
+        val cardMethod = json.getJSONObject(0)
+        assertEquals(MobileSDKConstants.GooglePayConfig.CARD_PAYMENT_TYPE, cardMethod.getString("type"))
+
+        val parameters = cardMethod.getJSONObject("parameters")
+        assertEquals(true, parameters.getBoolean("billingAddressRequired"))
+        val billingAddressParameters = parameters.getJSONObject("billingAddressParameters")
         assertEquals(
-            """[{"type":"CARD","parameters":{"allowedAuthMethods":["PAN_ONLY","CRYPTOGRAM_3DS"],"billingAddressRequired":true,"billingAddressParameters":{"format":"FULL"},"allowedCardNetworks":["AMEX","DISCOVER","JCB","MASTERCARD","VISA"]},"tokenizationSpecification":{"type":"PAYMENT_GATEWAY","parameters":{"gatewayMerchantId":"unit_test","gateway":"paydock"}}}]""",
-            methods
+            MobileSDKConstants.GooglePayConfig.BILLING_ADDRESS_FORMAT,
+            billingAddressParameters.getString("format")
         )
+
+        // Default `phoneNumberRequired` in PaymentsUtil.createGooglePayRequest is false in this test.
+        assertEquals(false, billingAddressParameters.getBoolean("phoneNumberRequired"))
+
+        assertEquals(
+            MobileSDKConstants.GooglePayConfig.ALLOWED_CARD_NETWORKS,
+            (
+                parameters.getJSONArray("allowedCardNetworks").let { arr ->
+                    List(arr.length()) { i -> arr.getString(i) }
+                }
+                )
+        )
+
+        val tokenizationSpecification = cardMethod.getJSONObject("tokenizationSpecification")
+        assertEquals(
+            MobileSDKConstants.GooglePayConfig.TOKENIZATION_TYPE,
+            tokenizationSpecification.getString("type")
+        )
+        val tokenParams = tokenizationSpecification.getJSONObject("parameters")
+        assertEquals("unit_test", tokenParams.getString("gatewayMerchantId"))
+        assertEquals(MobileSDKConstants.GooglePayConfig.GATEWAY, tokenParams.getString("gateway"))
     }
 
     @Test
     fun `extractAllowedPaymentMethods sets error state on invalid request`() = runTest {
-        val invalidRequest = JSONObject("{}")
+        val validRequest = PaymentsUtil.createGooglePayRequest(
+            amount = BigDecimal(10),
+            amountLabel = "Goodies",
+            currencyCode = "AUD",
+            countryCode = "AU",
+            merchantName = "unit_test",
+            merchantIdentifier = "unit_test"
+        )
+        val invalidRequest = validRequest.copy(allowedPaymentMethods = emptyList())
 
         val methods = viewModel.extractAllowedPaymentMethods(invalidRequest)
         assertNull(methods)
@@ -278,79 +335,6 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
             }
         }
     }
-
-    @Test
-    fun `processGooglePayPaymentResult extracts google token and calls CaptureWalletTransaction with success result`() =
-        runTest {
-            val paymentData = mockk<PaymentData>()
-            val googlePayToken = "googlePayToken"
-            every { paymentData.toJson() } returns """{"paymentMethodData": {"tokenizationData": {"token": "$googlePayToken"}}}"""
-            val mockResult = Result.success(
-                ChargeResponse(
-                    status = 200,
-                    resource = ChargeResponse.ChargeResource(
-                        type = "charge",
-                        data = ChargeResponse.ChargeData(
-                            status = "complete",
-                            id = "653784a37cb913091e1be3e5",
-                            amount = BigDecimal(10),
-                            currency = "AUD"
-                        )
-                    )
-                )
-            )
-            coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
-            viewModel.processGooglePayPaymentResult(paymentData)
-
-            viewModel.uiState.test {
-                // Initial state
-                assertIs<GooglePayUIState.Idle>(awaitItem())
-                // Loading state - before execution
-                assertIs<GooglePayUIState.Loading>(awaitItem())
-                coVerify { captureWalletChargeUseCase(any(), any()) }
-                awaitItem().let { state ->
-                    assertIs<GooglePayUIState.Success>(state)
-                    assertEquals(mockResult.getOrNull(), state.chargeData)
-                }
-            }
-        }
-
-    @Test
-    fun `processGooglePayPaymentResult extracts google token and calls CaptureWalletTransaction with failure result`() =
-        runTest {
-            val paymentData = mockk<PaymentData>()
-            val googlePayToken = "googlePayToken"
-            every { paymentData.toJson() } returns """{"paymentMethodData": {"tokenizationData": {"token": "$googlePayToken"}}}"""
-
-            val mockError = ApiException(
-                error = ApiErrorResponse(
-                    status = HttpStatusCode.InternalServerError.value,
-                    summary = ErrorSummary(
-                        code = "unexpected_error",
-                        message = MobileSDKTestConstants.Errors.MOCK_GENERAL_ERROR
-                    )
-                )
-            )
-            val mockResult = Result.failure<ChargeResponse>(mockError)
-            coEvery { captureWalletChargeUseCase(any(), any()) } returns mockResult
-
-            viewModel.processGooglePayPaymentResult(paymentData)
-            viewModel.uiState.test {
-                // Initial state
-                assertIs<GooglePayUIState.Idle>(awaitItem())
-                // Loading state - before execution
-                assertIs<GooglePayUIState.Loading>(awaitItem())
-                coVerify { captureWalletChargeUseCase(any(), any()) }
-                awaitItem().let { state ->
-                    assertIs<GooglePayUIState.Error>(state)
-                    assertTrue(state.exception is GooglePayException.CapturingChargeException)
-                    assertEquals(
-                        MobileSDKTestConstants.Errors.MOCK_GENERAL_ERROR,
-                        state.exception.message
-                    )
-                }
-            }
-        }
 
     @Test
     fun `processGooglePayPaymentResult fails to extract google token and updates error state`() =
@@ -369,9 +353,8 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
         }
 
     @Test
-    fun `resetResultState should reset UI state`() = runTest {
-        viewModel.handleGooglePayResultErrors(CommonStatusCodes.CANCELED)
-        // Assert state is Idle
+    fun `resetResultState resets state to Idle`() = runTest {
+        viewModel.handleGooglePayResultErrors(CommonStatusCodes.ERROR)
         viewModel.uiState.test {
             assertIs<GooglePayUIState.Error>(awaitItem())
             viewModel.resetResultState()

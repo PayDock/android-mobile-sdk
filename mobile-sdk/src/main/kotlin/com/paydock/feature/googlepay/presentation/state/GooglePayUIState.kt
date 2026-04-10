@@ -3,7 +3,7 @@ package com.paydock.feature.googlepay.presentation.state
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.wallet.PaymentData
 import com.paydock.core.domain.error.exceptions.SdkException
-import com.paydock.feature.wallet.domain.model.integration.ChargeResponse
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayResult
 
 /**
  * Represents the UI state for Google Pay interactions.
@@ -40,7 +40,7 @@ internal sealed class GooglePayUIState {
     /**
      * Represents a successful state where a Google Pay operation completed successfully.
      *
-     * @property chargeData The charge data returned from the successful operation.
+     * @property tokenDetails The token details returned from the successful token creation operation.
      */
-    data class Success(val chargeData: ChargeResponse) : GooglePayUIState()
+    data class Success(val tokenDetails: GooglePayResult) : GooglePayUIState()
 }

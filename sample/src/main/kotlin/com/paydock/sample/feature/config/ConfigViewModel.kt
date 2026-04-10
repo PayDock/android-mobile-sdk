@@ -9,7 +9,7 @@ import com.paydock.feature.card.domain.model.integration.SaveCardConfig
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.integration.enums.CardType
 import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
-import com.paydock.feature.googlepay.domain.model.GooglePayWidgetConfig
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.util.PaymentsUtil
 import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
@@ -45,8 +45,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import org.json.JSONArray
-import org.json.JSONObject
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayBillingAddressParameters
+import com.paydock.feature.googlepay.domain.model.integration.GooglePayShippingAddressParameters
 import java.math.BigDecimal
 import java.util.Locale
 import javax.inject.Inject
@@ -215,6 +215,8 @@ class ConfigViewModel @Inject constructor(
 
     private fun createDefaultGooglePayConfig(): GooglePayWidgetConfig {
         return GooglePayWidgetConfig(
+            accessToken = BuildConfig.ACCESS_TOKEN_WIDGET,
+            serviceId = BuildConfig.SERVICE_ID_GOOGLE_PAY,
             isReadyToPayRequest = PaymentsUtil.createIsReadyToPayRequest(),
             paymentRequest = createGooglePayPaymentRequest(
                 amount = widgetConfig.value.cartAmount,
@@ -226,7 +228,7 @@ class ConfigViewModel @Inject constructor(
     private fun createGooglePayPaymentRequest(
         amount: BigDecimal,
         currencyCode: String
-    ): JSONObject = PaymentsUtil.createGooglePayRequest(
+    ) = PaymentsUtil.createGooglePayRequest(
         amount = amount,
         amountLabel = "Goodies",
         currencyCode = currencyCode,
@@ -234,10 +236,11 @@ class ConfigViewModel @Inject constructor(
         merchantName = MERCHANT_NAME,
         merchantIdentifier = BuildConfig.MERCHANT_ID_GOOGLE_PAY,
         shippingAddressRequired = true,
-        shippingAddressParameters = JSONObject().apply {
-            put("phoneNumberRequired", false)
-            put("allowedCountryCodes", JSONArray(listOf("US", "GB", "AU")))
-        }
+        shippingAddressParameters = GooglePayShippingAddressParameters(
+            allowedCountryCodes = listOf("US", "GB", "AU")
+        ),
+        emailRequired = true,
+        phoneNumberRequired = true
     )
 
     // Card Details Config - initialized with defaults
@@ -250,7 +253,7 @@ class ConfigViewModel @Inject constructor(
     val giftCardWidgetConfig: StateFlow<GiftCardWidgetConfig> =
         _giftCardWidgetConfig.asStateFlow()
 
-    // Google Pay Config - nullable as it uses JSONObject
+    // Google Pay Config
     private val _googlePayWidgetConfig =
         MutableStateFlow<GooglePayWidgetConfig>(createDefaultGooglePayConfig())
     val googlePayWidgetConfig: StateFlow<GooglePayWidgetConfig> =
@@ -310,9 +313,10 @@ class ConfigViewModel @Inject constructor(
         // Update Google Pay config paymentRequest with new amount (used by Google Pay SDK for display)
         _googlePayWidgetConfig.update { current ->
             current.copy(
-                paymentRequest = createGooglePayPaymentRequest(
-                    amount = newAmount,
-                    currencyCode = globalConfig.value.currencyCode
+                paymentRequest = current.paymentRequest.copy(
+                    transactionInfo = current.paymentRequest.transactionInfo.copy(
+                        totalPrice = PaymentsUtil.formatAmountForGooglePay(newAmount)
+                    )
                 )
             )
         }
@@ -328,9 +332,10 @@ class ConfigViewModel @Inject constructor(
         // Update Google Pay config paymentRequest with new currency (used by Google Pay SDK for display)
         _googlePayWidgetConfig.update { current ->
             current.copy(
-                paymentRequest = createGooglePayPaymentRequest(
-                    amount = widgetConfig.value.cartAmount,
-                    currencyCode = newCurrency
+                paymentRequest = current.paymentRequest.copy(
+                    transactionInfo = current.paymentRequest.transactionInfo.copy(
+                        currencyCode = newCurrency
+                    )
                 )
             )
         }
@@ -611,6 +616,80 @@ class ConfigViewModel @Inject constructor(
                     else -> current
                 }
                 _paypalWidgetConfig.value = updatedConfig
+            }
+
+            WidgetType.GOOGLE_PAY -> {
+                val current = _googlePayWidgetConfig.value
+                val updatedConfig = when (component) {
+                    ConfigComponent.ACCESS_TOKEN -> current.copy(accessToken = newValue as String)
+                    ConfigComponent.SERVICE_ID -> current.copy(serviceId = newValue as String)
+                    ConfigComponent.EMAIL_REQUIRED -> {
+                        current.copy(
+                            paymentRequest = current.paymentRequest.copy(
+                                emailRequired = newValue as Boolean
+                            )
+                        )
+                    }
+
+                    ConfigComponent.PHONE_NUMBER_REQUIRED -> {
+                        val phoneNumberRequired = newValue as Boolean
+
+                        val updatedShippingAddressParameters =
+                            current.paymentRequest.shippingAddressParameters?.copy(
+                                phoneNumberRequired = phoneNumberRequired
+                            ) ?: GooglePayShippingAddressParameters(
+                                phoneNumberRequired = phoneNumberRequired
+                            )
+
+                        val updatedAllowedPaymentMethods =
+                            current.paymentRequest.allowedPaymentMethods.map { method ->
+                                val updatedBillingAddressParameters =
+                                    method.parameters.billingAddressParameters?.copy(
+                                        phoneNumberRequired = phoneNumberRequired
+                                    ) ?: GooglePayBillingAddressParameters(
+                                        phoneNumberRequired = phoneNumberRequired
+                                    )
+
+                                method.copy(
+                                    parameters = method.parameters.copy(
+                                        billingAddressParameters = updatedBillingAddressParameters
+                                    )
+                                )
+                            }
+
+                        current.copy(
+                            paymentRequest = current.paymentRequest.copy(
+                                shippingAddressParameters = updatedShippingAddressParameters,
+                                allowedPaymentMethods = updatedAllowedPaymentMethods
+                            )
+                        )
+                    }
+
+                    ConfigComponent.SHIPPING_REQUIRED -> {
+                        current.copy(
+                            paymentRequest = current.paymentRequest.copy(
+                                shippingAddressRequired = newValue as Boolean
+                            )
+                        )
+                    }
+
+                    ConfigComponent.BILLING_REQUIRED -> {
+                        current.copy(
+                            paymentRequest = current.paymentRequest.copy(
+                                allowedPaymentMethods = current.paymentRequest.allowedPaymentMethods.map { method ->
+                                    method.copy(
+                                        parameters = method.parameters.copy(
+                                            billingAddressRequired = newValue as Boolean
+                                        )
+                                    )
+                                }
+                            )
+                        )
+                    }
+
+                    else -> current
+                }
+                _googlePayWidgetConfig.value = updatedConfig
             }
 
             WidgetType.COLES_PAY -> {

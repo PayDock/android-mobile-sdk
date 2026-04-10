@@ -94,7 +94,7 @@ internal object MobileSDKConstants {
      * Constants related to card details.
      */
     object CardDetailsConfig {
-        internal const val MIN_CREDIT_CARD_LENGTH = 12
+        internal const val MIN_CREDIT_CARD_LENGTH = 13
         internal const val MAX_CREDIT_CARD_LENGTH = 19
         internal const val MIN_GIFT_CARD_LENGTH = 14
         internal const val GIFT_CARD_PIN_LENGTH = 4
@@ -196,6 +196,7 @@ internal object MobileSDKConstants {
                 "An unexpected error occurred while processing Google Pay. Please try again later."
             const val INITIALISATION_ERROR = "Unexpected non API exception when trying to " +
                 "retrieve [allowedPaymentMethods] parameter from PaymentRequest!"
+            const val IS_READY_TO_PAY_ERROR = "Google Pay is not available on this device or for this user."
             const val CANCELLATION_ERROR = "Google Pay charge was cancelled!"
             const val WALLET_TOKEN_ERROR =
                 "An unexpected error occurred while retrieving Google Pay wallet token. Please try again later."
@@ -239,8 +240,8 @@ internal object MobileSDKConstants {
 
         object Errors {
             const val VAULT_ERROR =
-                "An unexpected error occurred while processing PayPal Vault. Please try again " +
-                    "later or contact support for assistance."
+                "An unexpected error occurred while processing PayPal Vault. Please try " +
+                    "again later or contact support for assistance."
             const val DATA_COLLECTOR_ERROR =
                 "An unexpected error occurred while processing PayPal Data Collector. Please try " +
                     "again later or contact support for assistance."

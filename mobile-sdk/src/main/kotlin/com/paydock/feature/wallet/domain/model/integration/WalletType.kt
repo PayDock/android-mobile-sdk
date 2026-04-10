@@ -6,10 +6,6 @@ package com.paydock.feature.wallet.domain.model.integration
  * @property type The string representation of the wallet type.
  */
 enum class WalletType(val type: String) {
-    /**
-     * Google Pay wallet type.
-     */
-    GOOGLE("google"),
 
     /**
      * PayPal wallet type.

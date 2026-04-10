@@ -195,9 +195,19 @@ private fun MockRequestHandleScope.handleSuccessRequest(request: HttpRequestData
     return when {
         // Check for matching endpoint path
         request.url.encodedPath.endsWith("/payment_sources/tokens") -> {
-            // Check if the custom header indicating success is present
+            val bodyString = if (request.body is OutgoingContent.ByteArrayContent) {
+                (request.body as OutgoingContent.ByteArrayContent).bytes().decodeToString()
+            } else {
+                ""
+            }
+            // Check if it's a Google Pay request by looking for service_type
+            val responseFile = if (bodyString.contains("GooglePay")) {
+                "googlepay/success_googlepay_token_response.json"
+            } else {
+                "card/success_card_token_response.json"
+            }
             respond(
-                content = MockResponseFileReader("card/success_card_token_response.json").content,
+                content = MockResponseFileReader(responseFile).content,
                 status = HttpStatusCode.Created,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )

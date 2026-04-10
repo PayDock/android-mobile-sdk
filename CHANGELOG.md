@@ -1,5 +1,18 @@
 # Changelog
 
+## [5.4.0] - 2026-04-10
+
+### Added
+- New `GooglePayResult` object including token, email, shipping and billing details
+
+### Changed
+- Updated `GooglePayWidget` now tokenises result without performing transactions
+- Updated `GooglePayWidget` flow with new tokenization result
+- Updated GooglePay JSONObjects into data classes
+
+### Fixed
+- Minimum card number length for unknown card schemes updated to 13
+
 ## [5.3.2] - 2026-03-25
 
 ### Fixed

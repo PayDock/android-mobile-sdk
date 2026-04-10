@@ -112,8 +112,12 @@
     <string name="label_personal_information">Personal Information</string>
     <string name="label_first_name">First Name</string>
     <string name="label_email">Email</string>
+    <string name="label_email_required">Email Required</string>
     <string name="label_last_name">Last Name</string>
     <string name="label_phone">Phone</string>
+    <string name="label_phone_number_required">Phone Number Required</string>
+    <string name="label_billing_required">Billing Required</string>
+    <string name="label_shipping_required">Shipping Required</string>
     <string name="label_more_options">More options</string>
     <string name="label_saved_addresses">Saved Addresses</string>
     <string name="label_default">DEFAULT</string>

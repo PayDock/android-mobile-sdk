@@ -84,6 +84,7 @@ private fun WidgetType.hasConfigurableProperties(): Boolean {
         WidgetType.ADDRESS_DETAILS,
         WidgetType.CARD_DETAILS,
         WidgetType.GIFT_CARD,
+        WidgetType.GOOGLE_PAY,
         WidgetType.PAY_PAL,
         WidgetType.PAY_PAL_VAULT,
         WidgetType.AFTER_PAY,

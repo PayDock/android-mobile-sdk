@@ -21,6 +21,7 @@ import com.paydock.sample.feature.config.ui.properties.card.CardDetailsPropertie
 import com.paydock.sample.feature.config.ui.properties.clicktopay.ClickToPayProperties
 import com.paydock.sample.feature.config.ui.properties.colespay.ColesPayProperties
 import com.paydock.sample.feature.config.ui.properties.giftcard.GiftCardProperties
+import com.paydock.sample.feature.config.ui.properties.googlepay.GooglePayProperties
 import com.paydock.sample.feature.config.ui.properties.paypal.PayPalProperties
 import com.paydock.sample.feature.config.ui.properties.paypalvault.PayPalVaultProperties
 import com.paydock.sample.feature.config.ui.properties.zip.ZipProperties
@@ -53,6 +54,16 @@ fun ConfigPropertiesScreen(
             WidgetType.GIFT_CARD -> {
                 val config by configViewModel.giftCardWidgetConfig.collectAsState()
                 GiftCardProperties(
+                    config = config,
+                    configItemName = configItemName,
+                    widgetContext = widgetContext,
+                    configViewModel = configViewModel
+                )
+            }
+
+            WidgetType.GOOGLE_PAY -> {
+                val config by configViewModel.googlePayWidgetConfig.collectAsState()
+                GooglePayProperties(
                     config = config,
                     configItemName = configItemName,
                     widgetContext = widgetContext,
