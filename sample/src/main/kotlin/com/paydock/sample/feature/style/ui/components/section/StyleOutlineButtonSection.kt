@@ -53,7 +53,15 @@ fun OutlineButtonAppearanceStyleEditor(
             onIconChange = { newIcon ->
                 onAppearanceChange(currentAppearance.copy(icon = newIcon))
             },
-            defaultIcon = PayPalPaymentSourceAppearanceDefaults.appearance().actionButton.icon
+            defaultIcon = PayPalPaymentSourceAppearanceDefaults.appearance().actionButton.icon,
+            iconDescription = currentAppearance.iconDescription,
+            onIconDescriptionChange = { newDesc ->
+                onAppearanceChange(currentAppearance.copy(iconDescription = newDesc.takeIf { it.isNotEmpty() }))
+            },
+            clickableDescription = currentAppearance.clickableDescription,
+            onClickableDescriptionChange = { newDesc ->
+                onAppearanceChange(currentAppearance.copy(clickableDescription = newDesc.takeIf { it.isNotEmpty() }))
+            }
         )
 
         HorizontalDivider()

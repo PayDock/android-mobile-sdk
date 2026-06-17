@@ -17,6 +17,10 @@ package com.paydock.feature.card.domain.model.integration
  * If `false`, `store_ccv` will be set to `false`.
  * @property schemeSupport Configuration for supported card schemes and scheme validation behavior. Defaults to
  * [SupportedSchemeConfig] with no restrictions on card schemes and validation disabled.
+ * @property activePrimaryButton Specifies whether the primary button (e.g., Submit) should be enabled by default. If `true`, the button
+ * is always enabled, and validation is performed upon clicking it. If `false`, the button remains disabled until
+ * all fields are valid. Defaults to `true`.
+ *   Defaults to true.
  */
 data class CardDetailsWidgetConfig(
     val accessToken: String,
@@ -24,5 +28,6 @@ data class CardDetailsWidgetConfig(
     val collectCardholderName: Boolean = true,
     val allowSaveCard: SaveCardConfig? = null,
     val storeSecurityCode: Boolean? = null,
-    val schemeSupport: SupportedSchemeConfig = SupportedSchemeConfig()
+    val schemeSupport: SupportedSchemeConfig = SupportedSchemeConfig(),
+    val activePrimaryButton: Boolean = true
 )

@@ -11,7 +11,8 @@ fun WidgetType.mapWidgetTypeToConfigComponents(): List<ConfigComponent> {
             ConfigComponent.COLLECT_CARDHOLDER_NAME,
             ConfigComponent.ALLOW_SAVE_CARD,
             ConfigComponent.STORE_SECURITY_CODE,
-            ConfigComponent.SCHEME_SUPPORT
+            ConfigComponent.SCHEME_SUPPORT,
+            ConfigComponent.ACTIVE_PRIMARY_BUTTON
         )
 
         WidgetType.GIFT_CARD -> listOf(

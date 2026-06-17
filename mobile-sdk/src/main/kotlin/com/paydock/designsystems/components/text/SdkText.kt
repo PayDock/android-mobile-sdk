@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.paydock.core.presentation.ui.previews.SdkFontScalePreviews
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
@@ -40,6 +41,7 @@ internal fun SdkText(
         modifier = modifier,
         text = text,
         style = appearance.style,
+        textAlign = appearance.textAlign,
         overflow = appearance.overflow,
         softWrap = appearance.softWrap,
         maxLines = appearance.maxLines,
@@ -74,6 +76,7 @@ internal fun SdkText(
         modifier = modifier,
         text = text,
         style = appearance.style,
+        textAlign = appearance.textAlign,
         overflow = appearance.overflow,
         softWrap = appearance.softWrap,
         maxLines = appearance.maxLines,
@@ -101,6 +104,7 @@ internal fun SdkText(
  * @property minLines The minimum number of lines to occupy. If the text does
  *                    not require this many lines to display, it may be
  *                    padded with empty lines. A value of `1` is the minimum.
+ * @property textAlign The alignment of the text within the lines of the paragraph.
  */
 @Immutable
 class TextAppearance(
@@ -108,7 +112,8 @@ class TextAppearance(
     val overflow: TextOverflow,
     val softWrap: Boolean,
     val maxLines: Int,
-    val minLines: Int
+    val minLines: Int,
+    val textAlign: TextAlign = TextAlign.Start
 ) {
 
     /**
@@ -123,6 +128,7 @@ class TextAppearance(
      *                 Defaults to the maxLines setting of this [TextAppearance].
      * @param minLines The minimum number of lines the text should span.
      *                 Defaults to the minLines setting of this [TextAppearance].
+     * @param textAlign The alignment of the text. Defaults to the textAlign setting of this [TextAppearance].
      * @return A new [TextAppearance] object with the specified or copied properties.
      */
     fun copy(
@@ -130,13 +136,15 @@ class TextAppearance(
         overflow: TextOverflow = this.overflow,
         softWrap: Boolean = this.softWrap,
         maxLines: Int = this.maxLines,
-        minLines: Int = this.minLines
+        minLines: Int = this.minLines,
+        textAlign: TextAlign = this.textAlign
     ): TextAppearance = TextAppearance(
         style = style.copy(),
         overflow = overflow,
         softWrap = softWrap,
         maxLines = maxLines,
-        minLines = minLines
+        minLines = minLines,
+        textAlign = textAlign
     )
 
     override fun equals(other: Any?): Boolean {
@@ -150,6 +158,7 @@ class TextAppearance(
         if (minLines != other.minLines) return false
         if (style != other.style) return false
         if (overflow != other.overflow) return false
+        if (textAlign != other.textAlign) return false
 
         return true
     }
@@ -160,6 +169,7 @@ class TextAppearance(
         result = 31 * result + minLines
         result = 31 * result + style.hashCode()
         result = 31 * result + overflow.hashCode()
+        result = 31 * result + textAlign.hashCode()
         return result
     }
 }
@@ -182,6 +192,7 @@ object TextAppearanceDefaults {
      * - `softWrap`: `true`, enabling text wrapping to fit within the available space.
      * - `maxLines`: `Int.MAX_VALUE`, allowing the text to span an unlimited number of lines.
      * - `minLines`: `1`, ensuring at least one line of text is displayed, even if the content is empty.
+     * - `textAlign`: `TextAlign.Start`, aligning the text to the start of the container.
      *
      * This provides a baseline appearance that can be further customized by the caller if needed.
      *
@@ -194,6 +205,7 @@ object TextAppearanceDefaults {
         softWrap = true,
         maxLines = Int.MAX_VALUE,
         minLines = 1,
+        textAlign = TextAlign.Start
     )
 }
 

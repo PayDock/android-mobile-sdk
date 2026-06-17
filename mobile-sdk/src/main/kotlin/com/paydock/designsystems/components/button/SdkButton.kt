@@ -31,13 +31,18 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
 import com.paydock.R
 import com.paydock.core.presentation.extensions.scaled
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
-import com.paydock.core.presentation.util.buttonLoadingAccessibility
 import com.paydock.designsystems.components.icon.IconAppearance
 import com.paydock.designsystems.components.icon.IconAppearanceDefaults
 import com.paydock.designsystems.components.icon.SdkIcon
@@ -58,7 +63,6 @@ import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
  * @param modifier Modifier to be applied to the button.
  * @param text The text content of the button. Required for Filled, Outline, and Text appearances.
  * @param buttonIcon The icon to display on the button. Required for Image appearances, optional otherwise.
- * @param contentDescription The content description for the button icon, primarily for accessibility.
  * @param enabled Controls the enabled state of the button. Defaults to `true`.
  * @param isLoading Indicates if the button is in a loading state. If true, a loader is shown and
  * the button is disabled. Defaults to `false`.
@@ -70,7 +74,6 @@ internal fun ButtonAppearance.RenderButton(
     modifier: Modifier = Modifier,
     text: String? = null,
     buttonIcon: ButtonIcon? = null,
-    contentDescription: String? = null,
     enabled: Boolean = true,
     isLoading: Boolean = false,
     onClick: () -> Unit
@@ -121,7 +124,6 @@ internal fun ButtonAppearance.RenderButton(
                 isLoading = isLoading,
                 appearance = this,
                 buttonIcon = buttonIcon,
-                contentDescription = contentDescription,
                 onClick = onClick
             )
         }
@@ -144,9 +146,17 @@ internal fun ButtonAppearance.RenderButton(
  * @property elevation The elevation of the button, used to create a shadow effect.
  * @property border The border stroke applied to the button.
  * @property contentPadding The padding around the button's content.
+ * @property text The text to be shown in the button
+ * @property icon The visual to be shown in the button
  * @property iconAppearance The appearance of any icon displayed on the button.
  * @property textAppearance The appearance of the text displayed on the button.
  * @property loaderAppearance The appearance of a loader (e.g., a spinner) displayed on the button.
+ * @property iconDescription The description to be announced for an icon. (Used for Talkback).
+ *  Will be read before text description.
+ * @property clickableDescription The description to be announced for the on action description.
+ *  (Used for Talkback).
+ * @property hintDescription Optional accessibility hint appended after the button's text/icon
+ *  description (e.g. usage tip).
  */
 sealed class ButtonAppearance(
     // Button Appearance
@@ -164,6 +174,10 @@ sealed class ButtonAppearance(
     open val iconAppearance: IconAppearance?,
     open val textAppearance: TextAppearance?,
     open val loaderAppearance: LoaderAppearance,
+    // Accessibility
+    open val iconDescription: String? = null,
+    open val clickableDescription: String? = null,
+    open val hintDescription: String? = null
 ) {
 
     /**
@@ -181,9 +195,15 @@ sealed class ButtonAppearance(
      * @property elevation The elevation to be applied to the filled button. `null` means no elevation.
      * @property border The border to be drawn around the filled button. `null` means no border.
      * @property contentPadding The padding values for the button's content.
+     * @property text The text value for the button
+     * @property icon The icon to be used for the button
      * @property iconAppearance The appearance of the icon displayed within the button.
      * @property textAppearance The appearance of the text displayed within the button.
      * @property loaderAppearance The appearance of the loader displayed within the button during a loading state.
+     * @property iconDescription The description to be announced for an icon. (Used for Talkback).
+     *  Will be read before text description.
+     * @property clickableDescription The description to be announced for the on action description.
+     *  (Used for Talkback).
      */
     @Immutable
     data class FilledButtonAppearance(
@@ -199,6 +219,9 @@ sealed class ButtonAppearance(
         override val iconAppearance: IconAppearance,
         override val textAppearance: TextAppearance,
         override val loaderAppearance: LoaderAppearance,
+        override val iconDescription: String? = null,
+        override val clickableDescription: String? = null,
+        override val hintDescription: String? = null,
     ) : ButtonAppearance(
         height,
         contentSpacing,
@@ -211,7 +234,10 @@ sealed class ButtonAppearance(
         icon,
         iconAppearance,
         textAppearance,
-        loaderAppearance
+        loaderAppearance,
+        iconDescription,
+        clickableDescription,
+        hintDescription
     ) {
         fun copy(
             height: Dp = this.height,
@@ -222,7 +248,10 @@ sealed class ButtonAppearance(
             border: BorderStroke? = this.border,
             contentPadding: PaddingValues = this.contentPadding,
             text: String? = this.text,
-            icon: ButtonIcon? = this.icon
+            icon: ButtonIcon? = this.icon,
+            iconDescription: String? = this.iconDescription,
+            clickableDescription: String? = this.clickableDescription,
+            hintDescription: String? = this.hintDescription
         ): FilledButtonAppearance = FilledButtonAppearance(
             height = height.takeOrElse { this.height },
             contentSpacing = contentSpacing.takeOrElse { this.contentSpacing },
@@ -235,7 +264,10 @@ sealed class ButtonAppearance(
             icon = icon,
             iconAppearance = iconAppearance.copy(),
             textAppearance = textAppearance.copy(),
-            loaderAppearance = loaderAppearance.copy()
+            loaderAppearance = loaderAppearance.copy(),
+            iconDescription = iconDescription,
+            clickableDescription = clickableDescription,
+            hintDescription = hintDescription
         )
     }
 
@@ -254,10 +286,16 @@ sealed class ButtonAppearance(
      * @property elevation The elevation configuration for different button states. Can be null for no elevation.
      * @property border The border configuration for the outlined button. Can be null for no border.
      * @property contentPadding The padding between the button's border and its content.
+     * @property text The text value for the button
+     * @property icon The icon to be used for the button
      * @property iconAppearance The appearance configuration for any icons displayed within the button.
      * @property textAppearance The appearance configuration for the text displayed within the button.
      * @property loaderAppearance The appearance configuration for any loader/spinner displayed within
      * the button (e.g., during loading states).
+     * @property iconDescription The description to be announced for an icon. (Used for Talkback).
+     *  Will be read before text description.
+     * @property clickableDescription The description to be announced for the on action description.
+     *  (Used for Talkback).
      *
      * @see ButtonAppearance
      * @see androidx.compose.material3.OutlinedButton
@@ -276,6 +314,9 @@ sealed class ButtonAppearance(
         override val iconAppearance: IconAppearance,
         override val textAppearance: TextAppearance,
         override val loaderAppearance: LoaderAppearance,
+        override val iconDescription: String? = null,
+        override val clickableDescription: String? = null,
+        override val hintDescription: String? = null
     ) : ButtonAppearance(
         height,
         contentSpacing,
@@ -288,7 +329,10 @@ sealed class ButtonAppearance(
         icon,
         iconAppearance,
         textAppearance,
-        loaderAppearance
+        loaderAppearance,
+        iconDescription,
+        clickableDescription,
+        hintDescription
     ) {
         fun copy(
             height: Dp = this.height,
@@ -299,7 +343,10 @@ sealed class ButtonAppearance(
             border: BorderStroke? = this.border,
             contentPadding: PaddingValues = this.contentPadding,
             text: String? = this.text,
-            icon: ButtonIcon? = this.icon
+            icon: ButtonIcon? = this.icon,
+            iconDescription: String? = this.iconDescription,
+            clickableDescription: String? = this.clickableDescription,
+            hintDescription: String? = this.hintDescription
         ): OutlineButtonAppearance = OutlineButtonAppearance(
             height = height.takeOrElse { this.height },
             contentSpacing = contentSpacing.takeOrElse { this.contentSpacing },
@@ -312,7 +359,10 @@ sealed class ButtonAppearance(
             icon = icon,
             iconAppearance = iconAppearance.copy(),
             textAppearance = textAppearance.copy(),
-            loaderAppearance = loaderAppearance.copy()
+            loaderAppearance = loaderAppearance.copy(),
+            iconDescription = iconDescription,
+            clickableDescription = clickableDescription,
+            hintDescription = hintDescription
         )
     }
 
@@ -330,9 +380,15 @@ sealed class ButtonAppearance(
      * @property elevation The elevation (shadow) of the button. May be null if no elevation is desired.
      * @property border The border of the button. May be null if no border is desired.
      * @property contentPadding The padding between the button's edges and its content.
+     * @property text The text value for the button
+     * @property icon The icon to be used for the button (not used for text button)
      * @property iconAppearance The appearance settings for the optional icon within the button.
      * @property textAppearance The appearance settings for the text within the button.
      * @property loaderAppearance The appearance settings for the loader, shown when the button is in a loading state.
+     * @property iconDescription The description to be announced for an icon. (Used for Talkback).
+     *  Will be read before text description.
+     * @property clickableDescription The description to be announced for the on action description.
+     *  (Used for Talkback).
      *
      * This class is immutable, ensuring that once an instance is created, its properties cannot be changed.
      * This is beneficial for performance and thread safety in Compose.
@@ -351,6 +407,9 @@ sealed class ButtonAppearance(
         override val iconAppearance: IconAppearance,
         override val textAppearance: TextAppearance,
         override val loaderAppearance: LoaderAppearance,
+        override val iconDescription: String? = null,
+        override val clickableDescription: String? = null,
+        override val hintDescription: String? = null,
     ) : ButtonAppearance(
         height,
         contentSpacing,
@@ -363,7 +422,10 @@ sealed class ButtonAppearance(
         icon,
         iconAppearance,
         textAppearance,
-        loaderAppearance
+        loaderAppearance,
+        iconDescription,
+        clickableDescription,
+        hintDescription
     ) {
         fun copy(
             height: Dp = this.height,
@@ -374,7 +436,10 @@ sealed class ButtonAppearance(
             border: BorderStroke? = this.border,
             contentPadding: PaddingValues = this.contentPadding,
             text: String? = this.text,
-            icon: ButtonIcon? = this.icon
+            icon: ButtonIcon? = this.icon,
+            iconDescription: String? = this.iconDescription,
+            clickableDescription: String? = this.clickableDescription,
+            hintDescription: String? = this.hintDescription
         ): TextButtonAppearance = TextButtonAppearance(
             height = height.takeOrElse { this.height },
             contentSpacing = contentSpacing.takeOrElse { this.contentSpacing },
@@ -387,7 +452,10 @@ sealed class ButtonAppearance(
             icon = icon,
             iconAppearance = iconAppearance.copy(),
             textAppearance = textAppearance.copy(),
-            loaderAppearance = loaderAppearance.copy()
+            loaderAppearance = loaderAppearance.copy(),
+            iconDescription = iconDescription,
+            clickableDescription = clickableDescription,
+            hintDescription = hintDescription
         )
     }
 
@@ -409,12 +477,18 @@ sealed class ButtonAppearance(
      * @property elevation The elevation of the button, used to create a shadow effect.
      * @property border The border stroke applied to the button.
      * @property contentPadding The padding around the button's content (the image).
+     * @property text The text value for the button (not used for icon button)
+     * @property icon The icon to be used for the button
      * @property iconAppearance This property is usually null for [IconButtonAppearance] as
      *   the main content is the button's image itself, not an icon within other content.
      * @property textAppearance This property is usually null for [IconButtonAppearance] as
      *   the button does not typically display text.
      * @property loaderAppearance The appearance configuration for a loader (e.g., a spinner)
      *   displayed on the button when it is in a loading state.
+     * @property iconDescription The description to be announced for an icon. (Used for Talkback).
+     *  Will be read before text description.
+     * @property clickableDescription The description to be announced for the on action description.
+     *  (Used for Talkback).
      *
      * This class is immutable, ensuring that once an instance is created, its properties cannot be changed.
      * This is beneficial for performance and thread safety in Compose.
@@ -433,6 +507,9 @@ sealed class ButtonAppearance(
         override val iconAppearance: IconAppearance?,
         override val textAppearance: TextAppearance?,
         override val loaderAppearance: LoaderAppearance,
+        override val iconDescription: String? = null,
+        override val clickableDescription: String? = null,
+        override val hintDescription: String? = null,
     ) : ButtonAppearance(
         height,
         contentSpacing,
@@ -445,7 +522,10 @@ sealed class ButtonAppearance(
         icon,
         iconAppearance,
         textAppearance,
-        loaderAppearance
+        loaderAppearance,
+        iconDescription,
+        clickableDescription,
+        hintDescription
     ) {
         fun copy(
             height: Dp = this.height,
@@ -456,7 +536,10 @@ sealed class ButtonAppearance(
             border: BorderStroke? = this.border,
             contentPadding: PaddingValues = this.contentPadding,
             text: String? = this.text,
-            icon: ButtonIcon? = this.icon
+            icon: ButtonIcon? = this.icon,
+            iconDescription: String? = this.iconDescription,
+            clickableDescription: String? = this.clickableDescription,
+            hintDescription: String? = this.hintDescription
         ): IconButtonAppearance = IconButtonAppearance(
             height = height.takeOrElse { this.height },
             contentSpacing = contentSpacing.takeOrElse { this.contentSpacing },
@@ -469,7 +552,10 @@ sealed class ButtonAppearance(
             icon = icon,
             iconAppearance = iconAppearance?.copy(),
             textAppearance = textAppearance?.copy(),
-            loaderAppearance = loaderAppearance.copy()
+            loaderAppearance = loaderAppearance.copy(),
+            iconDescription = iconDescription,
+            clickableDescription = clickableDescription,
+            hintDescription = hintDescription
         )
     }
 }
@@ -526,7 +612,10 @@ object ButtonAppearanceDefaults {
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
                 color = ButtonDefaults.buttonColors().containerColor,
                 strokeWidth = ButtonLoaderWidth
-            )
+            ),
+            iconDescription = null,
+            clickableDescription = null,
+            hintDescription = null
         )
 
     /**
@@ -563,7 +652,10 @@ object ButtonAppearanceDefaults {
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
                 color = ButtonDefaults.buttonColors().containerColor,
                 strokeWidth = ButtonLoaderWidth
-            )
+            ),
+            iconDescription = null,
+            clickableDescription = null,
+            hintDescription = null
         )
 
     /**
@@ -597,7 +689,10 @@ object ButtonAppearanceDefaults {
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
                 color = ButtonDefaults.buttonColors().containerColor,
                 strokeWidth = ButtonLoaderWidth
-            )
+            ),
+            iconDescription = null,
+            clickableDescription = null,
+            hintDescription = null
         )
 
     @Composable
@@ -617,8 +712,43 @@ object ButtonAppearanceDefaults {
             loaderAppearance = LoaderAppearanceDefaults.appearance().copy(
                 color = ButtonDefaults.buttonColors().containerColor,
                 strokeWidth = ButtonLoaderWidth
-            )
+            ),
+            iconDescription = null,
+            clickableDescription = null,
+            hintDescription = null
         )
+}
+
+/**
+ * Builds the accessibility semantics shared by the SDK buttons.
+ *
+ * Mirrors iOS `SDKButton`, where `iconDescription`/text act as the accessibility label and
+ * `hintDescription` is appended as the hint read after the label. When only the icon
+ * description is set (icon-only buttons) the text fallback is skipped.
+ */
+private fun SemanticsPropertyReceiver.applyAccessibilitySemantics(
+    iconDescription: String?,
+    text: String?,
+    hintDescription: String?,
+    clickableDescription: String?,
+    onClickAction: () -> Unit
+) {
+    val hint = hintDescription?.takeIf { it.isNotEmpty() }
+    val iconDesc = iconDescription?.takeIf { it.isNotEmpty() }
+    val description = when {
+        iconDesc != null && hint != null -> "$iconDesc, $hint"
+        iconDesc != null -> iconDesc
+        hint != null -> listOfNotNull(text?.takeIf { it.isNotEmpty() }, hint).joinToString(", ")
+        else -> null
+    }
+    if (description != null) {
+        contentDescription = description
+    }
+    onClick(label = clickableDescription) {
+        onClickAction()
+        true
+    }
+    role = Role.Button
 }
 
 /**
@@ -679,7 +809,15 @@ internal fun SdkButton(
         onClick = onClick,
         modifier = modifier
             .heightIn(min = adjustedButtonHeight)
-            .buttonLoadingAccessibility(isLoading = isLoading, buttonText = text),
+            .semantics(mergeDescendants = true) {
+                applyAccessibilitySemantics(
+                    iconDescription = appearance.iconDescription,
+                    text = text,
+                    hintDescription = appearance.hintDescription,
+                    clickableDescription = appearance.clickableDescription,
+                    onClickAction = onClick
+                )
+            },
         enabled = isEnabled,
         content = {
             ButtonContent(
@@ -776,7 +914,15 @@ internal fun SdkOutlineButton(
         onClick = onClick,
         modifier = modifier
             .heightIn(min = adjustedButtonHeight)
-            .buttonLoadingAccessibility(isLoading = isLoading, buttonText = text),
+            .semantics(mergeDescendants = true) {
+                applyAccessibilitySemantics(
+                    iconDescription = appearance.iconDescription,
+                    text = text,
+                    hintDescription = appearance.hintDescription,
+                    clickableDescription = appearance.clickableDescription,
+                    onClickAction = onClick
+                )
+            },
         enabled = isEnabled,
         content = {
             ButtonContent(
@@ -816,6 +962,7 @@ internal fun SdkOutlineButton(
  * @param appearance The [ButtonAppearance.TextButtonAppearance] configuration provider for the button's styling.
  * Defaults to a text button appearance based on the effective enabled state (i.e., `enabled && !isLoading`).
  * The parameter is a composable function that takes the effective enabled state and returns a [ButtonAppearance.TextButtonAppearance].
+ * @param contentDescription The content description for the button icon, primarily for accessibility.
  * @param onClick The callback to be invoked when the button is clicked.
  *
  * @see ButtonAppearance
@@ -867,7 +1014,15 @@ internal fun SdkTextButton(
         onClick = onClick,
         modifier = modifier
             .heightIn(min = adjustedButtonHeight)
-            .buttonLoadingAccessibility(isLoading = isLoading, buttonText = text),
+            .semantics(mergeDescendants = true) {
+                applyAccessibilitySemantics(
+                    iconDescription = appearance.iconDescription,
+                    text = text,
+                    hintDescription = appearance.hintDescription,
+                    clickableDescription = appearance.clickableDescription,
+                    onClickAction = onClick
+                )
+            },
         enabled = isEnabled,
         shape = appearance.shape,
         content = {
@@ -899,13 +1054,12 @@ internal fun SdkIconButton(
     isLoading: Boolean = false,
     appearance: ButtonAppearance.IconButtonAppearance = ButtonAppearanceDefaults.imageButtonAppearance(),
     buttonIcon: ButtonIcon? = null,
-    contentDescription: String? = null,
     onClick: () -> Unit
 ) {
     // The actual enabled state for the underlying Button composable and for styling
     val isEnabled = enabled && !isLoading
-    // Get the appearance by invoking the provider with the current effective enabled state
     val disabledIconOrLoaderTint = ButtonDefaults.buttonColors().disabledContentColor
+    // Get the appearance by invoking the provider with the current effective enabled state
     val runtimeAppearance = remember(appearance, isEnabled) {
         if (isEnabled) {
             appearance
@@ -923,7 +1077,15 @@ internal fun SdkIconButton(
     Button(
         modifier = modifier
             .heightIn(min = ButtonAppearanceDefaults.ButtonHeight)
-            .buttonLoadingAccessibility(isLoading = isLoading),
+            .semantics(mergeDescendants = true) {
+                applyAccessibilitySemantics(
+                    iconDescription = appearance.iconDescription,
+                    text = null,
+                    hintDescription = appearance.hintDescription,
+                    clickableDescription = appearance.clickableDescription,
+                    onClickAction = onClick
+                )
+            },
         onClick = onClick,
         enabled = isEnabled,
         colors = runtimeAppearance.colors,
@@ -952,12 +1114,10 @@ internal fun SdkIconButton(
         ) {
             when (effectiveIcon) {
                 is ButtonIcon.Vector -> SdkIcon(
-                    imageVector = effectiveIcon.icon,
-                    contentDescription = contentDescription
+                    imageVector = effectiveIcon.icon
                 )
                 is ButtonIcon.DrawableRes -> SdkIcon(
-                    painter = painterResource(effectiveIcon.drawable),
-                    contentDescription = contentDescription
+                    painter = painterResource(effectiveIcon.drawable)
                 )
                 null -> Unit
             }
@@ -1015,12 +1175,10 @@ private fun ButtonContent(
                 when (buttonIcon) {
                     is ButtonIcon.Vector -> SdkIcon(
                         imageVector = buttonIcon.icon,
-                        contentDescription = null,
                         appearance = iconAppearance
                     )
                     is ButtonIcon.DrawableRes -> SdkIcon(
                         painter = painterResource(buttonIcon.drawable),
-                        contentDescription = null,
                         appearance = iconAppearance
                     )
 

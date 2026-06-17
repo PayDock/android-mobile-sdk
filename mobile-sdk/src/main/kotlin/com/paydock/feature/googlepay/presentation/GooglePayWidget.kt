@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.takeOrElse
@@ -98,6 +99,7 @@ fun GooglePayWidget(
         key = viewModelKey,
         parameters = { parametersOf(config) }
     )
+    val focusManager = LocalFocusManager.current
 
     // Collect the UI state from the ViewModel
     val uiState by viewModel.uiState.collectAsState()
@@ -143,6 +145,7 @@ fun GooglePayWidget(
                     theme = if (isSystemInDarkTheme()) ButtonTheme.Dark else ButtonTheme.Light,
                     type = appearance.type,
                     onClick = {
+                        focusManager.clearFocus()
                         // Emit button event
                         eventDelegate?.widgetEvent(
                             Event.ButtonEvent(

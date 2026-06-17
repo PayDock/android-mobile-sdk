@@ -1,14 +1,14 @@
 package com.paydock.designsystems.components
 
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
-import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertTextEquals
-import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.assertContentDescriptionContains
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.paydock.core.BaseUITest
@@ -17,12 +17,21 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/**
+ * [SdkTextField] curates a single accessibility readout via `clearAndSetSemantics`, so its internal
+ * label/placeholder/icons are intentionally not individual semantics nodes. These tests therefore
+ * drive the field as a controlled component (state via props, focus via click) and assert on the
+ * field's `contentDescription` / `stateDescription` — the accessibility contract it exposes.
+ */
 @OptIn(ExperimentalComposeUiApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class SdkTextFieldTest : BaseUITest() {
 
     @get:Rule
     val composeTestRule = createComposeRule()
+
+    private fun hasStateDescription(value: String) =
+        SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, value)
 
     @Test
     fun testSdkTextField_DefaultState() {
@@ -35,11 +44,12 @@ internal class SdkTextFieldTest : BaseUITest() {
             )
         }
 
-        composeTestRule.onNodeWithText("Name").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Enter your name").assertDoesNotExist()
-        composeTestRule.onNodeWithTag("sdkInput").assert(hasText(""))
-        composeTestRule.onNodeWithTag("errorIcon").assertDoesNotExist()
-        composeTestRule.onNodeWithTag("errorLabel").assertDoesNotExist()
+        // The label, "Edit box" role and "required" suffix are announced for an unfocused empty field.
+        composeTestRule.onNodeWithTag("sdkInput")
+            .assertIsNotFocused()
+            .assertContentDescriptionContains("Name", substring = true)
+            .assertContentDescriptionContains("Edit box", substring = true)
+            .assertContentDescriptionContains("required", substring = true)
     }
 
     @Test
@@ -55,11 +65,11 @@ internal class SdkTextFieldTest : BaseUITest() {
 
         composeTestRule.onNodeWithTag("sdkInput").performClick()
 
-        composeTestRule.onNodeWithText("Name").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Enter your name").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("sdkInput").assert(hasText(""))
-        composeTestRule.onNodeWithTag("errorIcon").assertDoesNotExist()
-        composeTestRule.onNodeWithTag("errorLabel").assertDoesNotExist()
+        // Once focused, the placeholder is offered as an example and the field reports "Editing".
+        composeTestRule.onNodeWithTag("sdkInput")
+            .assertIsFocused()
+            .assertContentDescriptionContains("Example: Enter your name", substring = true)
+            .assert(hasStateDescription("Editing"))
     }
 
     @Test
@@ -73,11 +83,11 @@ internal class SdkTextFieldTest : BaseUITest() {
             )
         }
 
-        composeTestRule.onNodeWithText("Name").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Enter your name").assertDoesNotExist()
-        composeTestRule.onNodeWithTag("sdkInput").assert(hasText("John Doe"))
-        composeTestRule.onNodeWithTag("errorIcon").assertDoesNotExist()
-        composeTestRule.onNodeWithTag("errorLabel").assertDoesNotExist()
+        // The value is announced character-by-character (spaced) so it isn't read as one token.
+        composeTestRule.onNodeWithTag("sdkInput")
+            .assertContentDescriptionContains("Name", substring = true)
+            .assertContentDescriptionContains("J o h n", substring = true)
+            .assertContentDescriptionContains("Edit box", substring = true)
     }
 
     @Test
@@ -93,10 +103,9 @@ internal class SdkTextFieldTest : BaseUITest() {
             )
         }
 
-        composeTestRule.onNodeWithText("Name").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("sdkInput").assert(hasText("John"))
-        composeTestRule.onNodeWithTag("errorIcon", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithTag("errorLabel").assertIsDisplayed().assertTextEquals(error)
+        // In the error state the error is announced last and the contextual extras are suppressed.
+        composeTestRule.onNodeWithTag("sdkInput")
+            .assertContentDescriptionContains("Error: $error", substring = true)
     }
 
     @Test
@@ -110,7 +119,8 @@ internal class SdkTextFieldTest : BaseUITest() {
             )
         }
 
-        // Assert that the input field is disabled
-        composeTestRule.onNodeWithText("John Doe").assertIsDisplayed().assertIsNotEnabled()
+        // A disabled field reports its disabled state to screen readers.
+        composeTestRule.onNodeWithTag("sdkInput")
+            .assert(hasStateDescription("Disabled"))
     }
 }

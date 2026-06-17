@@ -3,9 +3,12 @@ package com.paydock.sample.feature.style
 import androidx.lifecycle.ViewModel
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ImageButtonAppearance
+import com.paydock.designsystems.components.card.CardAppearance
 import com.paydock.designsystems.components.icon.IconAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearance
+import com.paydock.designsystems.components.link.LinkTextAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearance
+import com.paydock.designsystems.components.loader.OverlayLoaderAppearance
 import com.paydock.designsystems.components.search.DropdownAppearance
 import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.toggle.ToggleAppearance
@@ -19,7 +22,8 @@ import com.paydock.feature.paypal.checkout.presentation.PayPalWidgetAppearance
 import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 import com.paydock.feature.paypal.vault.presentation.PayPalPaymentSourceWidgetAppearance
 import com.paydock.feature.src.presentation.ClickToPayWidgetAppearance
-import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSWidgetAppearance
+import com.paydock.feature.threeDS.integrated.presentation.ui.MPGSThreeDSWidgetAppearance
+import com.paydock.feature.threeDS.standalone.presentation.ui.StandaloneThreeDSWidgetAppearance
 import com.paydock.feature.zip.presentation.ZipWidgetAppearance
 import com.paydock.sample.feature.style.models.StyleAppearanceComponent
 import com.paydock.sample.feature.widgets.ui.models.WidgetType
@@ -75,12 +79,12 @@ class StylingViewModel @Inject constructor() : ViewModel() {
     val clickToPayWidgetAppearance: StateFlow<ClickToPayWidgetAppearance?> =
         _clickToPayWidgetAppearance.asStateFlow()
 
-    private val _mpgs3dsWidgetAppearance = MutableStateFlow<ThreeDSWidgetAppearance?>(null)
-    val mpgs3dsWidgetAppearance: StateFlow<ThreeDSWidgetAppearance?> =
+    private val _mpgs3dsWidgetAppearance = MutableStateFlow<MPGSThreeDSWidgetAppearance?>(null)
+    val mpgs3dsWidgetAppearance: StateFlow<MPGSThreeDSWidgetAppearance?> =
         _mpgs3dsWidgetAppearance.asStateFlow()
 
-    private val _standalone3DSWidgetAppearance = MutableStateFlow<ThreeDSWidgetAppearance?>(null)
-    val standalone3DSWidgetAppearance: StateFlow<ThreeDSWidgetAppearance?> =
+    private val _standalone3DSWidgetAppearance = MutableStateFlow<StandaloneThreeDSWidgetAppearance?>(null)
+    val standalone3DSWidgetAppearance: StateFlow<StandaloneThreeDSWidgetAppearance?> =
         _standalone3DSWidgetAppearance.asStateFlow()
 
     private val _zipWidgetAppearance = MutableStateFlow<ZipWidgetAppearance?>(null)
@@ -123,7 +127,10 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                 // but update theme-dependent properties (colors from defaults)
                 updatedDefaults.copy(
                     actionButton = current.actionButton,
-                    textField = current.textField, // Preserve custom text field appearance
+                    cardNameTextField = current.cardNameTextField, // Preserve custom text field appearance
+                    cardNumberTextField = current.cardNumberTextField, // Preserve custom text field appearance
+                    cardExpiryTextField = current.cardExpiryTextField, // Preserve custom text field appearance
+                    cardSecurityCodeTextField = current.cardSecurityCodeTextField, // Preserve custom text field appearance
                     toggleText = current.toggleText, // Preserve custom toggle text appearance
                     linkText = current.linkText, // Preserve custom link text appearance
                     verticalSpacing = current.verticalSpacing,
@@ -195,11 +202,11 @@ class StylingViewModel @Inject constructor() : ViewModel() {
         _clickToPayWidgetAppearance.update { updatedDefaults }
     }
 
-    fun updateInitialMPGS3dsDefaults(updatedDefaults: ThreeDSWidgetAppearance) {
+    fun updateInitialMPGS3dsDefaults(updatedDefaults: MPGSThreeDSWidgetAppearance) {
         _mpgs3dsWidgetAppearance.update { updatedDefaults }
     }
 
-    fun updateInitialStandalone3DSDefaults(updatedDefaults: ThreeDSWidgetAppearance) {
+    fun updateInitialStandalone3DSDefaults(updatedDefaults: StandaloneThreeDSWidgetAppearance) {
         _standalone3DSWidgetAppearance.update { updatedDefaults }
     }
 
@@ -235,7 +242,6 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                     val updatedAppearance = when (component) {
                         StyleAppearanceComponent.TITLE -> current.copy(title = newComponentAppearance as TextAppearance)
                         StyleAppearanceComponent.PROPERTIES -> newComponentAppearance as AddressDetailsWidgetAppearance
-
                         StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD_PROPERTIES -> current.copy(
                             searchDropdown = current.searchDropdown.copy(textField = newComponentAppearance as TextFieldAppearance)
                         )
@@ -272,22 +278,22 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                             )
                         )
 
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_PROPERTIES -> current.copy(textField = newComponentAppearance as TextFieldAppearance)
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_PLACEHOLDER -> current.copy(
+                        StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_PROPERTIES -> current.copy(textField = newComponentAppearance as TextFieldAppearance)
+                        StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_PLACEHOLDER -> current.copy(
                             textField = current.textField.copy(placeholder = newComponentAppearance as TextAppearance)
                         )
 
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_LABEL -> current.copy(
+                        StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_LABEL -> current.copy(
                             textField = current.textField.copy(
                                 label = newComponentAppearance as TextAppearance
                             )
                         )
 
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_ERROR_LABEL -> current.copy(
+                        StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_ERROR_LABEL -> current.copy(
                             textField = current.textField.copy(error = newComponentAppearance as TextAppearance)
                         )
 
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_VALID_ICON -> current.copy(
+                        StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_VALID_ICON -> current.copy(
                             textField = current.textField.copy(
                                 validIcon = newComponentAppearance as IconAppearance
                             )
@@ -364,33 +370,167 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                         }
 
                         StyleAppearanceComponent.TOGGLE_TEXT -> current.copy(toggleText = newComponentAppearance as TextAppearance)
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_PROPERTIES -> (newComponentAppearance as TextFieldAppearance).let {
+
+                        StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_PROPERTIES -> (newComponentAppearance as TextFieldAppearance).let {
                             current.copy(
-                                textField = current.textField.copy(
+                                cardNameTextField = current.cardNameTextField.copy(
                                     style = newComponentAppearance.style,
                                     singleLine = newComponentAppearance.singleLine,
                                     colors = newComponentAppearance.colors,
-                                    shape = newComponentAppearance.shape
+                                    shape = newComponentAppearance.shape,
+                                    topMessageSpacing = newComponentAppearance.topMessageSpacing,
+                                    startMessageSpacing = newComponentAppearance.startMessageSpacing,
+                                    placeholderText = newComponentAppearance.placeholderText,
+                                    hintText = newComponentAppearance.hintText,
+                                    hintDescription = newComponentAppearance.hintDescription,
+                                    clickableDescription = newComponentAppearance.clickableDescription
                                 )
                             )
                         }
 
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_PLACEHOLDER -> current.copy(
-                            textField = current.textField.copy(placeholder = newComponentAppearance as TextAppearance)
+                        StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_PROPERTIES -> (newComponentAppearance as TextFieldAppearance).let {
+                            current.copy(
+                                cardNumberTextField = current.cardNumberTextField.copy(
+                                    style = newComponentAppearance.style,
+                                    singleLine = newComponentAppearance.singleLine,
+                                    colors = newComponentAppearance.colors,
+                                    shape = newComponentAppearance.shape,
+                                    topMessageSpacing = newComponentAppearance.topMessageSpacing,
+                                    startMessageSpacing = newComponentAppearance.startMessageSpacing,
+                                    placeholderText = newComponentAppearance.placeholderText,
+                                    hintText = newComponentAppearance.hintText,
+                                    hintDescription = newComponentAppearance.hintDescription,
+                                    clickableDescription = newComponentAppearance.clickableDescription
+                                )
+                            )
+                        }
+
+                        StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_PROPERTIES -> (newComponentAppearance as TextFieldAppearance).let {
+                            current.copy(
+                                cardExpiryTextField = current.cardExpiryTextField.copy(
+                                    style = newComponentAppearance.style,
+                                    singleLine = newComponentAppearance.singleLine,
+                                    colors = newComponentAppearance.colors,
+                                    shape = newComponentAppearance.shape,
+                                    topMessageSpacing = newComponentAppearance.topMessageSpacing,
+                                    startMessageSpacing = newComponentAppearance.startMessageSpacing,
+                                    placeholderText = newComponentAppearance.placeholderText,
+                                    hintText = newComponentAppearance.hintText,
+                                    hintDescription = newComponentAppearance.hintDescription,
+                                    clickableDescription = newComponentAppearance.clickableDescription
+                                )
+                            )
+                        }
+
+                        StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_PROPERTIES -> (newComponentAppearance as TextFieldAppearance).let {
+                            current.copy(
+                                cardSecurityCodeTextField = current.cardSecurityCodeTextField.copy(
+                                    style = newComponentAppearance.style,
+                                    singleLine = newComponentAppearance.singleLine,
+                                    colors = newComponentAppearance.colors,
+                                    shape = newComponentAppearance.shape,
+                                    topMessageSpacing = newComponentAppearance.topMessageSpacing,
+                                    startMessageSpacing = newComponentAppearance.startMessageSpacing,
+                                    placeholderText = newComponentAppearance.placeholderText,
+                                    hintText = newComponentAppearance.hintText,
+                                    hintDescription = newComponentAppearance.hintDescription,
+                                    clickableDescription = newComponentAppearance.clickableDescription
+                                )
+                            )
+                        }
+
+                        StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_PLACEHOLDER -> current.copy(
+                            cardNameTextField = current.cardNameTextField.copy(placeholder = newComponentAppearance as TextAppearance)
                         )
 
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_LABEL -> current.copy(
-                            textField = current.textField.copy(
+                        StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_LABEL -> current.copy(
+                            cardNameTextField = current.cardNameTextField.copy(
                                 label = newComponentAppearance as TextAppearance
                             )
                         )
 
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_ERROR_LABEL -> current.copy(
-                            textField = current.textField.copy(error = newComponentAppearance as TextAppearance)
+                        StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_ERROR_LABEL -> current.copy(
+                            cardNameTextField = current.cardNameTextField.copy(error = newComponentAppearance as TextAppearance)
                         )
 
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_VALID_ICON -> current.copy(
-                            textField = current.textField.copy(
+                        StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_HINT_LABEL -> current.copy(
+                            cardNameTextField = current.cardNameTextField.copy(hintLabel = newComponentAppearance as TextAppearance)
+                        )
+
+                        StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_VALID_ICON -> current.copy(
+                            cardNameTextField = current.cardNameTextField.copy(
+                                validIcon = newComponentAppearance as IconAppearance
+                            )
+                        )
+
+                        StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_PLACEHOLDER -> current.copy(
+                            cardNumberTextField = current.cardNumberTextField.copy(placeholder = newComponentAppearance as TextAppearance)
+                        )
+
+                        StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_LABEL -> current.copy(
+                            cardNumberTextField = current.cardNumberTextField.copy(
+                                label = newComponentAppearance as TextAppearance
+                            )
+                        )
+
+                        StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_ERROR_LABEL -> current.copy(
+                            cardNumberTextField = current.cardNumberTextField.copy(error = newComponentAppearance as TextAppearance)
+                        )
+
+                        StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_HINT_LABEL -> current.copy(
+                            cardNumberTextField = current.cardNumberTextField.copy(hintLabel = newComponentAppearance as TextAppearance)
+                        )
+
+                        StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_VALID_ICON -> current.copy(
+                            cardNumberTextField = current.cardNumberTextField.copy(
+                                validIcon = newComponentAppearance as IconAppearance
+                            )
+                        )
+
+                        StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_PLACEHOLDER -> current.copy(
+                            cardExpiryTextField = current.cardExpiryTextField.copy(placeholder = newComponentAppearance as TextAppearance)
+                        )
+
+                        StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_LABEL -> current.copy(
+                            cardExpiryTextField = current.cardExpiryTextField.copy(
+                                label = newComponentAppearance as TextAppearance
+                            )
+                        )
+
+                        StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_ERROR_LABEL -> current.copy(
+                            cardExpiryTextField = current.cardExpiryTextField.copy(error = newComponentAppearance as TextAppearance)
+                        )
+
+                        StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_HINT_LABEL -> current.copy(
+                            cardExpiryTextField = current.cardExpiryTextField.copy(hintLabel = newComponentAppearance as TextAppearance)
+                        )
+
+                        StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_VALID_ICON -> current.copy(
+                            cardExpiryTextField = current.cardExpiryTextField.copy(
+                                validIcon = newComponentAppearance as IconAppearance
+                            )
+                        )
+
+                        StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_PLACEHOLDER -> current.copy(
+                            cardSecurityCodeTextField = current.cardSecurityCodeTextField.copy(placeholder = newComponentAppearance as TextAppearance)
+                        )
+
+                        StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_LABEL -> current.copy(
+                            cardSecurityCodeTextField = current.cardSecurityCodeTextField.copy(
+                                label = newComponentAppearance as TextAppearance
+                            )
+                        )
+
+                        StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_ERROR_LABEL -> current.copy(
+                            cardSecurityCodeTextField = current.cardSecurityCodeTextField.copy(error = newComponentAppearance as TextAppearance)
+                        )
+
+                        StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_HINT_LABEL -> current.copy(
+                            cardSecurityCodeTextField = current.cardSecurityCodeTextField.copy(hintLabel = newComponentAppearance as TextAppearance)
+                        )
+
+                        StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_VALID_ICON -> current.copy(
+                            cardSecurityCodeTextField = current.cardSecurityCodeTextField.copy(
                                 validIcon = newComponentAppearance as IconAppearance
                             )
                         )
@@ -429,8 +569,12 @@ class StylingViewModel @Inject constructor() : ViewModel() {
 
                         StyleAppearanceComponent.SUB_LINK_TEXT -> current.copy(
                             linkText = current.linkText.copy(
-                                newComponentAppearance as TextAppearance
+                                textAppearance = newComponentAppearance as TextAppearance
                             )
+                        )
+
+                        StyleAppearanceComponent.SUB_LINK_TEXT_PROPERTIES -> current.copy(
+                            linkText = newComponentAppearance as LinkTextAppearance
                         )
 
                         else -> current
@@ -451,32 +595,42 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                             )
                         }
 
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_PROPERTIES -> (newComponentAppearance as TextFieldAppearance).let {
+                        StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_PROPERTIES -> (newComponentAppearance as TextFieldAppearance).let {
                             current.copy(
                                 textField = current.textField.copy(
                                     style = newComponentAppearance.style,
                                     singleLine = newComponentAppearance.singleLine,
                                     colors = newComponentAppearance.colors,
-                                    shape = newComponentAppearance.shape
+                                    shape = newComponentAppearance.shape,
+                                    topMessageSpacing = newComponentAppearance.topMessageSpacing,
+                                    startMessageSpacing = newComponentAppearance.startMessageSpacing,
+                                    placeholderText = newComponentAppearance.placeholderText,
+                                    hintText = newComponentAppearance.hintText,
+                                    hintDescription = newComponentAppearance.hintDescription,
+                                    clickableDescription = newComponentAppearance.clickableDescription
                                 )
                             )
                         }
 
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_PLACEHOLDER -> current.copy(
+                        StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_PLACEHOLDER -> current.copy(
                             textField = current.textField.copy(placeholder = newComponentAppearance as TextAppearance)
                         )
 
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_LABEL -> current.copy(
+                        StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_LABEL -> current.copy(
                             textField = current.textField.copy(
                                 label = newComponentAppearance as TextAppearance
                             )
                         )
 
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_ERROR_LABEL -> current.copy(
+                        StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_ERROR_LABEL -> current.copy(
                             textField = current.textField.copy(error = newComponentAppearance as TextAppearance)
                         )
 
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_VALID_ICON -> current.copy(
+                        StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_HINT_LABEL -> current.copy(
+                            textField = current.textField.copy(hintLabel = newComponentAppearance as TextAppearance)
+                        )
+
+                        StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_VALID_ICON -> current.copy(
                             textField = current.textField.copy(
                                 validIcon = newComponentAppearance as IconAppearance
                             )
@@ -606,7 +760,25 @@ class StylingViewModel @Inject constructor() : ViewModel() {
             WidgetType.STANDALONE_3DS -> {
                 _standalone3DSWidgetAppearance.value?.let { current ->
                     val updatedAppearance = when (component) {
-                        StyleAppearanceComponent.LOADER -> current.copy(loader = newComponentAppearance as LoaderAppearance)
+                        StyleAppearanceComponent.SUB_OVERLAY_LOADER_PROPERTIES -> current.copy(loader = newComponentAppearance as OverlayLoaderAppearance)
+                        StyleAppearanceComponent.SUB_OVERLAY_LOADER_CARD -> current.copy(
+                            loader = current.loader.copy(
+                                cardAppearance = newComponentAppearance as CardAppearance
+                            )
+                        )
+
+                        StyleAppearanceComponent.SUB_OVERLAY_LOADER_INDICATOR -> current.copy(
+                            loader = current.loader.copy(
+                                loaderAppearance = newComponentAppearance as LoaderAppearance
+                            )
+                        )
+
+                        StyleAppearanceComponent.SUB_OVERLAY_LOADER_TEXT -> current.copy(
+                            loader = current.loader.copy(
+                                loaderTextAppearance = newComponentAppearance as TextAppearance
+                            )
+                        )
+
                         else -> current
                     }
                     _standalone3DSWidgetAppearance.value = updatedAppearance

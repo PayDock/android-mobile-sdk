@@ -36,8 +36,11 @@ import com.paydock.feature.card.presentation.utils.validators.CreditCardInputPar
  * @param value The current value displayed in the cardholder name input field.
  * @param enabled Controls the enabled state of this Widget. When disabled, the input is not editable
  * and appears grayed out.
+ * @param forceShowErrors A [Boolean] that determines whether to show error messages regardless of user interaction.
  * @param nextFocus An optional [FocusRequester] that allows programmatically moving focus to the next
  * input field in a form when the user presses the "Next" button on the keyboard.
+ * @param a11yFocus An optional [Boolean] that allows programmatically moving accessibility focus to this
+ *  input field in a form.
  * @param onValueChange The callback function to be invoked when the value of the cardholder name
  * changes due to user input. This function receives the updated string value after parsing and formatting.
  */
@@ -48,36 +51,34 @@ internal fun CardHolderNameInput(
     appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     value: String = "",
     enabled: Boolean = true,
+    forceShowErrors: Boolean = false,
     nextFocus: FocusRequester? = null,
+    a11yFocus: Boolean = false,
     onValueChange: (String) -> Unit
 ) {
     var hasUserInteracted by remember { mutableStateOf(false) }
-    var suppressErrorUntilNextInput by remember { mutableStateOf(false) }
     var focusedState by remember { mutableStateOf(false) }
-    val previousFocus = remember { object { var value = false } }
 
-    val cardHolderError = CardHolderNameValidator.validateHolderNameInput(value, hasUserInteracted)
+    // Validate the current input value and determine the appropriate error state
+    val cardHolderError = CardHolderNameValidator.validateHolderNameInput(value, hasUserInteracted || forceShowErrors)
     val mappedError = when (cardHolderError) {
-        CardHolderNameError.Empty,
+        CardHolderNameError.Empty -> if (forceShowErrors) stringResource(id = R.string.error_cardholder_name_required) else null
         CardHolderNameError.None -> null
         CardHolderNameError.InvalidLuhn -> stringResource(id = R.string.error_luhn_card_holder_name)
         CardHolderNameError.InvalidFormat -> stringResource(id = R.string.error_card_holder_name)
     }
-    val errorMessage = if (suppressErrorUntilNextInput) null else mappedError
+    // Resolve placeholder and hint from appearance or defaults
+    val placeholder = appearance.placeholderText ?: ""
+    val hint = appearance.hintText ?: stringResource(id = R.string.hint_card_name)
 
     SdkTextField(
         modifier = modifier.onFocusChanged {
             focusedState = it.isFocused
-            val justGainedFocus = it.isFocused && !previousFocus.value
-            previousFocus.value = it.isFocused
-            if (justGainedFocus) suppressErrorUntilNextInput = true
-            if (!it.isFocused) suppressErrorUntilNextInput = false
         },
         appearance = appearance,
         value = value,
         onValueChange = { newValue ->
             hasUserInteracted = true
-            suppressErrorUntilNextInput = false
             // Validate and parse the input when the value changes
             CreditCardInputParser.parseHolderName(newValue)?.let { parsedName ->
                 onValueChange(parsedName)
@@ -85,8 +86,11 @@ internal fun CardHolderNameInput(
         },
         label = stringResource(id = R.string.label_cardholder_name),
         enabled = enabled,
-        error = errorMessage,
+        error = mappedError,
+        hint = hint,
+        placeholder = placeholder,
         showValidIcon = cardHolderError == CardHolderNameError.None && value.isNotBlank() && !focusedState,
+        a11yFocus = a11yFocus,
         autofillType = ContentType.PersonFullName,
         // Use keyboard options and actions for a more user-friendly input experience
         keyboardOptions = KeyboardOptions(
@@ -101,16 +105,25 @@ internal fun CardHolderNameInput(
     )
 }
 
+/**
+ * Preview for the cardholder name input with a default state.
+ */
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewCardHolderNameInputDefault() {
-    CardHolderNameInput(onValueChange = {})
+    CardHolderNameInput(
+        onValueChange = {}
+    )
 }
 
+/**
+ * Preview for the cardholder name input with a pre-filled value.
+ */
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewCardHolderNameInputValue() {
-    CardHolderNameInput(value = "J DOE", onValueChange = {
-
-    })
+    CardHolderNameInput(
+        value = "J DOE",
+        onValueChange = {}
+    )
 }

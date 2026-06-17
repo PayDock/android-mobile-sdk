@@ -106,6 +106,61 @@ internal class CardDetailsViewModel(
     }
 
     /**
+     * Triggers validation for all fields in the input state.
+     * This is useful when the submit button is enabled by default and needs to show errors upon click.
+     */
+    fun validateAllFields() {
+        _inputStateFlow.update { state ->
+            state.copy(
+                cardholderNameErrorOverwrite = true,
+                cardNumberErrorOverwrite = true,
+                cardExpiryErrorOverwrite = true,
+                cardSecurityErrorOverwrite = true
+            )
+        }
+    }
+
+    private fun resetCardholderErrorOverwrite() {
+        if (_inputStateFlow.value.cardholderNameErrorOverwrite) {
+            _inputStateFlow.update { state ->
+                state.copy(
+                    cardholderNameErrorOverwrite = false
+                )
+            }
+        }
+    }
+
+    private fun resetCardNumberErrorOverwrite() {
+        if (_inputStateFlow.value.cardNumberErrorOverwrite) {
+            _inputStateFlow.update { state ->
+                state.copy(
+                    cardNumberErrorOverwrite = false
+                )
+            }
+        }
+    }
+
+    private fun resetCardExpiryErrorOverwrite() {
+        if (_inputStateFlow.value.cardExpiryErrorOverwrite) {
+            _inputStateFlow.update { state ->
+                state.copy(
+                    cardExpiryErrorOverwrite = false
+                )
+            }
+        }
+    }
+
+    private fun resetCardSecurityErrorOverwrite() {
+        if (_inputStateFlow.value.cardSecurityErrorOverwrite) {
+            _inputStateFlow.update { state ->
+                state.copy(
+                    cardSecurityErrorOverwrite = false
+                )
+            }
+        }
+    }
+
+    /**
      * Sets whether to collect the cardholder's name.
      *
      * @param collectCardHolderName Boolean indicating whether to collect the cardholder's name.
@@ -134,6 +189,7 @@ internal class CardDetailsViewModel(
      * @param name The name of the cardholder to set.
      */
     fun updateCardholderName(name: String) {
+        resetCardholderErrorOverwrite()
         _inputStateFlow.update { state ->
             state.copy(cardholderName = name)
         }
@@ -146,6 +202,7 @@ internal class CardDetailsViewModel(
      * @param number The card number to set.
      */
     fun updateCardNumber(number: String) {
+        resetCardNumberErrorOverwrite()
         _inputStateFlow.update { state ->
             state.copy(cardNumber = number)
         }
@@ -157,6 +214,7 @@ internal class CardDetailsViewModel(
      * @param expiry The card's expiry date in MMYY format.
      */
     fun updateExpiry(expiry: String) {
+        resetCardExpiryErrorOverwrite()
         _inputStateFlow.update { state ->
             state.copy(expiry = expiry)
         }
@@ -168,6 +226,7 @@ internal class CardDetailsViewModel(
      * @param code The card's security code.
      */
     fun updateSecurityCode(code: String) {
+        resetCardSecurityErrorOverwrite()
         _inputStateFlow.update { state ->
             state.copy(code = code)
         }

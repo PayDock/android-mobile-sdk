@@ -124,6 +124,12 @@ class ThreeDSViewModel @Inject constructor(
             state.copy(token = null, error = null)
         }
     }
+
+    fun setIsLoading(isLoading: Boolean) {
+        _stateFlow.update { state ->
+            state.copy(isLoading = isLoading)
+        }
+    }
 }
 
 data class ThreeDSUIState(

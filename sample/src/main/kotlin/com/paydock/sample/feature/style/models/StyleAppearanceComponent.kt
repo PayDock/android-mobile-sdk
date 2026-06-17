@@ -8,15 +8,48 @@ enum class StyleAppearanceComponent(val hasSubComponents: Boolean = false) {
     SUB_DROPDOWN_ITEM, // DropdownAppearance.TextAppearance
     SUB_BUTTON_TEXT, // ButtonAppearance.TextAppearance
     SUB_LINK_BUTTON_TEXT, // LinkButtonAppearance.ButtonAppearance.TextAppearance
-    SUB_TEXT_FIELD_PLACEHOLDER,  // TextFieldAppearance.TextAppearance
-    SUB_TEXT_FIELD_LABEL, // TextFieldAppearance.TextAppearance
-    SUB_TEXT_FIELD_ERROR_LABEL, // TextFieldAppearance.TextAppearance
+
+    SUB_ADDRESS_TEXT_FIELD_PLACEHOLDER,  // TextFieldAppearance.TextAppearance
+    SUB_ADDRESS_TEXT_FIELD_LABEL, // TextFieldAppearance.TextAppearance
+    SUB_ADDRESS_TEXT_FIELD_ERROR_LABEL, // TextFieldAppearance.TextAppearance
+    SUB_ADDRESS_TEXT_FIELD_HINT_LABEL, // TextFieldAppearance.TextAppearance
+
+    SUB_GIFT_CARD_TEXT_FIELD_PLACEHOLDER,  // TextFieldAppearance.TextAppearance
+    SUB_GIFT_CARD_TEXT_FIELD_LABEL, // TextFieldAppearance.TextAppearance
+    SUB_GIFT_CARD_TEXT_FIELD_ERROR_LABEL, // TextFieldAppearance.TextAppearance
+    SUB_GIFT_CARD_TEXT_FIELD_HINT_LABEL, // TextFieldAppearance.TextAppearance
+
+    SUB_CARD_NAME_TEXT_FIELD_PLACEHOLDER,  // TextFieldAppearance.TextAppearance
+    SUB_CARD_NAME_TEXT_FIELD_LABEL, // TextFieldAppearance.TextAppearance
+    SUB_CARD_NAME_TEXT_FIELD_ERROR_LABEL, // TextFieldAppearance.TextAppearance
+    SUB_CARD_NAME_TEXT_FIELD_HINT_LABEL, // TextFieldAppearance.TextAppearance
+
+    SUB_CARD_NUMBER_TEXT_FIELD_PLACEHOLDER,  // TextFieldAppearance.TextAppearance
+    SUB_CARD_NUMBER_TEXT_FIELD_LABEL, // TextFieldAppearance.TextAppearance
+    SUB_CARD_NUMBER_TEXT_FIELD_ERROR_LABEL, // TextFieldAppearance.TextAppearance
+    SUB_CARD_NUMBER_TEXT_FIELD_HINT_LABEL, // TextFieldAppearance.TextAppearance
+
+    SUB_CARD_EXPIRY_TEXT_FIELD_PLACEHOLDER,  // TextFieldAppearance.TextAppearance
+    SUB_CARD_EXPIRY_TEXT_FIELD_LABEL, // TextFieldAppearance.TextAppearance
+    SUB_CARD_EXPIRY_TEXT_FIELD_ERROR_LABEL, // TextFieldAppearance.TextAppearance
+    SUB_CARD_EXPIRY_TEXT_FIELD_HINT_LABEL, // TextFieldAppearance.TextAppearance
+
+    SUB_CARD_SECURITY_TEXT_FIELD_PLACEHOLDER,  // TextFieldAppearance.TextAppearance
+    SUB_CARD_SECURITY_TEXT_FIELD_LABEL, // TextFieldAppearance.TextAppearance
+    SUB_CARD_SECURITY_TEXT_FIELD_ERROR_LABEL, // TextFieldAppearance.TextAppearance
+    SUB_CARD_SECURITY_TEXT_FIELD_HINT_LABEL, // TextFieldAppearance.TextAppearance
+
     SUB_SEARCH_TEXT_FIELD_PLACEHOLDER,  // SearchDropDownAppearance.TextFieldAppearance.TextAppearance
     SUB_SEARCH_TEXT_FIELD_LABEL, // SearchDropDownAppearance.TextFieldAppearance.TextAppearance
     SUB_SEARCH_TEXT_FIELD_ERROR_LABEL, // SearchDropDownAppearance.TextFieldAppearance.TextAppearance
 
     // TextField
-    TEXT_FIELD(hasSubComponents = true),  // TextFieldAppearance
+    ADDRESS_TEXT_FIELD(hasSubComponents = true), // TextFieldAppearance
+    GIFT_CARD_TEXT_FIELD(hasSubComponents = true), // TextFieldAppearance
+    CARD_NUMBER_TEXT_FIELD(hasSubComponents = true), // TextFieldAppearance
+    CARD_NAME_TEXT_FIELD(hasSubComponents = true), // TextFieldAppearance
+    CARD_EXPIRY_TEXT_FIELD(hasSubComponents = true), // TextFieldAppearance
+    CARD_SECURITY_TEXT_FIELD(hasSubComponents = true), // TextFieldAppearance
     SUB_SEARCH_TEXT_FIELD(hasSubComponents = true),  // SearchDropDownAppearance.TextFieldAppearance
 
     // Search (TextField)
@@ -37,41 +70,82 @@ enum class StyleAppearanceComponent(val hasSubComponents: Boolean = false) {
 
     // LinkTextAppearance
     LINK_TEXT(hasSubComponents = true),
+    SUB_LINK_TEXT_PROPERTIES,
 
     // LinkButtonAppearance
     LINK_BUTTON(hasSubComponents = true), // LinkButtonAppearance.ButtonAppearance
 
     // Icon
     ICON, // IconAppearance
-    SUB_TEXT_FIELD_VALID_ICON, // TextFieldAppearance.IconAppearance
+    SUB_ADDRESS_TEXT_FIELD_VALID_ICON, // TextFieldAppearance.IconAppearance
+    SUB_GIFT_CARD_TEXT_FIELD_VALID_ICON, // TextFieldAppearance.IconAppearance
+    SUB_CARD_NAME_TEXT_FIELD_VALID_ICON, // TextFieldAppearance.IconAppearance
+    SUB_CARD_NUMBER_TEXT_FIELD_VALID_ICON, // TextFieldAppearance.IconAppearance
+    SUB_CARD_EXPIRY_TEXT_FIELD_VALID_ICON, // TextFieldAppearance.IconAppearance
+    SUB_CARD_SECURITY_TEXT_FIELD_VALID_ICON, // TextFieldAppearance.IconAppearance
     SUB_SEARCH_TEXT_FIELD_VALID_ICON, // SearchDropDownAppearance.TextFieldAppearance.IconAppearance
     SUB_BUTTON_ICON, // ButtonAppearance.IconAppearance
     SUB_LINK_BUTTON_ICON, // LinkButtonAppearance.ButtonAppearance.IconAppearance
 
     // Loader
     LOADER, // LoaderAppearance
+    OVERLAY_LOADER(hasSubComponents = true),
     SUB_BUTTON_LOADER, // ButtonAppearance.LoaderAppearance
     SUB_LINK_BUTTON_LOADER, // LinkButtonAppearance.ButtonAppearance.LoaderAppearance
+    SUB_OVERLAY_LOADER_INDICATOR, // OverlayLoaderAppearance.LoaderAppearance
 
     // Component Properties
     PROPERTIES, // All other appearance components
     SUB_ACTION_BUTTON_PROPERTIES, // ButtonAppearance
     SUB_TEXT_BUTTON_PROPERTIES, // ButtonAppearance.TextButton
     SUB_DROP_DOWN_PROPERTIES, // DropdownAppearance
-    SUB_TEXT_FIELD_PROPERTIES, // TextFieldAppearance
-    SUB_SEARCH_TEXT_FIELD_PROPERTIES; // SearchDropDownAppearance.TextFieldAppearance
+
+    SUB_SEARCH_TEXT_FIELD_PROPERTIES, // SearchDropDownAppearance.TextFieldAppearance
+
+    SUB_ADDRESS_TEXT_FIELD_PROPERTIES, // TextFieldAppearance
+    SUB_GIFT_CARD_TEXT_FIELD_PROPERTIES, // TextFieldAppearance
+    SUB_CARD_NUMBER_TEXT_FIELD_PROPERTIES, // TextFieldAppearance
+    SUB_CARD_NAME_TEXT_FIELD_PROPERTIES, // TextFieldAppearance
+    SUB_CARD_EXPIRY_TEXT_FIELD_PROPERTIES, // TextFieldAppearance
+    SUB_CARD_SECURITY_TEXT_FIELD_PROPERTIES, // TextFieldAppearance
+
+    SUB_OVERLAY_LOADER_PROPERTIES, // OverlayLoaderAppearance
+    SUB_OVERLAY_LOADER_CARD, // OverlayLoaderAppearance.CardAppearance
+    SUB_OVERLAY_LOADER_TEXT; // OverlayLoaderAppearance.loaderTextAppearance (TextAppearance)
 
     fun displayName(): String = when (this) {
         TITLE -> "Title"
         TOGGLE_TEXT -> "Toggle Text"
         SUB_SEARCH_TEXT_FIELD_PLACEHOLDER,
-        SUB_TEXT_FIELD_PLACEHOLDER -> "Placeholder Label"
+        SUB_ADDRESS_TEXT_FIELD_PLACEHOLDER,
+        SUB_GIFT_CARD_TEXT_FIELD_PLACEHOLDER,
+        SUB_CARD_NAME_TEXT_FIELD_PLACEHOLDER,
+        SUB_CARD_NUMBER_TEXT_FIELD_PLACEHOLDER,
+        SUB_CARD_EXPIRY_TEXT_FIELD_PLACEHOLDER,
+        SUB_CARD_SECURITY_TEXT_FIELD_PLACEHOLDER -> "Placeholder Label"
 
         SUB_SEARCH_TEXT_FIELD_LABEL,
-        SUB_TEXT_FIELD_LABEL -> "Floating Label"
+        SUB_ADDRESS_TEXT_FIELD_LABEL,
+        SUB_GIFT_CARD_TEXT_FIELD_LABEL,
+        SUB_CARD_NAME_TEXT_FIELD_LABEL,
+        SUB_CARD_NUMBER_TEXT_FIELD_LABEL,
+        SUB_CARD_EXPIRY_TEXT_FIELD_LABEL,
+        SUB_CARD_SECURITY_TEXT_FIELD_LABEL -> "Floating Label"
 
         SUB_SEARCH_TEXT_FIELD_ERROR_LABEL,
-        SUB_TEXT_FIELD_ERROR_LABEL -> "Error Label"
+        SUB_ADDRESS_TEXT_FIELD_ERROR_LABEL,
+        SUB_GIFT_CARD_TEXT_FIELD_ERROR_LABEL,
+        SUB_CARD_NAME_TEXT_FIELD_ERROR_LABEL,
+        SUB_CARD_NUMBER_TEXT_FIELD_ERROR_LABEL,
+        SUB_CARD_EXPIRY_TEXT_FIELD_ERROR_LABEL,
+        SUB_CARD_SECURITY_TEXT_FIELD_ERROR_LABEL -> "Error Label"
+
+        SUB_ADDRESS_TEXT_FIELD_HINT_LABEL,
+        SUB_GIFT_CARD_TEXT_FIELD_HINT_LABEL,
+        SUB_CARD_NAME_TEXT_FIELD_HINT_LABEL,
+        SUB_CARD_NUMBER_TEXT_FIELD_HINT_LABEL,
+        SUB_CARD_EXPIRY_TEXT_FIELD_HINT_LABEL,
+        SUB_CARD_SECURITY_TEXT_FIELD_HINT_LABEL -> "Hint Label"
 
         SUB_DROPDOWN_ITEM -> "Dropdown Item"
         SUB_LINK_TEXT,
@@ -80,7 +154,13 @@ enum class StyleAppearanceComponent(val hasSubComponents: Boolean = false) {
         SUB_BUTTON_TEXT -> "Button Text"
         DROP_DOWN -> "Dropdown"
         SUB_SEARCH_TEXT_FIELD,
-        TEXT_FIELD -> "Text Field"
+        ADDRESS_TEXT_FIELD,
+        GIFT_CARD_TEXT_FIELD -> "Text Field"
+
+        CARD_NUMBER_TEXT_FIELD -> "Number Text Field"
+        CARD_NAME_TEXT_FIELD -> "Name Text Field"
+        CARD_EXPIRY_TEXT_FIELD -> "Expiry Text Field"
+        CARD_SECURITY_TEXT_FIELD -> "Security Text Field"
 
         SEARCH -> "Search Dropdown"
         DEFAULT_ACTION_BUTTON,
@@ -89,7 +169,10 @@ enum class StyleAppearanceComponent(val hasSubComponents: Boolean = false) {
         IMAGE_BUTTON -> "Image Button"
         SUB_LINK_BUTTON_LOADER,
         SUB_BUTTON_LOADER,
+        SUB_OVERLAY_LOADER_INDICATOR,
         LOADER -> "Loader"
+
+        OVERLAY_LOADER -> "Overlay Loader"
 
         TOGGLE -> "Toggle"
         LINK_TEXT -> "Link Text"
@@ -98,14 +181,29 @@ enum class StyleAppearanceComponent(val hasSubComponents: Boolean = false) {
         ICON -> "Icon"
 
         SUB_SEARCH_TEXT_FIELD_VALID_ICON,
-        SUB_TEXT_FIELD_VALID_ICON -> "Valid Icon"
+        SUB_ADDRESS_TEXT_FIELD_VALID_ICON,
+        SUB_GIFT_CARD_TEXT_FIELD_VALID_ICON,
+        SUB_CARD_NAME_TEXT_FIELD_VALID_ICON,
+        SUB_CARD_NUMBER_TEXT_FIELD_VALID_ICON,
+        SUB_CARD_EXPIRY_TEXT_FIELD_VALID_ICON,
+        SUB_CARD_SECURITY_TEXT_FIELD_VALID_ICON -> "Valid Icon"
 
         SUB_BUTTON_ICON -> "Button Icon"
         SUB_DROP_DOWN_PROPERTIES,
         SUB_SEARCH_TEXT_FIELD_PROPERTIES,
-        SUB_TEXT_FIELD_PROPERTIES,
+        SUB_ADDRESS_TEXT_FIELD_PROPERTIES,
+        SUB_GIFT_CARD_TEXT_FIELD_PROPERTIES,
+        SUB_CARD_NAME_TEXT_FIELD_PROPERTIES,
+        SUB_CARD_NUMBER_TEXT_FIELD_PROPERTIES,
+        SUB_CARD_EXPIRY_TEXT_FIELD_PROPERTIES,
+        SUB_CARD_SECURITY_TEXT_FIELD_PROPERTIES,
         SUB_ACTION_BUTTON_PROPERTIES,
         SUB_TEXT_BUTTON_PROPERTIES,
+        SUB_OVERLAY_LOADER_PROPERTIES,
+        SUB_LINK_TEXT_PROPERTIES,
         PROPERTIES -> "Default Properties"
+
+        SUB_OVERLAY_LOADER_CARD -> "Card Properties"
+        SUB_OVERLAY_LOADER_TEXT -> "Text Properties"
     }
 }

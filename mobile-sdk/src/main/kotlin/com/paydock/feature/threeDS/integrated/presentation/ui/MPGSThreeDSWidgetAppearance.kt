@@ -1,27 +1,26 @@
-package com.paydock.feature.threeDS.common.presentation.ui
+package com.paydock.feature.threeDS.integrated.presentation.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
-import com.paydock.feature.threeDS.standalone.presentation.Standalone3DSWidget
 
 /**
- * Represents the appearance configuration for the 3DS widget.
+ * Represents the appearance configuration for the MPGS 3DS widget.
  *
  * @property loader The [LoaderAppearance] configuration for the loader shown within the widget.
  */
 @Immutable
-class ThreeDSWidgetAppearance(val loader: LoaderAppearance) {
+class MPGSThreeDSWidgetAppearance(val loader: LoaderAppearance) {
 
     /**
-     * Creates a copy of the [ThreeDSWidgetAppearance] with optionally updated properties.
+     * Creates a copy of the [MPGSThreeDSWidgetAppearance] with optionally updated properties.
      *
      * @param loader The [LoaderAppearance] to use for the copy. Defaults to the current loader.
-     * @return A new [ThreeDSWidgetAppearance] instance with the specified properties.
+     * @return A new [MPGSThreeDSWidgetAppearance] instance with the specified properties.
      */
-    fun copy(loader: LoaderAppearance = this.loader): ThreeDSWidgetAppearance =
-        ThreeDSWidgetAppearance(
+    fun copy(loader: LoaderAppearance = this.loader): MPGSThreeDSWidgetAppearance =
+        MPGSThreeDSWidgetAppearance(
             loader = loader.copy()
         )
 
@@ -29,7 +28,7 @@ class ThreeDSWidgetAppearance(val loader: LoaderAppearance) {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as ThreeDSWidgetAppearance
+        other as MPGSThreeDSWidgetAppearance
 
         return loader == other.loader
     }
@@ -42,18 +41,18 @@ class ThreeDSWidgetAppearance(val loader: LoaderAppearance) {
 /**
  * Default appearance settings for the 3DS widget.
  *
- * This object provides a default [ThreeDSWidgetAppearance] which can be used
- * when a specific appearance is not provided for the [MPGS3dsWidget] and [Standalone3DSWidget].
+ * This object provides a default [MPGSThreeDSWidgetAppearance] which can be used
+ * when a specific appearance is not provided for the [MPGS3dsWidget].
  */
-object ThreeDSAppearanceDefaults {
+object MPGSThreeDSWidgetAppearanceDefaults {
 
     /**
      * Creates a default appearance configuration for the 3DS widget.
      *
-     * @return The default [ThreeDSWidgetAppearance].
+     * @return The default [MPGSThreeDSWidgetAppearance].
      */
     @Composable
-    fun appearance(): ThreeDSWidgetAppearance = ThreeDSWidgetAppearance(
+    fun appearance(): MPGSThreeDSWidgetAppearance = MPGSThreeDSWidgetAppearance(
         loader = LoaderAppearanceDefaults.appearance()
     )
 }

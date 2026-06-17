@@ -15,9 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
+import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.feature.threeDS.common.domain.integration.ThreeDSConfig
-import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSAppearanceDefaults
 import com.paydock.feature.threeDS.standalone.presentation.Standalone3DSWidget
+import com.paydock.feature.threeDS.standalone.presentation.ui.StandaloneThreeDSWidgetAppearanceDefaults
 import com.paydock.sample.core.THREE_DS_CARD_ERROR
 import com.paydock.sample.feature.card.CardViewModel
 import com.paydock.sample.feature.style.StylingViewModel
@@ -43,24 +44,47 @@ fun StandaloneThreeDSItem(
     val vaultToken = cardUIState.token
     val threeDSToken = threeDSUIState.token
     val threeDSAppearance by stylingViewModel.standalone3DSWidgetAppearance.collectAsState()
-    val currentOrDefaultAppearance = threeDSAppearance ?: ThreeDSAppearanceDefaults.appearance()
+    val currentOrDefaultAppearance = threeDSAppearance ?: StandaloneThreeDSWidgetAppearanceDefaults.appearance()
     when {
         !threeDSToken.isNullOrBlank() -> {
-            Standalone3DSWidget(
-                config = ThreeDSConfig(token = threeDSToken),
-                appearance = currentOrDefaultAppearance
-            ) { result ->
-                result.onSuccess {
-                    Log.d("[Standalone3DSWidget]", "Success: $it")
-                    Toast.makeText(context, "3DS Result returned [$it]", Toast.LENGTH_SHORT).show()
-                }.onFailure {
-                    val error = it.toError()
-                    Log.d("[Standalone3DSWidget]", "Failure: ${error.displayableMessage}")
-                    Toast.makeText(
-                        context,
-                        "3DS Result failed! [${error.displayableMessage}]",
-                        Toast.LENGTH_SHORT
-                    ).show()
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Standalone3DSWidget(
+                    config = ThreeDSConfig(token = threeDSToken),
+                    appearance = currentOrDefaultAppearance,
+//                    loadingDelegate = object : WidgetLoadingDelegate {
+//                        override fun widgetLoadingDidStart() {
+//                            threeDSViewModel.setIsLoading(true)
+//                        }
+//
+//                        override fun widgetLoadingDidFinish() {
+//                            threeDSViewModel.setIsLoading(false)
+//                        }
+//                    },
+                ) { result ->
+                    result.onSuccess {
+                        Log.d("[Standalone3DSWidget]", "Success: $it")
+                        Toast.makeText(context, "3DS Result returned [$it]", Toast.LENGTH_SHORT)
+                            .show()
+                    }.onFailure {
+                        val error = it.toError()
+                        Log.d("[Standalone3DSWidget]", "Failure: ${error.displayableMessage}")
+                        Toast.makeText(
+                            context,
+                            "3DS Result failed! [${error.displayableMessage}]",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+            if (threeDSUIState.isLoading) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    CircularProgressIndicator()
                 }
             }
         }

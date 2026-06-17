@@ -124,7 +124,8 @@ class ConfigViewModel @Inject constructor(
             schemeSupport = SupportedSchemeConfig(
                 supportedSchemes = CardType.entries.toSet(),
                 enableValidation = true
-            )
+            ),
+            activePrimaryButton = true
         )
     }
 
@@ -465,6 +466,10 @@ class ConfigViewModel @Inject constructor(
                     ConfigComponent.GATEWAY_ID -> current.copy(gatewayId = newValue as? String)
                     ConfigComponent.COLLECT_CARDHOLDER_NAME -> current.copy(
                         collectCardholderName = newValue as Boolean
+                    )
+
+                    ConfigComponent.ACTIVE_PRIMARY_BUTTON -> current.copy(
+                        activePrimaryButton = newValue as Boolean
                     )
 
                     ConfigComponent.ENABLE_SAVE_CARD -> {

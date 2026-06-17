@@ -1,14 +1,29 @@
 # Changelog
 
-## [5.4.0] - TBC
-
-### Changed
-- Split GooglePay MPGS for Google Wallet Service
-- Updated `GooglePayWidget` flow for tokenization result
-- Updated GooglePay JSONObjects into data classes
+## [5.5.0] - 2026-06-16
 
 ### Added
-- New `GooglePayResult` object including token, email, shipping and billing details 
+- Added "activePrimaryButton" to 'CardDetailsWidgetConfig' which defaults to "true" to allow submit button to be actionable when fields do not yet have valid entries
+- New customisable "hintText" field for textfields in 'CardDetailsWidget'
+- Added Talkback readout for 'CardDetailsWidget' for validation errors on submit
+- Added Talkback readouts for fields that are required in a form
+- Added accessibility options in styles for custom Talkback readouts
+- "formState" added to 'CardDetailsWidget' event 'WidgetEvent' on submit action
+- 'Standalone3dsWidget' now uses a new overlay loader component
+- Added a "loadingDelegate" to 'Standalone3dsWidget' for custom loader control
+
+## [5.4.0] - 2026-04-10
+
+### Added
+- New `GooglePayResult` object including token, email, shipping and billing details
+
+### Changed
+- Updated `GooglePayWidget` now tokenises result without performing transactions
+- Updated `GooglePayWidget` flow with new tokenization result
+- Updated GooglePay JSONObjects into data classes
+
+### Fixed
+- Minimum card number length for unknown card schemes updated to 13
 
 ## [5.3.2] - 2026-03-25
 

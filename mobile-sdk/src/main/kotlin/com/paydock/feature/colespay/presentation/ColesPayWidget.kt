@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -89,6 +90,7 @@ fun ColesPayWidget(
     val viewModel: ColesPayViewModel = koinViewModel(parameters = {
         parametersOf(config)
     })
+    val focusManager = LocalFocusManager.current
 
     // Collect states for Coles Pay and Wallet view models
     val uiState by viewModel.uiState.collectAsState()
@@ -122,6 +124,7 @@ fun ColesPayWidget(
             painter = painterResource(id = R.drawable.pay_with_coles_pay_button),
             contentDescription = LocalContext.current.getString(R.string.content_desc_coles_pay_button),
         ) {
+            focusManager.clearFocus()
             // Emit button event
             eventDelegate?.widgetEvent(
                 Event.ButtonEvent(

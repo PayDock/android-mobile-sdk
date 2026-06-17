@@ -31,6 +31,7 @@ import com.paydock.feature.paypal.vault.domain.model.integration.ButtonIcon
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
 import com.paydock.sample.designsystems.components.fields.StringDropdown
+import com.paydock.sample.designsystems.components.fields.TextField
 
 @Composable
 fun StyleButtonContentSection(
@@ -38,7 +39,11 @@ fun StyleButtonContentSection(
     onContentTextChange: (String) -> Unit,
     selectedIcon: ButtonIcon?,
     onIconChange: (ButtonIcon?) -> Unit,
-    defaultIcon: ButtonIcon? = null
+    defaultIcon: ButtonIcon? = null,
+    iconDescription: String? = null,
+    onIconDescriptionChange: (String) -> Unit = {},
+    clickableDescription: String? = null,
+    onClickableDescriptionChange: (String) -> Unit = {}
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
@@ -150,6 +155,22 @@ fun StyleButtonContentSection(
                         else -> null // Don't show any icon for "None" or null selections
                     }
                 }
+            )
+        }
+
+        HorizontalDivider()
+
+        SectionContainer(title = stringResource(R.string.label_more_options)) {
+            TextField(
+                label = stringResource(R.string.label_icon_description),
+                value = iconDescription ?: "",
+                onValueChange = onIconDescriptionChange
+            )
+
+            TextField(
+                label = stringResource(R.string.label_clickable_description),
+                value = clickableDescription ?: "",
+                onValueChange = onClickableDescriptionChange
             )
         }
     }

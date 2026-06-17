@@ -10,11 +10,11 @@ import com.paydock.designsystems.components.web.config.WidgetConfig
 import com.paydock.designsystems.components.web.utils.HtmlWidgetBuilder
 import com.paydock.feature.threeDS.common.domain.integration.ThreeDSConfig
 import com.paydock.feature.threeDS.common.domain.model.ui.enums.TokenFormat
-import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSAppearanceDefaults
-import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSWidgetAppearance
 import com.paydock.feature.threeDS.common.presentation.utils.ThreeDSTokenUtils
 import com.paydock.feature.threeDS.integrated.domain.model.integration.MPGS3dsResult
 import com.paydock.feature.threeDS.integrated.presentation.state.MPGS3dsUIState
+import com.paydock.feature.threeDS.integrated.presentation.ui.MPGSThreeDSWidgetAppearance
+import com.paydock.feature.threeDS.integrated.presentation.ui.MPGSThreeDSWidgetAppearanceDefaults
 import com.paydock.feature.threeDS.integrated.presentation.utils.MPGS3dsJSBridge
 import com.paydock.feature.threeDS.integrated.presentation.viewmodels.MPGS3dsViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -31,7 +31,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun MPGS3dsWidget(
     config: ThreeDSConfig,
-    appearance: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance(),
+    appearance: MPGSThreeDSWidgetAppearance = MPGSThreeDSWidgetAppearanceDefaults.appearance(),
     completion: (Result<MPGS3dsResult>) -> Unit,
 ) {
     val parsedToken = ThreeDSTokenUtils.extractToken(config.token)

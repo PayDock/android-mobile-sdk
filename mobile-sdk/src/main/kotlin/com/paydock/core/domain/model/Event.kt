@@ -16,17 +16,20 @@ sealed class Event(
      * @property name The name of the button (e.g., "TokenisationButton")
      * @property action The action performed on the button
      * @property text The optional text displayed on the button
+     * @property formState The optional form state at the time of the click (e.g. valid / invalid)
      */
     data class ButtonEvent(
         val name: String,
         val action: EventAction,
-        val text: String? = null
+        val text: String? = null,
+        val formState: FormState? = null
     ) : Event(
         type = "Button",
         properties = buildMap {
             put("name", name)
             put("action", action.value)
             text?.let { put("text", it) }
+            formState?.let { put("formState", it.value) }
         }
     )
 
@@ -76,4 +79,12 @@ sealed class Event(
  */
 enum class EventAction(val value: String) {
     CLICK("click")
+}
+
+/**
+ * Enum representing the validation state of a form at the time a widget event is dispatched.
+ */
+enum class FormState(val value: String) {
+    VALID("valid"),
+    INVALID("invalid")
 }

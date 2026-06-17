@@ -23,9 +23,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ImageButtonAppearance
+import com.paydock.designsystems.components.card.CardAppearance
 import com.paydock.designsystems.components.icon.IconAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearance
+import com.paydock.designsystems.components.link.LinkTextAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearance
+import com.paydock.designsystems.components.loader.OverlayLoaderAppearance
 import com.paydock.designsystems.components.search.DropdownAppearance
 import com.paydock.designsystems.components.text.TextAppearance
 import com.paydock.designsystems.components.toggle.ToggleAppearance
@@ -46,12 +49,15 @@ import com.paydock.sample.feature.style.ui.components.section.ButtonAppearanceSt
 import com.paydock.sample.feature.style.ui.components.section.StyleAddressDetailsMiscSection
 import com.paydock.sample.feature.style.ui.components.section.StyleAfterpayMiscSection
 import com.paydock.sample.feature.style.ui.components.section.StyleCardDetailsMiscSection
+import com.paydock.sample.feature.style.ui.components.section.StyleCardSection
 import com.paydock.sample.feature.style.ui.components.section.StyleDropdownMiscSection
 import com.paydock.sample.feature.style.ui.components.section.StyleGiftCardMiscSection
 import com.paydock.sample.feature.style.ui.components.section.StyleGooglePayMiscSection
 import com.paydock.sample.feature.style.ui.components.section.StyleIconSection
 import com.paydock.sample.feature.style.ui.components.section.StyleImageButtonSection
+import com.paydock.sample.feature.style.ui.components.section.StyleLinkTextSection
 import com.paydock.sample.feature.style.ui.components.section.StyleLoaderSection
+import com.paydock.sample.feature.style.ui.components.section.StyleOverlayLoaderMiscSection
 import com.paydock.sample.feature.style.ui.components.section.StylePayPalMiscSection
 import com.paydock.sample.feature.style.ui.components.section.StyleTextFieldSection
 import com.paydock.sample.feature.style.ui.components.section.StyleTextSection
@@ -97,11 +103,33 @@ fun StylePropertiesScreen(
                 StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD_PLACEHOLDER,
                 StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD_LABEL,
                 StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD_ERROR_LABEL,
-                StyleAppearanceComponent.SUB_TEXT_FIELD_PLACEHOLDER,
-                StyleAppearanceComponent.SUB_TEXT_FIELD_LABEL,
-                StyleAppearanceComponent.SUB_TEXT_FIELD_ERROR_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_PLACEHOLDER,
+                StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_ERROR_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_HINT_LABEL,
+                StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_PLACEHOLDER,
+                StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_LABEL,
+                StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_ERROR_LABEL,
+                StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_HINT_LABEL,
+                StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_PLACEHOLDER,
+                StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_LABEL,
+                StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_ERROR_LABEL,
+                StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_HINT_LABEL,
+                StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_PLACEHOLDER,
+                StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_LABEL,
+                StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_ERROR_LABEL,
+                StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_HINT_LABEL,
+                StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_PLACEHOLDER,
+                StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_LABEL,
+                StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_ERROR_LABEL,
+                StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_HINT_LABEL,
+                StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_PLACEHOLDER,
+                StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_LABEL,
+                StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_ERROR_LABEL,
+                StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_HINT_LABEL,
                 StyleAppearanceComponent.SUB_BUTTON_TEXT,
                 StyleAppearanceComponent.SUB_LINK_BUTTON_TEXT,
+                StyleAppearanceComponent.SUB_OVERLAY_LOADER_TEXT,
                     -> {
                     (componentAppearance as? TextAppearance)?.let { currentTitleAppearance ->
                         StyleTextSection(
@@ -119,7 +147,8 @@ fun StylePropertiesScreen(
 
                 StyleAppearanceComponent.LOADER,
                 StyleAppearanceComponent.SUB_BUTTON_LOADER,
-                StyleAppearanceComponent.SUB_LINK_BUTTON_LOADER -> {
+                StyleAppearanceComponent.SUB_LINK_BUTTON_LOADER,
+                StyleAppearanceComponent.SUB_OVERLAY_LOADER_INDICATOR -> {
                     (componentAppearance as? LoaderAppearance)?.let { currentLoaderAppearance ->
                         StyleLoaderSection(
                             currentAppearance = currentLoaderAppearance,
@@ -166,7 +195,12 @@ fun StylePropertiesScreen(
 
                 StyleAppearanceComponent.ICON,
                 StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD_VALID_ICON,
-                StyleAppearanceComponent.SUB_TEXT_FIELD_VALID_ICON,
+                StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_VALID_ICON,
+                StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_VALID_ICON,
+                StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_VALID_ICON,
+                StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_VALID_ICON,
+                StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_VALID_ICON,
+                StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_VALID_ICON,
                 StyleAppearanceComponent.SUB_BUTTON_ICON,
                 StyleAppearanceComponent.SUB_LINK_BUTTON_ICON -> {
                     (componentAppearance as? IconAppearance)?.let { currentIconAppearance ->
@@ -317,7 +351,12 @@ fun StylePropertiesScreen(
                 }
 
                 StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD_PROPERTIES,
-                StyleAppearanceComponent.SUB_TEXT_FIELD_PROPERTIES -> {
+                StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_PROPERTIES,
+                StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_PROPERTIES,
+                StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_PROPERTIES,
+                StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_PROPERTIES,
+                StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_PROPERTIES,
+                StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_PROPERTIES -> {
                     (componentAppearance as? TextFieldAppearance)?.let { currentTextFieldAppearance ->
                         StyleTextFieldSection(
                             currentAppearance = currentTextFieldAppearance,
@@ -346,6 +385,51 @@ fun StylePropertiesScreen(
                         )
                     }
                         ?: Text("$styleItemName appearance [${componentAppearance.javaClass}] not available for $widgetContext")
+                }
+
+                StyleAppearanceComponent.SUB_OVERLAY_LOADER_PROPERTIES -> {
+                    (componentAppearance as? OverlayLoaderAppearance)?.let { currentAppearance ->
+                        StyleOverlayLoaderMiscSection(
+                            currentAppearance = currentAppearance,
+                            onAppearanceChange = { newAppearance: OverlayLoaderAppearance ->
+                                stylingViewModel.updateWidgetComponentAppearance(
+                                    widgetContext,
+                                    styleItemName,
+                                    newAppearance
+                                )
+                            }
+                        )
+                    } ?: Text("$styleItemName appearance not available for $widgetContext")
+                }
+
+                StyleAppearanceComponent.SUB_LINK_TEXT_PROPERTIES -> {
+                    (componentAppearance as? LinkTextAppearance)?.let { currentAppearance ->
+                        StyleLinkTextSection(
+                            currentAppearance = currentAppearance,
+                            onAppearanceChange = { newAppearance ->
+                                stylingViewModel.updateWidgetComponentAppearance(
+                                    widgetContext,
+                                    styleItemName,
+                                    newAppearance
+                                )
+                            }
+                        )
+                    } ?: Text("$styleItemName appearance not available for $widgetContext")
+                }
+
+                StyleAppearanceComponent.SUB_OVERLAY_LOADER_CARD -> {
+                    (componentAppearance as? CardAppearance)?.let { currentAppearance ->
+                        StyleCardSection(
+                            currentAppearance = currentAppearance,
+                            onAppearanceChange = { newAppearance: CardAppearance ->
+                                stylingViewModel.updateWidgetComponentAppearance(
+                                    widgetContext,
+                                    styleItemName,
+                                    newAppearance
+                                )
+                            }
+                        )
+                    } ?: Text("$styleItemName appearance not available for $widgetContext")
                 }
 
                 StyleAppearanceComponent.SUB_TEXT_BUTTON_PROPERTIES -> {
@@ -439,11 +523,12 @@ fun getAppearanceForWidgetComponent(
                         StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD_PLACEHOLDER -> addressAppearance?.searchDropdown?.textField?.placeholder // Used for textfield placeholder
                         StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD_ERROR_LABEL -> addressAppearance?.searchDropdown?.textField?.errorLabel // Used for textfield error
                         StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD_VALID_ICON -> addressAppearance?.searchDropdown?.textField?.validIcon // Used for textfield icon
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_PROPERTIES -> addressAppearance?.textField
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_LABEL -> addressAppearance?.textField?.label
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_PLACEHOLDER -> addressAppearance?.textField?.placeholder
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_ERROR_LABEL -> addressAppearance?.textField?.errorLabel
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_VALID_ICON -> addressAppearance?.textField?.validIcon
+                        StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_PROPERTIES -> addressAppearance?.textField
+                        StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_LABEL -> addressAppearance?.textField?.label
+                        StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_PLACEHOLDER -> addressAppearance?.textField?.placeholder
+                        StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_ERROR_LABEL -> addressAppearance?.textField?.errorLabel
+                        StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_HINT_LABEL -> addressAppearance?.textField?.hintLabel
+                        StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_VALID_ICON -> addressAppearance?.textField?.validIcon
                         else -> null
                     }
                 }
@@ -463,12 +548,32 @@ fun getAppearanceForWidgetComponent(
                         StyleAppearanceComponent.SUB_BUTTON_LOADER -> cardAppearance?.actionButton?.loaderAppearance
                         StyleAppearanceComponent.TOGGLE -> cardAppearance?.toggle
                         StyleAppearanceComponent.LINK_TEXT -> cardAppearance?.linkText
+                        StyleAppearanceComponent.SUB_LINK_TEXT_PROPERTIES -> cardAppearance?.linkText
                         StyleAppearanceComponent.SUB_LINK_TEXT -> cardAppearance?.linkText?.textAppearance
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_PROPERTIES -> cardAppearance?.textField
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_LABEL -> cardAppearance?.textField?.label
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_PLACEHOLDER -> cardAppearance?.textField?.placeholder
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_ERROR_LABEL -> cardAppearance?.textField?.errorLabel
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_VALID_ICON -> cardAppearance?.textField?.validIcon
+                        StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_PROPERTIES -> cardAppearance?.cardNameTextField
+                        StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_PROPERTIES -> cardAppearance?.cardNumberTextField
+                        StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_PROPERTIES -> cardAppearance?.cardExpiryTextField
+                        StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_PROPERTIES -> cardAppearance?.cardSecurityCodeTextField
+                        StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_LABEL -> cardAppearance?.cardNameTextField?.label
+                        StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_PLACEHOLDER -> cardAppearance?.cardNameTextField?.placeholder
+                        StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_ERROR_LABEL -> cardAppearance?.cardNameTextField?.errorLabel
+                        StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_HINT_LABEL -> cardAppearance?.cardNameTextField?.hintLabel
+                        StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_VALID_ICON -> cardAppearance?.cardNameTextField?.validIcon
+                        StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_LABEL -> cardAppearance?.cardNumberTextField?.label
+                        StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_PLACEHOLDER -> cardAppearance?.cardNumberTextField?.placeholder
+                        StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_ERROR_LABEL -> cardAppearance?.cardNumberTextField?.errorLabel
+                        StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_HINT_LABEL -> cardAppearance?.cardNumberTextField?.hintLabel
+                        StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_VALID_ICON -> cardAppearance?.cardNumberTextField?.validIcon
+                        StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_LABEL -> cardAppearance?.cardExpiryTextField?.label
+                        StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_PLACEHOLDER -> cardAppearance?.cardExpiryTextField?.placeholder
+                        StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_ERROR_LABEL -> cardAppearance?.cardExpiryTextField?.errorLabel
+                        StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_HINT_LABEL -> cardAppearance?.cardExpiryTextField?.hintLabel
+                        StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_VALID_ICON -> cardAppearance?.cardExpiryTextField?.validIcon
+                        StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_LABEL -> cardAppearance?.cardSecurityCodeTextField?.label
+                        StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_PLACEHOLDER -> cardAppearance?.cardSecurityCodeTextField?.placeholder
+                        StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_ERROR_LABEL -> cardAppearance?.cardSecurityCodeTextField?.errorLabel
+                        StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_HINT_LABEL -> cardAppearance?.cardSecurityCodeTextField?.hintLabel
+                        StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_VALID_ICON -> cardAppearance?.cardSecurityCodeTextField?.validIcon
                         else -> null
                     }
                 }
@@ -485,11 +590,12 @@ fun getAppearanceForWidgetComponent(
                         StyleAppearanceComponent.SUB_BUTTON_ICON -> giftCardAppearance?.actionButton?.iconAppearance
                         StyleAppearanceComponent.SUB_BUTTON_TEXT -> giftCardAppearance?.actionButton?.textAppearance
                         StyleAppearanceComponent.SUB_BUTTON_LOADER -> giftCardAppearance?.actionButton?.loaderAppearance
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_PROPERTIES -> giftCardAppearance?.textField
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_LABEL -> giftCardAppearance?.textField?.label
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_PLACEHOLDER -> giftCardAppearance?.textField?.placeholder
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_ERROR_LABEL -> giftCardAppearance?.textField?.errorLabel
-                        StyleAppearanceComponent.SUB_TEXT_FIELD_VALID_ICON -> giftCardAppearance?.textField?.validIcon
+                        StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_PROPERTIES -> giftCardAppearance?.textField
+                        StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_LABEL -> giftCardAppearance?.textField?.label
+                        StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_PLACEHOLDER -> giftCardAppearance?.textField?.placeholder
+                        StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_ERROR_LABEL -> giftCardAppearance?.textField?.errorLabel
+                        StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_HINT_LABEL -> giftCardAppearance?.textField?.hintLabel
+                        StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_VALID_ICON -> giftCardAppearance?.textField?.validIcon
                         else -> null
                     }
                 }
@@ -592,7 +698,11 @@ fun getAppearanceForWidgetComponent(
             remember(standalone3SDAppearance, styleItemName) {
                 derivedStateOf {
                     when (styleItemName) {
-                        StyleAppearanceComponent.LOADER -> standalone3SDAppearance?.loader
+                        StyleAppearanceComponent.OVERLAY_LOADER -> standalone3SDAppearance?.loader
+                        StyleAppearanceComponent.SUB_OVERLAY_LOADER_PROPERTIES -> standalone3SDAppearance?.loader
+                        StyleAppearanceComponent.SUB_OVERLAY_LOADER_CARD -> standalone3SDAppearance?.loader?.cardAppearance
+                        StyleAppearanceComponent.SUB_OVERLAY_LOADER_INDICATOR -> standalone3SDAppearance?.loader?.loaderAppearance
+                        StyleAppearanceComponent.SUB_OVERLAY_LOADER_TEXT -> standalone3SDAppearance?.loader?.loaderTextAppearance
                         else -> null
                     }
                 }

@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -87,6 +88,7 @@ fun ZipWidget(
     completion: (Result<ZipResult>) -> Unit
 ) {
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
     val viewModel: ZipViewModel = koinViewModel(parameters = { parametersOf(config) })
 
     val uiState by viewModel.stateFlow.collectAsState()
@@ -129,6 +131,7 @@ fun ZipWidget(
             enabled = isEnabled,
             appearance = appearance,
             onClick = {
+                focusManager.clearFocus()
                 // Emit button event
                 eventDelegate?.widgetEvent(
                     Event.ButtonEvent(

@@ -39,6 +39,8 @@ import kotlinx.coroutines.delay
  * @param value The current value of the input field.
  * @param nextFocus The focus requester for the next input field. If provided, pressing 'Next' on the keyboard will
  *                  move focus to the next input field.
+ * @param forceShowErrors Flag to force showing validation errors even if the user hasn't interacted with the field yet
+ *                  (validates the live value immediately, bypassing the input debounce).
  * @param onValueChange The callback to be invoked when the value of the input field changes.
  */
 @OptIn(ExperimentalComposeUiApi::class)
@@ -50,6 +52,7 @@ internal fun GiftCardNumberInput(
     value: String = "",
     enabled: Boolean = true,
     nextFocus: FocusRequester? = null,
+    forceShowErrors: Boolean = false,
     onValueChange: (String) -> Unit
 ) {
     // State to track the focus state of the input field
@@ -62,8 +65,10 @@ internal fun GiftCardNumberInput(
         debouncedValue = value
     }
 
-    // Check if the card number is valid
-    val cardNumberError = GiftCardNumberValidator.validateCardNumberInput(debouncedValue, hasUserInteracted)
+    // Check if the card number is valid. When errors are forced (e.g. on submit), validate the live
+    // value immediately rather than the debounced one so the error surfaces without a typing delay.
+    val valueToValidate = if (forceShowErrors) value else debouncedValue
+    val cardNumberError = GiftCardNumberValidator.validateCardNumberInput(valueToValidate, hasUserInteracted || forceShowErrors)
 
     // Define the error message to be shown if the card number is invalid
     val errorMessage = when (cardNumberError) {
