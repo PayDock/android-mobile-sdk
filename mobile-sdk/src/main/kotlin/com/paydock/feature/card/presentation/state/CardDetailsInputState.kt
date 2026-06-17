@@ -27,6 +27,7 @@ import com.paydock.feature.card.presentation.utils.validators.CreditCardNumberVa
  * If `null`, the `store_ccv` parameter will not be sent in the tokenization request.
  * @property schemeConfig Configuration for supported card schemes and scheme validation behavior.
  * @property binData The BIN data used for card scheme detection (cache first, then bundled asset). Defaults to `null`.
+ * @property ctaErrorsOverwrite A flag indicating whether to force display validation errors for all fields. Defaults to `false`.
  */
 internal data class CardDetailsInputState(
     val cardholderName: String? = null,
@@ -37,7 +38,11 @@ internal data class CardDetailsInputState(
     val saveCard: Boolean = false,
     val storeSecurityCode: Boolean? = null,
     val schemeConfig: SupportedSchemeConfig = SupportedSchemeConfig(),
-    val binData: BinDataResponse? = null
+    val binData: BinDataResponse? = null,
+    val cardholderNameErrorOverwrite: Boolean = false,
+    val cardNumberErrorOverwrite: Boolean = false,
+    val cardExpiryErrorOverwrite: Boolean = false,
+    val cardSecurityErrorOverwrite: Boolean = false
 ) {
 
     /**
@@ -76,41 +81,43 @@ internal data class CardDetailsInputState(
         }
 
     /**
+     * Enum representing the input fields in the card details form.
+     */
+    enum class CardField {
+        CARDHOLDER_NAME,
+        CARD_NUMBER,
+        EXPIRY,
+        SECURITY_CODE
+    }
+
+    /**
+     * Returns a list of invalid fields based on the current state.
+     */
+    val invalidFields: List<CardField>
+        get() = mutableListOf<CardField>().apply {
+            if (collectCardholderName && !CardHolderNameValidator.isCardHolderNameValid(cardholderName ?: "")) {
+                add(CardField.CARDHOLDER_NAME)
+            }
+            if (!CreditCardNumberValidator.isCardNumberValid(cardNumber, cardScheme, schemeConfig)) {
+                add(CardField.CARD_NUMBER)
+            }
+            if (!CardExpiryValidator.isExpiryValid(expiry)) {
+                add(CardField.EXPIRY)
+            }
+            if (!CardSecurityCodeValidator.isSecurityCodeValid(code, cardScheme?.code)) {
+                add(CardField.SECURITY_CODE)
+            }
+        }
+
+    /**
+     * Returns the total number of validation errors in the form.
+     */
+    val errorCount: Int
+        get() = invalidFields.size
+
+    /**
      * Indicates whether the current card input data is valid.
-     *
-     * This property performs a comprehensive validation of the card input data,
-     * including the cardholder name (if required), card number, expiry date, and security code.
-     * It leverages the respective validator classes to ensure each field meets the required criteria.
-     *
-     * The validation process includes:
-     * - **Cardholder Name Validation:** If `collectCardholderName` is `true`, the cardholder name is
-     *   validated using [CardHolderNameValidator.isCardHolderNameValid].
-     *   If `collectCardholderName` is `false`, the cardholder name is considered valid regardless of its content.
-     * - **Card Number Validation:** The card number is validated using [CreditCardNumberValidator.isCardNumberValid],
-     *   which checks for emptiness, the Luhn algorithm, length, and supported card scheme.
-     * - **Expiry Date Validation:** The expiry date is validated using [CardExpiryValidator.isExpiryValid],
-     *   which checks for the correct format and whether the date is in the future.
-     * - **Security Code Validation:** The security code is validated using [CardSecurityCodeValidator.isSecurityCodeValid],
-     *   which checks for emptiness and the correct length based on the card scheme.
-     *
-     * @return `true` if all input fields are valid; `false` otherwise.
      */
     val isDataValid: Boolean
-        get() {
-            val isCardHolderNameValid =
-                (
-                    collectCardholderName && CardHolderNameValidator.isCardHolderNameValid(
-                        cardholderName ?: ""
-                    )
-                    ) || !collectCardholderName
-            val isCardNumberValid = CreditCardNumberValidator.isCardNumberValid(
-                cardNumber,
-                cardScheme,
-                schemeConfig
-            )
-            val isExpiryValid = CardExpiryValidator.isExpiryValid(expiry)
-            val isSecurityCodeValid = CardSecurityCodeValidator.isSecurityCodeValid(code, cardScheme?.code)
-
-            return isCardHolderNameValid && isCardNumberValid && isExpiryValid && isSecurityCodeValid
-        }
+        get() = errorCount == 0
 }

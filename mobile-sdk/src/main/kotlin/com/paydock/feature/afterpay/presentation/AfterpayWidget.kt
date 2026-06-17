@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.viewinterop.AndroidView
 import com.afterpay.android.Afterpay
 import com.afterpay.android.view.AfterpayColorScheme
@@ -84,6 +85,7 @@ fun AfterpayWidget(
     val viewModel: AfterpayViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
     val isConfigured by viewModel.isConfigured.collectAsState()
+    val focusManager = LocalFocusManager.current
 
     // ActivityResultLauncher for handling the checkout result
     val resolvePaymentForResult = rememberLauncherForActivityResult(
@@ -129,6 +131,7 @@ fun AfterpayWidget(
                         this.colorScheme = appearance.colorScheme
                         this.isEnabled = enabled
                         setOnClickListener {
+                            focusManager.clearFocus()
                             // Emit button event
                             eventDelegate?.widgetEvent(
                                 Event.ButtonEvent(

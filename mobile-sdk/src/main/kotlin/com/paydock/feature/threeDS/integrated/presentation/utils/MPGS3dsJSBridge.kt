@@ -80,5 +80,4 @@ internal class MPGS3dsJSBridge(eventCallback: (Result<MPGS3dsEvent>) -> Unit) :
             removeBridgeFromWebView()
         }
     }
-
 }

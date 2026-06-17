@@ -23,6 +23,12 @@
     <string name="label_state">State</string>
     <string name="label_supported_card_schemes">Supported card schemes: %1$s</string>
     <!-- endregion -->
+    <!-- region Hints -->
+    <string name="hint_card_name">Enter your cardholder name</string>
+    <string name="hint_card_number">Enter your card number</string>
+    <string name="hint_expiry_date">Format MM / YY</string>
+    <string name="hint_cvv">Enter your security code</string>
+    <!-- endregion -->
     <!-- region Errors -->
     <string name="error_luhn_card_holder_name">Card number is in the wrong field!</string>
     <string name="error_card_holder_name">Invalid name</string>
@@ -34,7 +40,13 @@
     <string name="error_security_code">Invalid security code</string>
     <string name="error_pin">Invalid PIN number</string>
     <string name="error_input_default">Input invalid</string>
+    <string name="error_cardholder_name_required">Cardholder name is required</string>
+    <string name="error_card_number_required">Card number is required</string>
+    <string name="error_expiry_date_required">Expiry date is required</string>
+    <string name="error_security_code_required">Security code is required</string>
     <string name="error_mandatory_field">Mandatory field</string>
+    <string name="error_form_count_plural">There are %d errors in the form</string>
+    <string name="error_form_count_singular">There is 1 error in the form</string>
     <!-- endregion -->
     <!-- region Buttons -->
     <string name="button_enter_address_manually">Or enter address manually</string>
@@ -44,10 +56,15 @@
     <string name="button_link_paypal_account">Link PayPal account</string>
     <!-- endregion -->
     <!-- region Accessibility -->
+    <string name="accessibility_state_disabled">Disabled</string>
+    <string name="accessibility_state_editing">Editing</string>
+    <string name="accessibility_click_open_browser">Open browser</string>
+    <string name="accessibility_click_open_browser_link_account">open browser and link account</string>
     <string name="accessibility_button_loading">Loading</string>
     <string name="accessibility_webview_loading">Loading</string>
     <string name="accessibility_overlay_loading">Loading, please wait.</string>
     <string name="accessibility_overlay_still_loading">Still loading, this might take a few moments.</string>
+    <string name="accessibility_required">required</string>
     <string name="content_desc_zip_button">Pay with Zip</string>
     <string name="content_desc_zip_loading">Zip loading</string>
     <!-- endregion -->

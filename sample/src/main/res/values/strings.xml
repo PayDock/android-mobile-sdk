@@ -44,6 +44,7 @@
     <string name="label_loader_track_colour">Track Color</string>
     <string name="label_loader_stroke_width">Stroke Width (Dp)</string>
     <string name="label_loader_stroke_cap">Stroke Cap</string>
+    <string name="label_width">Width (Dp)</string>
     <string name="label_height">Height (Dp)</string>
     <string name="label_disabled_alpha">Disabled Alpha</string>
     <string name="label_ripple_colour">Ripple Colour</string>
@@ -101,6 +102,13 @@
     <string name="label_content_spacing">Content Spacing</string>
     <string name="label_content_padding">Content Padding</string>
     <string name="label_elevation">Elevation</string>
+    <string name="label_top_message_spacing">Top Message Spacing (Dp)</string>
+    <string name="label_start_message_spacing">Start Message Spacing (Dp)</string>
+    <string name="label_placeholder_text">Placeholder Text</string>
+    <string name="label_hint_text">Hint Text</string>
+    <string name="label_hint_description">Hint Description</string>
+    <string name="label_icon_description">Icon Description</string>
+    <string name="label_clickable_description">Clickable Description</string>
     <string name="label_button_colours">Button Colours</string>
     <string name="label_content_colour">Content Colour</string>
     <string name="label_container_colour">Container Colour</string>
@@ -189,6 +197,7 @@
     <string name="label_privacy_policy_text">Privacy Policy Text</string>
     <string name="label_privacy_policy_url">Privacy Policy URL</string>
     <string name="label_enable_scheme_validation">Enable Scheme Validation</string>
+    <string name="label_active_primary_button">Active Primary Button</string>
     <string name="label_supported_card_schemes">Supported Card Schemes</string>
     <string name="label_minimum_amount_optional">Minimum Amount (Optional)</string>
     <string name="label_maximum_amount">Maximum Amount</string>
@@ -270,4 +279,10 @@
     <string name="label_shipping_type_optional">Shipping Type (Optional)</string>
     <string name="label_use_default_shipping_address">Use Default Shipping Address</string>
     <string name="label_postcode_optional">Postcode (Optional)</string>
+
+    <!-- Overlay Loader -->
+    <string name="label_background_colour">Background Color</string>
+    <string name="label_loader_spacing">Loader Spacing (Dp)</string>
+    <string name="label_loader_text">Loader Text</string>
+    <string name="placeholder_enter_loader_text">Enter loader text</string>
 </resources>

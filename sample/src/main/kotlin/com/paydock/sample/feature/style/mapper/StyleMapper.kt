@@ -8,7 +8,7 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
         WidgetType.ADDRESS_DETAILS -> listOf(
             StyleAppearanceComponent.PROPERTIES,
             StyleAppearanceComponent.TITLE,
-            StyleAppearanceComponent.TEXT_FIELD,
+            StyleAppearanceComponent.ADDRESS_TEXT_FIELD,
             StyleAppearanceComponent.COMPLETE_ACTION_BUTTON,
             StyleAppearanceComponent.LINK_BUTTON,
             StyleAppearanceComponent.SEARCH,
@@ -21,7 +21,10 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
 
         WidgetType.CARD_DETAILS -> listOf(
             StyleAppearanceComponent.PROPERTIES,
-            StyleAppearanceComponent.TEXT_FIELD,
+            StyleAppearanceComponent.CARD_NAME_TEXT_FIELD,
+            StyleAppearanceComponent.CARD_NUMBER_TEXT_FIELD,
+            StyleAppearanceComponent.CARD_EXPIRY_TEXT_FIELD,
+            StyleAppearanceComponent.CARD_SECURITY_TEXT_FIELD,
             StyleAppearanceComponent.COMPLETE_ACTION_BUTTON,
             StyleAppearanceComponent.TOGGLE,
             StyleAppearanceComponent.TOGGLE_TEXT, // Used for toggle text
@@ -39,7 +42,7 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
 
         WidgetType.GIFT_CARD -> listOf(
             StyleAppearanceComponent.PROPERTIES,
-            StyleAppearanceComponent.TEXT_FIELD,
+            StyleAppearanceComponent.GIFT_CARD_TEXT_FIELD,
             StyleAppearanceComponent.COMPLETE_ACTION_BUTTON,
         )
 
@@ -62,7 +65,7 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
         )
 
         WidgetType.STANDALONE_3DS -> listOf(
-            StyleAppearanceComponent.LOADER
+            StyleAppearanceComponent.OVERLAY_LOADER
         )
 
         WidgetType.ZIP -> listOf(
@@ -93,6 +96,7 @@ fun StyleAppearanceComponent.mapAppearanceComponentToSubComponents(): List<Style
         )
 
         StyleAppearanceComponent.LINK_TEXT -> listOf(
+            StyleAppearanceComponent.SUB_LINK_TEXT_PROPERTIES,
             StyleAppearanceComponent.SUB_LINK_TEXT
         )
 
@@ -114,12 +118,65 @@ fun StyleAppearanceComponent.mapAppearanceComponentToSubComponents(): List<Style
             StyleAppearanceComponent.SUB_DROPDOWN_ITEM
         )
 
-        StyleAppearanceComponent.TEXT_FIELD -> listOf(
-            StyleAppearanceComponent.SUB_TEXT_FIELD_PROPERTIES,
-            StyleAppearanceComponent.SUB_TEXT_FIELD_LABEL,
-            StyleAppearanceComponent.SUB_TEXT_FIELD_PLACEHOLDER,
-            StyleAppearanceComponent.SUB_TEXT_FIELD_ERROR_LABEL,
-            StyleAppearanceComponent.SUB_TEXT_FIELD_VALID_ICON,
+        StyleAppearanceComponent.ADDRESS_TEXT_FIELD -> listOf(
+            StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_PROPERTIES,
+            StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_PLACEHOLDER,
+            StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_ERROR_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_HINT_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_VALID_ICON,
+        )
+
+        StyleAppearanceComponent.GIFT_CARD_TEXT_FIELD -> listOf(
+            StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_PROPERTIES,
+            StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_LABEL,
+            StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_PLACEHOLDER,
+            StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_ERROR_LABEL,
+            StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_HINT_LABEL,
+            StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_VALID_ICON,
+        )
+
+        StyleAppearanceComponent.CARD_NAME_TEXT_FIELD -> listOf(
+            StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_PROPERTIES,
+            StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_LABEL,
+            StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_PLACEHOLDER,
+            StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_ERROR_LABEL,
+            StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_HINT_LABEL,
+            StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_VALID_ICON,
+        )
+
+        StyleAppearanceComponent.CARD_NUMBER_TEXT_FIELD -> listOf(
+            StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_PROPERTIES,
+            StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_LABEL,
+            StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_PLACEHOLDER,
+            StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_ERROR_LABEL,
+            StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_HINT_LABEL,
+            StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_VALID_ICON,
+        )
+
+        StyleAppearanceComponent.CARD_EXPIRY_TEXT_FIELD -> listOf(
+            StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_PROPERTIES,
+            StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_LABEL,
+            StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_PLACEHOLDER,
+            StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_ERROR_LABEL,
+            StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_HINT_LABEL,
+            StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_VALID_ICON,
+        )
+
+        StyleAppearanceComponent.CARD_SECURITY_TEXT_FIELD -> listOf(
+            StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_PROPERTIES,
+            StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_LABEL,
+            StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_PLACEHOLDER,
+            StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_ERROR_LABEL,
+            StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_HINT_LABEL,
+            StyleAppearanceComponent.SUB_CARD_SECURITY_TEXT_FIELD_VALID_ICON,
+        )
+
+        StyleAppearanceComponent.OVERLAY_LOADER -> listOf(
+            StyleAppearanceComponent.SUB_OVERLAY_LOADER_PROPERTIES,
+            StyleAppearanceComponent.SUB_OVERLAY_LOADER_CARD,
+            StyleAppearanceComponent.SUB_OVERLAY_LOADER_INDICATOR,
+            StyleAppearanceComponent.SUB_OVERLAY_LOADER_TEXT,
         )
 
         else -> null // No sub-components

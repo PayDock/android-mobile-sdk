@@ -40,6 +40,7 @@ import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 @Composable
 internal fun SdkLoader(
     modifier: Modifier = Modifier,
+    size: Dp? = null,
     appearance: LoaderAppearance = LoaderAppearanceDefaults.appearance()
 ) {
     val context = LocalContext.current
@@ -54,11 +55,14 @@ internal fun SdkLoader(
         }
     ) {
         CircularProgressIndicator(
-            modifier = Modifier.semantics {
-                // Hide default CircularProgressIndicator semantics so parent can provide custom one
-                // This prevents "In progress, progress bar" from being announced
-                hideFromAccessibility()
-            },
+            // Apply the size to the indicator itself (not just the wrapping Box) so it visually
+            // scales. Sizing only the Box would leave the default-sized indicator top-start.
+            modifier = (if (size != null) Modifier.size(size) else Modifier)
+                .semantics {
+                    // Hide default CircularProgressIndicator semantics so parent can provide custom one
+                    // This prevents "In progress, progress bar" from being announced
+                    hideFromAccessibility()
+                },
             color = appearance.color,
             strokeWidth = appearance.strokeWidth,
             trackColor = appearance.trackColor,

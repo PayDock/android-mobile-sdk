@@ -64,6 +64,20 @@ fun CardDetailsProperties(
             )
         }
 
+        ConfigComponent.ACTIVE_PRIMARY_BUTTON -> {
+            BooleanField(
+                label = stringResource(R.string.label_active_primary_button),
+                value = config.activePrimaryButton,
+                onValueChange = { newValue ->
+                    configViewModel.updateWidgetConfig(
+                        widgetContext,
+                        ConfigComponent.ACTIVE_PRIMARY_BUTTON,
+                        newValue
+                    )
+                }
+            )
+        }
+
         ConfigComponent.ALLOW_SAVE_CARD -> {
             ConfigSaveCardSection(
                 currentSaveCardConfig = config.allowSaveCard,

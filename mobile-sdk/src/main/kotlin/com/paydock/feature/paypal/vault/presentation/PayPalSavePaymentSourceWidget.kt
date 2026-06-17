@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.paydock.R
@@ -76,6 +77,7 @@ fun PayPalSavePaymentSourceWidget(
 ) {
     val context = LocalContext.current
     val viewModel: PayPalVaultViewModel = koinViewModel(parameters = { parametersOf(config) })
+    val focusManager = LocalFocusManager.current
 
     val uiState by viewModel.stateFlow.collectAsState()
 
@@ -108,8 +110,9 @@ fun PayPalSavePaymentSourceWidget(
                 .testTag("linkPayPalAccount"),
             text = appearance.actionButton.text,
             enabled = isEnabled,
-            isLoading = isLoading,
+            isLoading = isLoading
         ) {
+            focusManager.clearFocus()
             // Emit button event
             eventDelegate?.widgetEvent(
                 Event.ButtonEvent(
@@ -186,7 +189,8 @@ object PayPalPaymentSourceAppearanceDefaults {
             .outlineButtonAppearance()
             .copy(
                 text = stringResource(id = R.string.button_link_paypal_account),
-                icon = ButtonIcon.DrawableRes(R.drawable.ic_link)
+                icon = ButtonIcon.DrawableRes(R.drawable.ic_link),
+                clickableDescription = stringResource(id = R.string.accessibility_click_open_browser_link_account),
             )
     )
 

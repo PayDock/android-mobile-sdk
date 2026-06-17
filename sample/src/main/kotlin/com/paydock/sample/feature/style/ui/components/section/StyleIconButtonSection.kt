@@ -13,6 +13,7 @@ import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
 import com.paydock.sample.designsystems.components.fields.NumberCounter
+import com.paydock.sample.designsystems.components.fields.TextField
 import com.paydock.sample.feature.style.ui.components.core.color.ColorPickerField
 import com.paydock.sample.feature.style.ui.components.properties.button.BorderStrokeEditor
 import com.paydock.sample.feature.style.ui.components.properties.button.ElevationDropdown
@@ -165,6 +166,26 @@ fun IconButtonAppearanceStyleEditor(
                 currentBorderStroke = currentBorder,
                 onBorderStrokeChange = { newBorderStroke ->
                     onAppearanceChange(currentAppearance.copy(border = newBorderStroke))
+                }
+            )
+        }
+
+        HorizontalDivider()
+
+        SectionContainer(title = stringResource(R.string.label_more_options)) {
+            TextField(
+                label = stringResource(R.string.label_icon_description),
+                value = currentAppearance.iconDescription ?: "",
+                onValueChange = { newDesc ->
+                    onAppearanceChange(currentAppearance.copy(iconDescription = newDesc.takeIf { it.isNotEmpty() }))
+                }
+            )
+
+            TextField(
+                label = stringResource(R.string.label_clickable_description),
+                value = currentAppearance.clickableDescription ?: "",
+                onValueChange = { newDesc ->
+                    onAppearanceChange(currentAppearance.copy(clickableDescription = newDesc.takeIf { it.isNotEmpty() }))
                 }
             )
         }

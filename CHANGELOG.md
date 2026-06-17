@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.5.0] - 2026-06-16
+
+### Added
+- Added "activePrimaryButton" to 'CardDetailsWidgetConfig' which defaults to "true" to allow submit button to be actionable when fields do not yet have valid entries
+- New customisable "hintText" field for textfields in 'CardDetailsWidget'
+- Added Talkback readout for 'CardDetailsWidget' for validation errors on submit
+- Added Talkback readouts for fields that are required in a form
+- Added accessibility options in styles for custom Talkback readouts
+- "formState" added to 'CardDetailsWidget' event 'WidgetEvent' on submit action
+- 'Standalone3dsWidget' now uses a new overlay loader component
+- Added a "loadingDelegate" to 'Standalone3dsWidget' for custom loader control
+
 ## [5.4.0] - 2026-04-10
 
 ### Added

@@ -7,6 +7,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
 
     // Card Details specific
     COLLECT_CARDHOLDER_NAME,
+    ACTIVE_PRIMARY_BUTTON,
     ALLOW_SAVE_CARD,
     STORE_SECURITY_CODE,
     SCHEME_SUPPORT(hasSubComponents = true),
@@ -266,6 +267,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
         PHONE_NUMBER_REQUIRED -> "Phone Number Required"
         SHIPPING_REQUIRED -> "Shipping Required"
         BILLING_REQUIRED -> "Billing Required"
+        ACTIVE_PRIMARY_BUTTON -> "Active Primary Button"
     }
 
     fun mapConfigComponentToSubComponents(): List<ConfigComponent>? = when (this) {

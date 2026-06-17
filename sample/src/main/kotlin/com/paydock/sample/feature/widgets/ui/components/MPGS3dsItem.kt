@@ -16,8 +16,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.paydock.core.domain.error.displayableMessage
 import com.paydock.core.domain.error.toError
 import com.paydock.feature.threeDS.common.domain.integration.ThreeDSConfig
-import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSAppearanceDefaults
 import com.paydock.feature.threeDS.integrated.presentation.MPGS3dsWidget
+import com.paydock.feature.threeDS.integrated.presentation.ui.MPGSThreeDSWidgetAppearanceDefaults
 import com.paydock.sample.core.THREE_DS_CARD_ERROR
 import com.paydock.sample.core.TOKENISE_CARD_ERROR
 import com.paydock.sample.feature.card.CardViewModel
@@ -42,7 +42,7 @@ fun MPGS3dsItem(
         threeDSViewModel.resetResultState()
     }
     val threeDSAppearance by stylingViewModel.mpgs3dsWidgetAppearance.collectAsState()
-    val currentOrDefaultAppearance = threeDSAppearance ?: ThreeDSAppearanceDefaults.appearance()
+    val currentOrDefaultAppearance = threeDSAppearance ?: MPGSThreeDSWidgetAppearanceDefaults.appearance()
     val cardToken = cardUIState.token
     val threeDSToken = threeDSUIState.token
     when {

@@ -42,7 +42,10 @@ internal fun CardPinInput(
     appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     value: String = "",
     enabled: Boolean = true,
+    forceShowErrors: Boolean = false,
     nextFocus: FocusRequester? = null,
+    hint: String? = null,
+    placeholder: String? = null,
     onValueChange: (String) -> Unit
 ) {
     var hasUserInteracted by remember { mutableStateOf(false) }
@@ -52,11 +55,11 @@ internal fun CardPinInput(
         debouncedValue = value
     }
     // Parse the card pin
-    val cardPinError = CardPinValidator.validateCardPinInput(debouncedValue, hasUserInteracted)
+    val cardPinError = CardPinValidator.validateCardPinInput(debouncedValue, hasUserInteracted || forceShowErrors)
 
     // Determine the error message to display
     val errorMessage = when (cardPinError) {
-        CardPinError.Empty,
+        CardPinError.Empty -> if (forceShowErrors) stringResource(id = R.string.error_security_code_required) else null
         CardPinError.Invalid -> stringResource(id = R.string.error_pin)
         CardPinError.None -> null
     }
@@ -74,8 +77,9 @@ internal fun CardPinInput(
             }
         },
         label = stringResource(id = R.string.label_pin),
-        placeholder = stringResource(id = R.string.placeholder_card_pin),
         enabled = enabled,
+        placeholder = placeholder,
+        hint = hint,
         error = errorMessage,
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(

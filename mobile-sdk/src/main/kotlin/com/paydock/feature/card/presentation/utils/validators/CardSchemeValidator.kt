@@ -41,14 +41,14 @@ internal object CardSchemeValidator {
             type = CardType.MASTERCARD,
             gaps = listOf(4, 8, 12, 16),
             lengths = listOf(16),
-            code = CardCode(type = CodeType.CVC, size = MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH)
+            code = CardCode(type = CodeType.CVV, size = MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH)
         ),
 
         CardScheme(
             type = CardType.AMEX,
             gaps = listOf(4, 10),
             lengths = listOf(15),
-            code = CardCode(type = CodeType.CID, size = MobileSDKConstants.CardDetailsConfig.CID_LENGTH)
+            code = CardCode(type = CodeType.CVV, size = MobileSDKConstants.CardDetailsConfig.CID_LENGTH)
         ),
 
         CardScheme(
@@ -62,7 +62,7 @@ internal object CardSchemeValidator {
             type = CardType.DISCOVER,
             gaps = listOf(4, 8, 12, 16),
             lengths = listOf(16, 19),
-            code = CardCode(type = CodeType.CID, size = MobileSDKConstants.CardDetailsConfig.CID3_LENGTH)
+            code = CardCode(type = CodeType.CVV, size = MobileSDKConstants.CardDetailsConfig.CID3_LENGTH)
         ),
 
         CardScheme(
@@ -76,7 +76,7 @@ internal object CardSchemeValidator {
             type = CardType.UNIONPAY,
             gaps = listOf(4, 8, 12, 16),
             lengths = listOf(16, 17, 18, 19),
-            code = CardCode(type = CodeType.CVN, size = MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH)
+            code = CardCode(type = CodeType.CVV, size = MobileSDKConstants.CardDetailsConfig.CVV_CVC_LENGTH)
         )
     )
 

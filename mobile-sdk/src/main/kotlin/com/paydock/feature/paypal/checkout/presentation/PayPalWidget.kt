@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.viewinterop.AndroidView
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.PayPalException
@@ -97,6 +98,7 @@ fun PayPalWidget(
     val context = LocalContext.current
     // Obtain instances of view models
     val viewModel: PayPalViewModel = koinViewModel(parameters = { parametersOf(config) })
+    val focusManager = LocalFocusManager.current
 
     // Collect states for PayPal view models
     val uiState by viewModel.uiState.collectAsState()
@@ -152,6 +154,7 @@ fun PayPalWidget(
                 // Attach/detach click listener based on the current enabled state
                 if (isButtonEnabled) {
                     view.setOnClickListener {
+                        focusManager.clearFocus()
                         // Emit button event
                         eventDelegate?.widgetEvent(
                             Event.ButtonEvent(

@@ -22,6 +22,7 @@ import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.containers.SectionContainer
 import com.paydock.sample.designsystems.components.fields.BooleanField
 import com.paydock.sample.designsystems.components.fields.NumberCounter
+import com.paydock.sample.designsystems.components.fields.TextField
 import com.paydock.sample.feature.style.ui.components.core.color.ColorPickerField
 import com.paydock.sample.feature.style.ui.components.properties.font.FontFamilyDropdown
 import com.paydock.sample.feature.style.ui.components.properties.shape.ShapeDropdown
@@ -51,6 +52,12 @@ fun StyleTextFieldSection(
     val currentUnfocusedPlaceholderColor = currentAppearance.colors.unfocusedPlaceholderColor
     val currentErrorTextColor = currentAppearance.colors.errorTextColor
     val currentShape = currentAppearance.shape
+    val currentTopMessageSpacing = currentAppearance.topMessageSpacing.value.toInt()
+    val currentStartMessageSpacing = currentAppearance.startMessageSpacing.value.toInt()
+    val currentPlaceholderText = currentAppearance.placeholderText ?: ""
+    val currentHintText = currentAppearance.hintText ?: ""
+    val currentHintDescription = currentAppearance.hintDescription ?: ""
+    val currentClickableDescription = currentAppearance.clickableDescription ?: ""
 
     // State for available font names for the dropdown
     val systemFontDetailsList = remember { mutableStateListOf<FontHelper.FontInfo>() }
@@ -285,5 +292,81 @@ fun StyleTextFieldSection(
                 onAppearanceChange(currentAppearance.copy(shape = newShape))
             },
         )
+
+        HorizontalDivider()
+
+        SectionContainer(title = stringResource(R.string.label_spacing)) {
+            NumberCounter(
+                title = stringResource(R.string.label_top_message_spacing),
+                value = currentTopMessageSpacing,
+                onValueChange = { newValue ->
+                    onAppearanceChange(
+                        currentAppearance.copy(topMessageSpacing = newValue.dp)
+                    )
+                }
+            )
+
+            NumberCounter(
+                title = stringResource(R.string.label_start_message_spacing),
+                value = currentStartMessageSpacing,
+                onValueChange = { newValue ->
+                    onAppearanceChange(
+                        currentAppearance.copy(startMessageSpacing = newValue.dp)
+                    )
+                }
+            )
+        }
+
+        HorizontalDivider()
+
+        SectionContainer(title = stringResource(R.string.label_design)) {
+            TextField(
+                label = stringResource(R.string.label_placeholder_text),
+                value = currentPlaceholderText,
+                onValueChange = { newValue ->
+                    // Pass the raw value (including an empty string). An empty string explicitly
+                    // hides the placeholder; using null here would instead fall back to the field's
+                    // default placeholder, so clearing the input would appear to "reset" it.
+                    onAppearanceChange(
+                        currentAppearance.copy(placeholderText = newValue)
+                    )
+                }
+            )
+
+            TextField(
+                label = stringResource(R.string.label_hint_text),
+                value = currentHintText,
+                onValueChange = { newValue ->
+                    // Empty string hides the hint; null would fall back to the default hint text.
+                    onAppearanceChange(
+                        currentAppearance.copy(hintText = newValue)
+                    )
+                }
+            )
+        }
+
+        HorizontalDivider()
+
+        SectionContainer(title = stringResource(R.string.label_more_options)) {
+            TextField(
+                label = stringResource(R.string.label_hint_description),
+                value = currentHintDescription,
+                onValueChange = { newValue ->
+                    onAppearanceChange(
+                        currentAppearance.copy(hintDescription = newValue.takeIf { it.isNotEmpty() })
+                    )
+                }
+            )
+
+            TextField(
+                label = stringResource(R.string.label_clickable_description),
+                value = currentClickableDescription,
+                onValueChange = { newValue ->
+                    onAppearanceChange(
+                        currentAppearance.copy(clickableDescription = newValue.takeIf { it.isNotEmpty() })
+                    )
+                }
+            )
+        }
     }
 }

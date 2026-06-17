@@ -23,6 +23,7 @@ import com.paydock.designsystems.components.input.TextFieldAppearance
 import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.integration.enums.CardType
+import com.paydock.feature.card.domain.model.integration.enums.CardType.Companion.displayLabel
 import com.paydock.feature.card.domain.model.ui.CardCode
 import com.paydock.feature.card.domain.model.ui.CardScheme
 import com.paydock.feature.card.domain.model.ui.enums.CodeType
@@ -44,8 +45,11 @@ import com.paydock.feature.card.presentation.utils.validators.CreditCardNumberVa
  * @param value The current value of the input field, representing the credit card number.
  * @param cardScheme The detected [CardScheme] based on the card number input.
  * @param enabled Flag to enable or disable user interaction with the input field.
+ * @param forceShowErrors Flag to force showing validation errors even if the user hasn't interacted with the field yet.
  * @param nextFocus An optional `FocusRequester` for moving focus to the next input field when the
  * 'Next' keyboard action is triggered.
+ * @param a11yFocus An optional [Boolean] that allows programmatically moving accessibility focus to this
+ *  input field in a form.
  * @param onValueChange Callback function invoked when the input value changes. The callback receives
  * a parsed credit card number if the input is valid.
  */
@@ -59,8 +63,10 @@ internal fun CreditCardNumberInput(
     value: String = "",
     cardScheme: CardScheme? = null,
     enabled: Boolean = true,
+    forceShowErrors: Boolean = false,
     nextFocus: FocusRequester? = null,
-    onValueChange: (String) -> Unit,
+    a11yFocus: Boolean = false,
+    onValueChange: (String) -> Unit
 ) {
     // State to track the focus state of the input field
     var focusedState by remember { mutableStateOf(false) }
@@ -71,18 +77,20 @@ internal fun CreditCardNumberInput(
         cardNumber = value,
         cardScheme = cardScheme,
         schemeConfig = schemeConfig,
-        hasUserInteracted = hasUserInteracted,
-        isCardNumberFocused = focusedState
+        hasUserInteracted = hasUserInteracted || forceShowErrors,
+        isCardNumberFocused = if (forceShowErrors) false else focusedState
     )
 
     val errorMessage = when (cardNumberError) {
-        CardNumberError.Empty -> null // Empty field should show no error (neutral state)
+        CardNumberError.Empty -> if (forceShowErrors) stringResource(id = R.string.error_card_number_required) else null
         CardNumberError.InvalidLuhn,
         CardNumberError.InvalidLength -> stringResource(id = R.string.error_card_number)
-
         CardNumberError.UnsupportedCardScheme -> stringResource(id = R.string.error_unsupported_card_scheme)
         CardNumberError.None -> null
     }
+
+    val placeholder = appearance.placeholderText ?: stringResource(id = R.string.placeholder_card_number)
+    val hint = appearance.hintText ?: stringResource(id = R.string.hint_card_number)
 
     SdkTextField(
         modifier = modifier.onFocusChanged {
@@ -94,24 +102,27 @@ internal fun CreditCardNumberInput(
             hasUserInteracted = true
             // Strip spaces and other non-digits so pasted values (e.g. "6334 9000 0000 0005") are accepted
             val digitsOnly = newText.replace(Regex("\\D"), "")
-            // Use MAX so paste across schemes works (e.g. Amex 15→Visa 16). Scheme length enforced by validator.
-            val maxLength = MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH
-            // Always accept deletions to prevent "unable to delete" bug after paste/format operations
-            val isDeletion = digitsOnly.length < value.length
-            val withinLength = digitsOnly.length <= maxLength
-            if (isDeletion || withinLength) {
+            if (shouldAcceptCardNumberInput(
+                    newDigits = digitsOnly,
+                    currentLength = value.length,
+                    schemeMaxLength = cardScheme?.lengths?.maxOrNull()
+                )
+            ) {
                 CreditCardInputParser.parseNumber(digitsOnly)?.let { number ->
                     onValueChange(number)
                 }
             }
         },
-        placeholder = stringResource(id = R.string.placeholder_card_number),
         enabled = enabled,
         label = stringResource(id = R.string.label_card_number),
+        a11yFocus = a11yFocus,
         autofillType = ContentType.CreditCardNumber,
         leadingIcon = { CardSchemeIcon(cardScheme?.type, focusedState, hideFromAccessibility = true) },
+        leadingIconDescription = cardScheme?.type?.displayLabel(),
         showValidIcon = !focusedState && cardNumberError == CardNumberError.None && value.isNotBlank(),
         error = errorMessage,
+        hint = hint,
+        placeholder = placeholder,
         visualTransformation = cardScheme?.let {
             CardNumberInputTransformation(
                 subSectionSizes = it.gaps
@@ -133,6 +144,40 @@ internal fun CreditCardNumberInput(
     )
 }
 
+/**
+ * Decides whether a card-number edit should be accepted, capping single typed digits at the
+ * detected scheme's maximum length so the user can't enter more digits than the scheme allows
+ * (e.g. a 17th digit on a 16-digit Mastercard).
+ *
+ * - Deletions are always accepted (prevents an "unable to delete" bug after paste/format operations).
+ * - Single typed digits (incremental entry) are capped at [schemeMaxLength] when a scheme is known,
+ *   otherwise at [MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH].
+ * - Bulk changes (e.g. paste) may switch the scheme (Amex 15 → Visa 16), so they're allowed up to
+ *   the absolute max and the validator flags any over-length input.
+ *
+ * @param newDigits The proposed value's digits only (non-digits already stripped).
+ * @param currentLength The length of the current (raw, digits-only) value.
+ * @param schemeMaxLength The detected scheme's maximum length, or null when no scheme is detected.
+ * @return true if the edit should be applied; false if it should be rejected.
+ */
+internal fun shouldAcceptCardNumberInput(
+    newDigits: String,
+    currentLength: Int,
+    schemeMaxLength: Int?
+): Boolean {
+    val isDeletion = newDigits.length < currentLength
+    val isIncrementalEntry = newDigits.length == currentLength + 1
+    val maxLength = if (isIncrementalEntry) {
+        schemeMaxLength ?: MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH
+    } else {
+        MobileSDKConstants.CardDetailsConfig.MAX_CREDIT_CARD_LENGTH
+    }
+    return isDeletion || newDigits.length <= maxLength
+}
+
+/**
+ * Preview for the credit card number input with default settings.
+ */
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewCreditCardNumberInputDefault() {
@@ -142,6 +187,9 @@ internal fun PreviewCreditCardNumberInputDefault() {
     )
 }
 
+/**
+ * Preview for the credit card number input with a pre-filled valid card number.
+ */
 @SdkLightDarkPreviews
 @Composable
 internal fun PreviewCreditCardNumberInput() {

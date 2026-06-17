@@ -160,7 +160,13 @@ internal class GooglePayViewModel(
      */
     fun startGooglePayPaymentFlow() {
         updateUiState(GooglePayUIState.Loading)
-        launchOnIO {
+        // Build the loadPaymentData task and trigger the launch on the MAIN thread. Google Play
+        // Services' PaymentsClient.loadPaymentData and the resulting Activity launch are
+        // main-thread bound; creating the task on a background (IO) thread races with the
+        // ActivityResult launch and intermittently surfaces an immediate RESULT_CANCELED (the
+        // Google Pay sheet opens and closes instantly). The call is cheap (it only builds the
+        // request and returns a Task), so it is safe to run on main.
+        launchOnMain {
             val task = getLoadPaymentDataTask()
             updateUiState(GooglePayUIState.LaunchGooglePayTask(task))
         }

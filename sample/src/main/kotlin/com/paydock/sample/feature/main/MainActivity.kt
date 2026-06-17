@@ -69,8 +69,10 @@ import com.paydock.feature.paypal.vault.presentation.PayPalPaymentSourceAppearan
 import com.paydock.feature.paypal.vault.presentation.PayPalPaymentSourceWidgetAppearance
 import com.paydock.feature.src.presentation.ClickToPayAppearanceDefaults
 import com.paydock.feature.src.presentation.ClickToPayWidgetAppearance
-import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSAppearanceDefaults
-import com.paydock.feature.threeDS.common.presentation.ui.ThreeDSWidgetAppearance
+import com.paydock.feature.threeDS.integrated.presentation.ui.MPGSThreeDSWidgetAppearance
+import com.paydock.feature.threeDS.integrated.presentation.ui.MPGSThreeDSWidgetAppearanceDefaults
+import com.paydock.feature.threeDS.standalone.presentation.ui.StandaloneThreeDSWidgetAppearance
+import com.paydock.feature.threeDS.standalone.presentation.ui.StandaloneThreeDSWidgetAppearanceDefaults
 import com.paydock.feature.zip.presentation.ZipWidgetAppearance
 import com.paydock.feature.zip.presentation.ZipWidgetAppearanceDefaults
 import com.paydock.sample.designsystems.components.CenterAppTopBar
@@ -161,8 +163,9 @@ fun MainScreenView(
     val googlePaySdkDefaults: GooglePayWidgetAppearance = GooglePayAppearanceDefaults.appearance()
     val colesPaySdkDefaults: ColesPayWidgetAppearance =
         ColesPayWidgetAppearanceDefaults.appearance()
-    val mpgs3dsSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
-    val standalone3DSSdkDefaults: ThreeDSWidgetAppearance = ThreeDSAppearanceDefaults.appearance()
+    val mpgs3dsSdkDefaults: MPGSThreeDSWidgetAppearance = MPGSThreeDSWidgetAppearanceDefaults.appearance()
+    val standalone3DSSdkDefaults: StandaloneThreeDSWidgetAppearance =
+        StandaloneThreeDSWidgetAppearanceDefaults.appearance()
     val zipSdkDefaults: ZipWidgetAppearance = ZipWidgetAppearanceDefaults.appearance()
 
     // Effect to update ViewModel when theme or font scale changes
@@ -204,48 +207,35 @@ fun MainScreenView(
         // No need to call updateInitial* methods here unless overriding defaults
     }
 
-    // Optimize: Collect all initialization states in a single combined flow to reduce recompositions
-    // Use separate state collections and combine them
-    val isAddressInitialized by stylingViewModel.addressWidgetAppearance.map { it != null }
-        .collectAsState(initial = false)
-    val isCardInitialized by stylingViewModel.cardDetailsWidgetAppearance.map { it != null }
-        .collectAsState(initial = false)
-    val isGiftCardInitialized by stylingViewModel.giftCardWidgetAppearance.map { it != null }
-        .collectAsState(initial = false)
-    val isClickToPayInitialized by stylingViewModel.clickToPayWidgetAppearance.map { it != null }
-        .collectAsState(initial = false)
-    val isAfterpayInitialized by stylingViewModel.afterpayWidgetAppearance.map { it != null }
-        .collectAsState(initial = false)
-    val isPayPalInitialized by stylingViewModel.paypalWidgetAppearance.map { it != null }
-        .collectAsState(initial = false)
-    val isPayPalVaultInitialized by stylingViewModel.paypalVaultWidgetAppearance.map { it != null }
-        .collectAsState(initial = false)
-    val isGooglePayWidgetAppearanceInitialized by stylingViewModel.googlePayWidgetAppearance.map { it != null }
-        .collectAsState(initial = false)
-    val isColesPayWidgetAppearanceInitialized by stylingViewModel.colesPayWidgetAppearance.map { it != null }
-        .collectAsState(initial = false)
-    val isMPGS3dsWidgetAppearanceInitialized by stylingViewModel.mpgs3dsWidgetAppearance.map { it != null }
-        .collectAsState(initial = false)
-    val isStandalone3DSWidgetAppearanceInitialized by stylingViewModel.standalone3DSWidgetAppearance.map { it != null }
-        .collectAsState(initial = false)
-    val isZipWidgetAppearanceInitialized by stylingViewModel.zipWidgetAppearance.map { it != null }
-        .collectAsState(initial = false)
+    // Optimize: Collect the state directly and use derivedStateOf for initialization checks
+    val addressWidgetAppearance by stylingViewModel.addressWidgetAppearance.collectAsState()
+    val cardDetailsWidgetAppearance by stylingViewModel.cardDetailsWidgetAppearance.collectAsState()
+    val giftCardWidgetAppearance by stylingViewModel.giftCardWidgetAppearance.collectAsState()
+    val clickToPayWidgetAppearance by stylingViewModel.clickToPayWidgetAppearance.collectAsState()
+    val afterpayWidgetAppearance by stylingViewModel.afterpayWidgetAppearance.collectAsState()
+    val paypalWidgetAppearance by stylingViewModel.paypalWidgetAppearance.collectAsState()
+    val paypalVaultWidgetAppearance by stylingViewModel.paypalVaultWidgetAppearance.collectAsState()
+    val googlePayWidgetAppearance by stylingViewModel.googlePayWidgetAppearance.collectAsState()
+    val colesPayWidgetAppearance by stylingViewModel.colesPayWidgetAppearance.collectAsState()
+    val mpgs3dsWidgetAppearance by stylingViewModel.mpgs3dsWidgetAppearance.collectAsState()
+    val standalone3DSWidgetAppearance by stylingViewModel.standalone3DSWidgetAppearance.collectAsState()
+    val zipWidgetAppearance by stylingViewModel.zipWidgetAppearance.collectAsState()
 
     // Combine all states using derivedStateOf to avoid recomposition when individual states don't change
     val isAllInitialized by remember {
         derivedStateOf {
-            isAddressInitialized &&
-                    isCardInitialized &&
-                    isGiftCardInitialized &&
-                    isClickToPayInitialized &&
-                    isAfterpayInitialized &&
-                    isPayPalInitialized &&
-                    isPayPalVaultInitialized &&
-                    isGooglePayWidgetAppearanceInitialized &&
-                    isColesPayWidgetAppearanceInitialized &&
-                    isMPGS3dsWidgetAppearanceInitialized &&
-                    isStandalone3DSWidgetAppearanceInitialized &&
-                    isZipWidgetAppearanceInitialized
+            addressWidgetAppearance != null &&
+                    cardDetailsWidgetAppearance != null &&
+                    giftCardWidgetAppearance != null &&
+                    clickToPayWidgetAppearance != null &&
+                    afterpayWidgetAppearance != null &&
+                    paypalWidgetAppearance != null &&
+                    paypalVaultWidgetAppearance != null &&
+                    googlePayWidgetAppearance != null &&
+                    colesPayWidgetAppearance != null &&
+                    mpgs3dsWidgetAppearance != null &&
+                    standalone3DSWidgetAppearance != null &&
+                    zipWidgetAppearance != null
         }
     }
 
