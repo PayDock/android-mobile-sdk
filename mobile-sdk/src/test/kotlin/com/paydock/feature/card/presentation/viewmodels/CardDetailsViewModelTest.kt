@@ -25,6 +25,7 @@ import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
@@ -182,6 +183,58 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
         )
     }
 
+    private fun makeViewModel(savedStateHandle: SavedStateHandle) = CardDetailsViewModel(
+        MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN,
+        MobileSDKTestConstants.General.MOCK_GATEWAY_ID,
+        SupportedSchemeConfig(),
+        getCardSchemasUseCaseTest,
+        createCardPaymentUseCase,
+        dispatchersProvider,
+        savedStateHandle
+    )
+
+    // region Rotation / configuration-change state preservation
+
+    @Test
+    fun `config change restores cardholder name and save card but drops PAN CVV and expiry`() = runTest {
+        setupGetCardSchemasSuccess()
+        val savedState = SavedStateHandle()
+        val original = makeViewModel(savedState)
+        original.updateCardholderName("John Doe")
+        original.updateSaveCard(true)
+        original.updateCardNumber("4111111111111111")
+        original.updateExpiry("0536")
+        original.updateSecurityCode("123")
+
+        // A rotation/process death recreates the ViewModel from the same SavedStateHandle.
+        val recreated = makeViewModel(savedState)
+        val state = recreated.inputStateFlow.first()
+
+        // Non-sensitive fields survive the recreation.
+        assertEquals("John Doe", state.cardholderName)
+        assertTrue(state.saveCard)
+        // PCI: PAN, CVV and expiry are never persisted, so they come back empty.
+        assertEquals("", state.cardNumber)
+        assertEquals("", state.code)
+        assertEquals("", state.expiry)
+    }
+
+    @Test
+    fun `config change with no prior input keeps defaults`() = runTest {
+        setupGetCardSchemasSuccess()
+        val savedState = SavedStateHandle()
+        makeViewModel(savedState) // nothing entered
+
+        val recreated = makeViewModel(savedState)
+        val state = recreated.inputStateFlow.first()
+
+        assertEquals(null, state.cardholderName)
+        assertFalse(state.saveCard)
+        assertEquals("", state.cardNumber)
+    }
+
+    // endregion
+
     @Test
     fun `updateCardholderName should update cardholderName and clear error`() = runTest {
         val newName = "John Doe"
@@ -279,17 +332,19 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `credit card tokeniseCard should update isLoading, call useCase, and update state on success`() =
         runTest {
+            val testScope = this
             setupCreateCardPaymentUseCaseSuccess()
             setupGetCardSchemasSuccess()
+            // Loading is now set synchronously (before dispatching to IO — see tokeniseCard's
+            // re-entrancy guard), so by the time a collector subscribes it has already moved past
+            // Idle; start observing from Loading rather than expecting Idle first.
+            viewModel.tokeniseCard()
             // Allows for testing flow state
             viewModel.stateFlow.test {
-                // ACTION
-                viewModel.tokeniseCard()
-                // CHECK
-                // Initial state
-                assertIs<CardDetailsUIState.Idle>(awaitItem())
                 // Loading state - before execution
                 assertIs<CardDetailsUIState.Loading>(awaitItem())
+                // Let the launched coroutine actually reach the use-case call before verifying it.
+                testScope.runCurrent()
                 coVerify { createCardPaymentUseCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any()) }
                 // Result state - success
                 awaitItem().let { state ->
@@ -300,19 +355,35 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
         }
 
     @Test
+    fun `credit card tokeniseCard called twice while already loading only calls useCase once`() = runTest {
+        // Regression test: a fast double-submit (e.g. the internal button and an external
+        // state.submit() racing) must not fire two tokenisation requests.
+        setupCreateCardPaymentUseCaseSuccess()
+        setupGetCardSchemasSuccess()
+
+        viewModel.tokeniseCard()
+        viewModel.tokeniseCard() // Should be a no-op: state is already Loading synchronously.
+
+        viewModel.stateFlow.first { it is CardDetailsUIState.Success }
+        coVerify(exactly = 1) { createCardPaymentUseCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any()) }
+    }
+
+    @Test
     fun `credit card tokeniseCard should update isLoading, call useCase, and update state on failure`() =
         runTest {
+            val testScope = this
             setupCreateCardPaymentUseCasFailure()
             setupGetCardSchemasSuccess()
+            // Loading is now set synchronously (before dispatching to IO — see tokeniseCard's
+            // re-entrancy guard), so by the time a collector subscribes it has already moved past
+            // Idle; start observing from Loading rather than expecting Idle first.
+            viewModel.tokeniseCard()
             // Allows for testing flow state
             viewModel.stateFlow.test {
-                // ACTION
-                viewModel.tokeniseCard()
-                // CHECK
-                // Initial state
-                assertIs<CardDetailsUIState.Idle>(awaitItem())
                 // Loading state - before execution
                 assertIs<CardDetailsUIState.Loading>(awaitItem())
+                // Let the launched coroutine actually reach the use-case call before verifying it.
+                testScope.runCurrent()
                 coVerify { createCardPaymentUseCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any()) }
                 // Result state - failure
                 awaitItem().let { state ->

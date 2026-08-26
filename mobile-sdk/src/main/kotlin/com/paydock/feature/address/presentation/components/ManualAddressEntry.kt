@@ -49,6 +49,7 @@ import com.paydock.feature.address.presentation.state.AddressDetailsFormState
  * - The animation duration is determined by [MobileSDKConstants.General.EXPANSION_TRANSITION_DURATION].
  */
 @OptIn(ExperimentalComposeUiApi::class)
+@Suppress("LongParameterList", "LongMethod")
 @Composable
 internal fun ManualAddressEntry(
     isManualAddressVisible: Boolean,
@@ -62,6 +63,19 @@ internal fun ManualAddressEntry(
     verticalSpacing: Dp,
     textFieldAppearance: TextFieldAppearance,
     searchAppearance: SearchDropdownAppearance,
+    addressLine1Appearance: TextFieldAppearance = textFieldAppearance,
+    addressLine2Appearance: TextFieldAppearance = textFieldAppearance,
+    cityAppearance: TextFieldAppearance = textFieldAppearance,
+    stateAppearance: TextFieldAppearance = textFieldAppearance,
+    postcodeAppearance: TextFieldAppearance = textFieldAppearance,
+    addressLine1ForceShowErrors: Boolean = false,
+    cityForceShowErrors: Boolean = false,
+    stateForceShowErrors: Boolean = false,
+    postcodeForceShowErrors: Boolean = false,
+    a11yAddressLine1Focus: Boolean = false,
+    a11yCityFocus: Boolean = false,
+    a11yStateFocus: Boolean = false,
+    a11yPostcodeFocus: Boolean = false,
 ) {
     // Slide-down animation for the ManualAddress component
     AnimatedVisibility(
@@ -89,11 +103,13 @@ internal fun ManualAddressEntry(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("addressLine1Input"),
-                appearance = textFieldAppearance,
+                appearance = addressLine1Appearance,
                 value = addressInputState.addressLine1,
                 label = stringResource(R.string.label_address_line_1),
                 nextFocus = focusAddressLine2,
                 autofillType = ContentType.AddressStreet,
+                forceShowErrors = addressLine1ForceShowErrors,
+                a11yFocus = a11yAddressLine1Focus,
                 onValueUpdated = onAddressLine1Change,
             )
             AddressInputField(
@@ -101,7 +117,7 @@ internal fun ManualAddressEntry(
                     .fillMaxWidth()
                     .focusRequester(focusAddressLine2)
                     .testTag("addressLine2Input"),
-                appearance = textFieldAppearance,
+                appearance = addressLine2Appearance,
                 value = addressInputState.addressLine2,
                 label = stringResource(R.string.label_address_line_2),
                 nextFocus = focusCity,
@@ -113,11 +129,13 @@ internal fun ManualAddressEntry(
                     .fillMaxWidth()
                     .focusRequester(focusCity)
                     .testTag("cityInput"),
-                appearance = textFieldAppearance,
+                appearance = cityAppearance,
                 value = addressInputState.city,
                 label = stringResource(R.string.label_city),
                 nextFocus = focusState,
                 autofillType = ContentType.AddressLocality,
+                forceShowErrors = cityForceShowErrors,
+                a11yFocus = a11yCityFocus,
                 onValueUpdated = onCityChange
             )
             AddressInputField(
@@ -125,11 +143,13 @@ internal fun ManualAddressEntry(
                     .fillMaxWidth()
                     .focusRequester(focusState)
                     .testTag("stateInput"),
-                appearance = textFieldAppearance,
+                appearance = stateAppearance,
                 value = addressInputState.state,
                 label = stringResource(R.string.label_state),
                 nextFocus = focusPostalCode,
                 autofillType = ContentType.AddressRegion,
+                forceShowErrors = stateForceShowErrors,
+                a11yFocus = a11yStateFocus,
                 onValueUpdated = onStateChange
             )
             AddressInputField(
@@ -137,10 +157,12 @@ internal fun ManualAddressEntry(
                     .fillMaxWidth()
                     .focusRequester(focusPostalCode)
                     .testTag("postalCodeInput"),
-                appearance = textFieldAppearance,
+                appearance = postcodeAppearance,
                 value = addressInputState.postalCode,
                 label = stringResource(R.string.label_postal_code),
                 autofillType = ContentType.PostalCode,
+                forceShowErrors = postcodeForceShowErrors,
+                a11yFocus = a11yPostcodeFocus,
                 onValueUpdated = onPostalCodeChange
             )
             // Country auto-complete dropdown selection

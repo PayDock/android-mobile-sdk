@@ -125,9 +125,11 @@ fun ConfigPropertiesScreen(
                 val address by configViewModel.addressConfig.collectAsState()
                 // Create a default empty address if null for editing
                 val currentAddress = address ?: BillingAddress()
+                val activePrimaryButton by configViewModel.addressActivePrimaryButton.collectAsState()
 
                 AddressDetailsProperties(
                     currentAddress = currentAddress,
+                    currentActivePrimaryButton = activePrimaryButton,
                     configItemName = configItemName,
                     widgetContext = widgetContext,
                     configViewModel = configViewModel

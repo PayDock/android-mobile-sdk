@@ -1,25 +1,16 @@
 package com.paydock.feature.card.presentation
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsFocused
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performImeAction
-import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.paydock.R
 import com.paydock.binprocessor.data.dto.BinDataResponse
 import com.paydock.core.BaseViewModelKoinTest
 import com.paydock.core.domain.error.exceptions.CardDetailsException
@@ -43,6 +34,9 @@ import com.paydock.feature.card.domain.model.ui.TokenDetails
 import com.paydock.feature.card.domain.usecase.CreateCardPaymentTokenUseCase
 import com.paydock.feature.card.domain.usecase.GetCardSchemasUseCase
 import com.paydock.feature.card.injection.cardDetailsModule
+import com.paydock.feature.card.presentation.state.CardDetailsInputState
+import com.paydock.feature.card.presentation.state.CardDetailsWidgetState
+import com.paydock.feature.card.presentation.state.rememberCardDetailsWidgetState
 import com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel
 import io.ktor.http.HttpStatusCode
 import io.mockk.Runs
@@ -56,7 +50,6 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.compose.LocalKoinApplication
@@ -71,17 +64,19 @@ import org.koin.mp.KoinPlatformTools
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+/**
+ * Widget-level integration tests for [CardDetailsWidget].
+ *
+ * The card fields are built on `SdkTextField`, which uses `clearAndSetSemantics` to curate a single
+ * TalkBack readout; that intentionally removes the editable-text/IME semantics `performTextInput`
+ * relies on, so form input cannot be injected by typing. These tests therefore **drive the shared
+ * [CardDetailsViewModel] directly** (the widget resolves the same instance bound below via Koin) to
+ * populate form state, and assert on the widget via test tags, curated `contentDescription`s and the
+ * completion callback. Component-level a11y/validation is covered by the per-field component tests
+ * and the validator unit tests.
+ */
 @OptIn(KoinInternalApi::class)
 @RunWith(AndroidJUnit4::class)
-@Ignore(
-    "Widget-level integration tests that simulate multi-field text input and submit/tokenise flows. " +
-        "The card fields are built on SdkTextField, which uses clearAndSetSemantics to curate a single " +
-        "TalkBack readout; that intentionally removes the editable-text semantics performTextInput relies " +
-        "on, so input cannot be injected via the test framework (and some assertions also predate the " +
-        "activePrimaryButton change). Re-enable by driving CardDetailsViewModel directly to populate form " +
-        "state instead of typing. Component a11y is covered by SdkTextFieldTest / CreditCardNumberInputTest / " +
-        "GiftCardNumberInputTest; validation/cap logic by unit tests."
-)
 internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
 
     private val testModule: Module = module {
@@ -119,8 +114,7 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
     }
 
     private val createCardPaymentTokenUseCase: CreateCardPaymentTokenUseCase = mockk(relaxed = true)
-    private val getCardSchemasUseCase: GetCardSchemasUseCase =
-        mockk(relaxed = true)
+    private val getCardSchemasUseCase: GetCardSchemasUseCase = mockk(relaxed = true)
 
     override fun initialiseViewModel(): CardDetailsViewModel {
         setupGetCardSchemasSuccess()
@@ -138,327 +132,144 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         )
     }
 
-    @Test
-    fun testCardDetailsInitialStateInput() {
+    // region Helpers
+
+    /** Captured by [setWidget] so tests can drive [CardDetailsWidgetState.submit] from outside composition. */
+    private lateinit var cardDetailsWidgetState: CardDetailsWidgetState
+
+    private fun setWidget(
+        config: CardDetailsWidgetConfig,
+        eventDelegate: WidgetEventDelegate? = null,
+        enabled: Boolean = true,
+        completion: (Result<CardResult>) -> Unit = {}
+    ) {
         composeTestRule.setContent {
-            // This shouldn't be needed, but allows robolectric tests to run successfully
-            // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557
+            // Provides the root Koin scope so the widget resolves the test-bound ViewModel.
+            // TODO remove once koin fix lands - https://github.com/InsertKoinIO/koin/issues/1557
             CompositionLocalProvider(
                 LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
                 LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
             ) {
+                cardDetailsWidgetState = rememberCardDetailsWidgetState()
                 CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken"
-                    ),
-                    completion = {}
+                    enabled = enabled,
+                    config = config,
+                    eventDelegate = eventDelegate,
+                    state = cardDetailsWidgetState,
+                    completion = completion
                 )
             }
         }
+        composeTestRule.waitForIdle()
+    }
 
-        // Verify UI elements and interactions (label_card_information is not used in widget)
+    /**
+     * Populates the shared ViewModel with a valid card so the form is valid, without simulating
+     * keystrokes. Card number is digits-only and expiry is raw MMYY, matching what the field
+     * components pass to the ViewModel's update callbacks.
+     */
+    private fun setValidInputs(includeCardholder: Boolean = true) {
+        composeTestRule.runOnIdle {
+            if (includeCardholder) viewModel.updateCardholderName("John Doe")
+            viewModel.updateCardNumber("4111111111111111")
+            viewModel.updateExpiry("0536")
+            viewModel.updateSecurityCode("123")
+        }
+        composeTestRule.waitForIdle()
+    }
+
+    // endregion
+
+    @Test
+    fun testCardDetailsInitialStateInput() {
+        setWidget(
+            config = CardDetailsWidgetConfig(gatewayId = "testGateway", accessToken = "testAccessToken")
+        )
+
         composeTestRule.onNodeWithTag("cardHolderInput").assertIsDisplayed()
         composeTestRule.onNodeWithTag("cardNumberInput").assertIsDisplayed()
         composeTestRule.onNodeWithTag("cardExpiryInput").assertIsDisplayed()
         composeTestRule.onNodeWithTag("cardSecurityCodeInput").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("submitDetails").assertIsDisplayed().assertIsNotEnabled()
+        // Default config uses activePrimaryButton = true, so the submit button is enabled and
+        // validates on tap (it is not gated on form validity).
+        composeTestRule.onNodeWithTag("submitDetails").assertIsDisplayed().assertIsEnabled()
+        assertFalse(viewModel.inputStateFlow.value.isDataValid)
     }
 
     @Test
     fun testCardDetailsValidInput() {
-        composeTestRule.setContent {
-            // This shouldn't be needed, but allows robolectric tests to run successfully
-            // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken"
-                    ),
-                    completion = {}
-                )
-            }
-        }
-        // Simulate user interactions
-        // ... Use composeTestRule.onNode and composeTestRule.onNodeWithContentDescription
-        //     to interact with specific UI elements
-        // Allow some time for the UI to update
-        composeTestRule.onNodeWithText("Cardholder name", useUnmergedTree = false)
-            .performClick()
-            .assertIsFocused()
-            .performTextInput("John Doe")
-        // Send the IME action (e.g., Done) to the TextField
-        composeTestRule.onNode(hasText("Cardholder name")).performImeAction()
+        setWidget(
+            config = CardDetailsWidgetConfig(gatewayId = "testGateway", accessToken = "testAccessToken")
+        )
 
-        composeTestRule.onNodeWithText("Card number", useUnmergedTree = false)
-            .performClick()
-            .assertIsFocused()
-            .performTextInput("4111111111111111")
-        // Send the IME action (e.g., Done) to the TextField
-        composeTestRule.onNode(hasText("Card number")).performImeAction()
+        setValidInputs()
 
-        composeTestRule.onNodeWithText("Expiry")
-            .performClick()
-            .assertIsFocused()
-            .performTextInput("0536")
-        // Send the IME action (e.g., Done) to the TextField
-        composeTestRule.onNode(hasText("Expiry")).performImeAction()
-
-        composeTestRule.onNodeWithText("CVV")
-            .performClick()
-            .assertIsFocused()
-            .performTextInput("123")
-        // Send the IME action (e.g., Done) to the TextField
-        composeTestRule.onNode(hasText("CVV")).performImeAction()
-
-        // Allow some time for the UI to update
-        composeTestRule.waitForIdle()
-
-        // Verify UI updates/changes
-        composeTestRule.onNodeWithText("Cardholder name").assert(hasText("John Doe"))
-        composeTestRule.onNodeWithText("Card number").assert(hasText("4111 1111 1111 1111 "))
-        composeTestRule.onNodeWithText("Expiry").assert(hasText("05/36"))
-        composeTestRule.onNodeWithText("CVV").assert(hasText("123"))
-        composeTestRule.onNodeWithTag("submitDetails").assertIsDisplayed().assertIsEnabled()
-
-        // Assert ViewModel interactions
         assertTrue(viewModel.inputStateFlow.value.isDataValid)
+        composeTestRule.onNodeWithTag("submitDetails").assertIsDisplayed().assertIsEnabled()
     }
 
     @Test
     fun testCardDetailsInvalidInput() {
-        composeTestRule.setContent {
-            // This shouldn't be needed, but allows robolectric tests to run successfully
-            // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken"
-                    ),
-                    completion = {}
-                )
-            }
+        setWidget(
+            config = CardDetailsWidgetConfig(gatewayId = "testGateway", accessToken = "testAccessToken")
+        )
+
+        composeTestRule.runOnIdle {
+            viewModel.updateCardholderName("John Doe")
+            viewModel.updateCardNumber("4111") // too short
+            viewModel.updateExpiry("0520") // expired
+            viewModel.updateSecurityCode("12") // too short
         }
-
-        // Simulate user interactions
-        // ... Use composeTestRule.onNode and composeTestRule.onNodeWithContentDescription
-        //     to interact with specific UI elements
-        // Allow some time for the UI to update
-        composeTestRule.onNodeWithText("Cardholder name", useUnmergedTree = false)
-            .performClick()
-            .assertIsFocused()
-            .performTextInput("John Doe")
-        // Send the IME action (e.g., Done) to the TextField
-        composeTestRule.onNode(hasText("Cardholder name")).performImeAction()
-
-        composeTestRule.onNodeWithText("Card number", useUnmergedTree = false)
-            .performClick()
-            .assertIsFocused()
-            .performTextInput("4111")
-        // Send the IME action (e.g., Done) to the TextField
-        composeTestRule.onNode(hasText("Card number")).performImeAction()
-
-        composeTestRule.onNodeWithText("Expiry")
-            .performClick()
-            .assertIsFocused()
-            .performTextInput("0520")
-        // Send the IME action (e.g., Done) to the TextField
-        composeTestRule.onNode(hasText("Expiry")).performImeAction()
-
-        composeTestRule.onNodeWithText("CVV")
-            .performClick()
-            .assertIsFocused()
-            .performTextInput("12")
-        // Send the IME action (e.g., Done) to the TextField
-        composeTestRule.onNode(hasText("CVV")).performImeAction()
-
-        // Allow some time for the UI to update
         composeTestRule.waitForIdle()
 
-        // Assert ViewModel interactions
         assertFalse(viewModel.inputStateFlow.value.isDataValid)
     }
 
     @Test
     fun testValidSubmissionWithSuccessTokenResult() {
         val onCardDetailsResult: (Result<CardResult>) -> Unit = mockk()
-        composeTestRule.setContent {
-            // This shouldn't be needed, but allows robolectric tests to run successfully
-            // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                // Set up your ViewModel and other dependencies
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken"
-                    ),
-                    completion = onCardDetailsResult
-                )
-            }
-        }
-
-        // Simulate user interactions
-        // ... Use composeTestRule.onNode and composeTestRule.onNodeWithContentDescription
-        //     to interact with specific UI elements
-        // Allow some time for the UI to update
-        composeTestRule.onNodeWithText("Cardholder name", useUnmergedTree = false)
-            .performClick()
-            .assertIsFocused()
-            .performTextInput("John Doe")
-        // Send the IME action (e.g., Done) to the TextField
-        composeTestRule.onNode(hasText("Cardholder name")).performImeAction()
-
-        composeTestRule.onNodeWithText("Card number", useUnmergedTree = false)
-            .performClick()
-            .assertIsFocused()
-            .performTextInput("4111111111111111")
-        // Send the IME action (e.g., Done) to the TextField
-        composeTestRule.onNode(hasText("Card number")).performImeAction()
-
-        composeTestRule.onNodeWithText("Expiry")
-            .performClick()
-            .assertIsFocused()
-            .performTextInput("0536")
-        // Send the IME action (e.g., Done) to the TextField
-        composeTestRule.onNode(hasText("Expiry")).performImeAction()
-
-        composeTestRule.onNodeWithText("CVV")
-            .performClick()
-            .assertIsFocused()
-            .performTextInput("123")
-        // Send the IME action (e.g., Done) to the TextField
-        composeTestRule.onNode(hasText("CVV")).performImeAction()
-
-        // Verify UI updates/changes
-        composeTestRule.onNodeWithText("Cardholder name").assert(hasText("John Doe"))
-        composeTestRule.onNodeWithText("Card number").assert(hasText("4111 1111 1111 1111 "))
-        composeTestRule.onNodeWithText("Expiry").assert(hasText("05/36"))
-        composeTestRule.onNodeWithText("CVV").assert(hasText("123"))
-        composeTestRule.onNodeWithTag("submitDetails").assertIsDisplayed().assertIsEnabled()
-
-        // Allow some time for the UI to update
-        composeTestRule.waitForIdle()
-
-        // For token case
         val mockToken = "mockToken"
-        val mockResult = Result.success(
-            TokenDetails(
-                token = mockToken,
-                type = "token"
-            )
-        )
         coEvery {
-            createCardPaymentTokenUseCase.invoke(
-                "testAccessToken",
-                any()
-            )
-        } returns mockResult
+            createCardPaymentTokenUseCase.invoke("testAccessToken", any())
+        } returns Result.success(TokenDetails(token = mockToken, type = "token"))
         every { onCardDetailsResult(any()) } just Runs
 
-        composeTestRule.onNodeWithTag("submitDetails").assertIsEnabled().performClick()
+        setWidget(
+            config = CardDetailsWidgetConfig(gatewayId = "testGateway", accessToken = "testAccessToken"),
+            completion = onCardDetailsResult
+        )
 
-        // Trigger the LaunchedEffects
+        setValidInputs()
+        composeTestRule.onNodeWithTag("submitDetails").assertIsEnabled().performClick()
         composeTestRule.waitUntilTimeout(5000)
 
         verify {
             onCardDetailsResult(Result.success(CardResult(mockToken)))
-            viewModel.resetResultState()
         }
     }
 
     @Test
     fun testSubmissionWithFailureResult() = runTest {
         val onCardDetailsResult: (Result<CardResult>) -> Unit = mockk()
-
-        // Set up your ViewModel and other dependencies
-        composeTestRule.setContent {
-            // This shouldn't be needed, but allows robolectric tests to run successfully
-            // TODO remove once a solution is found or a fix in koin - https://github.com/InsertKoinIO/koin/issues/1557
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken"
-                    ),
-                    completion = onCardDetailsResult
-                )
-            }
-        }
-
-        // Simulate user interactions
-        // ... Use composeTestRule.onNode and composeTestRule.onNodeWithContentDescription
-        //     to interact with specific UI elements
-        // Allow some time for the UI to update
-        composeTestRule.onNodeWithText("Cardholder name", useUnmergedTree = false)
-            .performClick()
-            .assertIsFocused()
-            .performTextInput("John Doe")
-        // Send the IME action (e.g., Done) to the TextField
-        composeTestRule.onNode(hasText("Cardholder name")).performImeAction()
-
-        composeTestRule.onNodeWithText("Card number", useUnmergedTree = false)
-            .performClick()
-            .assertIsFocused()
-            .performTextInput("4111111111111111")
-        // Send the IME action (e.g., Done) to the TextField
-        composeTestRule.onNode(hasText("Card number")).performImeAction()
-
-        composeTestRule.onNodeWithText("Expiry")
-            .performClick()
-            .assertIsFocused()
-            .performTextInput("0536")
-        // Send the IME action (e.g., Done) to the TextField
-        composeTestRule.onNode(hasText("Expiry")).performImeAction()
-
-        composeTestRule.onNodeWithText("CVV")
-            .performClick()
-            .assertIsFocused()
-            .performTextInput("123")
-        // Send the IME action (e.g., Done) to the TextField
-        composeTestRule.onNode(hasText("CVV")).performImeAction()
-
-        // Verify UI updates/changes
-        composeTestRule.onNodeWithText("Cardholder name").assert(hasText("John Doe"))
-        composeTestRule.onNodeWithText("Card number").assert(hasText("4111 1111 1111 1111 "))
-        composeTestRule.onNodeWithText("Expiry").assert(hasText("05/36"))
-        composeTestRule.onNodeWithText("CVV").assert(hasText("123"))
-        composeTestRule.onNodeWithTag("submitDetails").assertIsDisplayed().assertIsEnabled()
-
-        // Allow some time for the UI to update
-        composeTestRule.waitForIdle()
-
-        // For token case
         val mockError = CardDetailsException.TokenisingCardException(
             error = ApiErrorResponse(
                 status = HttpStatusCode.InternalServerError.value,
-                summary = ErrorSummary(
-                    code = "tokenisation_error",
-                    message = "Tokenization failed"
-                )
+                summary = ErrorSummary(code = "tokenisation_error", message = "Tokenization failed")
             )
         )
-        val mockResult = Result.failure<TokenDetails>(mockError)
-        coEvery { createCardPaymentTokenUseCase.invoke("testAccessToken", any()) } returns mockResult
+        coEvery {
+            createCardPaymentTokenUseCase.invoke("testAccessToken", any())
+        } returns Result.failure(mockError)
         every { onCardDetailsResult(any()) } just Runs
 
-        composeTestRule.onNodeWithTag("submitDetails").assertIsEnabled().performClick()
+        setWidget(
+            config = CardDetailsWidgetConfig(gatewayId = "testGateway", accessToken = "testAccessToken"),
+            completion = onCardDetailsResult
+        )
 
-        // Trigger the LaunchedEffects
-        composeTestRule.waitForIdle()
+        setValidInputs()
+        composeTestRule.onNodeWithTag("submitDetails").assertIsEnabled().performClick()
+        composeTestRule.waitUntilTimeout(5000)
 
         verify {
             onCardDetailsResult(Result.failure(mockError))
@@ -467,46 +278,35 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
 
     @Test
     fun testCardDetailsWithoutCardholderName() {
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken",
-                        collectCardholderName = false
-                    ),
-                    completion = {}
-                )
-            }
-        }
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                collectCardholderName = false
+            )
+        )
 
         composeTestRule.onNodeWithTag("cardHolderInput").assertDoesNotExist()
         composeTestRule.onNodeWithTag("cardNumberInput").assertIsDisplayed()
         composeTestRule.onNodeWithTag("cardExpiryInput").assertIsDisplayed()
         composeTestRule.onNodeWithTag("cardSecurityCodeInput").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("submitDetails").assertIsDisplayed().assertIsNotEnabled()
+        // Default activePrimaryButton = true -> enabled.
+        composeTestRule.onNodeWithTag("submitDetails").assertIsDisplayed().assertIsEnabled()
+
+        // Valid without a cardholder name.
+        setValidInputs(includeCardholder = false)
+        assertTrue(viewModel.inputStateFlow.value.isDataValid)
     }
 
     @Test
     fun testCardDetailsWithSaveCardToggleDisabled() {
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken",
-                        allowSaveCard = null
-                    ),
-                    completion = {}
-                )
-            }
-        }
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                allowSaveCard = null
+            )
+        )
 
         composeTestRule.onNodeWithTag("saveCardToggle").assertDoesNotExist()
         composeTestRule.onNodeWithTag("submitDetails").assertIsDisplayed()
@@ -516,33 +316,25 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
     fun testCardDetailsWithSaveCardToggle() {
         val onCardDetailsResult: (Result<CardResult>) -> Unit = mockk()
         val consentText = "Remember this card for next time."
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken",
-                        allowSaveCard = SaveCardConfig(consentText = consentText)
-                    ),
-                    completion = onCardDetailsResult
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithTag("saveCardToggle").assertIsDisplayed()
-        composeTestRule.onNodeWithText(consentText).assertIsDisplayed()
-
-        fillValidCardDetails(includeCardholder = true)
-
         val mockToken = "mockToken"
         coEvery {
             createCardPaymentTokenUseCase.invoke("testAccessToken", any())
         } returns Result.success(TokenDetails(token = mockToken, type = "token"))
         every { onCardDetailsResult(any()) } just Runs
 
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                allowSaveCard = SaveCardConfig(consentText = consentText)
+            ),
+            completion = onCardDetailsResult
+        )
+
+        composeTestRule.onNodeWithTag("saveCardToggle").assertIsDisplayed()
+        composeTestRule.onNodeWithText(consentText).assertIsDisplayed()
+
+        setValidInputs()
         composeTestRule.onNodeWithTag("submitDetails").assertIsEnabled().performClick()
         composeTestRule.waitUntilTimeout(5000)
 
@@ -554,32 +346,25 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
     @Test
     fun testCardDetailsWithSaveCardToggleEnabledSubmitsTrue() {
         val onCardDetailsResult: (Result<CardResult>) -> Unit = mockk()
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken",
-                        allowSaveCard = SaveCardConfig(consentText = "Remember this card for next time.")
-                    ),
-                    completion = onCardDetailsResult
-                )
-            }
-        }
-
-        fillValidCardDetails(includeCardholder = true)
-
-        composeTestRule.onNodeWithTag("saveCardToggleSwitch").performClick()
-        composeTestRule.waitForIdle()
-
         val mockToken = "mockToken"
         coEvery {
             createCardPaymentTokenUseCase.invoke("testAccessToken", any())
         } returns Result.success(TokenDetails(token = mockToken, type = "token"))
         every { onCardDetailsResult(any()) } just Runs
+
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                allowSaveCard = SaveCardConfig(consentText = "Remember this card for next time.")
+            ),
+            completion = onCardDetailsResult
+        )
+
+        setValidInputs()
+
+        composeTestRule.onNodeWithTag("saveCardToggleSwitch").performClick()
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithTag("submitDetails").assertIsEnabled().performClick()
         composeTestRule.waitUntilTimeout(5000)
@@ -591,25 +376,16 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
 
     @Test
     fun testSupportedCardSchemesDisplay() {
-        val supportedSchemes = setOf(CardType.VISA, CardType.MASTERCARD)
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken",
-                        schemeSupport = SupportedSchemeConfig(
-                            supportedSchemes = supportedSchemes,
-                            enableValidation = true
-                        )
-                    ),
-                    completion = {}
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                schemeSupport = SupportedSchemeConfig(
+                    supportedSchemes = setOf(CardType.VISA, CardType.MASTERCARD),
+                    enableValidation = true
                 )
-            }
-        }
+            )
+        )
 
         composeTestRule.onNodeWithTag("supportedCardBanner").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription(
@@ -619,66 +395,41 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
 
     @Test
     fun testCardNumberValidationDisabledWhenEnableValidationFalse() {
-        setupGetCardSchemasSuccess()
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken",
-                        collectCardholderName = false,
-                        schemeSupport = SupportedSchemeConfig(
-                            supportedSchemes = setOf(CardType.MASTERCARD),
-                            enableValidation = false
-                        )
-                    ),
-                    completion = {}
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                collectCardholderName = false,
+                schemeSupport = SupportedSchemeConfig(
+                    supportedSchemes = setOf(CardType.MASTERCARD),
+                    enableValidation = false
                 )
-            }
-        }
+            )
+        )
 
-        // Enter Visa number (not in supportedSchemes) - with enableValidation=false, scheme check is skipped
-        composeTestRule.onNodeWithText("Card number", useUnmergedTree = false)
-            .performClick().assertIsFocused().performTextInput("4111111111111111")
-        composeTestRule.onNode(hasText("Card number")).performImeAction()
-        composeTestRule.onNodeWithText("Expiry").performClick().assertIsFocused().performTextInput("0536")
-        composeTestRule.onNode(hasText("Expiry")).performImeAction()
-        composeTestRule.onNodeWithText("CVV").performClick().assertIsFocused().performTextInput("123")
-        composeTestRule.onNode(hasText("CVV")).performImeAction()
-        composeTestRule.waitForIdle()
+        // Visa number is not in the supported set, but with enableValidation = false the scheme
+        // check is skipped, so the (Luhn-valid) number is accepted.
+        setValidInputs(includeCardholder = false)
 
-        // Submit should be enabled (no UnsupportedCardScheme error when enableValidation=false)
-        composeTestRule.onNodeWithTag("submitDetails").assertIsEnabled()
+        assertTrue(viewModel.inputStateFlow.value.isDataValid)
     }
 
     @Test
     fun testCardDetailsWithPrivacyPolicyLink() {
-        val privacyPolicyUrl = "https://example.com/privacy"
         val privacyPolicyText = "Read our privacy policy"
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken",
-                        allowSaveCard = SaveCardConfig(
-                            consentText = "Remember this card for next time.",
-                            privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
-                                privacyPolicyText = privacyPolicyText,
-                                privacyPolicyURL = privacyPolicyUrl
-                            )
-                        )
-                    ),
-                    completion = {}
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                allowSaveCard = SaveCardConfig(
+                    consentText = "Remember this card for next time.",
+                    privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
+                        privacyPolicyText = privacyPolicyText,
+                        privacyPolicyURL = "https://example.com/privacy"
+                    )
                 )
-            }
-        }
+            )
+        )
 
         composeTestRule.onNodeWithText(privacyPolicyText).assertIsDisplayed().performClick()
         composeTestRule.waitForIdle()
@@ -687,23 +438,6 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
     @Test
     fun testTokenizationFailureShowsSpecificMessage() = runTest {
         val onCardDetailsResult: (Result<CardResult>) -> Unit = mockk()
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken"
-                    ),
-                    completion = onCardDetailsResult
-                )
-            }
-        }
-
-        fillValidCardDetails(includeCardholder = true)
-
         val timeoutError = CardDetailsException.TokenisingCardException(
             error = ApiErrorResponse(
                 status = HttpStatusCode.RequestTimeout.value,
@@ -713,12 +447,19 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
                 )
             )
         )
-        coEvery { createCardPaymentTokenUseCase.invoke("testAccessToken", any()) } returns
-            Result.failure<TokenDetails>(timeoutError)
+        coEvery {
+            createCardPaymentTokenUseCase.invoke("testAccessToken", any())
+        } returns Result.failure(timeoutError)
         every { onCardDetailsResult(any()) } just Runs
 
+        setWidget(
+            config = CardDetailsWidgetConfig(gatewayId = "testGateway", accessToken = "testAccessToken"),
+            completion = onCardDetailsResult
+        )
+
+        setValidInputs()
         composeTestRule.onNodeWithTag("submitDetails").assertIsEnabled().performClick()
-        composeTestRule.waitForIdle()
+        composeTestRule.waitUntilTimeout(5000)
 
         verify {
             onCardDetailsResult(Result.failure(timeoutError))
@@ -732,23 +473,15 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             createCardPaymentTokenUseCase.invoke(any(), capture(requestSlot))
         } returns Result.success(TokenDetails(token = "tok", type = "token"))
 
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken",
-                        storeSecurityCode = true
-                    ),
-                    completion = {}
-                )
-            }
-        }
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                storeSecurityCode = true
+            )
+        )
 
-        fillValidCardDetails(includeCardholder = true)
+        setValidInputs()
         composeTestRule.onNodeWithTag("submitDetails").assertIsEnabled().performClick()
         composeTestRule.waitUntilTimeout(5000)
 
@@ -763,23 +496,15 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             createCardPaymentTokenUseCase.invoke(any(), capture(requestSlot))
         } returns Result.success(TokenDetails(token = "tok", type = "token"))
 
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken",
-                        storeSecurityCode = false
-                    ),
-                    completion = {}
-                )
-            }
-        }
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                storeSecurityCode = false
+            )
+        )
 
-        fillValidCardDetails(includeCardholder = true)
+        setValidInputs()
         composeTestRule.onNodeWithTag("submitDetails").assertIsEnabled().performClick()
         composeTestRule.waitUntilTimeout(5000)
 
@@ -794,22 +519,11 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             createCardPaymentTokenUseCase.invoke(any(), capture(requestSlot))
         } returns Result.success(TokenDetails(token = "tok", type = "token"))
 
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken"
-                    ),
-                    completion = {}
-                )
-            }
-        }
+        setWidget(
+            config = CardDetailsWidgetConfig(gatewayId = "testGateway", accessToken = "testAccessToken")
+        )
 
-        fillValidCardDetails(includeCardholder = true)
+        setValidInputs()
         composeTestRule.onNodeWithTag("submitDetails").assertIsEnabled().performClick()
         composeTestRule.waitUntilTimeout(5000)
 
@@ -820,23 +534,6 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
     @Test
     fun testTokenizationFailure500ShowsSpecificMessage() = runTest {
         val onCardDetailsResult: (Result<CardResult>) -> Unit = mockk()
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken"
-                    ),
-                    completion = onCardDetailsResult
-                )
-            }
-        }
-
-        fillValidCardDetails(includeCardholder = true)
-
         val serverError = CardDetailsException.TokenisingCardException(
             error = ApiErrorResponse(
                 status = HttpStatusCode.InternalServerError.value,
@@ -846,12 +543,19 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
                 )
             )
         )
-        coEvery { createCardPaymentTokenUseCase.invoke("testAccessToken", any()) } returns
-            Result.failure<TokenDetails>(serverError)
+        coEvery {
+            createCardPaymentTokenUseCase.invoke("testAccessToken", any())
+        } returns Result.failure(serverError)
         every { onCardDetailsResult(any()) } just Runs
 
+        setWidget(
+            config = CardDetailsWidgetConfig(gatewayId = "testGateway", accessToken = "testAccessToken"),
+            completion = onCardDetailsResult
+        )
+
+        setValidInputs()
         composeTestRule.onNodeWithTag("submitDetails").assertIsEnabled().performClick()
-        composeTestRule.waitForIdle()
+        composeTestRule.waitUntilTimeout(5000)
 
         verify {
             onCardDetailsResult(Result.failure(serverError))
@@ -862,32 +566,22 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
     @Test
     fun testTokenizationFailureNetworkShowsSpecificMessage() = runTest {
         val onCardDetailsResult: (Result<CardResult>) -> Unit = mockk()
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken"
-                    ),
-                    completion = onCardDetailsResult
-                )
-            }
-        }
-
-        fillValidCardDetails(includeCardholder = true)
-
         val networkError = GenericException.ConnectionException(
             "Could not connect to the server. Please check your internet."
         )
-        coEvery { createCardPaymentTokenUseCase.invoke("testAccessToken", any()) } returns
-            Result.failure<TokenDetails>(networkError)
+        coEvery {
+            createCardPaymentTokenUseCase.invoke("testAccessToken", any())
+        } returns Result.failure(networkError)
         every { onCardDetailsResult(any()) } just Runs
 
+        setWidget(
+            config = CardDetailsWidgetConfig(gatewayId = "testGateway", accessToken = "testAccessToken"),
+            completion = onCardDetailsResult
+        )
+
+        setValidInputs()
         composeTestRule.onNodeWithTag("submitDetails").assertIsEnabled().performClick()
-        composeTestRule.waitForIdle()
+        composeTestRule.waitUntilTimeout(5000)
 
         verify {
             onCardDetailsResult(Result.failure(networkError))
@@ -904,28 +598,20 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         val privacyPolicyUrl = "https://example.com/privacy"
         val privacyPolicyText = "Read our privacy policy"
 
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken",
-                        allowSaveCard = SaveCardConfig(
-                            consentText = "Remember this card for next time.",
-                            privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
-                                privacyPolicyText = privacyPolicyText,
-                                privacyPolicyURL = privacyPolicyUrl
-                            )
-                        )
-                    ),
-                    eventDelegate = eventDelegate,
-                    completion = {}
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                allowSaveCard = SaveCardConfig(
+                    consentText = "Remember this card for next time.",
+                    privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
+                        privacyPolicyText = privacyPolicyText,
+                        privacyPolicyURL = privacyPolicyUrl
+                    )
                 )
-            }
-        }
+            ),
+            eventDelegate = eventDelegate
+        )
 
         composeTestRule.onNodeWithText(privacyPolicyText).assertIsDisplayed().performClick()
         composeTestRule.waitForIdle()
@@ -940,27 +626,19 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
 
     @Test
     fun testInvalidPrivacyPolicyUrlHidesLink() {
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken",
-                        allowSaveCard = SaveCardConfig(
-                            consentText = "Remember this card for next time.",
-                            privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
-                                privacyPolicyText = "",
-                                privacyPolicyURL = ""
-                            )
-                        )
-                    ),
-                    completion = {}
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                allowSaveCard = SaveCardConfig(
+                    consentText = "Remember this card for next time.",
+                    privacyPolicyConfig = SaveCardConfig.PrivacyPolicyConfig(
+                        privacyPolicyText = "",
+                        privacyPolicyURL = ""
+                    )
                 )
-            }
-        }
+            )
+        )
 
         composeTestRule.onNodeWithText("Remember this card for next time.").assertIsDisplayed()
         composeTestRule.onNodeWithText("Read our privacy policy").assertDoesNotExist()
@@ -968,49 +646,33 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
 
     @Test
     fun testSecurityCodeValidationAfterChangingCardType() {
-        setupGetCardSchemasSuccess()
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken",
-                        collectCardholderName = false
-                    ),
-                    completion = {}
-                )
-            }
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                collectCardholderName = false
+            )
+        )
+
+        // Amex (4-digit CID) with a valid 4-digit code.
+        composeTestRule.runOnIdle {
+            viewModel.updateCardNumber("371449635398431")
+            viewModel.updateExpiry("0536")
+            viewModel.updateSecurityCode("1234")
         }
-
-        // Enter Amex card number (15 digits)
-        composeTestRule.onNodeWithText("Card number", useUnmergedTree = false)
-            .performClick().assertIsFocused().performTextInput("371449635398431")
-        composeTestRule.onNode(hasText("Card number")).performImeAction()
-
-        // Enter expiry
-        composeTestRule.onNodeWithText("Expiry").performClick().assertIsFocused().performTextInput("0536")
-        composeTestRule.onNode(hasText("Expiry")).performImeAction()
-
-        // Enter 4-digit CID (valid for Amex)
-        composeTestRule.onNodeWithText("CID").performClick().assertIsFocused().performTextInput("1234")
-        composeTestRule.onNode(hasText("CID")).performImeAction()
         composeTestRule.waitForIdle()
 
-        // Change card number to Visa (3-digit CVV expected) - replace Amex number
-        val cardNumberInput = hasTestTag("sdkInput") and hasAnyAncestor(hasTestTag("cardNumberInput"))
-        composeTestRule.onNode(cardNumberInput).performClick()
-        composeTestRule.onNode(hasText("3714 496353 98431")).performTextReplacement("4111111111111111")
-        composeTestRule.onNode(cardNumberInput).performImeAction()
+        // Switch to Visa (expects a 3-digit CVV) - the retained 4-digit code is now invalid.
+        composeTestRule.runOnIdle {
+            viewModel.updateCardNumber("4111111111111111")
+        }
         composeTestRule.waitForIdle()
 
-        val errorText = getStringRes(R.string.error_security_code)
-        composeTestRule.waitUntil(timeoutMillis = 3000) {
-            composeTestRule.onAllNodesWithText(errorText, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeTestRule.onNodeWithText(errorText, useUnmergedTree = true).assertIsDisplayed()
+        assertTrue(
+            viewModel.inputStateFlow.value.invalidFields.contains(
+                CardDetailsInputState.CardField.SECURITY_CODE
+            )
+        )
     }
 
     @Test
@@ -1019,29 +681,16 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         val eventDelegate: WidgetEventDelegate = mockk(relaxed = true) {
             every { widgetEvent(capture(eventSlot)) } just Runs
         }
-
         coEvery {
             createCardPaymentTokenUseCase.invoke(any(), any())
         } returns Result.success(TokenDetails(token = "tok", type = "token"))
 
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken"
-                    ),
-                    eventDelegate = eventDelegate,
-                    completion = {}
-                )
-            }
-        }
+        setWidget(
+            config = CardDetailsWidgetConfig(gatewayId = "testGateway", accessToken = "testAccessToken"),
+            eventDelegate = eventDelegate
+        )
 
-        fillValidCardDetails(includeCardholder = true)
-
+        setValidInputs()
         composeTestRule.onNodeWithTag("submitDetails").assertIsEnabled().performClick()
         composeTestRule.waitForIdle()
 
@@ -1059,22 +708,14 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             every { widgetEvent(capture(eventSlot)) } just Runs
         }
 
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken",
-                        allowSaveCard = SaveCardConfig(consentText = "Remember this card for next time.")
-                    ),
-                    eventDelegate = eventDelegate,
-                    completion = {}
-                )
-            }
-        }
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                allowSaveCard = SaveCardConfig(consentText = "Remember this card for next time.")
+            ),
+            eventDelegate = eventDelegate
+        )
 
         composeTestRule.onNodeWithTag("saveCardToggleSwitch").performClick()
         composeTestRule.waitForIdle()
@@ -1094,23 +735,15 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             createCardPaymentTokenUseCase.invoke(any(), capture(requestSlot))
         } returns Result.success(TokenDetails(token = "tok", type = "token"))
 
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalKoinScope provides KoinPlatformTools.defaultContext().get().scopeRegistry.rootScope,
-                LocalKoinApplication provides KoinPlatformTools.defaultContext().get()
-            ) {
-                CardDetailsWidget(
-                    config = CardDetailsWidgetConfig(
-                        gatewayId = "testGateway",
-                        accessToken = "testAccessToken",
-                        allowSaveCard = SaveCardConfig(consentText = "Remember this card for next time.")
-                    ),
-                    completion = {}
-                )
-            }
-        }
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                allowSaveCard = SaveCardConfig(consentText = "Remember this card for next time.")
+            )
+        )
 
-        fillValidCardDetails(includeCardholder = true)
+        setValidInputs()
 
         composeTestRule.onNodeWithTag("saveCardToggleSwitch").performClick()
         composeTestRule.waitForIdle()
@@ -1122,19 +755,126 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
         assertTrue(requestSlot.captured.savedCardConsentAccepted)
     }
 
-    private fun fillValidCardDetails(includeCardholder: Boolean) {
-        if (includeCardholder) {
-            composeTestRule.onNodeWithText("Cardholder name", useUnmergedTree = false)
-                .performClick().assertIsFocused().performTextInput("John Doe")
-            composeTestRule.onNode(hasText("Cardholder name")).performImeAction()
-        }
-        composeTestRule.onNodeWithText("Card number", useUnmergedTree = false)
-            .performClick().assertIsFocused().performTextInput("4111111111111111")
-        composeTestRule.onNode(hasText("Card number")).performImeAction()
-        composeTestRule.onNodeWithText("Expiry").performClick().assertIsFocused().performTextInput("0536")
-        composeTestRule.onNode(hasText("Expiry")).performImeAction()
-        composeTestRule.onNodeWithText("CVV").performClick().assertIsFocused().performTextInput("123")
-        composeTestRule.onNode(hasText("CVV")).performImeAction()
-        composeTestRule.waitForIdle()
+    // region showSubmitButton / showSchemeList / state.submit()
+
+    @Test
+    fun testShowSubmitButtonFalseHidesInternalButton() {
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                showSubmitButton = false
+            )
+        )
+
+        composeTestRule.onAllNodesWithTag("submitDetails").assertCountEquals(0)
     }
+
+    @Test
+    fun testShowSchemeListFalseHidesSchemeBannerWithoutDisablingValidation() {
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                schemeSupport = SupportedSchemeConfig(
+                    supportedSchemes = setOf(CardType.VISA, CardType.MASTERCARD),
+                    enableValidation = true,
+                    showSchemeList = false
+                )
+            )
+        )
+
+        composeTestRule.onAllNodesWithTag("supportedCardBanner").assertCountEquals(0)
+
+        // Scheme validation itself must still be active: an Amex number (not in supportedSchemes)
+        // should still be rejected even though the banner announcing the restriction is hidden.
+        composeTestRule.runOnIdle {
+            viewModel.updateCardNumber("371449635398431") // Amex
+        }
+        composeTestRule.waitForIdle()
+        assertFalse(viewModel.inputStateFlow.value.isDataValid)
+    }
+
+    @Test
+    fun testStateSubmitTokenisesWhenFormValid() {
+        val mockToken = "mockToken"
+        coEvery {
+            createCardPaymentTokenUseCase.invoke("testAccessToken", any())
+        } returns Result.success(TokenDetails(token = mockToken, type = "token"))
+
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                showSubmitButton = false
+            )
+        )
+        setValidInputs()
+
+        composeTestRule.runOnIdle { cardDetailsWidgetState.submit() }
+        composeTestRule.waitUntilTimeout(5000)
+
+        coVerify { createCardPaymentTokenUseCase.invoke("testAccessToken", any()) }
+    }
+
+    @Test
+    fun testStateSubmitWithActivePrimaryButtonFalseDoesNotTokeniseInvalidForm() {
+        // Regression test: activePrimaryButton only controls the *internal* button's enabled state.
+        // With showSubmitButton = false there is no button at all, so state.submit() must still
+        // re-validate rather than tokenising invalid input straight away.
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                activePrimaryButton = false,
+                showSubmitButton = false
+            )
+        )
+        // Form is left empty/invalid - no setValidInputs() call.
+        assertFalse(viewModel.inputStateFlow.value.isDataValid)
+
+        composeTestRule.runOnIdle { cardDetailsWidgetState.submit() }
+        composeTestRule.waitUntilTimeout(2000)
+
+        coVerify(exactly = 0) { createCardPaymentTokenUseCase.invoke(any(), any()) }
+    }
+
+    @Test
+    fun testStateSubmitWhenWidgetDisabledDoesNotTokenise() {
+        // Regression test: state.submit() bypasses the internal button's `enabled = isEnabled` UI
+        // guard entirely, so the widget's own `enabled` param must be re-checked inside submitTapped.
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                showSubmitButton = false
+            ),
+            enabled = false
+        )
+        setValidInputs()
+
+        composeTestRule.runOnIdle { cardDetailsWidgetState.submit() }
+        composeTestRule.waitUntilTimeout(2000)
+
+        coVerify(exactly = 0) { createCardPaymentTokenUseCase.invoke(any(), any()) }
+    }
+
+    @Test
+    fun testStateIsFormValidReflectsFormValidity() {
+        setWidget(
+            config = CardDetailsWidgetConfig(
+                gatewayId = "testGateway",
+                accessToken = "testAccessToken",
+                activePrimaryButton = false,
+                showSubmitButton = false
+            )
+        )
+        // Invalid/empty form: isFormValid must reflect that even though there is no button to observe.
+        assertFalse(cardDetailsWidgetState.isFormValid)
+
+        setValidInputs()
+        assertTrue(cardDetailsWidgetState.isFormValid)
+    }
+
+    // endregion
 }

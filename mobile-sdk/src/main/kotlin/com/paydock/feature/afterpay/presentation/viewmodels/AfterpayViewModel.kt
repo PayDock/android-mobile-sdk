@@ -20,6 +20,7 @@ import com.paydock.feature.afterpay.domain.mapper.integration.mapToSDKShippingOp
 import com.paydock.feature.afterpay.domain.model.integration.AfterpaySDKConfig
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOption
 import com.paydock.feature.afterpay.domain.model.integration.AfterpayShippingOptionUpdate
+import com.paydock.feature.afterpay.presentation.AfterpayBaseline
 import com.paydock.feature.afterpay.presentation.state.AfterpayUIState
 import com.paydock.feature.wallet.data.dto.CaptureWalletChargeRequest
 import com.paydock.feature.wallet.data.dto.CustomerData
@@ -372,12 +373,14 @@ internal class AfterpayViewModel(
     /**
      * Configures the Afterpay SDK using the provided [config].
      *
-     * Uses [AfterpaySDKConfig.locale] when set; otherwise [Locale.getDefault].
+     * Uses [AfterpaySDKConfig.locale] when set; otherwise falls back to [AfterpayBaseline.DEFAULT_LOCALE] (the device locale).
      * minimumAmount, maximumAmount and currencyCode are derived from the effective locale.
+     * The effective locale is also passed as Afterpay's consumerLocale so the payment button
+     * resolves its language/brand/logo deterministically rather than from the device locale.
      */
     fun configureAfterpaySdk(config: AfterpaySDKConfig) {
         launchOnIO {
-            val effectiveLocale = config.locale ?: Locale.getDefault()
+            val effectiveLocale = config.locale ?: AfterpayBaseline.DEFAULT_LOCALE
             try {
                 Afterpay.setConfiguration(
                     minimumAmount = "1",
@@ -387,7 +390,14 @@ internal class AfterpayViewModel(
                         .setLanguage(effectiveLocale.language)
                         .setRegion(effectiveLocale.country)
                         .build(),
-                    environment = MobileSDK.getInstance().environment.mapToAfterpayEnv()
+                    environment = MobileSDK.getInstance().environment.mapToAfterpayEnv(),
+                    // Afterpay 4.8.x added consumerLocale: it drives the payment button's
+                    // language, brand (Afterpay/Clearpay/Cash App) and logo. When omitted it
+                    // defaults to Locale.getDefault() (the device locale), which can render the
+                    // wrong brand or disable the button entirely if the device language is
+                    // unsupported for the region. Pin it to the configured locale for
+                    // deterministic rendering.
+                    consumerLocale = effectiveLocale
                 )
                 _isConfigured.value = true
             } catch (e: IllegalArgumentException) {

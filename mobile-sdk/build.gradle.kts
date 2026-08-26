@@ -1,10 +1,8 @@
-import com.android.build.api.dsl.ManagedVirtualDevice
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
     // linting
     id("detekt-convention")
@@ -20,7 +18,7 @@ plugins {
 
 android {
     namespace = "com.paydock"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
@@ -62,19 +60,36 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // Required by afterpay-android 4.8.x, which depends on desugared core library APIs.
+        isCoreLibraryDesugaringEnabled = true
     }
     testOptions {
         unitTests.isReturnDefaultValues = true
         // Disable window animations during instrumented tests (command-line) to reduce flakiness
         animationsDisabled = true
     }
-    // Gradle Managed Devices for instrumentation tests (CI-friendly aosp-atd image)
+    // Gradle Managed Devices for instrumentation tests (CI-friendly images).
+    // - pixel6Api35: the max supported OS (default single-device run).
+    // - minApi24: the minimum supported OS (minSdk = 24). ATD images only exist for API 30+, so
+    //   the floor device uses the plain "aosp" image.
+    // The "osMatrix" group runs the suite on both floor and ceiling: `:mobile-sdk:osMatrixGroupDebugAndroidTest`.
     testOptions.managedDevices {
-        devices {
-            maybeCreate<ManagedVirtualDevice>("pixel6Api35").apply {
+        localDevices {
+            create("pixel6Api35") {
                 device = "Pixel 6"
                 apiLevel = 35
                 systemImageSource = "aosp-atd"
+            }
+            create("minApi24") {
+                device = "Pixel 6"
+                apiLevel = 24
+                systemImageSource = "aosp"
+            }
+        }
+        groups {
+            create("osMatrix") {
+                targetDevices.add(localDevices.getByName("minApi24"))
+                targetDevices.add(localDevices.getByName("pixel6Api35"))
             }
         }
     }
@@ -139,6 +154,8 @@ dependencies {
     api(libs.google.compose.pay.button)
     // Afterpay SDK
     api(libs.afterpay.android)
+    // Core library desugaring runtime required by afterpay-android 4.8.x
+    coreLibraryDesugaring(libs.android.desugar.jdk.libs)
     // PayPal SDK
     // Expose only the button types to consumers; keep the rest internal to the SDK
     api(libs.paypal.payment.buttons)

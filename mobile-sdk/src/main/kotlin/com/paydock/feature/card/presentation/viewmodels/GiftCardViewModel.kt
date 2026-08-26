@@ -75,11 +75,37 @@ internal class GiftCardViewModel(
     }
 
     /**
+     * Triggers validation for all fields in the input state.
+     * This is useful when the submit button is enabled by default and needs to show errors upon click.
+     */
+    fun validateAllFields() {
+        _inputStateFlow.update { state ->
+            state.copy(
+                cardNumberErrorOverwrite = true,
+                pinErrorOverwrite = true
+            )
+        }
+    }
+
+    private fun resetCardNumberErrorOverwrite() {
+        if (_inputStateFlow.value.cardNumberErrorOverwrite) {
+            _inputStateFlow.update { state -> state.copy(cardNumberErrorOverwrite = false) }
+        }
+    }
+
+    private fun resetPinErrorOverwrite() {
+        if (_inputStateFlow.value.pinErrorOverwrite) {
+            _inputStateFlow.update { state -> state.copy(pinErrorOverwrite = false) }
+        }
+    }
+
+    /**
      * Updates the card number in the gift card input state.
      *
      * @param number The card number to be updated in the input state.
      */
     fun updateCardNumber(number: String) {
+        resetCardNumberErrorOverwrite()
         _inputStateFlow.update { state ->
             state.copy(cardNumber = number)
         }
@@ -91,6 +117,7 @@ internal class GiftCardViewModel(
      * @param pin The card PIN to be updated in the input state.
      */
     fun updateCardPin(pin: String) {
+        resetPinErrorOverwrite()
         _inputStateFlow.update { state ->
             state.copy(pin = pin)
         }
@@ -117,8 +144,14 @@ internal class GiftCardViewModel(
      * and prepares the state for any subsequent actions.
      */
     fun tokeniseCard() {
+        // Transition to Loading synchronously (before dispatching to IO), so a second call arriving
+        // on the same thread before the coroutine has started sees Loading immediately rather than
+        // racing it — this is what makes the composable's `uiState is Loading` re-entrancy guard
+        // (for both the internal button and the external `state.submit()` trigger) actually durable.
+        if (_stateFlow.value is GiftCardUIState.Loading) return
+        updateState(GiftCardUIState.Loading)
+
         launchOnIO {
-            updateState(GiftCardUIState.Loading)
             val state = _inputStateFlow.value
             val request = CreateCardPaymentTokenRequest.TokeniseCardRequest.GiftCard(
                 cardNumber = state.cardNumber,

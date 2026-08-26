@@ -815,9 +815,6 @@ private fun TextFieldHintLabel(
     hint: String,
     appearance: TextFieldAppearance = appearance()
 ) {
-    val hintAppearance = appearance.copy(
-        style = appearance.style.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
-    )
     SdkText(
         modifier = Modifier
             .padding(

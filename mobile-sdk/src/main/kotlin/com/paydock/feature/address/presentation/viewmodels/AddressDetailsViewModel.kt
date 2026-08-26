@@ -51,18 +51,33 @@ internal class AddressDetailsViewModel(
             initialValue = AddressDetailsState()
         )
 
+    /**
+     * Triggers validation for all required fields in the form.
+     * Used when the primary button is enabled by default (activePrimaryButton) so errors surface on click.
+     */
+    fun validateAllFields() {
+        _formState.value = _formState.value.copy(
+            firstNameErrorOverwrite = true,
+            lastNameErrorOverwrite = true,
+            addressLine1ErrorOverwrite = true,
+            cityErrorOverwrite = true,
+            stateErrorOverwrite = true,
+            postcodeErrorOverwrite = true
+        )
+    }
+
     // --- Functions to update individual fields ---
 
     fun updateFirstName(firstName: String) {
-        _formState.value = _formState.value.copy(firstName = firstName)
+        _formState.value = _formState.value.copy(firstName = firstName, firstNameErrorOverwrite = false)
     }
 
     fun updateLastName(lastName: String) {
-        _formState.value = _formState.value.copy(lastName = lastName)
+        _formState.value = _formState.value.copy(lastName = lastName, lastNameErrorOverwrite = false)
     }
 
     fun updateAddressLine1(addressLine1: String) {
-        _formState.value = _formState.value.copy(addressLine1 = addressLine1)
+        _formState.value = _formState.value.copy(addressLine1 = addressLine1, addressLine1ErrorOverwrite = false)
     }
 
     fun updateAddressLine2(addressLine2: String) {
@@ -70,15 +85,15 @@ internal class AddressDetailsViewModel(
     }
 
     fun updateCity(city: String) {
-        _formState.value = _formState.value.copy(city = city)
+        _formState.value = _formState.value.copy(city = city, cityErrorOverwrite = false)
     }
 
     fun updateState(stateValue: String) { // Renamed from 'state' to avoid conflict
-        _formState.value = _formState.value.copy(state = stateValue)
+        _formState.value = _formState.value.copy(state = stateValue, stateErrorOverwrite = false)
     }
 
     fun updatePostalCode(postalCode: String) {
-        _formState.value = _formState.value.copy(postalCode = postalCode)
+        _formState.value = _formState.value.copy(postalCode = postalCode, postcodeErrorOverwrite = false)
     }
 
     fun updateCountry(country: String?) {

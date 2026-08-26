@@ -8,6 +8,8 @@ import com.paydock.binprocessor.data.refresh.BinDataRefreshCoordinator
 import com.paydock.core.data.injection.MobileSDKKoinContext
 import com.paydock.core.domain.mapper.mapToBaseUrl
 import com.paydock.core.domain.model.Environment
+import com.paydock.feature.afterpay.presentation.AfterpayBaseline
+import java.util.Locale
 
 /**
  * The main entry point for the Mobile SDK.
@@ -48,6 +50,7 @@ class MobileSDK(
     class Builder {
         private var environment: Environment = Environment.PRODUCTION
         private var enableTestMode: Boolean = false
+        private var afterpayLocale: Locale? = null
 
         /**
          * Sets the environment for the SDK.
@@ -55,6 +58,16 @@ class MobileSDK(
          * @param environment The environment (production, sandbox, staging, etc.).
          */
         fun environment(environment: Environment) = apply { this.environment = environment }
+
+        /**
+         * Sets the locale used to resolve the Afterpay payment button's branding (classic Afterpay
+         * vs. Cash App Afterpay) at SDK initialisation. Useful for forcing a region — e.g. in
+         * testing — without changing the device locale. When `null` (default), the device locale
+         * is used.
+         *
+         * @param locale The Afterpay branding locale, or `null` to use the device locale.
+         */
+        fun afterpayLocale(locale: Locale?) = apply { this.afterpayLocale = locale }
 
         /**
          * Enables or disables test mode. This is only allowed for non-production environments.
@@ -74,7 +87,7 @@ class MobileSDK(
          * @return The initialized MobileSDK instance.
          */
         fun build(context: Context): MobileSDK {
-            return initialize(context, environment, enableTestMode)
+            return initialize(context, environment, enableTestMode, afterpayLocale)
         }
     }
 
@@ -93,6 +106,8 @@ class MobileSDK(
          * @param context The application context.
          * @param environment The environment to use (default: Environment.PRODUCTION).
          * @param enableTestMode Flag to enable test mode. This is only allowed in non-production environments.
+         * @param afterpayLocale Locale used to resolve the Afterpay payment button's branding at
+         *   initialisation. When `null` (default), the device locale is used.
          * @throws IllegalStateException if MobileSDK is already initialized.
          */
         @JvmStatic
@@ -101,12 +116,21 @@ class MobileSDK(
             context: Context,
             environment: Environment = Environment.PRODUCTION,
             enableTestMode: Boolean = false,
+            afterpayLocale: Locale? = null,
         ): MobileSDK {
             if (instance != null) {
                 error(IllegalStateException("MobileSDK is already initialized."))
             }
             return MobileSDK(context, environment, enableTestMode).also {
                 instance = it
+                // Apply the Afterpay baseline configuration at SDK initialisation — before any UI
+                // builds an Afterpay appearance (e.g. an app pre-building defaults at startup).
+                // Afterpay's AfterpayPaymentButton.ButtonText enum captures its brand artwork on
+                // first class-load from the configured locale, so configuring here ensures the
+                // intended branding is locked in before that first reference. When afterpayLocale
+                // is null, AfterpayBaseline falls back to the device locale. Safe no-op for apps
+                // that never use Afterpay. See [AfterpayBaseline].
+                AfterpayBaseline.ensureConfigured(afterpayLocale)
             }
         }
 
@@ -145,12 +169,14 @@ class MobileSDK(
  * Initializes the MobileSDK with the provided configuration using the application context.
  *
  * @param environment The environment to use (default: Environment.PRODUCTION).
- * @param enableTestMode Flag to enable test mode (default: false).
- * @param enableTestMode Flag to enable test mode. This is only allowed in non-production environments.
+ * @param enableTestMode Flag to enable test mode (default: false). This is only allowed in non-production environments.
+ * @param afterpayLocale Locale used to resolve the Afterpay payment button's branding at
+ *   initialisation. When `null` (default), the device locale is used.
  * @return The initialized MobileSDK instance.
  */
 @Synchronized
 fun Context.initializeMobileSDK(
     environment: Environment = Environment.PRODUCTION,
-    enableTestMode: Boolean = false
-): MobileSDK = MobileSDK.initialize(this, environment, enableTestMode)
+    enableTestMode: Boolean = false,
+    afterpayLocale: Locale? = null
+): MobileSDK = MobileSDK.initialize(this, environment, enableTestMode, afterpayLocale)

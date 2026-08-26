@@ -9,6 +9,13 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
             StyleAppearanceComponent.PROPERTIES,
             StyleAppearanceComponent.TITLE,
             StyleAppearanceComponent.ADDRESS_TEXT_FIELD,
+            StyleAppearanceComponent.ADDRESS_FIRST_NAME_TEXT_FIELD,
+            StyleAppearanceComponent.ADDRESS_LAST_NAME_TEXT_FIELD,
+            StyleAppearanceComponent.ADDRESS_LINE1_TEXT_FIELD,
+            StyleAppearanceComponent.ADDRESS_LINE2_TEXT_FIELD,
+            StyleAppearanceComponent.ADDRESS_CITY_TEXT_FIELD,
+            StyleAppearanceComponent.ADDRESS_STATE_TEXT_FIELD,
+            StyleAppearanceComponent.ADDRESS_POSTCODE_TEXT_FIELD,
             StyleAppearanceComponent.COMPLETE_ACTION_BUTTON,
             StyleAppearanceComponent.LINK_BUTTON,
             StyleAppearanceComponent.SEARCH,
@@ -43,6 +50,8 @@ fun WidgetType.mapWidgetTypeToAppearanceComponents(): List<StyleAppearanceCompon
         WidgetType.GIFT_CARD -> listOf(
             StyleAppearanceComponent.PROPERTIES,
             StyleAppearanceComponent.GIFT_CARD_TEXT_FIELD,
+            StyleAppearanceComponent.GIFT_CARD_NUMBER_TEXT_FIELD,
+            StyleAppearanceComponent.GIFT_CARD_PIN_TEXT_FIELD,
             StyleAppearanceComponent.COMPLETE_ACTION_BUTTON,
         )
 
@@ -127,6 +136,69 @@ fun StyleAppearanceComponent.mapAppearanceComponentToSubComponents(): List<Style
             StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_VALID_ICON,
         )
 
+        StyleAppearanceComponent.ADDRESS_FIRST_NAME_TEXT_FIELD -> listOf(
+            StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_PROPERTIES,
+            StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_PLACEHOLDER,
+            StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_ERROR_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_HINT_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_VALID_ICON,
+        )
+
+        StyleAppearanceComponent.ADDRESS_LAST_NAME_TEXT_FIELD -> listOf(
+            StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_PROPERTIES,
+            StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_PLACEHOLDER,
+            StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_ERROR_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_HINT_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_VALID_ICON,
+        )
+
+        StyleAppearanceComponent.ADDRESS_LINE1_TEXT_FIELD -> listOf(
+            StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_PROPERTIES,
+            StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_PLACEHOLDER,
+            StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_ERROR_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_HINT_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_VALID_ICON,
+        )
+
+        StyleAppearanceComponent.ADDRESS_LINE2_TEXT_FIELD -> listOf(
+            StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_PROPERTIES,
+            StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_PLACEHOLDER,
+            StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_ERROR_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_HINT_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_VALID_ICON,
+        )
+
+        StyleAppearanceComponent.ADDRESS_CITY_TEXT_FIELD -> listOf(
+            StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_PROPERTIES,
+            StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_PLACEHOLDER,
+            StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_ERROR_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_HINT_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_VALID_ICON,
+        )
+
+        StyleAppearanceComponent.ADDRESS_STATE_TEXT_FIELD -> listOf(
+            StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_PROPERTIES,
+            StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_PLACEHOLDER,
+            StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_ERROR_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_HINT_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_VALID_ICON,
+        )
+
+        StyleAppearanceComponent.ADDRESS_POSTCODE_TEXT_FIELD -> listOf(
+            StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_PROPERTIES,
+            StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_PLACEHOLDER,
+            StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_ERROR_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_HINT_LABEL,
+            StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_VALID_ICON,
+        )
+
         StyleAppearanceComponent.GIFT_CARD_TEXT_FIELD -> listOf(
             StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_PROPERTIES,
             StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_LABEL,
@@ -134,6 +206,24 @@ fun StyleAppearanceComponent.mapAppearanceComponentToSubComponents(): List<Style
             StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_ERROR_LABEL,
             StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_HINT_LABEL,
             StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_VALID_ICON,
+        )
+
+        StyleAppearanceComponent.GIFT_CARD_NUMBER_TEXT_FIELD -> listOf(
+            StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_PROPERTIES,
+            StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_LABEL,
+            StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_PLACEHOLDER,
+            StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_ERROR_LABEL,
+            StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_HINT_LABEL,
+            StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_VALID_ICON,
+        )
+
+        StyleAppearanceComponent.GIFT_CARD_PIN_TEXT_FIELD -> listOf(
+            StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_PROPERTIES,
+            StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_LABEL,
+            StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_PLACEHOLDER,
+            StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_ERROR_LABEL,
+            StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_HINT_LABEL,
+            StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_VALID_ICON,
         )
 
         StyleAppearanceComponent.CARD_NAME_TEXT_FIELD -> listOf(

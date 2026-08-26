@@ -78,6 +78,20 @@ fun CardDetailsProperties(
             )
         }
 
+        ConfigComponent.SHOW_SUBMIT_BUTTON -> {
+            BooleanField(
+                label = stringResource(R.string.label_show_submit_button),
+                value = config.showSubmitButton,
+                onValueChange = { newValue ->
+                    configViewModel.updateWidgetConfig(
+                        widgetContext,
+                        ConfigComponent.SHOW_SUBMIT_BUTTON,
+                        newValue
+                    )
+                }
+            )
+        }
+
         ConfigComponent.ALLOW_SAVE_CARD -> {
             ConfigSaveCardSection(
                 currentSaveCardConfig = config.allowSaveCard,
@@ -140,6 +154,20 @@ fun CardDetailsProperties(
                     configViewModel.updateWidgetConfig(
                         widgetContext,
                         ConfigComponent.SUPPORTED_SCHEMES,
+                        newValue
+                    )
+                }
+            )
+        }
+
+        ConfigComponent.SHOW_SCHEME_LIST -> {
+            BooleanField(
+                label = stringResource(R.string.label_show_scheme_list),
+                value = config.schemeSupport.showSchemeList,
+                onValueChange = { newValue ->
+                    configViewModel.updateWidgetConfig(
+                        widgetContext,
+                        ConfigComponent.SHOW_SCHEME_LIST,
                         newValue
                     )
                 }

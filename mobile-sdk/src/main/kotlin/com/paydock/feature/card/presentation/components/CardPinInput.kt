@@ -43,9 +43,8 @@ internal fun CardPinInput(
     value: String = "",
     enabled: Boolean = true,
     forceShowErrors: Boolean = false,
+    a11yFocus: Boolean = false,
     nextFocus: FocusRequester? = null,
-    hint: String? = null,
-    placeholder: String? = null,
     onValueChange: (String) -> Unit
 ) {
     var hasUserInteracted by remember { mutableStateOf(false) }
@@ -59,10 +58,15 @@ internal fun CardPinInput(
 
     // Determine the error message to display
     val errorMessage = when (cardPinError) {
-        CardPinError.Empty -> if (forceShowErrors) stringResource(id = R.string.error_security_code_required) else null
+        CardPinError.Empty -> if (forceShowErrors) stringResource(id = R.string.error_pin_required) else null
         CardPinError.Invalid -> stringResource(id = R.string.error_pin)
         CardPinError.None -> null
     }
+
+    // Source placeholder/hint from the appearance so they are customizable per field, falling back
+    // to the built-in defaults when not overridden.
+    val placeholder = appearance.placeholderText ?: stringResource(id = R.string.placeholder_card_pin)
+    val hint = appearance.hintText ?: stringResource(id = R.string.hint_gift_card_pin)
 
     // Create the visual representation of the security code input field
     SdkTextField(
@@ -80,6 +84,7 @@ internal fun CardPinInput(
         enabled = enabled,
         placeholder = placeholder,
         hint = hint,
+        a11yFocus = a11yFocus,
         error = errorMessage,
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(

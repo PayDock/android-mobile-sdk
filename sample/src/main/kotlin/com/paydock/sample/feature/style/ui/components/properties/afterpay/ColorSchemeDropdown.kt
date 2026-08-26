@@ -4,28 +4,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.afterpay.android.view.AfterpayColorScheme
+import com.afterpay.android.view.AfterpayWidgetStyle
 import com.paydock.sample.R
 import com.paydock.sample.designsystems.components.fields.StringDropdown
 
 @Composable
 fun ColorSchemeDropdown(
     modifier: Modifier = Modifier,
-    currentColorScheme: AfterpayColorScheme,
-    onAfterpayColorSchemeChange: (AfterpayColorScheme) -> Unit,
+    currentStyle: AfterpayWidgetStyle,
+    onAfterpayStyleChange: (AfterpayWidgetStyle) -> Unit,
 ) {
     val options = remember {
         listOf(
-            "Black on White" to AfterpayColorScheme.BLACK_ON_WHITE,
-            "Black on Mint" to AfterpayColorScheme.BLACK_ON_MINT,
-            "Mint on Black" to AfterpayColorScheme.MINT_ON_BLACK,
-            "White on Black" to AfterpayColorScheme.WHITE_ON_BLACK
+            "Black on Mint" to AfterpayWidgetStyle.Default,
+            "Mint on Black" to AfterpayWidgetStyle.Alt,
+            "White on Black" to AfterpayWidgetStyle.MonochromeDark,
+            "Black on White" to AfterpayWidgetStyle.MonochromeLight
         )
     }
 
-    val selectedOptionString = remember(currentColorScheme) {
-        options.find { it.second == currentColorScheme }?.first
-            ?: AfterpayColorScheme.BLACK_ON_MINT.name
+    val selectedOptionString = remember(currentStyle) {
+        options.find { it.second == currentStyle }?.first
+            ?: AfterpayWidgetStyle.Default.name
     }
 
     StringDropdown(
@@ -34,10 +34,10 @@ fun ColorSchemeDropdown(
         options = options.map { it.first },
         selectedOption = selectedOptionString,
         onOptionSelected = { newValueString ->
-            val newButtonText =
+            val newStyle =
                 options.find { it.first == newValueString }?.second
-                    ?: AfterpayColorScheme.BLACK_ON_MINT
-            onAfterpayColorSchemeChange(newButtonText)
+                    ?: AfterpayWidgetStyle.Default
+            onAfterpayStyleChange(newStyle)
         }
     )
 }

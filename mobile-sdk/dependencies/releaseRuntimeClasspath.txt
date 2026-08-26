@@ -118,7 +118,7 @@ co.touchlab:stately-concurrent-collections-jvm:2.1.0
 co.touchlab:stately-concurrent-collections:2.1.0
 co.touchlab:stately-strict-jvm:2.1.0
 co.touchlab:stately-strict:2.1.0
-com.afterpay:afterpay-android:4.7.0
+com.afterpay:afterpay-android:4.8.3
 com.braintreepayments.api:browser-switch:3.2.0
 com.google.android.gms:play-services-base:18.5.0
 com.google.android.gms:play-services-basement:18.4.0

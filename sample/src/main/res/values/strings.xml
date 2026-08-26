@@ -197,7 +197,9 @@
     <string name="label_privacy_policy_text">Privacy Policy Text</string>
     <string name="label_privacy_policy_url">Privacy Policy URL</string>
     <string name="label_enable_scheme_validation">Enable Scheme Validation</string>
+    <string name="label_show_scheme_list">Show Scheme List</string>
     <string name="label_active_primary_button">Active Primary Button</string>
+    <string name="label_show_submit_button">Show Submit Button</string>
     <string name="label_supported_card_schemes">Supported Card Schemes</string>
     <string name="label_minimum_amount_optional">Minimum Amount (Optional)</string>
     <string name="label_maximum_amount">Maximum Amount</string>

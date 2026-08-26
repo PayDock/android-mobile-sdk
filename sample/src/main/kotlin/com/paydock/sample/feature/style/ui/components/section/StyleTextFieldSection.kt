@@ -324,8 +324,11 @@ fun StyleTextFieldSection(
                 label = stringResource(R.string.label_placeholder_text),
                 value = currentPlaceholderText,
                 onValueChange = { newValue ->
+                    // Pass the raw value (including an empty string). An empty string explicitly
+                    // hides the placeholder; using null here would instead fall back to the field's
+                    // default placeholder, so clearing the input would appear to "reset" it.
                     onAppearanceChange(
-                        currentAppearance.copy(placeholderText = newValue.takeIf { it.isNotEmpty() })
+                        currentAppearance.copy(placeholderText = newValue)
                     )
                 }
             )
@@ -334,8 +337,9 @@ fun StyleTextFieldSection(
                 label = stringResource(R.string.label_hint_text),
                 value = currentHintText,
                 onValueChange = { newValue ->
+                    // Empty string hides the hint; null would fall back to the default hint text.
                     onAppearanceChange(
-                        currentAppearance.copy(hintText = newValue.takeIf { it.isNotEmpty() })
+                        currentAppearance.copy(hintText = newValue)
                     )
                 }
             )

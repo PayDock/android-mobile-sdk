@@ -53,6 +53,7 @@ internal fun GiftCardNumberInput(
     enabled: Boolean = true,
     nextFocus: FocusRequester? = null,
     forceShowErrors: Boolean = false,
+    a11yFocus: Boolean = false,
     onValueChange: (String) -> Unit
 ) {
     // State to track the focus state of the input field
@@ -72,10 +73,16 @@ internal fun GiftCardNumberInput(
 
     // Define the error message to be shown if the card number is invalid
     val errorMessage = when (cardNumberError) {
-        GiftCardNumberError.Empty -> null // Empty field should show no error (neutral state)
+        // On submit (forceShowErrors) an empty field must surface a "required" error like other fields.
+        GiftCardNumberError.Empty -> if (forceShowErrors) stringResource(id = R.string.error_card_number_required) else null
         GiftCardNumberError.Invalid -> stringResource(id = R.string.error_card_number)
         GiftCardNumberError.None -> null
     }
+
+    // Source placeholder/hint from the appearance so they are customizable per field, falling back
+    // to the built-in defaults when not overridden.
+    val placeholder = appearance.placeholderText ?: stringResource(id = R.string.placeholder_card_number)
+    val hint = appearance.hintText ?: stringResource(id = R.string.hint_gift_card_number)
 
     SdkTextField(
         modifier = modifier.onFocusChanged {
@@ -94,7 +101,9 @@ internal fun GiftCardNumberInput(
                 onValueChange(number)
             }
         },
-        placeholder = stringResource(id = R.string.placeholder_card_number),
+        placeholder = placeholder,
+        hint = hint,
+        a11yFocus = a11yFocus,
         enabled = enabled,
         label = stringResource(id = R.string.label_card_number),
         leadingIcon = {

@@ -22,8 +22,47 @@ internal data class AddressDetailsFormState(
     val city: String = "",
     val state: String = "",
     val postalCode: String = "",
-    val country: String = ""
+    val country: String = "",
+    val firstNameErrorOverwrite: Boolean = false,
+    val lastNameErrorOverwrite: Boolean = false,
+    val addressLine1ErrorOverwrite: Boolean = false,
+    val cityErrorOverwrite: Boolean = false,
+    val stateErrorOverwrite: Boolean = false,
+    val postcodeErrorOverwrite: Boolean = false
 ) {
+    /**
+     * Enum representing the required input fields in the address form.
+     */
+    enum class AddressField {
+        FIRST_NAME,
+        LAST_NAME,
+        ADDRESS_LINE_1,
+        CITY,
+        STATE,
+        POSTCODE,
+        COUNTRY
+    }
+
+    /**
+     * Returns a list of invalid required fields based on the current state, in visual/tab order.
+     */
+    val invalidFields: List<AddressField>
+        get() = mutableListOf<AddressField>().apply {
+            if (firstName.isBlank()) add(AddressField.FIRST_NAME)
+            if (lastName.isBlank()) add(AddressField.LAST_NAME)
+            if (addressLine1.isBlank()) add(AddressField.ADDRESS_LINE_1)
+            if (city.isBlank()) add(AddressField.CITY)
+            if (state.isBlank()) add(AddressField.STATE)
+            if (postalCode.isBlank()) add(AddressField.POSTCODE)
+            if (country.isBlank()) add(AddressField.COUNTRY)
+        }
+
+    /**
+     * Returns the total number of validation errors in the form.
+     */
+    val errorCount: Int
+        get() = invalidFields.size
+
     /**
      * Converts the [AddressDetailsFormState] to a [BillingAddress] domain model.
      * If [addressLine2] is blank, it will be set to null in the resulting [BillingAddress].

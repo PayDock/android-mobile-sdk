@@ -299,6 +299,212 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                             )
                         )
 
+                        // Per-field overrides: each writes into its own nullable field, seeding
+                        // from the current override (or the base textField, if none yet) so a
+                        // single sub-property edit doesn't lose the field's other customisations.
+                        StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_PROPERTIES -> current.copy(
+                            firstNameTextField = newComponentAppearance as TextFieldAppearance
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_PLACEHOLDER -> current.copy(
+                            firstNameTextField = (current.firstNameTextField ?: current.textField).copy(
+                                placeholder = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_LABEL -> current.copy(
+                            firstNameTextField = (current.firstNameTextField ?: current.textField).copy(
+                                label = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_ERROR_LABEL -> current.copy(
+                            firstNameTextField = (current.firstNameTextField ?: current.textField).copy(
+                                error = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_HINT_LABEL -> current.copy(
+                            firstNameTextField = (current.firstNameTextField ?: current.textField).copy(
+                                hintLabel = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_VALID_ICON -> current.copy(
+                            firstNameTextField = (current.firstNameTextField ?: current.textField).copy(
+                                validIcon = newComponentAppearance as IconAppearance
+                            )
+                        )
+
+                        StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_PROPERTIES -> current.copy(
+                            lastNameTextField = newComponentAppearance as TextFieldAppearance
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_PLACEHOLDER -> current.copy(
+                            lastNameTextField = (current.lastNameTextField ?: current.textField).copy(
+                                placeholder = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_LABEL -> current.copy(
+                            lastNameTextField = (current.lastNameTextField ?: current.textField).copy(
+                                label = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_ERROR_LABEL -> current.copy(
+                            lastNameTextField = (current.lastNameTextField ?: current.textField).copy(
+                                error = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_HINT_LABEL -> current.copy(
+                            lastNameTextField = (current.lastNameTextField ?: current.textField).copy(
+                                hintLabel = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_VALID_ICON -> current.copy(
+                            lastNameTextField = (current.lastNameTextField ?: current.textField).copy(
+                                validIcon = newComponentAppearance as IconAppearance
+                            )
+                        )
+
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_PROPERTIES -> current.copy(
+                            addressLine1TextField = newComponentAppearance as TextFieldAppearance
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_PLACEHOLDER -> current.copy(
+                            addressLine1TextField = (current.addressLine1TextField ?: current.textField).copy(
+                                placeholder = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_LABEL -> current.copy(
+                            addressLine1TextField = (current.addressLine1TextField ?: current.textField).copy(
+                                label = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_ERROR_LABEL -> current.copy(
+                            addressLine1TextField = (current.addressLine1TextField ?: current.textField).copy(
+                                error = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_HINT_LABEL -> current.copy(
+                            addressLine1TextField = (current.addressLine1TextField ?: current.textField).copy(
+                                hintLabel = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_VALID_ICON -> current.copy(
+                            addressLine1TextField = (current.addressLine1TextField ?: current.textField).copy(
+                                validIcon = newComponentAppearance as IconAppearance
+                            )
+                        )
+
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_PROPERTIES -> current.copy(
+                            addressLine2TextField = newComponentAppearance as TextFieldAppearance
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_PLACEHOLDER -> current.copy(
+                            addressLine2TextField = (current.addressLine2TextField ?: current.textField).copy(
+                                placeholder = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_LABEL -> current.copy(
+                            addressLine2TextField = (current.addressLine2TextField ?: current.textField).copy(
+                                label = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_ERROR_LABEL -> current.copy(
+                            addressLine2TextField = (current.addressLine2TextField ?: current.textField).copy(
+                                error = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_HINT_LABEL -> current.copy(
+                            addressLine2TextField = (current.addressLine2TextField ?: current.textField).copy(
+                                hintLabel = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_VALID_ICON -> current.copy(
+                            addressLine2TextField = (current.addressLine2TextField ?: current.textField).copy(
+                                validIcon = newComponentAppearance as IconAppearance
+                            )
+                        )
+
+                        StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_PROPERTIES -> current.copy(
+                            cityTextField = newComponentAppearance as TextFieldAppearance
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_PLACEHOLDER -> current.copy(
+                            cityTextField = (current.cityTextField ?: current.textField).copy(
+                                placeholder = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_LABEL -> current.copy(
+                            cityTextField = (current.cityTextField ?: current.textField).copy(
+                                label = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_ERROR_LABEL -> current.copy(
+                            cityTextField = (current.cityTextField ?: current.textField).copy(
+                                error = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_HINT_LABEL -> current.copy(
+                            cityTextField = (current.cityTextField ?: current.textField).copy(
+                                hintLabel = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_VALID_ICON -> current.copy(
+                            cityTextField = (current.cityTextField ?: current.textField).copy(
+                                validIcon = newComponentAppearance as IconAppearance
+                            )
+                        )
+
+                        StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_PROPERTIES -> current.copy(
+                            stateTextField = newComponentAppearance as TextFieldAppearance
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_PLACEHOLDER -> current.copy(
+                            stateTextField = (current.stateTextField ?: current.textField).copy(
+                                placeholder = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_LABEL -> current.copy(
+                            stateTextField = (current.stateTextField ?: current.textField).copy(
+                                label = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_ERROR_LABEL -> current.copy(
+                            stateTextField = (current.stateTextField ?: current.textField).copy(
+                                error = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_HINT_LABEL -> current.copy(
+                            stateTextField = (current.stateTextField ?: current.textField).copy(
+                                hintLabel = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_VALID_ICON -> current.copy(
+                            stateTextField = (current.stateTextField ?: current.textField).copy(
+                                validIcon = newComponentAppearance as IconAppearance
+                            )
+                        )
+
+                        StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_PROPERTIES -> current.copy(
+                            postcodeTextField = newComponentAppearance as TextFieldAppearance
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_PLACEHOLDER -> current.copy(
+                            postcodeTextField = (current.postcodeTextField ?: current.textField).copy(
+                                placeholder = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_LABEL -> current.copy(
+                            postcodeTextField = (current.postcodeTextField ?: current.textField).copy(
+                                label = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_ERROR_LABEL -> current.copy(
+                            postcodeTextField = (current.postcodeTextField ?: current.textField).copy(
+                                error = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_HINT_LABEL -> current.copy(
+                            postcodeTextField = (current.postcodeTextField ?: current.textField).copy(
+                                hintLabel = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_VALID_ICON -> current.copy(
+                            postcodeTextField = (current.postcodeTextField ?: current.textField).copy(
+                                validIcon = newComponentAppearance as IconAppearance
+                            )
+                        )
+
                         StyleAppearanceComponent.SUB_ACTION_BUTTON_PROPERTIES -> {
                             current.copy(actionButton = newComponentAppearance as ButtonAppearance)
                         }
@@ -636,6 +842,67 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                             )
                         )
 
+                        // Per-field overrides: each writes into its own nullable field, seeding
+                        // from the current override (or the base textField, if none yet) so a
+                        // single sub-property edit doesn't lose the field's other customisations.
+                        StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_PROPERTIES -> current.copy(
+                            cardNumberTextField = newComponentAppearance as TextFieldAppearance
+                        )
+                        StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_PLACEHOLDER -> current.copy(
+                            cardNumberTextField = (current.cardNumberTextField ?: current.textField).copy(
+                                placeholder = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_LABEL -> current.copy(
+                            cardNumberTextField = (current.cardNumberTextField ?: current.textField).copy(
+                                label = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_ERROR_LABEL -> current.copy(
+                            cardNumberTextField = (current.cardNumberTextField ?: current.textField).copy(
+                                error = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_HINT_LABEL -> current.copy(
+                            cardNumberTextField = (current.cardNumberTextField ?: current.textField).copy(
+                                hintLabel = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_VALID_ICON -> current.copy(
+                            cardNumberTextField = (current.cardNumberTextField ?: current.textField).copy(
+                                validIcon = newComponentAppearance as IconAppearance
+                            )
+                        )
+
+                        StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_PROPERTIES -> current.copy(
+                            pinTextField = newComponentAppearance as TextFieldAppearance
+                        )
+                        StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_PLACEHOLDER -> current.copy(
+                            pinTextField = (current.pinTextField ?: current.textField).copy(
+                                placeholder = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_LABEL -> current.copy(
+                            pinTextField = (current.pinTextField ?: current.textField).copy(
+                                label = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_ERROR_LABEL -> current.copy(
+                            pinTextField = (current.pinTextField ?: current.textField).copy(
+                                error = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_HINT_LABEL -> current.copy(
+                            pinTextField = (current.pinTextField ?: current.textField).copy(
+                                hintLabel = newComponentAppearance as TextAppearance
+                            )
+                        )
+                        StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_VALID_ICON -> current.copy(
+                            pinTextField = (current.pinTextField ?: current.textField).copy(
+                                validIcon = newComponentAppearance as IconAppearance
+                            )
+                        )
+
                         StyleAppearanceComponent.SUB_ACTION_BUTTON_PROPERTIES -> {
                             current.copy(actionButton = newComponentAppearance as ButtonAppearance)
                         }
@@ -663,7 +930,7 @@ class StylingViewModel @Inject constructor() : ViewModel() {
                         StyleAppearanceComponent.PROPERTIES -> (newComponentAppearance as AfterpayWidgetAppearance).let {
                             current.copy(
                                 buttonText = newComponentAppearance.buttonText,
-                                colorScheme = newComponentAppearance.colorScheme
+                                style = newComponentAppearance.style
                             )
                         }
 
