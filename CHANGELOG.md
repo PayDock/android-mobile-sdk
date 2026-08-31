@@ -1,5 +1,37 @@
 # Changelog
 
+## [5.6.0] - 2026-08-27
+
+### Added
+- Added `showSubmitButton` to `CardDetailsWidgetConfig` and `GiftCardWidgetConfig` (default `true`)
+- Added to `CardDetailsWidget` and `GiftCardWidget` a new `state` parameter (`CardDetailsWidgetState`/`GiftCardWidgetState`,
+  created via `rememberCardDetailsWidgetState()`/`rememberGiftCardWidgetState()`): call `state.submit()` from your own
+  button to trigger validation and tokenisation (a no-op while a request is already in flight).
+  `state.isFormValid` reflects form validity.
+- Added `showSchemeList` to `SupportedSchemeConfig` (default `true`). When `false`, `CardDetailsWidget`
+  hides its row of supported card scheme icons entirely, regardless of `supportedSchemes`
+- Added per-field text-field appearance overrides to `GiftCardWidgetAppearance` (`cardNumberTextField`,
+  `pinTextField`), matching `CardDetailsWidget`'s existing per-field customisation
+
+### Changed
+- Updated AfterPay to version `4.8.3`. **Integration requirement:** this pulls in AfterPay's core
+  library desugaring requirement — consuming apps must enable
+  `compileOptions.isCoreLibraryDesugaringEnabled = true` and depend on
+  `coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")` (or newer) in their own app
+  module, or the build will fail at the dexing step. See the README's Requirements section.
+- `GiftCardWidgetConfig.activePrimaryButton` now defaults to `true` (previously the Add button was
+  always gated on form validity), matching `CardDetailsWidgetConfig`'s existing default. Pass
+  `activePrimaryButton = false` to keep the button disabled until the form is valid
+- `GiftCardWidget`'s empty-field validation errors (card number, PIN) now surface on submit, matching
+  `CardDetailsWidget`'s existing "required" error behaviour
+
+### Fixed
+- Intermittent threading issue causing immediate `RESULT_CANCELLED` result on Google Pay sheet open
+- `GiftCardWidget`'s card number and PIN fields showed inline "invalid" errors while the user was
+  still typing (based on a fixed input-debounce timer), instead of only after the field lost focus
+  like every field in `CardDetailsWidget`. Both fields now suppress inline errors while focused,
+  matching `CardDetailsWidget`'s behaviour
+
 ## [5.5.0] - 2026-06-16
 
 ### Added

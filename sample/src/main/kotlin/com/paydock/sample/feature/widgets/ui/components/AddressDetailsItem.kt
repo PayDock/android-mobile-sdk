@@ -37,13 +37,15 @@ fun AddressDetailsItem(
     val currentOrDefaultAppearance =
         addressAppearance ?: AddressDetailsAppearanceDefaults.appearance()
     val addressConfig by configViewModel.addressConfig.collectAsState()
+    val activePrimaryButton by configViewModel.addressActivePrimaryButton.collectAsState()
 
     AddressDetailsWidget(
         modifier = Modifier
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
         config = AddressDetailsWidgetConfig(
-            address = addressConfig
+            address = addressConfig,
+            activePrimaryButton = activePrimaryButton
         ),
         eventDelegate = object : WidgetEventDelegate {
             override fun widgetEvent(event: Event) {

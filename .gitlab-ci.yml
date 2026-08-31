@@ -24,6 +24,13 @@ variables:
   #        commandlinetools-os_type-ANDROID_SDK_TOOLS_latest.zip
   # when the script was last modified for latest compileSdkVersion, it was which is written down below
   ANDROID_SDK_TOOLS: "11076708"
+  # No Gradle dependency lock files or dependency graph export exist for this project's modules
+  # (bin-processor, mobile-sdk, sample, convention-plugins), so GitLab's Dependency Scanning
+  # analyzer refuses to fall back to a manifest-only parse by default and fails the job outright.
+  # This accepts that degraded-but-working manifest-only scan (direct dependencies parsed from
+  # build.gradle.kts, no transitive resolution) instead. See:
+  # https://docs.gitlab.com/ee/user/application_security/dependency_scanning/dependency_scanning_sbom
+  DS_ENABLE_MANIFEST_FALLBACK: "true"
 
 # Stages:
 # Defines the stages of the pipeline. Jobs within the same stage run in parallel.

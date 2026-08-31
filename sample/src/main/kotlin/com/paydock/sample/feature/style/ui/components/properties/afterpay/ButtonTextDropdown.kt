@@ -16,16 +16,16 @@ fun ButtonTextDropdown(
 ) {
     val options = remember {
         listOf(
-            "Pay Now" to AfterpayPaymentButton.ButtonText.PAY_NOW,
+            "Pay" to AfterpayPaymentButton.ButtonText.PAY,
+            "Buy" to AfterpayPaymentButton.ButtonText.BUY,
             "Checkout" to AfterpayPaymentButton.ButtonText.CHECKOUT,
-            "Buy Now" to AfterpayPaymentButton.ButtonText.BUY_NOW,
-            "Place Order" to AfterpayPaymentButton.ButtonText.PLACE_ORDER
+            "Place Order" to AfterpayPaymentButton.ButtonText.CONTINUE
         )
     }
 
     val selectedOptionString = remember(currentButtonText) {
         options.find { it.second == currentButtonText }?.first
-            ?: AfterpayPaymentButton.ButtonText.PAY_NOW.name
+            ?: AfterpayPaymentButton.ButtonText.DEFAULT.name
     }
 
     StringDropdown(
@@ -36,7 +36,7 @@ fun ButtonTextDropdown(
         onOptionSelected = { newValueString ->
             val newButtonText =
                 options.find { it.first == newValueString }?.second
-                    ?: AfterpayPaymentButton.ButtonText.PAY_NOW
+                    ?: AfterpayPaymentButton.ButtonText.DEFAULT
             onAfterpayButtonTextChange(newButtonText)
         }
     )

@@ -19,7 +19,7 @@ fun StyleAfterpayMiscSection(
 ) {
     // Derived states remain essential for UDF
     val currentButtonText = currentAppearance.buttonText
-    val currentColorScheme = currentAppearance.colorScheme
+    val currentStyle = currentAppearance.style
 
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
@@ -40,10 +40,10 @@ fun StyleAfterpayMiscSection(
 
         ColorSchemeDropdown(
             modifier = Modifier.fillMaxWidth(),
-            currentColorScheme = currentColorScheme,
-            onAfterpayColorSchemeChange = { newColorScheme ->
+            currentStyle = currentStyle,
+            onAfterpayStyleChange = { newStyle ->
                 onAppearanceChange(
-                    currentAppearance.copy(colorScheme = newColorScheme)
+                    currentAppearance.copy(style = newStyle)
                 )
             },
         )

@@ -1,5 +1,5 @@
 import org.jreleaser.model.Active
-import com.android.build.gradle.LibraryExtension
+import com.android.build.api.dsl.LibraryExtension
 
 plugins {
     id("core-publish-convention")

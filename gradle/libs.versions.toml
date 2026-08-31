@@ -1,7 +1,9 @@
 [versions]
-afterpayAndroid = "4.7.0"
+afterpayAndroid = "4.8.3"
+# Required by afterpay-android 4.8.x (core library desugaring); see its AAR metadata desugarJdkLib.
+desugarJdkLibs = "2.1.2"
 # KMP: Maximum tested Android Gradle Plugin version: 8.5
-agp = "8.13.0"
+agp = "9.2.0"
 androidx-test-junit = "1.3.0"
 androidx-test-espresso = "3.7.0"
 androidx-arch-core-testing = "2.2.0"
@@ -15,7 +17,7 @@ detekt = "1.23.8"
 googlePayServices="16.5.0"
 googlePayWalletServices="19.4.0"
 googlePayComposeButton="1.1.0"
-hilt = "2.57.1"
+hilt = "2.60"
 hiltNavigationCompose = "1.3.0"
 jacoco = "0.8.11" # Used in our test-coverage-convention.gradle.kts
 json = "20250517"
@@ -126,6 +128,8 @@ google-compose-pay-button = { group = "com.google.pay.button", name = "compose-p
 paydock-core-networking = { module = "com.paydock.core:network", version.ref = "paydockCoreNetworking" }
 # Afterpay SDK
 afterpay-android = { module = "com.afterpay:afterpay-android", version.ref = "afterpayAndroid" }
+# Core library desugaring (required by afterpay-android 4.8.x)
+android-desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 # PayPal SDK
 paypal-payment-buttons = { module = "com.paypal.android:payment-buttons", version.ref = "paypalWebPayments" }
 paypal-web-payments = { module = "com.paypal.android:paypal-web-payments", version.ref = "paypalWebPayments" }

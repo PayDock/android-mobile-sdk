@@ -21,22 +21,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Configuration for loading accessibility announcements.
- *
- * @property initialAnnouncementDelayMs Delay in milliseconds before the first announcement.
- *                                      Defaults to 0 (immediate).
- * @property reAnnouncementIntervalMs Interval in milliseconds before re-announcement.
- *                                   Defaults to 5000ms (5 seconds).
- * @property reAnnounceOnce If true, only re-announce once. If false, re-announce periodically.
- *                         Defaults to false (periodic re-announcements).
- */
-data class LoadingAccessibilityConfig(
-    val initialAnnouncementDelayMs: Long = 0L,
-    val reAnnouncementIntervalMs: Long = 5000L,
-    val reAnnounceOnce: Boolean = false
-)
-
-/**
  * Modifier that handles accessibility announcements for loading states.
  *
  * This modifier uses `contentDescription` and a `liveRegion` to make screen readers
@@ -127,13 +111,11 @@ fun Modifier.loadingAccessibility(
  * so TalkBack will only announce "Loading" instead of "Loading, Button Disabled".
  *
  * @param isLoading Whether the button is currently loading.
- * @param buttonText The text displayed on the button (for context).
  * @return A Modifier with appropriate accessibility semantics.
  */
 @Composable
 fun Modifier.buttonLoadingAccessibility(
-    isLoading: Boolean,
-    buttonText: String? = null
+    isLoading: Boolean
 ): Modifier {
     val context = LocalContext.current
     val loadingMessage = context.getString(R.string.accessibility_button_loading)

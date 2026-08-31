@@ -67,6 +67,10 @@ fastlane/screenshots
 fastlane/test_output
 fastlane/readme.md
 
+# Bundler (installed gems for fastlane, see scripts/setup_bundler.sh)
+.bundle/
+vendor/bundle/
+
 # Version control
 vcs.xml
 
@@ -74,3 +78,4 @@ vcs.xml
 .DS_Store
 # Code quality reports (generated at runtime)
 reports/
+gradle

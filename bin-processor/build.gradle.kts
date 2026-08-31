@@ -2,7 +2,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
     // linting
     id("detekt-convention")
@@ -12,7 +11,7 @@ plugins {
 
 android {
     namespace = "com.paydock.binprocessor"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24

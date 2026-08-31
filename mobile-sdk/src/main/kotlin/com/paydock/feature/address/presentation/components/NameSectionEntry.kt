@@ -40,6 +40,7 @@ import com.paydock.designsystems.core.WidgetDefaults
  * @param titleAppearance The appearance style for the section title text. Defaults to [TextAppearanceDefaults.appearance].
  * @param textFieldAppearance The appearance style for the input text fields. Defaults to [TextFieldAppearanceDefaults.appearance].
  */
+@Suppress("LongParameterList")
 @Composable
 internal fun NameSectionEntry(
     firstName: String,
@@ -49,7 +50,12 @@ internal fun NameSectionEntry(
     verticalSpacing: Dp = WidgetDefaults.Spacing,
     horizontalSpacing: Dp = WidgetDefaults.Spacing,
     titleAppearance: TextAppearance = TextAppearanceDefaults.appearance(),
-    textFieldAppearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
+    firstNameAppearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
+    lastNameAppearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
+    firstNameForceShowErrors: Boolean = false,
+    lastNameForceShowErrors: Boolean = false,
+    a11yFirstNameFocus: Boolean = false,
+    a11yLastNameFocus: Boolean = false,
 ) {
     val configuration = LocalConfiguration.current
     val fontScale = configuration.fontScale
@@ -79,20 +85,30 @@ internal fun NameSectionEntry(
             if (shouldUseColumnLayout) {
                 NameInputDetailsColumn(
                     verticalSpacing = verticalSpacing,
-                    appearance = textFieldAppearance,
+                    firstNameAppearance = firstNameAppearance,
+                    lastNameAppearance = lastNameAppearance,
                     firstName = firstName,
                     lastName = lastName,
                     focusLastName = focusLastName,
+                    firstNameForceShowErrors = firstNameForceShowErrors,
+                    lastNameForceShowErrors = lastNameForceShowErrors,
+                    a11yFirstNameFocus = a11yFirstNameFocus,
+                    a11yLastNameFocus = a11yLastNameFocus,
                     onFirstNameChange = onFirstNameChange,
                     onLastNameChange = onLastNameChange
                 )
             } else {
                 NameInputDetailsRow(
                     horizontalSpacing = horizontalSpacing,
-                    appearance = textFieldAppearance,
+                    firstNameAppearance = firstNameAppearance,
+                    lastNameAppearance = lastNameAppearance,
                     firstName = firstName,
                     lastName = lastName,
                     focusLastName = focusLastName,
+                    firstNameForceShowErrors = firstNameForceShowErrors,
+                    lastNameForceShowErrors = lastNameForceShowErrors,
+                    a11yFirstNameFocus = a11yFirstNameFocus,
+                    a11yLastNameFocus = a11yLastNameFocus,
                     onFirstNameChange = onFirstNameChange,
                     onLastNameChange = onLastNameChange
                 )
@@ -114,13 +130,19 @@ internal fun NameSectionEntry(
  * @param onLastNameChange A callback function invoked when the last name input changes.
  */
 @OptIn(ExperimentalComposeUiApi::class)
+@Suppress("LongParameterList")
 @Composable
 private fun NameInputDetailsColumn(
     verticalSpacing: Dp = WidgetDefaults.Spacing,
-    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
+    firstNameAppearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
+    lastNameAppearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     firstName: String,
     lastName: String,
     focusLastName: FocusRequester,
+    firstNameForceShowErrors: Boolean = false,
+    lastNameForceShowErrors: Boolean = false,
+    a11yFirstNameFocus: Boolean = false,
+    a11yLastNameFocus: Boolean = false,
     onFirstNameChange: (String) -> Unit,
     onLastNameChange: (String) -> Unit
 ) {
@@ -133,11 +155,13 @@ private fun NameInputDetailsColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("firstName1Input"),
-            appearance = appearance,
+            appearance = firstNameAppearance,
             value = firstName,
             label = stringResource(R.string.label_first_name),
             nextFocus = focusLastName,
             autofillType = ContentType.PersonFirstName,
+            forceShowErrors = firstNameForceShowErrors,
+            a11yFocus = a11yFirstNameFocus,
             onValueUpdated = onFirstNameChange
         )
 
@@ -146,10 +170,12 @@ private fun NameInputDetailsColumn(
                 .fillMaxWidth()
                 .focusRequester(focusLastName)
                 .testTag("lastNameInput"),
-            appearance = appearance,
+            appearance = lastNameAppearance,
             value = lastName,
             label = stringResource(R.string.label_last_name),
             autofillType = ContentType.PersonLastName,
+            forceShowErrors = lastNameForceShowErrors,
+            a11yFocus = a11yLastNameFocus,
             onValueUpdated = onLastNameChange
         )
     }
@@ -168,13 +194,19 @@ private fun NameInputDetailsColumn(
  * @param onLastNameChange A callback function invoked when the last name input changes.
  */
 @OptIn(ExperimentalComposeUiApi::class)
+@Suppress("LongParameterList")
 @Composable
 private fun NameInputDetailsRow(
     horizontalSpacing: Dp = WidgetDefaults.Spacing,
-    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
+    firstNameAppearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
+    lastNameAppearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     firstName: String,
     lastName: String,
     focusLastName: FocusRequester,
+    firstNameForceShowErrors: Boolean = false,
+    lastNameForceShowErrors: Boolean = false,
+    a11yFirstNameFocus: Boolean = false,
+    a11yLastNameFocus: Boolean = false,
     onFirstNameChange: (String) -> Unit,
     onLastNameChange: (String) -> Unit
 ) {
@@ -190,11 +222,13 @@ private fun NameInputDetailsRow(
             modifier = Modifier
                 .weight(0.5f)
                 .testTag("firstName1Input"),
-            appearance = appearance,
+            appearance = firstNameAppearance,
             value = firstName,
             label = stringResource(R.string.label_first_name),
             nextFocus = focusLastName,
             autofillType = ContentType.PersonFirstName,
+            forceShowErrors = firstNameForceShowErrors,
+            a11yFocus = a11yFirstNameFocus,
             onValueUpdated = onFirstNameChange
         )
 
@@ -203,10 +237,12 @@ private fun NameInputDetailsRow(
                 .weight(0.5f)
                 .focusRequester(focusLastName)
                 .testTag("lastNameInput"),
-            appearance = appearance,
+            appearance = lastNameAppearance,
             value = lastName,
             label = stringResource(R.string.label_last_name),
             autofillType = ContentType.PersonLastName,
+            forceShowErrors = lastNameForceShowErrors,
+            a11yFocus = a11yLastNameFocus,
             onValueUpdated = onLastNameChange
         )
     }

@@ -28,6 +28,8 @@
     <string name="hint_card_number">Enter your card number</string>
     <string name="hint_expiry_date">Format MM / YY</string>
     <string name="hint_cvv">Enter your security code</string>
+    <string name="hint_gift_card_number">Enter your gift card number</string>
+    <string name="hint_gift_card_pin">Enter your 4-digit PIN</string>
     <!-- endregion -->
     <!-- region Errors -->
     <string name="error_luhn_card_holder_name">Card number is in the wrong field!</string>
@@ -44,6 +46,7 @@
     <string name="error_card_number_required">Card number is required</string>
     <string name="error_expiry_date_required">Expiry date is required</string>
     <string name="error_security_code_required">Security code is required</string>
+    <string name="error_pin_required">PIN is required</string>
     <string name="error_mandatory_field">Mandatory field</string>
     <string name="error_form_count_plural">There are %d errors in the form</string>
     <string name="error_form_count_singular">There is 1 error in the form</string>

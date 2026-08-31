@@ -9,12 +9,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +60,8 @@ import com.paydock.feature.card.presentation.components.SupportedCardBanner
 import com.paydock.feature.card.presentation.state.CardDetailsInputState
 import com.paydock.feature.card.presentation.state.CardDetailsInputState.CardField
 import com.paydock.feature.card.presentation.state.CardDetailsUIState
+import com.paydock.feature.card.presentation.state.CardDetailsWidgetState
+import com.paydock.feature.card.presentation.state.rememberCardDetailsWidgetState
 import com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -82,6 +86,9 @@ import org.koin.core.parameter.parametersOf
  * behavior during tokenization or other async operations.
  * @param eventDelegate An optional [WidgetEventDelegate] for tracking widget events such as
  * button clicks, toggle interactions, and link clicks.
+ * @param state A [CardDetailsWidgetState] (see [rememberCardDetailsWidgetState]) used to drive
+ * submission from outside the widget when `config.showSubmitButton` is `false` — call `state.submit()`
+ * from your own button. See [CardDetailsWidgetState] for how to derive your own button's enabled state.
  * @param completion A callback invoked with the result of the tokenization process.
  * It provides a [Result] containing a [CardResult] on success or an error on failure.
  */
@@ -94,6 +101,7 @@ fun CardDetailsWidget(
     appearance: CardDetailsWidgetAppearance = CardDetailsAppearanceDefaults.appearance(),
     loadingDelegate: WidgetLoadingDelegate? = null,
     eventDelegate: WidgetEventDelegate? = null,
+    state: CardDetailsWidgetState = rememberCardDetailsWidgetState(),
     completion: (Result<CardResult>) -> Unit
 ) {
     val viewModel: CardDetailsViewModel = koinViewModel(parameters = {
@@ -115,6 +123,12 @@ fun CardDetailsWidget(
         derivedStateOf { loadingDelegate == null && uiState is CardDetailsUIState.Loading }
     }
 
+    // Publish live validity to the external state handle, for hosts using
+    // `config.showSubmitButton = false` to drive their own submit UI (see CardDetailsWidgetState).
+    SideEffect {
+        state.isFormValid = isDataValid
+    }
+
     val focusCardNumber = remember { FocusRequester() }
     val focusExpiration = remember { FocusRequester() }
     val focusCVV = remember { FocusRequester() }
@@ -130,9 +144,84 @@ fun CardDetailsWidget(
     var suppressFieldFocusLossAnnouncement by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
+    val errorCountMessage = if (inputState.errorCount > 1) {
+        stringResource(R.string.error_form_count_plural, inputState.errorCount)
+    } else if (inputState.errorCount == 1) {
+        stringResource(R.string.error_form_count_singular, inputState.errorCount)
+    } else {
+        ""
+    }
+
+    // Validates and, if valid, tokenises the card details. Shared by the internal submit button and
+    // the external `state.submit()` trigger, so both entry points behave identically (error
+    // announcements, focus-to-first-error) — see CardDetailsWidgetConfig.showSubmitButton.
+    val submitTapped: () -> Unit = submitTapped@{
+        // The external trigger bypasses the button's own `enabled = isEnabled` guard (loading state
+        // and the widget's `enabled` param), so both must be re-checked here.
+        if (uiState is CardDetailsUIState.Loading || !enabled) return@submitTapped
+
+        // Suppress the edited field's focus-loss error announcement before clearing focus,
+        // so it doesn't talk over the error-count and first-error-field announcements below.
+        suppressFieldFocusLossAnnouncement = true
+        focusManager.clearFocus()
+
+        // Emit button event
+        eventDelegate?.widgetEvent(
+            Event.ButtonEvent(
+                name = CardDetailsEventNames.TOKENISATION_BUTTON,
+                action = EventAction.CLICK,
+                text = appearance.actionButton.text,
+                formState = if (isDataValid) FormState.VALID else FormState.INVALID
+            )
+        )
+
+        if (!isDataValid) {
+            // Data is not valid (regardless of whether the internal button was enabled to reach
+            // here): trigger validation to show errors rather than tokenising invalid input.
+            viewModel.validateAllFields()
+
+            // Update error announcement to trigger a screen reader announcement via live region
+            errorAnnouncement = errorCountMessage
+
+            coroutineScope.launch {
+                // Reset if used before
+                if (focusCardholderNameA11y) { focusCardholderNameA11y = false }
+                if (focusCardNumberA11y) { focusCardNumberA11y = false }
+                if (focusExpiryA11y) { focusExpiryA11y = false }
+                if (focusSecurityCodeA11y) { focusSecurityCodeA11y = false }
+
+                delay(FIRST_ERROR_FOCUS_DELAY)
+
+                // Shift focus to the first invalid field
+                val firstInvalidField = inputState.invalidFields.firstOrNull()
+
+                when (firstInvalidField) {
+                    CardField.CARDHOLDER_NAME -> focusCardholderNameA11y = true
+                    CardField.CARD_NUMBER -> focusCardNumberA11y = true
+                    CardField.EXPIRY -> focusExpiryA11y = true
+                    CardField.SECURITY_CODE -> focusSecurityCodeA11y = true
+                    null -> Unit
+                }
+            }
+        } else {
+            errorAnnouncement = null
+            viewModel.tokeniseCard()
+        }
+    }
+
     // Handles UI state changes (success or failure of tokenization)
     LaunchedEffect(uiState) {
         handleUIState(uiState, inputState, viewModel, loadingDelegate, completion)
+    }
+
+    // Wires the external submit trigger to the identical submit logic the internal button uses.
+    // `LaunchedEffect(state)` only re-launches when `state` itself changes (never, in practice), so
+    // the collector must read `submitTapped` through `rememberUpdatedState` rather than closing over
+    // it directly — otherwise it would keep calling composition-0's lambda (with composition-0's
+    // captured `errorCountMessage`/`config`/`appearance`) for the widget's whole lifetime.
+    val currentSubmitTapped by rememberUpdatedState(submitTapped)
+    LaunchedEffect(state) {
+        state.submitRequests.collect { currentSubmitTapped() }
     }
 
     // Add a reset effect for each so they can be re-triggered on subsequent submits
@@ -140,7 +229,7 @@ fun CardDetailsWidget(
         if (focusCardholderNameA11y) {
             // Give the accessibility framework time to readout, if this fire before readout complete,
             // it will reannounce state change
-            delay(20000)
+            delay(A11Y_FOCUS_RESET_DELAY)
             focusCardholderNameA11y = false
         }
     }
@@ -148,7 +237,7 @@ fun CardDetailsWidget(
         if (focusCardNumberA11y) {
             // Give the accessibility framework time to readout, if this fire before readout complete,
             // it will reannounce state change
-            delay(20000)
+            delay(A11Y_FOCUS_RESET_DELAY)
             focusCardNumberA11y = false
         }
     }
@@ -156,7 +245,7 @@ fun CardDetailsWidget(
         if (focusExpiryA11y) {
             // Give the accessibility framework time to readout, if this fire before readout complete,
             // it will reannounce state change
-            delay(20000)
+            delay(A11Y_FOCUS_RESET_DELAY)
             focusExpiryA11y = false
         }
     }
@@ -164,13 +253,13 @@ fun CardDetailsWidget(
         if (focusSecurityCodeA11y) {
             // Give the accessibility framework time to readout, if this fire before readout complete,
             // it will reannounce state change
-            delay(20000)
+            delay(A11Y_FOCUS_RESET_DELAY)
             focusSecurityCodeA11y = false
         }
     }
     LaunchedEffect(errorAnnouncement) {
         if (errorAnnouncement != null) {
-            delay(2000) // Give the accessibility framework a moment to register the event
+            delay(ERROR_ANNOUNCEMENT_RESET_DELAY) // Give the accessibility framework a moment to register the event
             errorAnnouncement = null // Reset it to null
         }
     }
@@ -178,7 +267,7 @@ fun CardDetailsWidget(
         if (suppressFieldFocusLossAnnouncement) {
             // Cover the recomposition where clearFocus drops the edited field's focus, then resume
             // normal per-field defocus announcements.
-            delay(1500)
+            delay(SUPPRESS_FOCUS_LOSS_ANNOUNCEMENT_DELAY)
             suppressFieldFocusLossAnnouncement = false
         }
     }
@@ -191,11 +280,13 @@ fun CardDetailsWidget(
         horizontalAlignment = Alignment.Start
     ) {
         // Show card scheme icons: if null (allow all) or empty set, show all schemes; otherwise show selected schemes
-        val schemesToDisplay = when {
-            config.schemeSupport.supportedSchemes.isNullOrEmpty() -> CardType.entries.toSet()
-            else -> config.schemeSupport.supportedSchemes!!
+        if (config.schemeSupport.showSchemeList) {
+            val schemesToDisplay = when {
+                config.schemeSupport.supportedSchemes.isNullOrEmpty() -> CardType.entries.toSet()
+                else -> config.schemeSupport.supportedSchemes!!
+            }
+            SupportedCardBanner(schemesToDisplay)
         }
-        SupportedCardBanner(schemesToDisplay)
         // Provide the focus-loss suppression flag to the input fields so submit's clearFocus
         // doesn't trigger a per-field error announcement (see suppressFieldFocusLossAnnouncement).
         CompositionLocalProvider(
@@ -268,13 +359,6 @@ fun CardDetailsWidget(
         }
 
         Column {
-            val errorCountMessage = if (inputState.errorCount > 1) {
-                stringResource(R.string.error_form_count_plural, inputState.errorCount)
-            } else if (inputState.errorCount == 1) {
-                stringResource(R.string.error_form_count_singular, inputState.errorCount)
-            } else {
-                ""
-            }
             if (errorAnnouncement != null) {
                 // Invisible text used for screen reader announcement via live region
                 androidx.compose.material3.Text(
@@ -286,66 +370,27 @@ fun CardDetailsWidget(
                         }
                 )
             }
-            appearance.actionButton.RenderButton(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("submitDetails"),
-                text = appearance.actionButton.text,
-                buttonIcon = appearance.actionButton.icon,
-                enabled = isEnabled,
-                isLoading = isLoading,
-            ) {
-                // Suppress the edited field's focus-loss error announcement before clearing focus,
-                // so it doesn't talk over the error-count and first-error-field announcements below.
-                suppressFieldFocusLossAnnouncement = true
-                focusManager.clearFocus()
-
-                // Emit button event
-                eventDelegate?.widgetEvent(
-                    Event.ButtonEvent(
-                        name = CardDetailsEventNames.TOKENISATION_BUTTON,
-                        action = EventAction.CLICK,
-                        text = appearance.actionButton.text,
-                        formState = if (isDataValid) FormState.VALID else FormState.INVALID
-                    )
-                )
-
-                if (config.activePrimaryButton && !isDataValid) {
-                    // If the button was enabled by default but data is not valid,
-                    // we should trigger validation to show errors.
-                    viewModel.validateAllFields()
-
-                    // Update error announcement to trigger a screen reader announcement via live region
-                    errorAnnouncement = errorCountMessage
-
-                    coroutineScope.launch {
-                        // Reset if used before
-                        if (focusCardholderNameA11y) { focusCardholderNameA11y = false }
-                        if (focusCardNumberA11y) { focusCardNumberA11y = false }
-                        if (focusExpiryA11y) { focusExpiryA11y = false }
-                        if (focusSecurityCodeA11y) { focusSecurityCodeA11y = false }
-
-                        delay(1000)
-
-                        // Shift focus to the first invalid field
-                        val firstInvalidField = inputState.invalidFields.firstOrNull()
-
-                        when (firstInvalidField) {
-                            CardField.CARDHOLDER_NAME -> focusCardholderNameA11y = true
-                            CardField.CARD_NUMBER -> focusCardNumberA11y = true
-                            CardField.EXPIRY -> focusExpiryA11y = true
-                            CardField.SECURITY_CODE -> focusSecurityCodeA11y = true
-                            null -> Unit
-                        }
-                    }
-                } else {
-                    errorAnnouncement = null
-                    viewModel.tokeniseCard()
+            if (config.showSubmitButton) {
+                appearance.actionButton.RenderButton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("submitDetails"),
+                    text = appearance.actionButton.text,
+                    buttonIcon = appearance.actionButton.icon,
+                    enabled = isEnabled,
+                    isLoading = isLoading,
+                ) {
+                    submitTapped()
                 }
             }
         }
     }
 }
+
+private const val A11Y_FOCUS_RESET_DELAY = 20000L
+private const val ERROR_ANNOUNCEMENT_RESET_DELAY = 2000L
+private const val FIRST_ERROR_FOCUS_DELAY = 1000L
+private const val SUPPRESS_FOCUS_LOSS_ANNOUNCEMENT_DELAY = 1500L
 
 /**
  * Represents the appearance settings for the Card Details Widget.

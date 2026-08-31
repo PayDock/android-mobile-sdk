@@ -61,6 +61,16 @@ internal class GiftCardNumberValidatorTest {
     }
 
     @Test
+    fun validateGiftCardNumberInput_focused_returnsNoneEvenForInvalidInput() {
+        val cardNumber = "411112222" // fails min-length
+        val hasUserInteracted = true
+        val isCardNumberFocused = true
+        val expected = GiftCardNumberError.None
+        val actual = GiftCardNumberValidator.validateCardNumberInput(cardNumber, hasUserInteracted, isCardNumberFocused)
+        assertEquals(expected, actual)
+    }
+
+    @Test
     fun validateGiftCardNumberInput_invalid_returnsInvalidError() {
         val cardNumber = "411112222" // fails min-length
         val hasUserInteracted = true

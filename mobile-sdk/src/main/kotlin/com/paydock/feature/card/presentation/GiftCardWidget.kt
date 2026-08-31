@@ -5,20 +5,31 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
@@ -38,8 +49,13 @@ import com.paydock.feature.card.domain.model.GiftCardEventNames
 import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
 import com.paydock.feature.card.presentation.components.CardPinInput
 import com.paydock.feature.card.presentation.components.GiftCardNumberInput
+import com.paydock.feature.card.presentation.state.GiftCardInputState.GiftCardField
 import com.paydock.feature.card.presentation.state.GiftCardUIState
+import com.paydock.feature.card.presentation.state.GiftCardWidgetState
+import com.paydock.feature.card.presentation.state.rememberGiftCardWidgetState
 import com.paydock.feature.card.presentation.viewmodels.GiftCardViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -57,6 +73,9 @@ import org.koin.core.parameter.parametersOf
  * @param appearance Defines the visual appearance of the gift card widget elements. Defaults to a standard appearance.
  * @param loadingDelegate An optional delegate to manage the visibility of loading indicators externally.
  * @param eventDelegate An optional [WidgetEventDelegate] for tracking widget events such as button clicks.
+ * @param state A [GiftCardWidgetState] (see [rememberGiftCardWidgetState]) used to drive submission
+ * from outside the widget when `config.showSubmitButton` is `false` — call `state.submit()` from your
+ * own button. See [GiftCardWidgetState] for how to derive your own button's enabled state.
  * @param completion A callback invoked with the result of the tokenization process, providing either
  *                   a success with the token or a failure with an exception.
  */
@@ -68,6 +87,7 @@ fun GiftCardWidget(
     appearance: GiftCardWidgetAppearance = GiftCardAppearanceDefaults.appearance(),
     loadingDelegate: WidgetLoadingDelegate? = null,
     eventDelegate: WidgetEventDelegate? = null,
+    state: GiftCardWidgetState = rememberGiftCardWidgetState(),
     completion: (Result<String>) -> Unit,
 ) {
     // ViewModel instance scoped to the Koin dependency injection framework
@@ -77,21 +97,122 @@ fun GiftCardWidget(
     val inputState by viewModel.inputStateFlow.collectAsState()
     val uiState by viewModel.stateFlow.collectAsState()
 
+    val isDataValid by remember(uiState) { derivedStateOf { inputState.isDataValid } }
     val isEnabled by remember(uiState) {
-        derivedStateOf { inputState.isDataValid && uiState !is GiftCardUIState.Loading && enabled }
+        derivedStateOf {
+            val isDataValidIfRequired = if (config.activePrimaryButton) true else isDataValid
+            isDataValidIfRequired && uiState !is GiftCardUIState.Loading && enabled
+        }
     }
     val isLoading by remember(uiState) { derivedStateOf { loadingDelegate == null && uiState is GiftCardUIState.Loading } }
+
+    // Publish live validity to the external state handle, for hosts using
+    // `config.showSubmitButton = false` to drive their own submit UI (see GiftCardWidgetState).
+    SideEffect {
+        state.isFormValid = isDataValid
+    }
 
     val configuration = LocalConfiguration.current
     val fontScale = configuration.fontScale
 
+    // Resolve per-field appearance, falling back to the shared textField when no override is provided.
+    val cardNumberAppearance = appearance.cardNumberTextField ?: appearance.textField
+    val pinAppearance = appearance.pinTextField ?: appearance.textField
+
     // Focus handlers for input fields
     val focusCardNumber = remember { FocusRequester() }
     val focusCardPin = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
+    var focusCardNumberA11y by remember { mutableStateOf(false) }
+    var focusPinA11y by remember { mutableStateOf(false) }
+    var errorAnnouncement by remember { mutableStateOf<String?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+
+    val errorCountMessage = when {
+        inputState.errorCount > 1 -> stringResource(R.string.error_form_count_plural, inputState.errorCount)
+        inputState.errorCount == 1 -> stringResource(R.string.error_form_count_singular, inputState.errorCount)
+        else -> ""
+    }
+
+    // Validates and, if valid, tokenises the gift card. Shared by the internal Add button and the
+    // external `state.submit()` trigger, so both entry points behave identically — see
+    // GiftCardWidgetConfig.showSubmitButton.
+    val submitTapped: () -> Unit = submitTapped@{
+        // The external trigger bypasses the button's own `enabled = isEnabled` guard (loading state
+        // and the widget's `enabled` param), so both must be re-checked here.
+        if (uiState is GiftCardUIState.Loading || !enabled) return@submitTapped
+
+        focusManager.clearFocus()
+
+        // Emit button event
+        eventDelegate?.widgetEvent(
+            Event.ButtonEvent(
+                name = GiftCardEventNames.TOKENISATION_BUTTON,
+                action = EventAction.CLICK,
+                text = appearance.actionButton.text
+            )
+        )
+
+        if (!isDataValid) {
+            // Data is not valid (regardless of whether the internal button was enabled to reach
+            // here): trigger validation to surface errors rather than tokenising invalid input.
+            viewModel.validateAllFields()
+
+            // Announce the aggregate error count via the live region.
+            errorAnnouncement = errorCountMessage
+
+            coroutineScope.launch {
+                if (focusCardNumberA11y) focusCardNumberA11y = false
+                if (focusPinA11y) focusPinA11y = false
+
+                delay(FIRST_ERROR_FOCUS_DELAY)
+
+                // Shift accessibility focus to the first invalid field.
+                when (inputState.invalidFields.firstOrNull()) {
+                    GiftCardField.CARD_NUMBER -> focusCardNumberA11y = true
+                    GiftCardField.PIN -> focusPinA11y = true
+                    null -> Unit
+                }
+            }
+        } else {
+            errorAnnouncement = null
+            viewModel.tokeniseCard()
+        }
+    }
 
     // React to changes in the UI state
     LaunchedEffect(uiState) {
         handleUIState(uiState, viewModel, loadingDelegate, completion)
+    }
+
+    // Wires the external submit trigger to the identical submit logic the internal button uses.
+    // `LaunchedEffect(state)` only re-launches when `state` itself changes (never, in practice), so
+    // the collector must read `submitTapped` through `rememberUpdatedState` rather than closing over
+    // it directly — otherwise it would keep calling composition-0's lambda (with composition-0's
+    // captured `errorCountMessage`/`config`/`appearance`) for the widget's whole lifetime.
+    val currentSubmitTapped by rememberUpdatedState(submitTapped)
+    LaunchedEffect(state) {
+        state.submitRequests.collect { currentSubmitTapped() }
+    }
+
+    // Reset a11y focus flags shortly after firing so they can be re-triggered on subsequent submits.
+    LaunchedEffect(focusCardNumberA11y) {
+        if (focusCardNumberA11y) {
+            delay(A11Y_FOCUS_RESET_DELAY)
+            focusCardNumberA11y = false
+        }
+    }
+    LaunchedEffect(focusPinA11y) {
+        if (focusPinA11y) {
+            delay(A11Y_FOCUS_RESET_DELAY)
+            focusPinA11y = false
+        }
+    }
+    LaunchedEffect(errorAnnouncement) {
+        if (errorAnnouncement != null) {
+            delay(ERROR_ANNOUNCEMENT_RESET_DELAY)
+            errorAnnouncement = null
+        }
     }
 
     // Composing the UI
@@ -115,52 +236,73 @@ fun GiftCardWidget(
             if (shouldUseColumnLayout) {
                 CardNumberPinColumn(
                     verticalSpacing = appearance.textFieldVerticalSpacing,
-                    appearance = appearance.textField,
+                    cardNumberAppearance = cardNumberAppearance,
+                    pinAppearance = pinAppearance,
                     enabled = uiState !is GiftCardUIState.Loading && enabled,
                     cardNumber = inputState.cardNumber,
                     cardPin = inputState.pin,
                     focusCardNumber = focusCardNumber,
                     focusCardPin = focusCardPin,
+                    cardNumberForceShowErrors = inputState.cardNumberErrorOverwrite,
+                    pinForceShowErrors = inputState.pinErrorOverwrite,
+                    a11yCardNumberFocus = focusCardNumberA11y,
+                    a11yPinFocus = focusPinA11y,
                     onCardNumberChange = { viewModel.updateCardNumber(it) },
                     onPinChange = { viewModel.updateCardPin(it) }
                 )
             } else {
                 CardNumberPinRow(
                     horizontalSpacing = appearance.textFieldHorizontalSpacing,
-                    appearance = appearance.textField,
+                    cardNumberAppearance = cardNumberAppearance,
+                    pinAppearance = pinAppearance,
                     enabled = uiState !is GiftCardUIState.Loading && enabled,
                     cardNumber = inputState.cardNumber,
                     cardPin = inputState.pin,
                     focusCardNumber = focusCardNumber,
                     focusCardPin = focusCardPin,
+                    cardNumberForceShowErrors = inputState.cardNumberErrorOverwrite,
+                    pinForceShowErrors = inputState.pinErrorOverwrite,
+                    a11yCardNumberFocus = focusCardNumberA11y,
+                    a11yPinFocus = focusPinA11y,
                     onCardNumberChange = { viewModel.updateCardNumber(it) },
                     onPinChange = { viewModel.updateCardPin(it) }
                 )
             }
         }
 
-        // Submit button
-        appearance.actionButton.RenderButton(
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag("addCard"),
-            text = appearance.actionButton.text,
-            buttonIcon = appearance.actionButton.icon,
-            enabled = isEnabled,
-            isLoading = isLoading,
-        ) {
-            // Emit button event
-            eventDelegate?.widgetEvent(
-                Event.ButtonEvent(
-                    name = GiftCardEventNames.TOKENISATION_BUTTON,
-                    action = EventAction.CLICK,
-                    text = appearance.actionButton.text
+        Column {
+            if (errorAnnouncement != null) {
+                // Invisible text used for screen reader announcement via live region
+                Text(
+                    text = errorAnnouncement!!,
+                    modifier = Modifier
+                        .size(1.dp)
+                        .semantics { liveRegion = LiveRegionMode.Polite }
                 )
-            )
-            viewModel.tokeniseCard()
+            }
+            // Submit button
+            if (config.showSubmitButton) {
+                appearance.actionButton.RenderButton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("addCard"),
+                    text = appearance.actionButton.text,
+                    buttonIcon = appearance.actionButton.icon,
+                    enabled = isEnabled,
+                    isLoading = isLoading,
+                ) {
+                    submitTapped()
+                }
+            }
         }
     }
 }
+
+// Give the accessibility framework time to read out before resetting the focus flag; firing again
+// before readout completes would re-announce the state change.
+private const val A11Y_FOCUS_RESET_DELAY = 20000L
+private const val ERROR_ANNOUNCEMENT_RESET_DELAY = 2000L
+private const val FIRST_ERROR_FOCUS_DELAY = 1000L
 
 /**
  * Displays the card number and PIN input fields in a horizontal row.
@@ -181,12 +323,17 @@ fun GiftCardWidget(
 @Composable
 fun CardNumberPinRow(
     horizontalSpacing: Dp,
-    appearance: TextFieldAppearance,
+    cardNumberAppearance: TextFieldAppearance,
+    pinAppearance: TextFieldAppearance,
     enabled: Boolean,
     cardNumber: String,
     cardPin: String,
     focusCardNumber: FocusRequester,
     focusCardPin: FocusRequester,
+    cardNumberForceShowErrors: Boolean = false,
+    pinForceShowErrors: Boolean = false,
+    a11yCardNumberFocus: Boolean = false,
+    a11yPinFocus: Boolean = false,
     onCardNumberChange: (String) -> Unit,
     onPinChange: (String) -> Unit
 ) {
@@ -204,9 +351,11 @@ fun CardNumberPinRow(
                 .weight(0.7f)
                 .focusRequester(focusCardNumber)
                 .testTag("cardNumberInput"),
-            appearance = appearance,
+            appearance = cardNumberAppearance,
             value = cardNumber,
             enabled = enabled,
+            forceShowErrors = cardNumberForceShowErrors,
+            a11yFocus = a11yCardNumberFocus,
             onValueChange = onCardNumberChange,
             nextFocus = focusCardPin
         )
@@ -217,9 +366,11 @@ fun CardNumberPinRow(
                 .weight(0.3f)
                 .focusRequester(focusCardPin)
                 .testTag("cardPinInput"),
-            appearance = appearance,
+            appearance = pinAppearance,
             value = cardPin,
             enabled = enabled,
+            forceShowErrors = pinForceShowErrors,
+            a11yFocus = a11yPinFocus,
             onValueChange = onPinChange
         )
     }
@@ -246,12 +397,17 @@ fun CardNumberPinRow(
 @Composable
 fun CardNumberPinColumn(
     verticalSpacing: Dp = WidgetDefaults.Spacing,
-    appearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
+    cardNumberAppearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
+    pinAppearance: TextFieldAppearance = TextFieldAppearanceDefaults.appearance(),
     enabled: Boolean,
     cardNumber: String,
     cardPin: String,
     focusCardNumber: FocusRequester = FocusRequester(),
     focusCardPin: FocusRequester = FocusRequester(),
+    cardNumberForceShowErrors: Boolean = false,
+    pinForceShowErrors: Boolean = false,
+    a11yCardNumberFocus: Boolean = false,
+    a11yPinFocus: Boolean = false,
     onCardNumberChange: (String) -> Unit = {},
     onPinChange: (String) -> Unit = {},
 ) {
@@ -265,9 +421,11 @@ fun CardNumberPinColumn(
             modifier = Modifier
                 .focusRequester(focusCardNumber)
                 .testTag("cardNumberInput"),
-            appearance = appearance,
+            appearance = cardNumberAppearance,
             value = cardNumber,
             enabled = enabled,
+            forceShowErrors = cardNumberForceShowErrors,
+            a11yFocus = a11yCardNumberFocus,
             onValueChange = onCardNumberChange,
             nextFocus = focusCardPin
         )
@@ -277,9 +435,11 @@ fun CardNumberPinColumn(
             modifier = Modifier
                 .focusRequester(focusCardPin)
                 .testTag("cardPinInput"),
-            appearance = appearance,
+            appearance = pinAppearance,
             value = cardPin,
             enabled = enabled,
+            forceShowErrors = pinForceShowErrors,
+            a11yFocus = a11yPinFocus,
             onValueChange = onPinChange
         )
     }
@@ -321,6 +481,9 @@ class GiftCardWidgetAppearance(
     val textFieldHorizontalSpacing: Dp,
     val textField: TextFieldAppearance,
     val actionButton: ButtonAppearance,
+    // Optional per-field overrides. When null, the field falls back to [textField].
+    val cardNumberTextField: TextFieldAppearance? = null,
+    val pinTextField: TextFieldAppearance? = null,
 ) {
     /**
      * Creates a new [GiftCardWidgetAppearance] instance with optional overrides.
@@ -354,6 +517,8 @@ class GiftCardWidgetAppearance(
         textFieldHorizontalSpacing: Dp = this.textFieldHorizontalSpacing,
         textField: TextFieldAppearance = this.textField,
         actionButton: ButtonAppearance = this.actionButton,
+        cardNumberTextField: TextFieldAppearance? = this.cardNumberTextField,
+        pinTextField: TextFieldAppearance? = this.pinTextField,
     ): GiftCardWidgetAppearance = GiftCardWidgetAppearance(
         verticalSpacing = verticalSpacing.takeOrElse { this.verticalSpacing },
         horizontalSpacing = horizontalSpacing.takeOrElse { this.horizontalSpacing },
@@ -366,6 +531,8 @@ class GiftCardWidgetAppearance(
             is ButtonAppearance.OutlineButtonAppearance -> actionButton.copy()
             is ButtonAppearance.TextButtonAppearance -> actionButton.copy()
         },
+        cardNumberTextField = cardNumberTextField?.copy(),
+        pinTextField = pinTextField?.copy(),
     )
 
     override fun equals(other: Any?): Boolean {
@@ -380,6 +547,8 @@ class GiftCardWidgetAppearance(
         if (textFieldHorizontalSpacing != other.textFieldHorizontalSpacing) return false
         if (textField != other.textField) return false
         if (actionButton != other.actionButton) return false
+        if (cardNumberTextField != other.cardNumberTextField) return false
+        if (pinTextField != other.pinTextField) return false
 
         return true
     }
@@ -391,6 +560,8 @@ class GiftCardWidgetAppearance(
         result = 31 * result + textFieldHorizontalSpacing.hashCode()
         result = 31 * result + textField.hashCode()
         result = 31 * result + actionButton.hashCode()
+        result = 31 * result + (cardNumberTextField?.hashCode() ?: 0)
+        result = 31 * result + (pinTextField?.hashCode() ?: 0)
         return result
     }
 }
@@ -422,6 +593,19 @@ object GiftCardAppearanceDefaults {
         textField = TextFieldAppearanceDefaults.appearance().copy(singleLine = true),
         actionButton = ButtonAppearanceDefaults.filledButtonAppearance().copy(
             text = stringResource(R.string.button_submit)
+        ),
+        // Seed the default placeholder/hint strings into the per-field appearance so they are
+        // discoverable and editable via the appearance object (e.g. shown in the styling screen)
+        // rather than living only as fallbacks inside each input component.
+        cardNumberTextField = TextFieldAppearanceDefaults.appearance().copy(
+            singleLine = true,
+            placeholderText = stringResource(R.string.placeholder_card_number),
+            hintText = stringResource(R.string.hint_gift_card_number)
+        ),
+        pinTextField = TextFieldAppearanceDefaults.appearance().copy(
+            singleLine = true,
+            placeholderText = stringResource(R.string.placeholder_card_pin),
+            hintText = stringResource(R.string.hint_gift_card_pin)
         )
     )
 

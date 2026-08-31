@@ -8,6 +8,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
     // Card Details specific
     COLLECT_CARDHOLDER_NAME,
     ACTIVE_PRIMARY_BUTTON,
+    SHOW_SUBMIT_BUTTON,
     ALLOW_SAVE_CARD,
     STORE_SECURITY_CODE,
     SCHEME_SUPPORT(hasSubComponents = true),
@@ -24,6 +25,7 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
     // Supported Scheme Config properties
     SUPPORTED_SCHEMES,
     ENABLE_VALIDATION,
+    SHOW_SCHEME_LIST,
 
     // Gift Card specific
     STORE_PIN,
@@ -268,6 +270,8 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
         SHIPPING_REQUIRED -> "Shipping Required"
         BILLING_REQUIRED -> "Billing Required"
         ACTIVE_PRIMARY_BUTTON -> "Active Primary Button"
+        SHOW_SUBMIT_BUTTON -> "Show Submit Button"
+        SHOW_SCHEME_LIST -> "Show Scheme List"
     }
 
     fun mapConfigComponentToSubComponents(): List<ConfigComponent>? = when (this) {
@@ -278,7 +282,8 @@ enum class ConfigComponent(val hasSubComponents: Boolean = false) {
 
         SCHEME_SUPPORT -> listOf(
             SUPPORTED_SCHEMES,
-            ENABLE_VALIDATION
+            ENABLE_VALIDATION,
+            SHOW_SCHEME_LIST
         )
 
         BILLING_ADDRESS -> listOf(

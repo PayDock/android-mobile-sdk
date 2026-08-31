@@ -12,12 +12,15 @@ fun WidgetType.mapWidgetTypeToConfigComponents(): List<ConfigComponent> {
             ConfigComponent.ALLOW_SAVE_CARD,
             ConfigComponent.STORE_SECURITY_CODE,
             ConfigComponent.SCHEME_SUPPORT,
-            ConfigComponent.ACTIVE_PRIMARY_BUTTON
+            ConfigComponent.ACTIVE_PRIMARY_BUTTON,
+            ConfigComponent.SHOW_SUBMIT_BUTTON
         )
 
         WidgetType.GIFT_CARD -> listOf(
             ConfigComponent.ACCESS_TOKEN,
-            ConfigComponent.STORE_PIN
+            ConfigComponent.STORE_PIN,
+            ConfigComponent.ACTIVE_PRIMARY_BUTTON,
+            ConfigComponent.SHOW_SUBMIT_BUTTON
         )
 
         WidgetType.PAY_PAL -> listOf(
@@ -57,7 +60,8 @@ fun WidgetType.mapWidgetTypeToConfigComponents(): List<ConfigComponent> {
         )
 
         WidgetType.ADDRESS_DETAILS -> listOf(
-            ConfigComponent.BILLING_ADDRESS
+            ConfigComponent.BILLING_ADDRESS,
+            ConfigComponent.ACTIVE_PRIMARY_BUTTON
         )
 
         WidgetType.ZIP -> listOf(

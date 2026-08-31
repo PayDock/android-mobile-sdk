@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.sample.R
+import com.paydock.sample.designsystems.components.fields.BooleanField
 import com.paydock.sample.designsystems.components.fields.TextField
 import com.paydock.sample.feature.config.ConfigViewModel
 import com.paydock.sample.feature.config.models.ConfigComponent
@@ -13,11 +14,26 @@ import com.paydock.sample.feature.widgets.ui.models.WidgetType
 @Composable
 fun AddressDetailsProperties(
     currentAddress: BillingAddress,
+    currentActivePrimaryButton: Boolean,
     configItemName: ConfigComponent,
     widgetContext: WidgetType,
     configViewModel: ConfigViewModel
 ) {
     when (configItemName) {
+        ConfigComponent.ACTIVE_PRIMARY_BUTTON -> {
+            BooleanField(
+                label = stringResource(R.string.label_active_primary_button),
+                value = currentActivePrimaryButton,
+                onValueChange = { newValue ->
+                    configViewModel.updateWidgetConfig(
+                        widgetContext,
+                        ConfigComponent.ACTIVE_PRIMARY_BUTTON,
+                        newValue
+                    )
+                }
+            )
+        }
+
         ConfigComponent.BILLING_ADDRESS -> {
             ConfigAddressSection(
                 currentAddress = currentAddress,

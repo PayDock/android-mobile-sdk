@@ -67,6 +67,8 @@ internal fun AddressInputField(
     isMandatory: Boolean = true,
     nextFocus: FocusRequester? = null,
     autofillType: ContentType? = null,
+    forceShowErrors: Boolean = false,
+    a11yFocus: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     enabled: Boolean = true
@@ -79,7 +81,10 @@ internal fun AddressInputField(
         debouncedValue = value
     }
     val errorMessage = if (isMandatory) {
-        val inputError = AddressValidator.validateInput(debouncedValue, hasUserInteracted)
+        // On submit (forceShowErrors) validate the live value immediately so an empty field surfaces
+        // its "required" error without waiting for the input debounce.
+        val valueToValidate = if (forceShowErrors) value else debouncedValue
+        val inputError = AddressValidator.validateInput(valueToValidate, hasUserInteracted || forceShowErrors)
         when (inputError) {
             AddressInputError.Empty -> stringResource(id = R.string.error_mandatory_field)
             AddressInputError.None -> null
@@ -101,7 +106,10 @@ internal fun AddressInputField(
         label = label,
         error = errorMessage,
         enabled = enabled,
+        a11yFocus = a11yFocus,
         autofillType = autofillType,
+        placeholder = appearance.placeholderText,
+        hint = appearance.hintText,
         keyboardOptions = keyboardOptions.copy(
             capitalization = KeyboardCapitalization.Words,
             imeAction = if (keyboardOptions.imeAction == ImeAction.Default && nextFocus != null) {

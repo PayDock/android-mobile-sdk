@@ -21,6 +21,9 @@ package com.paydock.feature.card.domain.model.integration
  * is always enabled, and validation is performed upon clicking it. If `false`, the button remains disabled until
  * all fields are valid. Defaults to `true`.
  *   Defaults to true.
+ * @property showSubmitButton Specifies whether the widget renders its own built-in primary (Submit) button. If `false`,
+ * the widget hides its button entirely so a host app can supply its own trigger UI — see [CardDetailsWidgetState].
+ * Defaults to `true`.
  */
 data class CardDetailsWidgetConfig(
     val accessToken: String,
@@ -29,5 +32,6 @@ data class CardDetailsWidgetConfig(
     val allowSaveCard: SaveCardConfig? = null,
     val storeSecurityCode: Boolean? = null,
     val schemeSupport: SupportedSchemeConfig = SupportedSchemeConfig(),
-    val activePrimaryButton: Boolean = true
+    val activePrimaryButton: Boolean = true,
+    val showSubmitButton: Boolean = true
 )

@@ -20,8 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.viewinterop.AndroidView
 import com.afterpay.android.Afterpay
-import com.afterpay.android.view.AfterpayColorScheme
 import com.afterpay.android.view.AfterpayPaymentButton
+import com.afterpay.android.view.AfterpayWidgetStyle
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.AfterpayException
 import com.paydock.core.domain.model.Event
@@ -128,7 +128,7 @@ fun AfterpayWidget(
                     AfterpayPaymentButton(context).apply {
                         // Initial properties
                         this.buttonText = appearance.buttonText
-                        this.colorScheme = appearance.colorScheme
+                        this.style = appearance.style
                         this.isEnabled = enabled
                         setOnClickListener {
                             focusManager.clearFocus()
@@ -145,7 +145,7 @@ fun AfterpayWidget(
                 },
                 update = { view ->
                     view.buttonText = appearance.buttonText
-                    view.colorScheme = appearance.colorScheme
+                    view.style = appearance.style
                     // Disable button if loading AND launching Intent flow already AND is not enabled (from parent)
                     view.isEnabled = uiState !is AfterpayUIState.Loading && uiState !is AfterpayUIState.LaunchIntent && enabled
                 }
@@ -165,13 +165,13 @@ fun AfterpayWidget(
  * color scheme, and the appearance of the loading indicator.
  *
  * @property buttonText The text to display on the Afterpay payment button.
- * @property colorScheme The color scheme to apply to the Afterpay payment button.
+ * @property style The widget style (e.g. Default, Alt, MonochromeDark, MonochromeLight) to apply to the Afterpay payment button.
  * @property loader The appearance configuration for the loader shown during processing.
  */
 @Immutable
 class AfterpayWidgetAppearance(
     val buttonText: AfterpayPaymentButton.ButtonText,
-    val colorScheme: AfterpayColorScheme,
+    val style: AfterpayWidgetStyle,
     val loader: LoaderAppearance
 ) {
     /**
@@ -179,21 +179,21 @@ class AfterpayWidgetAppearance(
      *
      * This function allows you to create a new instance of [AfterpayWidgetAppearance] by
      * copying the properties of the current instance, while selectively providing new values
-     * for [buttonText], [colorScheme], or [loader]. This is useful for creating variations
+     * for [buttonText], [style], or [loader]. This is useful for creating variations
      * of an existing appearance configuration without modifying the original.
      *
      * @param buttonText The new button text to use for the copied appearance. Defaults to the current instance's value.
-     * @param colorScheme The new color scheme to use for the copied appearance. Defaults to the current instance's value.
+     * @param style The new widget style to use for the copied appearance. Defaults to the current instance's value.
      * @param loader The new loader appearance to use for the copied appearance. Defaults to a copy of the current instance's loader.
      * @return A new [AfterpayWidgetAppearance] instance with the specified values.
      */
     fun copy(
         buttonText: AfterpayPaymentButton.ButtonText = this.buttonText,
-        colorScheme: AfterpayColorScheme = this.colorScheme,
+        style: AfterpayWidgetStyle = this.style,
         loader: LoaderAppearance = this.loader
     ): AfterpayWidgetAppearance = AfterpayWidgetAppearance(
         buttonText = buttonText,
-        colorScheme = colorScheme,
+        style = style,
         loader = loader.copy()
     )
 
@@ -204,7 +204,7 @@ class AfterpayWidgetAppearance(
         other as AfterpayWidgetAppearance
 
         if (buttonText != other.buttonText) return false
-        if (colorScheme != other.colorScheme) return false
+        if (style != other.style) return false
         if (loader != other.loader) return false
 
         return true
@@ -212,7 +212,7 @@ class AfterpayWidgetAppearance(
 
     override fun hashCode(): Int {
         var result = buttonText.hashCode()
-        result = 31 * result + colorScheme.hashCode()
+        result = 31 * result + style.hashCode()
         result = 31 * result + loader.hashCode()
         return result
     }
@@ -231,7 +231,7 @@ object AfterpayAppearanceDefaults {
      *
      * This function is a Composable that returns a default appearance configuration for the
      * Afterpay widget. It sets the default button text to [AfterpayPaymentButton.ButtonText.DEFAULT],
-     * the color scheme to [AfterpayColorScheme.BLACK_ON_MINT], and uses the default
+     * the style to [AfterpayWidgetStyle.Default], and uses the default
      * appearance for the loader via [LoaderAppearanceDefaults.appearance].
      *
      * @return The default [AfterpayWidgetAppearance] instance.
@@ -239,7 +239,7 @@ object AfterpayAppearanceDefaults {
     @Composable
     fun appearance(): AfterpayWidgetAppearance = AfterpayWidgetAppearance(
         buttonText = AfterpayPaymentButton.ButtonText.DEFAULT,
-        colorScheme = AfterpayColorScheme.BLACK_ON_MINT,
+        style = AfterpayWidgetStyle.Default,
         loader = LoaderAppearanceDefaults.appearance()
     )
 }
@@ -384,7 +384,7 @@ internal fun PreviewAfterpayWidget() {
     AndroidView(factory = { context ->
         AfterpayPaymentButton(context).apply {
             this.buttonText = buttonText
-            this.colorScheme = colorScheme
+            this.style = style
             setOnClickListener {}
         }
     })

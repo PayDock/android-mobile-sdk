@@ -7,7 +7,6 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp.devtools)
     alias(libs.plugins.dagger.hilt)
 }
@@ -16,12 +15,12 @@ val deployVersionName: String = project.findProperty("versionName") as String? ?
 
 android {
     namespace = "com.paydock.sample"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.paydock.sample"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = deployVersionName
 
@@ -87,8 +86,10 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        // Required by afterpay-android 4.8.x (transitively via :mobile-sdk).
+        isCoreLibraryDesugaringEnabled = true
     }
     buildFeatures {
         buildConfig = true
@@ -103,7 +104,7 @@ android {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -196,7 +197,12 @@ fun ProductFlavor.addBuildConfigField(type: String, name: String, value: String)
 
 dependencies {
     // Modules
+    // Use the published Maven Central release to test the released library.
+    // To switch back to the local module, restore: implementation(project(":mobile-sdk"))
+//    implementation("com.paydock:mobile-sdk:5.6.0")
     implementation(project(":mobile-sdk"))
+    // Core library desugaring required by afterpay-android 4.8.x (pulled in via :mobile-sdk)
+    coreLibraryDesugaring(libs.android.desugar.jdk.libs)
     // Libraries
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.ktx)

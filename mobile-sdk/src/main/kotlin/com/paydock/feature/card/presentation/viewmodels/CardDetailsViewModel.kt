@@ -262,9 +262,14 @@ internal class CardDetailsViewModel(
      * - On failure, updates the UI state to `Error` with the relevant exception.
      */
     fun tokeniseCard() {
-        launchOnIO {
-            updateState(CardDetailsUIState.Loading)
+        // Transition to Loading synchronously (before dispatching to IO), so a second call arriving
+        // on the same thread before the coroutine has started sees Loading immediately rather than
+        // racing it — this is what makes the composable's `uiState is Loading` re-entrancy guard
+        // (for both the internal button and the external `state.submit()` trigger) actually durable.
+        if (_stateFlow.value is CardDetailsUIState.Loading) return
+        updateState(CardDetailsUIState.Loading)
 
+        launchOnIO {
             val state = _inputStateFlow.value
             val request = CreateCardPaymentTokenRequest.TokeniseCardRequest.CreditCard(
                 cvv = state.code,

@@ -46,6 +46,34 @@ fun GiftCardProperties(
             )
         }
 
+        ConfigComponent.ACTIVE_PRIMARY_BUTTON -> {
+            BooleanField(
+                label = stringResource(R.string.label_active_primary_button),
+                value = config.activePrimaryButton,
+                onValueChange = { newValue ->
+                    configViewModel.updateWidgetConfig(
+                        widgetContext,
+                        ConfigComponent.ACTIVE_PRIMARY_BUTTON,
+                        newValue
+                    )
+                }
+            )
+        }
+
+        ConfigComponent.SHOW_SUBMIT_BUTTON -> {
+            BooleanField(
+                label = stringResource(R.string.label_show_submit_button),
+                value = config.showSubmitButton,
+                onValueChange = { newValue ->
+                    configViewModel.updateWidgetConfig(
+                        widgetContext,
+                        ConfigComponent.SHOW_SUBMIT_BUTTON,
+                        newValue
+                    )
+                }
+            )
+        }
+
         else -> {}
     }
 }

@@ -11,6 +11,7 @@ import com.paydock.core.utils.MainDispatcherRule
 import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
 import com.paydock.feature.card.domain.model.ui.TokenDetails
 import com.paydock.feature.card.domain.usecase.CreateGiftCardPaymentTokenUseCase
+import com.paydock.feature.card.presentation.state.GiftCardInputState
 import com.paydock.feature.card.presentation.state.GiftCardUIState
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
@@ -21,6 +22,7 @@ import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
@@ -102,6 +104,7 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `gift card tokeniseCard should update isLoading, call useCase, and update state on success`() =
         runTest {
+            val testScope = this
             val mockToken = MobileSDKTestConstants.Card.MOCK_CARD_TOKEN
             val mockResult = Result.success(
                 TokenDetails(
@@ -110,15 +113,16 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
                 )
             )
             coEvery { useCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any()) } returns mockResult
+            // Loading is now set synchronously (before dispatching to IO — see tokeniseCard's
+            // re-entrancy guard), so by the time a collector subscribes it has already moved past
+            // Idle; start observing from Loading rather than expecting Idle first.
+            viewModel.tokeniseCard()
             // Allows for testing flow state
             viewModel.stateFlow.test {
-                // ACTION
-                viewModel.tokeniseCard()
-                // CHECK
-                // Initial state
-                assertIs<GiftCardUIState.Idle>(awaitItem())
                 // Loading state - before execution
                 assertIs<GiftCardUIState.Loading>(awaitItem())
+                // Let the launched coroutine actually reach the use-case call before verifying it.
+                testScope.runCurrent()
                 coVerify { useCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any()) }
                 // Resul state - success
                 awaitItem().let { state ->
@@ -129,8 +133,23 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
         }
 
     @Test
+    fun `gift card tokeniseCard called twice while already loading only calls useCase once`() = runTest {
+        // Regression test: a fast double-submit (e.g. the internal button and an external
+        // state.submit() racing) must not fire two tokenisation requests.
+        val mockResult = Result.success(TokenDetails(token = MobileSDKTestConstants.Card.MOCK_CARD_TOKEN, type = "token"))
+        coEvery { useCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any()) } returns mockResult
+
+        viewModel.tokeniseCard()
+        viewModel.tokeniseCard() // Should be a no-op: state is already Loading synchronously.
+
+        viewModel.stateFlow.first { it is GiftCardUIState.Success }
+        coVerify(exactly = 1) { useCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any()) }
+    }
+
+    @Test
     fun `gift card tokeniseCard should update isLoading, call useCase, and update state on failure`() =
         runTest {
+            val testScope = this
             val mockError = GiftCardException.TokenisingCardException(
                 error = ApiErrorResponse(
                     status = HttpStatusCode.InternalServerError.value,
@@ -142,15 +161,16 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
             )
             val mockResult = Result.failure<TokenDetails>(mockError)
             coEvery { useCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any()) } returns mockResult
+            // Loading is now set synchronously (before dispatching to IO — see tokeniseCard's
+            // re-entrancy guard), so by the time a collector subscribes it has already moved past
+            // Idle; start observing from Loading rather than expecting Idle first.
+            viewModel.tokeniseCard()
             // Allows for testing flow state
             viewModel.stateFlow.test {
-                // ACTION
-                viewModel.tokeniseCard()
-                // CHECK
-                // Initial state
-                assertIs<GiftCardUIState.Idle>(awaitItem())
                 // Loading state - before execution
                 assertIs<GiftCardUIState.Loading>(awaitItem())
+                // Let the launched coroutine actually reach the use-case call before verifying it.
+                testScope.runCurrent()
                 coVerify { useCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any()) }
                 // Result state - failure
                 awaitItem().let { state ->
@@ -163,6 +183,64 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
                 }
             }
         }
+
+    @Test
+    fun `validateAllFields should force show errors for both fields`() = runTest {
+        // ACTION
+        viewModel.validateAllFields()
+        val inputState = viewModel.inputStateFlow.first()
+        // CHECK
+        assertTrue(inputState.cardNumberErrorOverwrite)
+        assertTrue(inputState.pinErrorOverwrite)
+    }
+
+    @Test
+    fun `updateCardNumber should reset cardNumberErrorOverwrite`() = runTest {
+        viewModel.validateAllFields()
+        // ACTION
+        viewModel.updateCardNumber("62734010001104878")
+        val inputState = viewModel.inputStateFlow.first()
+        // CHECK
+        assertFalse(inputState.cardNumberErrorOverwrite)
+        // Unrelated field's overwrite flag is untouched
+        assertTrue(inputState.pinErrorOverwrite)
+    }
+
+    @Test
+    fun `updateCardPin should reset pinErrorOverwrite`() = runTest {
+        viewModel.validateAllFields()
+        // ACTION
+        viewModel.updateCardPin("1234")
+        val inputState = viewModel.inputStateFlow.first()
+        // CHECK
+        assertFalse(inputState.pinErrorOverwrite)
+        // Unrelated field's overwrite flag is untouched
+        assertTrue(inputState.cardNumberErrorOverwrite)
+    }
+
+    @Test
+    fun `invalidFields and errorCount reflect empty form`() = runTest {
+        val inputState = viewModel.inputStateFlow.first()
+        assertEquals(
+            listOf(GiftCardInputState.GiftCardField.CARD_NUMBER, GiftCardInputState.GiftCardField.PIN),
+            inputState.invalidFields
+        )
+        assertEquals(2, inputState.errorCount)
+    }
+
+    @Test
+    fun `invalidFields and errorCount are empty when form is valid`() = runTest {
+        viewModel.updateCardNumber("62734010001104878")
+        viewModel.updateCardPin("1234")
+        val inputState = viewModel.inputStateFlow.first()
+        assertTrue(inputState.invalidFields.isEmpty())
+        assertEquals(0, inputState.errorCount)
+    }
+
+    @Test
+    fun `GiftCardWidgetConfig activePrimaryButton defaults to true`() {
+        assertTrue(GiftCardWidgetConfig(accessToken = MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN).activePrimaryButton)
+    }
 
     @Test
     fun `resetResultState should reset data state`() = runTest {

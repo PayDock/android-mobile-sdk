@@ -158,6 +158,9 @@ class ConfigViewModel @Inject constructor(
 
     private fun createDefaultAfterpayConfig(): AfterpaySDKConfig {
         return AfterpaySDKConfig(
+            // Default the Afterpay locale to en-AU so the button reads this (classic Afterpay
+            // branding) regardless of the device's region. Pass null to follow the device locale.
+            locale = Locale("en", "AU"),
             options = AfterpaySDKConfig.CheckoutOptions(
                 shippingOptionRequired = true,
                 enableSingleShippingOptionUpdate = true
@@ -294,6 +297,10 @@ class ConfigViewModel @Inject constructor(
     private val _addressConfig = MutableStateFlow<BillingAddress?>(null)
     val addressConfig: StateFlow<BillingAddress?> =
         _addressConfig.asStateFlow()
+
+    private val _addressActivePrimaryButton = MutableStateFlow(true)
+    val addressActivePrimaryButton: StateFlow<Boolean> =
+        _addressActivePrimaryButton.asStateFlow()
 
     // --- Global Config methods ---
     fun updateGlobalAccessToken(accessToken: String?) {
@@ -472,6 +479,10 @@ class ConfigViewModel @Inject constructor(
                         activePrimaryButton = newValue as Boolean
                     )
 
+                    ConfigComponent.SHOW_SUBMIT_BUTTON -> current.copy(
+                        showSubmitButton = newValue as Boolean
+                    )
+
                     ConfigComponent.ENABLE_SAVE_CARD -> {
                         val isEnabled = newValue as Boolean
                         current.copy(
@@ -596,6 +607,14 @@ class ConfigViewModel @Inject constructor(
                         )
                     }
 
+                    ConfigComponent.SHOW_SCHEME_LIST -> {
+                        current.copy(
+                            schemeSupport = current.schemeSupport.copy(
+                                showSchemeList = newValue as Boolean
+                            )
+                        )
+                    }
+
                     else -> current
                 }
                 _cardDetailsWidgetConfig.value = updatedConfig
@@ -606,6 +625,8 @@ class ConfigViewModel @Inject constructor(
                 val updatedConfig = when (component) {
                     ConfigComponent.ACCESS_TOKEN -> current.copy(accessToken = newValue as String)
                     ConfigComponent.STORE_PIN -> current.copy(storePin = newValue as Boolean)
+                    ConfigComponent.ACTIVE_PRIMARY_BUTTON -> current.copy(activePrimaryButton = newValue as Boolean)
+                    ConfigComponent.SHOW_SUBMIT_BUTTON -> current.copy(showSubmitButton = newValue as Boolean)
                     else -> current
                 }
                 _giftCardWidgetConfig.value = updatedConfig
@@ -1195,6 +1216,10 @@ class ConfigViewModel @Inject constructor(
                     ConfigComponent.BILLING_ADDRESS -> {
                         // Update the entire BillingAddress object
                         _addressConfig.value = newValue as? BillingAddress ?: BillingAddress()
+                    }
+
+                    ConfigComponent.ACTIVE_PRIMARY_BUTTON -> {
+                        _addressActivePrimaryButton.value = newValue as Boolean
                     }
 
                     else -> {

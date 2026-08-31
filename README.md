@@ -20,6 +20,20 @@ details.
 # Requirements
 
 - Android 7.0 (API level 24) and above
+- Core library desugaring enabled in your app module (required by the Afterpay SDK, a MobileSDK
+  dependency, from `afterpay-android` 4.8.x onward). Without it, your build will fail at the dexing
+  step. Add to your app's `build.gradle.kts`:
+  ```kotlin
+  android {
+      compileOptions {
+          isCoreLibraryDesugaringEnabled = true
+      }
+  }
+  dependencies {
+      coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2") // or newer
+  }
+  ```
+  Your `desugar_jdk_libs` version must be `2.1.2` or newer to match what MobileSDK was built against.
 
 # How to install and configure the SDK
 

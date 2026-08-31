@@ -23,14 +23,21 @@ internal object CardPinValidator {
      * Validates the input for a card PIN and determines the corresponding validation error state.
      *
      * This function checks the card PIN input for common validation scenarios:
+     * - If the field is focused ([isCardPinFocused] is true), returns [CardPinError.None] (no error shown while typing).
      * - If the input is empty and the user has interacted with the field, it returns an [CardPinError.Empty].
      * - Otherwise, it returns [CardPinError.None], indicating no validation error.
      *
      * @param cardPin The card PIN input provided by the user.
      * @param hasUserInteracted A flag indicating whether the user has interacted with the field.
+     * @param isCardPinFocused True while the PIN field is focused. When true, returns [CardPinError.None] to suppress inline errors.
      * @return A [CardPinError] representing the validation state of the card PIN input.
      */
-    fun validateCardPinInput(cardPin: String, hasUserInteracted: Boolean): CardPinError {
+    fun validateCardPinInput(
+        cardPin: String,
+        hasUserInteracted: Boolean,
+        isCardPinFocused: Boolean = false
+    ): CardPinError {
+        if (isCardPinFocused) return CardPinError.None
         val isValidFormat = validateCardPinFormat(cardPin)
         val isValidLength = validateCardPinLength(cardPin)
         return when {

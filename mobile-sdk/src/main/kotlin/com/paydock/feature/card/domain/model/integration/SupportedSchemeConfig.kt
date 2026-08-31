@@ -9,8 +9,11 @@ import com.paydock.feature.card.domain.model.integration.enums.CardType
  * This property allows you to restrict the card types the widget will accept.
  * @property enableValidation A flag indicating whether validation of the card scheme against `supportedSchemes` is required.
  * When set to `false`, the widget does not enforce restrictions based on `supportedSchemes`, even if provided.
+ * @property showSchemeList A flag indicating whether the row of supported card scheme icons should be displayed
+ * in `CardDetailsWidget`. Defaults to `true`.
  */
 data class SupportedSchemeConfig(
     val supportedSchemes: Set<CardType>? = null,
-    val enableValidation: Boolean = false
+    val enableValidation: Boolean = false,
+    val showSchemeList: Boolean = true
 )

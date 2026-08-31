@@ -92,9 +92,13 @@ internal data class CardDetailsInputState(
 
     /**
      * Returns a list of invalid fields based on the current state.
+     *
+     * Memoized with [lazy]: `isDataValid`/`errorCount` and the widget both read this on every
+     * recomposition of an (immutable) instance, and re-running all four validators each time is
+     * wasted work once the first read has already computed the answer for this exact input.
      */
-    val invalidFields: List<CardField>
-        get() = mutableListOf<CardField>().apply {
+    val invalidFields: List<CardField> by lazy {
+        mutableListOf<CardField>().apply {
             if (collectCardholderName && !CardHolderNameValidator.isCardHolderNameValid(cardholderName ?: "")) {
                 add(CardField.CARDHOLDER_NAME)
             }
@@ -108,6 +112,7 @@ internal data class CardDetailsInputState(
                 add(CardField.SECURITY_CODE)
             }
         }
+    }
 
     /**
      * Returns the total number of validation errors in the form.
@@ -120,4 +125,15 @@ internal data class CardDetailsInputState(
      */
     val isDataValid: Boolean
         get() = errorCount == 0
+
+    // Overridden so cardholder-data (name, card number, CVV) never lands in a log or crash report
+    // via the default data-class toString() — e.g. if this state is passed to Log.d/logcat or
+    // serialized into an exception message.
+    override fun toString(): String =
+        "CardDetailsInputState(cardholderName=[REDACTED], cardNumber=[REDACTED], expiry=[REDACTED], " +
+            "code=[REDACTED], collectCardholderName=$collectCardholderName, saveCard=$saveCard, " +
+            "storeSecurityCode=$storeSecurityCode, schemeConfig=$schemeConfig, " +
+            "cardholderNameErrorOverwrite=$cardholderNameErrorOverwrite, " +
+            "cardNumberErrorOverwrite=$cardNumberErrorOverwrite, cardExpiryErrorOverwrite=$cardExpiryErrorOverwrite, " +
+            "cardSecurityErrorOverwrite=$cardSecurityErrorOverwrite)"
 }

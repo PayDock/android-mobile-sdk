@@ -107,10 +107,46 @@ fun StylePropertiesScreen(
                 StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_LABEL,
                 StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_ERROR_LABEL,
                 StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_HINT_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_PLACEHOLDER,
+                StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_ERROR_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_HINT_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_PLACEHOLDER,
+                StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_ERROR_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_HINT_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_PLACEHOLDER,
+                StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_ERROR_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_HINT_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_PLACEHOLDER,
+                StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_ERROR_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_HINT_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_PLACEHOLDER,
+                StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_ERROR_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_HINT_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_PLACEHOLDER,
+                StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_ERROR_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_HINT_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_PLACEHOLDER,
+                StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_ERROR_LABEL,
+                StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_HINT_LABEL,
                 StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_PLACEHOLDER,
                 StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_LABEL,
                 StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_ERROR_LABEL,
                 StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_HINT_LABEL,
+                StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_PLACEHOLDER,
+                StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_LABEL,
+                StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_ERROR_LABEL,
+                StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_HINT_LABEL,
+                StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_PLACEHOLDER,
+                StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_LABEL,
+                StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_ERROR_LABEL,
+                StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_HINT_LABEL,
                 StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_PLACEHOLDER,
                 StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_LABEL,
                 StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_ERROR_LABEL,
@@ -196,7 +232,16 @@ fun StylePropertiesScreen(
                 StyleAppearanceComponent.ICON,
                 StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD_VALID_ICON,
                 StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_VALID_ICON,
+                StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_VALID_ICON,
+                StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_VALID_ICON,
+                StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_VALID_ICON,
+                StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_VALID_ICON,
+                StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_VALID_ICON,
+                StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_VALID_ICON,
+                StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_VALID_ICON,
                 StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_VALID_ICON,
+                StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_VALID_ICON,
+                StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_VALID_ICON,
                 StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_VALID_ICON,
                 StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_VALID_ICON,
                 StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_VALID_ICON,
@@ -352,7 +397,16 @@ fun StylePropertiesScreen(
 
                 StyleAppearanceComponent.SUB_SEARCH_TEXT_FIELD_PROPERTIES,
                 StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_PROPERTIES,
+                StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_PROPERTIES,
+                StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_PROPERTIES,
+                StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_PROPERTIES,
+                StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_PROPERTIES,
+                StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_PROPERTIES,
+                StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_PROPERTIES,
+                StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_PROPERTIES,
                 StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_PROPERTIES,
+                StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_PROPERTIES,
+                StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_PROPERTIES,
                 StyleAppearanceComponent.SUB_CARD_NUMBER_TEXT_FIELD_PROPERTIES,
                 StyleAppearanceComponent.SUB_CARD_NAME_TEXT_FIELD_PROPERTIES,
                 StyleAppearanceComponent.SUB_CARD_EXPIRY_TEXT_FIELD_PROPERTIES,
@@ -529,6 +583,100 @@ fun getAppearanceForWidgetComponent(
                         StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_ERROR_LABEL -> addressAppearance?.textField?.errorLabel
                         StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_HINT_LABEL -> addressAppearance?.textField?.hintLabel
                         StyleAppearanceComponent.SUB_ADDRESS_TEXT_FIELD_VALID_ICON -> addressAppearance?.textField?.validIcon
+
+                        // Per-field overrides: resolve the field's override, falling back to the
+                        // base textField when unset, so opening the editor shows the effective value.
+                        StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_PROPERTIES ->
+                            addressAppearance?.let { it.firstNameTextField ?: it.textField }
+                        StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_LABEL ->
+                            addressAppearance?.let { (it.firstNameTextField ?: it.textField).label }
+                        StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_PLACEHOLDER ->
+                            addressAppearance?.let { (it.firstNameTextField ?: it.textField).placeholder }
+                        StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_ERROR_LABEL ->
+                            addressAppearance?.let { (it.firstNameTextField ?: it.textField).errorLabel }
+                        StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_HINT_LABEL ->
+                            addressAppearance?.let { (it.firstNameTextField ?: it.textField).hintLabel }
+                        StyleAppearanceComponent.SUB_ADDRESS_FIRST_NAME_TEXT_FIELD_VALID_ICON ->
+                            addressAppearance?.let { (it.firstNameTextField ?: it.textField).validIcon }
+
+                        StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_PROPERTIES ->
+                            addressAppearance?.let { it.lastNameTextField ?: it.textField }
+                        StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_LABEL ->
+                            addressAppearance?.let { (it.lastNameTextField ?: it.textField).label }
+                        StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_PLACEHOLDER ->
+                            addressAppearance?.let { (it.lastNameTextField ?: it.textField).placeholder }
+                        StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_ERROR_LABEL ->
+                            addressAppearance?.let { (it.lastNameTextField ?: it.textField).errorLabel }
+                        StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_HINT_LABEL ->
+                            addressAppearance?.let { (it.lastNameTextField ?: it.textField).hintLabel }
+                        StyleAppearanceComponent.SUB_ADDRESS_LAST_NAME_TEXT_FIELD_VALID_ICON ->
+                            addressAppearance?.let { (it.lastNameTextField ?: it.textField).validIcon }
+
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_PROPERTIES ->
+                            addressAppearance?.let { it.addressLine1TextField ?: it.textField }
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_LABEL ->
+                            addressAppearance?.let { (it.addressLine1TextField ?: it.textField).label }
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_PLACEHOLDER ->
+                            addressAppearance?.let { (it.addressLine1TextField ?: it.textField).placeholder }
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_ERROR_LABEL ->
+                            addressAppearance?.let { (it.addressLine1TextField ?: it.textField).errorLabel }
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_HINT_LABEL ->
+                            addressAppearance?.let { (it.addressLine1TextField ?: it.textField).hintLabel }
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE1_TEXT_FIELD_VALID_ICON ->
+                            addressAppearance?.let { (it.addressLine1TextField ?: it.textField).validIcon }
+
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_PROPERTIES ->
+                            addressAppearance?.let { it.addressLine2TextField ?: it.textField }
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_LABEL ->
+                            addressAppearance?.let { (it.addressLine2TextField ?: it.textField).label }
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_PLACEHOLDER ->
+                            addressAppearance?.let { (it.addressLine2TextField ?: it.textField).placeholder }
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_ERROR_LABEL ->
+                            addressAppearance?.let { (it.addressLine2TextField ?: it.textField).errorLabel }
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_HINT_LABEL ->
+                            addressAppearance?.let { (it.addressLine2TextField ?: it.textField).hintLabel }
+                        StyleAppearanceComponent.SUB_ADDRESS_LINE2_TEXT_FIELD_VALID_ICON ->
+                            addressAppearance?.let { (it.addressLine2TextField ?: it.textField).validIcon }
+
+                        StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_PROPERTIES ->
+                            addressAppearance?.let { it.cityTextField ?: it.textField }
+                        StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_LABEL ->
+                            addressAppearance?.let { (it.cityTextField ?: it.textField).label }
+                        StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_PLACEHOLDER ->
+                            addressAppearance?.let { (it.cityTextField ?: it.textField).placeholder }
+                        StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_ERROR_LABEL ->
+                            addressAppearance?.let { (it.cityTextField ?: it.textField).errorLabel }
+                        StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_HINT_LABEL ->
+                            addressAppearance?.let { (it.cityTextField ?: it.textField).hintLabel }
+                        StyleAppearanceComponent.SUB_ADDRESS_CITY_TEXT_FIELD_VALID_ICON ->
+                            addressAppearance?.let { (it.cityTextField ?: it.textField).validIcon }
+
+                        StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_PROPERTIES ->
+                            addressAppearance?.let { it.stateTextField ?: it.textField }
+                        StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_LABEL ->
+                            addressAppearance?.let { (it.stateTextField ?: it.textField).label }
+                        StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_PLACEHOLDER ->
+                            addressAppearance?.let { (it.stateTextField ?: it.textField).placeholder }
+                        StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_ERROR_LABEL ->
+                            addressAppearance?.let { (it.stateTextField ?: it.textField).errorLabel }
+                        StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_HINT_LABEL ->
+                            addressAppearance?.let { (it.stateTextField ?: it.textField).hintLabel }
+                        StyleAppearanceComponent.SUB_ADDRESS_STATE_TEXT_FIELD_VALID_ICON ->
+                            addressAppearance?.let { (it.stateTextField ?: it.textField).validIcon }
+
+                        StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_PROPERTIES ->
+                            addressAppearance?.let { it.postcodeTextField ?: it.textField }
+                        StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_LABEL ->
+                            addressAppearance?.let { (it.postcodeTextField ?: it.textField).label }
+                        StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_PLACEHOLDER ->
+                            addressAppearance?.let { (it.postcodeTextField ?: it.textField).placeholder }
+                        StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_ERROR_LABEL ->
+                            addressAppearance?.let { (it.postcodeTextField ?: it.textField).errorLabel }
+                        StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_HINT_LABEL ->
+                            addressAppearance?.let { (it.postcodeTextField ?: it.textField).hintLabel }
+                        StyleAppearanceComponent.SUB_ADDRESS_POSTCODE_TEXT_FIELD_VALID_ICON ->
+                            addressAppearance?.let { (it.postcodeTextField ?: it.textField).validIcon }
+
                         else -> null
                     }
                 }
@@ -596,6 +744,35 @@ fun getAppearanceForWidgetComponent(
                         StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_ERROR_LABEL -> giftCardAppearance?.textField?.errorLabel
                         StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_HINT_LABEL -> giftCardAppearance?.textField?.hintLabel
                         StyleAppearanceComponent.SUB_GIFT_CARD_TEXT_FIELD_VALID_ICON -> giftCardAppearance?.textField?.validIcon
+
+                        // Per-field overrides: resolve the field's override, falling back to the
+                        // base textField when unset, so opening the editor shows the effective value.
+                        StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_PROPERTIES ->
+                            giftCardAppearance?.let { it.cardNumberTextField ?: it.textField }
+                        StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_LABEL ->
+                            giftCardAppearance?.let { (it.cardNumberTextField ?: it.textField).label }
+                        StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_PLACEHOLDER ->
+                            giftCardAppearance?.let { (it.cardNumberTextField ?: it.textField).placeholder }
+                        StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_ERROR_LABEL ->
+                            giftCardAppearance?.let { (it.cardNumberTextField ?: it.textField).errorLabel }
+                        StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_HINT_LABEL ->
+                            giftCardAppearance?.let { (it.cardNumberTextField ?: it.textField).hintLabel }
+                        StyleAppearanceComponent.SUB_GIFT_CARD_NUMBER_TEXT_FIELD_VALID_ICON ->
+                            giftCardAppearance?.let { (it.cardNumberTextField ?: it.textField).validIcon }
+
+                        StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_PROPERTIES ->
+                            giftCardAppearance?.let { it.pinTextField ?: it.textField }
+                        StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_LABEL ->
+                            giftCardAppearance?.let { (it.pinTextField ?: it.textField).label }
+                        StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_PLACEHOLDER ->
+                            giftCardAppearance?.let { (it.pinTextField ?: it.textField).placeholder }
+                        StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_ERROR_LABEL ->
+                            giftCardAppearance?.let { (it.pinTextField ?: it.textField).errorLabel }
+                        StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_HINT_LABEL ->
+                            giftCardAppearance?.let { (it.pinTextField ?: it.textField).hintLabel }
+                        StyleAppearanceComponent.SUB_GIFT_CARD_PIN_TEXT_FIELD_VALID_ICON ->
+                            giftCardAppearance?.let { (it.pinTextField ?: it.textField).validIcon }
+
                         else -> null
                     }
                 }

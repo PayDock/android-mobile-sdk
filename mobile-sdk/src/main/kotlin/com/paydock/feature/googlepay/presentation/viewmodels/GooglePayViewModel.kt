@@ -14,7 +14,6 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.GooglePayException
 import com.paydock.core.presentation.viewmodels.BaseViewModel
-import com.paydock.feature.address.domain.model.integration.BillingAddress
 import com.paydock.feature.googlepay.data.dto.CreateGooglePayTokenRequest
 import com.paydock.feature.googlepay.data.dto.GooglePayPayloadData
 import com.paydock.feature.googlepay.domain.model.integration.GooglePayBillingAddress
@@ -194,9 +193,7 @@ internal class GooglePayViewModel(
     fun extractAllowedPaymentMethods(request: GooglePayPaymentDataRequest = config.paymentRequest): String? {
         return runCatching {
             val json = request.allowedPaymentMethodsJsonArrayString()
-            if (json.isBlank() || json == "[]") {
-                throw IllegalArgumentException("Allowed payment methods missing")
-            }
+            require(json.isNotBlank() && json != "[]") { "Allowed payment methods missing" }
             json
         }.getOrElse {
             updateUiState(
@@ -427,18 +424,4 @@ internal class GooglePayViewModel(
         updateUiState(GooglePayUIState.Idle)
     }
     //endregion
-
-    private fun mapToBillingAddress(json: JSONObject?): BillingAddress? {
-        if (json == null) return null
-        return BillingAddress(
-            addressLine1 = json.optString("address1"),
-            addressLine2 = json.optString("address2"),
-            city = json.optString("locality"),
-            state = json.optString("administrativeArea"),
-            postalCode = json.optString("postalCode"),
-            country = json.optString("countryCode"),
-            firstName = json.optString("name").substringBeforeLast(" "),
-            lastName = json.optString("name").substringAfterLast(" ")
-        )
-    }
 }

@@ -3,8 +3,12 @@ package com.paydock.feature.address.presentation.viewmodels
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.utils.MainDispatcherRule
+import com.paydock.feature.address.domain.model.integration.AddressDetailsWidgetConfig
 import com.paydock.feature.address.domain.model.integration.BillingAddress
+import com.paydock.feature.address.presentation.state.AddressDetailsFormState
 import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertFalse
+import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -156,5 +160,68 @@ internal class AddressDetailsViewModelTest : BaseKoinUnitTest() {
         assertEquals("Greater Manchester", state.formState.state)
         assertEquals("M11 5MW", state.formState.postalCode)
         assertEquals("United Kingdom", state.formState.country)
+    }
+
+    @Test
+    fun `validateAllFields should force show errors for all required fields`() = runTest {
+        // ACTION
+        viewModel.validateAllFields()
+        val state = viewModel.stateFlow.first()
+        // CHECK
+        assertTrue(state.formState.firstNameErrorOverwrite)
+        assertTrue(state.formState.lastNameErrorOverwrite)
+        assertTrue(state.formState.addressLine1ErrorOverwrite)
+        assertTrue(state.formState.cityErrorOverwrite)
+        assertTrue(state.formState.stateErrorOverwrite)
+        assertTrue(state.formState.postcodeErrorOverwrite)
+    }
+
+    @Test
+    fun `updateFirstName should reset firstNameErrorOverwrite only`() = runTest {
+        viewModel.validateAllFields()
+        // ACTION
+        viewModel.updateFirstName("John")
+        val state = viewModel.stateFlow.first()
+        // CHECK
+        assertFalse(state.formState.firstNameErrorOverwrite)
+        assertTrue(state.formState.lastNameErrorOverwrite)
+    }
+
+    @Test
+    fun `invalidFields and errorCount reflect empty form`() = runTest {
+        val state = viewModel.stateFlow.first()
+        assertEquals(
+            listOf(
+                AddressDetailsFormState.AddressField.FIRST_NAME,
+                AddressDetailsFormState.AddressField.LAST_NAME,
+                AddressDetailsFormState.AddressField.ADDRESS_LINE_1,
+                AddressDetailsFormState.AddressField.CITY,
+                AddressDetailsFormState.AddressField.STATE,
+                AddressDetailsFormState.AddressField.POSTCODE,
+                AddressDetailsFormState.AddressField.COUNTRY
+            ),
+            state.formState.invalidFields
+        )
+        assertEquals(7, state.formState.errorCount)
+    }
+
+    @Test
+    fun `invalidFields and errorCount are empty when required fields are filled`() = runTest {
+        viewModel.updateFirstName("John")
+        viewModel.updateLastName("Doe")
+        viewModel.updateAddressLine1("1 Park Avenue")
+        viewModel.updateCity("Manchester")
+        viewModel.updateState("Greater Manchester")
+        viewModel.updatePostalCode("M11 5MW")
+        viewModel.updateCountry("United Kingdom")
+
+        val state = viewModel.stateFlow.first()
+        assertTrue(state.formState.invalidFields.isEmpty())
+        assertEquals(0, state.formState.errorCount)
+    }
+
+    @Test
+    fun `AddressDetailsWidgetConfig activePrimaryButton defaults to true`() {
+        assertTrue(AddressDetailsWidgetConfig().activePrimaryButton)
     }
 }
