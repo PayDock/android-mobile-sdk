@@ -52,9 +52,9 @@ stages:
 
 # Include:
 # Includes an external template for security checks from another project.
-# This template is located in the 'paydock/platform/gitlab-templates' project.
+# This template is located in the 'paydock-rps/platform/gitlab-templates' project.
 include:
-  - project: 'paydock/platform/gitlab-templates'
+  - project: 'paydock-rps/platform/gitlab-templates'
     ref: main
     file: '/security/gitlab-defectdojo.yaml' # Includes security checks from the DefectDojo template.
 
