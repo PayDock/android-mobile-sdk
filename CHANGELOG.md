@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- Client-SDK version to `v1.145.0` (staging `v1.145.0-beta`)
+
 ## [5.6.0] - 2026-08-27
 
 ### Added
