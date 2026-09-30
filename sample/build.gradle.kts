@@ -199,7 +199,7 @@ dependencies {
     // Modules
     // Use the published Maven Central release to test the released library.
     // To switch back to the local module, restore: implementation(project(":mobile-sdk"))
-//    implementation("com.paydock:mobile-sdk:5.6.0")
+//    implementation("com.paydock:mobile-sdk:5.7.0")
     implementation(project(":mobile-sdk"))
     // Core library desugaring required by afterpay-android 4.8.x (pulled in via :mobile-sdk)
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)

@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [5.7.0] - 2026-09-30
 
 ### Added
 - Added an optional `onProgress` callback to `Standalone3DSWidget` that receives `Standalone3DSProgress` events
@@ -12,6 +12,8 @@
   `result.description` fields of the web SDK's `Canvas3ds` events (e.g. `status = "success"`,
   `resultDescription = "frictionless"`). Both are `null` when not reported. Additive: existing code keeps compiling and
   running unchanged, no migration needed.
+- See the updated [Standalone 3DS guide](https://github.com/PayDock/mobile-sdk-doc/blob/main/widgets/standalone3ds.md#android)
+  for `onProgress`, the new loader behaviour and a recommended integration pattern.
 
 ### Changed
 - Client-SDK version to `v1.147.0` — faster standalone 3DS authentication
