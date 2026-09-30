@@ -55,6 +55,30 @@ internal sealed class Standalone3DSEvent {
     ) : Standalone3DSEvent()
 
     /**
+     * Represents the challenge page having loaded (or a safety timeout elapsed).
+     *
+     * @property event The event type ([StandaloneEvent.CHARGE_AUTH_CHALLENGE_LOADED]).
+     * @property data Event data containing the load reason.
+     */
+    @Serializable
+    data class ChargeAuthChallengeLoadedEvent(
+        override val event: StandaloneEvent = StandaloneEvent.CHARGE_AUTH_CHALLENGE_LOADED,
+        override val data: StandaloneChargeEventData
+    ) : Standalone3DSEvent()
+
+    /**
+     * Represents the challenge (or decoupled authentication) having been completed by the shopper.
+     *
+     * @property event The event type ([StandaloneEvent.CHARGE_AUTH_CHALLENGE_COMPLETED]).
+     * @property data Event data containing the completion source.
+     */
+    @Serializable
+    data class ChargeAuthChallengeCompletedEvent(
+        override val event: StandaloneEvent = StandaloneEvent.CHARGE_AUTH_CHALLENGE_COMPLETED,
+        override val data: StandaloneChargeEventData
+    ) : Standalone3DSEvent()
+
+    /**
      * Represents a decoupled charge authentication event.
      *
      * @property event The event type ([StandaloneEvent.CHARGE_AUTH_DECOUPLED]).

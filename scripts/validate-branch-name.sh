@@ -39,13 +39,13 @@ validate_branch_name() {
     # Check if branch name starts with any allowed prefix
     for prefix in "${ALLOWED_PREFIXES[@]}"; do
         if [[ "$branch_name" == "$prefix"* ]]; then
-            # For bug/, task/, feature/, spike/ - require SDK- ticket number
+            # For bug/, task/, feature/, spike/ - require an SDK- or PAYRAC- ticket number
             if [[ "$prefix" == "bug/" || "$prefix" == "task/" || "$prefix" == "feature/" || "$prefix" == "spike/" ]]; then
                 # Extract the part after the prefix
                 local suffix="${branch_name#$prefix}"
                 
-                # Check if it starts with SDK- followed by numbers
-                if [[ "$suffix" =~ ^SDK-[0-9]+.* ]]; then
+                # Check if it starts with an allowed Jira key (SDK- or PAYRAC-) followed by numbers
+                if [[ "$suffix" =~ ^(SDK|PAYRAC)-[0-9]+.* ]]; then
                     return 0
                 else
                     return 1
@@ -117,7 +117,7 @@ main() {
         print_error "Branch name '$branch_name' does not follow naming conventions"
         echo ""
         echo "Branch naming requirements:"
-        echo "  • bug/, task/, feature/, spike/ branches must include Jira ticket (SDK-####)"
+        echo "  • bug/, task/, feature/, spike/ branches must include Jira ticket (SDK-#### or PAYRAC-####)"
         echo "  • deploy/ branches must be in the form deploy/v<major>.<minor>.<patch>"
         echo ""
         echo "Required format:"

@@ -7,6 +7,7 @@ import com.paydock.core.domain.error.exceptions.Standalone3DSException
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.designsystems.components.web.utils.SdkJSBridge
 import com.paydock.feature.threeDS.standalone.domain.model.ui.Standalone3DSEvent
+import com.paydock.feature.threeDS.standalone.domain.utils.UnknownStandalone3DSEventException
 
 /**
  * JavaScript bridge for handling Standalone 3D Secure (3DS) events in an integrated WebView flow.
@@ -50,7 +51,11 @@ internal class Standalone3DSJSBridge(
      *      wrapped in a `Result.success` and then passed to the `eventCallback` function. This indicates
      *      successful event processing.
      *
-     * 4. **Failed Event Handling:**
+     * 4. **Unknown Event Handling:**
+     *    - Events with an unrecognised name (e.g. emitted by a newer web 3DS library) are logged and
+     *      ignored. The bridge stays enabled and the callback is not invoked.
+     *
+     * 5. **Failed Event Handling:**
      *    - If deserialization fails (e.g., due to invalid JSON format), the following steps occur:
      *      - **Bridge Deactivation:** The `isEnabled` flag is set to `false`, effectively disabling the
      *        bridge. This prevents subsequent events from being processed, as an error state has been
@@ -70,6 +75,10 @@ internal class Standalone3DSJSBridge(
         }.fold(
             onSuccess = { event -> eventCallback(Result.success(event)) },
             onFailure = { e ->
+                if (e is UnknownStandalone3DSEventException) {
+                    Log.w(MobileSDKConstants.MOBILE_SDK_TAG, "Ignoring unknown Standalone3DSEvent: ${e.eventName}")
+                    return
+                }
                 isEnabled = false
                 val errorMessage =
                     "Standalone3DSEvent Mapping Failure [${e::class.simpleName}]: ${e.message}"

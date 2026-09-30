@@ -11,14 +11,22 @@ import kotlinx.serialization.Serializable
  * status, optional charge 3DS ID, and the charge result.
  *
  * @property status The status of the charge event.
+ * @property rawStatus The status exactly as reported by the web SDK (e.g. `success`, `pending`, `rejected`,
+ *   `error`, `AuthTimedOut`), including values [status] cannot represent. Exposed as
+ *   [com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult.status].
  * @property charge3dsId Charge 3DS ID for tracking the authentication process.
  * @property result Optional result of the charge.
+ * @property reason Optional reason a challenge page was reported as loaded (`load` or `timeout`).
+ * @property source Optional source that detected the challenge completion (`poll` or `callback`).
  */
 @Serializable
 internal data class StandaloneChargeEventData(
-    val status: StandaloneStatus?,
+    val status: StandaloneStatus? = null,
     @SerialName("charge_3ds_id") val charge3dsId: String? = null,
-    val result: ChargeResult? = null
+    val result: ChargeResult? = null,
+    val reason: String? = null,
+    val source: String? = null,
+    @SerialName("raw_status") val rawStatus: String? = null
 )
 
 /**

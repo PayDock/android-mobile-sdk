@@ -78,19 +78,6 @@ internal object HtmlWidgetBuilder {
                     width: 100%;
                     height: 100vh;
                 }
-                #loader {
-                    display: flex;
-                    position: fixed;
-                    width: 100%;
-                    height: 100vh;
-                    top: 0;
-                    left: 0;
-                    background: white;
-                    align-items: center;
-                    justify-content: center;
-                    color: black;
-                    font-size: 40px;
-                }
                 """.trimIndent()
             )
         }
@@ -108,21 +95,55 @@ internal object HtmlWidgetBuilder {
                 var widget = ${config.createWidget()}
                 widget.setEnv("${config.environment}");
 
-                const watchEvent = (event) => {
-                    widget.on(event, function (data) {
-                        if (typeof ${MobileSDKConstants.JS_BRIDGE_NAME} !== "undefined") {
-                            ${MobileSDKConstants.JS_BRIDGE_NAME}.postMessage(JSON.stringify({
-                                event,
-                                data: data
-                            }));
-                        }
-                    });
-                };
+                ${createWatchEventScript(config)}
                 ${config.events.joinToString("\n") { "watchEvent(\"$it\");" }}
 
                 widget.load();
                 """.trimIndent()
             )
         }
+    }
+
+    /**
+     * Creates the `watchEvent` JavaScript function that forwards widget events to the native bridge.
+     *
+     * If the config provides a [WidgetConfig.eventDataTransform], the event payload is built with it and
+     * the forwarding is guarded so it never throws inside the page.
+     *
+     * @param config The configuration object for the widget.
+     * @return The `watchEvent` function declaration.
+     */
+    private fun createWatchEventScript(config: WidgetConfig): String {
+        val bridge = MobileSDKConstants.JS_BRIDGE_NAME
+        val transform = config.eventDataTransform
+            ?: return """
+                const watchEvent = (event) => {
+                    widget.on(event, function (data) {
+                        if (typeof $bridge !== "undefined") {
+                            $bridge.postMessage(JSON.stringify({
+                                event,
+                                data: data
+                            }));
+                        }
+                    });
+                };
+            """.trimIndent()
+        return """
+            const mapEventData = $transform;
+            const watchEvent = (event) => {
+                widget.on(event, function (data) {
+                    try {
+                        if (typeof $bridge !== "undefined") {
+                            $bridge.postMessage(JSON.stringify({
+                                event,
+                                data: mapEventData(event, data)
+                            }));
+                        }
+                    } catch (e) {
+                        console.error("Failed to forward " + event + " event", e);
+                    }
+                });
+            };
+        """.trimIndent()
     }
 }

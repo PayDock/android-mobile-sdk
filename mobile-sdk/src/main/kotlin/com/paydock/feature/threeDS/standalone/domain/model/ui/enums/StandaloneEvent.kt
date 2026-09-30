@@ -34,6 +34,18 @@ internal enum class StandaloneEvent {
     CHARGE_AUTH_CHALLENGE,
 
     /**
+     * Indicates that the challenge page has loaded (or a safety timeout elapsed) and is visible.
+     */
+    @SerialName("chargeAuthChallengeLoaded")
+    CHARGE_AUTH_CHALLENGE_LOADED,
+
+    /**
+     * Indicates that the challenge (or decoupled authentication) was completed and the result is being confirmed.
+     */
+    @SerialName("chargeAuthChallengeCompleted")
+    CHARGE_AUTH_CHALLENGE_COMPLETED,
+
+    /**
      * Indicates that the 3DS charge authorization was completed using a decoupled flow.
      * This means authentication occurred asynchronously without direct user interaction.
      */

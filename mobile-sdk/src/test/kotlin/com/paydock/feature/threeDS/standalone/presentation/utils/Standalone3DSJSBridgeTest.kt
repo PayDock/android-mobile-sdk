@@ -8,6 +8,8 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
+import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.kotlin.argThat
 
 @Suppress("MaxLineLength")
@@ -74,18 +76,43 @@ internal class Standalone3DSJSBridgeTest : BaseUnitTest() {
     }
 
     @Test
-    fun `postMessage with unknown event type should call callback with EventMappingException and disable bridge`() {
+    fun `postMessage with valid chargeAuthChallengeLoaded JSON should call callback with parsed event`() {
         val eventJson =
-            "{\"event\":\"unknownEvent\",\"data\":{\"status\":\"pending\",\"charge_3ds_id\":\"3e07e004-71af-44dc-a9f4-e59520b3e64f\",\"result\":{}}}"
-        val message =
-            "Standalone3DSEvent Mapping Failure [SerializationException]: Unknown 3DS event type"
+            "{\"event\":\"chargeAuthChallengeLoaded\",\"data\":{\"charge_3ds_id\":\"3e07e004-71af-44dc-a9f4-e59520b3e64f\",\"reason\":\"load\"}}"
+
+        val expectedEvent = Result.success(eventJson.convertToDataClass<Standalone3DSEvent>())
 
         jsBridge.postMessage(eventJson)
 
-        verify(mockCallback).invoke(
-            argThat {
-                this.isFailure && this.exceptionOrNull() is Standalone3DSException.EventMappingException && this.exceptionOrNull()?.message == message
-            }
-        )
+        verify(mockCallback).invoke(expectedEvent)
+    }
+
+    @Test
+    fun `postMessage with valid chargeAuthChallengeCompleted JSON should call callback with parsed event`() {
+        val eventJson =
+            "{\"event\":\"chargeAuthChallengeCompleted\",\"data\":{\"charge_3ds_id\":\"3e07e004-71af-44dc-a9f4-e59520b3e64f\",\"source\":\"callback\"}}"
+
+        val expectedEvent = Result.success(eventJson.convertToDataClass<Standalone3DSEvent>())
+
+        jsBridge.postMessage(eventJson)
+
+        verify(mockCallback).invoke(expectedEvent)
+    }
+
+    @Test
+    fun `postMessage with unknown event type should be ignored and keep the bridge enabled`() {
+        val unknownEventJson =
+            "{\"event\":\"unknownEvent\",\"data\":{\"status\":\"pending\",\"charge_3ds_id\":\"3e07e004-71af-44dc-a9f4-e59520b3e64f\",\"result\":{}}}"
+        val validEventJson =
+            "{\"event\":\"chargeAuthSuccess\",\"data\":{\"status\":\"success\",\"charge_3ds_id\":\"3e07e004-71af-44dc-a9f4-e59520b3e64f\"}}"
+        val expectedEvent = Result.success(validEventJson.convertToDataClass<Standalone3DSEvent>())
+
+        jsBridge.postMessage(unknownEventJson)
+        verifyNoInteractions(mockCallback)
+
+        // The bridge is still enabled, so subsequent known events are delivered
+        jsBridge.postMessage(validEventJson)
+        verify(mockCallback).invoke(expectedEvent)
+        verifyNoMoreInteractions(mockCallback)
     }
 }

@@ -5,9 +5,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.Standalone3DSException
@@ -18,12 +17,14 @@ import com.paydock.designsystems.components.web.utils.HtmlWidgetBuilder
 import com.paydock.feature.threeDS.common.domain.integration.ThreeDSConfig
 import com.paydock.feature.threeDS.common.domain.model.ui.enums.TokenFormat
 import com.paydock.feature.threeDS.common.presentation.utils.ThreeDSTokenUtils
+import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSProgress
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
 import com.paydock.feature.threeDS.standalone.presentation.state.Standalone3DSUIState
 import com.paydock.feature.threeDS.standalone.presentation.ui.StandaloneThreeDSWebView
 import com.paydock.feature.threeDS.standalone.presentation.ui.StandaloneThreeDSWidgetAppearance
 import com.paydock.feature.threeDS.standalone.presentation.ui.StandaloneThreeDSWidgetAppearanceDefaults
 import com.paydock.feature.threeDS.standalone.presentation.utils.Standalone3DSJSBridge
+import com.paydock.feature.threeDS.standalone.presentation.utils.Standalone3DSLoadingController
 import com.paydock.feature.threeDS.standalone.presentation.viewmodels.Standalone3DSViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -33,11 +34,21 @@ import org.koin.androidx.compose.koinViewModel
  * This widget displays a WebView for the 3DS authentication process and manages UI state changes
  * using a `ThreeDSViewModel`. It supports theming, back button handling, and error reporting.
  *
+ * Loading: the loader (or [loadingDelegate]) starts when the widget launches and stays up through
+ * device fingerprinting and while a challenge page is loading. It finishes once the challenge page is
+ * visible, starts again once the shopper completed the challenge while the result is confirmed, and
+ * finishes on the final result (success, reject or error). A decoupled authentication finishes it
+ * (use [onProgress] to show the shopper how to approve). [loadingDelegate] start/finish calls are
+ * always balanced.
+ *
  * @param modifier The modifier to apply to this widget.
  * @param config The configuration for the 3DS process, including the token.
  * @param appearance The appearance settings for the widget.
  * @param loadingDelegate An optional [WidgetLoadingDelegate] for overriding the default loader
  *    behavior during tokenization or other async operations.
+ * @param onProgress An optional callback invoked with intermediate [Standalone3DSProgress] events
+ *    (challenge started, challenge loaded, challenge completed, decoupled). It never receives the final
+ *    result, which is always delivered to [completion].
  * @param completion A callback invoked with the result of the 3DS process, either success or failure.
  */
 @Composable
@@ -46,6 +57,7 @@ fun Standalone3DSWidget(
     config: ThreeDSConfig,
     appearance: StandaloneThreeDSWidgetAppearance = StandaloneThreeDSWidgetAppearanceDefaults.appearance(),
     loadingDelegate: WidgetLoadingDelegate? = null,
+    onProgress: ((Standalone3DSProgress) -> Unit)? = null,
     completion: (Result<Standalone3DSResult>) -> Unit,
 ) {
     val parsedToken = ThreeDSTokenUtils.extractToken(config.token)
@@ -74,21 +86,26 @@ fun Standalone3DSWidget(
 
     // Obtain instances of view models
     val viewModel: Standalone3DSViewModel = koinViewModel()
-    var isLoading by remember {
-        mutableStateOf(loadingDelegate == null)
+    // Loading starts as soon as the widget launches (see LaunchedEffect below)
+    val loadingController = remember { Standalone3DSLoadingController() }
+    val currentLoadingDelegate by rememberUpdatedState(loadingDelegate)
+    val currentOnProgress by rememberUpdatedState(onProgress)
+    val currentCompletion by rememberUpdatedState(completion)
+
+    // Only notifies on actual transitions, so delegate start/finish calls always stay balanced
+    val updateLoading: (Boolean) -> Unit = { loading ->
+        loadingController.update(loading, currentLoadingDelegate)
     }
 
     LaunchedEffect(Unit) {
-        loadingDelegate?.widgetLoadingDidStart()
+        loadingController.start(currentLoadingDelegate)
         viewModel.eventFlow.collect { state ->
             handleUIState(
                 state,
                 viewModel,
-                loadingDelegate = loadingDelegate,
-                completion = { result ->
-                    isLoading = false
-                    completion(result)
-                }
+                onLoadingChange = updateLoading,
+                onProgress = { progress -> currentOnProgress?.invoke(progress) },
+                completion = { result -> currentCompletion(result) }
             )
         }
     }
@@ -113,11 +130,11 @@ fun Standalone3DSWidget(
             data = htmlString,
             jsBridge = jsBridge
         ) { status, message ->
-            isLoading = false
+            updateLoading(false)
             // Invoke the onWebViewError callback with the WebView ThreeDSException exception
-            completion(Result.failure(Standalone3DSException.WebViewException(status, message)))
+            currentCompletion(Result.failure(Standalone3DSException.WebViewException(status, message)))
         }
-        if (isLoading) {
+        if (loadingController.isLoading && loadingDelegate == null) {
             SdkOverlayLoader(
                 appearance = appearance.loader
             )
@@ -128,39 +145,36 @@ fun Standalone3DSWidget(
 /**
  * Handles the UI state for the 3DS process.
  *
- * Depending on the state, this function either invokes the completion callback
- * with the result or clears the state to prevent reuse.
+ * Depending on the state, this function either updates the loading state, forwards progress,
+ * or invokes the completion callback with the result and clears the state to prevent reuse.
  *
  * @param uiState The current UI state of the 3DS process.
  * @param viewModel The ViewModel managing the 3DS state.
- * @param loadingDelegate An optional [WidgetLoadingDelegate] for overriding the default loader
- *    behavior.
+ * @param onLoadingChange Invoked when the loading indicator should start (`true`) or finish (`false`).
+ * @param onProgress Invoked with intermediate progress events.
  * @param completion A callback invoked with the result of the 3DS process.
  */
 private fun handleUIState(
     uiState: Standalone3DSUIState,
     viewModel: Standalone3DSViewModel,
-    loadingDelegate: WidgetLoadingDelegate? = null,
+    onLoadingChange: (Boolean) -> Unit,
+    onProgress: (Standalone3DSProgress) -> Unit,
     completion: (Result<Standalone3DSResult>) -> Unit,
 ) {
     when (uiState) {
         is Standalone3DSUIState.Idle -> Unit // No action needed for idle state.
-        is Standalone3DSUIState.Loading -> {
-            // Start loading animation when in a loading state.
-            loadingDelegate?.widgetLoadingDidStart()
-        }
+        is Standalone3DSUIState.Loading -> onLoadingChange(uiState.isLoading)
+        is Standalone3DSUIState.Progress -> onProgress(uiState.progress)
 
         is Standalone3DSUIState.Success -> {
-            // Stop loading animation and invoke completion with success result.
-            loadingDelegate?.widgetLoadingDidFinish()
+            // Invoke completion with the event result (loading changes are emitted beforehand).
             completion(Result.success(uiState.result))
             // This ensures that we clear the state so it's not reused
             viewModel.resetResultState()
         }
 
         is Standalone3DSUIState.Error -> {
-            // Stop loading animation and invoke completion with failure result.
-            loadingDelegate?.widgetLoadingDidFinish()
+            // Invoke completion with failure result (the loader is finished beforehand).
             completion(Result.failure(uiState.exception))
             // This ensures that we clear the state so it's not reused
             viewModel.resetResultState()

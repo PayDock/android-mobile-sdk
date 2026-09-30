@@ -1,116 +1,23 @@
 package com.paydock.sample.feature.widgets.ui.components
 
 import android.content.Context
-import android.util.Log
-import android.widget.Toast
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.paydock.core.domain.error.displayableMessage
-import com.paydock.core.domain.error.toError
-import com.paydock.core.presentation.util.WidgetLoadingDelegate
-import com.paydock.feature.threeDS.common.domain.integration.ThreeDSConfig
-import com.paydock.feature.threeDS.standalone.presentation.Standalone3DSWidget
-import com.paydock.feature.threeDS.standalone.presentation.ui.StandaloneThreeDSWidgetAppearanceDefaults
-import com.paydock.sample.core.THREE_DS_CARD_ERROR
-import com.paydock.sample.feature.card.CardViewModel
 import com.paydock.sample.feature.style.StylingViewModel
-import com.paydock.sample.feature.threeDS.presentation.ThreeDSViewModel
+import com.paydock.sample.feature.threeDS.presentation.Standalone3DSDemoViewModel
+import com.paydock.sample.feature.widgets.ui.components.standalone3ds.Standalone3DSDemo
 
+@Suppress("UnusedParameter") // Keeps the signature shared with the other widget items
 @Composable
 fun StandaloneThreeDSItem(
     context: Context,
-    cardViewModel: CardViewModel = hiltViewModel(),
-    threeDSViewModel: ThreeDSViewModel = hiltViewModel(),
     stylingViewModel: StylingViewModel,
+    viewModel: Standalone3DSDemoViewModel = hiltViewModel(),
 ) {
-    val cardUIState by cardViewModel.stateFlow.collectAsState()
-    val threeDSUIState by threeDSViewModel.stateFlow.collectAsState()
-    // Use LaunchedEffect to execute the API request and state collection only once
-    LaunchedEffect(cardViewModel) {
-        cardViewModel.resetResultState()
-        cardViewModel.createCardVaultTokenDetails()
-    }
-    LaunchedEffect(threeDSViewModel) {
-        threeDSViewModel.resetResultState()
-    }
-    val vaultToken = cardUIState.token
-    val threeDSToken = threeDSUIState.token
-    val threeDSAppearance by stylingViewModel.standalone3DSWidgetAppearance.collectAsState()
-    val currentOrDefaultAppearance = threeDSAppearance ?: StandaloneThreeDSWidgetAppearanceDefaults.appearance()
-    when {
-        !threeDSToken.isNullOrBlank() -> {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Standalone3DSWidget(
-                    config = ThreeDSConfig(token = threeDSToken),
-                    appearance = currentOrDefaultAppearance,
-//                    loadingDelegate = object : WidgetLoadingDelegate {
-//                        override fun widgetLoadingDidStart() {
-//                            threeDSViewModel.setIsLoading(true)
-//                        }
-//
-//                        override fun widgetLoadingDidFinish() {
-//                            threeDSViewModel.setIsLoading(false)
-//                        }
-//                    },
-                ) { result ->
-                    result.onSuccess {
-                        Log.d("[Standalone3DSWidget]", "Success: $it")
-                        Toast.makeText(context, "3DS Result returned [$it]", Toast.LENGTH_SHORT)
-                            .show()
-                    }.onFailure {
-                        val error = it.toError()
-                        Log.d("[Standalone3DSWidget]", "Failure: ${error.displayableMessage}")
-                        Toast.makeText(
-                            context,
-                            "3DS Result failed! [${error.displayableMessage}]",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
-            }
-            if (threeDSUIState.isLoading) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-        }
-
-        !vaultToken.isNullOrBlank() -> {
-            cardViewModel.resetResultState()
-            threeDSViewModel.createStandalone3dsToken(vaultToken)
-        }
-
-        !cardUIState.error.isNullOrBlank() -> {
-            Toast.makeText(context, cardUIState.error ?: THREE_DS_CARD_ERROR, Toast.LENGTH_SHORT)
-                .show()
-        }
-
-        !threeDSUIState.error.isNullOrBlank() -> {
-            Toast.makeText(context, threeDSUIState.error ?: THREE_DS_CARD_ERROR, Toast.LENGTH_SHORT)
-                .show()
-        }
-
-        cardUIState.isLoading || threeDSUIState.isLoading -> {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                CircularProgressIndicator()
-            }
-        }
-    }
+    val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    Standalone3DSDemo(
+        viewModel = viewModel,
+        onDone = { backDispatcher?.onBackPressed() }
+    )
 }

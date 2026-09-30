@@ -263,7 +263,7 @@ if ! "$ENSURE_SCRIPT" --quiet; then
     echo "Your current branch name does not follow the required naming conventions."
     echo ""
     echo "Branch naming requirements:"
-    echo "  • bug/, task/, feature/, spike/ branches must include Jira ticket (SDK-####)"
+    echo "  • bug/, task/, feature/, spike/ branches must include Jira ticket (SDK-#### or PAYRAC-####)"
     echo "  • deploy/ branches must be in the form deploy/v<major>.<minor>.<patch>"
     echo ""
     echo "Examples of valid branch names:"
