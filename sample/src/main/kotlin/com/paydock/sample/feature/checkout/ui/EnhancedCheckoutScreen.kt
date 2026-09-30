@@ -67,6 +67,7 @@ import com.paydock.sample.designsystems.theme.SampleTheme
 import com.paydock.sample.feature.checkout.domain.model.Address
 import com.paydock.sample.feature.checkout.domain.model.AddressType
 import com.paydock.sample.feature.checkout.domain.model.CheckoutStep
+import com.paydock.sample.feature.checkout.models.Standalone3DSPhase
 import com.paydock.sample.feature.checkout.models.ThreeDSType
 import com.paydock.sample.feature.checkout.presentation.CheckoutBackCoordinator
 import com.paydock.sample.feature.checkout.presentation.EnhancedCheckoutViewModel
@@ -340,17 +341,28 @@ fun EnhancedCheckoutScreen(
     // 3DS Bottom Sheet
     val threeDSToken = viewModel.threeDSToken
     val vaultToken = viewModel.vaultToken
-    if (!threeDSToken.isNullOrBlank() && !vaultToken.isNullOrBlank()) {
+    val threeDSType by viewModel.threeDSType.collectAsState()
+    val standalone3DSFlow = viewModel.standalone3DSFlow
+    val showThreeDSSheet = when (threeDSType) {
+        ThreeDSType.MPGS -> !threeDSToken.isNullOrBlank() && !vaultToken.isNullOrBlank()
+        // The standalone sheet opens while the 3DS token is still being created ("preparing")
+        ThreeDSType.STANDALONE -> standalone3DSFlow != null
+    }
+    if (showThreeDSSheet) {
         val bottom3DSSheetState = rememberModalBottomSheetState(
             // This will expand the modal fully based on the size
             skipPartiallyExpanded = true,
             // Prevents dismissing sheet when dragging
             confirmValueChange = { newState ->
-                newState != SheetValue.Hidden //  Stop bottom sheet from hiding on outside press
+                newState != SheetValue.Hidden || // Stop bottom sheet from hiding on outside press
+                    // Standalone 3DS can be swiped away (cancelled), except while the shopper interacts with the
+                    // bank's page or once verified
+                    (threeDSType == ThreeDSType.STANDALONE && viewModel.standalone3DSFlow?.phase.let {
+                        it != Standalone3DSPhase.CHALLENGE && it != Standalone3DSPhase.SUCCESS
+                    })
             }
         )
         val isLoading = viewModel.isLoading
-        val threeDSType by viewModel.threeDSType.collectAsState()
         Checkout3DSBottomSheet(
             bottom3DSSheetState = bottom3DSSheetState,
             onDismissRequest = {
@@ -362,17 +374,16 @@ fun EnhancedCheckoutScreen(
                         )
                     }
 
-                    ThreeDSType.STANDALONE -> {
-                        viewModel.handleStandalone3DSResult(
-                            Result.failure(Exception("3DS cancelled by user"))
-                        )
-                    }
+                    ThreeDSType.STANDALONE -> viewModel.cancelStandalone3DS()
                 }
             },
             vaultToken = vaultToken,
             threeDSToken = threeDSToken,
             threeDSType = threeDSType,
-            showCloseButton = !isLoading,
+            showCloseButton = when (threeDSType) {
+                ThreeDSType.MPGS -> !isLoading
+                ThreeDSType.STANDALONE -> standalone3DSFlow?.phase != Standalone3DSPhase.SUCCESS
+            },
             viewModel = viewModel
         )
     }

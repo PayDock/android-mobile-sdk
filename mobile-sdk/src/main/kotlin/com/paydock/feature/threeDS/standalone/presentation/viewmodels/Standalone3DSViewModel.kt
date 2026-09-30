@@ -5,8 +5,10 @@ import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
 import com.paydock.feature.threeDS.standalone.domain.mapper.asEntity
+import com.paydock.feature.threeDS.standalone.domain.mapper.asProgress
 import com.paydock.feature.threeDS.standalone.domain.model.ui.Standalone3DSEvent
 import com.paydock.feature.threeDS.standalone.presentation.state.Standalone3DSUIState
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -34,8 +36,15 @@ internal class Standalone3DSViewModel(dispatchers: DispatchersProvider) :
      * This flow is used internally to communicate changes in the 3DS UI state to any
      * components that are observing it.  It's designed for one-way communication,
      * pushing updates outwards from the system managing the 3DS UI state.
+     *
+     * States are emitted synchronously (buffered) so collectors receive them in the exact order the
+     * 3DS events arrived, e.g. a loading change always precedes the result it belongs to. The buffer is
+     * unbounded so `tryEmit` never drops a state (a lost final result would leave the flow hanging).
      */
-    private val _eventFlow = MutableSharedFlow<Standalone3DSUIState>(replay = 0)
+    private val _eventFlow = MutableSharedFlow<Standalone3DSUIState>(
+        replay = 0,
+        extraBufferCapacity = Channel.UNLIMITED
+    )
 
     /**
      * A shared flow of [Standalone3DSUIState] events emitted by the 3DS UI.
@@ -72,23 +81,48 @@ internal class Standalone3DSViewModel(dispatchers: DispatchersProvider) :
      * @param newState The new state to set in the ViewModel.
      */
     private fun updateState(newState: Standalone3DSUIState) {
-        launchOnIO {
-            _eventFlow.emit(newState)
-        }
+        _eventFlow.tryEmit(newState)
     }
 
     /**
      * Processes an Standalone 3DS event and updates the UI state accordingly.
      *
-     * This method handles various 3DS events, such as authentication success,
-     * rejection, or errors, and updates the UI state to reflect the corresponding
-     * result. Each event type maps to a specific [Standalone3DSUIState].
+     * Each event may emit, in this order:
+     * 1. a [Standalone3DSUIState.Loading] change (see [loadingChange]),
+     * 2. a [Standalone3DSUIState.Progress] for progress events (challenge, challenge loaded,
+     *    challenge completed, decoupled),
+     * 3. a [Standalone3DSUIState.Success] for every event reported to the widget's completion
+     *    (all events except challenge loaded/completed, which are progress-only).
      *
      * @param event The Standalone 3DS event to be processed.
      */
     private fun updateThreeDSEvent(event: Standalone3DSEvent) {
-        val result = event.asEntity()
-        updateState(Standalone3DSUIState.Success(result))
+        event.loadingChange()?.let { updateState(Standalone3DSUIState.Loading(it)) }
+        event.asProgress()?.let { updateState(Standalone3DSUIState.Progress(it)) }
+        event.asEntity()?.let { updateState(Standalone3DSUIState.Success(it)) }
+    }
+
+    /**
+     * Determines how an event affects the loading indicator.
+     *
+     * The loader stays up from launch through fingerprinting and the challenge start (the challenge
+     * page is not visible yet), is hidden once the challenge page has loaded, is shown again while the
+     * challenge result is confirmed and is hidden on the final result. Decoupled authentications hide
+     * it (the shopper approves outside the widget); informational events leave it unchanged.
+     *
+     * @return `true` to show the loader, `false` to hide it, or `null` to leave it unchanged.
+     */
+    private fun Standalone3DSEvent.loadingChange(): Boolean? = when (this) {
+        is Standalone3DSEvent.ChargeAuthChallengeEvent,
+        is Standalone3DSEvent.ChargeAuthChallengeCompletedEvent -> true
+
+        is Standalone3DSEvent.ChargeAuthChallengeLoadedEvent,
+        is Standalone3DSEvent.ChargeAuthDecoupledEvent,
+        is Standalone3DSEvent.ChargeAuthSuccessEvent,
+        is Standalone3DSEvent.ChargeAuthRejectEvent,
+        is Standalone3DSEvent.ChargeErrorEvent -> false
+
+        is Standalone3DSEvent.ChargeAuthInfoEvent -> null
     }
 
     /**
@@ -99,7 +133,7 @@ internal class Standalone3DSViewModel(dispatchers: DispatchersProvider) :
      *
      * In case of success, it calls [updateThreeDSEvent] with the received [Standalone3DSEvent].
      * In case of failure, it attempts to cast the `Throwable` to an [SdkException]. If the cast is successful,
-     * it updates the UI state to `ThreeDSUIState.Error` with the `SdkException`.
+     * it hides the loader and updates the UI state to `ThreeDSUIState.Error` with the `SdkException`.
      * If the cast is not successful, nothing happens.
      *
      * @param eventResult The `Result` containing either a successful `ThreeDSEvent.Standalone3DSEvent` or a `Throwable` in case of failure.
@@ -119,7 +153,10 @@ internal class Standalone3DSViewModel(dispatchers: DispatchersProvider) :
             },
             onFailure = { throwable ->
                 throwable.safeCastAs<SdkException>()
-                    ?.let { updateState(Standalone3DSUIState.Error(it)) }
+                    ?.let {
+                        updateState(Standalone3DSUIState.Loading(false))
+                        updateState(Standalone3DSUIState.Error(it))
+                    }
             }
         )
     }

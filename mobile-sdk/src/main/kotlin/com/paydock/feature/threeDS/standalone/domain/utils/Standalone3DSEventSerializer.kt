@@ -24,21 +24,36 @@ internal class Standalone3DSEventSerializer :
      * Determines the appropriate deserialization strategy based on the "event" field in the JSON object.
      *
      * This function extracts the value of the "event" field and maps it to the corresponding event serializer.
-     * If the event type is unknown or missing, a [SerializationException] is thrown.
+     * If the event type is unknown or missing, an [UnknownStandalone3DSEventException] is thrown so callers
+     * can ignore it rather than treat it as a mapping failure.
      *
      * @param element The JSON element containing the event data.
      * @return The [DeserializationStrategy] for the matching [Standalone3DSEvent] subtype.
-     * @throws SerializationException If the "event" field is missing or contains an unrecognized value.
+     * @throws UnknownStandalone3DSEventException If the "event" field is missing or contains an unrecognized value.
      */
     override fun selectDeserializer(element: JsonElement): DeserializationStrategy<Standalone3DSEvent> {
-        return when (element.jsonObject["event"]?.jsonPrimitive?.content) {
+        val eventName = element.jsonObject["event"]?.jsonPrimitive?.content
+        return when (eventName) {
             "chargeAuthSuccess" -> Standalone3DSEvent.ChargeAuthSuccessEvent.serializer()
             "chargeAuthReject" -> Standalone3DSEvent.ChargeAuthRejectEvent.serializer()
             "chargeAuthChallenge" -> Standalone3DSEvent.ChargeAuthChallengeEvent.serializer()
+            "chargeAuthChallengeLoaded" -> Standalone3DSEvent.ChargeAuthChallengeLoadedEvent.serializer()
+            "chargeAuthChallengeCompleted" -> Standalone3DSEvent.ChargeAuthChallengeCompletedEvent.serializer()
             "chargeAuthDecoupled" -> Standalone3DSEvent.ChargeAuthDecoupledEvent.serializer()
             "chargeAuthInfo" -> Standalone3DSEvent.ChargeAuthInfoEvent.serializer()
             "error" -> Standalone3DSEvent.ChargeErrorEvent.serializer()
-            else -> throw SerializationException("Unknown 3DS event type")
+            else -> throw UnknownStandalone3DSEventException(eventName)
         }
     }
 }
+
+/**
+ * Thrown when a Standalone 3DS event with an unknown (or missing) event name is received.
+ *
+ * Newer versions of the web 3DS library may emit events this SDK does not know about yet;
+ * these must be ignored rather than failing the flow.
+ *
+ * @param eventName The unrecognised event name, if present.
+ */
+internal class UnknownStandalone3DSEventException(val eventName: String?) :
+    SerializationException("Unknown 3DS event type: $eventName")

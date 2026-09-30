@@ -1,5 +1,31 @@
 # Changelog
 
+## [5.7.0] - 2026-09-30
+
+### Added
+- Added an optional `onProgress` callback to `Standalone3DSWidget` that receives `Standalone3DSProgress` events
+  (`ChallengeStarted`, `ChallengeLoaded`, `ChallengeCompleted`, `Decoupled`) so you can drive your own UI during the
+  challenge, e.g. hide your loader once the bank's page is visible, show "Completing verification" once the shopper
+  finished the challenge, or show the decoupled approval instructions. `completion` still receives the same events
+  as before.
+- `Standalone3DSResult` now also carries optional `status` and `resultDescription`, matching the `status` and
+  `result.description` fields of the web SDK's `Canvas3ds` events (e.g. `status = "success"`,
+  `resultDescription = "frictionless"`). Both are `null` when not reported. Additive: existing code keeps compiling and
+  running unchanged, no migration needed.
+- See the updated [Standalone 3DS guide](https://github.com/PayDock/mobile-sdk-doc/blob/main/widgets/standalone3ds.md#android)
+  for `onProgress`, the new loader behaviour and a recommended integration pattern.
+
+### Changed
+- Client-SDK version to `v1.147.0` — faster standalone 3DS authentication
+- `Standalone3DSWidget`'s built-in loader now stays visible until the bank's challenge page has loaded, and shows
+  again while the result is confirmed after the challenge. A decoupled authentication hides it. If you pass a
+  `loadingDelegate`, the same moments are reported through `widgetLoadingDidStart` / `widgetLoadingDidFinish` (now
+  always balanced) and no built-in loader is drawn. Combine it with `onProgress` to drive your own UI entirely.
+
+### Fixed
+- `Standalone3DSWidget` no longer fails the flow when the 3DS page sends an event it does not recognise (it is now
+  logged and ignored), or an event without a `status` (e.g. `chargeAuthInfo`).
+
 ## [5.6.0] - 2026-08-27
 
 ### Added

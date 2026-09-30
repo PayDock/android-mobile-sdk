@@ -35,6 +35,13 @@ internal sealed class WidgetConfig {
     abstract val events: List<String>
 
     /**
+     * Optional JavaScript function expression `function (event, data) { ... }` that builds the payload
+     * forwarded to the native bridge for each event. When `null`, the raw event data is forwarded as is.
+     * When provided, the forwarding is wrapped so a failure in the page never throws.
+     */
+    open val eventDataTransform: String? = null
+
+    /**
      * Abstract method to create the widget initialization script.
      *
      * @return Widget initialization script.
@@ -212,7 +219,8 @@ internal sealed class WidgetConfig {
          *                       It is dynamically retrieved from the Mobile SDK's environment.
          * @property events The list of events that the 3D Secure component will emit.
          *                  This includes events like "chargeAuthSuccess", "chargeAuthReject", "chargeAuthChallenge",
-         *                  "chargeAuthDecoupled", "chargeAuthInfo", and "error".
+         *                  "chargeAuthChallengeLoaded", "chargeAuthChallengeCompleted", "chargeAuthDecoupled",
+         *                  "chargeAuthInfo", and "error".
          * @property token A unique token required for the standalone 3D Secure process.
          *                 This token is essential for authenticating the transaction.
          */
@@ -224,12 +232,23 @@ internal sealed class WidgetConfig {
                 "chargeAuthSuccess",
                 "chargeAuthReject",
                 "chargeAuthChallenge",
+                "chargeAuthChallengeLoaded",
+                "chargeAuthChallengeCompleted",
                 "chargeAuthDecoupled",
                 "chargeAuthInfo",
                 "error"
             ),
             val token: String,
         ) : ThreeDSConfigBase() {
+
+            /**
+             * Forwards only the fields the native side consumes (`charge_3ds_id`, `status` (also as
+             * `raw_status`, kept verbatim for `Standalone3DSResult.status`), `result.description`,
+             * `reason`, `source` and, for `error`, `error.message`), tolerating
+             * `data` being undefined or fields being missing.
+             */
+            override val eventDataTransform: String = STANDALONE_EVENT_DATA_TRANSFORM
+
             /**
              * Creates the widget initialization script for standalone 3D Secure.
              *
@@ -245,3 +264,26 @@ internal sealed class WidgetConfig {
         }
     }
 }
+
+/**
+ * JavaScript payload builder for standalone 3DS events. See [WidgetConfig.ThreeDSConfigBase.Standalone3DSConfig.eventDataTransform].
+ */
+private val STANDALONE_EVENT_DATA_TRANSFORM = """
+function (event, data) {
+    var d = (data !== null && typeof data === "object") ? data : {};
+    var str = function (value) { return typeof value === "string" ? value : null; };
+    var payload = {
+        charge_3ds_id: str(d.charge_3ds_id),
+        status: str(d.status),
+        raw_status: str(d.status),
+        result: { description: (d.result && typeof d.result === "object") ? str(d.result.description) : null },
+        reason: str(d.reason),
+        source: str(d.source)
+    };
+    if (event === "error") {
+        var err = d.error;
+        payload.error = { message: typeof err === "string" ? err : ((err && typeof err === "object") ? str(err.message) : null) };
+    }
+    return payload;
+}
+""".trimIndent()

@@ -1,6 +1,7 @@
 package com.paydock.feature.threeDS.standalone.presentation.state
 
 import com.paydock.core.domain.error.exceptions.SdkException
+import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSProgress
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
 
 /**
@@ -17,9 +18,18 @@ internal sealed class Standalone3DSUIState {
     data object Idle : Standalone3DSUIState()
 
     /**
-     * Represents the loading state while the authentication process is in progress.
+     * Requests the widget's loading indicator (or loading delegate) to start or finish.
+     *
+     * @param isLoading `true` to show the loading indicator, `false` to hide it.
      */
-    data object Loading : Standalone3DSUIState()
+    data class Loading(val isLoading: Boolean) : Standalone3DSUIState()
+
+    /**
+     * Represents intermediate progress of the authentication, delivered to `onProgress` only.
+     *
+     * @param progress The progress event.
+     */
+    data class Progress(val progress: Standalone3DSProgress) : Standalone3DSUIState()
 
     /**
      * Represents a successful 3DS authentication result.

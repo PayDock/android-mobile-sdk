@@ -12,6 +12,7 @@ import com.paydock.feature.card.domain.model.integration.CardResult
 import com.paydock.feature.googlepay.domain.model.integration.GooglePayResult
 import com.paydock.feature.threeDS.integrated.domain.model.integration.MPGS3dsResult
 import com.paydock.feature.threeDS.integrated.domain.model.integration.enums.MPGS3dsEventType
+import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSProgress
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.StandaloneEventType
 import com.paydock.feature.zip.domain.model.ZipResult
@@ -25,6 +26,8 @@ import com.paydock.sample.feature.checkout.domain.model.CheckoutStep
 import com.paydock.sample.feature.checkout.domain.model.ContactInfo
 import com.paydock.sample.feature.checkout.domain.model.PaymentMethod
 import com.paydock.sample.feature.checkout.domain.model.SavedAddress
+import com.paydock.sample.feature.checkout.models.Standalone3DSFlowState
+import com.paydock.sample.feature.checkout.models.Standalone3DSPhase
 import com.paydock.sample.feature.checkout.models.ThreeDSType
 import com.paydock.sample.feature.config.CheckoutConfig
 import com.paydock.sample.feature.config.data.GlobalConfigRepository
@@ -43,6 +46,8 @@ import com.paydock.sample.feature.wallet.presentation.CustomerData
 import com.paydock.sample.feature.zip.data.api.dto.CaptureZipChargeRequest
 import com.paydock.sample.feature.zip.domain.usecase.CaptureZipChargeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -119,6 +124,13 @@ class EnhancedCheckoutViewModel @Inject constructor(
 
     var threeDSToken by mutableStateOf<String?>(null)
         private set
+
+    // Standalone 3DS sheet state (null = sheet closed)
+    var standalone3DSFlow by mutableStateOf<Standalone3DSFlowState?>(null)
+        private set
+
+    // Pending standalone 3DS work (token creation, post-success delay), cancelled when the shopper cancels
+    private var standalone3DSJob: Job? = null
 
     // UI State
     var showAddressWidget by mutableStateOf(false)
@@ -281,6 +293,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
 
     fun routeToFailure() {
         isLoading = false
+        standalone3DSFlow = null
         orderCompleted = false
         orderFailed = true
         // Increment reset key to force fresh widget on retry
@@ -431,8 +444,14 @@ class EnhancedCheckoutViewModel @Inject constructor(
     }
 
     private fun createSessionVaultToken(cardToken: String) {
-        viewModelScope.launch {
-            isLoading = true
+        val job = viewModelScope.launch {
+            if (threeDSType.value == ThreeDSType.STANDALONE) {
+                // The standalone 3DS sheet shows its own "preparing" state instead of the full-screen loader
+                isLoading = false
+                standalone3DSFlow = Standalone3DSFlowState(Standalone3DSPhase.PREPARING)
+            } else {
+                isLoading = true
+            }
             val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
             val request = VaultTokenRequest.CreateCardSessionVaultTokenRequest(token = cardToken)
             val result = createCardSessionVaultTokenUseCase(accessToken, request)
@@ -446,6 +465,7 @@ class EnhancedCheckoutViewModel @Inject constructor(
                 routeToFailure()
             }
         }
+        if (threeDSType.value == ThreeDSType.STANDALONE) standalone3DSJob = job
     }
 
     private fun createMPGS3dsToken(vaultToken: String) {
@@ -470,7 +490,11 @@ class EnhancedCheckoutViewModel @Inject constructor(
     }
 
     private fun createStandalone3dsToken(vaultToken: String) {
-        viewModelScope.launch {
+        // Each attempt needs a new 3DS token/charge: tokens are single-use
+        threeDSToken = null
+        standalone3DSFlow = Standalone3DSFlowState(Standalone3DSPhase.PREPARING)
+        standalone3DSJob?.cancel()
+        standalone3DSJob = viewModelScope.launch {
             val cartTotal = CartManager.shared.totalPrice
             val currency = globalConfigRepository.globalConfig.value.currencyCode
             val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
@@ -487,6 +511,10 @@ class EnhancedCheckoutViewModel @Inject constructor(
     }
 
     private fun handle3DSTokenResult(result: Result<ThreeDSToken>) {
+        if (threeDSType.value == ThreeDSType.STANDALONE) {
+            handleStandalone3DSTokenResult(result)
+            return
+        }
         result.onSuccess { threeDSResult ->
             val status = threeDSResult.status
             val hasToken = !threeDSResult.token.isNullOrBlank()
@@ -538,6 +566,104 @@ class EnhancedCheckoutViewModel @Inject constructor(
         }
     }
 
+    private fun handleStandalone3DSTokenResult(result: Result<ThreeDSToken>) {
+        result.onSuccess { threeDSResult ->
+            val token = threeDSResult.token
+            val id = threeDSResult.id
+            when {
+                // 3DS required: launch the widget
+                !token.isNullOrBlank() -> {
+                    threeDSToken = token
+                    // Dismiss payment footer when 3DS flow starts
+                    selectedPaymentMethod = null
+                    savedStateHandle[KEY_PAYMENT_METHOD] = null
+                    standalone3DSFlow = Standalone3DSFlowState(Standalone3DSPhase.VERIFYING)
+                }
+
+                // No token but an id: provider completed silently (or 3DS not supported), capture directly
+                !id.isNullOrBlank() -> {
+                    standalone3DSFlow = null
+                    captureStandalone3DSCharge(id)
+                }
+
+                else -> failStandalone3DS(declined = false)
+            }
+        }.onFailure {
+            failStandalone3DS(declined = false)
+        }
+    }
+
+    /**
+     * Drives the standalone 3DS sheet phases from the widget's progress events.
+     */
+    fun handleStandalone3DSProgress(progress: Standalone3DSProgress) {
+        val current = standalone3DSFlow ?: return
+        // Ignore late progress once the flow reached a terminal phase
+        if (current.phase == Standalone3DSPhase.SUCCESS || current.phase == Standalone3DSPhase.FAILED) return
+        standalone3DSFlow = when (progress) {
+            is Standalone3DSProgress.ChallengeStarted ->
+                Standalone3DSFlowState(Standalone3DSPhase.CHALLENGE_LOADING, challengeShown = true)
+
+            is Standalone3DSProgress.ChallengeLoaded -> current.copy(phase = Standalone3DSPhase.CHALLENGE)
+            is Standalone3DSProgress.ChallengeCompleted -> current.copy(phase = Standalone3DSPhase.FINALIZING)
+            is Standalone3DSProgress.Decoupled -> Standalone3DSFlowState(
+                phase = Standalone3DSPhase.DECOUPLED,
+                decoupledDescription = progress.description
+            )
+        }
+    }
+
+    /**
+     * Creates a new 3DS token/charge for the same card after a failed attempt.
+     */
+    fun retryStandalone3DS() {
+        val vault = vaultToken
+        if (vault.isNullOrBlank()) {
+            closeStandalone3DSFailure()
+        } else {
+            createStandalone3dsToken(vault)
+        }
+    }
+
+    /**
+     * Closes the failed standalone 3DS sheet and routes to the order failure result.
+     */
+    fun closeStandalone3DSFailure() {
+        standalone3DSJob?.cancel()
+        standalone3DSFlow = null
+        isLoading = false
+        threeDSToken = null
+        vaultToken = null
+        paymentToken = null
+        selectedPaymentMethod = null
+        savedStateHandle[KEY_PAYMENT_METHOD] = null
+        orderFailed = true
+        paymentWidgetResetKey++
+    }
+
+    /**
+     * Cancels the standalone 3DS flow at any phase (close button / swipe): tears the widget down and drops the token.
+     */
+    fun cancelStandalone3DS() {
+        standalone3DSJob?.cancel()
+        standalone3DSFlow = null
+        isLoading = false
+        threeDSToken = null
+        vaultToken = null
+        paymentToken = null
+        selectedPaymentMethod = null
+        savedStateHandle[KEY_PAYMENT_METHOD] = null
+        orderCompleted = false
+        paymentWidgetResetKey++
+    }
+
+    private fun failStandalone3DS(declined: Boolean) {
+        standalone3DSJob?.cancel()
+        // Tear the widget down; a retry creates a new token
+        threeDSToken = null
+        standalone3DSFlow = Standalone3DSFlowState(Standalone3DSPhase.FAILED, declined = declined)
+    }
+
     fun handleMPGS3dsResult(result: Result<MPGS3dsResult>) {
         result.onSuccess {
             if (it.event == MPGS3dsEventType.CHARGE_AUTH_SUCCESS) {
@@ -566,31 +692,34 @@ class EnhancedCheckoutViewModel @Inject constructor(
     }
 
     fun handleStandalone3DSResult(result: Result<Standalone3DSResult>) {
+        // Ignore results arriving after the shopper cancelled
+        if (standalone3DSFlow == null) return
         result.onSuccess {
-            if (it.event == StandaloneEventType.CHARGE_AUTH_SUCCESS) {
-                it.charge3dsId?.let { id -> captureStandalone3DSCharge(id) }
-                threeDSToken = null
-            } else if (it.event == StandaloneEventType.CHARGE_AUTH_REJECT ||
-                it.event == StandaloneEventType.CHARGE_ERROR
-            ) {
-                isLoading = false
-                threeDSToken = null
-                vaultToken = null
-                paymentToken = null
-                selectedPaymentMethod = null
-                savedStateHandle[KEY_PAYMENT_METHOD] = null
-                orderFailed = true
-                paymentWidgetResetKey++
+            when (it.event) {
+                StandaloneEventType.CHARGE_AUTH_SUCCESS -> {
+                    val chargeId = it.charge3dsId
+                    if (chargeId.isNullOrBlank()) {
+                        failStandalone3DS(declined = false)
+                        return
+                    }
+                    standalone3DSFlow = Standalone3DSFlowState(Standalone3DSPhase.SUCCESS)
+                    standalone3DSJob?.cancel()
+                    standalone3DSJob = viewModelScope.launch {
+                        // Show "Verified" briefly, then dismiss the sheet and continue with the capture
+                        delay(STANDALONE_3DS_SUCCESS_DISMISS_DELAY_MS)
+                        standalone3DSFlow = null
+                        threeDSToken = null
+                        captureStandalone3DSCharge(chargeId)
+                    }
+                }
+
+                StandaloneEventType.CHARGE_AUTH_REJECT -> failStandalone3DS(declined = true)
+                StandaloneEventType.CHARGE_ERROR -> failStandalone3DS(declined = false)
+                // Challenge / decoupled / info are handled via onProgress (or are informational)
+                else -> Unit
             }
         }.onFailure {
-            isLoading = false
-            threeDSToken = null
-            vaultToken = null
-            paymentToken = null
-            selectedPaymentMethod = null
-            savedStateHandle[KEY_PAYMENT_METHOD] = null
-            orderCompleted = false
-            paymentWidgetResetKey++
+            failStandalone3DS(declined = false)
         }
     }
 
@@ -825,5 +954,6 @@ class EnhancedCheckoutViewModel @Inject constructor(
     private companion object {
         const val KEY_CURRENT_STEP = "checkout.current_step"
         const val KEY_PAYMENT_METHOD = "checkout.payment_method"
+        const val STANDALONE_3DS_SUCCESS_DISMISS_DELAY_MS = 2_500L
     }
 }
