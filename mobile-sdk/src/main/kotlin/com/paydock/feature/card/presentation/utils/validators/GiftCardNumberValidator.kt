@@ -40,12 +40,15 @@ internal object GiftCardNumberValidator {
      * Validates the gift card number input and determines the type of validation error.
      *
      * This function checks if the gift card number is:
+     * - Focused (no error shown while typing).
      * - Empty (and if the user has interacted with the field).
      * - In an incorrect format (non-numeric characters).
      * - Of an invalid length (not within the expected range).
      *
      * @param cardNumber The gift card number to validate.
      * @param hasUserInteracted Flag indicating if the user has interacted with the input field.
+     * @param isCardNumberFocused True while the card number field is focused. When true, returns
+     *  [GiftCardNumberError.None] to suppress inline errors.
      * @return A [GiftCardNumberError] representing the validation result:
      *         - [GiftCardNumberError.Empty]: The input is blank and the user has interacted.
      *         - [GiftCardNumberError.Invalid]: The input fails format or length validation.
@@ -53,8 +56,10 @@ internal object GiftCardNumberValidator {
      */
     fun validateCardNumberInput(
         cardNumber: String,
-        hasUserInteracted: Boolean
+        hasUserInteracted: Boolean,
+        isCardNumberFocused: Boolean = false
     ): GiftCardNumberError {
+        if (isCardNumberFocused) return GiftCardNumberError.None
         val isValidFormat = validateCardNumberFormat(cardNumber)
         val isValidLength = validateCardNumberLength(cardNumber)
         return when {

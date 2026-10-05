@@ -3,7 +3,6 @@ package com.paydock.feature.card.presentation.components
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -11,12 +10,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.paydock.R
-import com.paydock.core.MobileSDKConstants
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.designsystems.components.input.SdkTextField
 import com.paydock.designsystems.components.input.TextFieldAppearance
@@ -24,7 +23,6 @@ import com.paydock.designsystems.components.input.TextFieldAppearanceDefaults
 import com.paydock.feature.card.presentation.utils.errors.CardPinError
 import com.paydock.feature.card.presentation.utils.validators.CardPinValidator
 import com.paydock.feature.card.presentation.utils.validators.GiftCardInputParser
-import kotlinx.coroutines.delay
 
 /**
  * A composable function that creates a card pin input field.
@@ -48,13 +46,15 @@ internal fun CardPinInput(
     onValueChange: (String) -> Unit
 ) {
     var hasUserInteracted by remember { mutableStateOf(false) }
-    var debouncedValue by remember { mutableStateOf("") }
-    LaunchedEffect(value) {
-        delay(MobileSDKConstants.General.INPUT_DELAY)
-        debouncedValue = value
-    }
-    // Parse the card pin
-    val cardPinError = CardPinValidator.validateCardPinInput(debouncedValue, hasUserInteracted || forceShowErrors)
+    var focusedState by remember { mutableStateOf(false) }
+
+    // Validate the live value; the focus flag (not a debounce timer) is what suppresses inline
+    // errors while the user is still typing, matching CardDetailsWidget's field behaviour.
+    val cardPinError = CardPinValidator.validateCardPinInput(
+        value,
+        hasUserInteracted || forceShowErrors,
+        isCardPinFocused = if (forceShowErrors) false else focusedState
+    )
 
     // Determine the error message to display
     val errorMessage = when (cardPinError) {
@@ -70,7 +70,9 @@ internal fun CardPinInput(
 
     // Create the visual representation of the security code input field
     SdkTextField(
-        modifier = modifier,
+        modifier = modifier.onFocusChanged {
+            focusedState = it.isFocused
+        },
         appearance = appearance,
         value = value,
         onValueChange = {

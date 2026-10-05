@@ -31,6 +31,16 @@ internal class CardPinValidatorTest {
     }
 
     @Test
+    fun validateCardPinInput_focused_returnsNoneEvenForInvalidInput() {
+        val cardPin = "123" // fails length (requires 4)
+        val hasUserInteracted = true
+        val isCardPinFocused = true
+        val expected = CardPinError.None
+        val actual = CardPinValidator.validateCardPinInput(cardPin, hasUserInteracted, isCardPinFocused)
+        assertEquals(expected, actual)
+    }
+
+    @Test
     fun validateCardPinInput_emptyInput_userInteracted_returnsEmptyError() {
         val cardPin = ""
         val hasUserInteracted = true

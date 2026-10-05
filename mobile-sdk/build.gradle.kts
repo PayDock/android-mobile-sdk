@@ -18,7 +18,11 @@ plugins {
 
 android {
     namespace = "com.paydock"
-    compileSdk = 37
+    // Held at 36 (not the latest 37) pending mobile-lib-networking-android validating AGP 9.x —
+    // it's currently still pinned to AGP 8.13.0. Bumping this raises `minCompileSdk` in the
+    // published AAR's metadata, forcing every integrator to also have that compileSdk available
+    // just to keep compiling — not something to move ahead of schedule without a driving need.
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24

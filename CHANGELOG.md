@@ -66,8 +66,11 @@
   `pinTextField`), matching `CardDetailsWidget`'s existing per-field customisation
 
 ### Changed
-- Updated AfterPay to version `4.8.3`
-- Updated `compileSdk` to version 37
+- Updated AfterPay to version `4.8.3`. **Integration requirement:** this pulls in AfterPay's core
+  library desugaring requirement — consuming apps must enable
+  `compileOptions.isCoreLibraryDesugaringEnabled = true` and depend on
+  `coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")` (or newer) in their own app
+  module, or the build will fail at the dexing step. See the README's Requirements section.
 - `GiftCardWidgetConfig.activePrimaryButton` now defaults to `true` (previously the Add button was
   always gated on form validity), matching `CardDetailsWidgetConfig`'s existing default. Pass
   `activePrimaryButton = false` to keep the button disabled until the form is valid
@@ -76,6 +79,10 @@
 
 ### Fixed
 - Intermittent threading issue causing immediate `RESULT_CANCELLED` result on Google Pay sheet open
+- `GiftCardWidget`'s card number and PIN fields showed inline "invalid" errors while the user was
+  still typing (based on a fixed input-debounce timer), instead of only after the field lost focus
+  like every field in `CardDetailsWidget`. Both fields now suppress inline errors while focused,
+  matching `CardDetailsWidget`'s behaviour
 
 ## [5.5.0] - 2026-06-16
 
