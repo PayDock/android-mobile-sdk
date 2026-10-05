@@ -29,6 +29,22 @@ internal class Standalone3DSEventSerializerTest {
     }
 
     @Test
+    fun `test 3ds data serializer with chargeAuthInfo without status`() {
+        // Arrange: Client SDK emits { info } only when the issuer's 3DS Method is skipped or times out
+        val eventJson =
+            "{\"event\":\"chargeAuthInfo\",\"data\":{\"info\":\"3DS method timed out\"}}"
+
+        // Act
+        val result = eventJson.convertToDataClass<Standalone3DSEvent>()
+
+        // Assert
+        assertIs<Standalone3DSEvent.ChargeAuthInfoEvent>(result)
+        assertEquals(StandaloneEvent.CHARGE_AUTH_INFO, result.event)
+        assertEquals(null, result.data.status)
+        assertEquals(null, result.data.charge3dsId)
+    }
+
+    @Test
     fun `test 3ds data serializer with chargeAuthReject`() {
         // Arrange
         val eventJson =

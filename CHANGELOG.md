@@ -7,6 +7,8 @@
   fails to load.
 - `Standalone3DSWidget` fails immediately with `WebViewException` when a Paydock or GPayments request fails with any
   network error (e.g. blocked by a proxy or firewall), instead of waiting indefinitely.
+- `Standalone3DSWidget` no longer fails with `EventMappingException` when the bank's 3DS Method is skipped or times
+  out (`chargeAuthInfo` event without a `status`).
 
 ### Known limitations
 - If the bank's own 3DS challenge page can't be loaded, the widget keeps waiting until the 3DS provider times out.

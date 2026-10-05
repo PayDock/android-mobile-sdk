@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 internal data class StandaloneChargeEventData(
-    val status: StandaloneStatus?,
+    val status: StandaloneStatus? = null,
     @SerialName("charge_3ds_id") val charge3dsId: String? = null,
     val result: ChargeResult? = null
 )
