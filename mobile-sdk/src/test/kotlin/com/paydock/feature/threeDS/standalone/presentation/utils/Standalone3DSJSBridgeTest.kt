@@ -37,6 +37,19 @@ internal class Standalone3DSJSBridgeTest : BaseUnitTest() {
     }
 
     @Test
+    fun `postMessage with chargeAuthInfo without status keeps the bridge enabled for the final result`() {
+        val infoJson = "{\"event\":\"chargeAuthInfo\",\"data\":{\"info\":\"3DS method timed out\"}}"
+        val successJson =
+            "{\"event\":\"chargeAuthSuccess\",\"data\":{\"status\":\"success\",\"charge_3ds_id\":\"3e07e004-71af-44dc-a9f4-e59520b3e64f\"}}"
+
+        jsBridge.postMessage(infoJson)
+        jsBridge.postMessage(successJson)
+
+        verify(mockCallback).invoke(Result.success(infoJson.convertToDataClass<Standalone3DSEvent>()))
+        verify(mockCallback).invoke(Result.success(successJson.convertToDataClass<Standalone3DSEvent>()))
+    }
+
+    @Test
     fun `postMessage with valid chargeAuthReject JSON should call callback with parsed event`() {
         val eventJson =
             "{\"event\":\"chargeAuthReject\",\"data\":{\"status\":\"rejected\",\"charge_3ds_id\":\"b66dc074-5def-4f2a-99f6-58c54c55aabd\",\"result\":{}}}"
