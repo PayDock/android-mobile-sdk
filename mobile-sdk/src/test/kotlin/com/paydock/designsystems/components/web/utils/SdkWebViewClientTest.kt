@@ -107,7 +107,7 @@ internal class SdkWebViewClientTest {
     }
 
     @Test
-    fun `ignored third-party network errors are logged as warnings without query string`() {
+    fun `ignored third-party network errors are logged as warnings with host only`() {
         mockkStatic(Log::class)
         try {
             val message = slot<String>()
@@ -125,7 +125,8 @@ internal class SdkWebViewClientTest {
             verify(exactly = 1) { Log.w(any(), any<String>()) }
             assertTrue(message.captured.contains("code ${WebViewClient.ERROR_HOST_LOOKUP}"))
             assertTrue(message.captured.contains("net::ERR_NAME_NOT_RESOLVED"))
-            assertTrue(message.captured.contains("https://h.online-metrix.net/fp/tags.js"))
+            assertTrue(message.captured.contains("host: h.online-metrix.net"))
+            assertFalse(message.captured.contains("/fp/tags.js"))
             assertFalse(message.captured.contains("secret"))
         } finally {
             unmockkStatic(Log::class)

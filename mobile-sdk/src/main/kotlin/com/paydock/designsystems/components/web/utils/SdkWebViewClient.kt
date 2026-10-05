@@ -89,13 +89,14 @@ internal class SdkWebViewClient(
         /**
          * Logs a critical network error that was not escalated because it happened on a non-essential
          * host (e.g. an issuer page's analytics script). Logged as a warning so it reaches release log
-         * collectors (e.g. Sentry logcat breadcrumbs) while the flow continues.
+         * collectors (e.g. Sentry logcat breadcrumbs) while the flow continues. Only the host is logged:
+         * these pages are outside Paydock's control and their paths can carry session identifiers.
          */
         fun logIgnoredNetworkError(source: String, errorCode: Int, error: WebResourceError, uri: Uri?) {
             Log.w(
                 MobileSDKConstants.MOBILE_SDK_TAG,
                 "Ignored network error on non-essential $source (code $errorCode, " +
-                    "error: ${error.description}, url: ${describeFailedRequest(uri)})"
+                    "error: ${error.description}, host: ${uri?.host ?: "unknown"})"
             )
         }
     }
