@@ -1,6 +1,7 @@
 package com.paydock.designsystems.components.web.utils
 
 import android.graphics.Bitmap
+import android.net.Uri
 import android.util.Log
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -67,6 +68,26 @@ internal class SdkWebViewClient(
             ERROR_TIMEOUT,
             ERROR_IO -> true
             else -> false
+        }
+
+        /**
+         * Describes a failed request for logs as scheme, host and path only. The query string is dropped
+         * because 3DS URLs can carry transaction identifiers and tokens.
+         */
+        fun describeFailedRequest(uri: Uri?): String =
+            uri?.let { "${it.scheme}://${it.host}${it.path.orEmpty()}" } ?: "unknown"
+
+        /**
+         * Logs a critical network error that was not escalated because it happened on a non-essential
+         * host (e.g. an issuer page's analytics script). Logged as a warning so it reaches release log
+         * collectors (e.g. Sentry logcat breadcrumbs) while the flow continues.
+         */
+        fun logIgnoredNetworkError(source: String, errorCode: Int, error: WebResourceError, uri: Uri?) {
+            Log.w(
+                MobileSDKConstants.MOBILE_SDK_TAG,
+                "Ignored network error on non-essential $source (code $errorCode, " +
+                    "error: ${error.description}, url: ${describeFailedRequest(uri)})"
+            )
         }
     }
 
@@ -181,8 +202,11 @@ internal class SdkWebViewClient(
                         "Subsequent critical error in session ignored (code $errorCode, url: ${request?.url}): $errorMessage"
                     )
                 }
+            } else if (isCriticalNetworkError(errorCode)) {
+                // A third-party resource (e.g. an issuer page's script or image) failed: keep the flow going but record it.
+                logIgnoredNetworkError("sub-resource", errorCode, error, request?.url)
             } else {
-                // Log non-fatal errors (e.g., a third-party script or image failing) without triggering the error callback.
+                // Log other non-fatal errors (e.g. benign ERROR_UNKNOWN noise) without triggering the error callback.
                 Log.d(
                     MobileSDKConstants.MOBILE_SDK_TAG,
                     "Non-Fatal sub-resource error (code $errorCode, url: ${request?.url}): $errorMessage"

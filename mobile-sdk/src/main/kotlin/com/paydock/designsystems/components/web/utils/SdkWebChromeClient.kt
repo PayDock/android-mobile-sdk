@@ -162,6 +162,8 @@ internal class SdkWebChromeClient(
                     val errorMessage = SdkWebViewClient.mapWebViewErrorMessage(errorCode)
                     if (isChildWindowErrorFatal(request?.url?.host, errorCode)) {
                         onWebViewError(errorCode, errorMessage)
+                    } else if (SdkWebViewClient.isCriticalNetworkError(errorCode)) {
+                        SdkWebViewClient.logIgnoredNetworkError("child window resource", errorCode, error, request?.url)
                     } else {
                         Log.d(
                             MobileSDKConstants.MOBILE_SDK_TAG,
