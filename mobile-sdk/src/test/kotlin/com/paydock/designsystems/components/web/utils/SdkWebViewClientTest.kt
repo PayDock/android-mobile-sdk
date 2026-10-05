@@ -7,6 +7,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.paydock.feature.threeDS.standalone.presentation.ui.isEssentialStandalone3DSHost
+import com.paydock.feature.threeDS.standalone.presentation.ui.isKnownStandalone3DSProviderHost
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -201,13 +202,79 @@ internal class SdkWebViewClientTest {
         assertEquals("no urls here", SdkWebViewClient.redactUrlQueries("no urls here"))
     }
 
+    @Test
+    fun `known provider policy makes any error on paydock and gpayments fatal`() {
+        val codes = listOf(WebViewClient.ERROR_UNKNOWN, WebViewClient.ERROR_FAILED_SSL_HANDSHAKE, WebViewClient.ERROR_HOST_LOOKUP)
+        val hosts = listOf("paydock-test.as1.gpayments.net", "api.paydock.com", "widget.paydock.com")
+        codes.forEach { code ->
+            hosts.forEach { host ->
+                val errors = mutableListOf<Int>()
+                val client = standalone3DSClient(onError = { errors += it })
+
+                client.onReceivedError(webView, request(host, mainFrame = false), error(code))
+
+                assertEquals(listOf(code), errors, "Code $code on $host should be fatal")
+            }
+        }
+    }
+
+    @Test
+    fun `unknown errors on third-party hosts stay non-fatal with the known provider policy`() {
+        listOf("acs.issuer.example", "h.online-metrix.net", "mgmt.acscore-dev.testlab.3dsecure.cloud").forEach { host ->
+            val errors = mutableListOf<Int>()
+            val client = standalone3DSClient(onError = { errors += it })
+
+            client.onReceivedError(webView, request(host, mainFrame = false), error(WebViewClient.ERROR_UNKNOWN))
+
+            assertTrue(errors.isEmpty(), "ERROR_UNKNOWN on $host should not be fatal")
+        }
+    }
+
+    @Test
+    fun `unknown errors on known providers are non-fatal without the policy`() {
+        val errors = mutableListOf<Int>()
+        val client = client(onError = { errors += it })
+
+        client.onReceivedError(webView, request("paydock-test.as1.gpayments.net", mainFrame = false), error(WebViewClient.ERROR_UNKNOWN))
+
+        assertTrue(errors.isEmpty())
+    }
+
+    @Test
+    fun `known provider errors are reported once per session`() {
+        val errors = mutableListOf<Int>()
+        val client = standalone3DSClient(onError = { errors += it })
+
+        client.onReceivedError(webView, request("paydock-test.as1.gpayments.net", mainFrame = false), error(WebViewClient.ERROR_UNKNOWN))
+        client.onReceivedError(webView, request("api.paydock.com", mainFrame = false), error(WebViewClient.ERROR_CONNECT))
+
+        assertEquals(listOf(WebViewClient.ERROR_UNKNOWN), errors)
+    }
+
+    @Test
+    fun `known provider host matching is domain based and ignores unknown hosts`() {
+        assertTrue(isKnownStandalone3DSProviderHost("paydock-test.as1.gpayments.net"))
+        assertTrue(isKnownStandalone3DSProviderHost("Widget.Paydock.com."))
+        assertFalse(isKnownStandalone3DSProviderHost(null))
+        assertFalse(isKnownStandalone3DSProviderHost("paydock.com.evil.example"))
+        assertFalse(isKnownStandalone3DSProviderHost("acs.issuer.example"))
+    }
+
+    private fun standalone3DSClient(onError: (Int) -> Unit) = client(
+        onError = onError,
+        policy = ::isEssentialStandalone3DSHost,
+        anyPolicy = ::isKnownStandalone3DSProviderHost,
+    )
+
     private fun client(
         onError: (Int) -> Unit,
         policy: (String?) -> Boolean = { true },
+        anyPolicy: (String?) -> Boolean = { false },
     ) = SdkWebViewClient(
         onWebViewError = { code, _ -> onError(code) },
         delegateToAccompanist = false,
         isSubResourceNetworkErrorFatal = policy,
+        isAnyNetworkErrorFatal = anyPolicy,
     )
 
     private fun request(

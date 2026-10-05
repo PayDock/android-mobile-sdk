@@ -21,6 +21,9 @@ import com.paydock.core.MobileSDKConstants
  * @param isSubResourceNetworkErrorFatal Decides, by request host, whether a critical network error
  * on a sub-resource (script, iframe, XHR…) ends the session. Defaults to always fatal, because widgets
  * loaded from HTML data only see connectivity loss through their sub-resources.
+ * @param isAnyNetworkErrorFatal Decides, by request host, whether any network error (including
+ * ERROR_UNKNOWN, e.g. a proxy or firewall closing the request) on a sub-resource ends the session. Used for
+ * the payment providers a flow can't work without. Defaults to never.
  */
 internal class SdkWebViewClient(
     private val onShouldOverrideUrlLoading: ((request: WebResourceRequest?) -> Boolean)? = null,
@@ -34,6 +37,7 @@ internal class SdkWebViewClient(
      */
     private val delegateToAccompanist: Boolean = true,
     private val isSubResourceNetworkErrorFatal: (host: String?) -> Boolean = { true },
+    private val isAnyNetworkErrorFatal: (host: String?) -> Boolean = { false },
 ) : AccompanistWebViewClient() {
 
     companion object {
@@ -176,7 +180,8 @@ internal class SdkWebViewClient(
     /**
      * Handles WebView errors. Differentiates between fatal and non-fatal errors. Main-frame errors are
      * always fatal; critical network errors on sub-resources are fatal when [isSubResourceNetworkErrorFatal]
-     * accepts the request host. Fatal errors trigger [onWebViewError] once per session; the rest are only logged.
+     * accepts the request host, and any error is fatal when [isAnyNetworkErrorFatal] accepts it.
+     * Fatal errors trigger [onWebViewError] once per session; the rest are only logged.
      *
      * @param view The WebView that encountered an error.
      * @param request The request associated with the error.
@@ -194,7 +199,8 @@ internal class SdkWebViewClient(
 
             val isMainFrame = request?.isForMainFrame == true
             val isErrorFatalForSession = isMainFrame ||
-                (isCriticalNetworkError(errorCode) && isSubResourceNetworkErrorFatal(request?.url?.host))
+                (isCriticalNetworkError(errorCode) && isSubResourceNetworkErrorFatal(request?.url?.host)) ||
+                isAnyNetworkErrorFatal(request?.url?.host)
 
             if (isErrorFatalForSession) {
                 if (!criticalErrorOccurredInSession) {

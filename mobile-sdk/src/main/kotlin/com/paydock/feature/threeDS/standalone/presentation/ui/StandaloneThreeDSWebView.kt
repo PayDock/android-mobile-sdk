@@ -54,6 +54,14 @@ internal fun isEssentialStandalone3DSHost(host: String?): Boolean {
 }
 
 /**
+ * Whether [host] is one of the known payment providers (Paydock, GPayments) the Standalone 3DS flow can't work
+ * without. Unlike [isEssentialStandalone3DSHost], an unknown (null) host doesn't count, because any error on a
+ * known provider ends the session.
+ */
+internal fun isKnownStandalone3DSProviderHost(host: String?): Boolean =
+    host != null && isEssentialStandalone3DSHost(host)
+
+/**
  * Composable function to display a WebView with customizable settings and event handling.
  *
  * @param webUrl The URL to load in the WebView.
@@ -134,6 +142,9 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
                     onWebViewError = onWebViewError,
                     onCloseRequested = onCloseRequested,
                     isSubResourceNetworkErrorFatal = ::isEssentialStandalone3DSHost,
+                    // A known provider failing in any way (e.g. a proxy closing the request: ERROR_UNKNOWN) would
+                    // otherwise leave the flow waiting with no result.
+                    isAnyNetworkErrorFatal = ::isKnownStandalone3DSProviderHost,
                 )
             },
             chromeClient = remember(openTargetBlankInSameWebView) {
@@ -160,7 +171,8 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
                     onWebViewError = onWebViewError,
                     onCloseRequested = onCloseRequested,
                     isChildWindowErrorFatal = { host, errorCode ->
-                        SdkWebViewClient.isCriticalNetworkError(errorCode) && isEssentialStandalone3DSHost(host)
+                        (SdkWebViewClient.isCriticalNetworkError(errorCode) && isEssentialStandalone3DSHost(host)) ||
+                            isKnownStandalone3DSProviderHost(host)
                     },
                     openExternalLink = { url ->
                         context.openBrowser(uri = url, onError = { failedUrl ->

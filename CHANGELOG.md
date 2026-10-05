@@ -5,6 +5,12 @@
 ### Fixed
 - `Standalone3DSWidget` no longer fails with `WebViewException` when a third-party resource on the bank's 3DS page
   fails to load.
+- `Standalone3DSWidget` fails immediately with `WebViewException` when a Paydock or GPayments request fails with any
+  network error (e.g. blocked by a proxy or firewall), instead of waiting indefinitely.
+
+### Known limitations
+- If the bank's own 3DS challenge page can't be loaded, the widget keeps waiting until the 3DS provider times out.
+  Keep a way for the shopper to close the 3DS screen.
 
 ## [5.6.0] - 2026-08-27
 
