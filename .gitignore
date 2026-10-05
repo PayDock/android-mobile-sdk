@@ -17,6 +17,9 @@ out/
 # Gradle files
 .gradle/
 build/
+# CI caches (GRADLE_USER_HOME and extra Android SDK platforms, see .gitlab-ci.yml)
+.gradle-home/
+.android-platforms/
 
 # Local configuration file (sdk path, etc)
 local.properties
