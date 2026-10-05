@@ -38,7 +38,7 @@
 - `Standalone3DSWidget` no longer fails the flow when the 3DS page sends an event it does not recognise (it is now
   logged and ignored), or an event without a `status` (e.g. `chargeAuthInfo`).
 
-## [5.6.1] - Unreleased
+## [5.6.1] - 2026-10-05
 
 ### Fixed
 - `Standalone3DSWidget` no longer fails with `WebViewException` when a third-party resource on the bank's 3DS page
