@@ -1,9 +1,11 @@
 package com.paydock.designsystems.components.web.utils
 
 import android.graphics.Bitmap
+import android.net.Uri
 import android.util.Log
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import com.kevinnzou.web.AccompanistWebViewClient
 import com.paydock.core.MobileSDKConstants
@@ -17,6 +19,15 @@ import com.paydock.core.MobileSDKConstants
  * @param onPageFinished Callback that is triggered when a page finishes loading.
  * @param onWebViewError Callback that is triggered when a WebView encounters an error.
  * It provides the error code and a user-friendly error message.
+ * @param isSubResourceNetworkErrorFatal Decides, by request host, whether a critical network error
+ * on a sub-resource (script, iframe, XHR…) ends the session. Defaults to always fatal, because widgets
+ * loaded from HTML data only see connectivity loss through their sub-resources.
+ * @param criticalHttpResourceUrls Exact URLs whose HTTP error responses (4xx/5xx) end the session, e.g. the
+ * Client SDK script: without it the page can never progress. Empty by default, so HTTP errors are ignored
+ * (favicons, issuer page assets and API calls, which the Client SDK reports itself).
+ * @param isAnyNetworkErrorFatal Decides, by request host, whether any network error (including
+ * ERROR_UNKNOWN, e.g. a proxy or firewall closing the request) on a sub-resource ends the session. Used for
+ * the payment providers a flow can't work without. Defaults to never.
  */
 internal class SdkWebViewClient(
     private val onShouldOverrideUrlLoading: ((request: WebResourceRequest?) -> Boolean)? = null,
@@ -29,6 +40,9 @@ internal class SdkWebViewClient(
      * because the base class relies on an internal state that is only initialized by the Compose wrapper.
      */
     private val delegateToAccompanist: Boolean = true,
+    private val isSubResourceNetworkErrorFatal: (host: String?) -> Boolean = { true },
+    private val criticalHttpResourceUrls: Set<String> = emptySet(),
+    private val isAnyNetworkErrorFatal: (host: String?) -> Boolean = { false },
 ) : AccompanistWebViewClient() {
 
     companion object {
@@ -52,6 +66,52 @@ internal class SdkWebViewClient(
 
         fun mapWebViewErrorMessage(errorCode: Int): String =
             errorMessageByCode[errorCode] ?: "An unknown error occurred. Please try again later."
+
+        /**
+         * Whether [errorCode] is a concrete network failure. ERROR_UNKNOWN (-1) is deliberately excluded:
+         * it's frequently emitted for benign sub-resource failures (e.g. feature flag streams like LaunchDarkly).
+         */
+        fun isCriticalNetworkError(errorCode: Int): Boolean = when (errorCode) {
+            ERROR_HOST_LOOKUP,
+            ERROR_CONNECT,
+            ERROR_TIMEOUT,
+            ERROR_IO -> true
+            else -> false
+        }
+
+        /**
+         * Describes a failed request for logs as scheme, host and path only. The query string is dropped
+         * because 3DS URLs can carry transaction identifiers and tokens.
+         */
+        fun describeFailedRequest(uri: Uri?): String =
+            uri?.let { "${it.scheme}://${it.host}${it.path.orEmpty()}" } ?: "unknown"
+
+        /** User-friendly message for an HTTP error response on a critical resource. */
+        fun criticalResourceHttpErrorMessage(statusCode: Int): String =
+            "Failed to load the payment page (HTTP $statusCode). Please try again later."
+
+        /** String form of [describeFailedRequest]: drops the query string and fragment. */
+        fun describeUrl(url: String?): String =
+            url?.substringBefore('?')?.substringBefore('#') ?: "unknown"
+
+        private val URL_QUERY_REGEX = Regex("""(https?://[^\s?#"'<>]+)[?#][^\s"'<>]*""")
+
+        /** Drops the query string and fragment of every http(s) URL inside free text (e.g. JS console logs). */
+        fun redactUrlQueries(text: String): String = text.replace(URL_QUERY_REGEX, "$1")
+
+        /**
+         * Logs a critical network error that was not escalated because it happened on a non-essential
+         * host (e.g. an issuer page's analytics script). Logged as a warning so it reaches release log
+         * collectors (e.g. Sentry logcat breadcrumbs) while the flow continues. Only the host is logged:
+         * these pages are outside Paydock's control and their paths can carry session identifiers.
+         */
+        fun logIgnoredNetworkError(source: String, errorCode: Int, error: WebResourceError, uri: Uri?) {
+            Log.w(
+                MobileSDKConstants.MOBILE_SDK_TAG,
+                "Ignored network error on non-essential $source (code $errorCode, " +
+                    "error: ${error.description}, host: ${uri?.host ?: "unknown"})"
+            )
+        }
     }
 
     @Volatile
@@ -78,7 +138,7 @@ internal class SdkWebViewClient(
         if (currentMainUrl != url) {
             Log.d(
                 MobileSDKConstants.MOBILE_SDK_TAG,
-                "New page loading ($url), resetting critical error flag."
+                "New page loading (${describeUrl(url)}), resetting critical error flag."
             )
             criticalErrorOccurredInSession = false
             currentMainUrl = url
@@ -127,9 +187,10 @@ internal class SdkWebViewClient(
     }
 
     /**
-     * Handles WebView errors. Differentiates between fatal and non-fatal errors. For fatal errors
-     * (those affecting the main frame), it logs the error and triggers the [onWebViewError] callback.
-     * Non-fatal errors (those affecting sub-frames) are logged but not escalated.
+     * Handles WebView errors. Differentiates between fatal and non-fatal errors. Main-frame errors are
+     * always fatal; critical network errors on sub-resources are fatal when [isSubResourceNetworkErrorFatal]
+     * accepts the request host, and any error is fatal when [isAnyNetworkErrorFatal] accepts it.
+     * Fatal errors trigger [onWebViewError] once per session; the rest are only logged.
      *
      * @param view The WebView that encountered an error.
      * @param request The request associated with the error.
@@ -145,41 +206,76 @@ internal class SdkWebViewClient(
             val errorMessage = getWebViewErrorMessage(error.errorCode)
             val errorCode = error.errorCode
 
-            // Treat only concrete network failures as critical. Do NOT mark ERROR_UNKNOWN (-1)
-            // as critical on its own because it's frequently emitted for benign subresource
-            // failures (e.g., feature flag streams like LaunchDarkly) when not in the main frame.
-            val isCriticalNetworkError = when (errorCode) {
-                ERROR_HOST_LOOKUP,
-                ERROR_CONNECT,
-                ERROR_TIMEOUT,
-                ERROR_IO -> true
-                else -> false
-            }
-            val isErrorFatalForSession = isCriticalNetworkError || request?.isForMainFrame == true
+            val isMainFrame = request?.isForMainFrame == true
+            val isErrorFatalForSession = isMainFrame ||
+                (isCriticalNetworkError(errorCode) && isSubResourceNetworkErrorFatal(request?.url?.host)) ||
+                isAnyNetworkErrorFatal(request?.url?.host)
 
             if (isErrorFatalForSession) {
-                if (!criticalErrorOccurredInSession) {
-                    criticalErrorOccurredInSession = true
-                    Log.d(
-                        MobileSDKConstants.MOBILE_SDK_TAG,
-                        "First critical error in session (code $errorCode, " +
-                            "mainFrame: ${request?.isForMainFrame}, " +
-                            "url: ${request?.url}): $errorMessage"
-                    )
-                    onWebViewError(errorCode, errorMessage)
-                } else {
-                    Log.d(
-                        MobileSDKConstants.MOBILE_SDK_TAG,
-                        "Subsequent critical error in session ignored (code $errorCode, url: ${request?.url}): $errorMessage"
-                    )
-                }
+                reportCriticalError(errorCode, errorMessage, error.description, isMainFrame, request?.url)
+            } else if (isCriticalNetworkError(errorCode)) {
+                // A third-party resource (e.g. an issuer page's script or image) failed: keep the flow going but record it.
+                logIgnoredNetworkError("sub-resource", errorCode, error, request?.url)
             } else {
-                // Log non-fatal errors (e.g., error loading a sub-frame image) without triggering the main error callback.
+                // Log other non-fatal errors (e.g. benign ERROR_UNKNOWN noise) without triggering the error callback.
                 Log.d(
                     MobileSDKConstants.MOBILE_SDK_TAG,
-                    "Non-Fatal sub-resource error (code $errorCode, url: ${request?.url}): $errorMessage"
+                    "Non-Fatal sub-resource error (code $errorCode, url: ${describeFailedRequest(request?.url)}): $errorMessage"
                 )
             }
+        }
+    }
+
+    /**
+     * Handles HTTP error responses (4xx/5xx). Only responses for [criticalHttpResourceUrls] (exact match) end the
+     * session; every other HTTP error is left to the page, as before.
+     *
+     * @param view The WebView that received the response.
+     * @param request The request associated with the response.
+     * @param errorResponse The HTTP error response.
+     */
+    override fun onReceivedHttpError(
+        view: WebView,
+        request: WebResourceRequest?,
+        errorResponse: WebResourceResponse?,
+    ) {
+        super.onReceivedHttpError(view, request, errorResponse)
+        val statusCode = errorResponse?.statusCode ?: return
+        if (request?.url?.toString() !in criticalHttpResourceUrls) return
+        reportCriticalError(
+            errorCode = statusCode,
+            errorMessage = criticalResourceHttpErrorMessage(statusCode),
+            errorName = "HTTP $statusCode",
+            isMainFrame = request?.isForMainFrame == true,
+            uri = request?.url,
+        )
+    }
+
+    /**
+     * Reports the first critical error of the session through [onWebViewError] and logs it; later critical
+     * errors in the same session are only logged.
+     */
+    private fun reportCriticalError(
+        errorCode: Int,
+        errorMessage: String,
+        errorName: CharSequence?,
+        isMainFrame: Boolean,
+        uri: Uri?,
+    ) {
+        if (!criticalErrorOccurredInSession) {
+            criticalErrorOccurredInSession = true
+            Log.e(
+                MobileSDKConstants.MOBILE_SDK_TAG,
+                "First critical error in session (code $errorCode, error: $errorName, " +
+                    "mainFrame: $isMainFrame, url: ${describeFailedRequest(uri)}): $errorMessage"
+            )
+            onWebViewError(errorCode, errorMessage)
+        } else {
+            Log.d(
+                MobileSDKConstants.MOBILE_SDK_TAG,
+                "Subsequent critical error in session ignored (code $errorCode, " +
+                    "url: ${describeFailedRequest(uri)}): $errorMessage"
+            )
         }
     }
 
