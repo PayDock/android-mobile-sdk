@@ -184,7 +184,7 @@ internal fun <T : Any?> SdkWebView(
                         context.openBrowser(uri = url, onError = { failedUrl ->
                             onWebViewError(
                                 HttpURLConnection.HTTP_UNAVAILABLE,
-                                "No application found to open URL: $failedUrl"
+                                "No application found to open URL: ${SdkWebViewClient.describeFailedRequest(failedUrl)}"
                             )
                         })
                     }

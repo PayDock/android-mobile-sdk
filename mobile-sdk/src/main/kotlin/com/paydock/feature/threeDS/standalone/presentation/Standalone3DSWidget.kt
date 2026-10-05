@@ -112,9 +112,8 @@ fun Standalone3DSWidget(
 
     // Apply the SdkTheme for consistent styling
     // Display the 3DS WebView within the bottom sheet
-    val htmlString = HtmlWidgetBuilder.createHtml(
-        config = WidgetConfig.ThreeDSConfigBase.Standalone3DSConfig(token = config.token)
-    )
+    val widgetConfig = WidgetConfig.ThreeDSConfigBase.Standalone3DSConfig(token = config.token)
+    val htmlString = HtmlWidgetBuilder.createHtml(config = widgetConfig)
     val jsBridge = remember {
         Standalone3DSJSBridge { eventResult ->
             viewModel.handleEventResult(eventResult)
@@ -128,7 +127,9 @@ fun Standalone3DSWidget(
         StandaloneThreeDSWebView(
             webUrl = MobileSDKConstants.DEFAULT_WEB_URL,
             data = htmlString,
-            jsBridge = jsBridge
+            jsBridge = jsBridge,
+            // The page can't progress without the Client SDK script, so an HTTP error on it ends the flow.
+            criticalHttpResourceUrls = setOf(widgetConfig.jsLibraryUrl),
         ) { status, message ->
             updateLoading(false)
             // Invoke the onWebViewError callback with the WebView ThreeDSException exception

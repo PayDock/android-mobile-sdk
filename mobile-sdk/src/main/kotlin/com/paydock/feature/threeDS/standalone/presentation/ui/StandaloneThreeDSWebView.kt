@@ -43,6 +43,17 @@ private val OPEN_IN_SAME_WINDOW_SCRIPT = """
 """.trimIndent()
 
 /**
+ * Whether [host] belongs to one of [MobileSDKConstants.Standalone3DSConfig.ESSENTIAL_HOST_DOMAINS].
+ * An unknown (null) host is treated as essential, so its errors stay fatal.
+ */
+internal fun isEssentialStandalone3DSHost(host: String?): Boolean {
+    val normalised = host?.lowercase()?.trimEnd('.') ?: return true
+    return MobileSDKConstants.Standalone3DSConfig.ESSENTIAL_HOST_DOMAINS.any { domain ->
+        normalised == domain || normalised.endsWith(".$domain")
+    }
+}
+
+/**
  * Composable function to display a WebView with customizable settings and event handling.
  *
  * @param webUrl The URL to load in the WebView.
@@ -51,8 +62,10 @@ private val OPEN_IN_SAME_WINDOW_SCRIPT = """
  * @param openTargetBlankInSameWebView When true, links with target="_blank" (e.g. "Forgot password", "Apply now")
  *        load in the current WebView instead of opening a new window. The SDK injects JS (window.open override
  *        and click interception) so navigation works like a single-tab browser. Default is false.
+ * @param criticalHttpResourceUrls Exact URLs whose HTTP error responses end the session (the Client SDK script).
  * @param onWebViewError Callback to handle WebView errors.
  */
+@Suppress("LongMethod")
 @Composable
 internal fun <T : Any?> StandaloneThreeDSWebView(
     webUrl: String,
@@ -60,6 +73,7 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
     jsBridge: SdkJSBridge<T>? = null,
     onCloseRequested: () -> Unit = {},
     openTargetBlankInSameWebView: Boolean = false,
+    criticalHttpResourceUrls: Set<String> = emptySet(),
     onWebViewError: (Int, String) -> Unit,
 ) {
     // Get the current context
@@ -97,7 +111,7 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
             state = state,
             modifier = Modifier.fillMaxSize(),
             navigator = navigator,
-            client = remember(openTargetBlankInSameWebView) {
+            client = remember(openTargetBlankInSameWebView, criticalHttpResourceUrls) {
                 SdkWebViewClient(
                     onPageFinished = { webView ->
                         // When enabled, make target="_blank" / window.open load in the same WebView (SDK-wide)
@@ -121,6 +135,8 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
                     },
                     onWebViewError = onWebViewError,
                     onCloseRequested = onCloseRequested,
+                    isSubResourceNetworkErrorFatal = ::isEssentialStandalone3DSHost,
+                    criticalHttpResourceUrls = criticalHttpResourceUrls,
                 )
             },
             chromeClient = remember(openTargetBlankInSameWebView) {
@@ -146,11 +162,14 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
                     },
                     onWebViewError = onWebViewError,
                     onCloseRequested = onCloseRequested,
+                    isChildWindowErrorFatal = { host, errorCode ->
+                        SdkWebViewClient.isCriticalNetworkError(errorCode) && isEssentialStandalone3DSHost(host)
+                    },
                     openExternalLink = { url ->
                         context.openBrowser(uri = url, onError = { failedUrl ->
                             onWebViewError(
                                 HttpURLConnection.HTTP_UNAVAILABLE,
-                                "No application found to open URL: $failedUrl"
+                                "No application found to open URL: ${SdkWebViewClient.describeFailedRequest(failedUrl)}"
                             )
                         })
                     }
