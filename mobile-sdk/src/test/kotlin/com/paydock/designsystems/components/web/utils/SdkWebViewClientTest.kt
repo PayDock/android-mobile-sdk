@@ -179,6 +179,27 @@ internal class SdkWebViewClientTest {
         assertEquals("unknown", SdkWebViewClient.describeFailedRequest(null))
     }
 
+    @Test
+    fun `url description drops query string and fragment`() {
+        assertEquals(
+            "https://paydock-test.as1.gpayments.net/api/v2/brw/callback",
+            SdkWebViewClient.describeUrl("https://paydock-test.as1.gpayments.net/api/v2/brw/callback?transId=1&t=token#x"),
+        )
+        assertEquals("https://paydock.com/", SdkWebViewClient.describeUrl("https://paydock.com/#token"))
+        assertEquals("unknown", SdkWebViewClient.describeUrl(null))
+    }
+
+    @Test
+    fun `query strings are redacted from urls inside free text`() {
+        assertEquals(
+            "LOG: Collecting browser info ... at https://paydock-test.as1.gpayments.net/api/v2/brw/callback done",
+            SdkWebViewClient.redactUrlQueries(
+                "LOG: Collecting browser info ... at https://paydock-test.as1.gpayments.net/api/v2/brw/callback?transId=1&t=token done"
+            ),
+        )
+        assertEquals("no urls here", SdkWebViewClient.redactUrlQueries("no urls here"))
+    }
+
     private fun client(
         onError: (Int) -> Unit,
         policy: (String?) -> Boolean = { true },

@@ -77,6 +77,15 @@ internal class SdkWebViewClient(
         fun describeFailedRequest(uri: Uri?): String =
             uri?.let { "${it.scheme}://${it.host}${it.path.orEmpty()}" } ?: "unknown"
 
+        /** String form of [describeFailedRequest]: drops the query string and fragment. */
+        fun describeUrl(url: String?): String =
+            url?.substringBefore('?')?.substringBefore('#') ?: "unknown"
+
+        private val URL_QUERY_REGEX = Regex("""(https?://[^\s?#"'<>]+)[?#][^\s"'<>]*""")
+
+        /** Drops the query string and fragment of every http(s) URL inside free text (e.g. JS console logs). */
+        fun redactUrlQueries(text: String): String = text.replace(URL_QUERY_REGEX, "$1")
+
         /**
          * Logs a critical network error that was not escalated because it happened on a non-essential
          * host (e.g. an issuer page's analytics script). Logged as a warning so it reaches release log
@@ -115,7 +124,7 @@ internal class SdkWebViewClient(
         if (currentMainUrl != url) {
             Log.d(
                 MobileSDKConstants.MOBILE_SDK_TAG,
-                "New page loading ($url), resetting critical error flag."
+                "New page loading (${describeUrl(url)}), resetting critical error flag."
             )
             criticalErrorOccurredInSession = false
             currentMainUrl = url

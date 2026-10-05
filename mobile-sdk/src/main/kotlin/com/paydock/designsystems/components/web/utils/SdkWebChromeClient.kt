@@ -57,7 +57,7 @@ internal class SdkWebChromeClient(
      */
     override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
         val messageLevel = consoleMessage.messageLevel()
-        val message = formatMessage(consoleMessage.message())
+        val message = SdkWebViewClient.redactUrlQueries(formatMessage(consoleMessage.message()))
         val sourceId = consoleMessage.sourceId()
         val lineNumber = consoleMessage.lineNumber()
 
