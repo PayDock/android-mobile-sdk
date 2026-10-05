@@ -488,6 +488,10 @@ tag_release:
   rules:
     - if: $CI_COMMIT_BRANCH == "release" # Run on commit is made to the 'release' branch.
       when: on_success
+    # Maintenance releases of older versions (e.g. hotfix/v5.5.1) are published to Maven Central only,
+    # by running this job manually on the protected hotfix branch.
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\//
+      when: manual
 
 # create_gitlab_release:
 # This job creates a release in GitLab.
@@ -504,6 +508,10 @@ create_gitlab_release:
   rules:
     - if: $CI_COMMIT_BRANCH == "release" # Run on commit is made to the 'release' branch.
       when: on_success
+    # Maintenance releases of older versions (e.g. hotfix/v5.5.1) are published to Maven Central only,
+    # by running this job manually on the protected hotfix branch.
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\//
+      when: manual
 
 # create_github_release:
 # This job creates a release in GitHub.
@@ -548,8 +556,13 @@ publish_to_maven_central:
   extends: .setup_bundler # Extends the '.setup_bundler' template to set up the Ruby environment.
   dependencies:
     - tag_release
-  only:
-    - release # Only runs when a commit is made to the 'release' branch.
+  rules:
+    - if: $CI_COMMIT_BRANCH == "release" # Runs when a commit is made to the 'release' branch.
+      when: on_success
+    # Maintenance releases of older versions (e.g. hotfix/v5.5.1) are published to Maven Central only,
+    # by running this job manually on the protected hotfix branch.
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\//
+      when: manual
   script:
     - bundle exec fastlane publish_to_maven_central
   # This job handles:
