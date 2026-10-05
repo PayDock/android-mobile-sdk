@@ -27,6 +27,8 @@ import com.paydock.designsystems.components.web.extensions.setup
  * @param onWebViewError Callback triggered when a WebView encounters an error, providing the error code and message.
  * @param openExternalLink Callback triggered when an external link is encountered and needs to be opened outside of the WebView.
  * @param openTargetBlankInSameWebView When true, do not create a new window for target="_blank" links; the URL loads in the current WebView.
+ * @param isChildWindowErrorFatal Decides, by request host and error code, whether an error inside a child window
+ * triggers [onWebViewError]. Defaults to always fatal.
  */
 internal class SdkWebChromeClient(
     private val context: Context,
@@ -35,6 +37,7 @@ internal class SdkWebChromeClient(
     private val onPageFinished: (WebView) -> Unit,
     private val onWebViewError: (Int, String) -> Unit,
     private val onCloseRequested: () -> Unit = {},
+    private val isChildWindowErrorFatal: (host: String?, errorCode: Int) -> Boolean = { _, _ -> true },
     private val openExternalLink: (Uri) -> Unit
 ) : AccompanistWebChromeClient() {
 
@@ -157,7 +160,14 @@ internal class SdkWebChromeClient(
                 if (error != null) {
                     val errorCode = error.errorCode
                     val errorMessage = SdkWebViewClient.mapWebViewErrorMessage(errorCode)
-                    onWebViewError(errorCode, errorMessage)
+                    if (isChildWindowErrorFatal(request?.url?.host, errorCode)) {
+                        onWebViewError(errorCode, errorMessage)
+                    } else {
+                        Log.d(
+                            MobileSDKConstants.MOBILE_SDK_TAG,
+                            "Non-Fatal child window error (code $errorCode, url: ${request?.url}): $errorMessage"
+                        )
+                    }
                 }
             }
         }

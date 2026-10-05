@@ -43,6 +43,17 @@ private val OPEN_IN_SAME_WINDOW_SCRIPT = """
 """.trimIndent()
 
 /**
+ * Whether [host] belongs to one of [MobileSDKConstants.Standalone3DSConfig.ESSENTIAL_HOST_DOMAINS].
+ * An unknown (null) host is treated as essential, so its errors stay fatal.
+ */
+internal fun isEssentialStandalone3DSHost(host: String?): Boolean {
+    val normalised = host?.lowercase()?.trimEnd('.') ?: return true
+    return MobileSDKConstants.Standalone3DSConfig.ESSENTIAL_HOST_DOMAINS.any { domain ->
+        normalised == domain || normalised.endsWith(".$domain")
+    }
+}
+
+/**
  * Composable function to display a WebView with customizable settings and event handling.
  *
  * @param webUrl The URL to load in the WebView.
@@ -53,6 +64,7 @@ private val OPEN_IN_SAME_WINDOW_SCRIPT = """
  *        and click interception) so navigation works like a single-tab browser. Default is false.
  * @param onWebViewError Callback to handle WebView errors.
  */
+@Suppress("LongMethod")
 @Composable
 internal fun <T : Any?> StandaloneThreeDSWebView(
     webUrl: String,
@@ -121,6 +133,7 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
                     },
                     onWebViewError = onWebViewError,
                     onCloseRequested = onCloseRequested,
+                    isSubResourceNetworkErrorFatal = ::isEssentialStandalone3DSHost,
                 )
             },
             chromeClient = remember(openTargetBlankInSameWebView) {
@@ -146,6 +159,9 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
                     },
                     onWebViewError = onWebViewError,
                     onCloseRequested = onCloseRequested,
+                    isChildWindowErrorFatal = { host, errorCode ->
+                        SdkWebViewClient.isCriticalNetworkError(errorCode) && isEssentialStandalone3DSHost(host)
+                    },
                     openExternalLink = { url ->
                         context.openBrowser(uri = url, onError = { failedUrl ->
                             onWebViewError(

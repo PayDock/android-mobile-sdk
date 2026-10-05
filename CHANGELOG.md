@@ -1,5 +1,11 @@
 # Changelog
 
+## [5.6.1] - Unreleased
+
+### Fixed
+- `Standalone3DSWidget` no longer fails with `WebViewException` when a third-party resource on the bank's 3DS page
+  fails to load.
+
 ## [5.6.0] - 2026-08-27
 
 ### Added

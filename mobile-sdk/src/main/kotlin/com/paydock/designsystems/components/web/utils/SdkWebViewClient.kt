@@ -17,6 +17,9 @@ import com.paydock.core.MobileSDKConstants
  * @param onPageFinished Callback that is triggered when a page finishes loading.
  * @param onWebViewError Callback that is triggered when a WebView encounters an error.
  * It provides the error code and a user-friendly error message.
+ * @param isSubResourceNetworkErrorFatal Decides, by request host, whether a critical network error
+ * on a sub-resource (script, iframe, XHR…) ends the session. Defaults to always fatal, because widgets
+ * loaded from HTML data only see connectivity loss through their sub-resources.
  */
 internal class SdkWebViewClient(
     private val onShouldOverrideUrlLoading: ((request: WebResourceRequest?) -> Boolean)? = null,
@@ -29,6 +32,7 @@ internal class SdkWebViewClient(
      * because the base class relies on an internal state that is only initialized by the Compose wrapper.
      */
     private val delegateToAccompanist: Boolean = true,
+    private val isSubResourceNetworkErrorFatal: (host: String?) -> Boolean = { true },
 ) : AccompanistWebViewClient() {
 
     companion object {
@@ -52,6 +56,18 @@ internal class SdkWebViewClient(
 
         fun mapWebViewErrorMessage(errorCode: Int): String =
             errorMessageByCode[errorCode] ?: "An unknown error occurred. Please try again later."
+
+        /**
+         * Whether [errorCode] is a concrete network failure. ERROR_UNKNOWN (-1) is deliberately excluded:
+         * it's frequently emitted for benign sub-resource failures (e.g. feature flag streams like LaunchDarkly).
+         */
+        fun isCriticalNetworkError(errorCode: Int): Boolean = when (errorCode) {
+            ERROR_HOST_LOOKUP,
+            ERROR_CONNECT,
+            ERROR_TIMEOUT,
+            ERROR_IO -> true
+            else -> false
+        }
     }
 
     @Volatile
@@ -127,9 +143,9 @@ internal class SdkWebViewClient(
     }
 
     /**
-     * Handles WebView errors. Differentiates between fatal and non-fatal errors. For fatal errors
-     * (those affecting the main frame), it logs the error and triggers the [onWebViewError] callback.
-     * Non-fatal errors (those affecting sub-frames) are logged but not escalated.
+     * Handles WebView errors. Differentiates between fatal and non-fatal errors. Main-frame errors are
+     * always fatal; critical network errors on sub-resources are fatal when [isSubResourceNetworkErrorFatal]
+     * accepts the request host. Fatal errors trigger [onWebViewError] once per session; the rest are only logged.
      *
      * @param view The WebView that encountered an error.
      * @param request The request associated with the error.
@@ -145,17 +161,9 @@ internal class SdkWebViewClient(
             val errorMessage = getWebViewErrorMessage(error.errorCode)
             val errorCode = error.errorCode
 
-            // Treat only concrete network failures as critical. Do NOT mark ERROR_UNKNOWN (-1)
-            // as critical on its own because it's frequently emitted for benign subresource
-            // failures (e.g., feature flag streams like LaunchDarkly) when not in the main frame.
-            val isCriticalNetworkError = when (errorCode) {
-                ERROR_HOST_LOOKUP,
-                ERROR_CONNECT,
-                ERROR_TIMEOUT,
-                ERROR_IO -> true
-                else -> false
-            }
-            val isErrorFatalForSession = isCriticalNetworkError || request?.isForMainFrame == true
+            val isMainFrame = request?.isForMainFrame == true
+            val isErrorFatalForSession = isMainFrame ||
+                (isCriticalNetworkError(errorCode) && isSubResourceNetworkErrorFatal(request?.url?.host))
 
             if (isErrorFatalForSession) {
                 if (!criticalErrorOccurredInSession) {
@@ -163,7 +171,7 @@ internal class SdkWebViewClient(
                     Log.d(
                         MobileSDKConstants.MOBILE_SDK_TAG,
                         "First critical error in session (code $errorCode, " +
-                            "mainFrame: ${request?.isForMainFrame}, " +
+                            "mainFrame: $isMainFrame, " +
                             "url: ${request?.url}): $errorMessage"
                     )
                     onWebViewError(errorCode, errorMessage)
@@ -174,7 +182,7 @@ internal class SdkWebViewClient(
                     )
                 }
             } else {
-                // Log non-fatal errors (e.g., error loading a sub-frame image) without triggering the main error callback.
+                // Log non-fatal errors (e.g., a third-party script or image failing) without triggering the error callback.
                 Log.d(
                     MobileSDKConstants.MOBILE_SDK_TAG,
                     "Non-Fatal sub-resource error (code $errorCode, url: ${request?.url}): $errorMessage"
