@@ -149,6 +149,29 @@ internal class SdkWebViewClientTest {
     }
 
     @Test
+    fun `fatal errors are logged at error level without query string`() {
+        mockkStatic(Log::class)
+        try {
+            val message = slot<String>()
+            every { Log.e(any(), capture(message)) } returns 0
+            val client = client(onError = {}, policy = ::isEssentialStandalone3DSHost)
+
+            client.onReceivedError(
+                webView,
+                request("paydock-test.as1.gpayments.net", mainFrame = false, path = "/api/v2/brw/result/mon", query = "t=token"),
+                error(WebViewClient.ERROR_CONNECT, "net::ERR_CONNECTION_RESET"),
+            )
+
+            verify(exactly = 1) { Log.e(any(), any<String>()) }
+            assertTrue(message.captured.contains("net::ERR_CONNECTION_RESET"))
+            assertTrue(message.captured.contains("https://paydock-test.as1.gpayments.net/api/v2/brw/result/mon"))
+            assertFalse(message.captured.contains("token"))
+        } finally {
+            unmockkStatic(Log::class)
+        }
+    }
+
+    @Test
     fun `failed request description drops the query string`() {
         val uri = request("paydock-test.as1.gpayments.net", mainFrame = false, path = "/api/v2/brw/result/mon", query = "t=token").url
 

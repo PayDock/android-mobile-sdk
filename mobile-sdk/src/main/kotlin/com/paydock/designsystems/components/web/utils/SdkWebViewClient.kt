@@ -189,17 +189,17 @@ internal class SdkWebViewClient(
             if (isErrorFatalForSession) {
                 if (!criticalErrorOccurredInSession) {
                     criticalErrorOccurredInSession = true
-                    Log.d(
+                    Log.e(
                         MobileSDKConstants.MOBILE_SDK_TAG,
-                        "First critical error in session (code $errorCode, " +
-                            "mainFrame: $isMainFrame, " +
-                            "url: ${request?.url}): $errorMessage"
+                        "First critical error in session (code $errorCode, error: ${error.description}, " +
+                            "mainFrame: $isMainFrame, url: ${describeFailedRequest(request?.url)}): $errorMessage"
                     )
                     onWebViewError(errorCode, errorMessage)
                 } else {
                     Log.d(
                         MobileSDKConstants.MOBILE_SDK_TAG,
-                        "Subsequent critical error in session ignored (code $errorCode, url: ${request?.url}): $errorMessage"
+                        "Subsequent critical error in session ignored (code $errorCode, " +
+                            "url: ${describeFailedRequest(request?.url)}): $errorMessage"
                     )
                 }
             } else if (isCriticalNetworkError(errorCode)) {
@@ -209,7 +209,7 @@ internal class SdkWebViewClient(
                 // Log other non-fatal errors (e.g. benign ERROR_UNKNOWN noise) without triggering the error callback.
                 Log.d(
                     MobileSDKConstants.MOBILE_SDK_TAG,
-                    "Non-Fatal sub-resource error (code $errorCode, url: ${request?.url}): $errorMessage"
+                    "Non-Fatal sub-resource error (code $errorCode, url: ${describeFailedRequest(request?.url)}): $errorMessage"
                 )
             }
         }
