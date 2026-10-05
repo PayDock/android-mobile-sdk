@@ -1,5 +1,5 @@
-[![GitLab Pipeline Status](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/badges/main/pipeline.svg)](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/-/pipelines?scope=branches&ref=main)
-[![Coverage](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/badges/main/coverage.svg?job=test)](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/-/pipelines?scope=branches&ref=main)
+[![GitLab Pipeline Status](https://gitlab.com/paydock-rps/bounded-contexts/mobile/mobile-sdk-android/badges/main/pipeline.svg)](https://gitlab.com/paydock-rps/bounded-contexts/mobile/mobile-sdk-android/-/pipelines?scope=branches&ref=main)
+[![Coverage](https://gitlab.com/paydock-rps/bounded-contexts/mobile/mobile-sdk-android/badges/main/coverage.svg?job=test)](https://gitlab.com/paydock-rps/bounded-contexts/mobile/mobile-sdk-android/-/pipelines?scope=branches&ref=main)
 ![GitHub Release](https://img.shields.io/github/v/release/PayDock/android-mobile-sdk)
 [![Maven Central](https://img.shields.io/maven-central/v/com.paydock/mobile-sdk.svg)](https://central.sonatype.com/artifact/com.paydock/mobile-sdk)
 ![Kotlin](https://img.shields.io/badge/kotlin-2.2.20-7F52FF?logo=kotlin&logoColor=white)
