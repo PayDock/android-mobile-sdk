@@ -68,11 +68,14 @@ stages:
   - build # Stage for building the Android application.
   - deploy # Stage for deploying build to Firebase App Distribution.
   - firebase_test # Stage for optional manual Firebase Test Lab UI tests (runs after deploy).
+  - release_gate # Manual start of a release from a hotfix/ branch (hotfix for a previous release).
+  # Release stages (push to `release`). Maven Central is the only irreversible step, so it runs first, after
+  # every check has passed. Everything after it is safe to retry: retry the failed job, never add a commit.
+  - maven_central # Stage for publishing to Maven Central (point of no return).
   - tag # Stage for tagging a release.
+  - publish # Stage for publishing the SDK to GitHub Packages.
   - gitlab_release # Stage for creating a release in GitLab.
   - github_release # Stage for creating a release in GitHub.
-  - publish # Stage for publishing the SDK to GitHub.
-  - maven_central # Stage for publishing to Maven Central.
 
 # Include:
 # Includes an external template for security checks from another project.
@@ -141,6 +144,56 @@ code_quality:
       when: on_success
     - if: $CI_MERGE_REQUEST_IID # Run on merge (Merge Results)
       when: on_success
+
+# verify_release:
+# Merge request gate (seconds, no build). Runs on every MR into `release` and every MR from a deploy/ or hotfix/
+# branch, and blocks the merge (with "Pipelines must succeed") unless: a deploy/ or hotfix/ branch targets `release`
+# (never `main`), the branch is deploy/vX.Y.Z or hotfix/vX.Y.Z, versionName matches it and is higher than the latest release, CHANGELOG.md has the entry, and
+# (hotfix only) it is a patch bump cut from `release`. GIT_DEPTH 0 so the hotfix check can compare with main.
+verify_release:
+  stage: quality
+  extends: .setup_bundler
+  needs: [] # Independent of the other jobs: start straight away.
+  variables:
+    GIT_DEPTH: "0"
+  script:
+    - bundle exec fastlane verify_release
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "release" || $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^(deploy|hotfix)\//)'
+      when: on_success
+
+# release_preflight:
+# First check of the release pipeline (seconds). Stops the release before anything is published if the version
+# was already released, the CHANGELOG entry is missing, or a release token is missing or invalid.
+release_preflight:
+  stage: quality
+  extends: .setup_bundler
+  needs: []
+  interruptible: false # Release step.
+  script:
+    - bundle exec fastlane release_preflight
+  rules:
+    - if: $CI_COMMIT_BRANCH == "release"
+      when: on_success
+
+# hotfix_release:
+# Releases a hotfix for a previous release (e.g. hotfix/v5.6.2 cut from tag 5.6.1 while 5.7.1 is the latest) from
+# its own branch; that branch never merges into `release`. Press Run once the tests have passed: it runs the
+# release pre-flight (version checked against its own release line), then the release jobs below run on their own,
+# and the GitHub release isn't marked latest. Run on a hotfix for the latest release, it fails and says to open a
+# merge request into `release` instead. hotfix/* must be protected branches so the release variables are available.
+hotfix_release:
+  stage: release_gate
+  extends: .setup_bundler
+  interruptible: false # Release step.
+  variables:
+    GIT_DEPTH: "0" # The pre-flight checks the branch was cut from the right release tag.
+  script:
+    - bundle exec fastlane release_preflight
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\//
+      when: manual
+      allow_failure: false # Later stages (the release jobs) wait for it.
 
 # dependency_guard:
 # Fast check (~10 sec) that compares resolved dependencies against the committed baseline.
@@ -562,6 +615,8 @@ tag_release:
   rules:
     - if: $CI_COMMIT_BRANCH == "release" # Run on commit is made to the 'release' branch.
       when: on_success
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\// # Hotfix for a previous release, after the manual hotfix_release job.
+      when: on_success
 
 # create_gitlab_release:
 # This job creates a release in GitLab.
@@ -570,7 +625,7 @@ create_gitlab_release:
   interruptible: false # Release step: never cancel half-way.
   extends: .setup_bundler # Extends the '.setup_bundler' template to set up the Ruby environment.
   script:
-     - bundle exec fastlane create_gitlab_release version:$CI_COMMIT_TAG # Executes the 'create_gitlab_release' lane in the Fastfile.
+     - bundle exec fastlane create_gitlab_release # Executes the 'create_gitlab_release' lane in the Fastfile.
     # Fastfile Reference: This lane is defined in the Fastfile and handles the following:
     #   - Authenticating with GitHub using a personal access token.
     #   - Creating a new release on Gitlab with the specified tag name.
@@ -578,6 +633,8 @@ create_gitlab_release:
     #   - Potentially uploading release assets (e.g., APKs) to the release.
   rules:
     - if: $CI_COMMIT_BRANCH == "release" # Run on commit is made to the 'release' branch.
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\// # Hotfix for a previous release, after the manual hotfix_release job.
       when: on_success
 
 # create_github_release:
@@ -589,7 +646,7 @@ create_github_release:
   interruptible: false # Release step: never cancel half-way.
   extends: .setup_bundler # Extends the '.setup_bundler' template to set up the Ruby environment.
   script:
-    - bundle exec fastlane create_github_release$CI_COMMIT_TAG # Executes the 'create_github_release' lane in the Fastfile.
+    - bundle exec fastlane create_github_release # Executes the 'create_github_release' lane in the Fastfile.
     # Fastfile Reference: This lane is defined in the Fastfile and handles the following:
     #   - Authenticating with GitHub using a personal access token.
     #   - Creating a new release on GitHub with the specified tag name.
@@ -597,6 +654,8 @@ create_github_release:
     #   - Potentially uploading release assets (e.g., APKs) to the release.
   rules:
     - if: $CI_COMMIT_BRANCH == "release" # Run on commit is made to the 'release' branch.
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\// # Hotfix for a previous release, after the manual hotfix_release job.
       when: on_success
 
 # publish_to_github:
@@ -616,18 +675,23 @@ publish_to_github:
   rules:
     - if: $CI_COMMIT_BRANCH == "release" # Run on commit is made to the 'release' branch.
       when: on_success
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\// # Hotfix for a previous release, after the manual hotfix_release job.
+      when: on_success
 
 # publish_to_maven_central:
-# This job publishes the SDK to Maven Central using JReleaser.
-# It runs after the tag has been created and uses JReleaser for complete automation.
+# This job publishes the SDK to Maven Central using JReleaser: the release pipeline's point of no return.
+# It runs first among the release jobs, once release_preflight, quality checks and tests have passed (earlier
+# stages). JReleaser uploads the bundle and Maven Central validates it; only a valid bundle is published.
+# Safe to retry: it skips a version that is already on Maven Central.
 publish_to_maven_central:
   stage: maven_central # Runs in the 'maven_central' stage.
   interruptible: false # Release step: never cancel half-way.
   extends: .setup_bundler # Extends the '.setup_bundler' template to set up the Ruby environment.
-  dependencies:
-    - tag_release
-  only:
-    - release # Only runs when a commit is made to the 'release' branch.
+  rules:
+    - if: $CI_COMMIT_BRANCH == "release" # Only runs when a commit is made to the 'release' branch.
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\// # Hotfix for a previous release, after the manual hotfix_release job.
+      when: on_success
   script:
     - bundle exec fastlane publish_to_maven_central
   # This job handles:
