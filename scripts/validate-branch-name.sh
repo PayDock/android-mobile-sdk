@@ -35,6 +35,11 @@ validate_branch_name() {
     if [[ "$branch_name" == "main" || "$branch_name" == "release" ]]; then
         return 0
     fi
+
+    # SDD service branches: sdd/<change-id> or sdd/<change-id>-v<N>
+    if [[ "$branch_name" =~ ^sdd/[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+        return 0
+    fi
     
     # Check if branch name starts with any allowed prefix
     for prefix in "${ALLOWED_PREFIXES[@]}"; do
