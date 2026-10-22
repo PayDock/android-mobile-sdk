@@ -262,10 +262,12 @@ test:
       - build/reports/jacoco/merged/html/ # Merged HTML coverage report for GitLab Pages
       - build/reports/jacoco/merged/jacocoMergedReport.xml # Merged XML coverage report
       - bin-processor/build/test-results/
+      - telemetry/build/test-results/
       - mobile-sdk/build/test-results/ # Unit test results
     reports:
       junit:
         - bin-processor/build/test-results/**/TEST-*.xml # bin-processor unit test results
+        - telemetry/build/test-results/**/TEST-*.xml # telemetry unit test results
         - mobile-sdk/build/test-results/**/TEST-*.xml # mobile-sdk unit test results
       coverage_report:
         coverage_format: jacoco

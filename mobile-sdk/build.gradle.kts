@@ -22,7 +22,7 @@ android {
     // it's currently still pinned to AGP 8.13.0. Bumping this raises `minCompileSdk` in the
     // published AAR's metadata, forcing every integrator to also have that compileSdk available
     // just to keep compiling — not something to move ahead of schedule without a driving need.
-    compileSdk = 36
+    compileSdk = libs.versions.sdk.compileSdk.get().toInt()
 
     defaultConfig {
         minSdk = 24
@@ -57,7 +57,9 @@ android {
             // Including 'bin-processor' source code directly until it is published
             // as a standalone library to Maven/JitPack.
             // Link to issue: [Insert Jira/GitHub Link if applicable]
-            kotlin.srcDirs("src/main/kotlin", "../bin-processor/src/main/kotlin")
+            // 'telemetry' is compiled in the same way (internal sources, no project dependency) and is covered by
+            // this same follow-up: publish it separately, then depend on it.
+            kotlin.srcDirs("src/main/kotlin", "../bin-processor/src/main/kotlin", "../telemetry/src/main/kotlin")
             res.srcDirs("src/main/res", "../bin-processor/src/main/res") // Added in case there are UI resources
         }
     }

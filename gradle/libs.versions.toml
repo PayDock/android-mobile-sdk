@@ -1,4 +1,7 @@
 [versions]
+# The compileSdk of the published SDK's modules: :mobile-sdk and the sources it compiles in (:bin-processor, :telemetry).
+# :sample is an app and keeps its own value.
+sdk-compileSdk = "36"
 afterpayAndroid = "4.8.3"
 # Required by afterpay-android 4.8.x (core library desugaring); see its AAR metadata desugarJdkLib.
 desugarJdkLibs = "2.1.2"

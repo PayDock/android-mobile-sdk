@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-The Paydock Android **MobileSDK** — a Jetpack Compose UI kit of pre-built, customisable payment widgets (cards, gift cards, Google Pay, PayPal, Afterpay, Coles Pay, Click to Pay, Zip, address capture, 3DS, tokenisation). Published to Maven Central as **`com.paydock:mobile-sdk`** (current `versionName` 5.7.1, in `gradle.properties`). Kotlin **2.2.20**, `minSdk` **24** (Android 7.0), `compileSdk`/`targetSdk` **37**.
+The Paydock Android **MobileSDK** — a Jetpack Compose UI kit of pre-built, customisable payment widgets (cards, gift cards, Google Pay, PayPal, Afterpay, Coles Pay, Click to Pay, Zip, address capture, 3DS, tokenisation). Published to Maven Central as **`com.paydock:mobile-sdk`** (current `versionName` 5.7.1, in `gradle.properties`). Kotlin **2.2.20**, `minSdk` **24** (Android 7.0). The SDK modules (`:mobile-sdk`, `:bin-processor`, `:telemetry`) share `compileSdk` **36** (`sdk-compileSdk` in `gradle/libs.versions.toml`); the `:sample` app uses `compileSdk`/`targetSdk` **37**.
 
 ## Toolchain & setup
 
@@ -33,6 +33,9 @@ Run from the repo root.
 # bin-processor unit tests
 ./gradlew :bin-processor:testDebugUnitTest
 
+# telemetry unit tests
+./gradlew :telemetry:testDebugUnitTest
+
 # Instrumented tests via Gradle Managed Device (CI-friendly, no manual emulator)
 ./gradlew :mobile-sdk:pixel6Api35DebugAndroidTest        # ceiling device (Pixel 6, API 35, aosp-atd)
 ./gradlew :mobile-sdk:minApi24DebugAndroidTest           # floor device (minSdk 24, aosp image)
@@ -54,7 +57,7 @@ Code quality & coverage:
 
 # Coverage
 ./gradlew :mobile-sdk:testDebugUnitTest   # produces JaCoCo exec data (JaCoCo 0.8.11)
-./gradlew jacocoMergedReport              # merged bin-processor + mobile-sdk report
+./gradlew jacocoMergedReport              # merged bin-processor + telemetry + mobile-sdk report
 
 # Dependency validation (both fail the build in CI)
 ./gradlew buildHealth        # dependency-analysis: unused/misconfigured deps
@@ -69,6 +72,7 @@ The pre-commit hook runs `detektFormat` then `detektAll` and blocks commits on i
 
 - **`:mobile-sdk`** — the published library (`com.android.library`, namespace `com.paydock`). The SDK entry point is `MobileSDK` / `Context.initializeMobileSDK(...)` (`mobile-sdk/src/main/kotlin/com/paydock/MobileSDK.kt`): a singleton created via `MobileSDK.Builder`, holding `environment` + `enableTestMode`, that stands up a `MobileSDKKoinContext` on init.
 - **`:bin-processor`** — card BIN / scheme detection (`com.paydock.binprocessor`, ships `card-schemes.json`). **Currently compiled into `:mobile-sdk` via `sourceSets` srcDir hack** (`../bin-processor/src/main/kotlin`), not as a real module dependency — see the TODO in `mobile-sdk/build.gradle.kts`. It also has its own test suite run as `:bin-processor:testDebugUnitTest`.
+- **`:telemetry`** — SDK telemetry (`com.paydock.telemetry`): the `Telemetry` facade, the `TelemetryRuntime` lifecycle handle, `NoOpTelemetry`, `TelemetryEvent`, `TelemetryIntent` and `TelemetryLevel`. Every declaration is `internal`. **Compiled into `:mobile-sdk` via `sourceSets` like `bin-processor`** (`../telemetry/src/main/kotlin`), with no project dependency and no main dependencies, so the `releaseRuntimeClasspath` is unchanged. Dormant until activation: nothing binds or starts it yet. Two source-scan tests guard it: `InternalOnlyTest` (in the module) keeps every declaration internal, and `TelemetrySeamTest` (in `:mobile-sdk`) lets SDK code refer only to `Telemetry` and `TelemetryEvent`. Its own test suite runs as `:telemetry:testDebugUnitTest`.
 - **`:sample`** — demo app (`com.android.application`, namespace `com.paydock.sample`). Uses **Hilt** for its own DI and Retrofit to call the Paydock API directly (creating customers, tokens, etc.). Excluded from the build on JitPack.
 - **`convention-plugins`** — included build providing the shared script plugins (see Toolchain).
 
