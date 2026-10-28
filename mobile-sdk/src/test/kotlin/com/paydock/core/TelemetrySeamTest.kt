@@ -10,7 +10,8 @@ import java.io.File
  *
  * The telemetry sources are compiled into this library, so the compiler alone cannot stop SDK code from reaching
  * past the facade. This test scans the SDK's own sources (and bin-processor's, which compile alongside them) and
- * allows them to refer only to the `Telemetry` facade and to `TelemetryEvent` (with its nested types).
+ * allows them to refer only to the `Telemetry` facade and to `TelemetryEvent` (with its nested types). The one
+ * exception is the activation binding in [allowlist], which decides, binds and starts telemetry at SDK start.
  *
  * Java sources, where they exist, may not mention the telemetry package at all: Java does not see Kotlin's
  * `internal`, so a Java file could reach any telemetry class.
@@ -30,10 +31,11 @@ internal class TelemetrySeamTest {
     )
 
     /**
-     * Files, relative to the module directory, allowed to reach past the facade: the activation binding only.
-     * Empty until the activation slice (MD-24) adds its binding file.
+     * Files, relative to the module directory (`invariantSeparatorsPath`), allowed to reach past the facade: the
+     * activation binding only (MD-24). It selects and starts telemetry, keeps the lifecycle handle to itself and
+     * registers only the facade in Koin.
      */
-    private val allowlist: Set<String> = emptySet()
+    private val allowlist: Set<String> = setOf("src/main/kotlin/com/paydock/core/telemetry/TelemetryBinding.kt")
 
     private val telemetryPackageDeclaration = Regex("""^\s*package\s+com\.paydock\.telemetry(\.|\s|$)""")
     private val telemetryStarImport = Regex("""^\s*import\s+com\.paydock\.telemetry(\.\w+)*\.\*""")

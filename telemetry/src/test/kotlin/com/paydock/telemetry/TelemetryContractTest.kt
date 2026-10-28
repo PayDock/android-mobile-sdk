@@ -53,6 +53,12 @@ internal class TelemetryContractTest {
     }
 
     @Test
+    fun active_isBothFacadeAndRuntime() {
+        assertTrue(Telemetry::class.java.isAssignableFrom(ActiveTelemetry::class.java))
+        assertTrue(TelemetryRuntime::class.java.isAssignableFrom(ActiveTelemetry::class.java))
+    }
+
+    @Test
     fun facade_declaresExactlyIsActiveAndReport() {
         val names = Telemetry::class.java.declaredMethods
             .filterNot { it.isSynthetic }

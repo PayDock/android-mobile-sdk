@@ -8,6 +8,7 @@ import com.paydock.binprocessor.data.refresh.BinDataRefreshCoordinator
 import com.paydock.core.data.injection.MobileSDKKoinContext
 import com.paydock.core.domain.mapper.mapToBaseUrl
 import com.paydock.core.domain.model.Environment
+import com.paydock.core.telemetry.bindTelemetry
 import com.paydock.feature.afterpay.presentation.AfterpayBaseline
 import java.util.Locale
 
@@ -38,6 +39,8 @@ class MobileSDK(
         // Initialize Koin context if not already initialized
         if (koinContext == null) {
             koinContext = MobileSDKKoinContext(context)
+            // Bind telemetry before any init-time background work, so Koin already resolves Telemetry there.
+            koinContext?.koin?.let { bindTelemetry(it, environment) }
             koinContext?.koin?.get<BinDataRefreshCoordinator>()?.refreshAtSdkInit()
         }
     }

@@ -8,8 +8,8 @@ import org.junit.Test
  *
  * The no-op is what SDK code is bound to while telemetry is disabled (RS-2): it reports nothing and starts
  * nothing. Its `= Unit` bodies make that a review fact; there is no live-thread snapshot here, because
- * `Thread.getAllStackTraces()` sees every thread of the test JVM and would flake. The release-inert test of the
- * activation slice is the runtime guard.
+ * `Thread.getAllStackTraces()` sees every thread of the test JVM and would flake. A release build always binds it:
+ * its generated build values are disabled and empty.
  */
 internal class NoOpTelemetryTest {
 
