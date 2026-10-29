@@ -22,12 +22,9 @@ import com.paydock.core.MobileSDKConstants
  * @param isSubResourceNetworkErrorFatal Decides, by request host, whether a critical network error
  * on a sub-resource (script, iframe, XHR…) ends the session. Defaults to always fatal, because widgets
  * loaded from HTML data only see connectivity loss through their sub-resources.
- * @param criticalHttpResourceUrls Exact URLs whose HTTP error responses (4xx/5xx) end the session, e.g. the
- * Client SDK script: without it the page can never progress. Empty by default, so HTTP errors are ignored
- * (favicons, issuer page assets and API calls, which the Client SDK reports itself).
- * @param isAnyNetworkErrorFatal Decides, by request host, whether any network error (including
- * ERROR_UNKNOWN, e.g. a proxy or firewall closing the request) on a sub-resource ends the session. Used for
- * the payment providers a flow can't work without. Defaults to never.
+ * @param criticalResourceUrls Exact URLs whose network errors or HTTP error responses (4xx/5xx) end the session,
+ * e.g. the Client SDK script: without it the page can never progress. Empty by default, so HTTP errors are
+ * ignored (favicons, issuer page assets and API calls, which the Client SDK reports itself).
  */
 internal class SdkWebViewClient(
     private val onShouldOverrideUrlLoading: ((request: WebResourceRequest?) -> Boolean)? = null,
@@ -41,8 +38,7 @@ internal class SdkWebViewClient(
      */
     private val delegateToAccompanist: Boolean = true,
     private val isSubResourceNetworkErrorFatal: (host: String?) -> Boolean = { true },
-    private val criticalHttpResourceUrls: Set<String> = emptySet(),
-    private val isAnyNetworkErrorFatal: (host: String?) -> Boolean = { false },
+    private val criticalResourceUrls: Set<String> = emptySet(),
 ) : AccompanistWebViewClient() {
 
     companion object {
@@ -188,8 +184,8 @@ internal class SdkWebViewClient(
 
     /**
      * Handles WebView errors. Differentiates between fatal and non-fatal errors. Main-frame errors are
-     * always fatal; critical network errors on sub-resources are fatal when [isSubResourceNetworkErrorFatal]
-     * accepts the request host, and any error is fatal when [isAnyNetworkErrorFatal] accepts it.
+     * always fatal, and so is any error on [criticalResourceUrls]; critical network errors on other sub-resources
+     * are fatal when [isSubResourceNetworkErrorFatal] accepts the request host.
      * Fatal errors trigger [onWebViewError] once per session; the rest are only logged.
      *
      * @param view The WebView that encountered an error.
@@ -208,8 +204,8 @@ internal class SdkWebViewClient(
 
             val isMainFrame = request?.isForMainFrame == true
             val isErrorFatalForSession = isMainFrame ||
-                (isCriticalNetworkError(errorCode) && isSubResourceNetworkErrorFatal(request?.url?.host)) ||
-                isAnyNetworkErrorFatal(request?.url?.host)
+                request?.url?.toString() in criticalResourceUrls ||
+                (isCriticalNetworkError(errorCode) && isSubResourceNetworkErrorFatal(request?.url?.host))
 
             if (isErrorFatalForSession) {
                 reportCriticalError(errorCode, errorMessage, error.description, isMainFrame, request?.url)
@@ -227,7 +223,7 @@ internal class SdkWebViewClient(
     }
 
     /**
-     * Handles HTTP error responses (4xx/5xx). Only responses for [criticalHttpResourceUrls] (exact match) end the
+     * Handles HTTP error responses (4xx/5xx). Only responses for [criticalResourceUrls] (exact match) end the
      * session; every other HTTP error is left to the page, as before.
      *
      * @param view The WebView that received the response.
@@ -241,7 +237,7 @@ internal class SdkWebViewClient(
     ) {
         super.onReceivedHttpError(view, request, errorResponse)
         val statusCode = errorResponse?.statusCode ?: return
-        if (request?.url?.toString() !in criticalHttpResourceUrls) return
+        if (request?.url?.toString() !in criticalResourceUrls) return
         reportCriticalError(
             errorCode = statusCode,
             errorMessage = criticalResourceHttpErrorMessage(statusCode),

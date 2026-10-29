@@ -7,8 +7,6 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import com.paydock.feature.threeDS.standalone.presentation.ui.isEssentialStandalone3DSHost
-import com.paydock.feature.threeDS.standalone.presentation.ui.isKnownStandalone3DSProviderHost
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -43,26 +41,29 @@ internal class SdkWebViewClientTest {
     }
 
     @Test
-    fun `standalone 3DS policy ignores critical network errors on third-party sub-resources`() {
-        criticalCodes.forEach { code ->
-            val errors = mutableListOf<Int>()
-            val client = client(onError = { errors += it }, policy = ::isEssentialStandalone3DSHost)
+    fun `standalone 3DS policy ignores network errors on requests inside the page`() {
+        val hosts = listOf("acs.issuer.example", "api.paydock.com", "widget.paydock.com", "paydock.as1.gpayments.net")
+        (criticalCodes + WebViewClient.ERROR_UNKNOWN).forEach { code ->
+            hosts.forEach { host ->
+                val errors = mutableListOf<Int>()
+                val client = standalone3DSClient(onError = { errors += it })
 
-            client.onReceivedError(webView, request("acs.issuer.example", mainFrame = false), error(code))
+                client.onReceivedError(webView, request(host, mainFrame = false), error(code))
 
-            assertTrue(errors.isEmpty(), "Code $code on a third-party host should not be fatal")
+                assertTrue(errors.isEmpty(), "Code $code on $host should not be fatal")
+            }
         }
     }
 
     @Test
-    fun `standalone 3DS policy keeps critical network errors on Paydock and GPayments hosts fatal`() {
-        listOf("widget.paydock.com", "api.paydock.com", "paydock.as1.gpayments.net").forEach { host ->
+    fun `standalone 3DS policy keeps network errors on the client sdk script fatal`() {
+        criticalCodes.forEach { code ->
             val errors = mutableListOf<Int>()
-            val client = client(onError = { errors += it }, policy = ::isEssentialStandalone3DSHost)
+            val client = standalone3DSClient(onError = { errors += it })
 
-            client.onReceivedError(webView, request(host, mainFrame = false), error(WebViewClient.ERROR_HOST_LOOKUP))
+            client.onReceivedError(webView, libraryRequest(), error(code))
 
-            assertEquals(listOf(WebViewClient.ERROR_HOST_LOOKUP), errors, "$host should be fatal")
+            assertEquals(listOf(code), errors, "Code $code on the Client SDK script should be fatal")
         }
     }
 
@@ -98,24 +99,13 @@ internal class SdkWebViewClientTest {
     }
 
     @Test
-    fun `essential host matching is domain based and case insensitive`() {
-        assertTrue(isEssentialStandalone3DSHost("paydock.com"))
-        assertTrue(isEssentialStandalone3DSHost("Widget.Paydock.com."))
-        assertTrue(isEssentialStandalone3DSHost("paydock-test.api.as1.gpayments.net"))
-        assertTrue(isEssentialStandalone3DSHost(null))
-        assertFalse(isEssentialStandalone3DSHost("notpaydock.com"))
-        assertFalse(isEssentialStandalone3DSHost("paydock.com.evil.example"))
-        assertFalse(isEssentialStandalone3DSHost("h.online-metrix.net"))
-    }
-
-    @Test
     fun `ignored third-party network errors are logged as warnings with host only`() {
         mockkStatic(Log::class)
         try {
             val message = slot<String>()
             every { Log.w(any(), capture(message)) } returns 0
             val errors = mutableListOf<Int>()
-            val client = client(onError = { errors += it }, policy = ::isEssentialStandalone3DSHost)
+            val client = client(onError = { errors += it }, policy = { false })
 
             client.onReceivedError(
                 webView,
@@ -141,7 +131,7 @@ internal class SdkWebViewClientTest {
         try {
             every { Log.w(any(), any<String>()) } returns 0
             every { Log.d(any(), any()) } returns 0
-            val client = client(onError = {}, policy = ::isEssentialStandalone3DSHost)
+            val client = client(onError = {}, policy = { false })
 
             client.onReceivedError(webView, request("acs.issuer.example", mainFrame = false), error(WebViewClient.ERROR_UNKNOWN))
 
@@ -157,7 +147,7 @@ internal class SdkWebViewClientTest {
         try {
             val message = slot<String>()
             every { Log.e(any(), capture(message)) } returns 0
-            val client = client(onError = {}, policy = ::isEssentialStandalone3DSHost)
+            val client = client(onError = {})
 
             client.onReceivedError(
                 webView,
@@ -266,68 +256,20 @@ internal class SdkWebViewClientTest {
     }
 
     @Test
-    fun `known provider policy makes any error on paydock and gpayments fatal`() {
-        val codes =
-            listOf(WebViewClient.ERROR_UNKNOWN, WebViewClient.ERROR_FAILED_SSL_HANDSHAKE, WebViewClient.ERROR_HOST_LOOKUP)
-        val hosts = listOf("paydock-test.as1.gpayments.net", "api.paydock.com", "widget.paydock.com")
-        codes.forEach { code ->
-            hosts.forEach { host ->
-                val errors = mutableListOf<Int>()
-                val client = standalone3DSClient(onError = { errors += it })
-
-                client.onReceivedError(webView, request(host, mainFrame = false), error(code))
-
-                assertEquals(listOf(code), errors, "Code $code on $host should be fatal")
-            }
-        }
-    }
-
-    @Test
-    fun `unknown errors on third-party hosts stay non-fatal with the known provider policy`() {
-        listOf("acs.issuer.example", "h.online-metrix.net", "mgmt.acscore-dev.testlab.3dsecure.cloud").forEach { host ->
-            val errors = mutableListOf<Int>()
-            val client = standalone3DSClient(onError = { errors += it })
-
-            client.onReceivedError(webView, request(host, mainFrame = false), error(WebViewClient.ERROR_UNKNOWN))
-
-            assertTrue(errors.isEmpty(), "ERROR_UNKNOWN on $host should not be fatal")
-        }
-    }
-
-    @Test
-    fun `unknown errors on known providers are non-fatal without the policy`() {
-        val errors = mutableListOf<Int>()
-        val client = client(onError = { errors += it })
-
-        client.onReceivedError(webView, request("paydock-test.as1.gpayments.net", mainFrame = false), error(WebViewClient.ERROR_UNKNOWN))
-
-        assertTrue(errors.isEmpty())
-    }
-
-    @Test
-    fun `known provider errors are reported once per session`() {
+    fun `script network error and a later script http error are reported once per session`() {
         val errors = mutableListOf<Int>()
         val client = standalone3DSClient(onError = { errors += it })
 
-        client.onReceivedError(webView, request("paydock-test.as1.gpayments.net", mainFrame = false), error(WebViewClient.ERROR_UNKNOWN))
-        client.onReceivedError(webView, request("api.paydock.com", mainFrame = false), error(WebViewClient.ERROR_CONNECT))
+        client.onReceivedError(webView, libraryRequest(), error(WebViewClient.ERROR_HOST_LOOKUP))
+        client.onReceivedHttpError(webView, libraryRequest(), httpError(503))
 
-        assertEquals(listOf(WebViewClient.ERROR_UNKNOWN), errors)
-    }
-
-    @Test
-    fun `known provider host matching is domain based and ignores unknown hosts`() {
-        assertTrue(isKnownStandalone3DSProviderHost("paydock-test.as1.gpayments.net"))
-        assertTrue(isKnownStandalone3DSProviderHost("Widget.Paydock.com."))
-        assertFalse(isKnownStandalone3DSProviderHost(null))
-        assertFalse(isKnownStandalone3DSProviderHost("paydock.com.evil.example"))
-        assertFalse(isKnownStandalone3DSProviderHost("acs.issuer.example"))
+        assertEquals(listOf(WebViewClient.ERROR_HOST_LOOKUP), errors)
     }
 
     private fun standalone3DSClient(onError: (Int) -> Unit) = client(
         onError = onError,
-        policy = ::isEssentialStandalone3DSHost,
-        anyPolicy = ::isKnownStandalone3DSProviderHost,
+        policy = { false },
+        httpUrls = setOf(SCRIPT_URL),
     )
 
     private fun libraryRequest(): WebResourceRequest {
@@ -353,13 +295,11 @@ internal class SdkWebViewClientTest {
         policy: (String?) -> Boolean = { true },
         httpUrls: Set<String> = emptySet(),
         onErrorWithMessage: ((Int, String) -> Unit)? = null,
-        anyPolicy: (String?) -> Boolean = { false },
     ) = SdkWebViewClient(
         onWebViewError = { code, message -> onErrorWithMessage?.invoke(code, message) ?: onError(code) },
         delegateToAccompanist = false,
         isSubResourceNetworkErrorFatal = policy,
-        criticalHttpResourceUrls = httpUrls,
-        isAnyNetworkErrorFatal = anyPolicy,
+        criticalResourceUrls = httpUrls,
     )
 
     private fun request(

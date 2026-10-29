@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+- `Standalone3DSWidget` no longer fails with `WebViewException` when a request made by the 3DS page to Paydock or
+  GPayments fails, e.g. because the network changed while the shopper was in their banking app. The Client SDK retries
+  those requests and reports a failed flow through its own events. Only failing to load the 3DS page itself or the
+  Client SDK script ends the flow with `WebViewException`.
+
 ## [5.7.1] - 2026-10-05
 
 ### Fixed

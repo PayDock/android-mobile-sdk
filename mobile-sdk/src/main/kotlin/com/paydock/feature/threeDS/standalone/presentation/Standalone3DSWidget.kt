@@ -129,7 +129,7 @@ fun Standalone3DSWidget(
             data = htmlString,
             jsBridge = jsBridge,
             // The page can't progress without the Client SDK script, so an HTTP error on it ends the flow.
-            criticalHttpResourceUrls = setOf(widgetConfig.jsLibraryUrl),
+            criticalResourceUrls = setOf(widgetConfig.jsLibraryUrl),
         ) { status, message ->
             updateLoading(false)
             // Invoke the onWebViewError callback with the WebView ThreeDSException exception
