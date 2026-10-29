@@ -79,10 +79,16 @@ fun Standalone3DSDemo(
 ) {
     val state by viewModel.stateFlow.collectAsState()
     val phase = state.flow.phase
+    val scenario = state.scenario
+
+    if (scenario == null) {
+        Standalone3DSScenarioPicker(onSelect = viewModel::start)
+        return
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
-            text = "Secure verification · 3-D Secure",
+            text = "Secure verification · 3-D Secure · ${scenario.label}",
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -111,7 +117,8 @@ fun Standalone3DSDemo(
             if (phase != Standalone3DSPhase.CHALLENGE) {
                 StatusPanel(
                     state = state,
-                    onRestart = viewModel::start,
+                    onRestart = viewModel::restart,
+                    onChooseScenario = viewModel::chooseScenario,
                     onDone = onDone
                 )
             }
@@ -123,6 +130,7 @@ fun Standalone3DSDemo(
 private fun StatusPanel(
     state: Standalone3DSDemoUIState,
     onRestart: () -> Unit,
+    onChooseScenario: () -> Unit,
     onDone: () -> Unit,
 ) {
     val flow = state.flow
@@ -159,7 +167,12 @@ private fun StatusPanel(
         )
         if (terminal) {
             state.outcome?.let { OutcomeDetails(outcome = it, phase = phase) }
-            TerminalActions(success = phase == Standalone3DSPhase.SUCCESS, onRestart = onRestart, onDone = onDone)
+            TerminalActions(
+                success = phase == Standalone3DSPhase.SUCCESS,
+                onRestart = onRestart,
+                onChooseScenario = onChooseScenario,
+                onDone = onDone
+            )
         } else {
             ElapsedTicker(key = state.attempt, running = phase != Standalone3DSPhase.PREPARING)
         }
@@ -197,12 +210,24 @@ private fun OutcomeDetails(outcome: Standalone3DSDemoOutcome, phase: Standalone3
 }
 
 @Composable
-private fun TerminalActions(success: Boolean, onRestart: () -> Unit, onDone: () -> Unit) {
+private fun TerminalActions(
+    success: Boolean,
+    onRestart: () -> Unit,
+    onChooseScenario: () -> Unit,
+    onDone: () -> Unit,
+) {
     Spacer(modifier = Modifier.height(24.dp))
     AppButton(
         text = if (success) "Run again" else "Try again",
         modifier = Modifier.fillMaxWidth(),
         onClick = onRestart
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    AppButton(
+        text = "Choose another scenario",
+        modifier = Modifier.fillMaxWidth(),
+        variant = AppButtonVariant.Outline,
+        onClick = onChooseScenario
     )
     Spacer(modifier = Modifier.height(8.dp))
     AppButton(

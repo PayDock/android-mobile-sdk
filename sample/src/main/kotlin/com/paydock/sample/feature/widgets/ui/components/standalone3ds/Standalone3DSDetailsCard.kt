@@ -45,6 +45,7 @@ internal fun Standalone3DSDetailsCard(
             val rows = buildList {
                 add("Status" to (outcome.status ?: "—"))
                 outcome.description?.let { add("Description" to it) }
+                add("Scenario" to outcome.scenario.label)
                 add("Flow" to outcome.flowType.label)
                 add("Amount" to formatAmount(outcome))
                 outcome.errorMessage?.let { add("Error" to it) }

@@ -19,6 +19,7 @@ enum class Standalone3DSFlowType(val label: String) {
  * @property charge3dsId The 3DS charge id reported by the widget.
  * @property status The verbatim status reported by the SDK ([com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult.status]).
  * @property description The outcome description reported by the SDK, if any.
+ * @property scenario The TestLabs scenario that was run.
  * @property flowType Frictionless, challenge or decoupled.
  * @property amount The authenticated amount.
  * @property currency The ISO currency code of [amount].
@@ -28,6 +29,7 @@ data class Standalone3DSDemoOutcome(
     val charge3dsId: String?,
     val status: String?,
     val description: String?,
+    val scenario: Standalone3DSScenario,
     val flowType: Standalone3DSFlowType,
     val amount: BigDecimal,
     val currency: String,
@@ -37,12 +39,14 @@ data class Standalone3DSDemoOutcome(
 /**
  * State of the Widgets > Standalone 3DS demo.
  *
+ * @property scenario The TestLabs scenario being run; `null` while the scenario picker is shown.
  * @property flow The presentation phase (same phases as the checkout sheet and the web playground).
  * @property threeDSToken The token the widget is mounted with; `null` tears the widget (and its WebView) down.
  * @property outcome Details of the finished attempt, for the success / failure screens.
  * @property attempt Incremented on every run so the widget is recreated even when a token repeats.
  */
 data class Standalone3DSDemoUIState(
+    val scenario: Standalone3DSScenario? = null,
     val flow: Standalone3DSFlowState = Standalone3DSFlowState(Standalone3DSPhase.PREPARING),
     val threeDSToken: String? = null,
     val outcome: Standalone3DSDemoOutcome? = null,
