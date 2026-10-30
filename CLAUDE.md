@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-The Paydock Android **MobileSDK** — a Jetpack Compose UI kit of pre-built, customisable payment widgets (cards, gift cards, Google Pay, PayPal, Afterpay, Coles Pay, Click to Pay, Zip, address capture, 3DS, tokenisation). Published to Maven Central as **`com.paydock:mobile-sdk`** (current `versionName` 5.6.0, in `gradle.properties`). Kotlin **2.2.20**, `minSdk` **24** (Android 7.0), `compileSdk`/`targetSdk` **37**.
+The Paydock Android **MobileSDK** — a Jetpack Compose UI kit of pre-built, customisable payment widgets (cards, gift cards, Google Pay, PayPal, Afterpay, Coles Pay, Click to Pay, Zip, address capture, 3DS, tokenisation). Published to Maven Central as **`com.paydock:mobile-sdk`** (current `versionName` 5.7.1, in `gradle.properties`). Kotlin **2.2.20**, `minSdk` **24** (Android 7.0). The SDK modules (`:mobile-sdk`, `:bin-processor`, `:telemetry`) share `compileSdk` **36** (`sdk-compileSdk` in `gradle/libs.versions.toml`); the `:sample` app uses `compileSdk`/`targetSdk` **37**.
 
 ## Toolchain & setup
 
@@ -33,6 +33,9 @@ Run from the repo root.
 # bin-processor unit tests
 ./gradlew :bin-processor:testDebugUnitTest
 
+# telemetry unit tests
+./gradlew :telemetry:testDebugUnitTest
+
 # Instrumented tests via Gradle Managed Device (CI-friendly, no manual emulator)
 ./gradlew :mobile-sdk:pixel6Api35DebugAndroidTest        # ceiling device (Pixel 6, API 35, aosp-atd)
 ./gradlew :mobile-sdk:minApi24DebugAndroidTest           # floor device (minSdk 24, aosp image)
@@ -54,7 +57,7 @@ Code quality & coverage:
 
 # Coverage
 ./gradlew :mobile-sdk:testDebugUnitTest   # produces JaCoCo exec data (JaCoCo 0.8.11)
-./gradlew jacocoMergedReport              # merged bin-processor + mobile-sdk report
+./gradlew jacocoMergedReport              # merged bin-processor + telemetry + mobile-sdk report
 
 # Dependency validation (both fail the build in CI)
 ./gradlew buildHealth        # dependency-analysis: unused/misconfigured deps
@@ -69,6 +72,7 @@ The pre-commit hook runs `detektFormat` then `detektAll` and blocks commits on i
 
 - **`:mobile-sdk`** — the published library (`com.android.library`, namespace `com.paydock`). The SDK entry point is `MobileSDK` / `Context.initializeMobileSDK(...)` (`mobile-sdk/src/main/kotlin/com/paydock/MobileSDK.kt`): a singleton created via `MobileSDK.Builder`, holding `environment` + `enableTestMode`, that stands up a `MobileSDKKoinContext` on init.
 - **`:bin-processor`** — card BIN / scheme detection (`com.paydock.binprocessor`, ships `card-schemes.json`). **Currently compiled into `:mobile-sdk` via `sourceSets` srcDir hack** (`../bin-processor/src/main/kotlin`), not as a real module dependency — see the TODO in `mobile-sdk/build.gradle.kts`. It also has its own test suite run as `:bin-processor:testDebugUnitTest`.
+- **`:telemetry`** — SDK telemetry (`com.paydock.telemetry`): the `Telemetry` facade, the `TelemetryRuntime` lifecycle handle, `NoOpTelemetry`, the `ActiveTelemetry` placeholder, `TelemetryActivation`, `TelemetryCredentials`, `TelemetryEvent`, `TelemetryIntent` and `TelemetryLevel`. Every declaration is `internal`. **Compiled into `:mobile-sdk` via `sourceSets` like `bin-processor`** (`../telemetry/src/main/kotlin`), with no project dependency and no main dependencies, so the `releaseRuntimeClasspath` is unchanged. Bound at SDK start by `core/telemetry/TelemetryBinding.kt` (`bindTelemetry`, one line in `MobileSDK.init`): it registers only `Telemetry` in Koin and starts the runtime once when `TelemetryActivation` passes (debug build, local keys, `SANDBOX`, level not off), else binds `NoOpTelemetry`. A release build always binds the no-op, and `ActiveTelemetry` does nothing yet. Two source-scan tests guard it: `InternalOnlyTest` (in the module) keeps every declaration internal, and `TelemetrySeamTest` (in `:mobile-sdk`) lets SDK code refer only to `Telemetry` and `TelemetryEvent`, with `TelemetryBinding.kt` the one allowlisted exception. Its own test suite runs as `:telemetry:testDebugUnitTest`.
 - **`:sample`** — demo app (`com.android.application`, namespace `com.paydock.sample`). Uses **Hilt** for its own DI and Retrofit to call the Paydock API directly (creating customers, tokens, etc.). Excluded from the build on JitPack.
 - **`convention-plugins`** — included build providing the shared script plugins (see Toolchain).
 
@@ -89,8 +93,10 @@ A consumer initialises the SDK once (`initializeMobileSDK`), then drops a featur
 ## Conventions & gotchas
 
 - **Sample app config** — each flavor you run needs `sample/src/<flavor>/config.properties` (`staging`/`sandbox`/`prod`). `sample/build.gradle.kts` reads it (falling back to env vars of the same name, suffixed by flavor) and injects the values as `BuildConfig` fields; a missing file just logs "Properties file not found" and yields empty values. Keys (the `BuildVariable` enum in `sample/build.gradle.kts`): `ACCESS_TOKEN_API`, `ACCESS_TOKEN_WIDGET`, `SERVICE_ID_MPGS`, `SERVICE_ID_MPGS_TEST`, `SERVICE_ID_CYBERSOURCE`, `SERVICE_ID_PAYPAL`, `SERVICE_ID_COLES_PAY`, `SERVICE_ID_AFTERPAY`, `SERVICE_ID_CLICK_TO_PAY`, `SERVICE_ID_GOOGLE_PAY`, `SERVICE_ID_GPAYMENTS` (marked "to be removed"), `SERVICE_ID_ZIP`, plus the shared `MERCHANT_ID_GOOGLE_PAY` and `WALLET_ID_COLES_PAY`. The `MERCHANT_ID_*`/`WALLET_ID_*` keys are shared across flavors; the `SERVICE_ID_*`/`ACCESS_TOKEN_*` keys are looked up per-flavor (env-var fallback name is suffixed with the uppercased flavor, e.g. `SERVICE_ID_MPGS_STAGING`). Values may be quoted (`KEY="value"`); the build strips the quotes. These are secrets — never commit real tokens.
+- **Telemetry local keys** — `paydock.telemetry.otlpEndpoint`, `paydock.telemetry.otlpAuth` and `paydock.telemetry.level` in the root `local.properties` feed the generated, debug-only internal `com.paydock.core.telemetry.TelemetryBuildValues` (task `generate<Variant>TelemetryBuildValues` in `mobile-sdk/build.gradle.kts`; never `BuildConfig`). Release is always disabled and empty: the generator writes fixed literals for every non-debug build type and never reads `local.properties` for it. `local.properties` is gitignored — never commit these keys or a real token. **Intentional, not a gap:** there is no release-variant unit test of this — AGP 9 creates no release unit-test task, and release inertness holds by construction — until the post-MVP turn-on ticket makes release activation deliberate. `bindTelemetry` must stay the first thing `MobileSDK.init` does after Koin starts, before any init-time background work (the BIN refresh), so `Telemetry` always resolves there.
 - **WebView + rotation** — JS-driven webflows (Click to Pay, 3DS) reinitialise their in-page JS runtime if the hosting Activity is recreated (orientation/size change), losing in-page state. Host these in a dedicated Activity that opts out of recreation (`android:configChanges="orientation|screenSize"`), or pass a resumable session/token so the flow can re-bootstrap after restore. See the README's "WebView-based flows and rotation" section.
 - **Dependency validation is strict** — `dependency-analysis` (`buildHealth`) fails on unused/incorrectly-configured deps (with a curated exclude list for SDKs the plugin can't detect, e.g. Afterpay/PayPal/mockk-android), and `dependency-guard` fails when the `releaseRuntimeClasspath` transitive graph changes. Regenerate the guard baseline intentionally after real dependency changes.
 - **Which deps are public API** — the SDK exposes some third-party types via `api(...)` (networking lib, Google Pay compose button, Afterpay, PayPal payment buttons). Changing those affects consumers' classpaths; most other deps are `implementation`.
-- **Branch naming** — enforced by `scripts/validate-branch-name.sh` (via the pre-commit hook): branches must start with `bug/`, `task/`, `feature/`, `deploy/`, or `spike/` (`main`/`release` exempt); `bug/`/`task/`/`feature/`/`spike/` need an `SDK-####` or `PAYRAC-####` ticket, `deploy/` must be `deploy/v<major>.<minor>.<patch>`.
+- **Branch naming** — enforced by `scripts/validate-branch-name.sh` (via the pre-commit hook): branches must start with `bug/`, `task/`, `feature/`, `deploy/`, `hotfix/`, or `spike/` (`main`/`release` exempt); `bug/`/`task/`/`feature/`/`spike/` need an `SDK-####` or `PAYRAC-####` ticket, `deploy/` and `hotfix/` must be `deploy/v<major>.<minor>.<patch>` / `hotfix/v<major>.<minor>.<patch>`.
+- **Releasing** — Only `deploy/vX.Y.Z` (from `main`) and `hotfix/vX.Y.Z` (from `release`) merge into `release`; the `verify_release` MR job checks the branch, `versionName`, CHANGELOG and hotfix base, and the release pipeline runs `release_preflight` → Maven Central → tag → GitHub Packages → GitLab/GitHub releases. A hotfix for a previous release (e.g. `hotfix/v5.6.2` cut from tag `5.6.1` while 5.7.x is out) never merges into `release`: it's released from its own branch by running the manual `hotfix_release` job, its GitHub release isn't marked latest, and the fix must also ship as a hotfix of the latest release.
 - **Publishing** — handled by the convention plugins (GitHub + Maven Central); publishing metadata (`groupName`, `versionName`, `libraryName`, developer info) lives in `gradle.properties`. CI is GitLab (`.gitlab-ci.yml`) with fastlane; `jitpack.yml` supports JitPack builds (which skip `:sample`).

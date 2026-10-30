@@ -147,19 +147,14 @@ internal object MobileSDKConstants {
      * This object holds constants specific to the 3DS verification process.
      */
     object Standalone3DSConfig {
-        /**
-         * Domains whose network failures end a Standalone 3DS session: Paydock (Client SDK, API) and
-         * GPayments (3DS Server pages). Failures on any other host (issuer pages and their assets) are
-         * only logged, so the 3DS flow's own timeouts decide the outcome.
-         */
-        internal val ESSENTIAL_HOST_DOMAINS = listOf("paydock.com", "gpayments.net")
-
         object Errors {
             const val STANDALONE_3DS_ERROR =
                 "An unexpected error occurred while processing Standalone 3DS verification. " +
                     "Please try again later or contact support for assistance."
             const val INVALID_TOKEN_ERROR = "Invalid Standalone 3DS token!"
             const val INVALID_TOKEN_FORMAT_ERROR = "Invalid Standalone 3DS token format!"
+            const val RENDER_PROCESS_GONE_ERROR =
+                "The 3D Secure page stopped unexpectedly. Please try again."
         }
     }
 

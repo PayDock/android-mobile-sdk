@@ -68,13 +68,13 @@ internal class ConnectivityManagerNetworkMonitor(
         }
     }
         .conflate()
-
-    /**
-     * Helper function to check if the ConnectivityManager is currently connected to the internet.
-     *
-     * @return `true` if the device is connected to the internet, `false` otherwise.
-     */
-    private fun ConnectivityManager.isCurrentlyConnected() = activeNetwork
-        ?.let(::getNetworkCapabilities)
-        ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ?: false
 }
+
+/**
+ * Helper function to check if the ConnectivityManager is currently connected to the internet.
+ *
+ * @return `true` if the device is connected to the internet, `false` otherwise.
+ */
+internal fun ConnectivityManager.isCurrentlyConnected() = activeNetwork
+    ?.let(::getNetworkCapabilities)
+    ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ?: false

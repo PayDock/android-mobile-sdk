@@ -1,5 +1,28 @@
 # Changelog
 
+## [5.7.2] - 2026-10-30
+
+### Added
+- `Standalone3DSException.WebViewException` now also carries `host` (the failing request's host, no path or query),
+  `charge3dsId`, `inBackground` and `networkAvailable`, so a failed session can be looked up in Paydock and its cause
+  told apart. All are optional; existing code keeps compiling and running unchanged.
+- `Standalone3DSException.RenderProcessGoneException`: returned through `completion` when Android stops the 3DS
+  WebView's renderer (`didCrash` is `false` when Android reclaimed it for memory, typically while the app was in the
+  background). Carries `charge3dsId` and `inBackground`. If you handle `Standalone3DSException` with an exhaustive
+  `when`, add a branch for it.
+
+### Changed
+- Client-SDK version to `v1.150.0` — the standalone 3DS result poll now times out hung requests and polls again as
+  soon as the app returns to the foreground or the network comes back.
+
+### Fixed
+- `Standalone3DSWidget` no longer takes the host app down when Android stops the 3DS WebView's renderer (Android 8+).
+  The flow ends with `RenderProcessGoneException` instead, and the widget removes and destroys the dead WebView.
+- `Standalone3DSWidget` no longer fails with `WebViewException` when a request made by the 3DS page to Paydock or
+  GPayments fails, e.g. because the network changed while the shopper was in their banking app. The Client SDK retries
+  those requests and reports a failed flow through its own events. Only failing to load the 3DS page itself or the
+  Client SDK script ends the flow with `WebViewException`.
+
 ## [5.7.1] - 2026-10-05
 
 ### Fixed

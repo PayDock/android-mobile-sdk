@@ -4,10 +4,11 @@
 # Docker Image:
 # This pipeline uses a custom Docker image for building Android projects.
 # Reference: https://hub.docker.com/r/mingc/android-build-box/
-image: mingc/android-build-box:latest # Sets the latest version of the image
+# Pinned by digest to what `latest` resolved to on 2026-08-10 (the newest versioned tag, 1.29.0, is from
+# 2025-04 and predates AGP 9 / compileSdk 37). A fixed digest lets runner nodes reuse the pulled image
+# and keeps builds reproducible. To upgrade, take the digest of a newer tag and run a full pipeline.
+image: mingc/android-build-box@sha256:47a26138302605eb8a37b024e8a263af0812c14800813458bc674df47cc26331
 # NB: Java version is set in .java-version file
-# Alternative is to set a specific version: https://hub.docker.com/r/mingc/android-build-box/tags
-#image: mingc/android-build-box:1.28.0
 
 # Variables:
 # These variables define the Android SDK versions used for building the project.
@@ -31,10 +32,33 @@ variables:
   # build.gradle.kts, no transitive resolution) instead. See:
   # https://docs.gitlab.com/ee/user/application_security/dependency_scanning/dependency_scanning_sbom
   DS_ENABLE_MANIFEST_FALLBACK: "true"
+  # Keep Gradle's wrapper distributions, dependency and build caches inside the project dir so GitLab
+  # can cache them between jobs (see `.setup_bundler`). Without it every job re-downloads everything.
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle-home"
+  # Faster cache archive/extract (the Gradle cache is large).
+  FF_USE_FASTZIP: "true"
+  CACHE_COMPRESSION_LEVEL: "fast"
+
+# Workflow:
+# One pipeline per push. Without this, a push to a branch with an open MR starts both a branch pipeline and
+# an MR pipeline that run the same jobs. Branches without an MR (main, release, hotfix/*) keep branch pipelines.
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - when: always
+
+# Default:
+# A newer pipeline on the same ref cancels this one. Jobs that push commits, update CI variables, deploy or
+# release opt out with `interruptible: false`.
+default:
+  interruptible: true
 
 # Stages:
 # Defines the stages of the pipeline. Jobs within the same stage run in parallel.
-# Jobs in subsequent stages run after the previous stage has completed successfully.
+# Jobs in subsequent stages run after the previous stage has completed successfully, unless they declare
+# `needs:`, in which case they start as soon as the listed jobs finish (`needs: []` = start immediately).
 stages:
   - quality # Stage for code quality checks (e.g., linting, static analysis).
   - code_quality # Stage for linting the codebase using detekt
@@ -44,11 +68,14 @@ stages:
   - build # Stage for building the Android application.
   - deploy # Stage for deploying build to Firebase App Distribution.
   - firebase_test # Stage for optional manual Firebase Test Lab UI tests (runs after deploy).
+  - release_gate # Manual start of a release from a hotfix/ branch (hotfix for a previous release).
+  # Release stages (push to `release`). Maven Central is the only irreversible step, so it runs first, after
+  # every check has passed. Everything after it is safe to retry: retry the failed job, never add a commit.
+  - maven_central # Stage for publishing to Maven Central (point of no return).
   - tag # Stage for tagging a release.
+  - publish # Stage for publishing the SDK to GitHub Packages.
   - gitlab_release # Stage for creating a release in GitLab.
   - github_release # Stage for creating a release in GitHub.
-  - publish # Stage for publishing the SDK to GitHub.
-  - maven_central # Stage for publishing to Maven Central.
 
 # Include:
 # Includes an external template for security checks from another project.
@@ -63,11 +90,31 @@ include:
 # It is used by other jobs to ensure they have the necessary Ruby dependencies.
 .setup_bundler:
   cache:
-    paths:
-      - vendor/bundle # Caches the Ruby dependencies to speed up subsequent runs.
+    - key:
+        files:
+          - Gemfile.lock
+      paths:
+        - vendor/bundle # Caches the Ruby dependencies to speed up subsequent runs.
+    # Gradle wrapper distribution + dependency/plugin/build caches. A new key is used when the Gradle
+    # version or the version catalog changes, so stale dependencies don't pile up.
+    - key:
+        prefix: gradle
+        files:
+          - gradle/wrapper/gradle-wrapper.properties
+          - gradle/libs.versions.toml
+      paths:
+        - .gradle-home/wrapper
+        - .gradle-home/caches
+    # Android SDK platforms the image doesn't ship and AGP installs on the fly (see scripts/ci_cache.sh).
+    - key: android-platforms
+      paths:
+        - .android-platforms
   before_script:
-    - chmod +x scripts/setup_bundler.sh # Ensure it is executable in CI
+    - chmod +x scripts/setup_bundler.sh scripts/ci_cache.sh # Ensure they are executable in CI
+    - scripts/ci_cache.sh restore
     - scripts/setup_bundler.sh # Run the script
+  after_script:
+    - scripts/ci_cache.sh save
   script:
     - bundle --version # Checks the version of Bundler.
 
@@ -78,6 +125,7 @@ include:
 code_quality:
   stage: code_quality # Runs in the 'code_quality' stage.
   extends: .setup_bundler # Inherits configurations (like Bundler setup) from the '.setup_bundler' template.
+  needs: [] # Independent of the other jobs: start straight away.
   script:
     - bundle exec fastlane code_quality # Executes the 'code_quality' lane in Fastlane.
   artifacts:
@@ -97,6 +145,56 @@ code_quality:
     - if: $CI_MERGE_REQUEST_IID # Run on merge (Merge Results)
       when: on_success
 
+# verify_release:
+# Merge request gate (seconds, no build). Runs on every MR into `release` and every MR from a deploy/ or hotfix/
+# branch, and blocks the merge (with "Pipelines must succeed") unless: a deploy/ or hotfix/ branch targets `release`
+# (never `main`), the branch is deploy/vX.Y.Z or hotfix/vX.Y.Z, versionName matches it and is higher than the latest release, CHANGELOG.md has the entry, and
+# (hotfix only) it is a patch bump cut from `release`. GIT_DEPTH 0 so the hotfix check can compare with main.
+verify_release:
+  stage: quality
+  extends: .setup_bundler
+  needs: [] # Independent of the other jobs: start straight away.
+  variables:
+    GIT_DEPTH: "0"
+  script:
+    - bundle exec fastlane verify_release
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "release" || $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^(deploy|hotfix)\//)'
+      when: on_success
+
+# release_preflight:
+# First check of the release pipeline (seconds). Stops the release before anything is published if the version
+# was already released, the CHANGELOG entry is missing, or a release token is missing or invalid.
+release_preflight:
+  stage: quality
+  extends: .setup_bundler
+  needs: []
+  interruptible: false # Release step.
+  script:
+    - bundle exec fastlane release_preflight
+  rules:
+    - if: $CI_COMMIT_BRANCH == "release"
+      when: on_success
+
+# hotfix_release:
+# Releases a hotfix for a previous release (e.g. hotfix/v5.6.2 cut from tag 5.6.1 while 5.7.1 is the latest) from
+# its own branch; that branch never merges into `release`. Press Run once the tests have passed: it runs the
+# release pre-flight (version checked against its own release line), then the release jobs below run on their own,
+# and the GitHub release isn't marked latest. Run on a hotfix for the latest release, it fails and says to open a
+# merge request into `release` instead. hotfix/* must be protected branches so the release variables are available.
+hotfix_release:
+  stage: release_gate
+  extends: .setup_bundler
+  interruptible: false # Release step.
+  variables:
+    GIT_DEPTH: "0" # The pre-flight checks the branch was cut from the right release tag.
+  script:
+    - bundle exec fastlane release_preflight
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\//
+      when: manual
+      allow_failure: false # Later stages (the release jobs) wait for it.
+
 # dependency_guard:
 # Fast check (~10 sec) that compares resolved dependencies against the committed baseline.
 # Fails if ANY dependency version changes are detected (e.g., Compose 1.8.3 -> 1.9.0).
@@ -104,6 +202,7 @@ code_quality:
 dependency_guard:
   stage: dependency_validation
   extends: .setup_bundler
+  needs: [] # Independent of the other jobs: start straight away.
   script:
     - echo "Running Dependency Guard - detecting version changes..."
     - ./gradlew dependencyGuard --console=plain
@@ -125,13 +224,11 @@ dependency_guard:
 #   - Unused dependencies that should be removed
 #   - Incorrect configurations (api vs implementation)
 #   - Transitive dependencies used directly in code
-# Only runs if dependency_guard passes (versions are correct first).
+# Runs in parallel with dependency_guard (both must pass for the pipeline to succeed).
 dependency_health:
   stage: dependency_validation
   extends: .setup_bundler
-  needs:
-    - job: dependency_guard
-      artifacts: false
+  needs: [] # Independent of the other jobs: start straight away.
   script:
     - echo "Running Dependency Analysis - checking dependency health..."
     - ./gradlew buildHealth --console=plain
@@ -153,6 +250,7 @@ dependency_health:
 test:
   stage: test # Runs in the 'test' stage.
   extends: .setup_bundler # Extends the '.setup_bundler' template.
+  needs: [] # Independent of the other jobs: start straight away.
   script:
     - bundle exec fastlane test flavor:staging build_type:Debug
   environment:
@@ -164,10 +262,12 @@ test:
       - build/reports/jacoco/merged/html/ # Merged HTML coverage report for GitLab Pages
       - build/reports/jacoco/merged/jacocoMergedReport.xml # Merged XML coverage report
       - bin-processor/build/test-results/
+      - telemetry/build/test-results/
       - mobile-sdk/build/test-results/ # Unit test results
     reports:
       junit:
         - bin-processor/build/test-results/**/TEST-*.xml # bin-processor unit test results
+        - telemetry/build/test-results/**/TEST-*.xml # telemetry unit test results
         - mobile-sdk/build/test-results/**/TEST-*.xml # mobile-sdk unit test results
       coverage_report:
         coverage_format: jacoco
@@ -289,6 +389,14 @@ pages:
 increment_version:
   stage: versioning # Specifies that this job runs in the '.pre' stage, which should be defined before other stages.
   extends: .setup_bundler # Inherits configurations (like Bundler setup) from the '.setup_bundler' template.
+  interruptible: false # Updates CI variables.
+  needs: # Same gate as before (code quality + dependency checks), without waiting on unrelated stages.
+    - job: code_quality
+      artifacts: false
+    - job: dependency_guard
+      artifacts: false
+    - job: dependency_health
+      artifacts: false
   rules: # Defines conditions for when this job should be executed.
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Checks if the current branch is the default branch (e.g., 'main').
       when: on_success # Specifies that the job runs automatically when a pipeline successfully reaches this stage.
@@ -309,6 +417,7 @@ increment_version:
 fetch_bin_file:
   stage: build
   extends: .setup_bundler
+  needs: [] # Only downloads the file; committing it is gated in commit_bin_file.
   script:
     - bundle exec fastlane fetch_bin_file
   artifacts:
@@ -330,11 +439,20 @@ fetch_bin_file:
 commit_bin_file:
   stage: build
   extends: .setup_bundler
+  interruptible: false # Pushes a commit.
   dependencies:
     - fetch_bin_file
-  needs:
+  needs: # Only commit once the checks have passed (as when it waited for the earlier stages).
     - job: fetch_bin_file
       artifacts: true
+    - job: code_quality
+      artifacts: false
+    - job: dependency_guard
+      artifacts: false
+    - job: dependency_health
+      artifacts: false
+    - job: test
+      artifacts: false
   script:
     - bundle exec fastlane commit_bin_file
   rules:
@@ -358,8 +476,10 @@ commit_bin_file:
 
 # buildStaging:
 # This job builds the staging version of the Android application.
+# Starts straight away: compiling the sample doesn't depend on the tests (deploy_staging still waits for both).
 build_staging:
   extends: .build_template # Extends the '.build_template' template.
+  needs: []
   script:
     - bundle exec fastlane buildDebug flavor:staging # Executes the 'build' lane using staging flavor in the Fastfile.
     # Fastfile Reference: This lane is defined in the Fastfile and handles the actual build process.
@@ -382,7 +502,10 @@ build_sandbox:
     # Fastfile Reference: This lane is defined in the Fastfile and handles the actual build process.
   environment:
     name: sandbox
-  needs: [increment_version]
+  needs:
+    - job: increment_version
+    - job: test
+      artifacts: false
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run on merge to main
       when: on_success
@@ -406,6 +529,7 @@ build_sandbox:
 # This template handles the setup of the Bundler and Google Cloud credentials required for the pipeline and Firebase interaction.
 .deploy_template:
   stage: deploy # Runs in the 'deploy' stage.
+  interruptible: false # Distributes a build.
   cache:
     paths:
       - vendor/bundle # Caches the Ruby dependencies to speed up subsequent runs.
@@ -433,8 +557,10 @@ deploy_staging:
     APP_ID: $FIREBASE_APP_ID_STAGING # Firebase App ID for the staging environment.
   environment:
     name: staging # Sets the environment name to 'staging'.
-  needs:
+  needs: # Only deploy a build whose tests passed.
     - job: build_staging
+    - job: test
+      artifacts: false
   script:
     - bundle exec fastlane deploy flavor:staging # Executes the 'deploy' lane using staging flavor in the Fastfile.
   rules:
@@ -454,6 +580,8 @@ deploy_sandbox:
     name: sandbox # Sets the environment name to 'sandbox'.
   needs:
     - job: build_sandbox
+    - job: test
+      artifacts: false
   script:
     - bundle exec fastlane deploy flavor:sandbox # Executes the 'deploy' lane using sandbox flavor in the Fastfile.
   rules:
@@ -481,6 +609,7 @@ deploy_sandbox:
 # This job tags a release in the repository.
 tag_release:
   stage: tag # Runs in the 'tag' stage.
+  interruptible: false # Release step: never cancel half-way.
   extends: .setup_bundler # Extends the '.setup_bundler' template.
   script:
     - bundle exec fastlane tag_release # Executes the 'tag_release' lane in the Fastfile.
@@ -488,14 +617,17 @@ tag_release:
   rules:
     - if: $CI_COMMIT_BRANCH == "release" # Run on commit is made to the 'release' branch.
       when: on_success
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\// # Hotfix for a previous release, after the manual hotfix_release job.
+      when: on_success
 
 # create_gitlab_release:
 # This job creates a release in GitLab.
 create_gitlab_release:
   stage: gitlab_release # Runs in the 'gitlab_release' stage.
+  interruptible: false # Release step: never cancel half-way.
   extends: .setup_bundler # Extends the '.setup_bundler' template to set up the Ruby environment.
   script:
-     - bundle exec fastlane create_gitlab_release version:$CI_COMMIT_TAG # Executes the 'create_gitlab_release' lane in the Fastfile.
+     - bundle exec fastlane create_gitlab_release # Executes the 'create_gitlab_release' lane in the Fastfile.
     # Fastfile Reference: This lane is defined in the Fastfile and handles the following:
     #   - Authenticating with GitHub using a personal access token.
     #   - Creating a new release on Gitlab with the specified tag name.
@@ -504,6 +636,8 @@ create_gitlab_release:
   rules:
     - if: $CI_COMMIT_BRANCH == "release" # Run on commit is made to the 'release' branch.
       when: on_success
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\// # Hotfix for a previous release, after the manual hotfix_release job.
+      when: on_success
 
 # create_github_release:
 # This job creates a release in GitHub.
@@ -511,9 +645,10 @@ create_gitlab_release:
 # This job uses Fastlane to interact with the GitHub API.
 create_github_release:
   stage: github_release # Runs in the 'github_release' stage.
+  interruptible: false # Release step: never cancel half-way.
   extends: .setup_bundler # Extends the '.setup_bundler' template to set up the Ruby environment.
   script:
-    - bundle exec fastlane create_github_release$CI_COMMIT_TAG # Executes the 'create_github_release' lane in the Fastfile.
+    - bundle exec fastlane create_github_release # Executes the 'create_github_release' lane in the Fastfile.
     # Fastfile Reference: This lane is defined in the Fastfile and handles the following:
     #   - Authenticating with GitHub using a personal access token.
     #   - Creating a new release on GitHub with the specified tag name.
@@ -522,6 +657,8 @@ create_github_release:
   rules:
     - if: $CI_COMMIT_BRANCH == "release" # Run on commit is made to the 'release' branch.
       when: on_success
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\// # Hotfix for a previous release, after the manual hotfix_release job.
+      when: on_success
 
 # publish_to_github:
 # This job publishes the built SDK to GitHub.
@@ -529,6 +666,7 @@ create_github_release:
 # This job uses Fastlane to interact with the GitHub API.
 publish_to_github:
   stage: publish # Runs in the 'publish' stage.
+  interruptible: false # Release step: never cancel half-way.
   extends: .setup_bundler # Extends the '.setup_bundler' template to set up the Ruby environment.
   script:
     - bundle exec fastlane publish_to_github # Executes the 'publish_to_github' lane in the Fastfile.
@@ -539,17 +677,23 @@ publish_to_github:
   rules:
     - if: $CI_COMMIT_BRANCH == "release" # Run on commit is made to the 'release' branch.
       when: on_success
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\// # Hotfix for a previous release, after the manual hotfix_release job.
+      when: on_success
 
 # publish_to_maven_central:
-# This job publishes the SDK to Maven Central using JReleaser.
-# It runs after the tag has been created and uses JReleaser for complete automation.
+# This job publishes the SDK to Maven Central using JReleaser: the release pipeline's point of no return.
+# It runs first among the release jobs, once release_preflight, quality checks and tests have passed (earlier
+# stages). JReleaser uploads the bundle and Maven Central validates it; only a valid bundle is published.
+# Safe to retry: it skips a version that is already on Maven Central.
 publish_to_maven_central:
   stage: maven_central # Runs in the 'maven_central' stage.
+  interruptible: false # Release step: never cancel half-way.
   extends: .setup_bundler # Extends the '.setup_bundler' template to set up the Ruby environment.
-  dependencies:
-    - tag_release
-  only:
-    - release # Only runs when a commit is made to the 'release' branch.
+  rules:
+    - if: $CI_COMMIT_BRANCH == "release" # Only runs when a commit is made to the 'release' branch.
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\// # Hotfix for a previous release, after the manual hotfix_release job.
+      when: on_success
   script:
     - bundle exec fastlane publish_to_maven_central
   # This job handles:

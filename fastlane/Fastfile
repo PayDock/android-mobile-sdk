@@ -1059,6 +1059,103 @@ platform :android do
 
     # --- Release Lanes ---
 
+    desc "Merge request gate for release branches (deploy/vX.Y.Z and hotfix/vX.Y.Z)"
+    lane :verify_release do |options|
+        # Runs on every merge request into `release` and every merge request from a deploy/ or hotfix/ branch
+        # (see `verify_release` in .gitlab-ci.yml). Fails, and so blocks the merge, unless:
+        #   0. A deploy/ or hotfix/ branch targets `release` (they never merge into `main`; after the release,
+        #      `release` itself is merged into `main`).
+        #   1. The source branch is deploy/vX.Y.Z or hotfix/vX.Y.Z.
+        #   2. versionName in gradle.properties equals X.Y.Z and is higher than the latest release.
+        #   3. CHANGELOG.md has a "## [X.Y.Z]" entry.
+        #   4. hotfix/ only: X.Y.Z is a patch bump of the latest release, and the branch was cut from `release`
+        #      (it contains no unreleased commits from `main`). A hotfix for a previous release (e.g. 5.6.2 when
+        #      5.7.1 is out) never merges into `release`: it's released from its own branch (`hotfix_release` job).
+        #
+        # Options (all default to the GitLab merge request variables):
+        #   source_branch, target_branch: branch names
+        #   head: commit to check (default HEAD)
+        source_branch = options[:source_branch] ||
+            ENV["CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"] ||
+            sh("git rev-parse --abbrev-ref HEAD", log: false).strip
+        target_branch = options[:target_branch] || ENV["CI_MERGE_REQUEST_TARGET_BRANCH_NAME"]
+        head = options[:head] || "HEAD"
+
+        # Checked first: the release checks below give misleading errors for an MR into main
+        # (e.g. "already released" once the version is tagged).
+        if source_branch.match?(%r{\A(deploy|hotfix)/}) && target_branch && target_branch != "release"
+            UI.user_error!("#{source_branch} can only be merged into release, not #{target_branch}. After the release, bring its changes to main by merging release into main.")
+        end
+
+        branch_match = source_branch.match(%r{\A(deploy|hotfix)/v(\d+\.\d+\.\d+)\z})
+        unless branch_match
+            if target_branch == "release"
+                UI.user_error!("Only deploy/vX.Y.Z or hotfix/vX.Y.Z branches can be merged into release (got '#{source_branch}')")
+            end
+            UI.user_error!("Branch '#{source_branch}' must be named deploy/vX.Y.Z or hotfix/vX.Y.Z")
+        end
+        kind, branch_version = branch_match[1], branch_match[2]
+
+        version = read_gradle_properties_version_name
+        if branch_version != version
+            UI.user_error!("Version mismatch: branch '#{source_branch}' is for #{branch_version} but gradle.properties has versionName=#{version}. Update versionName in gradle.properties (or rename the branch).")
+        end
+        UI.success("✅ gradle.properties versionName (#{version}) matches branch #{source_branch}")
+
+        tags = release_remote_tags
+        latest = release_latest_version(tags)
+        ensure_hotfix_for_latest_release!(version, latest) if kind == "hotfix"
+        ensure_release_version_is_new!(version, tags, latest, "bump versionName in gradle.properties")
+        ensure_not_on_maven_central!(version)
+        ensure_changelog_entry!(version)
+
+        if kind == "hotfix"
+            ensure_hotfix_is_patch_bump!(version, latest)
+            ensure_hotfix_cut_from_release!(head)
+        end
+
+        version
+    end
+
+    desc "Release pipeline pre-flight: version not released yet, and every release token present and valid"
+    lane :release_preflight do
+        # First job of the release pipeline (push to `release`), before anything is built or published.
+        # Also run by the manual `hotfix_release` job on a hotfix/ branch, to release a hotfix for a previous
+        # release; there the version is checked against its own release line (5.6.2 against 5.6.1, not 5.7.1).
+        # A new pipeline on an already-tagged commit is a re-run and is allowed through.
+        version = read_gradle_properties_version_name
+        tags = release_remote_tags
+        tag = tags[version] || tags["v#{version}"]
+        head_commit = sh("git rev-parse HEAD", log: false).strip
+        re_run = tag && tag[:commit] == head_commit
+        hotfix_branch = ENV["CI_COMMIT_BRANCH"].to_s.start_with?("hotfix/") ? ENV["CI_COMMIT_BRANCH"] : nil
+        if re_run
+            UI.important("Tag #{tag[:name]} already points at HEAD (#{head_commit[0, 8]}); treating this pipeline as a re-run")
+        elsif hotfix_branch
+            ensure_previous_release_hotfix!(hotfix_branch, version, tags, "HEAD", "bump versionName in gradle.properties")
+        else
+            ensure_release_version_is_new!(version, tags, release_latest_version(tags), "bump versionName in gradle.properties")
+        end
+        ensure_changelog_entry!(version)
+
+        ensure_env_present!(%w[
+            GITLAB_TOKEN GITHUB_TOKEN GITHUB_USERNAME JRELEASER_GITLAB_TOKEN
+            JRELEASER_GPG_PUBLIC_KEY JRELEASER_GPG_SECRET_KEY JRELEASER_GPG_PASSPHRASE
+            JRELEASER_MAVENCENTRAL_SONATYPE_USERNAME JRELEASER_MAVENCENTRAL_SONATYPE_TOKEN
+        ])
+        ensure_gitlab_token_valid!
+        ensure_github_token_can_push!("PayDock/android-mobile-sdk", extra_scopes: ["write:packages"])
+        ensure_maven_central_credentials_valid!
+
+        # Maven Central publishes before tag_release, so an untagged version can already be live there (a release
+        # pipeline that failed after publishing). Treat it as released: only retrying that pipeline's jobs is safe.
+        ensure_not_on_maven_central!(version) unless re_run
+
+        UI.success("✅ Pre-flight passed for #{version}")
+        remind_to_hotfix_latest_release(version, tags) if hotfix_branch
+        version
+    end
+
     desc "Creates and pushes a tag on GitLab"
     lane :tag_release do
         # This lane automates the process of creating and pushing a tag to the GitLab repository.
@@ -1066,6 +1163,14 @@ platform :android do
 
         # Get the version name using the unified helper function (require Gradle)
         version_tag = get_version_tag(require_gradle: true)
+
+        # Fail before tagging if this version was already tagged on a different commit. A tag that already
+        # points at HEAD means this job is being retried, and the existing-tag check below skips creating it.
+        tag = release_remote_tags.values_at(version_tag, "v#{version_tag}").compact.first
+        head_commit = sh("git rev-parse HEAD", log: false).strip
+        if tag && tag[:commit] != head_commit
+            UI.user_error!("Tag #{tag[:name]} already exists on origin (commit #{tag[:commit][0, 8]}), not on this release commit. Version #{version_tag} has already been released: ship the fix as the next patch version.")
+        end
 
         # Configure Git user (if needed).
         sh("git config --global user.email \"ricardo.dasilva@paydock.com\"") # Sets the Git user email.
@@ -1085,7 +1190,9 @@ platform :android do
             #   - '-m': Specifies the tag message.
 
             # Use the GITLAB_TOKEN environment variable for authentication.
-            git_url_with_token = "https://gitlab-ci-token:#{ENV['GITLAB_TOKEN']}@gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android.git"
+            # Host and project path come from GitLab's predefined CI variables so a group move doesn't break this
+            # (a hardcoded gitlab.com/paydock/... URL kept pushing to the pre-move project after the paydock-rps move).
+            git_url_with_token = "https://gitlab-ci-token:#{ENV['GITLAB_TOKEN']}@#{ENV['CI_SERVER_HOST']}/#{ENV['CI_PROJECT_PATH']}.git"
             sh("git remote set-url origin #{git_url_with_token}") # Updates the remote URL to include the token.
             #   - 'ENV['GITLAB_TOKEN']': Accesses the 'GITLAB_TOKEN' environment variable.
 
@@ -1100,7 +1207,7 @@ platform :android do
         # It is designed to be triggered when a new tag is pushed to the 'release' branch.
 
         # Get the version tag using the unified helper function
-        version_tag = get_version_tag(options)
+        version_tag = release_version(options)
 
         # Ensure a version tag is available; otherwise, raise an error.
         if version_tag == "unknown"
@@ -1123,7 +1230,7 @@ platform :android do
         release_description = <<~RELEASE
             #{changelog_notes}
 
-            **Full Changelog:** [View on GitLab](https://gitlab.com/paydock/bounded-contexts/mobile/mobile-sdk-android/-/commits/#{version_tag})
+            **Full Changelog:** [View on GitLab](#{ENV['CI_PROJECT_URL']}/-/commits/#{version_tag})
         RELEASE
 
         # Sanitize single quotes to avoid breaking single-quoted shell strings
@@ -1154,8 +1261,16 @@ platform :android do
         # This is the URL that will be used to create the release via the GitLab API.
         api_url = "#{api_endpoint}/projects/#{project_id}/releases"
 
+        # Safe to retry: skip if this release already exists.
+        existing_code, = release_http_get("#{api_url}/#{version_tag}", "PRIVATE-TOKEN" => gitlab_token)
+        if existing_code == 200
+            UI.important("GitLab release for #{version_tag} already exists; skipping")
+            next
+        end
+
         # Create the release using the GitLab API. https://docs.gitlab.com/api/releases/
-        # Avoid shell quoting issues by writing JSON to a temp file and using @file syntax
+        # Avoid shell quoting issues by writing JSON to a temp file and using @file syntax.
+        # log: false keeps the token out of the job log.
         require 'tempfile'
         tmp = Tempfile.new(["gitlab_release_", ".json"])
         begin
@@ -1163,13 +1278,19 @@ platform :android do
             tmp.flush
             response = sh("curl --silent --header 'Content-Type: application/json' --header 'PRIVATE-TOKEN: #{gitlab_token}' \
                 --data @#{tmp.path} \
-                --request POST '#{api_url}'")
+                --request POST '#{api_url}'", log: false)
         ensure
             tmp.close!
         end
 
         # Output the GitLab API response for debugging purposes.
         puts "📢 GitLab API Response: #{response}"
+
+        # curl --silent doesn't fail on HTTP errors, so check GitLab actually created the release.
+        parsed = JSON.parse(response) rescue {}
+        unless parsed["tag_name"] == version_tag
+            UI.user_error!("GitLab release creation failed: #{parsed['message'] || response}")
+        end
 
         # Indicate that the GitLab release was created successfully.
         UI.success("✅ GitLab release created successfully: #{release_name}")
@@ -1181,7 +1302,7 @@ platform :android do
         # It extracts the version name from the Git tag, authenticates with GitHub, and creates a new release.
 
         # Get the version tag using the unified helper function
-        version_tag = get_version_tag(options)
+        version_tag = release_version(options)
 
         require 'octokit' # Loads the Octokit library for interacting with the GitHub API.
 
@@ -1194,6 +1315,30 @@ platform :android do
 
         # Create a release on GitHub.
         repo = 'PayDock/android-mobile-sdk' # Replace with your GitHub repository
+
+        # Safe to retry: skip if this release already exists.
+        begin
+            client.release_for_tag(repo, version_tag)
+            UI.important("GitHub release for #{version_tag} already exists; skipping")
+            next
+        rescue Octokit::NotFound
+        end
+
+        # The tag must already be on GitHub (pushed by a GitLab push mirror or by hand). Wait for it rather than
+        # letting create_release create its own tag on whatever commit GitHub's release branch is at.
+        tag_on_github = false
+        10.times do |attempt|
+            begin
+                client.ref(repo, "tags/#{version_tag}")
+                tag_on_github = true
+                break
+            rescue Octokit::NotFound
+                UI.message("Waiting for tag #{version_tag} to reach GitHub (#{attempt + 1}/10)...")
+                sleep(30)
+            end
+        end
+        UI.user_error!("Tag #{version_tag} isn't on github.com/#{repo}. Push the #{ENV['CI_COMMIT_BRANCH'] || 'release'} branch and tag #{version_tag} to GitHub (or check the push mirror), then retry this job.") unless tag_on_github
+
         release_name = "v#{version_tag}" # Creates the release name (e.g., "v1.0.0").
         release_body = <<~RELEASE
             #{release_notes}
@@ -1201,14 +1346,328 @@ platform :android do
             **Full Changelog:** [View on GitLab]( https://github.com/PayDock/android-mobile-sdk/commits/#{version_tag})
         RELEASE
 
+        # Only the highest version is "latest": a hotfix for a previous release (5.6.2 after 5.7.1) must not
+        # replace the newest SDK on the GitHub releases page.
+        latest = release_latest_version(release_remote_tags)
+        is_latest = latest.nil? || Gem::Version.new(version_tag) >= latest
+
         release = client.create_release(repo, "#{version_tag}", { # Creates the release on GitHub.
           tag_name: "#{version_tag}", # Sets the tag name.
           name: release_name, # Sets the release name.
           body: release_body, # Sets the release body.
           is_generate_release_notes: false, # Disables automatic generation of release notes.
-          make_latest: 'true' # Marks the release as the latest.
+          make_latest: is_latest.to_s
         })
         # The 'client.create_release' method is used to create the release.
+        remind_to_hotfix_latest_release(version_tag, release_remote_tags) unless is_latest
+    end
+
+    # Reads versionName straight from gradle.properties (no Gradle daemon needed).
+    #
+    # @return [String] The version, e.g. "5.7.1"
+    def read_gradle_properties_version_name
+        properties_path = File.expand_path("../gradle.properties", __dir__)
+        line = File.readlines(properties_path).find { |l| l.strip.start_with?("versionName=") }
+        UI.user_error!("versionName not found in #{properties_path}") unless line
+        version = line.split("=", 2).last.strip
+        UI.user_error!("versionName '#{version}' in gradle.properties is not X.Y.Z") unless version.match?(/\A\d+\.\d+\.\d+\z/)
+        version
+    end
+
+    # The version a release lane works on: the `version` option if given, otherwise versionName in
+    # gradle.properties. No fallbacks, so a lane can never act on a stale or "unknown" version.
+    def release_version(options = {})
+        version = options[:version].to_s.sub(/\Av/, "")
+        version.empty? ? read_gradle_properties_version_name : version
+    end
+
+    # --- Release check helpers (used by verify_release, release_preflight and the release lanes) ---
+
+    # Lists the release tags on origin (X.Y.Z or vX.Y.Z).
+    #
+    # @return [Hash{String => Hash}] tag name => { name:, version:, commit: } (commit the tag points at)
+    def release_remote_tags
+        refs = {}
+        sh("git ls-remote --tags origin", log: false).each_line do |line|
+            sha, ref = line.strip.split("\t", 2)
+            refs[ref] = sha if ref
+        end
+        tags = {}
+        refs.each_key do |ref|
+            match = ref.match(%r{\Arefs/tags/(v?(\d+\.\d+\.\d+))\z})
+            next unless match
+            # Annotated tags are listed twice; the peeled "^{}" entry is the commit they point at.
+            tags[match[1]] = { name: match[1], version: match[2], commit: refs["#{ref}^{}"] || refs[ref] }
+        end
+        tags
+    end
+
+    # @return [Gem::Version, nil] The highest released version, or nil if nothing has been released
+    def release_latest_version(tags)
+        tags.values.map { |tag| Gem::Version.new(tag[:version]) }.max
+    end
+
+    # Fails unless `version` is unreleased and higher than the latest release.
+    def ensure_release_version_is_new!(version, tags, latest, how_to_fix)
+        tag = tags[version] || tags["v#{version}"]
+        if tag
+            UI.user_error!("Version #{version} has already been released (tag #{tag[:name]} on commit #{tag[:commit][0, 8]}): #{how_to_fix}.")
+        end
+        if latest && Gem::Version.new(version) <= latest
+            UI.user_error!("Version #{version} must be higher than the latest release (#{latest}): #{how_to_fix}.")
+        end
+        UI.success("✅ #{version} is unreleased and higher than the latest release (#{latest || 'none'})")
+    end
+
+    # Fails unless CHANGELOG.md has a "## [X.Y.Z]" entry, so release notes are never empty.
+    def ensure_changelog_entry!(version)
+        changelog_path = File.expand_path("../CHANGELOG.md", __dir__)
+        content = File.exist?(changelog_path) ? File.read(changelog_path) : ""
+        unless content.match?(/^##\s+\[#{Regexp.escape(version)}\]/)
+            UI.user_error!("CHANGELOG.md has no '## [#{version}]' entry. Add the release notes for #{version}.")
+        end
+        UI.success("✅ CHANGELOG.md has an entry for #{version}")
+    end
+
+    # Hotfixes only patch the latest release: same major.minor, higher patch (e.g. 5.7.0 -> 5.7.1).
+    def ensure_hotfix_is_patch_bump!(version, latest)
+        UI.user_error!("There is no previous release to hotfix; use a deploy/ branch") unless latest
+        major, minor, = version.split(".").map(&:to_i)
+        latest_major, latest_minor, = latest.segments
+        unless major == latest_major && minor == latest_minor
+            UI.user_error!("A hotfix must be a patch bump of the latest release (#{latest}), e.g. #{latest_major}.#{latest_minor}.#{latest.segments[2] + 1}. Use a deploy/ branch for #{version}.")
+        end
+        UI.success("✅ #{version} is a patch bump of #{latest}")
+    end
+
+    # A hotfix branch may only contain commits already on `release`, plus its own fix: the commit it shares
+    # with `main` must already be on `release`. Branching from `main` would ship unreleased work.
+    def ensure_hotfix_cut_from_release!(head)
+        if ENV["CI"]
+            sh("git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main +refs/heads/release:refs/remotes/origin/release", log: false)
+        end
+        shared_with_main = sh("git merge-base #{head} origin/main", log: false).strip
+        unless system("git", "merge-base", "--is-ancestor", shared_with_main, "origin/release")
+            UI.user_error!("This hotfix branch contains unreleased commits from main (it shares #{shared_with_main[0, 8]} with main, which isn't on release). Cut hotfix/ branches from release and add only the fix.")
+        end
+        UI.success("✅ Hotfix branch was cut from release (no unreleased main commits)")
+    end
+
+    # --- Hotfixes for the latest release vs a previous release ---
+    # A hotfix for the latest release (5.7.2 when 5.7.1 is out) merges into `release`. A hotfix for a previous
+    # release (5.6.2 when 5.7.1 is out) is cut from that release's tag and released from its own branch.
+
+    # @return [Symbol] :latest (same major.minor as the latest release), :previous (an older major.minor) or
+    #   :new (a higher major.minor, or nothing released yet: not a hotfix)
+    def hotfix_target(version, latest)
+        return :new unless latest
+        line = Gem::Version.new(version).segments[0, 2]
+        latest_line = latest.segments[0, 2]
+        return :latest if line == latest_line
+        (line <=> latest_line) < 0 ? :previous : :new
+    end
+
+    # @return [Gem::Version, nil] The highest released version on the same major.minor as `version`
+    def release_latest_on_line(tags, version)
+        line = Gem::Version.new(version).segments[0, 2]
+        tags.values.map { |tag| Gem::Version.new(tag[:version]) }.select { |v| v.segments[0, 2] == line }.max
+    end
+
+    # Merge request into `release`: fails with what to do instead unless `version` hotfixes the latest release.
+    def ensure_hotfix_for_latest_release!(version, latest)
+        case hotfix_target(version, latest)
+        when :previous
+            UI.user_error!("#{version} is a hotfix for a previous release (the latest release is #{latest}). Don't merge it into release: release it from this branch's pipeline by running the manual hotfix_release job.")
+        when :new
+            UI.user_error!("#{version} isn't a hotfix of any release (the latest release is #{latest || 'none'}). Use a deploy/v#{version} branch.")
+        end
+    end
+
+    # Manual release from a hotfix/ branch: fails with what to do instead unless the branch hotfixes a previous
+    # release, is the next version on that release's line, and was cut from that line's latest tag.
+    def ensure_previous_release_hotfix!(branch, version, tags, head, how_to_fix)
+        branch_version = branch[%r{\Ahotfix/v(\d+\.\d+\.\d+)\z}, 1]
+        UI.user_error!("Branch '#{branch}' must be named hotfix/vX.Y.Z") unless branch_version
+        if branch_version != version
+            UI.user_error!("Version mismatch: branch '#{branch}' is for #{branch_version} but the project version is #{version}: #{how_to_fix} (or rename the branch).")
+        end
+
+        latest = release_latest_version(tags)
+        case hotfix_target(version, latest)
+        when :latest
+            UI.user_error!("#{version} is a hotfix for the latest release (#{latest}). Don't run hotfix_release: open a merge request from #{branch} into release; merging it runs the release pipeline.")
+        when :new
+            UI.user_error!("#{version} isn't a hotfix of any release (the latest release is #{latest || 'none'}). Use a deploy/v#{version} branch.")
+        end
+
+        line_latest = release_latest_on_line(tags, version)
+        unless line_latest
+            UI.user_error!("Nothing has been released on the #{version.split('.')[0, 2].join('.')} line, so there's no release to hotfix.")
+        end
+        ensure_release_version_is_new!(version, tags, line_latest, how_to_fix)
+        ensure_hotfix_cut_from_tag!(head, tags, line_latest)
+        UI.success("✅ #{version} is a hotfix for the previous release #{line_latest} (latest release: #{latest})")
+    end
+
+    # The branch contains the line's latest release tag, and nothing released after it or unreleased from main.
+    def ensure_hotfix_cut_from_tag!(head, tags, line_latest)
+        if ENV["CI"]
+            sh("git fetch --tags --force origin +refs/heads/main:refs/remotes/origin/main", log: false)
+        end
+        line_tag = tags.values.find { |tag| Gem::Version.new(tag[:version]) == line_latest }
+        unless system("git", "merge-base", "--is-ancestor", line_tag[:commit], head)
+            UI.user_error!("This branch doesn't contain #{line_tag[:name]}. Cut a hotfix for a previous release from that release's tag: git switch -c hotfix/vX.Y.Z #{line_tag[:name]}")
+        end
+        later = tags.values.select do |tag|
+            Gem::Version.new(tag[:version]) > line_latest && system("git", "merge-base", "--is-ancestor", tag[:commit], head)
+        end
+        unless later.empty?
+            UI.user_error!("This branch contains #{later.map { |tag| tag[:name] }.sort.join(', ')}, released after #{line_tag[:name]}. Cut it from #{line_tag[:name]} and add only the fix.")
+        end
+        shared_with_main = sh("git merge-base #{head} origin/main", log: false).strip
+        unless system("git", "merge-base", "--is-ancestor", shared_with_main, line_tag[:commit])
+            UI.user_error!("This branch contains unreleased commits from main (it shares #{shared_with_main[0, 8]} with main, which isn't in #{line_tag[:name]}). Cut it from #{line_tag[:name]} and add only the fix.")
+        end
+        UI.success("✅ Branch was cut from #{line_tag[:name]}")
+    end
+
+    # Printed when a hotfix for a previous release is released.
+    def remind_to_hotfix_latest_release(version, tags)
+        latest = release_latest_version(tags)
+        return unless latest && hotfix_target(version, latest) == :previous
+        next_version = "#{latest.segments[0]}.#{latest.segments[1]}.#{latest.segments[2] + 1}"
+        UI.important("Reminder: ship this fix on the latest release too (hotfix/v#{next_version} into release), unless #{latest} isn't affected.")
+    end
+
+    def ensure_env_present!(names)
+        missing = names.select { |name| ENV[name].to_s.strip.empty? }
+        UI.user_error!("Missing CI/CD variables: #{missing.join(', ')}") unless missing.empty?
+        UI.success("✅ All release variables are set")
+    end
+
+    # GET with retries. Transient failures (timeouts, connection/DNS errors, HTTP 429 and 5xx) are retried 3 times
+    # with a short back-off, so a network blip doesn't fail a release. Uses Net::HTTP so tokens never reach the job log.
+    #
+    # @return [Array(Integer, String, Hash)] HTTP status (0 if the host couldn't be reached), body, and response
+    #   headers (lower-case names)
+    def release_http_get(url, headers = {})
+        require 'net/http'
+        uri = URI(url)
+        code, body, response_headers = 0, "", {}
+        3.times do |attempt|
+            sleep(2 * attempt) if attempt > 0
+            begin
+                request = Net::HTTP::Get.new(uri)
+                headers.each { |key, value| request[key] = value }
+                response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 15, read_timeout: 30) do |http|
+                    http.request(request)
+                end
+                code, body = response.code.to_i, response.body.to_s
+                response_headers = response.each_header.to_h
+                return [code, body, response_headers] unless code == 429 || code >= 500
+            rescue StandardError => e
+                code, body, response_headers = 0, "#{e.class}: #{e.message}", {}
+            end
+            UI.message("#{uri.host} didn't respond properly (#{code == 0 ? body : "HTTP #{code}"}); retrying...") if attempt < 2
+        end
+        [code, body, response_headers]
+    end
+
+    # GITLAB_TOKEN pushes the release tag and creates the GitLab release, so it needs the api and write_repository
+    # scopes, must be active and must not be expired. Works for personal, project and group access tokens.
+    def ensure_gitlab_token_valid!
+        unless ENV["CI_API_V4_URL"] && ENV["CI_PROJECT_ID"]
+            UI.important("Not in GitLab CI; skipping the GITLAB_TOKEN check")
+            return
+        end
+        auth = { "PRIVATE-TOKEN" => ENV["GITLAB_TOKEN"] }
+        code, body = release_http_get("#{ENV['CI_API_V4_URL']}/personal_access_tokens/self", auth)
+        UI.user_error!("Couldn't reach GitLab to check GITLAB_TOKEN (#{body}); retry this job") if code == 0
+        UI.user_error!("GITLAB_TOKEN was rejected by GitLab (HTTP #{code}): it's missing, revoked or expired") if code == 401
+        if code == 200
+            token = JSON.parse(body) rescue {}
+            missing = %w[api write_repository] - Array(token["scopes"])
+            UI.user_error!("GITLAB_TOKEN is not active (revoked or expired)") unless token["active"] == true && token["revoked"] != true
+            UI.user_error!("GITLAB_TOKEN is missing the #{missing.join(' and ')} scope(s), needed to push the tag and create the release") unless missing.empty?
+            require 'date'
+            if token["expires_at"] && Date.parse(token["expires_at"]) <= Date.today + 14
+                UI.important("GITLAB_TOKEN expires on #{token['expires_at']}; renew it soon")
+            end
+        else
+            # Not a token type that endpoint describes; at least make sure it can see this project.
+            code, = release_http_get("#{ENV['CI_API_V4_URL']}/projects/#{ENV['CI_PROJECT_ID']}", auth)
+            UI.user_error!("GITLAB_TOKEN can't access this project (HTTP #{code})") unless code == 200
+            UI.important("Couldn't read GITLAB_TOKEN's scopes; it can access the project, but check it has api and write_repository")
+        end
+        UI.success("✅ GITLAB_TOKEN is valid")
+    end
+
+    # GITHUB_TOKEN creates the GitHub release (and, on Android, publishes GitHub Packages). Classic tokens report their
+    # scopes, so those are checked exactly. Fine-grained tokens don't, so for them only repository access can be checked.
+    def ensure_github_token_can_push!(repo, extra_scopes: [])
+        code, body, headers = release_http_get("https://api.github.com/repos/#{repo}", "Authorization" => "Bearer #{ENV['GITHUB_TOKEN']}", "Accept" => "application/vnd.github+json")
+        UI.user_error!("Couldn't reach GitHub to check GITHUB_TOKEN (#{body}); retry this job") if code == 0
+        UI.user_error!("GITHUB_TOKEN was rejected by GitHub (HTTP 401): it's missing, revoked or expired") if code == 401
+        UI.user_error!("GITHUB_TOKEN can't see #{repo} (HTTP #{code})") unless code == 200
+        if headers.key?("x-oauth-scopes")
+            scopes = headers["x-oauth-scopes"].split(",").map(&:strip)
+            missing = []
+            missing << "repo (or public_repo)" unless (scopes & %w[repo public_repo]).any?
+            missing.concat(extra_scopes - scopes)
+            UI.user_error!("GITHUB_TOKEN is missing the #{missing.join(' and ')} scope(s) for #{repo}") unless missing.empty?
+            can_push = JSON.parse(body).dig("permissions", "push") rescue false
+            UI.user_error!("GITHUB_TOKEN's account has no write access to #{repo}") unless can_push
+            UI.success("✅ GITHUB_TOKEN can create releases on #{repo}")
+        else
+            UI.success("✅ GITHUB_TOKEN can access #{repo}")
+            UI.important("GITHUB_TOKEN is a fine-grained token, so its write permission can't be checked in advance; it needs Contents: read and write#{extra_scopes.empty? ? '' : ' and Packages: write'} on #{repo}")
+        end
+    end
+
+    # Maven Central Publisher API: is this version of com.paydock:mobile-sdk already published?
+    #
+    # @return [Array(Integer, Boolean)] HTTP status and whether it's published
+    def maven_central_publisher_status(version)
+        require 'base64'
+        auth = Base64.strict_encode64("#{ENV['JRELEASER_MAVENCENTRAL_SONATYPE_USERNAME']}:#{ENV['JRELEASER_MAVENCENTRAL_SONATYPE_TOKEN']}")
+        code, body = release_http_get("https://central.sonatype.com/api/v1/publisher/published?namespace=com.paydock&name=mobile-sdk&version=#{version}", "Authorization" => "Bearer #{auth}")
+        published = code == 200 && (JSON.parse(body)["published"] == true rescue false)
+        [code, published]
+    end
+
+    def ensure_maven_central_credentials_valid!
+        # Any version works for an authentication check; the answer itself is ignored.
+        code, = maven_central_publisher_status("0.0.0")
+        UI.user_error!("Maven Central rejected the Sonatype credentials (HTTP #{code})") if [401, 403].include?(code)
+        if code == 200
+            UI.success("✅ Maven Central credentials are valid")
+        else
+            # Not proof of bad credentials: publish_to_maven_central fails before publishing anything if they are.
+            UI.important("Couldn't verify the Maven Central credentials (#{code == 0 ? 'Maven Central unreachable' : "HTTP #{code}"}); continuing")
+        end
+    end
+
+    # True if com.paydock:mobile-sdk:<version> is already on Maven Central. Uses the Publisher API when the
+    # Sonatype credentials are available (release pipeline), otherwise the public repository (merge request
+    # pipelines, where protected variables aren't exposed; it can lag a fresh publish by up to ~30 minutes).
+    def maven_central_published?(version)
+        unless ENV["JRELEASER_MAVENCENTRAL_SONATYPE_USERNAME"].to_s.empty? || ENV["JRELEASER_MAVENCENTRAL_SONATYPE_TOKEN"].to_s.empty?
+            code, published = maven_central_publisher_status(version)
+            return published if code == 200
+        end
+        pom_code, = release_http_get("https://repo1.maven.org/maven2/com/paydock/mobile-sdk/#{version}/mobile-sdk-#{version}.pom")
+        return true if pom_code == 200
+        return false if pom_code == 404
+        UI.user_error!("Couldn't check whether #{version} is on Maven Central (#{pom_code == 0 ? 'unreachable' : "HTTP #{pom_code}"}); retry this job")
+    end
+
+    # A version on Maven Central counts as released even without a git tag: Maven Central publishes before
+    # tag_release, and a published version can never be replaced.
+    def ensure_not_on_maven_central!(version)
+        if maven_central_published?(version)
+            UI.user_error!("#{version} is already on Maven Central but has no tag on this commit. If its release pipeline failed after publishing, retry that pipeline's failed jobs instead; otherwise bump versionName in gradle.properties.")
+        end
+        UI.success("✅ #{version} isn't on Maven Central yet")
     end
 
     # Gets the version tag using multiple fallback strategies.
@@ -1319,6 +1778,17 @@ platform :android do
     lane :publish_to_github do
         # This lane publishes the built SDK to GitHub Packages.
         # It uses the 'gradle' action to execute the 'publishAllPublicationsToGitHubPackagesRepository' Gradle task.
+
+        # Safe to retry: GitHub Packages rejects republishing a version, so skip if it's already there.
+        # (Needs read:packages on GITHUB_TOKEN; if the lookup fails we just try to publish.)
+        version_tag = read_gradle_properties_version_name
+        code, body = release_http_get("https://api.github.com/orgs/PayDock/packages/maven/com.paydock.mobile-sdk/versions?per_page=100", "Authorization" => "Bearer #{ENV['GITHUB_TOKEN']}", "Accept" => "application/vnd.github+json")
+        published = code == 200 && (JSON.parse(body).any? { |package_version| package_version["name"] == version_tag } rescue false)
+        if published
+            UI.important("#{version_tag} is already on GitHub Packages; skipping")
+            next
+        end
+
         gradle(task: ":mobile-sdk:publishAllPublicationsToGitHubPackagesRepository")
     end
 
@@ -1331,11 +1801,17 @@ lane :publish_to_maven_central do
     UI.message("🚀 Starting Maven Central publishing process...")
 
     # Pre-flight checks for debugging
-    version_tag = get_version_tag()
+    version_tag = release_version
     UI.message("📋 Publishing version: #{version_tag}")
     UI.message("🔧 Environment: #{ENV['CI'] ? 'CI' : 'Local'}")
     UI.message("🏷️ Branch: #{ENV['CI_COMMIT_REF_NAME'] || 'unknown'}")
     UI.message("📝 Commit: #{ENV['CI_COMMIT_SHA'] ? ENV['CI_COMMIT_SHA'][0..7] : 'unknown'}")
+
+    # Safe to retry: a version on Maven Central can never be replaced, so if it's already there, there's nothing to do.
+    if maven_central_published?(version_tag)
+        UI.important("#{version_tag} is already published on Maven Central; skipping")
+        next
+    end
 
     # Validate required environment variables
     required_vars = [

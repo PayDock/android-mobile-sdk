@@ -164,7 +164,7 @@ internal class SdkWebChromeClient(
                         Log.e(
                             MobileSDKConstants.MOBILE_SDK_TAG,
                             "Critical child window error (code $errorCode, error: ${error.description}, " +
-                                "url: ${SdkWebViewClient.describeFailedRequest(request?.url)}): $errorMessage"
+                                "host: ${SdkWebViewClient.describeFailedRequest(request?.url)}): $errorMessage"
                         )
                         onWebViewError(errorCode, errorMessage)
                     } else if (SdkWebViewClient.isCriticalNetworkError(errorCode)) {
@@ -173,7 +173,7 @@ internal class SdkWebChromeClient(
                         Log.d(
                             MobileSDKConstants.MOBILE_SDK_TAG,
                             "Non-Fatal child window error (code $errorCode, " +
-                                "url: ${SdkWebViewClient.describeFailedRequest(request?.url)}): $errorMessage"
+                                "host: ${SdkWebViewClient.describeFailedRequest(request?.url)}): $errorMessage"
                         )
                     }
                 }

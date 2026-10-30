@@ -8,6 +8,7 @@ if (!System.getenv().containsKey("JITPACK")) {
 }
 include(":mobile-sdk")
 include(":bin-processor")
+include(":telemetry")
 
 pluginManagement {
     repositories {

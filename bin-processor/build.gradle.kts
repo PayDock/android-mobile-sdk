@@ -11,7 +11,7 @@ plugins {
 
 android {
     namespace = "com.paydock.binprocessor"
-    compileSdk = 37
+    compileSdk = libs.versions.sdk.compileSdk.get().toInt()
 
     defaultConfig {
         minSdk = 24

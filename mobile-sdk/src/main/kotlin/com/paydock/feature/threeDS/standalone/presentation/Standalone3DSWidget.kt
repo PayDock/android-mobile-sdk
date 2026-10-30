@@ -1,5 +1,7 @@
 package com.paydock.feature.threeDS.standalone.presentation
 
+import android.content.Context
+import android.net.ConnectivityManager
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
@@ -8,7 +10,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.getSystemService
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ProcessLifecycleOwner
 import com.paydock.core.MobileSDKConstants
+import com.paydock.core.data.util.isCurrentlyConnected
 import com.paydock.core.domain.error.exceptions.Standalone3DSException
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.designsystems.components.loader.SdkOverlayLoader
@@ -84,6 +91,10 @@ fun Standalone3DSWidget(
         return
     }
 
+    val context = LocalContext.current
+    // Attached to every error, so the session can be looked up in Paydock
+    val charge3dsId = remember(config.token) { ThreeDSTokenUtils.extractCharge3dsId(config.token) }
+
     // Obtain instances of view models
     val viewModel: Standalone3DSViewModel = koinViewModel()
     // Loading starts as soon as the widget launches (see LaunchedEffect below)
@@ -128,12 +139,35 @@ fun Standalone3DSWidget(
             webUrl = MobileSDKConstants.DEFAULT_WEB_URL,
             data = htmlString,
             jsBridge = jsBridge,
-            // The page can't progress without the Client SDK script, so an HTTP error on it ends the flow.
-            criticalHttpResourceUrls = setOf(widgetConfig.jsLibraryUrl),
-        ) { status, message ->
+            // The page can't progress without the Client SDK script, so a network or HTTP error on it ends the flow.
+            criticalResourceUrls = setOf(widgetConfig.jsLibraryUrl),
+            onRendererGone = { didCrash ->
+                updateLoading(false)
+                currentCompletion(
+                    Result.failure(
+                        Standalone3DSException.RenderProcessGoneException(
+                            didCrash = didCrash,
+                            displayableMessage = MobileSDKConstants.Standalone3DSConfig.Errors.RENDER_PROCESS_GONE_ERROR,
+                            charge3dsId = charge3dsId,
+                            inBackground = isAppInBackground(),
+                        )
+                    )
+                )
+            },
+        ) { status, message, host ->
             updateLoading(false)
-            // Invoke the onWebViewError callback with the WebView ThreeDSException exception
-            currentCompletion(Result.failure(Standalone3DSException.WebViewException(status, message)))
+            currentCompletion(
+                Result.failure(
+                    Standalone3DSException.WebViewException(
+                        code = status,
+                        displayableMessage = message,
+                        host = host,
+                        charge3dsId = charge3dsId,
+                        inBackground = isAppInBackground(),
+                        networkAvailable = context.isNetworkAvailable(),
+                    )
+                )
+            )
         }
         if (loadingController.isLoading && loadingDelegate == null) {
             SdkOverlayLoader(
@@ -142,6 +176,18 @@ fun Standalone3DSWidget(
         }
     }
 }
+
+/**
+ * Whether the app has no started activity, i.e. the shopper is in another app or on the home screen.
+ */
+private fun isAppInBackground(): Boolean =
+    !ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+
+/**
+ * Whether the device's active network can currently reach the internet.
+ */
+private fun Context.isNetworkAvailable(): Boolean =
+    getSystemService<ConnectivityManager>()?.isCurrentlyConnected() == true
 
 /**
  * Handles the UI state for the 3DS process.

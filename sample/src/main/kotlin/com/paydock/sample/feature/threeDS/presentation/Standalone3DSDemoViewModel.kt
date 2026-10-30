@@ -21,6 +21,7 @@ import com.paydock.sample.feature.threeDS.domain.usecase.CreateStandaloneThreeDS
 import com.paydock.sample.feature.threeDS.presentation.state.Standalone3DSDemoOutcome
 import com.paydock.sample.feature.threeDS.presentation.state.Standalone3DSDemoUIState
 import com.paydock.sample.feature.threeDS.presentation.state.Standalone3DSFlowType
+import com.paydock.sample.feature.threeDS.presentation.state.Standalone3DSScenario
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,8 +32,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * Drives the Widgets > Standalone 3DS demo: creates a vault token and a 3DS token, then maps the
- * widget's progress and result callbacks onto the playground phases.
+ * Drives the Widgets > Standalone 3DS demo: once a TestLabs scenario is picked, creates a vault token
+ * and a 3DS token, then maps the widget's progress and result callbacks onto the playground phases.
  */
 @HiltViewModel
 class Standalone3DSDemoViewModel @Inject constructor(
@@ -48,22 +49,18 @@ class Standalone3DSDemoViewModel @Inject constructor(
     private var setupJob: Job? = null
     private var flowType = Standalone3DSFlowType.FRICTIONLESS
 
-    init {
-        start()
-    }
-
     /**
-     * Starts (or restarts) the demo with fresh tokens.
+     * Starts the demo for [scenario] with fresh tokens, vaulting the scenario's TestLabs card.
      */
-    fun start() {
+    fun start(scenario: Standalone3DSScenario) {
         setupJob?.cancel()
         flowType = Standalone3DSFlowType.FRICTIONLESS
-        _stateFlow.update { Standalone3DSDemoUIState(attempt = it.attempt + 1) }
+        _stateFlow.update { Standalone3DSDemoUIState(scenario = scenario, attempt = it.attempt + 1) }
         setupJob = viewModelScope.launch {
             val accessToken = globalConfigRepository.globalConfig.value.apiAccessToken
             val vaultToken = createCardVaultTokenUseCase(
                 accessToken,
-                VaultTokenRequest.CreateCardVaultTokenRequest()
+                VaultTokenRequest.CreateCardVaultTokenRequest(cardNumber = scenario.cardNumber)
             ).getOrElse {
                 fail(declined = false, errorMessage = it.message ?: TOKENISE_CARD_ERROR)
                 return@launch
@@ -73,6 +70,13 @@ class Standalone3DSDemoViewModel @Inject constructor(
                 currency = globalConfigRepository.globalConfig.value.currencyCode,
                 customer = ChargesCustomerDTO(
                     paymentSource = ChargesCustomerDTO.PaymentSourceDTO(vaultToken = vaultToken)
+                ),
+                threeDSDetails = CreateStandaloneThreeDSTokenRequest.ThreeDSDetails(
+                    authentication = CreateStandaloneThreeDSTokenRequest.Authentication(
+                        // Only the decoupled scenario asks for decoupled, or the ACS uses it for every challenge
+                        decoupled = CreateStandaloneThreeDSTokenRequest.Decoupled()
+                            .takeIf { scenario == Standalone3DSScenario.CHALLENGE_DECOUPLED }
+                    )
                 )
             )
             val threeDSToken = createStandaloneThreeDSTokenUseCase(accessToken, request)
@@ -91,6 +95,21 @@ class Standalone3DSDemoViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    /**
+     * Runs the last scenario again with fresh tokens.
+     */
+    fun restart() {
+        _stateFlow.value.scenario?.let(::start)
+    }
+
+    /**
+     * Tears the widget down and goes back to the scenario picker.
+     */
+    fun chooseScenario() {
+        setupJob?.cancel()
+        _stateFlow.update { Standalone3DSDemoUIState(attempt = it.attempt) }
     }
 
     /**
@@ -173,6 +192,7 @@ class Standalone3DSDemoViewModel @Inject constructor(
         charge3dsId = charge3dsId,
         status = status,
         description = description,
+        scenario = checkNotNull(_stateFlow.value.scenario),
         flowType = flowType,
         amount = widgetConfigRepository.widgetConfig.value.cartAmount,
         currency = globalConfigRepository.globalConfig.value.currencyCode,

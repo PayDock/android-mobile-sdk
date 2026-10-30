@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Git Branch Name Validation Script
-# Restricts branch creation to specific prefixes: bug/, task/, feature/, deploy/, spike/
+# Restricts branch creation to specific prefixes: bug/, task/, feature/, deploy/, hotfix/, spike/
 
 set -e
 
 # Define allowed branch prefixes
-ALLOWED_PREFIXES=("bug/" "task/" "feature/" "deploy/" "spike/")
+ALLOWED_PREFIXES=("bug/" "task/" "feature/" "deploy/" "hotfix/" "spike/")
 
 # Colors for output
 RED='\033[0;31m'
@@ -35,6 +35,11 @@ validate_branch_name() {
     if [[ "$branch_name" == "main" || "$branch_name" == "release" ]]; then
         return 0
     fi
+
+    # SDD service branches: sdd/<change-id> or sdd/<change-id>-v<N>
+    if [[ "$branch_name" =~ ^sdd/[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+        return 0
+    fi
     
     # Check if branch name starts with any allowed prefix
     for prefix in "${ALLOWED_PREFIXES[@]}"; do
@@ -50,8 +55,8 @@ validate_branch_name() {
                 else
                     return 1
                 fi
-            elif [[ "$prefix" == "deploy/" ]]; then
-                # For deploy/ branches, enforce semantic version: deploy/v<major>.<minor>.<patch>
+            elif [[ "$prefix" == "deploy/" || "$prefix" == "hotfix/" ]]; then
+                # Release branches: deploy/v<major>.<minor>.<patch> (from main) or hotfix/v<major>.<minor>.<patch> (from release, or from a previous release's tag)
                 local suffix="${branch_name#$prefix}"
                 if [[ "$suffix" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
                     return 0
@@ -81,6 +86,7 @@ show_usage() {
     echo "  - task/SDK-5678-update-dependencies"
     echo "  - feature/SDK-9012-user-authentication"
     echo "  - deploy/v1.2.0"
+    echo "  - hotfix/v1.2.1"
     echo "  - spike/SDK-3456-investigate-performance"
     echo ""
     echo "If no branch name is provided, validates the current branch."
@@ -118,20 +124,23 @@ main() {
         echo ""
         echo "Branch naming requirements:"
         echo "  • bug/, task/, feature/, spike/ branches must include Jira ticket (SDK-#### or PAYRAC-####)"
-        echo "  • deploy/ branches must be in the form deploy/v<major>.<minor>.<patch>"
+        echo "  • deploy/ and hotfix/ branches must be in the form deploy/v<major>.<minor>.<patch> or hotfix/v<major>.<minor>.<patch>"
         echo ""
         echo "Required format:"
         echo "  • bug/SDK-####-description"
         echo "  • task/SDK-####-description"  
         echo "  • feature/SDK-####-description"
         echo "  • spike/SDK-####-description"
-        echo "  • deploy/v<major>.<minor>.<patch>"
+        echo "  • deploy/v<major>.<minor>.<patch>   (release, branched from main)"
+        echo "  • hotfix/v<major>.<minor>.<patch>   (fix, branched from release, or from a previous release's tag)"
         echo ""
         echo "Examples:"
         echo "  git checkout -b bug/SDK-1234-fix-payment-issue"
         echo "  git checkout -b task/SDK-5678-update-readme"
         echo "  git checkout -b feature/SDK-9012-new-payment-method"
         echo "  git checkout -b deploy/v2.1.0"
+        echo "  git checkout -b hotfix/v2.1.1 origin/release   # hotfix for the latest release"
+        echo "  git checkout -b hotfix/v2.0.4 2.0.3            # hotfix for a previous release, from its tag"
         echo "  git checkout -b spike/SDK-3456-investigate-memory-usage"
         exit 1
     fi

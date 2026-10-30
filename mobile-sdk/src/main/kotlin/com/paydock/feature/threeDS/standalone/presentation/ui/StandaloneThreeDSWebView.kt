@@ -4,7 +4,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -43,25 +47,6 @@ private val OPEN_IN_SAME_WINDOW_SCRIPT = """
 """.trimIndent()
 
 /**
- * Whether [host] belongs to one of [MobileSDKConstants.Standalone3DSConfig.ESSENTIAL_HOST_DOMAINS].
- * An unknown (null) host is treated as essential, so its errors stay fatal.
- */
-internal fun isEssentialStandalone3DSHost(host: String?): Boolean {
-    val normalised = host?.lowercase()?.trimEnd('.') ?: return true
-    return MobileSDKConstants.Standalone3DSConfig.ESSENTIAL_HOST_DOMAINS.any { domain ->
-        normalised == domain || normalised.endsWith(".$domain")
-    }
-}
-
-/**
- * Whether [host] is one of the known payment providers (Paydock, GPayments) the Standalone 3DS flow can't work
- * without. Unlike [isEssentialStandalone3DSHost], an unknown (null) host doesn't count, because any error on a
- * known provider ends the session.
- */
-internal fun isKnownStandalone3DSProviderHost(host: String?): Boolean =
-    host != null && isEssentialStandalone3DSHost(host)
-
-/**
  * Composable function to display a WebView with customizable settings and event handling.
  *
  * @param webUrl The URL to load in the WebView.
@@ -70,8 +55,14 @@ internal fun isKnownStandalone3DSProviderHost(host: String?): Boolean =
  * @param openTargetBlankInSameWebView When true, links with target="_blank" (e.g. "Forgot password", "Apply now")
  *        load in the current WebView instead of opening a new window. The SDK injects JS (window.open override
  *        and click interception) so navigation works like a single-tab browser. Default is false.
- * @param criticalHttpResourceUrls Exact URLs whose HTTP error responses end the session (the Client SDK script).
- * @param onWebViewError Callback to handle WebView errors.
+ * @param criticalResourceUrls Exact URLs whose network or HTTP errors end the session (the Client SDK script).
+ *        Besides those and main-frame errors, failed requests inside the page (Paydock, GPayments, issuer pages)
+ *        and child windows never end the session: the Client SDK times out and retries its own requests and
+ *        reports a failed flow through its events.
+ * @param onRendererGone Called once if the WebView's renderer process stops (Android 8+), with `true` if it
+ *        crashed and `false` if Android reclaimed it for memory. The host app survives; the session can't continue.
+ *        The dead WebView is removed from the screen and destroyed straight away.
+ * @param onWebViewError Callback to handle WebView errors, with the error code, message and failing host.
  */
 @Suppress("LongMethod")
 @Composable
@@ -81,8 +72,9 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
     jsBridge: SdkJSBridge<T>? = null,
     onCloseRequested: () -> Unit = {},
     openTargetBlankInSameWebView: Boolean = false,
-    criticalHttpResourceUrls: Set<String> = emptySet(),
-    onWebViewError: (Int, String) -> Unit,
+    criticalResourceUrls: Set<String> = emptySet(),
+    onRendererGone: (didCrash: Boolean) -> Unit = {},
+    onWebViewError: (code: Int, message: String, host: String?) -> Unit,
 ) {
     // Get the current context
     val context = LocalContext.current
@@ -90,6 +82,10 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
     // Remember the state of the WebView
     val state = rememberSaveableWebViewState()
     val navigator = rememberWebViewNavigator()
+
+    // Once the renderer is gone the WebView can't be used again: it's removed from the screen and destroyed
+    var rendererGone by remember { mutableStateOf(false) }
+    val currentOnRendererGone by rememberUpdatedState(onRendererGone)
 
     // Load the initial URL (or HTML data) using LaunchedEffect.
     // This ensures the URL is loaded only when `webUrl` or `data` changes,
@@ -115,11 +111,12 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
     Box(
         contentAlignment = Alignment.Center,
     ) {
+        if (rendererGone) return@Box
         WebView(
             state = state,
             modifier = Modifier.fillMaxSize(),
             navigator = navigator,
-            client = remember(openTargetBlankInSameWebView, criticalHttpResourceUrls) {
+            client = remember(openTargetBlankInSameWebView, criticalResourceUrls) {
                 SdkWebViewClient(
                     onPageFinished = { webView ->
                         // When enabled, make target="_blank" / window.open load in the same WebView (SDK-wide)
@@ -143,11 +140,14 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
                     },
                     onWebViewError = onWebViewError,
                     onCloseRequested = onCloseRequested,
-                    isSubResourceNetworkErrorFatal = ::isEssentialStandalone3DSHost,
-                    criticalHttpResourceUrls = criticalHttpResourceUrls,
-                    // A known provider failing in any way (e.g. a proxy closing the request: ERROR_UNKNOWN) would
-                    // otherwise leave the flow waiting with no result.
-                    isAnyNetworkErrorFatal = ::isKnownStandalone3DSProviderHost,
+                    // The Client SDK owns its requests (e.g. the 3DS result polls, which fail whenever the network
+                    // drops while the shopper approves in their banking app): it retries them and reports failures.
+                    isSubResourceNetworkErrorFatal = { false },
+                    criticalResourceUrls = criticalResourceUrls,
+                    onRendererGone = { didCrash ->
+                        rendererGone = true
+                        currentOnRendererGone(didCrash)
+                    },
                 )
             },
             chromeClient = remember(openTargetBlankInSameWebView) {
@@ -171,17 +171,15 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
                             null
                         )
                     },
-                    onWebViewError = onWebViewError,
+                    onWebViewError = { code, message -> onWebViewError(code, message, null) },
                     onCloseRequested = onCloseRequested,
-                    isChildWindowErrorFatal = { host, errorCode ->
-                        (SdkWebViewClient.isCriticalNetworkError(errorCode) && isEssentialStandalone3DSHost(host)) ||
-                            isKnownStandalone3DSProviderHost(host)
-                    },
+                    isChildWindowErrorFatal = { _, _ -> false },
                     openExternalLink = { url ->
                         context.openBrowser(uri = url, onError = { failedUrl ->
                             onWebViewError(
                                 HttpURLConnection.HTTP_UNAVAILABLE,
-                                "No application found to open URL: ${SdkWebViewClient.describeFailedRequest(failedUrl)}"
+                                "No application found to open a link to ${SdkWebViewClient.describeFailedRequest(failedUrl)}",
+                                failedUrl.host,
                             )
                         })
                     }
@@ -197,6 +195,9 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
                         MobileSDKConstants.JS_BRIDGE_NAME
                     )
                 }
+            },
+            onDispose = { webView ->
+                if (rendererGone) webView.destroy()
             }
         )
     }

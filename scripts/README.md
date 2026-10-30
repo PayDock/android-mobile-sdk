@@ -24,7 +24,10 @@ All branches must follow specific naming patterns:
 - `task/SDK-####-description` - For general tasks and maintenance (requires Jira ticket)
 - `feature/SDK-####-description` - For new features (requires Jira ticket)
 - `spike/SDK-####-description` - For research and investigation work (requires Jira ticket)
-- `deploy/v<major>.<minor>.<patch>` - For deployment/release branches (semantic version required)
+- `deploy/v<major>.<minor>.<patch>` - For releases, branched from `main` (semantic version required)
+- `hotfix/v<major>.<minor>.<patch>` - For fixes to a released version (semantic version required): branched from `release` to hotfix the latest release, or from a previous release's tag (e.g. `hotfix/v1.1.4` from tag `1.1.3`) for clients who can't upgrade yet
+
+Only `deploy/` and `hotfix/` branches can be merged into `release`. A hotfix for a previous release never merges into `release`: it's released from its own branch by running the manual `hotfix_release` pipeline job.
 
 ### Jira Ticket Requirement
 
@@ -40,6 +43,7 @@ task/SDK-3456-refactor-networking
 feature/SDK-7890-apple-pay-integration
 feature/SDK-2468-new-payment-method
 deploy/v1.2.0
+hotfix/v1.2.1
 spike/SDK-1357-investigate-memory-leaks
 spike/SDK-8642-research-new-payment-api
 ```
@@ -51,7 +55,7 @@ bug/fix-login              # Missing SDK- ticket number
 task/update-deps           # Missing SDK- ticket number  
 feature/new-ui             # Missing SDK- ticket number
 spike/research             # Missing SDK- ticket number
-hotfix/urgent-fix          # Invalid prefix (should be bug/)
+hotfix/urgent-fix          # hotfix/ needs a version (hotfix/v1.2.1)
 improvement/ui-updates     # Invalid prefix (should be feature/ or task/)
 my-branch                  # Missing required prefix and ticket
 fix-login                  # Missing prefix and ticket
@@ -80,13 +84,14 @@ Your current branch name does not follow the required naming conventions.
 
 Branch naming requirements:
   • bug/, task/, feature/, spike/ branches must include Jira ticket (SDK-#### or PAYRAC-####)
-  • deploy/ branches must be named deploy/v<major>.<minor>.<patch>
+  • deploy/ and hotfix/ branches must be named deploy/v<major>.<minor>.<patch> or hotfix/v<major>.<minor>.<patch>
 
 Examples of valid branch names:
   • bug/SDK-1234-fix-payment-issue
   • task/SDK-5678-update-dependencies
   • feature/SDK-9012-new-payment-method
   • deploy/v1.2.0
+  • hotfix/v1.2.1
   • spike/SDK-3456-investigate-performance
 
 To fix this:
@@ -254,7 +259,7 @@ The validation can be used in CI/CD pipelines:
 To modify allowed prefixes, edit the `ALLOWED_PREFIXES` array in `validate-branch-name.sh`:
 
 ```bash
-ALLOWED_PREFIXES=("bug/" "task/" "feature/" "deploy/" "spike/")
+ALLOWED_PREFIXES=("bug/" "task/" "feature/" "deploy/" "hotfix/" "spike/")
 ```
 
 ## Pre-commit: Detekt formatting and static analysis

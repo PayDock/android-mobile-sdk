@@ -2,11 +2,14 @@ package com.paydock.designsystems.components.web.utils
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Build
 import android.util.Log
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
+import androidx.annotation.RequiresApi
 import com.kevinnzou.web.AccompanistWebViewClient
 import com.paydock.core.MobileSDKConstants
 
@@ -18,21 +21,21 @@ import com.paydock.core.MobileSDKConstants
  * @param onShouldOverrideUrlLoading Optional callback that allows customization of URL loading behavior.
  * @param onPageFinished Callback that is triggered when a page finishes loading.
  * @param onWebViewError Callback that is triggered when a WebView encounters an error.
- * It provides the error code and a user-friendly error message.
+ * It provides the error code, a user-friendly error message and the host of the failed request, if known.
  * @param isSubResourceNetworkErrorFatal Decides, by request host, whether a critical network error
  * on a sub-resource (script, iframe, XHR…) ends the session. Defaults to always fatal, because widgets
  * loaded from HTML data only see connectivity loss through their sub-resources.
- * @param criticalHttpResourceUrls Exact URLs whose HTTP error responses (4xx/5xx) end the session, e.g. the
- * Client SDK script: without it the page can never progress. Empty by default, so HTTP errors are ignored
- * (favicons, issuer page assets and API calls, which the Client SDK reports itself).
- * @param isAnyNetworkErrorFatal Decides, by request host, whether any network error (including
- * ERROR_UNKNOWN, e.g. a proxy or firewall closing the request) on a sub-resource ends the session. Used for
- * the payment providers a flow can't work without. Defaults to never.
+ * @param criticalResourceUrls Exact URLs whose network errors or HTTP error responses (4xx/5xx) end the session,
+ * e.g. the Client SDK script: without it the page can never progress. Empty by default, so HTTP errors are
+ * ignored (favicons, issuer page assets and API calls, which the Client SDK reports itself).
+ * @param onRendererGone Called once when the WebView's renderer process stops (Android 8+), with `true` if it
+ * crashed and `false` if Android reclaimed it for memory. When set, the host app survives and the WebView must not
+ * be used again. When null, the platform default applies: Android kills the host app.
  */
 internal class SdkWebViewClient(
     private val onShouldOverrideUrlLoading: ((request: WebResourceRequest?) -> Boolean)? = null,
     private val onPageFinished: (WebView) -> Unit = {},
-    private val onWebViewError: (Int, String) -> Unit,
+    private val onWebViewError: (code: Int, message: String, host: String?) -> Unit,
     private val onCloseRequested: () -> Unit = {},
     /**
      * When true, delegates lifecycle callbacks to the base AccompanistWebViewClient.
@@ -41,8 +44,8 @@ internal class SdkWebViewClient(
      */
     private val delegateToAccompanist: Boolean = true,
     private val isSubResourceNetworkErrorFatal: (host: String?) -> Boolean = { true },
-    private val criticalHttpResourceUrls: Set<String> = emptySet(),
-    private val isAnyNetworkErrorFatal: (host: String?) -> Boolean = { false },
+    private val criticalResourceUrls: Set<String> = emptySet(),
+    private val onRendererGone: ((didCrash: Boolean) -> Unit)? = null,
 ) : AccompanistWebViewClient() {
 
     companion object {
@@ -80,19 +83,24 @@ internal class SdkWebViewClient(
         }
 
         /**
-         * Describes a failed request for logs as scheme, host and path only. The query string is dropped
-         * because 3DS URLs can carry transaction identifiers and tokens.
+         * Describes a failed request for logs and error messages as its host only. Paths, query strings and
+         * fragments are dropped because 3DS URLs can carry transaction identifiers and tokens.
          */
-        fun describeFailedRequest(uri: Uri?): String =
-            uri?.let { "${it.scheme}://${it.host}${it.path.orEmpty()}" } ?: "unknown"
+        fun describeFailedRequest(uri: Uri?): String = uri?.host?.takeIf { it.isNotBlank() } ?: "unknown"
 
         /** User-friendly message for an HTTP error response on a critical resource. */
         fun criticalResourceHttpErrorMessage(statusCode: Int): String =
             "Failed to load the payment page (HTTP $statusCode). Please try again later."
 
-        /** String form of [describeFailedRequest]: drops the query string and fragment. */
-        fun describeUrl(url: String?): String =
-            url?.substringBefore('?')?.substringBefore('#') ?: "unknown"
+        /** String form of [describeFailedRequest]: keeps the host only. */
+        fun describeUrl(url: String?): String = url
+            ?.substringAfter("://")
+            ?.substringBefore('/')
+            ?.substringBefore('?')
+            ?.substringBefore('#')
+            ?.substringAfterLast('@')
+            ?.takeIf { it.isNotBlank() }
+            ?: "unknown"
 
         private val URL_QUERY_REGEX = Regex("""(https?://[^\s?#"'<>]+)[?#][^\s"'<>]*""")
 
@@ -188,8 +196,8 @@ internal class SdkWebViewClient(
 
     /**
      * Handles WebView errors. Differentiates between fatal and non-fatal errors. Main-frame errors are
-     * always fatal; critical network errors on sub-resources are fatal when [isSubResourceNetworkErrorFatal]
-     * accepts the request host, and any error is fatal when [isAnyNetworkErrorFatal] accepts it.
+     * always fatal, and so is any error on [criticalResourceUrls]; critical network errors on other sub-resources
+     * are fatal when [isSubResourceNetworkErrorFatal] accepts the request host.
      * Fatal errors trigger [onWebViewError] once per session; the rest are only logged.
      *
      * @param view The WebView that encountered an error.
@@ -208,8 +216,8 @@ internal class SdkWebViewClient(
 
             val isMainFrame = request?.isForMainFrame == true
             val isErrorFatalForSession = isMainFrame ||
-                (isCriticalNetworkError(errorCode) && isSubResourceNetworkErrorFatal(request?.url?.host)) ||
-                isAnyNetworkErrorFatal(request?.url?.host)
+                request?.url?.toString() in criticalResourceUrls ||
+                (isCriticalNetworkError(errorCode) && isSubResourceNetworkErrorFatal(request?.url?.host))
 
             if (isErrorFatalForSession) {
                 reportCriticalError(errorCode, errorMessage, error.description, isMainFrame, request?.url)
@@ -220,14 +228,14 @@ internal class SdkWebViewClient(
                 // Log other non-fatal errors (e.g. benign ERROR_UNKNOWN noise) without triggering the error callback.
                 Log.d(
                     MobileSDKConstants.MOBILE_SDK_TAG,
-                    "Non-Fatal sub-resource error (code $errorCode, url: ${describeFailedRequest(request?.url)}): $errorMessage"
+                    "Non-Fatal sub-resource error (code $errorCode, host: ${describeFailedRequest(request?.url)}): $errorMessage"
                 )
             }
         }
     }
 
     /**
-     * Handles HTTP error responses (4xx/5xx). Only responses for [criticalHttpResourceUrls] (exact match) end the
+     * Handles HTTP error responses (4xx/5xx). Only responses for [criticalResourceUrls] (exact match) end the
      * session; every other HTTP error is left to the page, as before.
      *
      * @param view The WebView that received the response.
@@ -241,7 +249,7 @@ internal class SdkWebViewClient(
     ) {
         super.onReceivedHttpError(view, request, errorResponse)
         val statusCode = errorResponse?.statusCode ?: return
-        if (request?.url?.toString() !in criticalHttpResourceUrls) return
+        if (request?.url?.toString() !in criticalResourceUrls) return
         reportCriticalError(
             errorCode = statusCode,
             errorMessage = criticalResourceHttpErrorMessage(statusCode),
@@ -249,6 +257,27 @@ internal class SdkWebViewClient(
             isMainFrame = request?.isForMainFrame == true,
             uri = request?.url,
         )
+    }
+
+    /**
+     * Handles the WebView's renderer process stopping. With [onRendererGone] set, reports it once per session
+     * (unless a critical error already ended the session) and returns `true` so Android keeps the host app alive.
+     * Without it, defers to the platform default, which kills the host app.
+     *
+     * @param view The WebView whose renderer stopped. It can't be used again.
+     * @param detail Whether the renderer crashed or was reclaimed for memory.
+     * @return `true` if handled, so the host app survives.
+     */
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
+        val callback = onRendererGone ?: return super.onRenderProcessGone(view, detail)
+        val didCrash = detail.didCrash()
+        Log.e(MobileSDKConstants.MOBILE_SDK_TAG, "WebView renderer process gone (crashed: $didCrash)")
+        if (!criticalErrorOccurredInSession) {
+            criticalErrorOccurredInSession = true
+            callback(didCrash)
+        }
+        return true
     }
 
     /**
@@ -267,14 +296,14 @@ internal class SdkWebViewClient(
             Log.e(
                 MobileSDKConstants.MOBILE_SDK_TAG,
                 "First critical error in session (code $errorCode, error: $errorName, " +
-                    "mainFrame: $isMainFrame, url: ${describeFailedRequest(uri)}): $errorMessage"
+                    "mainFrame: $isMainFrame, host: ${describeFailedRequest(uri)}): $errorMessage"
             )
-            onWebViewError(errorCode, errorMessage)
+            onWebViewError(errorCode, errorMessage, uri?.host)
         } else {
             Log.d(
                 MobileSDKConstants.MOBILE_SDK_TAG,
                 "Subsequent critical error in session ignored (code $errorCode, " +
-                    "url: ${describeFailedRequest(uri)}): $errorMessage"
+                    "host: ${describeFailedRequest(uri)}): $errorMessage"
             )
         }
     }

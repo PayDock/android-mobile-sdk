@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.library)
@@ -22,7 +23,7 @@ android {
     // it's currently still pinned to AGP 8.13.0. Bumping this raises `minCompileSdk` in the
     // published AAR's metadata, forcing every integrator to also have that compileSdk available
     // just to keep compiling — not something to move ahead of schedule without a driving need.
-    compileSdk = 36
+    compileSdk = libs.versions.sdk.compileSdk.get().toInt()
 
     defaultConfig {
         minSdk = 24
@@ -57,7 +58,9 @@ android {
             // Including 'bin-processor' source code directly until it is published
             // as a standalone library to Maven/JitPack.
             // Link to issue: [Insert Jira/GitHub Link if applicable]
-            kotlin.srcDirs("src/main/kotlin", "../bin-processor/src/main/kotlin")
+            // 'telemetry' is compiled in the same way (internal sources, no project dependency) and is covered by
+            // this same follow-up: publish it separately, then depend on it.
+            kotlin.srcDirs("src/main/kotlin", "../bin-processor/src/main/kotlin", "../telemetry/src/main/kotlin")
             res.srcDirs("src/main/res", "../bin-processor/src/main/res") // Added in case there are UI resources
         }
     }
@@ -115,6 +118,71 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
+    }
+}
+
+/** Writes the internal `com.paydock.core.telemetry.TelemetryBuildValues` object of one variant. */
+abstract class GenerateTelemetryBuildValues : DefaultTask() {
+    @get:Input
+    abstract val buildEnabled: Property<Boolean>
+
+    @get:Input
+    abstract val endpoint: Property<String>
+
+    @get:Input
+    abstract val auth: Property<String>
+
+    @get:Input
+    abstract val level: Property<String>
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun generate() {
+        fun literal(value: String): String =
+            "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"").replace("$", "\\$") + "\""
+        val file = outputDir.file("com/paydock/core/telemetry/TelemetryBuildValues.kt").get().asFile
+        file.parentFile.mkdirs()
+        file.writeText(
+            listOf(
+                "package com.paydock.core.telemetry",
+                "",
+                "/** Generated per variant by the build. Debug: from local.properties. " +
+                    "Release: always disabled and empty (D14). */",
+                "internal object TelemetryBuildValues {",
+                "    const val ENABLED: Boolean = ${buildEnabled.get()}",
+                "    const val OTLP_ENDPOINT: String = ${literal(endpoint.get())}",
+                "    const val OTLP_AUTH: String = ${literal(auth.get())}",
+                "    const val LEVEL: String = ${literal(level.get())}",
+                "}",
+                ""
+            ).joinToString("\n")
+        )
+    }
+}
+
+// Debug values come from the engineer's uncommitted local.properties (spec § 8); never commit them.
+// Every other build type is always disabled and empty (D14): local.properties is not read for it.
+// No release-variant unit test guards this on purpose: AGP 9 creates no release unit-test task, and the release
+// inputs below are fixed literals, so no local value can reach a release build. Revisit with the turn-on ticket.
+androidComponents {
+    onVariants { variant ->
+        val isDebug = variant.buildType == "debug"
+        val localProperties = Properties()
+        if (isDebug) {
+            val localFile = rootProject.file("local.properties")
+            if (localFile.isFile) localFile.inputStream().use { localProperties.load(it) }
+        }
+        fun localValue(key: String): String = localProperties.getProperty(key)?.trim().orEmpty()
+        val variantName = variant.name.replaceFirstChar { it.uppercase() }
+        val task = tasks.register<GenerateTelemetryBuildValues>("generate${variantName}TelemetryBuildValues") {
+            buildEnabled.set(isDebug)
+            endpoint.set(if (isDebug) localValue("paydock.telemetry.otlpEndpoint") else "")
+            auth.set(if (isDebug) localValue("paydock.telemetry.otlpAuth") else "")
+            level.set(if (isDebug) localValue("paydock.telemetry.level") else "")
+        }
+        variant.sources.kotlin?.addGeneratedSourceDirectory(task, GenerateTelemetryBuildValues::outputDir)
     }
 }
 

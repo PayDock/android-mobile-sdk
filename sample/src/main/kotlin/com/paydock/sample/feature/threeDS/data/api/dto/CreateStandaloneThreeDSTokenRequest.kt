@@ -30,5 +30,17 @@ data class CreateStandaloneThreeDSTokenRequest(
                 cardType = "02"
             )
         ),
+        // Sent as threeDSRequestorDecReqInd = Y / DecMaxTime only when set (Gson omits nulls): any ACS that
+        // supports decoupled would otherwise use it for a plain challenge too
+        val decoupled: Decoupled? = null,
+    )
+
+    /**
+     * @property enabled Asks the ACS to use decoupled authentication.
+     * @property timeout How long, in minutes (EMV format, 5 digits), the ACS has to complete it.
+     */
+    data class Decoupled(
+        val enabled: Boolean = true,
+        val timeout: String = "00005",
     )
 }
