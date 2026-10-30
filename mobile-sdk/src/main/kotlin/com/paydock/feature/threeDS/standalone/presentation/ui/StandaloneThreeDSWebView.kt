@@ -55,7 +55,9 @@ private val OPEN_IN_SAME_WINDOW_SCRIPT = """
  *        Besides those and main-frame errors, failed requests inside the page (Paydock, GPayments, issuer pages)
  *        and child windows never end the session: the Client SDK times out and retries its own requests and
  *        reports a failed flow through its events.
- * @param onWebViewError Callback to handle WebView errors.
+ * @param onRendererGone Called once if the WebView's renderer process stops (Android 8+), with `true` if it
+ *        crashed and `false` if Android reclaimed it for memory. The host app survives; the session can't continue.
+ * @param onWebViewError Callback to handle WebView errors, with the error code, message and failing host.
  */
 @Suppress("LongMethod")
 @Composable
@@ -66,7 +68,8 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
     onCloseRequested: () -> Unit = {},
     openTargetBlankInSameWebView: Boolean = false,
     criticalResourceUrls: Set<String> = emptySet(),
-    onWebViewError: (Int, String) -> Unit,
+    onRendererGone: (didCrash: Boolean) -> Unit = {},
+    onWebViewError: (code: Int, message: String, host: String?) -> Unit,
 ) {
     // Get the current context
     val context = LocalContext.current
@@ -131,6 +134,7 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
                     // drops while the shopper approves in their banking app): it retries them and reports failures.
                     isSubResourceNetworkErrorFatal = { false },
                     criticalResourceUrls = criticalResourceUrls,
+                    onRendererGone = onRendererGone,
                 )
             },
             chromeClient = remember(openTargetBlankInSameWebView) {
@@ -154,14 +158,15 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
                             null
                         )
                     },
-                    onWebViewError = onWebViewError,
+                    onWebViewError = { code, message -> onWebViewError(code, message, null) },
                     onCloseRequested = onCloseRequested,
                     isChildWindowErrorFatal = { _, _ -> false },
                     openExternalLink = { url ->
                         context.openBrowser(uri = url, onError = { failedUrl ->
                             onWebViewError(
                                 HttpURLConnection.HTTP_UNAVAILABLE,
-                                "No application found to open URL: ${SdkWebViewClient.describeFailedRequest(failedUrl)}"
+                                "No application found to open a link to ${SdkWebViewClient.describeFailedRequest(failedUrl)}",
+                                failedUrl.host,
                             )
                         })
                     }

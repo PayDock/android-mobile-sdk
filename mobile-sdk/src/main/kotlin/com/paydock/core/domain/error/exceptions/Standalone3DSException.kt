@@ -14,10 +14,43 @@ sealed class Standalone3DSException(displayableMessage: String) : SdkException(d
      *
      * @param code The HTTP code of the response, if available.
      * @param displayableMessage A message that can be displayed to the user.
-     * @constructor Creates a WebViewException with the specified HTTP code and displayable message.
+     * @param host The host of the request that failed (no path or query), if known.
+     * @param charge3dsId The 3DS charge ID of the session, to look the session up in Paydock.
+     * @param inBackground Whether the app was in the background when the error happened.
+     * @param networkAvailable Whether the device had a network connection when the error happened.
+     * @constructor Creates a WebViewException with the specified HTTP code, displayable message and context.
      */
-    class WebViewException(val code: Int? = null, displayableMessage: String) :
-        Standalone3DSException(displayableMessage)
+    class WebViewException(
+        val code: Int? = null,
+        displayableMessage: String,
+        val host: String? = null,
+        val charge3dsId: String? = null,
+        val inBackground: Boolean? = null,
+        val networkAvailable: Boolean? = null,
+    ) : Standalone3DSException(displayableMessage) {
+
+        /**
+         * Kept for binary compatibility with the original constructor.
+         */
+        @Deprecated("Binary compatibility only", level = DeprecationLevel.HIDDEN)
+        constructor(code: Int?, displayableMessage: String) : this(code, displayableMessage, null)
+    }
+
+    /**
+     * Exception thrown when the WebView's renderer process stops, either because it crashed or because Android
+     * reclaimed it for memory (typically while the app is in the background). The 3DS session can't continue.
+     *
+     * @param didCrash True if the renderer crashed, false if Android killed it to reclaim memory.
+     * @param displayableMessage A message that can be displayed to the user.
+     * @param charge3dsId The 3DS charge ID of the session, to look the session up in Paydock.
+     * @param inBackground Whether the app was in the background when the renderer stopped.
+     */
+    class RenderProcessGoneException(
+        val didCrash: Boolean,
+        displayableMessage: String,
+        val charge3dsId: String? = null,
+        val inBackground: Boolean? = null,
+    ) : Standalone3DSException(displayableMessage)
 
     /**
      * Exception thrown when an operation is attempted with an invalid or expired token.

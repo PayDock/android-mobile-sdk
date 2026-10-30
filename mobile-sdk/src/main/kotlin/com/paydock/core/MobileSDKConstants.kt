@@ -153,6 +153,8 @@ internal object MobileSDKConstants {
                     "Please try again later or contact support for assistance."
             const val INVALID_TOKEN_ERROR = "Invalid Standalone 3DS token!"
             const val INVALID_TOKEN_FORMAT_ERROR = "Invalid Standalone 3DS token format!"
+            const val RENDER_PROCESS_GONE_ERROR =
+                "The 3D Secure page stopped unexpectedly. Please try again."
         }
     }
 

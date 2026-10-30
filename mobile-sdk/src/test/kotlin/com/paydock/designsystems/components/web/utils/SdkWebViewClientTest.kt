@@ -2,6 +2,7 @@ package com.paydock.designsystems.components.web.utils
 
 import android.net.Uri
 import android.util.Log
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -142,7 +143,7 @@ internal class SdkWebViewClientTest {
     }
 
     @Test
-    fun `fatal errors are logged at error level without query string`() {
+    fun `fatal errors are logged at error level with the host only`() {
         mockkStatic(Log::class)
         try {
             val message = slot<String>()
@@ -157,7 +158,8 @@ internal class SdkWebViewClientTest {
 
             verify(exactly = 1) { Log.e(any(), any<String>()) }
             assertTrue(message.captured.contains("net::ERR_CONNECTION_RESET"))
-            assertTrue(message.captured.contains("https://paydock-test.as1.gpayments.net/api/v2/brw/result/mon"))
+            assertTrue(message.captured.contains("host: paydock-test.as1.gpayments.net"))
+            assertFalse(message.captured.contains("/api/v2/brw/result/mon"))
             assertFalse(message.captured.contains("token"))
         } finally {
             unmockkStatic(Log::class)
@@ -165,20 +167,22 @@ internal class SdkWebViewClientTest {
     }
 
     @Test
-    fun `failed request description drops the query string`() {
+    fun `failed request description keeps the host only`() {
         val uri = request("paydock-test.as1.gpayments.net", mainFrame = false, path = "/api/v2/brw/result/mon", query = "t=token").url
 
-        assertEquals("https://paydock-test.as1.gpayments.net/api/v2/brw/result/mon", SdkWebViewClient.describeFailedRequest(uri))
+        assertEquals("paydock-test.as1.gpayments.net", SdkWebViewClient.describeFailedRequest(uri))
         assertEquals("unknown", SdkWebViewClient.describeFailedRequest(null))
     }
 
     @Test
-    fun `url description drops query string and fragment`() {
+    fun `url description keeps the host only`() {
         assertEquals(
-            "https://paydock-test.as1.gpayments.net/api/v2/brw/callback",
+            "paydock-test.as1.gpayments.net",
             SdkWebViewClient.describeUrl("https://paydock-test.as1.gpayments.net/api/v2/brw/callback?transId=1&t=token#x"),
         )
-        assertEquals("https://paydock.com/", SdkWebViewClient.describeUrl("https://paydock.com/#token"))
+        assertEquals("paydock.com", SdkWebViewClient.describeUrl("https://paydock.com/#token"))
+        assertEquals("paydock.com", SdkWebViewClient.describeUrl("https://paydock.com?t=token"))
+        assertEquals("paydock.com", SdkWebViewClient.describeUrl("https://user:secret@paydock.com/path"))
         assertEquals("unknown", SdkWebViewClient.describeUrl(null))
     }
 
@@ -266,6 +270,60 @@ internal class SdkWebViewClientTest {
         assertEquals(listOf(WebViewClient.ERROR_HOST_LOOKUP), errors)
     }
 
+    @Test
+    fun `critical errors report the failing host without path or query`() {
+        val hosts = mutableListOf<String?>()
+        val client = client(onError = {}, onErrorHost = { hosts += it })
+
+        client.onReceivedError(
+            webView,
+            request("acs.issuer.example", mainFrame = false, query = "token=secret"),
+            error(WebViewClient.ERROR_CONNECT),
+        )
+
+        assertEquals(listOf<String?>("acs.issuer.example"), hosts)
+    }
+
+    @Test
+    fun `renderer gone is reported once and keeps the host app alive`() {
+        val reports = mutableListOf<Boolean>()
+        val client = client(onError = {}, onRendererGone = { reports += it })
+
+        assertTrue(client.onRenderProcessGone(webView, rendererGone(crashed = false)))
+        assertTrue(client.onRenderProcessGone(webView, rendererGone(crashed = true)))
+
+        assertEquals(listOf(false), reports)
+    }
+
+    @Test
+    fun `renderer gone after a critical error keeps the host app alive without a second report`() {
+        val errors = mutableListOf<Int>()
+        val reports = mutableListOf<Boolean>()
+        val client = client(
+            onError = { errors += it },
+            policy = { false },
+            httpUrls = setOf(SCRIPT_URL),
+            onRendererGone = { reports += it },
+        )
+
+        client.onReceivedError(webView, libraryRequest(), error(WebViewClient.ERROR_HOST_LOOKUP))
+
+        assertTrue(client.onRenderProcessGone(webView, rendererGone(crashed = true)))
+        assertEquals(listOf(WebViewClient.ERROR_HOST_LOOKUP), errors)
+        assertTrue(reports.isEmpty())
+    }
+
+    @Test
+    fun `renderer gone without a handler defers to the platform default`() {
+        val client = client(onError = {})
+
+        assertFalse(client.onRenderProcessGone(webView, rendererGone(crashed = false)))
+    }
+
+    private fun rendererGone(crashed: Boolean): RenderProcessGoneDetail = mockk {
+        every { this@mockk.didCrash() } returns crashed
+    }
+
     private fun standalone3DSClient(onError: (Int) -> Unit) = client(
         onError = onError,
         policy = { false },
@@ -295,11 +353,17 @@ internal class SdkWebViewClientTest {
         policy: (String?) -> Boolean = { true },
         httpUrls: Set<String> = emptySet(),
         onErrorWithMessage: ((Int, String) -> Unit)? = null,
+        onErrorHost: (String?) -> Unit = {},
+        onRendererGone: ((Boolean) -> Unit)? = null,
     ) = SdkWebViewClient(
-        onWebViewError = { code, message -> onErrorWithMessage?.invoke(code, message) ?: onError(code) },
+        onWebViewError = { code, message, host ->
+            onErrorHost(host)
+            onErrorWithMessage?.invoke(code, message) ?: onError(code)
+        },
         delegateToAccompanist = false,
         isSubResourceNetworkErrorFatal = policy,
         criticalResourceUrls = httpUrls,
+        onRendererGone = onRendererGone,
     )
 
     private fun request(
