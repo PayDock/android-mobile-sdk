@@ -17,7 +17,7 @@
 
 ### Fixed
 - `Standalone3DSWidget` no longer takes the host app down when Android stops the 3DS WebView's renderer (Android 8+).
-  The flow ends with `RenderProcessGoneException` instead; remove the widget as for any other failure.
+  The flow ends with `RenderProcessGoneException` instead, and the widget removes and destroys the dead WebView.
 - `Standalone3DSWidget` no longer fails with `WebViewException` when a request made by the 3DS page to Paydock or
   GPayments fails, e.g. because the network changed while the shopper was in their banking app. The Client SDK retries
   those requests and reports a failed flow through its own events. Only failing to load the 3DS page itself or the

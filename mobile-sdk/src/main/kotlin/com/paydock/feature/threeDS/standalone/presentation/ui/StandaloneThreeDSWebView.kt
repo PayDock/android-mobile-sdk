@@ -4,7 +4,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -57,6 +61,7 @@ private val OPEN_IN_SAME_WINDOW_SCRIPT = """
  *        reports a failed flow through its events.
  * @param onRendererGone Called once if the WebView's renderer process stops (Android 8+), with `true` if it
  *        crashed and `false` if Android reclaimed it for memory. The host app survives; the session can't continue.
+ *        The dead WebView is removed from the screen and destroyed straight away.
  * @param onWebViewError Callback to handle WebView errors, with the error code, message and failing host.
  */
 @Suppress("LongMethod")
@@ -77,6 +82,10 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
     // Remember the state of the WebView
     val state = rememberSaveableWebViewState()
     val navigator = rememberWebViewNavigator()
+
+    // Once the renderer is gone the WebView can't be used again: it's removed from the screen and destroyed
+    var rendererGone by remember { mutableStateOf(false) }
+    val currentOnRendererGone by rememberUpdatedState(onRendererGone)
 
     // Load the initial URL (or HTML data) using LaunchedEffect.
     // This ensures the URL is loaded only when `webUrl` or `data` changes,
@@ -102,6 +111,7 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
     Box(
         contentAlignment = Alignment.Center,
     ) {
+        if (rendererGone) return@Box
         WebView(
             state = state,
             modifier = Modifier.fillMaxSize(),
@@ -134,7 +144,10 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
                     // drops while the shopper approves in their banking app): it retries them and reports failures.
                     isSubResourceNetworkErrorFatal = { false },
                     criticalResourceUrls = criticalResourceUrls,
-                    onRendererGone = onRendererGone,
+                    onRendererGone = { didCrash ->
+                        rendererGone = true
+                        currentOnRendererGone(didCrash)
+                    },
                 )
             },
             chromeClient = remember(openTargetBlankInSameWebView) {
@@ -182,6 +195,9 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
                         MobileSDKConstants.JS_BRIDGE_NAME
                     )
                 }
+            },
+            onDispose = { webView ->
+                if (rendererGone) webView.destroy()
             }
         )
     }
