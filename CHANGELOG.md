@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [5.7.2] - 2026-10-30
 
 ### Added
 - `Standalone3DSException.WebViewException` now also carries `host` (the failing request's host, no path or query),
