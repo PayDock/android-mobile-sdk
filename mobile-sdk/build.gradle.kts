@@ -29,6 +29,8 @@ android {
         minSdk = 24
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
+        // The published version at runtime, in every build type (telemetry service.version).
+        buildConfigField("String", "SDK_VERSION", "\"${providers.gradleProperty("versionName").get()}\"")
     }
 
     buildTypes {

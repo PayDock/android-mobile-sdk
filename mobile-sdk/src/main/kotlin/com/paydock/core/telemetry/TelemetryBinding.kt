@@ -1,5 +1,7 @@
 package com.paydock.core.telemetry
 
+import android.content.Context
+import com.paydock.BuildConfig
 import com.paydock.core.domain.model.Environment
 import com.paydock.telemetry.ActiveTelemetry
 import com.paydock.telemetry.NoOpTelemetry
@@ -34,12 +36,16 @@ internal object BuildValuesCredentialsProvider : TelemetryCredentialsProvider {
 /** What the binding chose. SDK code only ever receives [telemetry]; [runtime] stays in this file. */
 internal class TelemetrySelection(val telemetry: Telemetry, val runtime: TelemetryRuntime)
 
-/** The decision with every input injectable. A provider that throws counts as no credentials. */
+/**
+ * The decision with every input injectable. A provider that throws counts as no credentials. [createActive] is called
+ * only when the decision passes, so an inactive SDK never builds the worker or touches storage.
+ */
 internal fun selectTelemetry(
     buildEnabled: Boolean,
     credentialsProvider: TelemetryCredentialsProvider,
     environment: Environment,
     level: TelemetryLevel,
+    createActive: (TelemetryCredentials, TelemetryLevel) -> ActiveTelemetry,
 ): TelemetrySelection {
     val credentials = runCatching { credentialsProvider.credentials() }.getOrNull()
     val isActive = TelemetryActivation.isActive(
@@ -49,7 +55,7 @@ internal fun selectTelemetry(
         level = level
     )
     return if (isActive && credentials != null) {
-        val active = ActiveTelemetry(credentials = credentials, level = level)
+        val active = createActive(credentials, level)
         TelemetrySelection(telemetry = active, runtime = active)
     } else {
         TelemetrySelection(telemetry = NoOpTelemetry, runtime = NoOpTelemetry)
@@ -66,13 +72,19 @@ internal fun bind(koin: Koin, selection: TelemetrySelection): Telemetry {
     )
 }
 
-/** The one binding at SDK start (RS-4): reads TelemetryBuildValues, selects, binds. Never throws. */
-internal fun bindTelemetry(koin: Koin, environment: Environment): Telemetry = runCatching {
+/**
+ * The one binding at SDK start (RS-4): reads TelemetryBuildValues, selects, binds. Never throws. When active, the
+ * telemetry is built with the app context, the SDK version and the environment name (R_08, R_10).
+ */
+internal fun bindTelemetry(koin: Koin, environment: Environment, context: Context): Telemetry = runCatching {
     val selection = selectTelemetry(
         buildEnabled = TelemetryBuildValues.ENABLED,
         credentialsProvider = BuildValuesCredentialsProvider,
         environment = environment,
-        level = TelemetryLevel.parse(TelemetryBuildValues.LEVEL)
+        level = TelemetryLevel.parse(TelemetryBuildValues.LEVEL),
+        createActive = { c, l ->
+            ActiveTelemetry.create(context, c, l, BuildConfig.SDK_VERSION, environment.name.lowercase())
+        }
     )
     bind(koin, selection)
 }.getOrElse {

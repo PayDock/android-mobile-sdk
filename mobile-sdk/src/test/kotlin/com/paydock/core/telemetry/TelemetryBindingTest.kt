@@ -1,11 +1,17 @@
 package com.paydock.core.telemetry
 
+import android.content.ContextWrapper
 import com.paydock.core.domain.model.Environment
 import com.paydock.telemetry.ActiveTelemetry
+import com.paydock.telemetry.DeviceContextProvider
+import com.paydock.telemetry.NetworkConnectionType
 import com.paydock.telemetry.NoOpTelemetry
+import com.paydock.telemetry.ResourceAttributes
+import com.paydock.telemetry.SerialTelemetryDispatcher
 import com.paydock.telemetry.Telemetry
 import com.paydock.telemetry.TelemetryCredentials
 import com.paydock.telemetry.TelemetryCredentialsProvider
+import com.paydock.telemetry.TelemetryDispatcher
 import com.paydock.telemetry.TelemetryLevel
 import com.paydock.telemetry.TelemetryRuntime
 import org.junit.Assert.assertEquals
@@ -20,9 +26,9 @@ import org.koin.dsl.koinApplication
 /**
  * Debug tests for the telemetry activation binding (RS-4, R_05, R_06).
  *
- * Every input is injected: fake credentials providers and a counting fake runtime, never the generated build
- * values, so the result does not depend on the engineer's `local.properties`. Each test binds into its own fresh
- * Koin instance.
+ * Every input is injected: fake credentials providers, a counting factory that builds [ActiveTelemetry] with an
+ * immediate dispatcher and a fake device context, and a counting fake runtime — never the generated build values, so
+ * the result does not depend on the engineer's `local.properties`. Each test binds into its own fresh Koin instance.
  */
 internal class TelemetryBindingTest {
 
@@ -48,6 +54,48 @@ internal class TelemetryBindingTest {
         }
     }
 
+    /** A fixed device context: these tests never build the real one. */
+    private val deviceContext = object : DeviceContextProvider {
+        override fun current() = ResourceAttributes(
+            serviceVersion = "0.0.0-test",
+            deploymentEnvironmentName = "sandbox",
+            osVersion = "",
+            deviceManufacturer = "",
+            deviceModelIdentifier = "",
+            appInstallationId = "installation-test",
+            appId = "",
+            appVersion = "",
+            appDebuggable = true
+        )
+
+        override fun networkConnectionType() = NetworkConnectionType.UNKNOWN
+    }
+
+    /** Runs every task at once on the caller's thread, so no worker thread is ever started. */
+    private val immediate = object : TelemetryDispatcher {
+        override fun post(task: () -> Unit): Boolean {
+            task()
+            return true
+        }
+
+        override fun postDelayed(delayMillis: Long, task: () -> Unit): Boolean = true
+    }
+
+    private fun activeTelemetry(level: TelemetryLevel = TelemetryLevel.ALL) = ActiveTelemetry(
+        credentials = credentials,
+        level = level,
+        deviceContextProvider = deviceContext,
+        dispatcher = immediate
+    )
+
+    /** The `createActive` factory, counting its calls. */
+    private var factoryCalls = 0
+    private val countingFactory: (TelemetryCredentials, TelemetryLevel) -> ActiveTelemetry = { c, l ->
+        factoryCalls++
+        assertSame(credentials, c)
+        activeTelemetry(l)
+    }
+
     @Before
     fun setUp() {
         koin = koinApplication { }.koin
@@ -58,12 +106,18 @@ internal class TelemetryBindingTest {
         provider: TelemetryCredentialsProvider = configured,
         environment: Environment = Environment.SANDBOX,
         level: TelemetryLevel = TelemetryLevel.ALL,
-    ): TelemetrySelection = selectTelemetry(buildEnabled, provider, environment, level)
+    ): TelemetrySelection = selectTelemetry(buildEnabled, provider, environment, level, countingFactory)
 
+    /** A no-op selection, and the factory never called: nothing is built and nothing is written to storage. */
     private fun assertNoOp(selection: TelemetrySelection) {
         assertSame(NoOpTelemetry, selection.telemetry)
         assertSame(NoOpTelemetry, selection.runtime)
+        assertEquals(0, factoryCalls)
     }
+
+    private fun liveTelemetryThreads(): Set<Thread> = Thread.getAllStackTraces().keys
+        .filter { it.isAlive && it.name == SerialTelemetryDispatcher.THREAD_NAME }
+        .toSet()
 
     @Test
     fun select_buildDisabled_isNoOp() {
@@ -96,8 +150,20 @@ internal class TelemetryBindingTest {
     }
 
     @Test
+    fun select_inactive_neverCallsTheFactory() {
+        select(buildEnabled = false)
+        select(provider = unconfigured)
+        select(provider = failing)
+        select(environment = Environment.PRODUCTION)
+        select(environment = Environment.STAGING)
+        select(level = TelemetryLevel.OFF)
+
+        assertEquals(0, factoryCalls)
+    }
+
+    @Test
     fun select_allConditions_isActiveTelemetryAsBothFacadeAndRuntime() {
-        listOf(TelemetryLevel.ERRORS, TelemetryLevel.ALL).forEach { level ->
+        listOf(TelemetryLevel.ERRORS, TelemetryLevel.ALL).forEachIndexed { index, level ->
             val selection = select(level = level)
 
             val active = selection.telemetry as ActiveTelemetry
@@ -105,17 +171,32 @@ internal class TelemetryBindingTest {
             assertTrue(active.isActive)
             assertSame(credentials, active.credentials)
             assertSame(level, active.level)
+            assertEquals(index + 1, factoryCalls)
         }
     }
 
     @Test
-    fun bind_active_registersTheFacade() {
+    fun bindTelemetry_inactive_startsNoTelemetryThread() {
+        val before = liveTelemetryThreads()
+
+        // Production is never active, whatever the build values say; the context is never touched.
+        val bound = bindTelemetry(koin, Environment.PRODUCTION, ContextWrapper(null))
+
+        assertSame(NoOpTelemetry, bound)
+        assertSame(NoOpTelemetry, koin.get<Telemetry>())
+        // Compared with the threads alive before, so a worker another test class left in this JVM cannot interfere.
+        assertEquals(emptySet<Thread>(), liveTelemetryThreads() - before)
+    }
+
+    @Test
+    fun bind_active_registersTheFacade_andStartsItOnceWithTheDeviceContext() {
         val selection = select()
 
         val bound = bind(koin, selection)
 
         assertSame(selection.telemetry, bound)
         assertSame(selection.telemetry, koin.get<Telemetry>())
+        assertEquals(deviceContext.current(), (bound as ActiveTelemetry).resourceAttributes)
     }
 
     @Test
@@ -138,7 +219,7 @@ internal class TelemetryBindingTest {
     @Test
     fun bind_active_startsTheRuntimeOnce() {
         val runtime = CountingRuntime()
-        val facade = ActiveTelemetry(credentials = credentials, level = TelemetryLevel.ALL)
+        val facade = activeTelemetry()
 
         val bound = bind(koin, TelemetrySelection(telemetry = facade, runtime = runtime))
 
@@ -159,7 +240,7 @@ internal class TelemetryBindingTest {
     @Test
     fun bind_startThrows_bindsTheNoOp() {
         val runtime = CountingRuntime(failure = IllegalStateException("synthetic start failure"))
-        val facade = ActiveTelemetry(credentials = credentials, level = TelemetryLevel.ALL)
+        val facade = activeTelemetry()
 
         val bound = bind(koin, TelemetrySelection(telemetry = facade, runtime = runtime))
 

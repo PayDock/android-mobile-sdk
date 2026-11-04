@@ -40,7 +40,7 @@ class MobileSDK(
         if (koinContext == null) {
             koinContext = MobileSDKKoinContext(context)
             // Bind telemetry before any init-time background work, so Koin already resolves Telemetry there.
-            koinContext?.koin?.let { bindTelemetry(it, environment) }
+            koinContext?.koin?.let { bindTelemetry(it, environment, context) }
             koinContext?.koin?.get<BinDataRefreshCoordinator>()?.refreshAtSdkInit()
         }
     }
