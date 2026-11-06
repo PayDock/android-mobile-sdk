@@ -14,10 +14,12 @@ internal sealed interface TelemetryEvent {
      * or an abnormal exit found on the next launch (EXIT_INFO).
      */
     data class Crash(
-        val error: ErrorInfo?, // null for next-launch crashes reported from exit info
+        val error: ErrorInfo?, // null when the OS report has no trace (an os_kill)
         val source: CrashSource,
-        val exitReason: Int? = null, // ApplicationExitInfo reason, next-launch crashes only
+        val kind: CrashKind, // paydock.crash.kind
+        val reason: String? = null, // paydock.crash.reason: a name (ANR, CRASH_NATIVE, LOW_MEMORY), never an int
         val threadName: String? = null,
+        val occurredAt: Long? = null, // UTC epoch ms from the OS report; null for an in-process crash
     ) : TelemetryEvent
 
     /**
@@ -46,18 +48,24 @@ internal sealed interface TelemetryEvent {
         val widget: String? = null,
     ) : TelemetryEvent
 
+    /** A widget was shown (D19). */
+    data class WidgetOpened(val widget: String) : TelemetryEvent
+
+    /** How many records were dropped for one reason (spec § 5.8). Only the reducer creates it; never reported. */
+    data class Dropped(val reason: DroppedReason, val count: Int) : TelemetryEvent
+
     /**
      * A sanitised exception: its fully qualified type, its stack frames and its cause, never a message,
      * toString() output, localized text or suppressed exceptions (spec § 5.5).
      */
     data class ErrorInfo(
-        val type: String, // throwable.javaClass.name
+        val type: String?, // throwable.javaClass.name; null only for frames without an exception (an ANR thread dump)
         val frames: List<String>, // "<class>.<method>(<file>:<line>)", at most MAX_FRAMES
         val cause: ErrorInfo? = null, // the chain, at most MAX_CAUSES deep
     ) {
         /** Ordered types down the cause chain, outermost cause first (paydock.exception.cause_types). */
         val causeTypes: List<String>
-            get() = generateSequence(cause) { it.cause }.map { it.type }.toList()
+            get() = generateSequence(cause) { it.cause }.mapNotNull { it.type }.toList()
 
         companion object {
             const val MAX_FRAMES = 64
@@ -108,15 +116,29 @@ internal sealed interface TelemetryEvent {
 
     /** Structured fields of a Paydock error body. Never its message text. */
     data class ApiError(
-        val status: String? = null,
+        val status: Int? = null, // spec § 5.4 (2026-11-06)
         val code: String? = null,
         val summaryCode: String? = null,
         val gatewayCodes: List<String> = emptyList(),
     )
 
-    enum class CrashSource { UNCAUGHT_HANDLER, EXIT_INFO }
+    enum class CrashSource(val value: String) { UNCAUGHT_HANDLER("uncaught_handler"), EXIT_INFO("exit_info") }
 
-    enum class TransportKind { TIMEOUT, CONNECTION, TLS, UNKNOWN }
+    enum class CrashKind(val value: String) { EXCEPTION("exception"), ANR("anr"), NATIVE("native"), OS_KILL("os_kill") }
+
+    enum class DroppedReason(val value: String) {
+        RATE_LIMIT("rate_limit"),
+        STORE_FULL("store_full"),
+        TOO_OLD("too_old"),
+        REJECTED("rejected"),
+    }
+
+    enum class TransportKind(val value: String) {
+        TIMEOUT("timeout"),
+        CONNECTION("connection"),
+        TLS("tls"),
+        UNKNOWN("unknown"),
+    }
 
     enum class HttpMethod { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS }
 }

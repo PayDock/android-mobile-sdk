@@ -1,0 +1,25 @@
+{
+  "time": "2026-11-05T04:14:07.512Z",
+  "builtTime": "2026-11-05T04:14:07.512Z",
+  "sessionId": "b2f6c0a4-1d3e-4e8f-9a71-5c2d8e0f4b13",
+  "sequence": 5,
+  "connection": "wifi",
+  "event": {
+    "type": "SdkError",
+    "code": "TokenisingCardException",
+    "widget": "CardDetailsWidget",
+    "inSdk": true,
+    "error": {
+      "type": "com.paydock.core.domain.error.exceptions.CardDetailsException$TokenisingCardException",
+      "frames": [
+        "com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel.tokeniseCard(CardDetailsViewModel.kt:151)"
+      ],
+      "cause": {
+        "type": "com.paydock.core.network.exceptions.ApiException",
+        "frames": [
+          "com.paydock.core.network.interceptor.ApiErrorInterceptor.intercept(ApiErrorInterceptor.kt:31)"
+        ]
+      }
+    }
+  }
+}

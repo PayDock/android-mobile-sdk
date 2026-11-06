@@ -62,12 +62,18 @@ internal fun selectTelemetry(
     }
 }
 
-/** Registers selection.telemetry as the Koin `single<Telemetry>`, then starts the runtime once if it is active. */
-internal fun bind(koin: Koin, selection: TelemetrySelection): Telemetry {
+/**
+ * Registers selection.telemetry as the Koin `single<Telemetry>`, then starts the runtime once if it is active. After a
+ * successful start, [sendTestRecord] (debug-only, R_16) asks the runtime to store and send one test record.
+ */
+internal fun bind(koin: Koin, selection: TelemetrySelection, sendTestRecord: Boolean = false): Telemetry {
     koin.loadModules(listOf(module { single<Telemetry> { selection.telemetry } }), allowOverride = true)
     if (!selection.telemetry.isActive) return selection.telemetry
     return runCatching { selection.runtime.start() }.fold(
-        onSuccess = { selection.telemetry },
+        onSuccess = {
+            if (sendTestRecord) runCatching { selection.runtime.sendTestRecord() }
+            selection.telemetry
+        },
         onFailure = { bindNoOp(koin) }
     )
 }
@@ -86,7 +92,7 @@ internal fun bindTelemetry(koin: Koin, environment: Environment, context: Contex
             ActiveTelemetry.create(context, c, l, BuildConfig.SDK_VERSION, environment.name.lowercase())
         }
     )
-    bind(koin, selection)
+    bind(koin, selection, sendTestRecord = TelemetryBuildValues.SEND_TEST_RECORD)
 }.getOrElse {
     runCatching { bindNoOp(koin) }.getOrDefault(NoOpTelemetry)
 }

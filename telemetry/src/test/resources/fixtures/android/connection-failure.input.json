@@ -1,0 +1,25 @@
+{
+  "time": "2026-11-05T04:14:07.512Z",
+  "builtTime": "2026-11-05T04:14:07.512Z",
+  "sessionId": "b2f6c0a4-1d3e-4e8f-9a71-5c2d8e0f4b13",
+  "sequence": 6,
+  "connection": "cell",
+  "event": {
+    "type": "NetworkFailure",
+    "method": "POST",
+    "urlTemplate": "/v1/payment_sources/tokens",
+    "serverAddress": "api-sandbox.paydock.com",
+    "failure": {
+      "kind": "timeout",
+      "error": {
+        "type": "java.net.SocketTimeoutException",
+        "frames": [
+          "okhttp3.internal.http2.Http2Stream$StreamTimeout.newTimeoutException(Http2Stream.kt:675)",
+          "io.ktor.client.engine.okhttp.OkHttpEngine.execute(OkHttpEngine.kt:59)"
+        ]
+      }
+    },
+    "attempt": 2,
+    "widget": "GiftCardWidget"
+  }
+}

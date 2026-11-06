@@ -1,0 +1,179 @@
+{
+  "resourceLogs": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "paydock-mobile-sdk"
+            }
+          },
+          {
+            "key": "service.namespace",
+            "value": {
+              "stringValue": "paydock"
+            }
+          },
+          {
+            "key": "service.version",
+            "value": {
+              "stringValue": "5.7.2"
+            }
+          },
+          {
+            "key": "paydock.sdk.platform",
+            "value": {
+              "stringValue": "android"
+            }
+          },
+          {
+            "key": "paydock.telemetry.spec_version",
+            "value": {
+              "intValue": "1"
+            }
+          },
+          {
+            "key": "deployment.environment.name",
+            "value": {
+              "stringValue": "sandbox"
+            }
+          },
+          {
+            "key": "os.name",
+            "value": {
+              "stringValue": "Android"
+            }
+          },
+          {
+            "key": "os.version",
+            "value": {
+              "stringValue": "14"
+            }
+          },
+          {
+            "key": "device.manufacturer",
+            "value": {
+              "stringValue": "Google"
+            }
+          },
+          {
+            "key": "device.model.identifier",
+            "value": {
+              "stringValue": "Pixel 8"
+            }
+          },
+          {
+            "key": "app.installation.id",
+            "value": {
+              "stringValue": "3f9c6b1e-7a42-4d0b-9e15-2c8a5d71b3e4"
+            }
+          },
+          {
+            "key": "paydock.app.id",
+            "value": {
+              "stringValue": "com.merchant.shop"
+            }
+          },
+          {
+            "key": "paydock.app.version",
+            "value": {
+              "stringValue": "3.2.0"
+            }
+          },
+          {
+            "key": "paydock.app.debuggable",
+            "value": {
+              "boolValue": true
+            }
+          }
+        ]
+      },
+      "scopeLogs": [
+        {
+          "scope": {
+            "name": "paydock.telemetry"
+          },
+          "logRecords": [
+            {
+              "timeUnixNano": "1793852047512000000",
+              "severityNumber": 17,
+              "severityText": "ERROR",
+              "body": {
+                "stringValue": "paydock.error · sdk_error · TokenisingCardException"
+              },
+              "attributes": [
+                {
+                  "key": "event.name",
+                  "value": {
+                    "stringValue": "paydock.error"
+                  }
+                },
+                {
+                  "key": "session.id",
+                  "value": {
+                    "stringValue": "b2f6c0a4-1d3e-4e8f-9a71-5c2d8e0f4b13"
+                  }
+                },
+                {
+                  "key": "log.record.uid",
+                  "value": {
+                    "stringValue": "b2f6c0a4-1d3e-4e8f-9a71-5c2d8e0f4b13-5"
+                  }
+                },
+                {
+                  "key": "network.connection.type",
+                  "value": {
+                    "stringValue": "wifi"
+                  }
+                },
+                {
+                  "key": "paydock.widget",
+                  "value": {
+                    "stringValue": "CardDetailsWidget"
+                  }
+                },
+                {
+                  "key": "exception.type",
+                  "value": {
+                    "stringValue": "com.paydock.core.domain.error.exceptions.CardDetailsException$TokenisingCardException"
+                  }
+                },
+                {
+                  "key": "exception.stacktrace",
+                  "value": {
+                    "stringValue": "com.paydock.core.domain.error.exceptions.CardDetailsException$TokenisingCardException\n\tat com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel.tokeniseCard(CardDetailsViewModel.kt:151)\nCaused by: com.paydock.core.network.exceptions.ApiException\n\tat com.paydock.core.network.interceptor.ApiErrorInterceptor.intercept(ApiErrorInterceptor.kt:31)"
+                  }
+                },
+                {
+                  "key": "paydock.exception.cause_types",
+                  "value": {
+                    "stringValue": "com.paydock.core.network.exceptions.ApiException"
+                  }
+                },
+                {
+                  "key": "paydock.exception.in_sdk",
+                  "value": {
+                    "boolValue": true
+                  }
+                },
+                {
+                  "key": "paydock.error.kind",
+                  "value": {
+                    "stringValue": "sdk_error"
+                  }
+                },
+                {
+                  "key": "paydock.error.code",
+                  "value": {
+                    "stringValue": "TokenisingCardException"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

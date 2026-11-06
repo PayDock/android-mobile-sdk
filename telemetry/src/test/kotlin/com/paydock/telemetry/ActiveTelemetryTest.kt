@@ -2,44 +2,79 @@ package com.paydock.telemetry
 
 import com.paydock.telemetry.TelemetryTestFakes.FakeClock
 import com.paydock.telemetry.TelemetryTestFakes.FakeDeviceContextProvider
+import com.paydock.telemetry.TelemetryTestFakes.FakeLifecycle
+import com.paydock.telemetry.TelemetryTestFakes.FakeMonotonic
+import com.paydock.telemetry.TelemetryTestFakes.FakeTransport
 import com.paydock.telemetry.TelemetryTestFakes.ImmediateDispatcher
-import com.paydock.telemetry.TelemetryTestFakes.RecordingExporter
-import com.paydock.telemetry.TelemetryTestFakes.RecordingQueue
-import com.paydock.telemetry.TelemetryTestFakes.RecordingStore
+import com.paydock.telemetry.TelemetryTestFakes.InMemoryStore
 import com.paydock.telemetry.TelemetryTestFakes.SequentialIds
 import com.paydock.telemetry.TelemetryTestFakes.ThrowingDispatcher
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 /**
- * Unit tests for [ActiveTelemetry], the facade and lifecycle on the worker (R_03, R_04, R_12). Every test passes a
- * fake device context: the real one is built in a later slice.
+ * Unit tests for [ActiveTelemetry], the facade and lifecycle on the worker (R_03, R_04, R_11, R_12, R_14, R_16):
+ * recording fakes for the store, the transport and the lifecycle; the immediate dispatcher, or the real
+ * [SerialTelemetryDispatcher] where the thread or the order matters. Nothing sleeps: a test waits on a latch.
  */
 internal class ActiveTelemetryTest {
 
+    @get:Rule
+    val folder = TemporaryFolder()
+
+    private val waitSeconds = 5L
     private val credentials = TelemetryTestFakes.credentials
     private val deviceContext = FakeDeviceContextProvider()
+    private val store = InMemoryStore()
+    private val lifecycle = FakeLifecycle()
     private val error = TelemetryTestFakes.sdkError()
 
     private fun telemetry(
         dispatcher: TelemetryDispatcher = ImmediateDispatcher(),
         idGenerator: IdGenerator = SequentialIds(),
         clock: Clock = FakeClock(),
-        ports: ActiveTelemetry.Ports = ActiveTelemetry.Ports(),
+        transport: TelemetryTransport = FakeTransport(),
+        store: DurableStore = this.store,
     ) = ActiveTelemetry(
         credentials = credentials,
         level = TelemetryLevel.ALL,
         deviceContextProvider = deviceContext,
+        ports = ActiveTelemetry.Ports(
+            store = store,
+            exporter = OtlpExporter(transport, credentials),
+            lifecycle = lifecycle,
+            retryPolicy = RetryPolicy(Random(5))
+        ),
         clock = clock,
+        monotonic = FakeMonotonic(),
         idGenerator = idGenerator,
-        dispatcher = dispatcher,
-        ports = ports
+        dispatcher = dispatcher
+    )
+
+    /** Waits until every task posted so far, delayed by 0 at most, has run on the worker. */
+    private fun SerialTelemetryDispatcher.awaitIdle() {
+        val done = CountDownLatch(1)
+        assertTrue(postDelayed(0) { done.countDown() })
+        assertTrue(done.await(waitSeconds, TimeUnit.SECONDS))
+    }
+
+    /** A record from an earlier run, already on disk. */
+    private fun storedRecord(sequence: Long) = TelemetryTestFakes.record(
+        sequence,
+        sessionId = TelemetryTestFakes.uuid(900),
+        event = TelemetryTestFakes.sdkError("test.Earlier$sequence"),
+        createdAt = TelemetryTestFakes.T0 - 60_000 + sequence
     )
 
     @Test
@@ -92,14 +127,16 @@ internal class ActiveTelemetryTest {
     }
 
     @Test
-    fun report_andStart_surviveADispatcherThatThrows() {
+    fun report_start_andSendTestRecord_surviveADispatcherThatThrows() {
         val telemetry = telemetry(dispatcher = ThrowingDispatcher)
 
         telemetry.report(error)
         telemetry.start()
+        telemetry.sendTestRecord()
 
         assertTrue(telemetry.isActive)
         assertNull(telemetry.resourceAttributes)
+        assertEquals(0, lifecycle.registrations)
     }
 
     @Test
@@ -117,6 +154,17 @@ internal class ActiveTelemetryTest {
     }
 
     @Test
+    fun recordIds_comeFromTheSessionsSequence() {
+        val telemetry = telemetry()
+
+        telemetry.report(error)
+        telemetry.report(TelemetryTestFakes.crash())
+
+        assertEquals(listOf("${telemetry.sessionId}-1", "${telemetry.sessionId}-2"), store.saved.map { it.id })
+        assertEquals(3L, telemetry.sequence.next())
+    }
+
+    @Test
     fun start_twice_buildsTheContextOnce() {
         val telemetry = telemetry()
         assertNull(telemetry.resourceAttributes)
@@ -124,8 +172,8 @@ internal class ActiveTelemetryTest {
         telemetry.start()
         telemetry.start()
 
-        assertEquals(1, deviceContext.currentCalls)
         assertEquals(TelemetryTestFakes.resourceAttributes, telemetry.resourceAttributes)
+        assertEquals(1, lifecycle.registrations)
     }
 
     @Test
@@ -134,45 +182,191 @@ internal class ActiveTelemetryTest {
         val telemetry = telemetry(dispatcher = dispatcher)
 
         telemetry.start()
-        val done = CountDownLatch(1)
-        assertTrue(dispatcher.post { done.countDown() })
+        dispatcher.awaitIdle()
 
-        assertTrue(done.await(5, TimeUnit.SECONDS))
         assertEquals(TelemetryTestFakes.resourceAttributes, telemetry.resourceAttributes)
     }
 
+    /** Never on the main thread: every store and transport call runs on the worker, never the caller's thread. */
     @Test
-    fun dispatch_endToEnd_reachesThePorts_withTheInstallationIdAndTheSessionId() {
+    fun everyStoreAndTransportCall_runsOnThePaydockTelemetryThread() {
+        val dispatcher = SerialTelemetryDispatcher()
+        val transport = FakeTransport()
+        store.save(storedRecord(1))
+        store.threads.clear()
+        val telemetry = telemetry(dispatcher = dispatcher, transport = transport)
+
+        telemetry.start()
+        telemetry.report(error)
+        repeat(TelemetryLimits.FLUSH_THRESHOLD) { telemetry.report(TelemetryTestFakes.sdkError("test.Error$it")) }
+        telemetry.sendTestRecord()
+        dispatcher.awaitIdle()
+        dispatcher.awaitIdle()
+
+        assertNotEquals(SerialTelemetryDispatcher.THREAD_NAME, Thread.currentThread().name)
+        assertTrue(store.threads.isNotEmpty())
+        assertEquals(setOf(SerialTelemetryDispatcher.THREAD_NAME), store.threads.toSet())
+        assertTrue(transport.sent.size >= 2)
+        assertEquals(setOf(SerialTelemetryDispatcher.THREAD_NAME), transport.sent.map { it.thread }.toSet())
+    }
+
+    @Test
+    fun theLifecycle_isRegisteredOnceByStartOnly_andTheBackgroundCallbackExports() {
         val dispatcher = ImmediateDispatcher()
-        val clock = FakeClock()
-        val start = clock.nowMillis
-        val queue = RecordingQueue()
-        val store = RecordingStore()
-        val exporter = RecordingExporter()
-        val telemetry = telemetry(
-            dispatcher = dispatcher,
-            clock = clock,
-            ports = ActiveTelemetry.Ports(queue = queue, store = store, exporter = exporter)
-        )
+        val transport = FakeTransport()
+        val telemetry = telemetry(dispatcher = dispatcher, transport = transport)
+        telemetry.report(error)
+        assertEquals(0, lifecycle.registrations)
+
+        telemetry.start()
+        telemetry.start()
+        telemetry.report(error)
+        assertEquals(1, lifecycle.registrations)
+        val sentBefore = transport.sent.size
+
+        lifecycle.onBackground!!.invoke()
+        assertEquals(sentBefore, transport.sent.size) // posted, not run on the lifecycle's thread
+        dispatcher.runDelayed(0)
+
+        assertEquals(sentBefore + 1, transport.sent.size)
+        assertEquals(0, store.count())
+        assertEquals(1, lifecycle.registrations)
+    }
+
+    @Test
+    fun start_flushesTheStoredRecords_earlierRunFirst() {
+        val stored = listOf(storedRecord(1), storedRecord(2)).onEach(store::save)
+        val transport = FakeTransport()
+        val telemetry = telemetry(transport = transport)
+
         telemetry.start()
 
-        repeat(TelemetryReducer.FLUSH_THRESHOLD) { telemetry.report(TelemetryTestFakes.crash()) }
-        telemetry.report(error)
+        assertEquals(listOf(stored.map { it.id }), transport.sent.map { it.recordIds() })
+        assertEquals(0, store.count())
+        assertEquals(0, telemetry.currentState().pending)
+    }
 
-        clock.nowMillis = start + TelemetryReducer.FLUSH_INTERVAL_MILLIS
-        dispatcher.runDelayed()
-        clock.nowMillis = start + TelemetryReducer.COLLAPSE_WINDOW_MILLIS
+    @Test
+    fun sendTestRecord_storesAndSendsARecordWithTheTestCode() {
+        val dispatcher = ImmediateDispatcher()
+        val transport = FakeTransport()
+        val telemetry = telemetry(dispatcher = dispatcher, transport = transport)
+        telemetry.start()
+
+        telemetry.sendTestRecord()
+        val saved = store.saved.single()
+        assertEquals(AttributeValue.Str(ActiveTelemetry.TEST_RECORD_CODE), saved.value("paydock.error.code"))
+        assertEquals(AttributeValue.Str(ActiveTelemetry.TEST_RECORD_TYPE), saved.value("exception.type"))
+        assertTrue(transport.sent.isEmpty())
+        dispatcher.runDelayed(0)
+
+        val request = transport.sent.single()
+        assertEquals(listOf("TelemetryTestRecord"), request.recordValues("paydock.error.code"))
+        assertEquals(listOf("com.paydock.telemetry.TelemetryTestRecord"), request.recordValues("exception.type"))
+        assertEquals(0, store.count())
+    }
+
+    @Test
+    fun everySentBatch_carriesTheInstallationId_andEveryRecordItsSessionId() {
+        val dispatcher = ImmediateDispatcher()
+        val transport = FakeTransport()
+        val telemetry = telemetry(dispatcher = dispatcher, transport = transport)
+        telemetry.start()
+
+        repeat(TelemetryLimits.FLUSH_THRESHOLD + 3) { telemetry.report(TelemetryTestFakes.sdkError("test.Error$it")) }
         dispatcher.runDelayed()
 
-        assertEquals(listOf(TelemetryReducer.FLUSH_THRESHOLD, 1), exporter.batches.map { it.records.size })
-        assertEquals(TelemetryReducer.FLUSH_THRESHOLD + 1, store.saved.size)
-        assertEquals(TelemetryReducer.FLUSH_THRESHOLD + 1, queue.offered.size)
-        exporter.batches.forEach { batch ->
-            assertEquals(TelemetryTestFakes.INSTALLATION_ID, batch.resource.appInstallationId)
-            assertTrue(batch.records.all { it.sessionId == telemetry.sessionId })
+        assertEquals(2, transport.sent.size)
+        assertEquals(TelemetryLimits.FLUSH_THRESHOLD + 3, transport.sent.sumOf { it.logRecords.size })
+        transport.sent.forEach { request ->
+            assertEquals(TelemetryTestFakes.INSTALLATION_ID, request.resourceValue("app.installation.id"))
+            assertTrue(request.recordValues("session.id").all { it == telemetry.sessionId })
         }
-        assertEquals(0, telemetry.currentState().queued)
-        assertTrue(telemetry.currentState().collapsing.isEmpty())
-        assertEquals(start + TelemetryReducer.COLLAPSE_WINDOW_MILLIS, telemetry.currentState().lastExport)
+    }
+
+    /** With a transport that always answers 401: one send, then ExportStopped, and nothing re-armed after it. */
+    @Test
+    fun aTransportThatAlwaysAnswers401_sendsOnce_thenStops_andLaterReportsAreStoredButNeverSent() {
+        val dispatcher = ImmediateDispatcher()
+        val transport = FakeTransport(otherwise = TransportResult.HttpError(401, null))
+        val telemetry = telemetry(dispatcher = dispatcher, transport = transport)
+        telemetry.start()
+
+        telemetry.report(error)
+        assertEquals(1, dispatcher.delayed.size) // the 10 s timer
+        dispatcher.runDelayed()
+
+        assertEquals(1, transport.sent.size)
+        assertTrue(telemetry.currentState().exportStopped)
+        assertTrue(dispatcher.delayed.isEmpty())
+
+        repeat(TelemetryLimits.FLUSH_THRESHOLD + 5) { telemetry.report(TelemetryTestFakes.sdkError("test.Error$it")) }
+        telemetry.sendTestRecord()
+        lifecycle.onBackground!!.invoke()
+        dispatcher.runDelayed()
+        dispatcher.runDelayed()
+
+        assertEquals(1, transport.sent.size)
+        assertTrue(dispatcher.delayed.isEmpty())
+        assertEquals(TelemetryLimits.FLUSH_THRESHOLD + 7, store.count())
+    }
+
+    /** Follow-ups run in the same worker task: reports queued behind a slow send are counted, never overwritten. */
+    @Test
+    fun reportsQueuedBehindASlowSend_areCountedInPending_afterTheFlush() {
+        val dispatcher = SerialTelemetryDispatcher()
+        val sending = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val transport = FakeTransport()
+        transport.beforeAnswer = {
+            sending.countDown()
+            release.await(waitSeconds, TimeUnit.SECONDS)
+        }
+        store.save(storedRecord(1))
+        val telemetry = telemetry(dispatcher = dispatcher, transport = transport)
+
+        telemetry.start()
+        assertTrue(sending.await(waitSeconds, TimeUnit.SECONDS))
+        repeat(3) { telemetry.report(TelemetryTestFakes.sdkError("test.Error$it")) }
+        release.countDown()
+        dispatcher.awaitIdle()
+
+        assertEquals(3, telemetry.currentState().pending)
+        assertEquals(3, store.count())
+        assertTrue(telemetry.currentState().flushScheduled)
+    }
+
+    /** The store creates nothing until the first record: an active, started but idle telemetry writes no file. */
+    @Test
+    fun activeButIdle_createsNoTelemetryDirectory() {
+        val dispatcher = SerialTelemetryDispatcher()
+        val directory = File(folder.root, FileDurableStore.DIRECTORY_NAME)
+        val transport = FakeTransport()
+        val telemetry = telemetry(
+            dispatcher = dispatcher,
+            transport = transport,
+            store = FileDurableStore { directory }
+        )
+
+        telemetry.start()
+        dispatcher.awaitIdle()
+
+        assertEquals(TelemetryTestFakes.resourceAttributes, telemetry.resourceAttributes)
+        assertFalse(directory.exists())
+        assertTrue(transport.sent.isEmpty())
+
+        telemetry.report(error)
+        dispatcher.awaitIdle()
+        assertTrue(directory.isDirectory)
+    }
+
+    /** Off the main looper, as in a JVM test, the process lifecycle's registration fails quietly and never throws. */
+    @Test
+    fun processAppLifecycle_registrationWithoutAMainLooper_neverThrows() {
+        var backgrounded = 0
+
+        ProcessAppLifecycle.register { backgrounded++ }
+
+        assertEquals(0, backgrounded)
     }
 }

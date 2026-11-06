@@ -1,0 +1,173 @@
+{
+  "resourceLogs": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "paydock-mobile-sdk"
+            }
+          },
+          {
+            "key": "service.namespace",
+            "value": {
+              "stringValue": "paydock"
+            }
+          },
+          {
+            "key": "service.version",
+            "value": {
+              "stringValue": "5.7.2"
+            }
+          },
+          {
+            "key": "paydock.sdk.platform",
+            "value": {
+              "stringValue": "android"
+            }
+          },
+          {
+            "key": "paydock.telemetry.spec_version",
+            "value": {
+              "intValue": "1"
+            }
+          },
+          {
+            "key": "deployment.environment.name",
+            "value": {
+              "stringValue": "sandbox"
+            }
+          },
+          {
+            "key": "os.name",
+            "value": {
+              "stringValue": "Android"
+            }
+          },
+          {
+            "key": "os.version",
+            "value": {
+              "stringValue": "14"
+            }
+          },
+          {
+            "key": "device.manufacturer",
+            "value": {
+              "stringValue": "Google"
+            }
+          },
+          {
+            "key": "device.model.identifier",
+            "value": {
+              "stringValue": "Pixel 8"
+            }
+          },
+          {
+            "key": "app.installation.id",
+            "value": {
+              "stringValue": "3f9c6b1e-7a42-4d0b-9e15-2c8a5d71b3e4"
+            }
+          },
+          {
+            "key": "paydock.app.id",
+            "value": {
+              "stringValue": "com.merchant.shop"
+            }
+          },
+          {
+            "key": "paydock.app.version",
+            "value": {
+              "stringValue": "3.2.0"
+            }
+          },
+          {
+            "key": "paydock.app.debuggable",
+            "value": {
+              "boolValue": true
+            }
+          }
+        ]
+      },
+      "scopeLogs": [
+        {
+          "scope": {
+            "name": "paydock.telemetry"
+          },
+          "logRecords": [
+            {
+              "timeUnixNano": "1793852047512000000",
+              "severityNumber": 21,
+              "severityText": "FATAL",
+              "body": {
+                "stringValue": "paydock.crash · exception · java.lang.IndexOutOfBoundsException"
+              },
+              "attributes": [
+                {
+                  "key": "event.name",
+                  "value": {
+                    "stringValue": "paydock.crash"
+                  }
+                },
+                {
+                  "key": "session.id",
+                  "value": {
+                    "stringValue": "b2f6c0a4-1d3e-4e8f-9a71-5c2d8e0f4b13"
+                  }
+                },
+                {
+                  "key": "log.record.uid",
+                  "value": {
+                    "stringValue": "b2f6c0a4-1d3e-4e8f-9a71-5c2d8e0f4b13-4"
+                  }
+                },
+                {
+                  "key": "network.connection.type",
+                  "value": {
+                    "stringValue": "wifi"
+                  }
+                },
+                {
+                  "key": "exception.type",
+                  "value": {
+                    "stringValue": "java.lang.IndexOutOfBoundsException"
+                  }
+                },
+                {
+                  "key": "exception.stacktrace",
+                  "value": {
+                    "stringValue": "java.lang.IndexOutOfBoundsException\n\tat com.merchant.shop.cart.CartAdapter.onBindViewHolder(CartAdapter.kt:58)\n\tat androidx.recyclerview.widget.RecyclerView$Adapter.bindViewHolder(RecyclerView.java:7254)"
+                  }
+                },
+                {
+                  "key": "paydock.exception.in_sdk",
+                  "value": {
+                    "boolValue": false
+                  }
+                },
+                {
+                  "key": "paydock.crash.kind",
+                  "value": {
+                    "stringValue": "exception"
+                  }
+                },
+                {
+                  "key": "paydock.crash.source",
+                  "value": {
+                    "stringValue": "uncaught_handler"
+                  }
+                },
+                {
+                  "key": "thread.name",
+                  "value": {
+                    "stringValue": "main"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

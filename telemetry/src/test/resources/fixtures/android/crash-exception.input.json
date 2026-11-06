@@ -1,0 +1,28 @@
+{
+  "time": "2026-11-05T04:14:07.512Z",
+  "builtTime": "2026-11-05T04:14:07.512Z",
+  "sessionId": "b2f6c0a4-1d3e-4e8f-9a71-5c2d8e0f4b13",
+  "sequence": 3,
+  "connection": "wifi",
+  "event": {
+    "type": "Crash",
+    "kind": "exception",
+    "source": "uncaught_handler",
+    "thread": "main",
+    "inSdk": true,
+    "error": {
+      "type": "java.lang.IllegalStateException",
+      "frames": [
+        "com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel.tokeniseCard(CardDetailsViewModel.kt:142)",
+        "com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel$tokeniseCard$1.invokeSuspend(CardDetailsViewModel.kt:118)",
+        "kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)"
+      ],
+      "cause": {
+        "type": "java.lang.NullPointerException",
+        "frames": [
+          "com.paydock.feature.card.domain.mapper.CardMapperKt.asEntity(CardMapper.kt:27)"
+        ]
+      }
+    }
+  }
+}

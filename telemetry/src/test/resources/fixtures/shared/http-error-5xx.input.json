@@ -1,0 +1,20 @@
+{
+  "time": "2026-11-05T04:14:07.512Z",
+  "builtTime": "2026-11-05T04:14:07.512Z",
+  "sessionId": "5d0c3b8e-2f71-4a96-8e04-6b1a9c7d2e53",
+  "sequence": 9,
+  "connection": "cell",
+  "event": {
+    "type": "NetworkFailure",
+    "method": "GET",
+    "urlTemplate": "/v1/gateways/{id}/wallet-config",
+    "serverAddress": "api-sandbox.paydock.com",
+    "failure": {
+      "kind": "http",
+      "status": 503
+    },
+    "apiError": {},
+    "attempt": 3,
+    "widget": "GooglePayWidget"
+  }
+}

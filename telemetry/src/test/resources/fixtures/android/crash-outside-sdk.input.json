@@ -1,0 +1,21 @@
+{
+  "time": "2026-11-05T04:14:07.512Z",
+  "builtTime": "2026-11-05T04:14:07.512Z",
+  "sessionId": "b2f6c0a4-1d3e-4e8f-9a71-5c2d8e0f4b13",
+  "sequence": 4,
+  "connection": "wifi",
+  "event": {
+    "type": "Crash",
+    "kind": "exception",
+    "source": "uncaught_handler",
+    "thread": "main",
+    "inSdk": false,
+    "error": {
+      "type": "java.lang.IndexOutOfBoundsException",
+      "frames": [
+        "com.merchant.shop.cart.CartAdapter.onBindViewHolder(CartAdapter.kt:58)",
+        "androidx.recyclerview.widget.RecyclerView$Adapter.bindViewHolder(RecyclerView.java:7254)"
+      ]
+    }
+  }
+}

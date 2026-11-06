@@ -30,7 +30,7 @@ internal class DefaultDeviceContextProviderTest {
                 osVersion = "15",
                 deviceManufacturer = "TestMaker",
                 deviceModelIdentifier = "TestModel",
-                appInstallationId = "id-1",
+                appInstallationId = TelemetryTestFakes.uuid(1),
                 appId = "com.example.merchant",
                 appVersion = "1.0.0",
                 appDebuggable = true

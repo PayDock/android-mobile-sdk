@@ -16,8 +16,18 @@ internal class NoOpTelemetryTest {
     private val failure = TelemetryEvent.ErrorInfo.from(IllegalStateException("synthetic failure"))
 
     private val oneOfEachEvent: List<TelemetryEvent> = listOf(
-        TelemetryEvent.Crash(error = failure, source = TelemetryEvent.CrashSource.UNCAUGHT_HANDLER),
-        TelemetryEvent.Crash(error = null, source = TelemetryEvent.CrashSource.EXIT_INFO, exitReason = 4),
+        TelemetryEvent.Crash(
+            error = failure,
+            source = TelemetryEvent.CrashSource.UNCAUGHT_HANDLER,
+            kind = TelemetryEvent.CrashKind.EXCEPTION
+        ),
+        TelemetryEvent.Crash(
+            error = null,
+            source = TelemetryEvent.CrashSource.EXIT_INFO,
+            kind = TelemetryEvent.CrashKind.OS_KILL,
+            reason = "LOW_MEMORY",
+            occurredAt = 1_700_000_000_000L
+        ),
         TelemetryEvent.UncaughtException(error = failure, threadName = "main"),
         TelemetryEvent.SdkError(error = failure, errorCode = "SdkException"),
         TelemetryEvent.NetworkFailure(
@@ -25,7 +35,7 @@ internal class NoOpTelemetryTest {
             urlTemplate = "/v1/payment_sources/tokens",
             serverAddress = "api.example.test",
             failure = TelemetryEvent.NetworkError.HttpStatus(code = 400),
-            apiError = TelemetryEvent.ApiError(status = "400", code = "validation_error")
+            apiError = TelemetryEvent.ApiError(status = 400, code = "validation_error")
         ),
         TelemetryEvent.NetworkFailure(
             method = TelemetryEvent.HttpMethod.GET,
@@ -42,7 +52,9 @@ internal class NoOpTelemetryTest {
             urlTemplate = "/v1/payment_sources/tokens",
             serverAddress = "api.example.test",
             failure = TelemetryEvent.NetworkError.Decode(statusCode = 200, error = failure)
-        )
+        ),
+        TelemetryEvent.WidgetOpened(widget = "CardDetailsWidget"),
+        TelemetryEvent.Dropped(reason = TelemetryEvent.DroppedReason.RATE_LIMIT, count = 3)
     )
 
     @Test
@@ -53,6 +65,14 @@ internal class NoOpTelemetryTest {
     @Test
     fun report_acceptsEveryEventKindAndReturns() {
         oneOfEachEvent.forEach { NoOpTelemetry.report(it) }
+
+        assertFalse(NoOpTelemetry.isActive)
+    }
+
+    @Test
+    fun sendTestRecord_returnsAndDoesNothing() {
+        NoOpTelemetry.sendTestRecord()
+        NoOpTelemetry.sendTestRecord()
 
         assertFalse(NoOpTelemetry.isActive)
     }

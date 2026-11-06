@@ -1,9 +1,18 @@
 package com.paydock.telemetry
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import java.util.zip.GZIPInputStream
+
 /** Hand-written fakes shared by the core tests. No mocking library. */
 internal object TelemetryTestFakes {
 
-    const val INSTALLATION_ID = "installation-test-0001"
+    const val INSTALLATION_ID = "00000000-0000-4000-8000-000000000001"
+    const val SESSION_ID = "00000000-0000-4000-8000-000000000101"
+    const val T0 = 1_700_000_000_000L
 
     val resourceAttributes = ResourceAttributes(
         serviceVersion = "0.0.0-test",
@@ -27,7 +36,8 @@ internal object TelemetryTestFakes {
 
     fun crash(type: String = "java.lang.IllegalStateException") = TelemetryEvent.Crash(
         error = TelemetryEvent.ErrorInfo(type = type, frames = emptyList()),
-        source = TelemetryEvent.CrashSource.UNCAUGHT_HANDLER
+        source = TelemetryEvent.CrashSource.UNCAUGHT_HANDLER,
+        kind = TelemetryEvent.CrashKind.EXCEPTION
     )
 
     /** A device context that counts how often it is built. */
@@ -66,6 +76,13 @@ internal object TelemetryTestFakes {
             delayed.clear()
             tasks.forEach { (_, task) -> task() }
         }
+
+        /** Runs and forgets only the delayed tasks posted so far with [delayMillis]; keeps the others. */
+        fun runDelayed(delayMillis: Long) {
+            val tasks = delayed.filter { it.first == delayMillis }
+            delayed.removeAll(tasks)
+            tasks.forEach { (_, task) -> task() }
+        }
     }
 
     /** A dispatcher that throws from every call. */
@@ -74,44 +91,128 @@ internal object TelemetryTestFakes {
         override fun postDelayed(delayMillis: Long, task: () -> Unit): Boolean = error("synthetic dispatcher failure")
     }
 
-    /** A queue that keeps records in memory, so exports can be observed. */
-    class RecordingQueue : RecordQueue {
-        val offered = mutableListOf<PendingRecord>()
-        private val pending = ArrayDeque<PendingRecord>()
+    /** The UUID-shaped ID number [n], as the allowlist requires of `session.id` and installation IDs. */
+    fun uuid(n: Int): String = "00000000-0000-4000-8000-%012d".format(n)
 
-        override fun offer(record: PendingRecord) {
-            offered += record
-            pending.addLast(record)
-        }
+    /** A record as [RecordFactory] builds it, filtered, for the store and runner tests. */
+    fun record(
+        sequence: Long,
+        sessionId: String = SESSION_ID,
+        event: TelemetryEvent = sdkError(),
+        createdAt: Long = T0 + sequence,
+    ): TelemetryRecord = Allowlist.filter(
+        RecordFactory.create(PendingRecord("$sessionId-$sequence", sessionId, event, createdAt), NetworkConnectionType.WIFI)
+    )
 
-        override fun drain(max: Int): List<PendingRecord> {
-            val drained = mutableListOf<PendingRecord>()
-            while (drained.size < max && pending.isNotEmpty()) drained += pending.removeFirst()
-            return drained
-        }
+    /** An in-memory [DurableStore]: oldest by time then sequence, pruned by age only. Records each call's thread. */
+    class InMemoryStore : DurableStore {
+        val records = linkedMapOf<String, TelemetryRecord>()
+        val saved = mutableListOf<TelemetryRecord>()
+        val removed = mutableListOf<String>()
+        val threads: MutableList<String> = java.util.Collections.synchronizedList(mutableListOf())
 
-        override fun size(): Int = pending.size
-    }
+        /** Added to every prune's result, to model a store that dropped records for space. */
+        var extraPrune = PruneResult()
 
-    class RecordingStore : DurableStore {
-        val saved = mutableListOf<PendingRecord>()
-
-        override fun save(record: PendingRecord) {
+        @Synchronized
+        override fun save(record: TelemetryRecord) {
+            threads += Thread.currentThread().name
             saved += record
+            records[record.id] = record
         }
 
-        override fun loadAll(): List<PendingRecord> = saved.toList()
-        override fun remove(ids: Collection<String>) = Unit
-        override fun prune(now: Long) = Unit
+        @Synchronized
+        override fun oldest(max: Int): List<TelemetryRecord> {
+            threads += Thread.currentThread().name
+            return records.values.sortedWith(
+                compareBy<TelemetryRecord>({ it.timeUnixMillis }, { it.id.substringAfterLast('-').toLongOrNull() })
+            ).take(max)
+        }
+
+        @Synchronized
+        override fun remove(ids: Collection<String>) {
+            threads += Thread.currentThread().name
+            removed += ids
+            ids.forEach { records.remove(it) }
+        }
+
+        @Synchronized
+        override fun prune(now: Long): PruneResult {
+            threads += Thread.currentThread().name
+            val tooOld = records.values.filter { now - it.timeUnixMillis > TelemetryLimits.RECORD_MAX_AGE_MILLIS }
+            tooOld.forEach { records.remove(it.id) }
+            return PruneResult(tooOld = tooOld.count { !it.isDroppedNotice } + extraPrune.tooOld, extraPrune.storeFull)
+        }
+
+        @Synchronized
+        override fun count(): Int {
+            threads += Thread.currentThread().name
+            return records.size
+        }
     }
 
-    class RecordingExporter : Exporter {
-        val batches = mutableListOf<ExportBatch>()
-
-        override fun export(batch: ExportBatch): ExportResult {
-            batches += batch
-            return ExportResult.SUCCESS
+    /** One sent request, as the transport saw it, with its body un-gzipped and parsed. */
+    class SentRequest(val payload: ByteArray, val headers: Map<String, String>, val thread: String) {
+        val json: JsonObject by lazy {
+            Json.parseToJsonElement(GZIPInputStream(payload.inputStream()).use { it.readBytes() }.decodeToString())
+                .jsonObject
         }
+        val resourceLogs: JsonObject
+            get() = json["resourceLogs"]!!.jsonArray.single().jsonObject
+        val logRecords: List<JsonObject>
+            get() = resourceLogs["scopeLogs"]!!.jsonArray.single().jsonObject["logRecords"]!!.jsonArray
+                .map { it.jsonObject }
+
+        fun resourceValue(key: String): String? = attributeValue(resourceLogs["resource"]!!.jsonObject, key)
+
+        fun recordValues(key: String): List<String?> = logRecords.map { attributeValue(it, key) }
+
+        fun recordIds(): List<String?> = recordValues("log.record.uid")
+
+        private fun attributeValue(owner: JsonObject, key: String): String? = owner["attributes"]!!.jsonArray
+            .map { it.jsonObject }
+            .firstOrNull { it["key"]!!.jsonPrimitive.content == key }
+            ?.get("value")?.jsonObject?.values?.single()?.jsonPrimitive?.content
+    }
+
+    /** A transport that records every send and answers from [script], then with [otherwise]. */
+    class FakeTransport(
+        vararg script: TransportResult,
+        private val otherwise: TransportResult = TransportResult.Success(204),
+    ) : TelemetryTransport {
+        private val answers = ArrayDeque(script.toList())
+        val sent: MutableList<SentRequest> = java.util.Collections.synchronizedList(mutableListOf())
+
+        /** Runs before each answer, on the sending thread: a hook to block or observe a send. */
+        @Volatile
+        var beforeAnswer: () -> Unit = {}
+
+        override fun send(payload: ByteArray, headers: Map<String, String>): TransportResult {
+            sent += SentRequest(payload, headers, Thread.currentThread().name)
+            beforeAnswer()
+            return synchronized(answers) { answers.removeFirstOrNull() } ?: otherwise
+        }
+    }
+
+    /** A lifecycle that counts its registrations and keeps the callback. */
+    class FakeLifecycle : AppLifecycle {
+        @Volatile
+        var registrations = 0
+            private set
+
+        @Volatile
+        var onBackground: (() -> Unit)? = null
+            private set
+
+        override fun register(onBackground: () -> Unit) {
+            registrations++
+            this.onBackground = onBackground
+        }
+    }
+
+    /** A settable monotonic clock in milliseconds. */
+    class FakeMonotonic(var elapsedMillis: Long = 0L) : MonotonicClock {
+        override fun elapsed(): Long = elapsedMillis
     }
 
     /** A settable clock in UTC epoch milliseconds. */
@@ -170,9 +271,9 @@ internal object TelemetryTestFakes {
         }
     }
 
-    /** Sequential IDs: "id-1", "id-2", … */
+    /** Sequential UUID-shaped IDs: [uuid] of 1, 2, … */
     class SequentialIds : IdGenerator {
         private var next = 0
-        override fun newId(): String = "id-${++next}"
+        override fun newId(): String = uuid(++next)
     }
 }

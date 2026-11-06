@@ -1,0 +1,27 @@
+{
+  "time": "2026-11-05T04:14:07.512Z",
+  "builtTime": "2026-11-05T04:14:07.512Z",
+  "sessionId": "5d0c3b8e-2f71-4a96-8e04-6b1a9c7d2e53",
+  "sequence": 8,
+  "connection": "wifi",
+  "event": {
+    "type": "NetworkFailure",
+    "method": "POST",
+    "urlTemplate": "/v1/payment_sources/tokens",
+    "serverAddress": "api-sandbox.paydock.com",
+    "failure": {
+      "kind": "http",
+      "status": 400
+    },
+    "apiError": {
+      "status": 400,
+      "code": "invalid_transaction_details",
+      "summaryCode": "invalid_transaction_details",
+      "gatewayCodes": [
+        "INVALID_REQUEST:INVALID:sourceOfFunds.provided.card.securityCode"
+      ]
+    },
+    "attempt": 1,
+    "widget": "CardDetailsWidget"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "time": "2026-11-05T03:58:41.000Z",
+  "builtTime": "2026-11-05T04:14:07.512Z",
+  "sessionId": "b2f6c0a4-1d3e-4e8f-9a71-5c2d8e0f4b13",
+  "sequence": 1,
+  "connection": "wifi",
+  "event": {
+    "type": "Crash",
+    "kind": "anr",
+    "source": "exit_info",
+    "reason": "ANR",
+    "inSdk": true,
+    "error": {
+      "type": null,
+      "frames": [
+        "android.os.MessageQueue.nativePollOnce(Native Method)",
+        "com.paydock.feature.card.presentation.ui.CardDetailsWidgetKt.CardDetailsWidget(CardDetailsWidget.kt:77)"
+      ]
+    }
+  }
+}

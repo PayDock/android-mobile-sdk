@@ -1,0 +1,209 @@
+{
+  "resourceLogs": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "paydock-mobile-sdk"
+            }
+          },
+          {
+            "key": "service.namespace",
+            "value": {
+              "stringValue": "paydock"
+            }
+          },
+          {
+            "key": "service.version",
+            "value": {
+              "stringValue": "4.9.1"
+            }
+          },
+          {
+            "key": "paydock.sdk.platform",
+            "value": {
+              "stringValue": "ios"
+            }
+          },
+          {
+            "key": "paydock.telemetry.spec_version",
+            "value": {
+              "intValue": "1"
+            }
+          },
+          {
+            "key": "deployment.environment.name",
+            "value": {
+              "stringValue": "sandbox"
+            }
+          },
+          {
+            "key": "os.name",
+            "value": {
+              "stringValue": "iOS"
+            }
+          },
+          {
+            "key": "os.version",
+            "value": {
+              "stringValue": "18.1"
+            }
+          },
+          {
+            "key": "device.manufacturer",
+            "value": {
+              "stringValue": "Apple"
+            }
+          },
+          {
+            "key": "device.model.identifier",
+            "value": {
+              "stringValue": "iPhone15,2"
+            }
+          },
+          {
+            "key": "app.installation.id",
+            "value": {
+              "stringValue": "c81d4e2a-5f3b-4a90-b6e7-19d2f0a8c435"
+            }
+          },
+          {
+            "key": "paydock.app.id",
+            "value": {
+              "stringValue": "com.merchant.shop"
+            }
+          },
+          {
+            "key": "paydock.app.version",
+            "value": {
+              "stringValue": "3.2.0"
+            }
+          },
+          {
+            "key": "paydock.app.debuggable",
+            "value": {
+              "boolValue": true
+            }
+          }
+        ]
+      },
+      "scopeLogs": [
+        {
+          "scope": {
+            "name": "paydock.telemetry"
+          },
+          "logRecords": [
+            {
+              "timeUnixNano": "1793852047512000000",
+              "severityNumber": 17,
+              "severityText": "ERROR",
+              "body": {
+                "stringValue": "paydock.network.failure · http_4xx 400 · POST /v1/payment_sources/tokens"
+              },
+              "attributes": [
+                {
+                  "key": "event.name",
+                  "value": {
+                    "stringValue": "paydock.network.failure"
+                  }
+                },
+                {
+                  "key": "session.id",
+                  "value": {
+                    "stringValue": "5d0c3b8e-2f71-4a96-8e04-6b1a9c7d2e53"
+                  }
+                },
+                {
+                  "key": "log.record.uid",
+                  "value": {
+                    "stringValue": "5d0c3b8e-2f71-4a96-8e04-6b1a9c7d2e53-8"
+                  }
+                },
+                {
+                  "key": "network.connection.type",
+                  "value": {
+                    "stringValue": "wifi"
+                  }
+                },
+                {
+                  "key": "paydock.widget",
+                  "value": {
+                    "stringValue": "CardDetailsWidget"
+                  }
+                },
+                {
+                  "key": "paydock.group.key",
+                  "value": {
+                    "stringValue": "http POST /v1/payment_sources/tokens 400"
+                  }
+                },
+                {
+                  "key": "http.request.method",
+                  "value": {
+                    "stringValue": "POST"
+                  }
+                },
+                {
+                  "key": "url.template",
+                  "value": {
+                    "stringValue": "/v1/payment_sources/tokens"
+                  }
+                },
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "api-sandbox.paydock.com"
+                  }
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": {
+                    "intValue": "400"
+                  }
+                },
+                {
+                  "key": "error.type",
+                  "value": {
+                    "stringValue": "http_4xx"
+                  }
+                },
+                {
+                  "key": "paydock.api.status",
+                  "value": {
+                    "intValue": "400"
+                  }
+                },
+                {
+                  "key": "paydock.api.error.code",
+                  "value": {
+                    "stringValue": "invalid_transaction_details"
+                  }
+                },
+                {
+                  "key": "paydock.api.error.summary_code",
+                  "value": {
+                    "stringValue": "invalid_transaction_details"
+                  }
+                },
+                {
+                  "key": "paydock.api.gateway.codes",
+                  "value": {
+                    "stringValue": "INVALID_REQUEST:INVALID:sourceOfFunds.provided.card.securityCode"
+                  }
+                },
+                {
+                  "key": "paydock.http.attempt",
+                  "value": {
+                    "intValue": "1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

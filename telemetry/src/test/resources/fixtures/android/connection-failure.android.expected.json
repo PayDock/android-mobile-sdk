@@ -1,0 +1,185 @@
+{
+  "resourceLogs": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "paydock-mobile-sdk"
+            }
+          },
+          {
+            "key": "service.namespace",
+            "value": {
+              "stringValue": "paydock"
+            }
+          },
+          {
+            "key": "service.version",
+            "value": {
+              "stringValue": "5.7.2"
+            }
+          },
+          {
+            "key": "paydock.sdk.platform",
+            "value": {
+              "stringValue": "android"
+            }
+          },
+          {
+            "key": "paydock.telemetry.spec_version",
+            "value": {
+              "intValue": "1"
+            }
+          },
+          {
+            "key": "deployment.environment.name",
+            "value": {
+              "stringValue": "sandbox"
+            }
+          },
+          {
+            "key": "os.name",
+            "value": {
+              "stringValue": "Android"
+            }
+          },
+          {
+            "key": "os.version",
+            "value": {
+              "stringValue": "14"
+            }
+          },
+          {
+            "key": "device.manufacturer",
+            "value": {
+              "stringValue": "Google"
+            }
+          },
+          {
+            "key": "device.model.identifier",
+            "value": {
+              "stringValue": "Pixel 8"
+            }
+          },
+          {
+            "key": "app.installation.id",
+            "value": {
+              "stringValue": "3f9c6b1e-7a42-4d0b-9e15-2c8a5d71b3e4"
+            }
+          },
+          {
+            "key": "paydock.app.id",
+            "value": {
+              "stringValue": "com.merchant.shop"
+            }
+          },
+          {
+            "key": "paydock.app.version",
+            "value": {
+              "stringValue": "3.2.0"
+            }
+          },
+          {
+            "key": "paydock.app.debuggable",
+            "value": {
+              "boolValue": true
+            }
+          }
+        ]
+      },
+      "scopeLogs": [
+        {
+          "scope": {
+            "name": "paydock.telemetry"
+          },
+          "logRecords": [
+            {
+              "timeUnixNano": "1793852047512000000",
+              "severityNumber": 17,
+              "severityText": "ERROR",
+              "body": {
+                "stringValue": "paydock.network.failure · timeout · POST /v1/payment_sources/tokens"
+              },
+              "attributes": [
+                {
+                  "key": "event.name",
+                  "value": {
+                    "stringValue": "paydock.network.failure"
+                  }
+                },
+                {
+                  "key": "session.id",
+                  "value": {
+                    "stringValue": "b2f6c0a4-1d3e-4e8f-9a71-5c2d8e0f4b13"
+                  }
+                },
+                {
+                  "key": "log.record.uid",
+                  "value": {
+                    "stringValue": "b2f6c0a4-1d3e-4e8f-9a71-5c2d8e0f4b13-6"
+                  }
+                },
+                {
+                  "key": "network.connection.type",
+                  "value": {
+                    "stringValue": "cell"
+                  }
+                },
+                {
+                  "key": "paydock.widget",
+                  "value": {
+                    "stringValue": "GiftCardWidget"
+                  }
+                },
+                {
+                  "key": "exception.type",
+                  "value": {
+                    "stringValue": "java.net.SocketTimeoutException"
+                  }
+                },
+                {
+                  "key": "exception.stacktrace",
+                  "value": {
+                    "stringValue": "java.net.SocketTimeoutException\n\tat okhttp3.internal.http2.Http2Stream$StreamTimeout.newTimeoutException(Http2Stream.kt:675)\n\tat io.ktor.client.engine.okhttp.OkHttpEngine.execute(OkHttpEngine.kt:59)"
+                  }
+                },
+                {
+                  "key": "http.request.method",
+                  "value": {
+                    "stringValue": "POST"
+                  }
+                },
+                {
+                  "key": "url.template",
+                  "value": {
+                    "stringValue": "/v1/payment_sources/tokens"
+                  }
+                },
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "api-sandbox.paydock.com"
+                  }
+                },
+                {
+                  "key": "error.type",
+                  "value": {
+                    "stringValue": "timeout"
+                  }
+                },
+                {
+                  "key": "paydock.http.attempt",
+                  "value": {
+                    "intValue": "2"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

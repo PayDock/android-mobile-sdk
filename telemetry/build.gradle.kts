@@ -7,6 +7,8 @@ plugins {
     id("detekt-convention")
     // test coverage
     id("test-coverage-convention")
+    // dependency validation (buildHealth)
+    id("dependency-analysis-convention")
 }
 
 android {
@@ -31,8 +33,15 @@ kotlin {
 }
 
 dependencies {
-    // No main dependencies: the module ships inside :mobile-sdk and must not change its runtime classpath.
+    // Compile-only: everything below already ships inside :mobile-sdk, so the module adds nothing to its runtime
+    // classpath.
+    compileOnly(libs.paydock.core.networking)
+    compileOnly(libs.kotlinx.serialization.json)
+    compileOnly(libs.kotlinx.coroutines)
+    compileOnly(libs.androidx.lifecycle.process)
 
     // Unit Testing
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.serialization.json)
+    testImplementation(libs.paydock.core.networking)
 }

@@ -1,10 +1,9 @@
 package com.paydock.telemetry
 
-/** A reported event on its way to becoming a record (RecordFactory, A5). Typed fields only. */
+/** A reported event on its way to becoming a record ([RecordFactory]). Typed fields only. */
 internal data class PendingRecord(
-    val id: String, // "<sessionId>-<sequence>", deterministic
+    val id: String, // "<sessionId>-<sequence>", sequence from RecordSequence (log.record.uid)
     val sessionId: String,
     val event: TelemetryEvent,
-    val firstSeenAt: Long, // UTC epoch milliseconds
-    val occurrences: Int = 1, // paydock.occurrences
+    val createdAt: Long, // UTC epoch ms, when the reducer created it
 )

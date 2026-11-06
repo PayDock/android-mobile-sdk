@@ -18,7 +18,9 @@ internal class TelemetryContractTest {
         TelemetryEvent.Crash::class.java,
         TelemetryEvent.UncaughtException::class.java,
         TelemetryEvent.SdkError::class.java,
-        TelemetryEvent.NetworkFailure::class.java
+        TelemetryEvent.NetworkFailure::class.java,
+        TelemetryEvent.WidgetOpened::class.java,
+        TelemetryEvent.Dropped::class.java
     )
 
     /** Every class nested in [TelemetryEvent], at any depth. */
@@ -27,6 +29,8 @@ internal class TelemetryContractTest {
         TelemetryEvent.UncaughtException::class.java,
         TelemetryEvent.SdkError::class.java,
         TelemetryEvent.NetworkFailure::class.java,
+        TelemetryEvent.WidgetOpened::class.java,
+        TelemetryEvent.Dropped::class.java,
         TelemetryEvent.ErrorInfo::class.java,
         TelemetryEvent.ErrorInfo.Companion::class.java,
         TelemetryEvent.NetworkError::class.java,
@@ -35,6 +39,8 @@ internal class TelemetryContractTest {
         TelemetryEvent.NetworkError.Decode::class.java,
         TelemetryEvent.ApiError::class.java,
         TelemetryEvent.CrashSource::class.java,
+        TelemetryEvent.CrashKind::class.java,
+        TelemetryEvent.DroppedReason::class.java,
         TelemetryEvent.TransportKind::class.java,
         TelemetryEvent.HttpMethod::class.java
     )
@@ -43,7 +49,11 @@ internal class TelemetryContractTest {
         TelemetryIntent.Reported::class.java,
         TelemetryIntent.Flush::class.java,
         TelemetryIntent.AppBackgrounded::class.java,
-        TelemetryIntent.LevelChanged::class.java
+        TelemetryIntent.LevelChanged::class.java,
+        TelemetryIntent.RecordsDropped::class.java,
+        TelemetryIntent.PendingCounted::class.java,
+        TelemetryIntent.NoticesExported::class.java,
+        TelemetryIntent.ExportStopped::class.java
     )
 
     @Test

@@ -118,6 +118,21 @@ internal class ErrorInfoTest {
     }
 
     @Test
+    fun causeTypes_skipsACauseWithoutAType() {
+        val info = ErrorInfo(
+            type = null,
+            frames = listOf("android.os.MessageQueue.nativePollOnce(Native Method)"),
+            cause = ErrorInfo(
+                type = null,
+                frames = emptyList(),
+                cause = ErrorInfo(type = CauseFailure::class.java.name, frames = emptyList())
+            )
+        )
+
+        assertEquals(listOf(CauseFailure::class.java.name), info.causeTypes)
+    }
+
+    @Test
     fun from_fallsBackToTheTypeAloneWhenTheStackTraceCannotBeRead() {
         val throwable = UnreadableStackFailure()
 

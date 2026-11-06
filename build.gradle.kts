@@ -219,6 +219,14 @@ dependencyAnalysis {
                 exclude("org.jetbrains.kotlin:kotlin-test-junit")
             }
         }
+
+        project(":telemetry") {
+            // The Kotlin plugin adds kotlin-stdlib as `api` itself; the module never declares it. Every declaration is
+            // internal, so the plugin advises `implementation`, which this module cannot express.
+            onIncorrectConfiguration {
+                exclude("org.jetbrains.kotlin:kotlin-stdlib")
+            }
+        }
     }
     
     // Structure for reports

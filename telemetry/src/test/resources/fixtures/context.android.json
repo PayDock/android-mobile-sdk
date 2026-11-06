@@ -1,0 +1,16 @@
+{
+  "service.name": "paydock-mobile-sdk",
+  "service.namespace": "paydock",
+  "service.version": "5.7.2",
+  "paydock.sdk.platform": "android",
+  "paydock.telemetry.spec_version": 1,
+  "deployment.environment.name": "sandbox",
+  "os.name": "Android",
+  "os.version": "14",
+  "device.manufacturer": "Google",
+  "device.model.identifier": "Pixel 8",
+  "app.installation.id": "3f9c6b1e-7a42-4d0b-9e15-2c8a5d71b3e4",
+  "paydock.app.id": "com.merchant.shop",
+  "paydock.app.version": "3.2.0",
+  "paydock.app.debuggable": true
+}
