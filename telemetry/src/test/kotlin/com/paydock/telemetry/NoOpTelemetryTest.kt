@@ -1,6 +1,9 @@
 package com.paydock.telemetry
 
+import android.os.Looper
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 /**
@@ -75,6 +78,35 @@ internal class NoOpTelemetryTest {
         NoOpTelemetry.sendTestRecord()
 
         assertFalse(NoOpTelemetry.isActive)
+    }
+
+    /**
+     * Nothing posted, nothing installed. On the JVM every `android.os` call throws (the unmocked android.jar), so a
+     * post to the main looper would fail this test; the handlers it could install are the same objects after.
+     */
+    @Test
+    fun throwTestCrash_postsNothing_andInstallsNothing() {
+        assertThrows(RuntimeException::class.java) { Looper.getMainLooper() }
+        val thread = Thread.currentThread()
+        val defaultBefore = Thread.getDefaultUncaughtExceptionHandler()
+        val threadBefore = thread.uncaughtExceptionHandler
+
+        NoOpTelemetry.throwTestCrash()
+        NoOpTelemetry.throwTestCrash()
+
+        assertSame(defaultBefore, Thread.getDefaultUncaughtExceptionHandler())
+        assertSame(threadBefore, thread.uncaughtExceptionHandler)
+    }
+
+    /** RS-8, MD-7: the no-op never touches the JVM's default uncaught-exception handler. */
+    @Test
+    fun startAndThrowTestCrash_leaveTheDefaultUncaughtExceptionHandlerUntouched() {
+        val before = Thread.getDefaultUncaughtExceptionHandler()
+
+        NoOpTelemetry.start()
+        NoOpTelemetry.throwTestCrash()
+
+        assertSame(before, Thread.getDefaultUncaughtExceptionHandler())
     }
 
     @Test

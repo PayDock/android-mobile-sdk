@@ -140,6 +140,9 @@ abstract class GenerateTelemetryBuildValues : DefaultTask() {
     @get:Input
     abstract val sendTestRecord: Property<Boolean>
 
+    @get:Input
+    abstract val testCrash: Property<Boolean>
+
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
 
@@ -161,6 +164,7 @@ abstract class GenerateTelemetryBuildValues : DefaultTask() {
                 "    const val OTLP_AUTH: String = ${literal(auth.get())}",
                 "    const val LEVEL: String = ${literal(level.get())}",
                 "    const val SEND_TEST_RECORD: Boolean = ${sendTestRecord.get()}",
+                "    const val TEST_CRASH: Boolean = ${testCrash.get()}",
                 "}",
                 ""
             ).joinToString("\n")
@@ -189,6 +193,9 @@ androidComponents {
             level.set(if (isDebug) localValue("paydock.telemetry.level") else "")
             sendTestRecord.set(
                 if (isDebug) localValue("paydock.telemetry.sendTestRecord").equals("true", ignoreCase = true) else false
+            )
+            testCrash.set(
+                if (isDebug) localValue("paydock.telemetry.testCrash").equals("true", ignoreCase = true) else false
             )
         }
         variant.sources.kotlin?.addGeneratedSourceDirectory(task, GenerateTelemetryBuildValues::outputDir)

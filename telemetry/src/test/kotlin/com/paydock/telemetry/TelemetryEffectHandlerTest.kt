@@ -10,6 +10,7 @@ import com.paydock.telemetry.TelemetryTestFakes.InMemoryStore
 import com.paydock.telemetry.TelemetryTestFakes.SESSION_ID
 import com.paydock.telemetry.TelemetryTestFakes.T0
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -18,7 +19,7 @@ import kotlin.random.Random
 
 /**
  * Unit tests for [TelemetryEffectHandler] (R_02, R_06 to R_10, R_12): every effect reaches its port, the follow-up
- * intents come back in order, and no failure spreads.
+ * intents come back in order, and no failure spreads: a failed effect is reported in the outcome, never thrown.
  */
 internal class TelemetryEffectHandlerTest {
 
@@ -38,6 +39,7 @@ internal class TelemetryEffectHandlerTest {
             store = store,
             exporter = OtlpExporter(transport, TelemetryTestFakes.credentials),
             deviceContext = deviceContext,
+            clockOffset = ClockOffset(clock),
             monotonic = FakeMonotonic(),
             retryPolicy = RetryPolicy(Random(1)),
             scheduleRetry = {}
@@ -63,7 +65,8 @@ internal class TelemetryEffectHandlerTest {
 
         val expected = Allowlist.filter(RecordFactory.create(pending(1), NetworkConnectionType.WIFI))
         assertEquals(listOf(expected), store.saved)
-        assertTrue(followUps.isEmpty())
+        assertTrue(followUps.intents.isEmpty())
+        assertFalse(followUps.failed)
     }
 
     @Test
@@ -74,7 +77,7 @@ internal class TelemetryEffectHandlerTest {
 
         val followUps = handler.run(listOf(TelemetryEffect.Persist(pending(500))))
 
-        assertEquals(listOf(RecordsDropped(DroppedReason.STORE_FULL, 1)), followUps)
+        assertEquals(listOf(RecordsDropped(DroppedReason.STORE_FULL, 1)), followUps.intents)
         assertEquals(TelemetryLimits.STORE_MAX_RECORDS, store.count())
     }
 
@@ -89,7 +92,7 @@ internal class TelemetryEffectHandlerTest {
         clock.nowMillis = T0 + TelemetryLimits.RECORD_MAX_AGE_MILLIS + 3
         val followUps = handler.run(listOf(TelemetryEffect.Persist(pending(3, at = clock.nowMillis))))
 
-        assertEquals(listOf(RecordsDropped(DroppedReason.TOO_OLD, 1)), followUps)
+        assertEquals(listOf(RecordsDropped(DroppedReason.TOO_OLD, 1)), followUps.intents)
         assertEquals(1, store.count())
     }
 
@@ -100,7 +103,8 @@ internal class TelemetryEffectHandlerTest {
         val followUps = handler(store).run(listOf(TelemetryEffect.Persist(pending(1, sessionId = "not-a-uuid"))))
 
         assertTrue(store.saved.isEmpty())
-        assertEquals(listOf(RecordsDropped(DroppedReason.REJECTED, 1)), followUps)
+        assertEquals(listOf(RecordsDropped(DroppedReason.REJECTED, 1)), followUps.intents)
+        assertFalse("a rejected record is a drop, not a failure", followUps.failed)
     }
 
     @Test
@@ -130,7 +134,7 @@ internal class TelemetryEffectHandlerTest {
                 RecordsDropped(DroppedReason.STORE_FULL, 2),
                 RecordsDropped(DroppedReason.REJECTED, 1)
             ),
-            followUps
+            followUps.intents
         )
         assertEquals(3, transport.sent.size)
     }
@@ -141,7 +145,7 @@ internal class TelemetryEffectHandlerTest {
 
         val followUps = handler(transport = transport).run(listOf(TelemetryEffect.Export(50)))
 
-        assertEquals(listOf(TelemetryIntent.PendingCounted(0)), followUps)
+        assertEquals(listOf(TelemetryIntent.PendingCounted(0)), followUps.intents)
         assertTrue(transport.sent.isEmpty())
     }
 
@@ -164,7 +168,7 @@ internal class TelemetryEffectHandlerTest {
         val followUps = handler().run(listOf(TelemetryEffect.ScheduleFlush(TelemetryLimits.FLUSH_INTERVAL_MILLIS)))
 
         assertEquals(listOf(TelemetryLimits.FLUSH_INTERVAL_MILLIS), scheduled)
-        assertTrue(followUps.isEmpty())
+        assertTrue(followUps.intents.isEmpty())
     }
 
     @Test
@@ -176,7 +180,8 @@ internal class TelemetryEffectHandlerTest {
             TelemetryEffect.DropReason.entries.map { TelemetryEffect.Drop(it) }
         )
 
-        assertTrue(followUps.isEmpty())
+        assertTrue(followUps.intents.isEmpty())
+        assertFalse("a drop is not a failure", followUps.failed)
         assertTrue(store.threads.isEmpty())
         assertTrue(transport.sent.isEmpty())
         assertTrue(scheduled.isEmpty())
@@ -201,7 +206,8 @@ internal class TelemetryEffectHandlerTest {
         )
 
         assertEquals(listOf(1L), scheduled)
-        assertEquals(listOf(TelemetryIntent.PendingCounted(0)), followUps)
+        assertEquals(listOf(TelemetryIntent.PendingCounted(0)), followUps.intents)
+        assertTrue("the failed save is reported, never thrown", followUps.failed)
     }
 
     @Test
@@ -209,8 +215,9 @@ internal class TelemetryEffectHandlerTest {
         val store = InMemoryStore()
         val handler = handler(store) { error("synthetic scheduler failure") }
 
-        handler.run(listOf(TelemetryEffect.ScheduleFlush(1L), TelemetryEffect.Persist(pending(1))))
+        val outcome = handler.run(listOf(TelemetryEffect.ScheduleFlush(1L), TelemetryEffect.Persist(pending(1))))
 
         assertEquals(1, store.saved.size)
+        assertTrue(outcome.failed)
     }
 }

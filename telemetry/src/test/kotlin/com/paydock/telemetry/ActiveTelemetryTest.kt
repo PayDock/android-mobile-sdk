@@ -2,6 +2,7 @@ package com.paydock.telemetry
 
 import com.paydock.telemetry.TelemetryTestFakes.FakeClock
 import com.paydock.telemetry.TelemetryTestFakes.FakeDeviceContextProvider
+import com.paydock.telemetry.TelemetryTestFakes.FakeHandlerSlot
 import com.paydock.telemetry.TelemetryTestFakes.FakeLifecycle
 import com.paydock.telemetry.TelemetryTestFakes.FakeMonotonic
 import com.paydock.telemetry.TelemetryTestFakes.FakeTransport
@@ -14,6 +15,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -26,7 +28,9 @@ import kotlin.random.Random
 /**
  * Unit tests for [ActiveTelemetry], the facade and lifecycle on the worker (R_03, R_04, R_11, R_12, R_14, R_16):
  * recording fakes for the store, the transport and the lifecycle; the immediate dispatcher, or the real
- * [SerialTelemetryDispatcher] where the thread or the order matters. Nothing sleeps: a test waits on a latch.
+ * [SerialTelemetryDispatcher] where the thread or the order matters. Nothing sleeps: a test waits on a latch. The
+ * crash handler goes into a fake slot and the test crash into a recording main-thread poster, so no test touches the
+ * JVM's default handler or the main looper.
  */
 internal class ActiveTelemetryTest {
 
@@ -39,6 +43,8 @@ internal class ActiveTelemetryTest {
     private val store = InMemoryStore()
     private val lifecycle = FakeLifecycle()
     private val error = TelemetryTestFakes.sdkError()
+    private val handlerSlot = FakeHandlerSlot()
+    private val mainPosts = mutableListOf<Pair<Long, () -> Unit>>()
 
     private fun telemetry(
         dispatcher: TelemetryDispatcher = ImmediateDispatcher(),
@@ -46,6 +52,10 @@ internal class ActiveTelemetryTest {
         clock: Clock = FakeClock(),
         transport: TelemetryTransport = FakeTransport(),
         store: DurableStore = this.store,
+        clockOffset: ClockOffset = ClockOffset(FakeClock()),
+        crashHandlers: CrashHandlerInstaller = CrashHandlerInstaller(handlerSlot),
+        postToMain: (Long, () -> Unit) -> Unit = { delay, task -> mainPosts += delay to task },
+        exitReports: ExitReportReader = ExitReportReader.NONE,
     ) = ActiveTelemetry(
         credentials = credentials,
         level = TelemetryLevel.ALL,
@@ -54,12 +64,16 @@ internal class ActiveTelemetryTest {
             store = store,
             exporter = OtlpExporter(transport, credentials),
             lifecycle = lifecycle,
-            retryPolicy = RetryPolicy(Random(5))
+            retryPolicy = RetryPolicy(Random(5)),
+            clockOffset = clockOffset,
+            exitReports = exitReports
         ),
         clock = clock,
         monotonic = FakeMonotonic(),
         idGenerator = idGenerator,
-        dispatcher = dispatcher
+        dispatcher = dispatcher,
+        crashHandlers = crashHandlers,
+        postToMain = postToMain
     )
 
     /** Waits until every task posted so far, delayed by 0 at most, has run on the worker. */
@@ -247,6 +261,27 @@ internal class ActiveTelemetryTest {
     }
 
     @Test
+    fun start_sendsALateRecordStamped_withThePortsClockOffset() {
+        val stored = storedRecord(1).also(store::save)
+        val now = stored.timeUnixMillis + TelemetryLimits.ORDERING_WINDOW_MILLIS + 1
+        val offset = ClockOffset(FakeClock(TelemetryTestFakes.T0)).apply { measure(TelemetryTestFakes.T0 - 7_000) }
+        val transport = FakeTransport()
+
+        telemetry(clock = FakeClock(now), transport = transport, clockOffset = offset).start()
+
+        val sent = transport.sent.single()
+        assertEquals(
+            ((now - 7_000) * 1_000_000).toString(),
+            sent.logRecords.single().getValue("timeUnixNano").toString().trim('"')
+        )
+        assertEquals(
+            listOf(UtcTimestamp.iso8601(stored.timeUnixMillis - 7_000)),
+            sent.recordValues(SendStamp.OCCURRED_AT)
+        )
+        assertEquals(listOf(stored.id), sent.recordIds())
+    }
+
+    @Test
     fun sendTestRecord_storesAndSendsARecordWithTheTestCode() {
         val dispatcher = ImmediateDispatcher()
         val transport = FakeTransport()
@@ -358,6 +393,238 @@ internal class ActiveTelemetryTest {
         telemetry.report(error)
         dispatcher.awaitIdle()
         assertTrue(directory.isDirectory)
+    }
+
+    /** R_01, RS-3: the handler is installed by start(), on the calling thread, and never at construction. */
+    @Test
+    fun theCrashHandler_isInstalledByStartOnly_once() {
+        val previous = TelemetryTestFakes.RecordingHandler()
+        handlerSlot.current = previous
+        val telemetry = telemetry()
+        telemetry.report(error)
+        assertEquals(0, handlerSlot.sets)
+        assertSame(previous, handlerSlot.current)
+
+        telemetry.start()
+        telemetry.start()
+
+        assertEquals(1, handlerSlot.sets)
+        assertTrue(handlerSlot.current is ChainedCrashHandler)
+    }
+
+    /** The install runs before the worker task is posted, so a dispatcher that throws cannot prevent it. */
+    @Test
+    fun start_installsTheCrashHandler_evenWhenTheDispatcherThrows() {
+        telemetry(dispatcher = ThrowingDispatcher).start()
+
+        assertEquals(1, handlerSlot.sets)
+    }
+
+    @Test
+    fun start_withAnInstallThatThrows_stillRunsTheWorkerTask() {
+        val failingSlot = object : DefaultHandlerSlot {
+            override fun get(): Thread.UncaughtExceptionHandler? = error("synthetic slot failure")
+            override fun set(handler: Thread.UncaughtExceptionHandler) = error("synthetic slot failure")
+        }
+        val telemetry = telemetry(crashHandlers = CrashHandlerInstaller(failingSlot))
+
+        telemetry.start()
+
+        assertEquals(TelemetryTestFakes.resourceAttributes, telemetry.resourceAttributes)
+        assertEquals(1, lifecycle.registrations)
+    }
+
+    /** The installed handler records into this session, with an ID from its sequence, and hands the crash on. */
+    @Test
+    fun theInstalledHandler_recordsACrashIntoThisSession_thenCallsThePreviousHandler() {
+        val previous = TelemetryTestFakes.RecordingHandler()
+        handlerSlot.current = previous
+        val telemetry = telemetry()
+        telemetry.start()
+        telemetry.report(error)
+        val crash = IllegalStateException()
+        val thread = Thread("checkout-worker")
+
+        handlerSlot.current!!.uncaughtException(thread, crash)
+
+        val record = store.saved.last()
+        assertEquals("${telemetry.sessionId}-2", record.id)
+        assertEquals(AttributeValue.Str("uncaught_handler"), record.value("paydock.crash.source"))
+        assertEquals(AttributeValue.Str("checkout-worker"), record.value("thread.name"))
+        assertEquals(listOf<Pair<Thread, Throwable>>(thread to crash), previous.calls)
+    }
+
+    /** R_12: the test crash is posted to the main thread 10 s later and throws a message-less [TelemetryTestCrash]. */
+    @Test
+    fun throwTestCrash_postsATaskThatThrowsTheTestCrash_tenSecondsLater() {
+        val dispatcher = ImmediateDispatcher()
+        val telemetry = telemetry(dispatcher = dispatcher)
+        telemetry.start()
+
+        telemetry.throwTestCrash()
+
+        val (delay, task) = mainPosts.single()
+        assertEquals(ActiveTelemetry.TEST_CRASH_DELAY_MILLIS, delay)
+        assertEquals(10_000L, delay)
+        val thrown = assertThrows(TelemetryTestCrash::class.java) { task() }
+        assertNull(thrown.message)
+        assertTrue(dispatcher.delayed.isEmpty())
+    }
+
+    @Test
+    fun throwTestCrash_whenPostingFails_neverThrows() {
+        val telemetry = telemetry(postToMain = { _, _ -> error("synthetic looper failure") })
+
+        telemetry.throwTestCrash()
+
+        assertTrue(telemetry.isActive)
+    }
+
+    /** A store that logs each save and count into [log], in the order the worker makes them. */
+    private class LoggingStore(private val log: MutableList<String>, private val inner: InMemoryStore) :
+        DurableStore by inner {
+        override fun save(record: TelemetryRecord) {
+            log += "save ${(record.value("paydock.crash.reason") as? AttributeValue.Str)?.value ?: record.id}"
+            inner.save(record)
+        }
+
+        override fun count(): Int = inner.count().also { log += "count" }
+    }
+
+    /** A marker store that logs each write into [log]. */
+    private class LoggingMarkers(private val log: MutableList<String>) : KeyValueStore {
+        val values = mutableMapOf<String, String>()
+        override fun getString(key: String): String? = values[key]
+        override fun putString(key: String, value: String) {
+            log += "mark $value"
+            values[key] = value
+        }
+    }
+
+    private fun exit(reason: ExitReason, timestamp: Long) = ProcessExit(reason, true, timestamp) { null }
+
+    /**
+     * R_04, R_07, note 8: on the worker, the exit reports are read after the stored records are counted and before
+     * the start flush; each is stored as a record, and the marker moves only after they are all stored.
+     */
+    @Test
+    fun start_readsTheExitReportsBeforeTheStartFlush_andMovesTheMarkerOnlyAfterTheirDispatch() {
+        val log = mutableListOf<String>()
+        val dispatcher = SerialTelemetryDispatcher()
+        val transport = FakeTransport()
+        transport.beforeAnswer = { synchronized(log) { log += "send" } }
+        val markers = LoggingMarkers(log)
+        val source = ExitInfoSource {
+            log += "exits"
+            listOf(
+                exit(ExitReason.LOW_MEMORY, TelemetryTestFakes.T0 - 2_000),
+                exit(ExitReason.ANR, TelemetryTestFakes.T0 - 3_000)
+            )
+        }
+        val telemetry = telemetry(
+            dispatcher = dispatcher,
+            transport = transport,
+            store = LoggingStore(log, store),
+            exitReports = ExitReportReader(source, markers)
+        )
+
+        telemetry.start()
+        dispatcher.awaitIdle()
+
+        assertEquals(
+            listOf(
+                "count",
+                "exits",
+                "save ANR",
+                "save LOW_MEMORY",
+                "mark ${TelemetryTestFakes.T0 - 2_000}",
+                "send"
+            ),
+            log.take(log.indexOf("send") + 1) // the flush counts the store again after its send
+        )
+        val sent = transport.sent.single()
+        assertEquals(listOf("anr", "os_kill"), sent.recordValues("paydock.crash.kind"))
+        assertEquals(listOf("exit_info", "exit_info"), sent.recordValues("paydock.crash.source"))
+        assertEquals(listOf("${telemetry.sessionId}-1", "${telemetry.sessionId}-2"), sent.recordIds())
+        assertEquals((TelemetryTestFakes.T0 - 2_000).toString(), markers.values[ExitReportReader.MARKER_KEY])
+        assertEquals(0, store.count())
+    }
+
+    @Test
+    fun start_withNoExitReports_flushesAsBefore_andWritesNoMarker() {
+        val log = mutableListOf<String>()
+        val markers = LoggingMarkers(log)
+        store.save(storedRecord(1))
+        val transport = FakeTransport()
+
+        telemetry(transport = transport, exitReports = ExitReportReader(ExitInfoSource.NONE, markers)).start()
+
+        assertTrue(log.isEmpty())
+        assertEquals(1, transport.sent.size)
+    }
+
+    /** A marker write that fails costs only a repeat next launch: the records are stored and the start flush runs. */
+    @Test
+    fun start_withAMarkerWriteThatThrows_stillFlushesTheExitRecords() {
+        val failingMarkers = object : KeyValueStore {
+            override fun getString(key: String): String? = null
+            override fun putString(key: String, value: String) = error("synthetic marker failure")
+        }
+        val source = ExitInfoSource { listOf(exit(ExitReason.ANR, TelemetryTestFakes.T0 - 1_000)) }
+        val transport = FakeTransport()
+
+        telemetry(transport = transport, exitReports = ExitReportReader(source, failingMarkers)).start()
+
+        assertEquals(listOf("anr"), transport.sent.single().recordValues("paydock.crash.kind"))
+    }
+
+    private fun TelemetryRecord.crashReason(): String? = (value("paydock.crash.reason") as? AttributeValue.Str)?.value
+
+    /**
+     * Review fix (R1): a failed exit-record save leaves the marker, so the next launch reads the exits again (at least
+     * once); only then, with every record stored, does the marker move.
+     */
+    @Test
+    fun start_withAnExitRecordSaveThatFails_leavesTheMarker_andTheNextLaunchReadsTheExitsAgain() {
+        val markers = TelemetryTestFakes.MapKeyValueStore()
+        val exits = listOf(
+            exit(ExitReason.ANR, TelemetryTestFakes.T0 - 3_000),
+            exit(ExitReason.LOW_MEMORY, TelemetryTestFakes.T0 - 2_000)
+        )
+        val inner = store
+        val diskFullForTheKill = object : DurableStore by inner {
+            override fun save(record: TelemetryRecord) {
+                if (record.crashReason() == "LOW_MEMORY") error("synthetic disk full")
+                inner.save(record)
+            }
+        }
+
+        telemetry(store = diskFullForTheKill, exitReports = ExitReportReader(ExitInfoSource { exits }, markers)).start()
+
+        assertEquals(listOf("ANR"), store.saved.map { it.crashReason() })
+        assertEquals(0, markers.writes)
+        assertNull(markers.values[ExitReportReader.MARKER_KEY])
+
+        val nextLaunch = InMemoryStore()
+        telemetry(store = nextLaunch, exitReports = ExitReportReader(ExitInfoSource { exits }, markers)).start()
+
+        assertEquals(listOf("ANR", "LOW_MEMORY"), nextLaunch.saved.map { it.crashReason() })
+        assertEquals((TelemetryTestFakes.T0 - 2_000).toString(), markers.values[ExitReportReader.MARKER_KEY])
+    }
+
+    /** An exit event the reducer drops on purpose (here the hourly cap) is not a failure: the marker still moves. */
+    @Test
+    fun start_withExitEventsTheReducerDrops_stillMovesTheMarker() {
+        val markers = TelemetryTestFakes.MapKeyValueStore()
+        val source = ExitInfoSource { listOf(exit(ExitReason.ANR, TelemetryTestFakes.T0 - 1_000)) }
+        val telemetry = telemetry(exitReports = ExitReportReader(source, markers))
+        repeat(TelemetryLimits.HOURLY_CAP) { telemetry.report(TelemetryTestFakes.sdkError("test.Cap$it")) }
+
+        telemetry.start()
+
+        assertTrue(store.saved.none { it.crashReason() == "ANR" })
+        assertTrue("the cap's drop notice", store.saved.any { it.isDroppedNotice })
+        assertEquals((TelemetryTestFakes.T0 - 1_000).toString(), markers.values[ExitReportReader.MARKER_KEY])
     }
 
     /** Off the main looper, as in a JVM test, the process lifecycle's registration fails quietly and never throws. */

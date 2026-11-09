@@ -271,6 +271,41 @@ internal object TelemetryTestFakes {
         }
     }
 
+    /** A default-handler slot over a plain field: never the test JVM's own handler. Counts its writes. */
+    class FakeHandlerSlot(var current: Thread.UncaughtExceptionHandler? = null) : DefaultHandlerSlot {
+        var sets = 0
+            private set
+
+        override fun get(): Thread.UncaughtExceptionHandler? = current
+
+        override fun set(handler: Thread.UncaughtExceptionHandler) {
+            sets++
+            current = handler
+        }
+    }
+
+    /** A previous uncaught-exception handler that records every call, in order. */
+    class RecordingHandler : Thread.UncaughtExceptionHandler {
+        val calls = mutableListOf<Pair<Thread, Throwable>>()
+
+        override fun uncaughtException(thread: Thread, throwable: Throwable) {
+            calls += thread to throwable
+        }
+    }
+
+    /**
+     * A card-like number: 16 digits from a non-issuer prefix that pass Luhn, computed at run time so no card-shaped
+     * literal is committed.
+     */
+    fun cardLikeNumber(): String {
+        val payload = "990000000000123"
+        val sum = payload.reversed().mapIndexed { index, char ->
+            val digit = char - '0'
+            if (index % 2 == 0) (digit * 2).let { if (it > 9) it - 9 else it } else digit
+        }.sum()
+        return payload + (10 - sum % 10) % 10
+    }
+
     /** Sequential UUID-shaped IDs: [uuid] of 1, 2, … */
     class SequentialIds : IdGenerator {
         private var next = 0

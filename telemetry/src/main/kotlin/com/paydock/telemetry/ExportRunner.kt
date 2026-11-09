@@ -8,6 +8,9 @@ import kotlinx.serialization.json.JsonElement
  * cuts the records into batches of at most `maxRecords` records and [TelemetryLimits.BATCH_MAX_BYTES], oldest first,
  * and exports each in turn. Files are removed only after a success, a rejection or a single-record 413.
  *
+ * Every record of a flush goes out stamped by [SendStamp] with the flush's time and the [clockOffset] read once (D20),
+ * before it is sized and batched; the store keeps the record as it was.
+ *
  * It keeps its own attempt count: a retryable failure schedules a later flush through [scheduleRetry] and ends this
  * one, and a flush before that time sends nothing. A 401/403, or [TelemetryLimits.RETRY_MAX_ATTEMPTS] failed
  * attempts, stops sending for the process. It never sleeps and never throws.
@@ -16,6 +19,7 @@ internal class ExportRunner(
     private val store: DurableStore,
     private val exporter: Exporter,
     private val deviceContext: DeviceContextProvider,
+    private val clockOffset: ClockOffset,
     private val monotonic: MonotonicClock,
     private val retryPolicy: RetryPolicy,
     private val scheduleRetry: (delayMillis: Long) -> Unit,
@@ -50,7 +54,7 @@ internal class ExportRunner(
         val pruned = store.prune(now)
         val tally = Tally()
         val resource = deviceContext.current()
-        if (resource.appInstallationId.isNotBlank()) send(resource, maxRecords.coerceAtLeast(1), tally)
+        if (resource.appInstallationId.isNotBlank()) send(resource, maxRecords.coerceAtLeast(1), tally, now)
         return FlushReport(
             tooOld = pruned.tooOld,
             storeFull = pruned.storeFull,
@@ -61,8 +65,10 @@ internal class ExportRunner(
         )
     }
 
-    private fun send(resource: ResourceAttributes, maxRecords: Int, tally: Tally) {
+    private fun send(resource: ResourceAttributes, maxRecords: Int, tally: Tally, now: Long) {
+        val offset = clockOffset.millis
         val merged = DuplicateGate.merge(store.oldest(TelemetryLimits.STORE_MAX_RECORDS))
+            .map { it.copy(record = SendStamp.stamp(it.record, now, offset)) }
         val (sendable, unusable) = merged.partition { isSendable(it.record) }
         unusable.forEach { remove(listOf(Sized(it, 0)), tally, rejected = it.sourceIds.size.toLong()) }
 

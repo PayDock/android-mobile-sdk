@@ -1,7 +1,9 @@
 # Golden fixtures (S1)
 
 Each `*.input.json` is one event with its time, IDs and connection fixed. `time` is when it happened, or `null`
-when the event carries no time of its own; then `builtTime`, when the SDK built the record, is sent instead (spec § 5.2). Each `*.<platform>.expected.json` is the exact
+when the event carries no time of its own; then `builtTime`, when the SDK built the record, is used. `sentTime` is when the batch is sent: an event more
+than 30 min older is stamped with `sentTime` and carries `paydock.occurred_at`. `clockOffsetMs` is the device clock’s
+correction from the gateway’s `Date` header (spec D20). Each `*.<platform>.expected.json` is the exact
 OTLP JSON that platform’s encoder must produce for it, with the device context from `context.<platform>.json`.
 
 | Folder | Encoded by | Why |

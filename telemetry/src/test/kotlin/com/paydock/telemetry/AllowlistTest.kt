@@ -52,6 +52,20 @@ internal class AllowlistTest {
         }
     }
 
+    @Test
+    fun everyEventVariant_stampedLate_encodesOnlyAllowedKeysAndValues() {
+        val records = everyEventVariant().mapIndexed { index, event ->
+            val pending = PendingRecord("$SESSION_ID-${index + 1}", SESSION_ID, event, createdAt = T0)
+            val record = Allowlist.filter(RecordFactory.create(pending, NetworkConnectionType.WIFI))
+            SendStamp.stamp(record, sentAt = T0 + TelemetryLimits.ORDERING_WINDOW_MILLIS + 1, offsetMillis = 3_600_000)
+        }
+
+        val json = OtlpLogEncoder.encode(resource, records).toString(Charsets.UTF_8)
+
+        assertEquals(emptyList<String>(), OutputScan.violations(json))
+        records.forEach { assertTrue(it.value(SendStamp.OCCURRED_AT) is Str) }
+    }
+
     // ---- self-tests: the scan reports every violation it guards against ----
 
     @Test
@@ -278,9 +292,29 @@ internal class AllowlistTest {
     @Test
     fun keys_matchTheSpecLists() {
         assertEquals(RESOURCE_TYPES.keys.toList(), Allowlist.RESOURCE_KEYS)
-        assertEquals(29, Allowlist.RECORD_KEYS.size)
+        assertEquals(30, Allowlist.RECORD_KEYS.size)
         assertEquals(Num::class, Allowlist.RECORD_KEYS["paydock.dropped.count"])
         assertEquals(Bool::class, Allowlist.RECORD_KEYS["paydock.exception.in_sdk"])
+        assertEquals(Str::class, Allowlist.RECORD_KEYS[SendStamp.OCCURRED_AT])
+        val order = Allowlist.RECORD_KEYS.keys.toList()
+        assertEquals(order.indexOf("paydock.group.key") + 1, order.indexOf(SendStamp.OCCURRED_AT))
+    }
+
+    /** D20: no per-device stream label, so `service.instance.id` is listed nowhere and the scan reports it. */
+    @Test
+    fun serviceInstanceId_isNeverAllowed() {
+        assertFalse(SERVICE_INSTANCE_ID in Allowlist.RESOURCE_KEYS)
+        assertFalse(SERVICE_INSTANCE_ID in RESOURCE_TYPES)
+        assertFalse(Allowlist.RECORD_KEYS.containsKey(SERVICE_INSTANCE_ID))
+
+        val asResource = encode(validRecord()).replace("\"device.model.identifier\"", "\"$SERVICE_INSTANCE_ID\"")
+        assertReported("unlisted resource key $SERVICE_INSTANCE_ID", asResource)
+        assertReported(
+            "unlisted record key $SERVICE_INSTANCE_ID",
+            encode(validRecord().plus(SERVICE_INSTANCE_ID, Str(INSTALLATION_ID)))
+        )
+        val filtered = Allowlist.filter(validRecord().plus(SERVICE_INSTANCE_ID, Str(INSTALLATION_ID)))
+        assertEquals(null, filtered.value(SERVICE_INSTANCE_ID))
     }
 
     // ---- helpers ----
@@ -468,6 +502,7 @@ internal class AllowlistTest {
         const val OTHER_SESSION_ID = "b2f6c0a4-1d3e-4e8f-9a71-5c2d8e0f4b13"
         const val INSTALLATION_ID = "3f9c6b1e-7a42-4d0b-9e15-2c8a5d71b3e4"
         const val EMAIL = "someone@example.com"
+        const val SERVICE_INSTANCE_ID = "service.instance.id"
         const val SECRET_TEXT = "secret-message-text"
 
         val FORMAT_CHECKED = setOf("session.id", "log.record.uid")

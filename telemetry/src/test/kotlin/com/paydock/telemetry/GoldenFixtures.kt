@@ -88,10 +88,15 @@ internal object GoldenFixtures {
         )
     }
 
-    /** RecordFactory, then Allowlist.filter, then OtlpLogEncoder.encode: what the SDK sends for this input. */
+    /**
+     * RecordFactory, then Allowlist.filter, then the send stamp at `sentTime` with `clockOffsetMs` (0 when absent),
+     * then OtlpLogEncoder.encode: what the SDK sends for this input, as `generate.py` does.
+     */
     fun encode(input: JsonObject, resource: ResourceAttributes = resource()): String {
         val record = Allowlist.filter(RecordFactory.create(pendingRecord(input), connection(input)))
-        return OtlpLogEncoder.encode(resource, listOf(record)).toString(Charsets.UTF_8)
+        val sentAt = millis(input.getValue("sentTime").jsonPrimitive.content)
+        val offset = input["clockOffsetMs"]?.jsonPrimitive?.long ?: 0L
+        return OtlpLogEncoder.encode(resource, listOf(SendStamp.stamp(record, sentAt, offset))).toString(Charsets.UTF_8)
     }
 
     private fun millis(iso: String): Long = Instant.parse(iso).toEpochMilli()

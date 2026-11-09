@@ -37,7 +37,7 @@ internal class TelemetryHttpClientTest {
 
     private fun transport(): OtlpHttpTransport {
         val endpoint = server.url("/v1/logs").toString()
-        return OtlpHttpTransport(endpoint) { TelemetryHttpClient.create(endpoint) }
+        return OtlpHttpTransport(endpoint, ClockOffset(Clock.SYSTEM)) { TelemetryHttpClient.create(endpoint) }
     }
 
     @Test

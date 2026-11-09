@@ -6,6 +6,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.paydock.core.domain.model.Environment
 import com.paydock.telemetry.ActiveTelemetry
+import com.paydock.telemetry.ChainedCrashHandler
+import com.paydock.telemetry.CrashHandlerInstaller
+import com.paydock.telemetry.DefaultHandlerSlot
 import com.paydock.telemetry.DeviceContextProvider
 import com.paydock.telemetry.DurableStore
 import com.paydock.telemetry.ExportBatch
@@ -48,7 +51,8 @@ import java.io.File
  * Every input is injected: fake credentials providers, a counting factory that builds [ActiveTelemetry] with an
  * immediate dispatcher, a fake device context and in-memory ports, and a counting fake runtime — never the generated
  * build values, so the result does not depend on the engineer's `local.properties`. Each test binds into its own
- * fresh Koin instance.
+ * fresh Koin instance. An [ActiveTelemetry] built here installs its crash handler into a fake slot and posts its test
+ * crash to a list, never to the JVM's default handler or the main looper.
  */
 internal class TelemetryBindingTest {
 
@@ -76,6 +80,9 @@ internal class TelemetryBindingTest {
         val testRecords: Int
             get() = calls.count { it == "sendTestRecord" }
 
+        val testCrashes: Int
+            get() = calls.count { it == "throwTestCrash" }
+
         override fun start() {
             calls += "start"
             failure?.let { throw it }
@@ -84,7 +91,29 @@ internal class TelemetryBindingTest {
         override fun sendTestRecord() {
             calls += "sendTestRecord"
         }
+
+        override fun throwTestCrash() {
+            calls += "throwTestCrash"
+        }
     }
+
+    /** The default-handler slot of these tests: a plain field, never the JVM's own handler. */
+    private class FakeSlot : DefaultHandlerSlot {
+        var current: Thread.UncaughtExceptionHandler? = null
+        var sets = 0
+
+        override fun get(): Thread.UncaughtExceptionHandler? = current
+
+        override fun set(handler: Thread.UncaughtExceptionHandler) {
+            sets++
+            current = handler
+        }
+    }
+
+    private val handlerSlot = FakeSlot()
+
+    /** Every task an [ActiveTelemetry] of these tests posted to the main thread, with its delay. */
+    private val mainPosts = mutableListOf<Long>()
 
     /** Keeps records in memory: these tests never touch the disk through an active telemetry. */
     private class MemoryStore : DurableStore {
@@ -142,7 +171,9 @@ internal class TelemetryBindingTest {
         level = level,
         deviceContextProvider = deviceContext,
         ports = ActiveTelemetry.Ports(store = MemoryStore(), exporter = acceptingExporter, lifecycle = {}),
-        dispatcher = immediate
+        dispatcher = immediate,
+        crashHandlers = CrashHandlerInstaller(handlerSlot),
+        postToMain = { delay, _ -> mainPosts += delay }
     )
 
     /** The `createActive` factory, counting its calls. */
@@ -340,6 +371,74 @@ internal class TelemetryBindingTest {
         assertSame(NoOpTelemetry, bound)
     }
 
+    @Test
+    fun bind_testCrashTrue_asksForTheTestCrashAfterStart() {
+        val runtime = CountingRuntime()
+
+        bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = runtime), testCrash = true)
+
+        assertEquals(listOf("start", "throwTestCrash"), runtime.calls)
+    }
+
+    @Test
+    fun bind_bothDebugFlags_sendTheTestRecordThenAskForTheTestCrash() {
+        val runtime = CountingRuntime()
+
+        bind(
+            koin,
+            TelemetrySelection(telemetry = activeTelemetry(), runtime = runtime),
+            sendTestRecord = true,
+            testCrash = true
+        )
+
+        assertEquals(listOf("start", "sendTestRecord", "throwTestCrash"), runtime.calls)
+    }
+
+    @Test
+    fun bind_testCrashFalse_neverAsksForATestCrash() {
+        val runtime = CountingRuntime()
+
+        bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = runtime), testCrash = false)
+        bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = runtime))
+
+        assertEquals(2, runtime.starts)
+        assertEquals(0, runtime.testCrashes)
+    }
+
+    @Test
+    fun bind_testCrash_isNeverAskedOfANoOpOrAFailedStart() {
+        val noOp = CountingRuntime()
+        val failing = CountingRuntime(failure = IllegalStateException("synthetic start failure"))
+
+        bind(koin, TelemetrySelection(telemetry = NoOpTelemetry, runtime = noOp), testCrash = true)
+        val bound = bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = failing), testCrash = true)
+
+        assertEquals(0, noOp.testCrashes)
+        assertEquals(0, failing.testCrashes)
+        assertSame(NoOpTelemetry, bound)
+    }
+
+    /** R_01, R_12: an active binding installs the crash handler at start and posts the test crash 10 s later. */
+    @Test
+    fun bind_active_installsTheCrashHandler_andWithTestCrashPostsIt() {
+        val selection = select()
+        assertEquals(0, handlerSlot.sets)
+
+        bind(koin, selection, testCrash = true)
+
+        assertEquals(1, handlerSlot.sets)
+        assertTrue(handlerSlot.current is ChainedCrashHandler)
+        assertEquals(listOf(ActiveTelemetry.TEST_CRASH_DELAY_MILLIS), mainPosts)
+    }
+
+    @Test
+    fun bind_active_withoutTestCrash_postsNothingToTheMainThread() {
+        bind(koin, select())
+
+        assertEquals(1, handlerSlot.sets)
+        assertTrue(mainPosts.isEmpty())
+    }
+
     /** RS-2: inactive, nothing is built: no factory call, no worker thread, no lifecycle observer, no file. */
     @Test
     fun bind_inactive_createsNoThreadNoObserverAndNoFile() {
@@ -354,6 +453,7 @@ internal class TelemetryBindingTest {
             every { ProcessLifecycleOwner.get() } returns owner
             every { owner.lifecycle } returns lifecycle
             val before = liveTelemetryThreads()
+            val handlerBefore = Thread.getDefaultUncaughtExceptionHandler()
             var factoryCalls = 0
             val factory: (TelemetryCredentials, TelemetryLevel) -> ActiveTelemetry = { c, l ->
                 factoryCalls++
@@ -367,7 +467,9 @@ internal class TelemetryBindingTest {
                 selectTelemetry(true, configured, Environment.PRODUCTION, TelemetryLevel.ALL, factory),
                 selectTelemetry(true, configured, Environment.STAGING, TelemetryLevel.ALL, factory),
                 selectTelemetry(true, configured, Environment.SANDBOX, TelemetryLevel.OFF, factory)
-            ).forEach { selection -> assertSame(NoOpTelemetry, bind(koin, selection, sendTestRecord = true)) }
+            ).forEach { selection ->
+                assertSame(NoOpTelemetry, bind(koin, selection, sendTestRecord = true, testCrash = true))
+            }
             assertSame(NoOpTelemetry, bindTelemetry(koin, Environment.PRODUCTION, context))
 
             assertEquals(0, factoryCalls)
@@ -375,6 +477,7 @@ internal class TelemetryBindingTest {
             verify(exactly = 0) { lifecycle.addObserver(any()) }
             assertFalse(File(noBackup, FileDurableStore.DIRECTORY_NAME).exists())
             assertEquals(emptyList<String>(), noBackup.list()!!.toList())
+            assertSame(handlerBefore, Thread.getDefaultUncaughtExceptionHandler())
         } finally {
             unmockkObject(ProcessLifecycleOwner)
         }

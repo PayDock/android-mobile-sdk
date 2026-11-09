@@ -3,14 +3,17 @@ package com.paydock.telemetry
 import com.paydock.telemetry.AttributeValue.Str
 import com.paydock.telemetry.TelemetryLimits.BATCH_MAX_BYTES
 import com.paydock.telemetry.TelemetryLimits.BATCH_MAX_RECORDS
+import com.paydock.telemetry.TelemetryLimits.ORDERING_WINDOW_MILLIS
 import com.paydock.telemetry.TelemetryLimits.RECORD_MAX_AGE_MILLIS
 import com.paydock.telemetry.TelemetryLimits.RETRY_MAX_ATTEMPTS
+import com.paydock.telemetry.TelemetryTestFakes.FakeClock
 import com.paydock.telemetry.TelemetryTestFakes.FakeDeviceContextProvider
 import com.paydock.telemetry.TelemetryTestFakes.FakeMonotonic
 import com.paydock.telemetry.TelemetryTestFakes.FakeTransport
 import com.paydock.telemetry.TelemetryTestFakes.InMemoryStore
 import com.paydock.telemetry.TelemetryTestFakes.SESSION_ID
 import com.paydock.telemetry.TelemetryTestFakes.T0
+import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -19,9 +22,10 @@ import java.util.zip.GZIPInputStream
 import kotlin.random.Random
 
 /**
- * Unit tests for [ExportRunner] (R_10, R_12, R_13, R_18): a fake store, a fake transport behind the real
+ * Unit tests for [ExportRunner] (R_08 to R_10, R_12, R_13, R_18): a fake store, a fake transport behind the real
  * [OtlpExporter], a fixed clock, a fake monotonic clock and a seeded random. Nothing sleeps: a retry is a recorded
- * delay, and time moves by setting the monotonic clock.
+ * delay, and time moves by setting the monotonic clock. Records go out stamped with the flush's time and the clock
+ * offset (D20), while the stored records stay as they were.
  */
 internal class ExportRunnerTest {
 
@@ -29,6 +33,7 @@ internal class ExportRunnerTest {
     private val store = InMemoryStore()
     private val monotonic = FakeMonotonic(10_000)
     private val retries = mutableListOf<Long>()
+    private val clockOffset = ClockOffset(FakeClock(T0))
 
     private fun runner(
         transport: TelemetryTransport,
@@ -37,6 +42,7 @@ internal class ExportRunnerTest {
         store = store,
         exporter = OtlpExporter(transport, TelemetryTestFakes.credentials),
         deviceContext = deviceContext,
+        clockOffset = clockOffset,
         monotonic = monotonic,
         retryPolicy = RetryPolicy(Random(3)),
         scheduleRetry = { retries += it }
@@ -51,6 +57,11 @@ internal class ExportRunnerTest {
     private fun ids(range: LongRange): List<String> = range.map { "$SESSION_ID-$it" }
 
     private fun FakeTransport.sentIds(): List<List<String?>> = sent.map { it.recordIds() }
+
+    private fun nanos(millis: Long): String = (millis * 1_000_000).toString()
+
+    private fun TelemetryTestFakes.SentRequest.times(): List<String> =
+        logRecords.map { it.getValue("timeUnixNano").jsonPrimitive.content }
 
     /** One retryable answer: the records stay, one retry is scheduled, and a flush before it sends nothing. */
     private fun assertRetried(answer: TransportResult, expectedDelay: LongRange) {
@@ -365,6 +376,104 @@ internal class ExportRunnerTest {
         assertEquals(0, store.count())
     }
 
+    // ---- the send stamp (D20) ----
+
+    @Test
+    fun aLateRecord_goesOutWithTheSendTimeAndOccurredAt_whileItsStoredRecordIsUnchanged() {
+        val late = record(1, createdAt = now - ORDERING_WINDOW_MILLIS - 1).also(store::save)
+        val transport = FakeTransport(TransportResult.HttpError(503, null))
+
+        runner(transport).flush(now, BATCH_MAX_RECORDS)
+
+        val sent = transport.sent.single()
+        assertEquals(listOf(nanos(now)), sent.times())
+        assertEquals(listOf(UtcTimestamp.iso8601(late.timeUnixMillis)), sent.recordValues(SendStamp.OCCURRED_AT))
+        assertEquals(listOf(late), store.oldest(10))
+        assertEquals(listOf(late), store.saved)
+    }
+
+    @Test
+    fun aFreshRecord_goesOutWithItsOwnTime_andNoOccurredAt() {
+        val fresh = record(1, createdAt = now - ORDERING_WINDOW_MILLIS).also(store::save)
+        val transport = FakeTransport()
+
+        runner(transport).flush(now, BATCH_MAX_RECORDS)
+
+        val sent = transport.sent.single()
+        assertEquals(listOf(nanos(fresh.timeUnixMillis)), sent.times())
+        assertEquals(listOf(null), sent.recordValues(SendStamp.OCCURRED_AT))
+    }
+
+    @Test
+    fun theClockOffset_correctsBothTheFreshAndTheLateRecords() {
+        val offset = 3_600_000L
+        clockOffset.measure(T0 + offset)
+        val late = record(1, createdAt = now - ORDERING_WINDOW_MILLIS - 1).also(store::save)
+        val fresh = record(2, createdAt = now - 1_000).also(store::save)
+        val transport = FakeTransport(TransportResult.HttpError(503, null))
+
+        runner(transport).flush(now, BATCH_MAX_RECORDS)
+
+        val sent = transport.sent.single()
+        assertEquals(listOf(nanos(now + offset), nanos(fresh.timeUnixMillis + offset)), sent.times())
+        assertEquals(
+            listOf(UtcTimestamp.iso8601(late.timeUnixMillis + offset), null),
+            sent.recordValues(SendStamp.OCCURRED_AT)
+        )
+        assertEquals(listOf(late, fresh), store.oldest(10))
+    }
+
+    /** The stamp is decided per flush: a record still fresh on one flush is stamped late on a later one. */
+    @Test
+    fun aRecordFreshOnOneFlush_goesOutStampedLate_onALaterFlush() {
+        val stored = record(1, createdAt = now - 1_000).also(store::save)
+        val transport = FakeTransport(TransportResult.HttpError(503, null))
+        val runner = runner(transport)
+
+        runner.flush(now, BATCH_MAX_RECORDS)
+        monotonic.elapsedMillis += retries.single()
+        val later = stored.timeUnixMillis + ORDERING_WINDOW_MILLIS + 1
+        runner.flush(later, BATCH_MAX_RECORDS)
+
+        val (first, second) = transport.sent
+        assertEquals(listOf(nanos(stored.timeUnixMillis)), first.times())
+        assertEquals(listOf(null), first.recordValues(SendStamp.OCCURRED_AT))
+        assertEquals(listOf(nanos(later)), second.times())
+        assertEquals(listOf(UtcTimestamp.iso8601(stored.timeUnixMillis)), second.recordValues(SendStamp.OCCURRED_AT))
+        assertEquals(listOf(stored.id), second.recordIds())
+        assertEquals(listOf(stored), store.saved)
+        assertEquals(0, store.count())
+    }
+
+    @Test
+    fun everyBatchOfOneFlush_carriesTheFlushsSendTime() {
+        val late = (1L..3L).map { record(it, createdAt = now - ORDERING_WINDOW_MILLIS - 10 + it).also(store::save) }
+        val transport = FakeTransport()
+
+        runner(transport).flush(now, 1)
+
+        assertEquals(3, transport.sent.size)
+        assertEquals(List(3) { listOf(nanos(now)) }, transport.sent.map { it.times() })
+        assertEquals(late.map { it.id }, transport.sentIds().flatten())
+        assertEquals(0, store.count())
+    }
+
+    @Test
+    fun aStampedNotice_stillCountsAsExported() {
+        val notice = TelemetryTestFakes.record(
+            1,
+            event = TelemetryEvent.Dropped(TelemetryEvent.DroppedReason.entries.first(), 2),
+            createdAt = now - ORDERING_WINDOW_MILLIS - 1
+        ).also(store::save)
+        val transport = FakeTransport()
+
+        val report = runner(transport).flush(now, BATCH_MAX_RECORDS)
+
+        assertEquals(setOf(notice.id), report.exportedNoticeIds)
+        assertEquals(listOf(notice.id), store.removed)
+        assertEquals(listOf(nanos(now)), transport.sent.single().times())
+    }
+
     @Test
     fun anEmptyStore_sendsNothing() {
         val transport = FakeTransport()
@@ -383,6 +492,7 @@ internal class ExportRunnerTest {
             throwing,
             OtlpExporter(FakeTransport(), TelemetryTestFakes.credentials),
             FakeDeviceContextProvider(),
+            clockOffset,
             monotonic,
             RetryPolicy(Random(3)),
             scheduleRetry = { retries += it }

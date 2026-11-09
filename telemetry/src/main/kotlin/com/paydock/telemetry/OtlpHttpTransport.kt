@@ -13,6 +13,7 @@ import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.content.ByteArrayContent
+import io.ktor.http.fromHttpToGmtDate
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.TimeoutCancellationException
@@ -34,9 +35,14 @@ import java.net.SocketTimeoutException
  *
  * A 2xx body is read, up to [MAX_BODY_BYTES], only for `partialSuccess.rejectedLogRecords`; no other body is read
  * and `partialSuccess.errorMessage` is never kept. [send] never throws.
+ *
+ * Every response that reaches the response step, whatever its status, measures [clockOffset] from its `Date` header
+ * (D20). A send that fails before its response reaches that step (a timeout, a connection failure, the networking
+ * library's ApiParseException) measures nothing.
  */
 internal class OtlpHttpTransport(
     private val endpoint: String,
+    private val clockOffset: ClockOffset, // measured from the Date header of every response that reaches result()
     clientFactory: () -> HttpClient, // called once, on the first send
 ) : TelemetryTransport {
 
@@ -59,6 +65,7 @@ internal class OtlpHttpTransport(
     }
 
     private suspend fun result(response: HttpResponse): TransportResult {
+        serverDateMillis(response.headers[HttpHeaders.Date])?.let(clockOffset::measure)
         val status = response.status.value
         return if (response.status.isSuccess()) {
             TransportResult.Success(status, rejectedRecords(response))
@@ -103,6 +110,17 @@ internal class OtlpHttpTransport(
         fun retryAfterMillis(value: String?): Long? {
             val seconds = value?.trim()?.takeIf { it.isNotEmpty() && it.all(Char::isDigit) }?.toLongOrNull()
             return seconds?.takeIf { it <= Long.MAX_VALUE / MILLIS_PER_SECOND }?.let { it * MILLIS_PER_SECOND }
+        }
+
+        /**
+         * An HTTP-date (`Sun, 06 Nov 1994 08:49:37 GMT`) as UTC epoch ms, by Ktor's `fromHttpToGmtDate()`; null when
+         * absent or unparsable.
+         */
+        @Suppress("TooGenericExceptionCaught", "SwallowedException") // an unparsable date measures nothing
+        fun serverDateMillis(value: String?): Long? = try {
+            value?.fromHttpToGmtDate()?.timestamp
+        } catch (ignored: Exception) {
+            null
         }
     }
 }

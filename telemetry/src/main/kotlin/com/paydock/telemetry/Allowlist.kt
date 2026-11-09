@@ -37,6 +37,7 @@ internal object Allowlist {
         "paydock.widget" to AttributeValue.Str::class,
         "paydock.occurrences" to AttributeValue.Num::class,
         "paydock.group.key" to AttributeValue.Str::class,
+        "paydock.occurred_at" to AttributeValue.Str::class,
         // Exception
         "exception.type" to AttributeValue.Str::class,
         "exception.stacktrace" to AttributeValue.Str::class,

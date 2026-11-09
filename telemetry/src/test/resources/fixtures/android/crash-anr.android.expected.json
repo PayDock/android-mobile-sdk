@@ -96,7 +96,7 @@
           },
           "logRecords": [
             {
-              "timeUnixNano": "1793851121000000000",
+              "timeUnixNano": "1793852052512000000",
               "severityNumber": 21,
               "severityText": "FATAL",
               "body": {
@@ -125,6 +125,12 @@
                   "key": "network.connection.type",
                   "value": {
                     "stringValue": "wifi"
+                  }
+                },
+                {
+                  "key": "paydock.occurred_at",
+                  "value": {
+                    "stringValue": "2026-11-03T03:58:41.000Z"
                   }
                 },
                 {
