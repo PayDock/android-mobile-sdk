@@ -39,6 +39,8 @@ import com.paydock.core.domain.model.EventAction
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.core.telemetry.ReportWidgetOpened
+import com.paydock.core.telemetry.SdkWidget
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.button.RenderButton
@@ -90,6 +92,7 @@ fun GiftCardWidget(
     state: GiftCardWidgetState = rememberGiftCardWidgetState(),
     completion: (Result<String>) -> Unit,
 ) {
+    ReportWidgetOpened(SdkWidget.GIFT_CARD)
     // ViewModel instance scoped to the Koin dependency injection framework
     val viewModel: GiftCardViewModel = koinViewModel(parameters = { parametersOf(config) })
 

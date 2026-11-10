@@ -32,6 +32,8 @@ import com.paydock.R
 import com.paydock.core.domain.model.Event
 import com.paydock.core.domain.model.EventAction
 import com.paydock.core.presentation.util.WidgetEventDelegate
+import com.paydock.core.telemetry.ReportWidgetOpened
+import com.paydock.core.telemetry.SdkWidget
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.button.RenderButton
@@ -79,6 +81,7 @@ fun AddressDetailsWidget(
     eventDelegate: WidgetEventDelegate? = null,
     completion: (BillingAddress) -> Unit,
 ) {
+    ReportWidgetOpened(SdkWidget.ADDRESS_DETAILS)
     // Use config.address as part of the key to force fresh ViewModel when address changes
     // This ensures that editing vs adding gets separate ViewModel instances
     val viewModelKey = remember(config.address) {

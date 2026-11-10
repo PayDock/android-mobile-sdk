@@ -42,6 +42,8 @@ import com.paydock.core.domain.model.Event
 import com.paydock.core.domain.model.EventAction
 import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.core.telemetry.ReportWidgetOpened
+import com.paydock.core.telemetry.SdkWidget
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
@@ -86,6 +88,7 @@ fun GooglePayWidget(
     completion: (Result<GooglePayResult>) -> Unit,
     fallbackUi: @Composable (() -> Unit)? = null
 ) {
+    ReportWidgetOpened(SdkWidget.GOOGLE_PAY)
     // Use content-based key so ViewModel is recreated when config changes.
     val viewModelKey = remember(
         config.accessToken,
@@ -157,14 +160,12 @@ fun GooglePayWidget(
                     }, radius = appearance.cornerRadius,
                     allowedPaymentMethods = allowedPaymentMethods,
                     onError = {
-                        completion(
-                            Result.failure(
-                                GooglePayException.IsReadyToPayException(
-                                    it.message
-                                        ?: MobileSDKConstants.GooglePayConfig.Errors.IS_READY_TO_PAY_ERROR
-                                )
-                            )
+                        val failure = GooglePayException.IsReadyToPayException(
+                            it.message
+                                ?: MobileSDKConstants.GooglePayConfig.Errors.IS_READY_TO_PAY_ERROR
                         )
+                        viewModel.reportWidgetError(failure, cause = it)
+                        completion(Result.failure(failure))
                     },
                     enabled = uiState !is GooglePayUIState.Loading && uiState !is GooglePayUIState.LaunchGooglePayTask && enabled,
                     fallbackUi = fallbackUi

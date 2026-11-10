@@ -5,6 +5,9 @@ import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.MPGS3dsException
+import com.paydock.core.telemetry.RecordingTelemetry
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.WidgetSourceScan
 import com.paydock.core.utils.MainDispatcherRule
 import com.paydock.feature.threeDS.integrated.domain.model.integration.enums.MPGS3dsEventType
 import com.paydock.feature.threeDS.integrated.domain.model.ui.MPGS3dsChargeEventData
@@ -12,6 +15,8 @@ import com.paydock.feature.threeDS.integrated.domain.model.ui.MPGS3dsEvent
 import com.paydock.feature.threeDS.integrated.domain.model.ui.enums.IntegratedEvent
 import com.paydock.feature.threeDS.integrated.domain.model.ui.enums.MPGS3dsStatus
 import com.paydock.feature.threeDS.integrated.presentation.state.MPGS3dsUIState
+import junit.framework.TestCase.assertNull
+import junit.framework.TestCase.assertSame
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
@@ -21,6 +26,7 @@ import org.koin.test.inject
 import org.mockito.junit.MockitoJUnitRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 @RunWith(MockitoJUnitRunner::class)
 internal class MPGS3dsViewModelTest : BaseKoinUnitTest() {
@@ -31,10 +37,12 @@ internal class MPGS3dsViewModelTest : BaseKoinUnitTest() {
     private val dispatchersProvider: DispatchersProvider by inject()
 
     private lateinit var viewModel: MPGS3dsViewModel
+    private lateinit var telemetry: RecordingTelemetry
 
     @Before
     fun setup() {
-        viewModel = MPGS3dsViewModel(dispatchersProvider)
+        telemetry = RecordingTelemetry()
+        viewModel = MPGS3dsViewModel(dispatchersProvider, telemetry)
     }
 
     @Test
@@ -186,4 +194,115 @@ internal class MPGS3dsViewModelTest : BaseKoinUnitTest() {
             }
         }
     }
+
+    // region Telemetry: one SdkError per failure path (MP1-MP3), merchant-visible results unchanged
+
+    @Test
+    fun `event SdkException failure reports it once and still sets the error (MP1)`() = runTest {
+        val failure = MPGS3dsException.EventMappingException("3DS Error has occurred!")
+
+        viewModel.eventFlow.test {
+            viewModel.handleEventResult(Result.failure(failure))
+
+            awaitItem().let { state ->
+                assertIs<MPGS3dsUIState.Error>(state)
+                assertSame(failure, state.exception)
+            }
+        }
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.MPGS_3DS, reported.widget)
+        assertEquals("EventMappingException", reported.errorCode)
+        assertNull(reported.error.cause)
+    }
+
+    @Test
+    fun `event failure that is no SdkException reports it once and is still dropped (MP1)`() = runTest {
+        viewModel.eventFlow.test {
+            viewModel.handleEventResult(Result.failure(IllegalStateException()))
+
+            expectNoEvents()
+        }
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.MPGS_3DS, reported.widget)
+        assertNull(reported.errorCode)
+        assertEquals(IllegalStateException::class.java.name, reported.error.type)
+    }
+
+    @Test
+    fun `a successful event reports nothing`() = runTest {
+        val event = MPGS3dsEvent.ChargeAuthSuccessEvent(
+            data = MPGS3dsChargeEventData(
+                event = IntegratedEvent.CHARGE_AUTH_SUCCESS,
+                charge3dsId = MobileSDKTestConstants.ThreeDS.MOCK_CHARGE_ID,
+                status = MPGS3dsStatus.AUTHENTICATED
+            )
+        )
+
+        viewModel.eventFlow.test {
+            viewModel.handleEventResult(Result.success(event))
+            assertIs<MPGS3dsUIState.Success>(awaitItem())
+        }
+        assertEquals(emptyList<Any>(), telemetry.events.toList())
+    }
+
+    @Test
+    fun `reportWidgetError reports one MPGS 3DS SdkError and emits no state (MP3)`() = runTest {
+        viewModel.eventFlow.test {
+            viewModel.reportWidgetError(MPGS3dsException.WebViewException(-1, "web view"))
+
+            expectNoEvents()
+        }
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.MPGS_3DS, reported.widget)
+        assertEquals("WebViewException", reported.errorCode)
+        assertNull(reported.error.cause)
+    }
+
+    @Test
+    fun `reportWidgetError reports only the first web view failure per view model (MP3)`() = runTest {
+        viewModel.eventFlow.test {
+            // Child windows can fire one error per failed resource.
+            viewModel.reportWidgetError(MPGS3dsException.WebViewException(-1, "web view"))
+            viewModel.reportWidgetError(MPGS3dsException.WebViewException(-2, "web view"))
+
+            expectNoEvents()
+        }
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.MPGS_3DS, reported.widget)
+        assertEquals("WebViewException", reported.errorCode)
+    }
+
+    @Test
+    fun `the invalid token returns report from an effect before the early return, once per failure type (MP2)`() {
+        val source = WidgetSourceScan.read("feature/threeDS/integrated/presentation/MPGS3dsWidget.kt")
+        val widget = WidgetSourceScan.function(source, "MPGS3dsWidget")
+        val invalidToken = WidgetSourceScan.between(widget, "if (parsedToken == null) {", "} else if")
+        val invalidFormat = WidgetSourceScan.between(widget, "} else if", "koinViewModel()")
+        val reporter = WidgetSourceScan.function(WidgetSourceScan.read("core/telemetry/ReportWidgetOpened.kt"), "ReportSdkErrorOnce")
+
+        listOf(invalidToken, invalidFormat).forEach { branch ->
+            assertEquals(1, WidgetSourceScan.count(branch, "MPGS3dsException.InvalidTokenException("))
+            assertEquals(1, WidgetSourceScan.count(branch, "ReportSdkErrorOnce(failure, SdkWidget.MPGS_3DS)"))
+            assertEquals(1, WidgetSourceScan.count(branch, "completion(Result.failure(failure))"))
+            assertTrue(
+                branch.indexOf("ReportSdkErrorOnce(failure, SdkWidget.MPGS_3DS)") < branch.indexOf("return"),
+                "the report precedes the early return"
+            )
+        }
+        assertEquals(1, WidgetSourceScan.count(reporter, "remember { telemetryOrNull() }"))
+        assertEquals(1, WidgetSourceScan.count(reporter, "LaunchedEffect(error::class)"))
+        assertEquals(1, WidgetSourceScan.count(reporter, "telemetry?.reportSdkError(error, widget)"))
+    }
+
+    @Test
+    fun `the web view error handler reports the WebViewException it hands on, once (MP3)`() {
+        val source = WidgetSourceScan.read("feature/threeDS/integrated/presentation/MPGS3dsWidget.kt")
+        val onError = WidgetSourceScan.between(source, "{ status, message ->", "completion(Result.failure(failure))")
+
+        assertEquals(1, WidgetSourceScan.count(source, "viewModel.reportWidgetError("))
+        assertEquals(1, WidgetSourceScan.count(onError, "MPGS3dsException.WebViewException("))
+        assertEquals(1, WidgetSourceScan.count(onError, "viewModel.reportWidgetError(failure)"))
+    }
+
+    // endregion
 }

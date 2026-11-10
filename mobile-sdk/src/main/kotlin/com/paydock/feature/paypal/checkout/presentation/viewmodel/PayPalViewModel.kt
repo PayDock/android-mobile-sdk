@@ -1,12 +1,16 @@
 package com.paydock.feature.paypal.checkout.presentation.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.PayPalException
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.domain.error.extensions.mapApiException
 import com.paydock.core.extensions.safeCastAs
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.reportSdkError
+import com.paydock.core.telemetry.reportSdkErrorWhileActive
 import com.paydock.feature.paypal.checkout.domain.mapper.integration.mapToPayPalFundingSource
 import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
@@ -23,7 +27,10 @@ import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
+import com.paydock.telemetry.Telemetry
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFundingSource
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel for managing the PayPal checkout process in the mobile SDK.
@@ -39,6 +46,7 @@ import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFundingSource
  * @param getWalletCallbackUseCase Use case for retrieving wallet callback data.
  * @param dispatchers Dispatcher provider for managing coroutine contexts.
  * @param getPayPalClientIdUseCase Use case for retrieving the PayPal Client ID.
+ * @param telemetry The telemetry facade the view model reports its handled errors to.
  */
 internal class PayPalViewModel(
     private val config: PayPalWidgetConfig,
@@ -48,6 +56,7 @@ internal class PayPalViewModel(
     getWalletCallbackUseCase: GetWalletCallbackUseCase,
     dispatchers: DispatchersProvider,
     private val getPayPalClientIdUseCase: GetPayPalClientIdUseCase,
+    private val telemetry: Telemetry,
 ) : WalletViewModel<PayPalCheckoutUIState>(
     captureWalletChargeUseCase,
     declineWalletChargeUseCase,
@@ -115,17 +124,17 @@ internal class PayPalViewModel(
                 setLoadingState()
                 val orderId = callback.id
                 if (orderId.isNullOrBlank()) {
-                    updateUiState(
-                        PayPalCheckoutUIState.Error(
-                            PayPalException.ConfigurationException("Missing PayPal ORDER_ID")
-                        )
-                    )
+                    val failure = PayPalException.ConfigurationException("Missing PayPal ORDER_ID")
+                    reportWhileActive(failure)
+                    updateUiState(PayPalCheckoutUIState.Error(failure))
                     return
                 }
                 getPayPalClientId(orderId)
             },
             onFailure = { throwable ->
-                updateUiState(PayPalCheckoutUIState.Error(throwable.mapApiException(PayPalException.FetchingUrlException::class)))
+                val failure = throwable.mapApiException(PayPalException.FetchingUrlException::class)
+                reportWhileActive(failure, cause = throwable)
+                updateUiState(PayPalCheckoutUIState.Error(failure))
             }
         )
     }
@@ -141,7 +150,9 @@ internal class PayPalViewModel(
                 updateUiState(PayPalCheckoutUIState.Success(chargeData))
             },
             onFailure = { throwable ->
-                updateUiState(PayPalCheckoutUIState.Error(throwable.mapApiException(PayPalException.CapturingChargeException::class)))
+                val failure = throwable.mapApiException(PayPalException.CapturingChargeException::class)
+                reportWhileActive(failure, cause = throwable)
+                updateUiState(PayPalCheckoutUIState.Error(failure))
             }
         )
     }
@@ -187,6 +198,7 @@ internal class PayPalViewModel(
                 .onFailure { error ->
                     val mapped = error.safeCastAs<SdkException>()
                         ?: error.mapApiException(PayPalException.GetPayPalClientIdException::class)
+                    telemetry.reportSdkErrorWhileActive(mapped, SdkWidget.PAYPAL, cause = error.takeIf { it !== mapped })
                     updateUiState(PayPalCheckoutUIState.Error(mapped))
                 }
         }
@@ -215,13 +227,11 @@ internal class PayPalViewModel(
             captureWalletTransaction(token, request)
         } else {
             // Wallet token was lost during process death - treat as error for proper user feedback
-            updateUiState(
-                PayPalCheckoutUIState.Error(
-                    PayPalException.InitialisationWalletTokenException(
-                        "Wallet token lost during process recreation. Please try again."
-                    )
-                )
+            val failure = PayPalException.InitialisationWalletTokenException(
+                "Wallet token lost during process recreation. Please try again."
             )
+            telemetry.reportSdkError(failure, SdkWidget.PAYPAL)
+            updateUiState(PayPalCheckoutUIState.Error(failure))
         }
     }
 
@@ -258,7 +268,32 @@ internal class PayPalViewModel(
             }
         }
     }
+
+    /**
+     * Reports a failure the widget builds and hands to the merchant itself, outside this view model's state (PP7).
+     *
+     * @param error The error the merchant gets.
+     * @param cause The original throwable [error] was built from, if any.
+     */
+    fun reportWidgetError(error: Throwable, cause: Throwable? = null) {
+        telemetry.reportSdkError(error, SdkWidget.PAYPAL, cause = cause)
+    }
     //endregion
+
+    /**
+     * Reports a failure from the wallet result overrides ([updateCallbackUIState], [updateChargeUIState]). They do not
+     * suspend, but they run inside the wallet use case's coroutine of [viewModelScope], so the report goes through
+     * reportSdkErrorWhileActive from an undispatched child of that scope: it runs at once, before the caller's next
+     * statement, and is skipped once the scope is cancelled (research question 16).
+     *
+     * @param error The error the merchant gets.
+     * @param cause The original throwable [error] was built from, if any.
+     */
+    private fun reportWhileActive(error: Throwable, cause: Throwable? = null) {
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            telemetry.reportSdkErrorWhileActive(error, SdkWidget.PAYPAL, cause = cause)
+        }
+    }
 
     private companion object {
         const val KEY_WALLET_TOKEN: String = "paypal.checkout.wallet_token"

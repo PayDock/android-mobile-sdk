@@ -4,10 +4,13 @@ import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.reportSdkError
 import com.paydock.feature.threeDS.standalone.domain.mapper.asEntity
 import com.paydock.feature.threeDS.standalone.domain.mapper.asProgress
 import com.paydock.feature.threeDS.standalone.domain.model.ui.Standalone3DSEvent
 import com.paydock.feature.threeDS.standalone.presentation.state.Standalone3DSUIState
+import com.paydock.telemetry.Telemetry
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -21,14 +24,17 @@ import kotlinx.coroutines.flow.asSharedFlow
  * components to observe and react to changes in the 3DS process.
  *
  * @param dispatchers A [DispatchersProvider] for managing coroutine dispatchers.
+ * @param telemetry The telemetry facade the view model reports its handled errors to.
  *
  * @see BaseViewModel
  * @see Standalone3DSUIState
  * @see Standalone3DSEvent
  * @see DispatchersProvider
  */
-internal class Standalone3DSViewModel(dispatchers: DispatchersProvider) :
-    BaseViewModel(dispatchers) {
+internal class Standalone3DSViewModel(
+    dispatchers: DispatchersProvider,
+    private val telemetry: Telemetry,
+) : BaseViewModel(dispatchers) {
 
     /**
      * A [MutableSharedFlow] used to emit events related to the 3DS UI state.
@@ -152,6 +158,7 @@ internal class Standalone3DSViewModel(dispatchers: DispatchersProvider) :
                 updateThreeDSEvent(event)
             },
             onFailure = { throwable ->
+                telemetry.reportSdkError(throwable, SdkWidget.STANDALONE_3DS)
                 throwable.safeCastAs<SdkException>()
                     ?.let {
                         updateState(Standalone3DSUIState.Loading(false))
@@ -159,5 +166,17 @@ internal class Standalone3DSViewModel(dispatchers: DispatchersProvider) :
                     }
             }
         )
+    }
+
+    /**
+     * Reports a failure the widget or its bridge holds outside this view model's state: the unknown bridge event
+     * that is otherwise only logged (SD2), the render process gone and web view errors handed to the merchant (SD4,
+     * SD5).
+     *
+     * @param error The error the merchant gets, or the one the bridge drops.
+     * @param cause The original throwable [error] was built from, if any.
+     */
+    fun reportWidgetError(error: Throwable, cause: Throwable? = null) {
+        telemetry.reportSdkError(error, SdkWidget.STANDALONE_3DS, cause = cause)
     }
 }

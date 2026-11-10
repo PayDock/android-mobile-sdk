@@ -20,8 +20,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for the pure [TelemetryReducer] (R_01, R_04, R_09 to R_11, R_17, R_18), one test per rule. `now` is
- * UTC epoch ms and `elapsed` monotonic ms; events are synthetic and carry no message text.
+ * Unit tests for the pure [TelemetryReducer] (R_01, R_04, R_07, R_09 to R_11, R_17, R_18), one test per rule. `now`
+ * is UTC epoch ms and `elapsed` monotonic ms; events are synthetic and carry no message text.
  */
 internal class TelemetryReducerTest {
 
@@ -355,6 +355,73 @@ internal class TelemetryReducerTest {
         assertFalse(TelemetryReducer.isError(TelemetryEvent.Dropped(DroppedReason.RATE_LIMIT, 1)))
         assertEquals(start, next)
         assertEquals(listOf(Drop(DropReason.LEVEL_FILTERED)), effects)
+    }
+
+    @Test
+    fun widgetOpened_isRecordedOncePerWidget_andASecondOpeningDropsAsAlreadyOpened() {
+        val (first, firstEffects) = report(state(), widgetOpened)
+        assertEquals(TelemetryEvent.WidgetOpened("CardDetailsWidget"), persisted(firstEffects).single().event)
+        assertEquals(setOf("CardDetailsWidget"), first.openedWidgets)
+
+        val (second, secondEffects) = report(first, widgetOpened, t0 + 1)
+        assertEquals(first, second)
+        assertEquals(listOf(Drop(DropReason.ALREADY_OPENED)), secondEffects)
+
+        val other = TelemetryEvent.WidgetOpened(widget = "ZipWidget")
+        val (third, thirdEffects) = report(second, other, t0 + 2)
+        assertEquals(other, persisted(thirdEffects).single().event)
+        assertEquals(setOf("CardDetailsWidget", "ZipWidget"), third.openedWidgets)
+        assertTrue(third.notices.isEmpty())
+
+        val (_, errorEffects) = report(third, error, t0 + 3)
+        assertEquals(1, persisted(errorEffects).size)
+    }
+
+    @Test
+    fun widgetOpened_isRecordedAgainInANewSession() {
+        val (opened, _) = report(state(), widgetOpened)
+        assertEquals(listOf(Drop(DropReason.ALREADY_OPENED)), report(opened, widgetOpened).second)
+
+        val newSession = state() // a new runtime starts from a new state
+        val (reopened, effects) = report(newSession, widgetOpened)
+        assertEquals(widgetOpened, persisted(effects).single().event)
+        assertEquals(setOf("CardDetailsWidget"), reopened.openedWidgets)
+    }
+
+    @Test
+    fun widgetOpened_droppedByTheLevelOrTheCap_isNotRemembered() {
+        val filtered = state(level = TelemetryLevel.ERRORS)
+        val (afterFilter, filterEffects) = report(filtered, widgetOpened)
+        assertEquals(listOf(Drop(DropReason.LEVEL_FILTERED)), filterEffects)
+        assertTrue(afterFilter.openedWidgets.isEmpty())
+        val (restored, _) = reduce(afterFilter, TelemetryIntent.LevelChanged(TelemetryLevel.ALL))
+        assertEquals(widgetOpened, persisted(report(restored, widgetOpened).second).single().event)
+
+        val off = state(level = TelemetryLevel.OFF)
+        assertTrue(report(off, widgetOpened).first.openedWidgets.isEmpty())
+
+        val capped = reportMany(state(), HOURLY_CAP)
+        val (afterCap, capEffects) = report(capped, widgetOpened)
+        assertEquals(Drop(DropReason.RATE_LIMIT), capEffects.first())
+        assertTrue(afterCap.openedWidgets.isEmpty())
+        val (nextHour, nextHourEffects) = report(afterCap, widgetOpened, elapsed = e0 + HOUR_MILLIS)
+        assertEquals(widgetOpened, persisted(nextHourEffects).single().event)
+        assertEquals(setOf("CardDetailsWidget"), nextHour.openedWidgets)
+    }
+
+    @Test
+    fun widgetOpened_alreadyOpened_isCheckedAfterTheLevel_andBeforeTheCap() {
+        val (opened, _) = report(state(), widgetOpened)
+
+        val (_, offEffects) = report(opened.copy(level = TelemetryLevel.OFF), widgetOpened)
+        assertEquals(listOf(Drop(DropReason.LEVEL_OFF)), offEffects)
+        val (_, filteredEffects) = report(opened.copy(level = TelemetryLevel.ERRORS), widgetOpened)
+        assertEquals(listOf(Drop(DropReason.LEVEL_FILTERED)), filteredEffects)
+
+        val full = opened.copy(createdInWindow = HOURLY_CAP)
+        val (next, effects) = report(full, widgetOpened)
+        assertEquals(full, next)
+        assertEquals(listOf(Drop(DropReason.ALREADY_OPENED)), effects)
     }
 
     @Test

@@ -122,6 +122,44 @@ internal class RecordFactoryTest {
     }
 
     @Test
+    fun sdkError_withAnApiError_carriesTheFourApiKeys_inAllowlistOrder() {
+        val error = ErrorInfo("com.paydock.core.domain.error.exceptions.TokenisingException", listOf(sdkFrame))
+        val apiError = TelemetryEvent.ApiError(
+            status = 400,
+            code = "invalid_request",
+            summaryCode = "validation_error",
+            gatewayCodes = listOf("05", "N7")
+        )
+
+        val record = create(
+            TelemetryEvent.SdkError(error, errorCode = "TokenisingCardException", widget = "CardDetailsWidget", apiError)
+        )
+        val without = create(TelemetryEvent.SdkError(error, "TokenisingCardException", widget = "CardDetailsWidget"))
+
+        assertEquals(Num(400), record.value("paydock.api.status"))
+        assertEquals(Str("invalid_request"), record.value("paydock.api.error.code"))
+        assertEquals(Str("validation_error"), record.value("paydock.api.error.summary_code"))
+        assertEquals(Str("05, N7"), record.value("paydock.api.gateway.codes"))
+        val order = Allowlist.RECORD_KEYS.keys.toList()
+        val keys = record.attributes.map { it.key }
+        assertEquals(keys.sortedBy { order.indexOf(it) }, keys)
+        assertEquals(keys.distinct(), keys)
+        assertEquals(
+            listOf(
+                "paydock.api.status",
+                "paydock.api.error.code",
+                "paydock.api.error.summary_code",
+                "paydock.api.gateway.codes"
+            ),
+            keys.filter { it.startsWith("paydock.api.") }
+        )
+        assertEquals("paydock.error · sdk_error · TokenisingCardException", record.body)
+        assertEquals(without.body, record.body)
+        assertEquals(emptyList<String>(), without.attributes.map { it.key }.filter { it.startsWith("paydock.api.") })
+        assertEquals(without.attributes, record.attributes.filterNot { it.key.startsWith("paydock.api.") })
+    }
+
+    @Test
     fun httpFailure_carriesStatusErrorTypeApiFieldsAndGroupKey() {
         val record = create(
             network(

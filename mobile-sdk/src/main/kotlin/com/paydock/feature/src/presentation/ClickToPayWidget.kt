@@ -15,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.ClickToPayException
+import com.paydock.core.telemetry.ReportWidgetOpened
+import com.paydock.core.telemetry.SdkWidget
 import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.web.SdkWebView
@@ -41,6 +43,7 @@ fun ClickToPayWidget(
     appearance: ClickToPayWidgetAppearance = ClickToPayAppearanceDefaults.appearance(),
     completion: (Result<String>) -> Unit
 ) {
+    ReportWidgetOpened(SdkWidget.CLICK_TO_PAY)
     // Obtain instances of view models
     val viewModel: ClickToPayViewModel = koinViewModel()
 
@@ -95,14 +98,12 @@ fun ClickToPayWidget(
                 loaderAppearance = appearance.loader
             ) { status, message ->
                 // Invoke the completion callback with the Click to Pay exception upon WebView error
-                completion(
-                    Result.failure(
-                        ClickToPayException.WebViewException(
-                            code = status,
-                            displayableMessage = message
-                        )
-                    )
+                val failure = ClickToPayException.WebViewException(
+                    code = status,
+                    displayableMessage = message
                 )
+                viewModel.reportWidgetError(failure)
+                completion(Result.failure(failure))
             }
         }
     }

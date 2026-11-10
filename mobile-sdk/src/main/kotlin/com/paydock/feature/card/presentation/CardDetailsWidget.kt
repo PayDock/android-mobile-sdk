@@ -37,6 +37,8 @@ import com.paydock.core.domain.model.FormState
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.core.telemetry.ReportWidgetOpened
+import com.paydock.core.telemetry.SdkWidget
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.button.RenderButton
@@ -104,6 +106,7 @@ fun CardDetailsWidget(
     state: CardDetailsWidgetState = rememberCardDetailsWidgetState(),
     completion: (Result<CardResult>) -> Unit
 ) {
+    ReportWidgetOpened(SdkWidget.CARD_DETAILS)
     val viewModel: CardDetailsViewModel = koinViewModel(parameters = {
         parametersOf(config.accessToken, config.gatewayId, config.schemeSupport)
     })

@@ -7,6 +7,8 @@ import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.GiftCardException
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
+import com.paydock.core.telemetry.RecordingTelemetry
+import com.paydock.core.telemetry.SdkWidget
 import com.paydock.core.utils.MainDispatcherRule
 import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
 import com.paydock.feature.card.domain.model.ui.TokenDetails
@@ -19,9 +21,12 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
+import junit.framework.TestCase.assertNull
+import junit.framework.TestCase.assertSame
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -43,14 +48,17 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
 
     private lateinit var viewModel: GiftCardViewModel
     private lateinit var useCase: CreateGiftCardPaymentTokenUseCase
+    private lateinit var telemetry: RecordingTelemetry
 
     @Before
     fun setup() {
         useCase = mockk()
+        telemetry = RecordingTelemetry()
         viewModel = GiftCardViewModel(
             GiftCardWidgetConfig(accessToken = MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN),
             useCase,
-            dispatchersProvider
+            dispatchersProvider,
+            telemetry
         )
     }
 
@@ -273,4 +281,52 @@ internal class GiftCardViewModelTest : BaseKoinUnitTest() {
             assertIs<GiftCardUIState.Idle>(awaitItem())
         }
     }
+
+    // region Telemetry: one SdkError per failure path (GC1), merchant-visible results unchanged
+
+    @Test
+    fun `gift card tokeniseCard SdkException failure reports one SdkError and hands on the same exception (GC1)`() =
+        runTest {
+            val failure = GiftCardException.TokenisingCardException(
+                error = ApiErrorResponse(
+                    status = HttpStatusCode.InternalServerError.value,
+                    summary = ErrorSummary(
+                        code = "invalid_card",
+                        message = MobileSDKTestConstants.Errors.MOCK_INVALID_CARD_DETAILS_ERROR
+                    )
+                )
+            )
+            coEvery {
+                useCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any())
+            } returns Result.failure(failure)
+
+            viewModel.tokeniseCard()
+            val state = viewModel.stateFlow.first { it is GiftCardUIState.Error }
+
+            assertIs<GiftCardUIState.Error>(state)
+            assertSame(failure, state.exception)
+            val reported = telemetry.sdkErrors.single()
+            assertEquals(SdkWidget.GIFT_CARD, reported.widget)
+            assertEquals("TokenisingCardException", reported.errorCode)
+            assertEquals(HttpStatusCode.InternalServerError.value, reported.apiError?.status)
+            assertEquals("invalid_card", reported.apiError?.summaryCode)
+        }
+
+    @Test
+    fun `gift card tokeniseCard other failure reports one SdkError and still stays Loading (GC1)`() = runTest {
+        coEvery {
+            useCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any())
+        } returns Result.failure(IllegalStateException())
+
+        viewModel.tokeniseCard()
+        advanceUntilIdle()
+
+        assertIs<GiftCardUIState.Loading>(viewModel.stateFlow.value)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.GIFT_CARD, reported.widget)
+        assertNull(reported.errorCode)
+        assertEquals(IllegalStateException::class.java.name, reported.error.type)
+    }
+
+    // endregion
 }

@@ -1,6 +1,7 @@
 package com.paydock.feature.googlepay.presentation.viewmodels
 
 import app.cash.turbine.test
+import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.tasks.Tasks
@@ -12,18 +13,26 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.GooglePayException
+import com.paydock.core.network.dto.error.ApiErrorResponse
+import com.paydock.core.network.dto.error.ErrorSummary
+import com.paydock.core.telemetry.RecordingTelemetry
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.WidgetSourceScan
 import com.paydock.core.utils.MainDispatcherRule
 import com.paydock.feature.googlepay.domain.model.integration.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.domain.usecase.CreateGooglePayTokenUseCase
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.util.PaymentsUtil
+import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNull
+import junit.framework.TestCase.assertSame
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.json.JSONArray
 import org.junit.Before
@@ -48,11 +57,13 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
     private lateinit var viewModel: GooglePayViewModel
     private lateinit var paymentsClient: PaymentsClient
     private lateinit var createGooglePayTokenUseCase: CreateGooglePayTokenUseCase
+    private lateinit var telemetry: RecordingTelemetry
 
     @Before
     fun setup() {
         createGooglePayTokenUseCase = mockk()
         paymentsClient = mockk()
+        telemetry = RecordingTelemetry()
 
         val mockAccessToken = MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN
         val mockServiceId = MobileSDKTestConstants.General.MOCK_GATEWAY_ID
@@ -79,7 +90,8 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
                 paymentRequest
             ),
             createGooglePayTokenUseCase,
-            dispatchersProvider
+            dispatchersProvider,
+            telemetry
         )
     }
 
@@ -111,7 +123,8 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
                     paymentRequest
                 ),
                 createGooglePayTokenUseCase,
-                dispatchersProvider
+                dispatchersProvider,
+                telemetry
             )
 
             viewModel.googlePayAvailable.test {
@@ -361,4 +374,204 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
             assertIs<GooglePayUIState.Idle>(awaitItem())
         }
     }
+
+    // region Telemetry: one SdkError per failure path (GP1-GP8), merchant-visible results unchanged
+
+    private fun makeViewModel(reporting: RecordingTelemetry) = GooglePayViewModel(
+        paymentsClient,
+        GooglePayWidgetConfig(
+            MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN,
+            MobileSDKTestConstants.General.MOCK_GATEWAY_ID,
+            PaymentsUtil.createIsReadyToPayRequest(),
+            PaymentsUtil.createGooglePayRequest(
+                amount = BigDecimal(10),
+                amountLabel = "Goodies",
+                currencyCode = "AUD",
+                countryCode = "AU",
+                merchantName = "unit_test",
+                merchantIdentifier = "unit_test"
+            )
+        ),
+        createGooglePayTokenUseCase,
+        dispatchersProvider,
+        reporting
+    )
+
+    @Test
+    fun `not ready to pay reports no SdkError and still sets IsReadyToPayException (GP1)`() = runTest {
+        coEvery { paymentsClient.isReadyToPay(any()) } returns Tasks.forResult(false)
+        val reporting = RecordingTelemetry()
+
+        val failing = makeViewModel(reporting)
+        val state = failing.uiState.first { it is GooglePayUIState.Error }
+
+        assertIs<GooglePayUIState.Error>(state)
+        assertIs<GooglePayException.IsReadyToPayException>(state.exception)
+        assertTrue(reporting.sdkErrors.isEmpty())
+    }
+
+    @Test
+    fun `isReadyToPay ApiException reports one SdkError with the gms cause and still sets IsReadyToPayException (GP2)`() =
+        runTest {
+            coEvery { paymentsClient.isReadyToPay(any()) } returns
+                Tasks.forException(ApiException(Status(CommonStatusCodes.NETWORK_ERROR)))
+            val reporting = RecordingTelemetry()
+
+            val failing = makeViewModel(reporting)
+            val state = failing.uiState.first { it is GooglePayUIState.Error }
+
+            assertIs<GooglePayUIState.Error>(state)
+            assertIs<GooglePayException.IsReadyToPayException>(state.exception)
+            val reported = reporting.sdkErrors.single()
+            assertEquals(SdkWidget.GOOGLE_PAY, reported.widget)
+            assertEquals("IsReadyToPayException", reported.errorCode)
+            assertEquals(ApiException::class.java.name, reported.error.cause?.type)
+        }
+
+    @Test
+    fun `allowed payment methods failure reports once per view model and still sets InitialisationException (GP3)`() =
+        runTest {
+            val invalidRequest = PaymentsUtil.createGooglePayRequest(
+                amount = BigDecimal(10),
+                amountLabel = "Goodies",
+                currencyCode = "AUD",
+                countryCode = "AU",
+                merchantName = "unit_test",
+                merchantIdentifier = "unit_test"
+            ).copy(allowedPaymentMethods = emptyList())
+
+            // Runs on every composition: the second call must not report again.
+            assertNull(viewModel.extractAllowedPaymentMethods(invalidRequest))
+            assertNull(viewModel.extractAllowedPaymentMethods(invalidRequest))
+
+            val state = viewModel.uiState.value
+            assertIs<GooglePayUIState.Error>(state)
+            assertIs<GooglePayException.InitialisationException>(state.exception)
+            val reported = telemetry.sdkErrors.single()
+            assertEquals(SdkWidget.GOOGLE_PAY, reported.widget)
+            assertEquals("InitialisationException", reported.errorCode)
+            assertEquals(IllegalArgumentException::class.java.name, reported.error.cause?.type)
+        }
+
+    @Test
+    fun `cancellation reports no SdkError and still sets CancellationException (GP4)`() = runTest {
+        viewModel.handleCancellationResult()
+
+        val state = viewModel.uiState.value
+        assertIs<GooglePayUIState.Error>(state)
+        assertIs<GooglePayException.CancellationException>(state.exception)
+        assertTrue(telemetry.sdkErrors.isEmpty())
+    }
+
+    @Test
+    fun `result parse failure reports one SdkError with the parse cause and still sets ResultException (GP5)`() =
+        runTest {
+            val paymentData = mockk<PaymentData>()
+            every { paymentData.toJson() } throws IllegalStateException()
+
+            viewModel.processGooglePayPaymentResult(paymentData)
+
+            val state = viewModel.uiState.value
+            assertIs<GooglePayUIState.Error>(state)
+            assertIs<GooglePayException.ResultException>(state.exception)
+            val reported = telemetry.sdkErrors.single()
+            assertEquals(SdkWidget.GOOGLE_PAY, reported.widget)
+            assertEquals("ResultException", reported.errorCode)
+            assertEquals(IllegalStateException::class.java.name, reported.error.cause?.type)
+        }
+
+    @Test
+    fun `token API failure reports the ResultException with the mapped cause and its API fields (GP6)`() = runTest {
+        val paymentData = mockk<PaymentData>()
+        every { paymentData.toJson() } returns
+            """{"paymentMethodData":{"tokenizationData":{"token":"unit_test_token"},"info":{"cardNetwork":"VISA"}}}"""
+        every { android.util.Base64.encodeToString(any(), any()) } answers {
+            java.util.Base64.getEncoder().encodeToString(firstArg<ByteArray>())
+        }
+        val mapped = GooglePayException.TokenisingGooglePayException(
+            error = ApiErrorResponse(
+                status = HttpStatusCode.BadRequest.value,
+                summary = ErrorSummary(
+                    code = "invalid_token",
+                    message = MobileSDKTestConstants.Errors.MOCK_TOKENIZATION_ERROR
+                )
+            )
+        )
+        coEvery { createGooglePayTokenUseCase(any(), any()) } returns Result.failure(mapped)
+
+        viewModel.processGooglePayPaymentResult(paymentData)
+        val state = viewModel.uiState.first { it is GooglePayUIState.Error }
+
+        assertIs<GooglePayUIState.Error>(state)
+        assertIs<GooglePayException.ResultException>(state.exception)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.GOOGLE_PAY, reported.widget)
+        assertEquals("ResultException", reported.errorCode)
+        assertEquals(mapped.javaClass.name, reported.error.cause?.type)
+        assertEquals(HttpStatusCode.BadRequest.value, reported.apiError?.status)
+        assertEquals("invalid_token", reported.apiError?.summaryCode)
+    }
+
+    @Test
+    fun `Google Pay failing status reports one SdkError and still sets the mapped SDKException (GP7)`() = runTest {
+        viewModel.handleWalletResultErrors(Status(CommonStatusCodes.TIMEOUT))
+
+        val state = viewModel.uiState.value
+        assertIs<GooglePayUIState.Error>(state)
+        assertIs<GooglePayException.SDKException.Timeout>(state.exception)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.GOOGLE_PAY, reported.widget)
+        assertEquals("Timeout", reported.errorCode)
+        assertNull(reported.error.cause)
+    }
+
+    @Test
+    fun `Google Pay cancelled status reports no SdkError and still sets CancelledBySdk (GP7)`() = runTest {
+        listOf(CommonStatusCodes.CANCELED, WalletConstants.ERROR_CODE_USER_CANCELLED).forEach { statusCode ->
+            viewModel.handleGooglePayResultErrors(statusCode)
+
+            val state = viewModel.uiState.value
+            assertIs<GooglePayUIState.Error>(state)
+            assertIs<GooglePayException.SDKException.CancelledBySdk>(state.exception)
+        }
+        assertTrue(telemetry.sdkErrors.isEmpty())
+    }
+
+    @Test
+    fun `Google Pay sign-in required status reports no SdkError and still sets PlayServicesError (GP7)`() = runTest {
+        viewModel.handleWalletResultErrors(Status(CommonStatusCodes.SIGN_IN_REQUIRED))
+
+        val state = viewModel.uiState.value
+        assertIs<GooglePayUIState.Error>(state)
+        assertIs<GooglePayException.SDKException.PlayServicesError>(state.exception)
+        assertTrue(telemetry.sdkErrors.isEmpty())
+    }
+
+    @Test
+    fun `reportWidgetError reports one Google Pay SdkError with its cause and changes no state (GP8)`() = runTest {
+        val failure = GooglePayException.IsReadyToPayException(
+            MobileSDKConstants.GooglePayConfig.Errors.IS_READY_TO_PAY_ERROR
+        )
+        val before = viewModel.uiState.value
+
+        viewModel.reportWidgetError(failure, cause = IllegalStateException())
+
+        assertSame(before, viewModel.uiState.value)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.GOOGLE_PAY, reported.widget)
+        assertEquals("IsReadyToPayException", reported.errorCode)
+        assertEquals(IllegalStateException::class.java.name, reported.error.cause?.type)
+    }
+
+    @Test
+    fun `the Pay button onError reports the failure it hands on, once, with its cause (GP8)`() {
+        val source = WidgetSourceScan.read("feature/googlepay/presentation/GooglePayWidget.kt")
+        val onError = WidgetSourceScan.between(source, "onError = {", "enabled =")
+
+        assertEquals(1, WidgetSourceScan.count(source, "viewModel.reportWidgetError("))
+        assertEquals(1, WidgetSourceScan.count(onError, "viewModel.reportWidgetError(failure, cause = it)"))
+        assertEquals(1, WidgetSourceScan.count(onError, "completion(Result.failure(failure))"))
+    }
+
+    // endregion
 }

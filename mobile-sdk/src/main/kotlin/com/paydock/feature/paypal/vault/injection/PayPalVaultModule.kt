@@ -16,7 +16,7 @@ internal val payPalVaultModule = module {
     // Factory methods for creating instances of ViewModels
     // SavedStateHandle is auto-injected by Koin when not in the lambda parameters
     viewModel { (config: PayPalVaultConfig) ->
-        PayPalVaultViewModel(config, get(), get(), get(), get(), get())
+        PayPalVaultViewModel(config, get(), get(), get(), get(), get(), telemetry = get())
     }
 
     // PayPalWebVaultViewModel with SavedStateHandle

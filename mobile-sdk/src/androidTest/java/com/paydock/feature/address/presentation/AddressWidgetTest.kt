@@ -14,6 +14,7 @@ import com.paydock.feature.address.injection.addressDetailsModule
 import com.paydock.feature.address.presentation.viewmodels.AddressDetailsViewModel
 import com.paydock.feature.address.presentation.viewmodels.AddressSearchViewModel
 import com.paydock.feature.address.presentation.viewmodels.CountryAutoCompleteViewModel
+import com.paydock.telemetry.NoOpTelemetry
 import io.mockk.coEvery
 import io.mockk.mockk
 import org.junit.After
@@ -48,7 +49,7 @@ internal class AddressWidgetTest : BaseViewModelKoinTest<AddressDetailsViewModel
         single<Geocoder> { geocoder }
         viewModel {
             // Use the real AddressSearchViewModel with our mocked Geocoder
-            AddressSearchViewModel(geocoder, dispatchersProvider)
+            AddressSearchViewModel(geocoder, dispatchersProvider, NoOpTelemetry)
         }
         viewModel { CountryAutoCompleteViewModel(dispatchersProvider) }
         viewModel { AddressDetailsViewModel(dispatchersProvider) }

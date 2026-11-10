@@ -5,6 +5,7 @@ import android.content.ContextWrapper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.paydock.core.domain.model.Environment
+import com.paydock.core.injection.sdkModule
 import com.paydock.telemetry.ActiveTelemetry
 import com.paydock.telemetry.ChainedCrashHandler
 import com.paydock.telemetry.CrashHandlerInstaller
@@ -187,6 +188,24 @@ internal class TelemetryBindingTest {
     @Before
     fun setUp() {
         koin = koinApplication { }.koin
+    }
+
+    @Test
+    fun theSdkModules_withNoBind_resolveTheNoOpFacade() {
+        val sdkKoin = koinApplication { modules(sdkModule) }.koin
+
+        assertSame(NoOpTelemetry, sdkKoin.get<Telemetry>())
+    }
+
+    @Test
+    fun bind_overridesTheDefaultFacade() {
+        koin.loadModules(listOf(defaultTelemetryModule))
+        val runtime = CountingRuntime()
+        val telemetry = activeTelemetry()
+
+        bind(koin, TelemetrySelection(telemetry = telemetry, runtime = runtime))
+
+        assertSame(telemetry, koin.get<Telemetry>())
     }
 
     private fun select(

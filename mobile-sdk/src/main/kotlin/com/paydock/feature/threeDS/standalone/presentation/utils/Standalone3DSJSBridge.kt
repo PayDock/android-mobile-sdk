@@ -17,9 +17,12 @@ import com.paydock.feature.threeDS.standalone.domain.utils.UnknownStandalone3DSE
  * and invokes the provided callback function to handle the event.
  *
  * @param eventCallback A callback function that processes the parsed [Standalone3DSEvent].
+ * @param onUnknownEvent Invoked with the [UnknownStandalone3DSEventException] of an event that is ignored, so its
+ *    owner can report it. It never reaches [eventCallback].
  */
 internal class Standalone3DSJSBridge(
-    eventCallback: (Result<Standalone3DSEvent>) -> Unit
+    eventCallback: (Result<Standalone3DSEvent>) -> Unit,
+    private val onUnknownEvent: (UnknownStandalone3DSEventException) -> Unit = {},
 ) : SdkJSBridge<Result<Standalone3DSEvent>>(eventCallback) {
 
     /**
@@ -52,8 +55,8 @@ internal class Standalone3DSJSBridge(
      *      successful event processing.
      *
      * 4. **Unknown Event Handling:**
-     *    - Events with an unrecognised name (e.g. emitted by a newer web 3DS library) are logged and
-     *      ignored. The bridge stays enabled and the callback is not invoked.
+     *    - Events with an unrecognised name (e.g. emitted by a newer web 3DS library) are logged,
+     *      handed to `onUnknownEvent` and ignored. The bridge stays enabled and the callback is not invoked.
      *
      * 5. **Failed Event Handling:**
      *    - If deserialization fails (e.g., due to invalid JSON format), the following steps occur:
@@ -77,6 +80,7 @@ internal class Standalone3DSJSBridge(
             onFailure = { e ->
                 if (e is UnknownStandalone3DSEventException) {
                     Log.w(MobileSDKConstants.MOBILE_SDK_TAG, "Ignoring unknown Standalone3DSEvent: ${e.eventName}")
+                    onUnknownEvent(e)
                     return
                 }
                 isEnabled = false

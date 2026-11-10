@@ -4,12 +4,16 @@ import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.reportSdkError
 import com.paydock.feature.threeDS.integrated.domain.mapper.asEntity
 import com.paydock.feature.threeDS.integrated.domain.model.ui.MPGS3dsEvent
 import com.paydock.feature.threeDS.integrated.presentation.state.MPGS3dsUIState
+import com.paydock.telemetry.Telemetry
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * ViewModel for managing the UI state and logic related to MPGS 3DS (3-D Secure) authentication.
@@ -19,14 +23,17 @@ import kotlinx.coroutines.flow.asSharedFlow
  * components to observe and react to changes in the 3DS process.
  *
  * @param dispatchers A [DispatchersProvider] for managing coroutine dispatchers.
+ * @param telemetry The telemetry facade the view model reports its handled errors to.
  *
  * @see BaseViewModel
  * @see MPGS3dsUIState
  * @see MPGS3dsEvent
  * @see DispatchersProvider
  */
-internal class MPGS3dsViewModel(dispatchers: DispatchersProvider) :
-    BaseViewModel(dispatchers) {
+internal class MPGS3dsViewModel(
+    dispatchers: DispatchersProvider,
+    private val telemetry: Telemetry,
+) : BaseViewModel(dispatchers) {
 
     /**
      * A [MutableSharedFlow] used to emit events related to the MPGS 3DS UI state.
@@ -36,6 +43,12 @@ internal class MPGS3dsViewModel(dispatchers: DispatchersProvider) :
      * pushing updates outwards from the system managing the 3DS UI state.
      */
     private val _eventFlow = MutableSharedFlow<MPGS3dsUIState>(replay = 0)
+
+    /**
+     * Whether a web view failure was reported: the web view's child windows can fire one error per failed resource,
+     * so only the first failure is reported per view model (MP3).
+     */
+    private val widgetFailureReported = AtomicBoolean(false)
 
     /**
      * A shared flow of [MPGS3dsUIState] events emitted by the MPGS 3DS UI.
@@ -122,9 +135,24 @@ internal class MPGS3dsViewModel(dispatchers: DispatchersProvider) :
                 updateThreeDSEvent(event)
             },
             onFailure = { throwable ->
+                telemetry.reportSdkError(throwable, SdkWidget.MPGS_3DS)
                 throwable.safeCastAs<SdkException>()
                     ?.let { updateState(MPGS3dsUIState.Error(it)) }
             }
         )
+    }
+
+    /**
+     * Reports a failure the widget builds and hands to the merchant itself, outside this view model's state (MP3):
+     * the first one per view model, since child windows can fire one error per failed resource. The merchant still
+     * gets every one.
+     *
+     * @param error The error the merchant gets.
+     * @param cause The original throwable [error] was built from, if any.
+     */
+    fun reportWidgetError(error: Throwable, cause: Throwable? = null) {
+        if (widgetFailureReported.compareAndSet(false, true)) {
+            telemetry.reportSdkError(error, SdkWidget.MPGS_3DS, cause = cause)
+        }
     }
 }

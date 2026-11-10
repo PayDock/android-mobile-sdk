@@ -8,6 +8,10 @@ import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
+import com.paydock.core.network.exceptions.ApiException
+import com.paydock.core.telemetry.RecordingTelemetry
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.WidgetSourceScan
 import com.paydock.core.utils.MainDispatcherRule
 import com.paydock.feature.paypal.core.domain.model.ui.PayPalPaymentTokenDetails
 import com.paydock.feature.paypal.core.domain.usecase.CreatePayPalVaultPaymentTokenUseCase
@@ -21,6 +25,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertNull
+import junit.framework.TestCase.assertSame
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -46,6 +52,7 @@ internal class PayPalVaultViewModelTest : BaseKoinUnitTest() {
 
     private lateinit var viewModel: PayPalVaultViewModel
     private lateinit var config: PayPalVaultConfig
+    private lateinit var telemetry: RecordingTelemetry
 
     companion object {
         const val MOCK_ACCESS_TOKEN = MobileSDKTestConstants.PayPalVault.MOCK_ACCESS_TOKEN
@@ -62,13 +69,15 @@ internal class PayPalVaultViewModelTest : BaseKoinUnitTest() {
         createSetupTokenUseCase = mockk()
         getPayPalClientIdUseCase = mockk()
         createPayPalVaultPaymentTokenUseCase = mockk()
+        telemetry = RecordingTelemetry()
         viewModel = PayPalVaultViewModel(
             config,
             SavedStateHandle(),
             createSetupTokenUseCase,
             getPayPalClientIdUseCase,
             createPayPalVaultPaymentTokenUseCase,
-            dispatchersProvider
+            dispatchersProvider,
+            telemetry
         )
     }
 
@@ -331,4 +340,163 @@ internal class PayPalVaultViewModelTest : BaseKoinUnitTest() {
             assertIs<PayPalVaultUIState.Idle>(awaitItem())
         }
     }
+
+    // region Telemetry: one SdkError per failure path (PV1-PV5), merchant-visible results unchanged
+
+    @Test
+    fun `setup token SdkException failure reports it once and still sets the error (PV1)`() = runTest {
+        prepareCreateSetupTokenFailure()
+
+        viewModel.createPayPalSetupToken()
+        runCurrent()
+
+        val state = viewModel.stateFlow.value
+        assertIs<PayPalVaultUIState.Error>(state)
+        assertIs<PayPalVaultException.CreateSetupTokenException>(state.exception)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.PAYPAL_SAVE_PAYMENT_SOURCE, reported.widget)
+        assertEquals("CreateSetupTokenException", reported.errorCode)
+        assertNull(reported.error.cause)
+        assertEquals("setup_token", reported.apiError?.summaryCode)
+    }
+
+    @Test
+    fun `setup token failure that is no SdkException reports it once and is still dropped (PV1)`() = runTest {
+        coEvery { createSetupTokenUseCase(any(), any()) } returns Result.failure(IllegalStateException())
+
+        viewModel.createPayPalSetupToken()
+        runCurrent()
+
+        assertIs<PayPalVaultUIState.Loading>(viewModel.stateFlow.value)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.PAYPAL_SAVE_PAYMENT_SOURCE, reported.widget)
+        assertNull(reported.errorCode)
+        assertEquals(IllegalStateException::class.java.name, reported.error.type)
+    }
+
+    @Test
+    fun `client id API failure reports the mapped exception with the raw cause and still sets it (PV2)`() = runTest {
+        prepareCreateSetupTokenSuccess()
+        coEvery { getPayPalClientIdUseCase(any(), any()) } returns Result.failure(
+            ApiException(
+                error = ApiErrorResponse(
+                    status = HttpStatusCode.InternalServerError.value,
+                    summary = ErrorSummary(
+                        code = "gateway_client_id",
+                        message = MobileSDKTestConstants.Errors.MOCK_CLIENT_ID_ERROR
+                    )
+                )
+            )
+        )
+
+        viewModel.createPayPalSetupToken()
+        runCurrent()
+
+        val state = viewModel.stateFlow.value
+        assertIs<PayPalVaultUIState.Error>(state)
+        assertIs<PayPalVaultException.GetPayPalClientIdException>(state.exception)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.PAYPAL_SAVE_PAYMENT_SOURCE, reported.widget)
+        assertEquals("GetPayPalClientIdException", reported.errorCode)
+        assertEquals(ApiException::class.java.name, reported.error.cause?.type)
+        assertEquals(HttpStatusCode.InternalServerError.value, reported.apiError?.status)
+        assertEquals("gateway_client_id", reported.apiError?.summaryCode)
+    }
+
+    @Test
+    fun `client id SdkException failure reports the same exception with no cause and still sets it (PV2)`() =
+        runTest {
+            prepareCreateSetupTokenSuccess()
+            prepareGetClientIdFailure()
+
+            viewModel.createPayPalSetupToken()
+            runCurrent()
+
+            val state = viewModel.stateFlow.value
+            assertIs<PayPalVaultUIState.Error>(state)
+            assertIs<PayPalVaultException.GetPayPalClientIdException>(state.exception)
+            val reported = telemetry.sdkErrors.single()
+            assertEquals(SdkWidget.PAYPAL_SAVE_PAYMENT_SOURCE, reported.widget)
+            assertEquals("GetPayPalClientIdException", reported.errorCode)
+            assertNull(reported.error.cause)
+            assertEquals("gateway_client_id", reported.apiError?.summaryCode)
+        }
+
+    @Test
+    fun `payment token SdkException failure reports it once and still sets the error (PV3)`() = runTest {
+        preparePayPalCompleteSuccessFlow()
+        viewModel.createPayPalSetupToken()
+        runCurrent()
+        val mockError = PayPalVaultException.CreatePaymentTokenException(
+            error = ApiErrorResponse(
+                status = HttpStatusCode.InternalServerError.value,
+                summary = ErrorSummary(
+                    code = "payment_token_error",
+                    message = MobileSDKTestConstants.Errors.MOCK_TOKENIZATION_ERROR
+                )
+            )
+        )
+        coEvery { createPayPalVaultPaymentTokenUseCase(any(), any(), any()) } returns Result.failure(mockError)
+
+        viewModel.createPayPalPaymentSourceToken()
+        runCurrent()
+
+        val state = viewModel.stateFlow.value
+        assertIs<PayPalVaultUIState.Error>(state)
+        assertSame(mockError, state.exception)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.PAYPAL_SAVE_PAYMENT_SOURCE, reported.widget)
+        assertEquals("CreatePaymentTokenException", reported.errorCode)
+        assertNull(reported.error.cause)
+        assertEquals("payment_token_error", reported.apiError?.summaryCode)
+    }
+
+    @Test
+    fun `payment token failure that is no SdkException reports it once and is still dropped (PV3)`() = runTest {
+        preparePayPalCompleteSuccessFlow()
+        viewModel.createPayPalSetupToken()
+        runCurrent()
+        coEvery { createPayPalVaultPaymentTokenUseCase(any(), any(), any()) } returns
+            Result.failure(IllegalStateException())
+
+        viewModel.createPayPalPaymentSourceToken()
+        runCurrent()
+
+        assertIs<PayPalVaultUIState.Loading>(viewModel.stateFlow.value)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.PAYPAL_SAVE_PAYMENT_SOURCE, reported.widget)
+        assertNull(reported.errorCode)
+        assertEquals(IllegalStateException::class.java.name, reported.error.type)
+    }
+
+    @Test
+    fun `reportWidgetError reports one PayPal vault SdkError and changes no state (PV4)`() = runTest {
+        val before = viewModel.stateFlow.value
+
+        viewModel.reportWidgetError(PayPalVaultException.PayPalSDKException(code = -1, description = "synthetic"))
+
+        assertSame(before, viewModel.stateFlow.value)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.PAYPAL_SAVE_PAYMENT_SOURCE, reported.widget)
+        assertEquals("PayPalSDKException", reported.errorCode)
+        assertNull(reported.error.cause)
+    }
+
+    @Test
+    fun `the vault result handler reports the web vault error it hands on once, and never the cancellation (PV4, PV5)`() {
+        val source = WidgetSourceScan.read("feature/paypal/vault/presentation/PayPalSavePaymentSourceWidget.kt")
+        val handler = WidgetSourceScan.function(source, "handlePayPalVaultResult")
+        val cancellation = WidgetSourceScan.between(handler, "CancellationStatus.USER_INITIATED", "else ->")
+        val webVault = WidgetSourceScan.between(handler, "else ->", "else -> Unit")
+
+        assertEquals(1, WidgetSourceScan.count(source, "viewModel.reportWidgetError("))
+        assertEquals(1, WidgetSourceScan.count(cancellation, "PayPalVaultException.CancellationException("))
+        assertEquals(0, WidgetSourceScan.count(cancellation, "reportWidgetError("))
+        assertEquals(1, WidgetSourceScan.count(cancellation, "completion("))
+        assertEquals(1, WidgetSourceScan.count(webVault, "PayPalVaultException.PayPalSDKException("))
+        assertEquals(1, WidgetSourceScan.count(webVault, "viewModel.reportWidgetError(failure)"))
+        assertEquals(1, WidgetSourceScan.count(webVault, "completion(Result.failure(failure))"))
+    }
+
+    // endregion
 }

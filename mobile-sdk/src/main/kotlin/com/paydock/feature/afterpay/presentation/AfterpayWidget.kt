@@ -29,6 +29,8 @@ import com.paydock.core.domain.model.EventAction
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.core.telemetry.ReportWidgetOpened
+import com.paydock.core.telemetry.SdkWidget
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
@@ -82,6 +84,7 @@ fun AfterpayWidget(
     eventDelegate: WidgetEventDelegate? = null,
     completion: (Result<ChargeResponse>) -> Unit,
 ) {
+    ReportWidgetOpened(SdkWidget.AFTERPAY)
     val viewModel: AfterpayViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
     val isConfigured by viewModel.isConfigured.collectAsState()
@@ -264,7 +267,7 @@ private fun handleAfterpayResult(
             else -> Unit
         }
     } catch (e: IllegalStateException) {
-        handleInvalidError(e.message ?: "", viewModel, completion)
+        handleInvalidError(e.message ?: "", viewModel, completion, cause = e)
     }
 }
 
@@ -315,13 +318,17 @@ private fun handleCancellation(
  * @param message The error message that will be included in the failure result.
  * @param viewModel The ViewModel responsible for handling the Afterpay checkout state.
  * @param completion A callback function that returns the failure result with the provided error message.
+ * @param cause The original throwable the error was built from, if any; reported, never handed on.
  */
 private fun handleInvalidError(
     message: String,
     viewModel: AfterpayViewModel,
-    completion: (Result<ChargeResponse>) -> Unit
+    completion: (Result<ChargeResponse>) -> Unit,
+    cause: Throwable? = null
 ) {
-    completion(Result.failure(AfterpayException.InvalidResultException(message)))
+    val failure = AfterpayException.InvalidResultException(message)
+    viewModel.reportWidgetError(failure, cause = cause)
+    completion(Result.failure(failure))
     viewModel.resetResultState()
 }
 

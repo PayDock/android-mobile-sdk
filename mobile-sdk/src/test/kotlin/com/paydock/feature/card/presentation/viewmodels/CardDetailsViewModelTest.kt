@@ -1,6 +1,7 @@
 package com.paydock.feature.card.presentation.viewmodels
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import app.cash.turbine.test
 import com.paydock.binprocessor.data.dto.BinDataResponse
 import com.paydock.core.BaseKoinUnitTest
@@ -10,6 +11,8 @@ import com.paydock.core.domain.error.exceptions.CardDetailsException
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.extensions.convertToDataClass
+import com.paydock.core.telemetry.RecordingTelemetry
+import com.paydock.core.telemetry.SdkWidget
 import com.paydock.core.utils.MainDispatcherRule
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.model.ui.TokenDetails
@@ -22,9 +25,13 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
+import junit.framework.TestCase.assertNull
+import junit.framework.TestCase.assertSame
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -33,6 +40,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.test.inject
 import org.mockito.junit.MockitoJUnitRunner
+import java.io.IOException
 import kotlin.test.assertIs
 
 @ExperimentalCoroutinesApi
@@ -47,6 +55,7 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
     private lateinit var viewModel: CardDetailsViewModel
     private lateinit var getCardSchemasUseCaseTest: GetCardSchemasUseCase
     private lateinit var createCardPaymentUseCase: CreateCardPaymentTokenUseCase
+    private lateinit var telemetry: RecordingTelemetry
 
     private fun setupCreateCardPaymentUseCaseSuccess() {
         val mockToken = MobileSDKTestConstants.Card.MOCK_CARD_TOKEN
@@ -169,6 +178,7 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
     fun setup() {
         createCardPaymentUseCase = mockk()
         getCardSchemasUseCaseTest = mockk()
+        telemetry = RecordingTelemetry()
 
         setupGetCardSchemasSuccess()
 
@@ -179,18 +189,23 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
             getCardSchemasUseCaseTest,
             createCardPaymentUseCase,
             dispatchersProvider,
-            SavedStateHandle()
+            SavedStateHandle(),
+            telemetry
         )
     }
 
-    private fun makeViewModel(savedStateHandle: SavedStateHandle) = CardDetailsViewModel(
+    private fun makeViewModel(
+        savedStateHandle: SavedStateHandle,
+        telemetry: RecordingTelemetry = RecordingTelemetry(),
+    ) = CardDetailsViewModel(
         MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN,
         MobileSDKTestConstants.General.MOCK_GATEWAY_ID,
         SupportedSchemeConfig(),
         getCardSchemasUseCaseTest,
         createCardPaymentUseCase,
         dispatchersProvider,
-        savedStateHandle
+        savedStateHandle,
+        telemetry
     )
 
     // region Rotation / configuration-change state preservation
@@ -416,4 +431,88 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
             assertIs<CardDetailsUIState.Idle>(awaitItem())
         }
     }
+
+    // region Telemetry: one SdkError per failure path (CD1, CD2), merchant-visible results unchanged
+
+    @Test
+    fun `getCardSchemas failure reports one SdkError and still drops the BIN data (CD1)`() = runTest {
+        coEvery { getCardSchemasUseCaseTest() } returns Result.failure(IOException())
+        val reporting = RecordingTelemetry()
+
+        val failing = makeViewModel(SavedStateHandle(), reporting)
+        advanceUntilIdle()
+
+        assertNull(failing.inputStateFlow.value.binData)
+        val reported = reporting.sdkErrors.single()
+        assertEquals(SdkWidget.CARD_DETAILS, reported.widget)
+        assertNull(reported.errorCode)
+        assertEquals(IOException::class.java.name, reported.error.type)
+    }
+
+    @Test
+    fun `tokeniseCard SdkException failure reports one SdkError and hands on the same exception (CD2)`() =
+        runTest {
+            val failure = CardDetailsException.TokenisingCardException(
+                error = ApiErrorResponse(
+                    status = HttpStatusCode.InternalServerError.value,
+                    summary = ErrorSummary(
+                        code = "tokenisation_error",
+                        message = MobileSDKTestConstants.Errors.MOCK_TOKENIZATION_ERROR
+                    )
+                )
+            )
+            coEvery {
+                createCardPaymentUseCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any())
+            } returns Result.failure(failure)
+
+            viewModel.tokeniseCard()
+            val state = viewModel.stateFlow.first { it is CardDetailsUIState.Error }
+
+            assertIs<CardDetailsUIState.Error>(state)
+            assertSame(failure, state.exception)
+            val reported = telemetry.sdkErrors.single()
+            assertEquals(SdkWidget.CARD_DETAILS, reported.widget)
+            assertEquals("TokenisingCardException", reported.errorCode)
+            assertEquals(HttpStatusCode.InternalServerError.value, reported.apiError?.status)
+            assertEquals("tokenisation_error", reported.apiError?.summaryCode)
+        }
+
+    @Test
+    fun `tokeniseCard other failure reports one SdkError and still stays Loading (CD2)`() = runTest {
+        coEvery {
+            createCardPaymentUseCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any())
+        } returns Result.failure(IllegalStateException())
+
+        viewModel.tokeniseCard()
+        advanceUntilIdle()
+
+        assertIs<CardDetailsUIState.Loading>(viewModel.stateFlow.value)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.CARD_DETAILS, reported.widget)
+        assertNull(reported.errorCode)
+        assertEquals(IllegalStateException::class.java.name, reported.error.type)
+    }
+
+    @Test
+    fun `tokeniseCard failure in a cancelled scope reports nothing and still hands on the same exception (CD2)`() =
+        runTest {
+            // What the mapper builds from a coroutine cancellation: an SdkException with the original dropped.
+            val failure = CardDetailsException.UnknownException("synthetic")
+            coEvery {
+                createCardPaymentUseCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any())
+            } coAnswers {
+                viewModel.viewModelScope.cancel()
+                Result.failure(failure)
+            }
+
+            viewModel.tokeniseCard()
+            advanceUntilIdle()
+
+            val state = viewModel.stateFlow.value
+            assertIs<CardDetailsUIState.Error>(state)
+            assertSame(failure, state.exception)
+            assertTrue(telemetry.sdkErrors.isEmpty())
+        }
+
+    // endregion
 }

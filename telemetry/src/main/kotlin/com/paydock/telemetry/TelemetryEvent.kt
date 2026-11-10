@@ -34,8 +34,9 @@ internal sealed interface TelemetryEvent {
 
     data class SdkError(
         val error: ErrorInfo,
-        val errorCode: String? = null, // SdkException class where one exists
+        val errorCode: String? = null, // SdkException subclass simple name
         val widget: String? = null,
+        val apiError: ApiError? = null, // spec § 5.4 API codes when the error carries an API error body (R_03)
     ) : TelemetryEvent
 
     data class NetworkFailure(

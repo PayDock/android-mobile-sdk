@@ -31,6 +31,8 @@ import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.core.telemetry.ReportWidgetOpened
+import com.paydock.core.telemetry.SdkWidget
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
@@ -95,6 +97,7 @@ fun PayPalWidget(
     eventDelegate: WidgetEventDelegate? = null,
     completion: (Result<ChargeResponse>) -> Unit,
 ) {
+    ReportWidgetOpened(SdkWidget.PAYPAL)
     val context = LocalContext.current
     // Obtain instances of view models
     val viewModel: PayPalViewModel = koinViewModel(parameters = { parametersOf(config) })
@@ -313,14 +316,12 @@ private fun handlePayPalResult(
                         val status = data.getStatusExtra()
                         val message =
                             data.getMessageExtra(MobileSDKConstants.PayPalConfig.Errors.PAY_PAL_ERROR)
-                        completion(
-                            Result.failure(
-                                PayPalException.PayPalSDKException(
-                                    code = status,
-                                    description = message
-                                )
-                            )
+                        val failure = PayPalException.PayPalSDKException(
+                            code = status,
+                            description = message
                         )
+                        viewModel.reportWidgetError(failure)
+                        completion(Result.failure(failure))
                         viewModel.resetResultState()
                     }
                 }

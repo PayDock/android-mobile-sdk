@@ -1,10 +1,14 @@
 package com.paydock.feature.colespay.presentation.viewmodels
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.ColesPayException
 import com.paydock.core.domain.error.extensions.mapApiException
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.reportSdkError
+import com.paydock.core.telemetry.reportSdkErrorWhileActive
 import com.paydock.feature.colespay.integration.ColesPayWidgetConfig
 import com.paydock.feature.colespay.presentation.state.ColesPayUIState
 import com.paydock.feature.wallet.data.dto.WalletCallbackRequest
@@ -14,6 +18,9 @@ import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
+import com.paydock.telemetry.Telemetry
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel responsible for managing the Coles Pay feature's UI state and interactions.
@@ -28,6 +35,7 @@ import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
  * @param declineWalletChargeUseCase Use case for declining charges associated with Coles Pay wallets.
  * @param getWalletCallbackUseCase Use case for fetching callback data from the Coles Pay wallet service.
  * @param dispatchers Dispatcher provider to manage coroutine contexts for background operations.
+ * @param telemetry The telemetry facade the view model reports its handled errors to.
  */
 internal class ColesPayViewModel(
     val config: ColesPayWidgetConfig,
@@ -35,7 +43,8 @@ internal class ColesPayViewModel(
     captureWalletChargeUseCase: CaptureWalletChargeUseCase,
     declineWalletChargeUseCase: DeclineWalletChargeUseCase,
     getWalletCallbackUseCase: GetWalletCallbackUseCase,
-    dispatchers: DispatchersProvider
+    dispatchers: DispatchersProvider,
+    private val telemetry: Telemetry,
 ) : WalletViewModel<ColesPayUIState>(
     captureWalletChargeUseCase,
     declineWalletChargeUseCase,
@@ -108,11 +117,9 @@ internal class ColesPayViewModel(
                 updateUiState(ColesPayUIState.LaunchIntent(chargeData))
             },
             onFailure = { throwable ->
-                updateUiState(
-                    ColesPayUIState.Error(
-                        throwable.mapApiException(ColesPayException.FetchingUrlException::class)
-                    )
-                )
+                val failure = throwable.mapApiException(ColesPayException.FetchingUrlException::class)
+                reportWhileActive(failure, cause = throwable)
+                updateUiState(ColesPayUIState.Error(failure))
             }
         )
     }
@@ -185,7 +192,33 @@ internal class ColesPayViewModel(
     fun completeResult(orderId: String) {
         updateUiState(ColesPayUIState.Success(orderId))
     }
+
+    /**
+     * Reports a failure the widget builds and hands to the merchant itself, outside this view model's state (CP3,
+     * CP4).
+     *
+     * @param error The error the merchant gets.
+     * @param cause The original throwable [error] was built from, if any.
+     */
+    fun reportWidgetError(error: Throwable, cause: Throwable? = null) {
+        telemetry.reportSdkError(error, SdkWidget.COLES_PAY, cause = cause)
+    }
     //endregion
+
+    /**
+     * Reports a failure from the wallet result overrides ([updateCallbackUIState], [updateChargeUIState]). They do not
+     * suspend, but they run inside the wallet use case's coroutine of [viewModelScope], so the report goes through
+     * reportSdkErrorWhileActive from an undispatched child of that scope: it runs at once, before the caller's next
+     * statement, and is skipped once the scope is cancelled (research question 16).
+     *
+     * @param error The error the merchant gets.
+     * @param cause The original throwable [error] was built from, if any.
+     */
+    private fun reportWhileActive(error: Throwable, cause: Throwable? = null) {
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            telemetry.reportSdkErrorWhileActive(error, SdkWidget.COLES_PAY, cause = cause)
+        }
+    }
 
     private companion object {
         const val KEY_WALLET_TOKEN: String = "colespay.wallet_token"

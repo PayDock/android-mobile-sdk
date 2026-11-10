@@ -3,6 +3,7 @@ package com.paydock.feature.afterpay.presentation.viewmodels
 import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import com.afterpay.android.Afterpay
 import com.afterpay.android.CancellationStatus
 import com.paydock.MobileSDK
@@ -12,6 +13,9 @@ import com.paydock.core.domain.error.exceptions.AfterpayException
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.domain.error.extensions.mapApiException
 import com.paydock.core.domain.mapper.mapToAfterpayEnv
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.reportSdkError
+import com.paydock.core.telemetry.reportSdkErrorWhileActive
 import com.paydock.core.utils.jwt.JwtHelper
 import com.paydock.feature.afterpay.domain.mapper.integration.mapMessage
 import com.paydock.feature.afterpay.domain.mapper.integration.mapToAfterpayV2Options
@@ -33,11 +37,15 @@ import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
+import com.paydock.telemetry.Telemetry
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.util.Currency
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * ViewModel responsible for managing the state and interactions for the Afterpay payment flow.
@@ -55,6 +63,7 @@ import java.util.Locale
  * @param declineWalletChargeUseCase Use case for declining a wallet charge.
  * @param getWalletCallbackUseCase Use case for fetching a wallet callback.
  * @param dispatchers Provides coroutine dispatchers for managing asynchronous tasks.
+ * @param telemetry The telemetry facade the view model reports its handled errors to.
  */
 internal class AfterpayViewModel(
     private val savedStateHandle: SavedStateHandle,
@@ -62,6 +71,7 @@ internal class AfterpayViewModel(
     declineWalletChargeUseCase: DeclineWalletChargeUseCase,
     getWalletCallbackUseCase: GetWalletCallbackUseCase,
     dispatchers: DispatchersProvider,
+    private val telemetry: Telemetry,
 ) : WalletViewModel<AfterpayUIState>(
     captureWalletChargeUseCase,
     declineWalletChargeUseCase,
@@ -95,6 +105,12 @@ internal class AfterpayViewModel(
 
     private var flowState: FlowState = FlowState.SDK_LAUNCHED
     private var pendingIntent: Intent? = null
+
+    /**
+     * Whether the SDK configuration failure was reported: [configureAfterpaySdk] runs on every composition, each time
+     * in a new IO coroutine, so its failure is reported once per view model, atomically.
+     */
+    private val configurationFailureReported = AtomicBoolean(false)
     //endregion
 
     //region Public Properties
@@ -167,11 +183,10 @@ internal class AfterpayViewModel(
                                 updateUiState(AfterpayUIState.LaunchIntent(intent))
                             } else {
                                 // This shouldn't happen, but handle gracefully
-                                updateUiState(
-                                    AfterpayUIState.Error(
-                                        AfterpayException.TokenException("Intent was lost during flow initialization")
-                                    )
-                                )
+                                val failure =
+                                    AfterpayException.TokenException("Intent was lost during flow initialization")
+                                reportWhileActive(failure)
+                                updateUiState(AfterpayUIState.Error(failure))
                             }
                         }
                         FlowState.SDK_LAUNCHED -> {
@@ -179,24 +194,20 @@ internal class AfterpayViewModel(
                             updateUiState(AfterpayUIState.ProvideCheckoutTokenResult(tokenResult))
                         }
                     }
-                } ?: updateUiState(
-                    AfterpayUIState.Error(
-                        AfterpayException.TokenException(MobileSDKConstants.AfterpayConfig.Errors.CALLBACK_ERROR)
-                    )
-                )
+                } ?: run {
+                    val failure = AfterpayException.TokenException(MobileSDKConstants.AfterpayConfig.Errors.CALLBACK_ERROR)
+                    reportWhileActive(failure)
+                    updateUiState(AfterpayUIState.Error(failure))
+                }
             },
             onFailure = { throwable ->
                 // Clean up on error
                 flowState = FlowState.SDK_LAUNCHED
                 pendingIntent = null
 
-                updateUiState(
-                    AfterpayUIState.PendingDeclineOnError(
-                        throwable.mapApiException(
-                            AfterpayException.FetchingUrlException::class
-                        )
-                    )
-                )
+                val failure = throwable.mapApiException(AfterpayException.FetchingUrlException::class)
+                reportWhileActive(failure, cause = throwable)
+                updateUiState(AfterpayUIState.PendingDeclineOnError(failure))
             }
         )
     }
@@ -233,7 +244,9 @@ internal class AfterpayViewModel(
             },
             onFailure = { throwable ->
                 // Any failure will take precedence over any pending error
-                updateUiState(AfterpayUIState.Error(throwable.mapApiException(AfterpayException.CapturingChargeException::class)))
+                val failure = throwable.mapApiException(AfterpayException.CapturingChargeException::class)
+                reportWhileActive(failure, cause = throwable)
+                updateUiState(AfterpayUIState.Error(failure))
             }
         )
     }
@@ -308,13 +321,10 @@ internal class AfterpayViewModel(
      * @param status The cancellation status received from the Afterpay SDK.
      */
     fun updateCancellationState(status: CancellationStatus) {
-        updateUiState(
-            AfterpayUIState.PendingDeclineOnError(
-                AfterpayException.CancellationException(
-                    status.mapMessage()
-                )
-            )
-        )
+        val failure = AfterpayException.CancellationException(status.mapMessage())
+        // The shopper cancelling is an expected outcome; every other status is an integration failure.
+        if (status != CancellationStatus.USER_INITIATED) telemetry.reportSdkError(failure, SdkWidget.AFTERPAY)
+        updateUiState(AfterpayUIState.PendingDeclineOnError(failure))
     }
 
     /**
@@ -360,13 +370,11 @@ internal class AfterpayViewModel(
             captureWalletTransaction(token, request)
         } else {
             // Wallet token was lost during process death - treat as error for proper user feedback
-            updateUiState(
-                AfterpayUIState.Error(
-                    AfterpayException.InitialisationWalletTokenException(
-                        "Wallet token lost during process recreation. Please try again."
-                    )
-                )
+            val failure = AfterpayException.InitialisationWalletTokenException(
+                "Wallet token lost during process recreation. Please try again."
             )
+            telemetry.reportSdkError(failure, SdkWidget.AFTERPAY)
+            updateUiState(AfterpayUIState.Error(failure))
         }
     }
 
@@ -403,11 +411,11 @@ internal class AfterpayViewModel(
             } catch (e: IllegalArgumentException) {
                 val errorMessage = e.message
                     ?: "Afterpay: unsupported country: ${effectiveLocale.displayCountry}"
-                updateUiState(
-                    AfterpayUIState.PendingDeclineOnError(
-                        AfterpayException.ConfigurationException(errorMessage)
-                    )
-                )
+                val failure = AfterpayException.ConfigurationException(errorMessage)
+                if (configurationFailureReported.compareAndSet(false, true)) {
+                    telemetry.reportSdkErrorWhileActive(failure, SdkWidget.AFTERPAY, cause = e)
+                }
+                updateUiState(AfterpayUIState.PendingDeclineOnError(failure))
             }
         }
     }
@@ -424,13 +432,11 @@ internal class AfterpayViewModel(
             getWalletCallback(token, request)
         } else {
             // Wallet token was lost during process death - treat as error for proper user feedback
-            updateUiState(
-                AfterpayUIState.Error(
-                    AfterpayException.InitialisationWalletTokenException(
-                        "Wallet token lost during process recreation. Please try again."
-                    )
-                )
+            val failure = AfterpayException.InitialisationWalletTokenException(
+                "Wallet token lost during process recreation. Please try again."
             )
+            telemetry.reportSdkError(failure, SdkWidget.AFTERPAY)
+            updateUiState(AfterpayUIState.Error(failure))
         }
     }
 
@@ -451,7 +457,32 @@ internal class AfterpayViewModel(
     fun provideShippingOptionUpdate(shippingOptionUpdate: AfterpayShippingOptionUpdate?) {
         updateUiState(AfterpayUIState.ProvideShippingOptionUpdateResult(shippingOptionUpdate?.mapToSDKShippingOptionUpdateResult()))
     }
+
+    /**
+     * Reports a failure the widget builds and hands to the merchant itself, outside this view model's state (AF10).
+     *
+     * @param error The error the merchant gets.
+     * @param cause The original throwable [error] was built from, if any.
+     */
+    fun reportWidgetError(error: Throwable, cause: Throwable? = null) {
+        telemetry.reportSdkError(error, SdkWidget.AFTERPAY, cause = cause)
+    }
     //endregion
+
+    /**
+     * Reports a failure from the wallet result overrides ([updateCallbackUIState], [updateChargeUIState]). They do not
+     * suspend, but they run inside the wallet use case's coroutine of [viewModelScope], so the report goes through
+     * reportSdkErrorWhileActive from an undispatched child of that scope: it runs at once, before the caller's next
+     * statement, and is skipped once the scope is cancelled (research question 16).
+     *
+     * @param error The error the merchant gets.
+     * @param cause The original throwable [error] was built from, if any.
+     */
+    private fun reportWhileActive(error: Throwable, cause: Throwable? = null) {
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            telemetry.reportSdkErrorWhileActive(error, SdkWidget.AFTERPAY, cause = cause)
+        }
+    }
 
     private companion object {
         const val KEY_WALLET_TOKEN: String = "afterpay.wallet_token"

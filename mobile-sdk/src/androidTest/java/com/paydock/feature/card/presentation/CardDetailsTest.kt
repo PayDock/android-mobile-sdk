@@ -38,6 +38,7 @@ import com.paydock.feature.card.presentation.state.CardDetailsInputState
 import com.paydock.feature.card.presentation.state.CardDetailsWidgetState
 import com.paydock.feature.card.presentation.state.rememberCardDetailsWidgetState
 import com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel
+import com.paydock.telemetry.NoOpTelemetry
 import io.ktor.http.HttpStatusCode
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -128,7 +129,8 @@ internal class CardDetailsTest : BaseViewModelKoinTest<CardDetailsViewModel>() {
             getCardSchemasUseCase = getCardSchemasUseCase,
             createCardPaymentTokenUseCase = createCardPaymentTokenUseCase,
             dispatchers = dispatchersProvider,
-            savedStateHandle = SavedStateHandle()
+            savedStateHandle = SavedStateHandle(),
+            telemetry = NoOpTelemetry
         )
     }
 

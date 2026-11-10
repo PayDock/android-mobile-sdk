@@ -14,6 +14,6 @@ internal val colesPayModule = module {
 
     // SavedStateHandle is auto-injected by Koin when not in the lambda parameters
     viewModel { (config: ColesPayWidgetConfig) ->
-        ColesPayViewModel(config, get(), get(), get(), get(), get())
+        ColesPayViewModel(config, get(), get(), get(), get(), get(), telemetry = get())
     }
 }

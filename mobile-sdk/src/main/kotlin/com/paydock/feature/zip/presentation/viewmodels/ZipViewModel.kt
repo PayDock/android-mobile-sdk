@@ -7,12 +7,16 @@ import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.domain.error.exceptions.ZipException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.reportSdkError
+import com.paydock.core.telemetry.reportSdkErrorWhileActive
 import com.paydock.feature.zip.domain.model.ZipCallbackData
 import com.paydock.feature.zip.domain.model.ZipStatus
 import com.paydock.feature.zip.domain.model.integration.ZipWidgetConfig
 import com.paydock.feature.zip.domain.usecase.CreateZipPaymentSourceTokenUseCase
 import com.paydock.feature.zip.domain.usecase.InitializeZipCheckoutUseCase
 import com.paydock.feature.zip.presentation.state.ZipUIState
+import com.paydock.telemetry.Telemetry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,13 +32,15 @@ import kotlinx.coroutines.flow.asStateFlow
  * @param createZipPaymentSourceTokenUseCase The use case for creating the payment source token.
  * @param dispatchers The provider for coroutine dispatchers.
  * @param savedStateHandle Handle for persisting state across process death.
+ * @param telemetry The telemetry facade the view model reports its handled errors to.
  */
 internal class ZipViewModel(
     private val config: ZipWidgetConfig,
     private val initializeZipCheckoutUseCase: InitializeZipCheckoutUseCase,
     private val createZipPaymentSourceTokenUseCase: CreateZipPaymentSourceTokenUseCase,
     dispatchers: DispatchersProvider,
-    private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle,
+    private val telemetry: Telemetry,
 ) : BaseViewModel(dispatchers) {
 
     /**
@@ -78,9 +84,9 @@ internal class ZipViewModel(
                     updateState(ZipUIState.LaunchCheckout(checkoutUrl, checkoutToken))
                 }
                 .onFailure { error ->
-                    error.safeCastAs<SdkException>()
-                        ?.let { updateState(ZipUIState.Error(it)) }
-                        ?: updateState(ZipUIState.Error(ZipException.UnknownException()))
+                    val failure = error.safeCastAs<SdkException>() ?: ZipException.UnknownException()
+                    telemetry.reportSdkErrorWhileActive(failure, SdkWidget.ZIP, cause = error.takeIf { it !== failure })
+                    updateState(ZipUIState.Error(failure))
                 }
         }
     }
@@ -108,12 +114,10 @@ internal class ZipViewModel(
                 ZipUIState.Error(ZipException.ReferredException(callbackData.checkoutId))
             )
 
-            ZipStatus.UNEXPECTED, ZipStatus.UNEXPECTED_ERROR -> updateState(
-                ZipUIState.Error(
-                    ZipException.UnexpectedStatusException(
-                        status = callbackData.status.value,
-                        checkoutId = callbackData.checkoutId
-                    )
+            ZipStatus.UNEXPECTED, ZipStatus.UNEXPECTED_ERROR -> reportAndUpdateError(
+                ZipException.UnexpectedStatusException(
+                    status = callbackData.status.value,
+                    checkoutId = callbackData.checkoutId
                 )
             )
         }
@@ -125,7 +129,7 @@ internal class ZipViewModel(
     private fun handleApprovedCallback() {
         val checkoutToken = getCheckoutToken()
         if (checkoutToken == null) {
-            updateState(ZipUIState.Error(ZipException.UnknownException(MobileSDKConstants.ZipConfig.Errors.ZIP_ERROR)))
+            reportAndUpdateError(ZipException.UnknownException(MobileSDKConstants.ZipConfig.Errors.ZIP_ERROR))
             return
         }
 
@@ -141,9 +145,9 @@ internal class ZipViewModel(
                     updateState(ZipUIState.Success(token))
                 }
                 .onFailure { error ->
-                    error.safeCastAs<SdkException>()
-                        ?.let { updateState(ZipUIState.Error(it)) }
-                        ?: updateState(ZipUIState.Error(ZipException.UnknownException()))
+                    val failure = error.safeCastAs<SdkException>() ?: ZipException.UnknownException()
+                    telemetry.reportSdkErrorWhileActive(failure, SdkWidget.ZIP, cause = error.takeIf { it !== failure })
+                    updateState(ZipUIState.Error(failure))
                 }
         }
     }
@@ -155,7 +159,7 @@ internal class ZipViewModel(
      * @param errorMessage The error message from the webview.
      */
     fun handleWebViewError(errorCode: Int?, errorMessage: String) {
-        updateState(ZipUIState.Error(ZipException.WebViewException(errorCode, errorMessage)))
+        reportAndUpdateError(ZipException.WebViewException(errorCode, errorMessage))
     }
 
     /**
@@ -163,6 +167,17 @@ internal class ZipViewModel(
      */
     fun handleUserCancellation() {
         updateState(ZipUIState.Error(ZipException.CancellationException()))
+    }
+
+    /**
+     * Reports a failure the view model builds with no original throwable (ZP5, ZP6, ZP8), then sets the same
+     * instance as the error state.
+     *
+     * @param failure The error the merchant gets.
+     */
+    private fun reportAndUpdateError(failure: ZipException) {
+        telemetry.reportSdkError(failure, SdkWidget.ZIP)
+        updateState(ZipUIState.Error(failure))
     }
 
     /**

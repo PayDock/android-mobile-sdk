@@ -6,9 +6,13 @@ import android.location.Geocoder.GeocodeListener
 import android.os.Build
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.reportSdkErrorWhileActive
 import com.paydock.designsystems.components.search.SearchViewModel
+import com.paydock.telemetry.Telemetry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -17,11 +21,20 @@ import kotlin.coroutines.suspendCoroutine
  *
  * @param geocoder The Geocoder instance for performing address searches.
  * @param dispatchers Provides coroutines dispatchers for background tasks.
+ * @param telemetry The telemetry facade the view model reports its handled errors to.
  */
 internal class AddressSearchViewModel(
     private val geocoder: Geocoder,
-    dispatchers: DispatchersProvider
+    dispatchers: DispatchersProvider,
+    private val telemetry: Telemetry,
 ) : SearchViewModel<Address>(dispatchers) {
+
+    /**
+     * Whether a search failure was reported: a search runs per keystroke, so only the first failure is reported per
+     * view model (AD2).
+     */
+    private val searchFailureReported = AtomicBoolean(false)
+
     override fun stringResults(): List<String> =
         searchResult.value.mapNotNull { it.getAddressLine(0) }
 
@@ -66,6 +79,9 @@ internal class AddressSearchViewModel(
                 // Emit a successful result with the addresses list
                 emit(addresses)
             } catch (e: Exception) {
+                if (searchFailureReported.compareAndSet(false, true)) {
+                    telemetry.reportSdkErrorWhileActive(e, SdkWidget.ADDRESS_DETAILS)
+                }
                 // Emit empty result on exception
                 emit(emptyList())
             }

@@ -9,16 +9,22 @@ import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.paydock.MobileSDK
 import com.paydock.core.BaseUnitTest
+import com.paydock.core.MobileSDKConstants
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.domain.error.exceptions.PayPalDataCollectorException
+import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.domain.injection.domainModule
 import com.paydock.core.domain.model.Environment
+import com.paydock.core.telemetry.RecordingTelemetry
 import com.paydock.core.utils.MainDispatcherRule
+import com.paydock.feature.paypal.core.domain.usecase.GetPayPalClientIdUseCase
 import com.paydock.feature.paypal.fraud.domain.model.integration.PayPalDataCollectorConfig
 import com.paydock.feature.paypal.fraud.injection.dataCollectorFailureTestModule
 import com.paydock.feature.paypal.fraud.injection.dataCollectorSuccessTestModule
 import com.paydock.initializeMobileSDK
+import com.paydock.telemetry.Telemetry
 import com.paypal.android.fraudprotection.PayPalDataCollectorRequest
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -32,10 +38,12 @@ import org.junit.Rule
 import org.koin.core.context.loadKoinModules
 import org.koin.core.context.stopKoin
 import org.koin.core.context.unloadKoinModules
+import org.koin.dsl.module
 import java.io.File
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 internal class PayPalDataCollectorUtilTest : BaseUnitTest() {
@@ -113,6 +121,55 @@ internal class PayPalDataCollectorUtilTest : BaseUnitTest() {
         val result = PayPalDataCollectorUtil.initialise(config = config)
         // Assert that the result is null and not initialized
         assertNull(result)
+    }
+
+    @Test
+    fun `initialise client id failure reports one SdkError and still throws InitialisationClientIdException (PD1)`() =
+        runTest {
+            unloadKoinModules(domainModule)
+            loadKoinModules(dataCollectorFailureTestModule)
+            val telemetry = RecordingTelemetry()
+            loadKoinModules(module { single<Telemetry> { telemetry } })
+
+            val thrown = assertFailsWith<PayPalDataCollectorException.InitialisationClientIdException> {
+                PayPalDataCollectorUtil.initialise(config = config)
+            }
+
+            val reported = telemetry.sdkErrors.single()
+            assertNull(reported.widget)
+            assertEquals("InitialisationClientIdException", reported.errorCode)
+            assertEquals(
+                listOf(PayPalVaultException.GetPayPalClientIdException::class.java.name),
+                reported.error.causeTypes.take(1)
+            )
+            assertEquals(thrown.error.status, reported.apiError?.status)
+            assertEquals("gateway_client_id", reported.apiError?.summaryCode)
+        }
+
+    @Test
+    fun `initialise other failure reports one SdkError and still throws UnknownException (PD2)`() = runTest {
+        unloadKoinModules(domainModule)
+        loadKoinModules(
+            module {
+                single {
+                    mockk<GetPayPalClientIdUseCase>(relaxed = false) {
+                        coEvery { this@mockk(any(), any()) } returns Result.failure<String>(IllegalStateException())
+                    }
+                }
+            }
+        )
+        val telemetry = RecordingTelemetry()
+        loadKoinModules(module { single<Telemetry> { telemetry } })
+
+        val thrown = assertFailsWith<PayPalDataCollectorException.UnknownException> {
+            PayPalDataCollectorUtil.initialise(config = config)
+        }
+
+        assertEquals(MobileSDKConstants.PayPalVaultConfig.Errors.DATA_COLLECTOR_UNKNOWN_ERROR, thrown.message)
+        val reported = telemetry.sdkErrors.single()
+        assertNull(reported.widget)
+        assertEquals("UnknownException", reported.errorCode)
+        assertEquals(listOf(IllegalStateException::class.java.name), reported.error.causeTypes.take(1))
     }
 
     @Test

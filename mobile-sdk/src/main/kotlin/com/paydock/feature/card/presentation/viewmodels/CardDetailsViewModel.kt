@@ -5,12 +5,15 @@ import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.reportSdkErrorWhileActive
 import com.paydock.feature.card.data.dto.CreateCardPaymentTokenRequest
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.usecase.CreateCardPaymentTokenUseCase
 import com.paydock.feature.card.domain.usecase.GetCardSchemasUseCase
 import com.paydock.feature.card.presentation.state.CardDetailsInputState
 import com.paydock.feature.card.presentation.state.CardDetailsUIState
+import com.paydock.telemetry.Telemetry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +28,7 @@ import kotlinx.coroutines.flow.update
  * @param getCardSchemasUseCase The use case responsible for retrieving supported card schemas.
  * @param createCardPaymentTokenUseCase The use case responsible for creating card payment tokens.
  * @param dispatchers The provider for coroutine dispatchers, used for handling asynchronous tasks.
+ * @param telemetry The telemetry facade the view model reports its handled errors to.
  */
 internal class CardDetailsViewModel(
     private val accessToken: String,
@@ -34,6 +38,7 @@ internal class CardDetailsViewModel(
     private val createCardPaymentTokenUseCase: CreateCardPaymentTokenUseCase,
     dispatchers: DispatchersProvider,
     private val savedStateHandle: SavedStateHandle,
+    private val telemetry: Telemetry,
 ) : BaseViewModel(dispatchers) {
 
     /**
@@ -90,7 +95,8 @@ internal class CardDetailsViewModel(
                         state.copy(binData = binData)
                     }
                 }
-                .onFailure {
+                .onFailure { error ->
+                    telemetry.reportSdkErrorWhileActive(error, SdkWidget.CARD_DETAILS)
                     _inputStateFlow.update { state ->
                         state.copy(binData = null)
                     }
@@ -286,6 +292,7 @@ internal class CardDetailsViewModel(
                     updateState(CardDetailsUIState.Success(details.token!!))
                 }
                 .onFailure { error ->
+                    telemetry.reportSdkErrorWhileActive(error, SdkWidget.CARD_DETAILS)
                     error.safeCastAs<SdkException>()
                         ?.let { updateState(CardDetailsUIState.Error(it)) }
                 }

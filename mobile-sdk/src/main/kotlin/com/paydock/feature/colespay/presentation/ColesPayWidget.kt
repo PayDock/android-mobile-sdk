@@ -41,6 +41,8 @@ import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
 import com.paydock.core.presentation.util.webviewLoadingAccessibility
+import com.paydock.core.telemetry.ReportWidgetOpened
+import com.paydock.core.telemetry.SdkWidget
 import com.paydock.designsystems.components.button.ImageButtonAppearance
 import com.paydock.designsystems.components.button.ImageButtonDefaults
 import com.paydock.designsystems.components.button.SdkImageButton
@@ -85,6 +87,7 @@ fun ColesPayWidget(
     eventDelegate: WidgetEventDelegate? = null,
     completion: (Result<String>) -> Unit
 ) {
+    ReportWidgetOpened(SdkWidget.COLES_PAY)
     val context = LocalContext.current
     // Obtain instances of view models
     val viewModel: ColesPayViewModel = koinViewModel(parameters = {
@@ -246,6 +249,18 @@ object ColesPayWidgetAppearanceDefaults {
 }
 
 /**
+ * Reports a Coles Pay cancellation unless the shopper initiated it (CP3): the shopper cancelling is an expected
+ * outcome, a page that closed itself is reported. The decision is on the returned status, never on message text.
+ *
+ * @param status The cancellation status the Coles Pay activity returned.
+ * @param failure The error the merchant gets.
+ * @param viewModel The ViewModel that reports the failure.
+ */
+private fun reportCancellation(status: CancellationStatus?, failure: Throwable, viewModel: ColesPayViewModel) {
+    if (status != CancellationStatus.USER_INITIATED) viewModel.reportWidgetError(failure)
+}
+
+/**
  * Handles the result returned from the Coles Pay web activity, processing the order ID,
  * cancellation, or errors, and invoking the appropriate completion handler.
  *
@@ -270,16 +285,14 @@ private fun handleColesPayResult(
 
             // Handles the cancellation case when the result code is RESULT_CANCELED.
             AppCompatActivity.RESULT_CANCELED -> {
-                when (data.getCancellationStatusExtra()) {
+                when (val cancellationStatus = data.getCancellationStatusExtra()) {
                     // If the cancellation was user-initiated, the completion is invoked with a failure result.
                     CancellationStatus.USER_INITIATED, CancellationStatus.PAGE_CLOSED -> {
-                        completion(
-                            Result.failure(
-                                ColesPayException.CancellationException(
-                                    displayableMessage = MobileSDKConstants.ColesPayConfig.Errors.CANCELLATION_ERROR
-                                )
-                            )
+                        val failure = ColesPayException.CancellationException(
+                            displayableMessage = MobileSDKConstants.ColesPayConfig.Errors.CANCELLATION_ERROR
                         )
+                        reportCancellation(cancellationStatus, failure, viewModel)
+                        completion(Result.failure(failure))
                         viewModel.resetResultState()
                     }
 
@@ -288,14 +301,12 @@ private fun handleColesPayResult(
                         val status = data.getStatusExtra()
                         val message =
                             data.getMessageExtra(MobileSDKConstants.ColesPayConfig.Errors.COLES_PAY_ERROR)
-                        completion(
-                            Result.failure(
-                                ColesPayException.WebViewException(
-                                    status,
-                                    message
-                                )
-                            )
+                        val failure = ColesPayException.WebViewException(
+                            status,
+                            message
                         )
+                        viewModel.reportWidgetError(failure)
+                        completion(Result.failure(failure))
                         viewModel.resetResultState()
                     }
                 }

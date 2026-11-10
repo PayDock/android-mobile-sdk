@@ -4,26 +4,36 @@ import android.location.Address
 import android.location.Geocoder
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.data.util.DispatchersProvider
+import com.paydock.core.telemetry.RecordingTelemetry
+import com.paydock.core.telemetry.SdkWidget
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.test.inject
 import org.mockito.junit.MockitoJUnitRunner
+import java.io.IOException
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @RunWith(MockitoJUnitRunner::class)
 internal class AddressSearchViewModelTest : BaseKoinUnitTest() {
 
     private lateinit var viewModel: AddressSearchViewModel
     private lateinit var geocoder: Geocoder
+    private lateinit var telemetry: RecordingTelemetry
     private val dispatchersProvider: DispatchersProvider by inject()
 
     @Before
     fun setup() {
         geocoder = mockk()
-        viewModel = AddressSearchViewModel(geocoder, dispatchersProvider)
+        telemetry = RecordingTelemetry()
+        viewModel = AddressSearchViewModel(geocoder, dispatchersProvider, telemetry)
     }
 
     @Test
@@ -44,6 +54,53 @@ internal class AddressSearchViewModelTest : BaseKoinUnitTest() {
 
         // Check that the results are empty for a blank query
         assert(results[0].isEmpty())
+    }
+
+    @Suppress("DEPRECATION")
+    @Test
+    fun `searchItems geocoder failure reports one SdkError and still emits an empty list (AD2)`() = runTest {
+        // Both geocoder calls fail, so the path is the same on either side of the SDK_INT branch.
+        every { geocoder.getFromLocationName(any(), any()) } throws IOException()
+        every { geocoder.getFromLocationName(any(), any(), any<Geocoder.GeocodeListener>()) } throws IOException()
+
+        val results = viewModel.searchItems("Test Address").toList()
+
+        assertEquals(listOf(emptyList<Address>()), results)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.ADDRESS_DETAILS, reported.widget)
+        assertNull(reported.errorCode)
+        assertEquals(IOException::class.java.name, reported.error.type)
+    }
+
+    @Suppress("DEPRECATION")
+    @Test
+    fun `searchItems reports only the first geocoder failure per view model and still emits empty lists (AD2)`() =
+        runTest {
+            every { geocoder.getFromLocationName(any(), any()) } throws IOException()
+            every { geocoder.getFromLocationName(any(), any(), any<Geocoder.GeocodeListener>()) } throws IOException()
+
+            // A search runs per keystroke.
+            val first = viewModel.searchItems("Test").toList()
+            val second = viewModel.searchItems("Test Address").toList()
+
+            assertEquals(listOf(emptyList<Address>()), first)
+            assertEquals(listOf(emptyList<Address>()), second)
+            val reported = telemetry.sdkErrors.single()
+            assertEquals(SdkWidget.ADDRESS_DETAILS, reported.widget)
+        }
+
+    @Suppress("DEPRECATION")
+    @Test
+    fun `searchItems coroutine cancellation reports nothing and still emits an empty list (AD2)`() = runTest {
+        every { geocoder.getFromLocationName(any(), any()) } throws CancellationException()
+        every {
+            geocoder.getFromLocationName(any(), any(), any<Geocoder.GeocodeListener>())
+        } throws CancellationException()
+
+        val results = viewModel.searchItems("Test Address").toList()
+
+        assertEquals(listOf(emptyList<Address>()), results)
+        assertTrue(telemetry.events.isEmpty())
     }
 
     // FIXME - setStaticFieldViaReflection not working on Gitlab CI

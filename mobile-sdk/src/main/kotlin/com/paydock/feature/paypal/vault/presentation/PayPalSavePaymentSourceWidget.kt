@@ -31,6 +31,8 @@ import com.paydock.core.presentation.extensions.getStatusExtra
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.core.telemetry.ReportWidgetOpened
+import com.paydock.core.telemetry.SdkWidget
 import com.paydock.designsystems.components.button.ButtonAppearance
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.button.RenderButton
@@ -75,6 +77,7 @@ fun PayPalSavePaymentSourceWidget(
     eventDelegate: WidgetEventDelegate? = null,
     completion: (Result<PayPalVaultResult>) -> Unit,
 ) {
+    ReportWidgetOpened(SdkWidget.PAYPAL_SAVE_PAYMENT_SOURCE)
     val context = LocalContext.current
     val viewModel: PayPalVaultViewModel = koinViewModel(parameters = { parametersOf(config) })
     val focusManager = LocalFocusManager.current
@@ -233,14 +236,12 @@ private fun handlePayPalVaultResult(
                         val status = data.getStatusExtra()
                         val message =
                             data.getMessageExtra(MobileSDKConstants.PayPalVaultConfig.Errors.VAULT_ERROR)
-                        completion(
-                            Result.failure(
-                                PayPalVaultException.PayPalSDKException(
-                                    status,
-                                    message
-                                )
-                            )
+                        val failure = PayPalVaultException.PayPalSDKException(
+                            status,
+                            message
                         )
+                        viewModel.reportWidgetError(failure)
+                        completion(Result.failure(failure))
                     }
                 }
             }

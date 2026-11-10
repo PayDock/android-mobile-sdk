@@ -20,6 +20,7 @@ import com.paydock.feature.address.injection.addressDetailsModule
 import com.paydock.feature.address.presentation.viewmodels.AddressDetailsViewModel
 import com.paydock.feature.address.presentation.viewmodels.AddressSearchViewModel
 import com.paydock.feature.address.presentation.viewmodels.CountryAutoCompleteViewModel
+import com.paydock.telemetry.NoOpTelemetry
 import io.mockk.mockk
 import org.junit.After
 import org.junit.Before
@@ -68,7 +69,7 @@ internal class AddressDetailsAccessibilityTest : BaseViewModelKoinTest<AddressDe
     private lateinit var geocoder: Geocoder
 
     private val testModule: Module = module {
-        viewModel { AddressSearchViewModel(geocoder, dispatchersProvider) }
+        viewModel { AddressSearchViewModel(geocoder, dispatchersProvider, NoOpTelemetry) }
         viewModel { CountryAutoCompleteViewModel(dispatchersProvider) }
         viewModel { AddressDetailsViewModel(dispatchersProvider) }
         viewModel { viewModel }

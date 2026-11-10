@@ -8,6 +8,8 @@ import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.ZipException
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
+import com.paydock.core.telemetry.RecordingTelemetry
+import com.paydock.core.telemetry.SdkWidget
 import com.paydock.core.utils.MainDispatcherRule
 import com.paydock.feature.zip.domain.model.ZipCallbackData
 import com.paydock.feature.zip.domain.model.ZipStatus
@@ -19,7 +21,11 @@ import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertNull
+import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
@@ -42,6 +48,7 @@ internal class ZipViewModelTest : BaseKoinUnitTest() {
     private lateinit var viewModel: ZipViewModel
     private lateinit var initializeZipCheckoutUseCase: InitializeZipCheckoutUseCase
     private lateinit var createZipPaymentSourceTokenUseCase: CreateZipPaymentSourceTokenUseCase
+    private lateinit var telemetry: RecordingTelemetry
 
     private val testConfig = ZipWidgetConfig(
         accessToken = MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN,
@@ -132,13 +139,15 @@ internal class ZipViewModelTest : BaseKoinUnitTest() {
     fun setup() {
         initializeZipCheckoutUseCase = mockk()
         createZipPaymentSourceTokenUseCase = mockk()
+        telemetry = RecordingTelemetry()
 
         viewModel = ZipViewModel(
             testConfig,
             initializeZipCheckoutUseCase,
             createZipPaymentSourceTokenUseCase,
             dispatchersProvider,
-            SavedStateHandle()
+            SavedStateHandle(),
+            telemetry
         )
     }
 
@@ -469,5 +478,165 @@ internal class ZipViewModelTest : BaseKoinUnitTest() {
         kotlin.test.assertEquals(testConfig.firstName, "John")
         kotlin.test.assertEquals(testConfig.lastName, "Doe")
         kotlin.test.assertEquals(testConfig.email, "john.doe@example.com")
+    }
+
+    // MARK: - Telemetry: one SdkError per failure path (ZP1-ZP8), merchant-visible results unchanged
+
+    @Test
+    fun `checkout init SdkException failure reports it once and still sets it (ZP1)`() = runTest {
+        setupInitializeCheckoutFailure()
+
+        viewModel.initializeCheckout()
+        runCurrent()
+
+        val state = viewModel.stateFlow.value
+        assertIs<ZipUIState.Error>(state)
+        assertIs<ZipException.FetchingCheckoutUrlException>(state.exception)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.ZIP, reported.widget)
+        assertEquals("FetchingCheckoutUrlException", reported.errorCode)
+        assertNull(reported.error.cause)
+        assertEquals(HttpStatusCode.BadRequest.value, reported.apiError?.status)
+        assertEquals("invalid_gateway", reported.apiError?.summaryCode)
+    }
+
+    @Test
+    fun `checkout init failure that is no SdkException reports the UnknownException with the dropped cause (ZP1)`() =
+        runTest {
+            coEvery { initializeZipCheckoutUseCase(any(), any()) } returns Result.failure(IllegalStateException())
+
+            viewModel.initializeCheckout()
+            runCurrent()
+
+            val state = viewModel.stateFlow.value
+            assertIs<ZipUIState.Error>(state)
+            assertIs<ZipException.UnknownException>(state.exception)
+            val reported = telemetry.sdkErrors.single()
+            assertEquals(SdkWidget.ZIP, reported.widget)
+            assertEquals("UnknownException", reported.errorCode)
+            assertEquals(IllegalStateException::class.java.name, reported.error.cause?.type)
+        }
+
+    @Test
+    fun `declined callback reports no SdkError and still sets the DeclinedException (ZP2)`() = runTest {
+        assertCallbackReportsNothing(ZipStatus.DECLINED)
+        assertIs<ZipException.DeclinedException>((viewModel.stateFlow.value as ZipUIState.Error).exception)
+    }
+
+    @Test
+    fun `cancelled callback reports no SdkError and still sets the CancellationException (ZP3)`() = runTest {
+        assertCallbackReportsNothing(ZipStatus.CANCELLED)
+        assertIs<ZipException.CancellationException>((viewModel.stateFlow.value as ZipUIState.Error).exception)
+    }
+
+    @Test
+    fun `referred callback reports no SdkError and still sets the ReferredException (ZP4)`() = runTest {
+        assertCallbackReportsNothing(ZipStatus.REFERRED)
+        assertIs<ZipException.ReferredException>((viewModel.stateFlow.value as ZipUIState.Error).exception)
+    }
+
+    @Test
+    fun `unexpected status callbacks report the UnexpectedStatusException they set (ZP5)`() = runTest {
+        assertCallbackReports(ZipStatus.UNEXPECTED, "UnexpectedStatusException")
+        assertIs<ZipException.UnexpectedStatusException>((viewModel.stateFlow.value as ZipUIState.Error).exception)
+
+        telemetry.events.clear()
+        assertCallbackReports(ZipStatus.UNEXPECTED_ERROR, "UnexpectedStatusException")
+        assertIs<ZipException.UnexpectedStatusException>((viewModel.stateFlow.value as ZipUIState.Error).exception)
+    }
+
+    @Test
+    fun `approved callback without a checkout token reports the UnknownException it sets (ZP6)`() = runTest {
+        assertCallbackReports(ZipStatus.APPROVED, "UnknownException")
+        assertIs<ZipException.UnknownException>((viewModel.stateFlow.value as ZipUIState.Error).exception)
+    }
+
+    @Test
+    fun `payment source token SdkException failure reports it once and still sets it (ZP7)`() = runTest {
+        setupInitializeCheckoutSuccess()
+        setupCreatePaymentSourceTokenFailure()
+        viewModel.initializeCheckout()
+        runCurrent()
+
+        viewModel.handleZipCallback(approvedCallback())
+        runCurrent()
+
+        val state = viewModel.stateFlow.value
+        assertIs<ZipUIState.Error>(state)
+        assertIs<ZipException.CreatingPaymentSourceTokenException>(state.exception)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.ZIP, reported.widget)
+        assertEquals("CreatingPaymentSourceTokenException", reported.errorCode)
+        assertNull(reported.error.cause)
+        assertEquals("token_creation_failed", reported.apiError?.summaryCode)
+    }
+
+    @Test
+    fun `payment source token failure that is no SdkException reports UnknownException with the cause (ZP7)`() =
+        runTest {
+            setupInitializeCheckoutSuccess()
+            coEvery { createZipPaymentSourceTokenUseCase(any(), any(), any()) } returns
+                Result.failure(IllegalStateException())
+            viewModel.initializeCheckout()
+            runCurrent()
+
+            viewModel.handleZipCallback(approvedCallback())
+            runCurrent()
+
+            val state = viewModel.stateFlow.value
+            assertIs<ZipUIState.Error>(state)
+            assertIs<ZipException.UnknownException>(state.exception)
+            val reported = telemetry.sdkErrors.single()
+            assertEquals(SdkWidget.ZIP, reported.widget)
+            assertEquals("UnknownException", reported.errorCode)
+            assertEquals(IllegalStateException::class.java.name, reported.error.cause?.type)
+        }
+
+    @Test
+    fun `web view error reports the WebViewException it sets (ZP8)`() = runTest {
+        viewModel.handleWebViewError(-1, "WebView error occurred")
+
+        val state = viewModel.stateFlow.value
+        assertIs<ZipUIState.Error>(state)
+        assertIs<ZipException.WebViewException>(state.exception)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.ZIP, reported.widget)
+        assertEquals("WebViewException", reported.errorCode)
+        assertNull(reported.error.cause)
+    }
+
+    @Test
+    fun `user cancellation is out of scope and reports nothing`() = runTest {
+        viewModel.handleUserCancellation()
+
+        assertIs<ZipUIState.Error>(viewModel.stateFlow.value)
+        assertTrue(telemetry.events.isEmpty())
+    }
+
+    private fun approvedCallback() = ZipCallbackData(
+        status = ZipStatus.APPROVED,
+        checkoutId = MobileSDKTestConstants.Zip.MOCK_CHECKOUT_ID,
+        orderId = MobileSDKTestConstants.Zip.MOCK_ORDER_ID
+    )
+
+    private fun assertCallbackReports(status: ZipStatus, code: String) {
+        viewModel.handleZipCallback(
+            ZipCallbackData(status = status, checkoutId = MobileSDKTestConstants.Zip.MOCK_CHECKOUT_ID)
+        )
+
+        assertIs<ZipUIState.Error>(viewModel.stateFlow.value)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.ZIP, reported.widget)
+        assertEquals(code, reported.errorCode)
+        assertNull(reported.error.cause)
+    }
+
+    private fun assertCallbackReportsNothing(status: ZipStatus) {
+        viewModel.handleZipCallback(
+            ZipCallbackData(status = status, checkoutId = MobileSDKTestConstants.Zip.MOCK_CHECKOUT_ID)
+        )
+
+        assertIs<ZipUIState.Error>(viewModel.stateFlow.value)
+        assertTrue(telemetry.sdkErrors.isEmpty())
     }
 }

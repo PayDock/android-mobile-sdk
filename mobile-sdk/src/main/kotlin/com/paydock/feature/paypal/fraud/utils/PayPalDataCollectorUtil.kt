@@ -6,6 +6,8 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.PayPalDataCollectorException
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.domain.mapper.mapToPayPalEnv
+import com.paydock.core.telemetry.reportSdkErrorWhileActive
+import com.paydock.core.telemetry.telemetryOrNull
 import com.paydock.feature.paypal.core.domain.usecase.GetPayPalClientIdUseCase
 import com.paydock.feature.paypal.fraud.domain.model.integration.PayPalDataCollectorConfig
 import com.paypal.android.corepayments.CoreConfig
@@ -75,13 +77,17 @@ class PayPalDataCollectorUtil private constructor(
                 collector.initialiseCollector()
                 return collector
             } catch (e: PayPalVaultException.GetPayPalClientIdException) {
-                throw PayPalDataCollectorException.InitialisationClientIdException(e.error)
+                val failure = PayPalDataCollectorException.InitialisationClientIdException(e.error)
+                telemetryOrNull()?.reportSdkErrorWhileActive(failure, widget = null, cause = e)
+                throw failure
             } catch (e: Exception) {
                 // This is just a fallback in the event that some other error occurs
-                throw PayPalDataCollectorException.UnknownException(
+                val failure = PayPalDataCollectorException.UnknownException(
                     e.message
                         ?: MobileSDKConstants.PayPalVaultConfig.Errors.DATA_COLLECTOR_UNKNOWN_ERROR
                 )
+                telemetryOrNull()?.reportSdkErrorWhileActive(failure, widget = null, cause = e)
+                throw failure
             }
         }
     }

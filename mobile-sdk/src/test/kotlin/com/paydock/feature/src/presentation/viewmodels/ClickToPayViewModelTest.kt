@@ -4,6 +4,10 @@ import app.cash.turbine.test
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
+import com.paydock.core.domain.error.exceptions.ClickToPayException
+import com.paydock.core.telemetry.RecordingTelemetry
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.WidgetSourceScan
 import com.paydock.core.utils.MainDispatcherRule
 import com.paydock.feature.src.domain.model.ui.CardData
 import com.paydock.feature.src.domain.model.ui.CheckoutData
@@ -13,6 +17,7 @@ import com.paydock.feature.src.domain.model.ui.EventData
 import com.paydock.feature.src.domain.model.ui.SuccessEventData
 import com.paydock.feature.src.domain.model.ui.mapToException
 import junit.framework.TestCase.assertNull
+import junit.framework.TestCase.assertSame
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -23,6 +28,7 @@ import org.koin.test.inject
 import org.mockito.junit.MockitoJUnitRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 @RunWith(MockitoJUnitRunner::class)
@@ -34,10 +40,12 @@ internal class ClickToPayViewModelTest : BaseKoinUnitTest() {
     private val dispatchersProvider: DispatchersProvider by inject()
 
     private lateinit var viewModel: ClickToPayViewModel
+    private lateinit var telemetry: RecordingTelemetry
 
     @Before
     fun setup() {
-        viewModel = ClickToPayViewModel(dispatchersProvider)
+        telemetry = RecordingTelemetry()
+        viewModel = ClickToPayViewModel(dispatchersProvider, telemetry)
     }
 
     @Test
@@ -146,4 +154,85 @@ internal class ClickToPayViewModelTest : BaseKoinUnitTest() {
             }
         }
     }
+
+    // region Telemetry: one SdkError per failure path (CT1, CT2), merchant-visible results unchanged
+
+    @Test
+    fun `checkout user error event reports no SdkError and still sets the same error (CT1)`() = runTest {
+        val event = ClickToPayEvent.CheckoutErrorEvent(
+            data = ErrorData.UserErrorData(data = "Request failed due to CARD_MISSING")
+        )
+
+        viewModel.updateSRCEvent(event)
+
+        val state = viewModel.stateFlow.first()
+        assertIs<ClickToPayException.CheckoutErrorException>(state.error)
+        assertNull(state.token)
+        assertTrue(telemetry.sdkErrors.isEmpty())
+    }
+
+    @Test
+    fun `checkout critical error event reports one SdkError and still sets the same error (CT1)`() = runTest {
+        val event = ClickToPayEvent.CheckoutErrorEvent(
+            data = ErrorData.CriticalErrorData(data = "synthetic critical error")
+        )
+
+        viewModel.updateSRCEvent(event)
+
+        val state = viewModel.stateFlow.first()
+        assertIs<ClickToPayException.CheckoutErrorException>(state.error)
+        assertNull(state.token)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.CLICK_TO_PAY, reported.widget)
+        assertEquals("CheckoutErrorException", reported.errorCode)
+        assertEquals(state.error?.javaClass?.name, reported.error.type)
+        assertNull(reported.error.cause)
+    }
+
+    @Test
+    fun `non-error events report nothing`() = runTest {
+        viewModel.updateSRCEvent(ClickToPayEvent.IframeLoadedEvent(data = EventData()))
+        viewModel.updateSRCEvent(ClickToPayEvent.CheckoutReadyEvent(data = EventData()))
+
+        assertTrue(telemetry.sdkErrors.isEmpty())
+    }
+
+    @Test
+    fun `reportWidgetError reports one Click to Pay SdkError and changes no state (CT2)`() = runTest {
+        val before = viewModel.stateFlow.value
+
+        viewModel.reportWidgetError(ClickToPayException.WebViewException(code = 0, displayableMessage = "web"))
+
+        assertSame(before, viewModel.stateFlow.value)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.CLICK_TO_PAY, reported.widget)
+        assertEquals("WebViewException", reported.errorCode)
+        assertNull(reported.error.cause)
+    }
+
+    @Test
+    fun `reportWidgetError reports only the first web view failure per view model (CT2)`() = runTest {
+        val before = viewModel.stateFlow.value
+
+        // Child windows can fire one error per failed resource.
+        viewModel.reportWidgetError(ClickToPayException.WebViewException(code = 0, displayableMessage = "web"))
+        viewModel.reportWidgetError(ClickToPayException.WebViewException(code = -2, displayableMessage = "web"))
+
+        assertSame(before, viewModel.stateFlow.value)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.CLICK_TO_PAY, reported.widget)
+        assertEquals("WebViewException", reported.errorCode)
+    }
+
+    @Test
+    fun `the web view error handler reports the failure it hands on, once (CT2)`() {
+        val source = WidgetSourceScan.read("feature/src/presentation/ClickToPayWidget.kt")
+        val onError = WidgetSourceScan.between(source, "{ status, message ->", "completion(Result.failure(failure))")
+
+        assertEquals(1, WidgetSourceScan.count(source, "viewModel.reportWidgetError("))
+        assertEquals(1, WidgetSourceScan.count(onError, "ClickToPayException.WebViewException("))
+        assertEquals(1, WidgetSourceScan.count(onError, "viewModel.reportWidgetError(failure)"))
+    }
+
+    // endregion
 }

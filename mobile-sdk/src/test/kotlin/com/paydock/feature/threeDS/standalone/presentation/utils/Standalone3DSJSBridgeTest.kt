@@ -4,6 +4,7 @@ import com.paydock.core.BaseUnitTest
 import com.paydock.core.domain.error.exceptions.Standalone3DSException
 import com.paydock.core.network.extensions.convertToDataClass
 import com.paydock.feature.threeDS.standalone.domain.model.ui.Standalone3DSEvent
+import com.paydock.feature.threeDS.standalone.domain.utils.UnknownStandalone3DSEventException
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -11,6 +12,8 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.kotlin.argThat
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @Suppress("MaxLineLength")
 internal class Standalone3DSJSBridgeTest : BaseUnitTest() {
@@ -127,5 +130,31 @@ internal class Standalone3DSJSBridgeTest : BaseUnitTest() {
         jsBridge.postMessage(validEventJson)
         verify(mockCallback).invoke(expectedEvent)
         verifyNoMoreInteractions(mockCallback)
+    }
+
+    @Test
+    fun `postMessage with unknown event type hands the UnknownStandalone3DSEventException to onUnknownEvent (SD2)`() {
+        val unknown = mutableListOf<UnknownStandalone3DSEventException>()
+        val bridge = Standalone3DSJSBridge(mockCallback, onUnknownEvent = { unknown += it })
+        val unknownEventJson =
+            "{\"event\":\"unknownEvent\",\"data\":{\"status\":\"pending\",\"charge_3ds_id\":\"3e07e004-71af-44dc-a9f4-e59520b3e64f\",\"result\":{}}}"
+
+        bridge.postMessage(unknownEventJson)
+
+        assertEquals("unknownEvent", unknown.single().eventName)
+        verifyNoInteractions(mockCallback)
+    }
+
+    @Test
+    fun `postMessage with a known event or a mapping failure never calls onUnknownEvent`() {
+        val unknown = mutableListOf<UnknownStandalone3DSEventException>()
+        val bridge = Standalone3DSJSBridge(mockCallback, onUnknownEvent = { unknown += it })
+        val validEventJson =
+            "{\"event\":\"chargeAuthSuccess\",\"data\":{\"status\":\"success\",\"charge_3ds_id\":\"3e07e004-71af-44dc-a9f4-e59520b3e64f\"}}"
+
+        bridge.postMessage(validEventJson)
+        bridge.postMessage("invalid json")
+
+        assertTrue(unknown.isEmpty())
     }
 }

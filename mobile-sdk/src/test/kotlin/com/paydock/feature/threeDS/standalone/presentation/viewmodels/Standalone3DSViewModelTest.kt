@@ -7,6 +7,9 @@ import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.Standalone3DSException
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.core.telemetry.RecordingTelemetry
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.WidgetSourceScan
 import com.paydock.core.utils.MainDispatcherRule
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSProgress
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
@@ -19,7 +22,9 @@ import com.paydock.feature.threeDS.standalone.domain.model.ui.ChargeResult
 import com.paydock.feature.threeDS.standalone.domain.model.ui.Standalone3DSEvent
 import com.paydock.feature.threeDS.standalone.domain.model.ui.StandaloneChargeEventData
 import com.paydock.feature.threeDS.standalone.domain.model.ui.enums.StandaloneStatus
+import com.paydock.feature.threeDS.standalone.domain.utils.UnknownStandalone3DSEventException
 import com.paydock.feature.threeDS.standalone.presentation.state.Standalone3DSUIState
+import com.paydock.feature.threeDS.standalone.presentation.utils.Standalone3DSJSBridge
 import com.paydock.feature.threeDS.standalone.presentation.utils.Standalone3DSLoadingController
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -30,6 +35,8 @@ import org.koin.test.inject
 import org.mockito.junit.MockitoJUnitRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @RunWith(MockitoJUnitRunner::class)
@@ -41,6 +48,7 @@ internal class Standalone3DSViewModelTest : BaseKoinUnitTest() {
     private val dispatchersProvider: DispatchersProvider by inject()
 
     private lateinit var viewModel: Standalone3DSViewModel
+    private lateinit var telemetry: RecordingTelemetry
 
     private val chargeId = MobileSDKTestConstants.ThreeDS.MOCK_CHARGE_ID
 
@@ -75,7 +83,8 @@ internal class Standalone3DSViewModelTest : BaseKoinUnitTest() {
 
     @Before
     fun setup() {
-        viewModel = Standalone3DSViewModel(dispatchersProvider)
+        telemetry = RecordingTelemetry()
+        viewModel = Standalone3DSViewModel(dispatchersProvider, telemetry)
     }
 
     private suspend fun ReceiveTurbine<Standalone3DSUIState>.awaitSuccess(
@@ -272,6 +281,131 @@ internal class Standalone3DSViewModelTest : BaseKoinUnitTest() {
         val lastLoading = states.indexOfLast { it is Standalone3DSUIState.Loading }
         assertTrue(lastLoading < states.indexOfLast { it is Standalone3DSUIState.Success })
     }
+
+    // region Telemetry: one SdkError per failure path (SD1-SD5), merchant-visible results unchanged
+
+    @Test
+    fun `event SdkException failure reports it once and still finishes loading and sets the error (SD1)`() = runTest {
+        val failure = Standalone3DSException.EventMappingException("3DS Error has occurred!")
+
+        viewModel.eventFlow.test {
+            viewModel.handleEventResult(Result.failure(failure))
+
+            assertEquals(Standalone3DSUIState.Loading(false), awaitItem())
+            awaitItem().let { state ->
+                assertIs<Standalone3DSUIState.Error>(state)
+                assertSame(failure, state.exception)
+            }
+            expectNoEvents()
+        }
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.STANDALONE_3DS, reported.widget)
+        assertEquals("EventMappingException", reported.errorCode)
+        assertNull(reported.error.cause)
+    }
+
+    @Test
+    fun `event failure that is no SdkException reports it once and is still dropped (SD1)`() = runTest {
+        viewModel.eventFlow.test {
+            viewModel.handleEventResult(Result.failure(IllegalStateException()))
+
+            expectNoEvents()
+        }
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.STANDALONE_3DS, reported.widget)
+        assertNull(reported.errorCode)
+        assertEquals(IllegalStateException::class.java.name, reported.error.type)
+    }
+
+    @Test
+    fun `a successful event reports nothing`() = runTest {
+        collectStates(successEvent)
+
+        assertEquals(emptyList<Any>(), telemetry.events.toList())
+    }
+
+    @Test
+    fun `an unknown bridge event reports one SdkError through the view model and emits no state (SD2)`() = runTest {
+        val bridge = Standalone3DSJSBridge(
+            eventCallback = { eventResult -> viewModel.handleEventResult(eventResult) },
+            onUnknownEvent = { unknownEvent -> viewModel.reportWidgetError(unknownEvent) },
+        )
+
+        viewModel.eventFlow.test {
+            bridge.postMessage("{\"event\":\"unknownEvent\",\"data\":{\"status\":\"pending\"}}")
+
+            expectNoEvents()
+        }
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.STANDALONE_3DS, reported.widget)
+        assertNull(reported.errorCode)
+        assertEquals(UnknownStandalone3DSEventException::class.java.name, reported.error.type)
+    }
+
+    @Test
+    fun `reportWidgetError reports one Standalone 3DS SdkError and emits no state (SD4, SD5)`() = runTest {
+        viewModel.eventFlow.test {
+            viewModel.reportWidgetError(
+                Standalone3DSException.RenderProcessGoneException(didCrash = true, displayableMessage = "gone")
+            )
+
+            expectNoEvents()
+        }
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.STANDALONE_3DS, reported.widget)
+        assertEquals("RenderProcessGoneException", reported.errorCode)
+        assertNull(reported.error.cause)
+    }
+
+    @Test
+    fun `the widget hands unknown bridge events to the view model's reportWidgetError (SD2)`() {
+        val source = WidgetSourceScan.read("feature/threeDS/standalone/presentation/Standalone3DSWidget.kt")
+        val bridge = WidgetSourceScan.between(source, "Standalone3DSJSBridge(", "Box(")
+
+        val handOff = "onUnknownEvent = { unknownEvent -> viewModel.reportWidgetError(unknownEvent) }"
+
+        assertEquals(1, WidgetSourceScan.count(bridge, handOff))
+    }
+
+    @Test
+    fun `the invalid token returns report from an effect before the early return, once per failure type (SD3)`() {
+        val source = WidgetSourceScan.read("feature/threeDS/standalone/presentation/Standalone3DSWidget.kt")
+        val widget = WidgetSourceScan.function(source, "Standalone3DSWidget")
+        val invalidToken = WidgetSourceScan.between(widget, "if (parsedToken == null) {", "} else if")
+        val invalidFormat = WidgetSourceScan.between(widget, "} else if", "koinViewModel()")
+        val reporter = WidgetSourceScan.function(WidgetSourceScan.read("core/telemetry/ReportWidgetOpened.kt"), "ReportSdkErrorOnce")
+
+        listOf(invalidToken, invalidFormat).forEach { branch ->
+            assertEquals(1, WidgetSourceScan.count(branch, "Standalone3DSException.InvalidTokenException("))
+            assertEquals(1, WidgetSourceScan.count(branch, "ReportSdkErrorOnce(failure, SdkWidget.STANDALONE_3DS)"))
+            assertEquals(1, WidgetSourceScan.count(branch, "completion(Result.failure(failure))"))
+            assertTrue(
+                branch.indexOf("ReportSdkErrorOnce(failure, SdkWidget.STANDALONE_3DS)") < branch.indexOf("return"),
+                "the report precedes the early return"
+            )
+        }
+        assertEquals(1, WidgetSourceScan.count(reporter, "remember { telemetryOrNull() }"))
+        assertEquals(1, WidgetSourceScan.count(reporter, "LaunchedEffect(error::class)"))
+        assertEquals(1, WidgetSourceScan.count(reporter, "telemetry?.reportSdkError(error, widget)"))
+    }
+
+    @Test
+    fun `the render process gone and web view error handlers report what they hand on, once each (SD4, SD5)`() {
+        val source = WidgetSourceScan.read("feature/threeDS/standalone/presentation/Standalone3DSWidget.kt")
+        val rendererGone =
+            WidgetSourceScan.between(source, "onRendererGone = { didCrash ->", "{ status, message, host ->")
+        val webView = WidgetSourceScan.between(source, "{ status, message, host ->", "SdkOverlayLoader(")
+
+        assertEquals(3, WidgetSourceScan.count(source, "viewModel.reportWidgetError("))
+        assertEquals(1, WidgetSourceScan.count(rendererGone, "Standalone3DSException.RenderProcessGoneException("))
+        assertEquals(1, WidgetSourceScan.count(rendererGone, "viewModel.reportWidgetError(failure)"))
+        assertEquals(1, WidgetSourceScan.count(rendererGone, "currentCompletion(Result.failure(failure))"))
+        assertEquals(1, WidgetSourceScan.count(webView, "Standalone3DSException.WebViewException("))
+        assertEquals(1, WidgetSourceScan.count(webView, "viewModel.reportWidgetError(failure)"))
+        assertEquals(1, WidgetSourceScan.count(webView, "currentCompletion(Result.failure(failure))"))
+    }
+
+    // endregion
 
     /**
      * Feeds the events through the view model and collects every emitted state, in order.

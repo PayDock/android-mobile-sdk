@@ -12,13 +12,18 @@ import com.paydock.telemetry.TelemetryCredentialsProvider
 import com.paydock.telemetry.TelemetryLevel
 import com.paydock.telemetry.TelemetryRuntime
 import org.koin.core.Koin
+import org.koin.core.module.Module
 import org.koin.dsl.module
 
 /*
  * The telemetry activation binding (RS-4): the only file of :mobile-sdk allowed past the telemetry facade
  * (see TelemetrySeamTest). It decides at SDK start whether telemetry runs, registers only the [Telemetry] facade in
- * Koin and keeps the [TelemetryRuntime] lifecycle handle to itself.
+ * Koin and keeps the [TelemetryRuntime] lifecycle handle to itself. Its default module binds the no-op facade with
+ * the SDK's own modules, so a widget's view model always resolves one.
  */
+
+/** single<Telemetry> { NoOpTelemetry }, part of the SDK's own Koin modules; bind() overrides it (allowOverride). */
+internal val defaultTelemetryModule: Module = module { single<Telemetry> { NoOpTelemetry } }
 
 /** Reads the debug-only build values; release values are empty, so release has none (D14). */
 internal object BuildValuesCredentialsProvider : TelemetryCredentialsProvider {

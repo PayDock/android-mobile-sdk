@@ -13,6 +13,7 @@ import com.paydock.feature.card.injection.cardDetailsModule
 import com.paydock.feature.card.presentation.state.GiftCardWidgetState
 import com.paydock.feature.card.presentation.state.rememberGiftCardWidgetState
 import com.paydock.feature.card.presentation.viewmodels.GiftCardViewModel
+import com.paydock.telemetry.NoOpTelemetry
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -66,7 +67,8 @@ internal class GiftCardWidgetSubmitTest : BaseViewModelKoinTest<GiftCardViewMode
         return GiftCardViewModel(
             config = GiftCardWidgetConfig(accessToken = "testAccessToken", storePin = true),
             createCardPaymentTokenUseCase = createGiftCardPaymentTokenUseCase,
-            dispatchers = dispatchersProvider
+            dispatchers = dispatchersProvider,
+            telemetry = NoOpTelemetry
         )
     }
 

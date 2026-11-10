@@ -32,8 +32,10 @@ internal object RecordFactory {
             is TelemetryEvent.Crash -> crashShape(event, values)
             is TelemetryEvent.UncaughtException ->
                 errorShape("uncaught", event.error, code = null, event.threadName, event.widget, values)
-            is TelemetryEvent.SdkError ->
+            is TelemetryEvent.SdkError -> {
+                event.apiError?.let { putApiError(it, values) }
                 errorShape("sdk_error", event.error, event.errorCode, threadName = null, event.widget, values)
+            }
             is TelemetryEvent.NetworkFailure -> networkShape(event, values)
             is TelemetryEvent.WidgetOpened -> {
                 values["paydock.widget"] = Str(event.widget)

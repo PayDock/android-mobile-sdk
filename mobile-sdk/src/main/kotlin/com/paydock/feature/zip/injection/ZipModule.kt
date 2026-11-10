@@ -35,7 +35,8 @@ internal val zipModule = module {
             initializeZipCheckoutUseCase = get(),
             createZipPaymentSourceTokenUseCase = get(),
             dispatchers = get(),
-            savedStateHandle = get()
+            savedStateHandle = get(),
+            telemetry = get()
         )
     }
 }

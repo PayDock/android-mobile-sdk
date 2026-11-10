@@ -8,6 +8,8 @@ import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.paydock.core.BaseUnitTest
 import com.paydock.core.domain.model.Environment
+import com.paydock.core.telemetry.RecordingTelemetry
+import com.paydock.telemetry.Telemetry
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -15,12 +17,15 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.koin.core.context.loadKoinModules
 import org.koin.core.context.stopKoin
+import org.koin.dsl.module
 import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 internal class MobileSDKTest : BaseUnitTest() {
@@ -136,6 +141,24 @@ internal class MobileSDKTest : BaseUnitTest() {
         assertFailsWith<IllegalStateException> {
             MobileSDK.initialize(context)
         }
+    }
+
+    @Test
+    fun `initialize twice reports one SdkError and still throws the same IllegalStateException (EP1)`() {
+        MobileSDK.initialize(context)
+        val telemetry = RecordingTelemetry()
+        loadKoinModules(module { single<Telemetry> { telemetry } })
+
+        val thrown = assertFailsWith<IllegalStateException> {
+            MobileSDK.initialize(context)
+        }
+
+        // The message `error(IllegalStateException(...))` built before: the inner exception's toString().
+        assertEquals(IllegalStateException("MobileSDK is already initialized.").toString(), thrown.message)
+        val reported = telemetry.sdkErrors.single()
+        assertNull(reported.widget)
+        assertNull(reported.errorCode)
+        assertEquals(IllegalStateException::class.java.name, reported.error.type)
     }
 
     @Test

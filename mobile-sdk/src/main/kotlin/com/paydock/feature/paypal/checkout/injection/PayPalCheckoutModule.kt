@@ -15,7 +15,7 @@ internal val payPalCheckoutModule = module {
     // Define a view model for PayPalViewModel with SavedStateHandle
     // SavedStateHandle is auto-injected by Koin when not in the lambda parameters
     viewModel { (config: PayPalWidgetConfig) ->
-        PayPalViewModel(config, get(), get(), get(), get(), get(), get())
+        PayPalViewModel(config, get(), get(), get(), get(), get(), get(), telemetry = get())
     }
 
     // PayPalWebCheckoutViewModel - uses default PayPalWebClientManager

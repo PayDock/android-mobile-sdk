@@ -27,6 +27,7 @@ import com.paydock.feature.card.domain.model.ui.TokenDetails
 import com.paydock.feature.card.domain.usecase.CreateGiftCardPaymentTokenUseCase
 import com.paydock.feature.card.injection.cardDetailsModule
 import com.paydock.feature.card.presentation.viewmodels.GiftCardViewModel
+import com.paydock.telemetry.NoOpTelemetry
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.every
@@ -90,7 +91,8 @@ internal class GiftCardTest : BaseViewModelKoinTest<GiftCardViewModel>() {
                 storePin = true
             ),
             createCardPaymentTokenUseCase = createGiftCardPaymentTokenUseCase,
-            dispatchers = dispatchersProvider
+            dispatchers = dispatchersProvider,
+            telemetry = NoOpTelemetry
         )
     }
 

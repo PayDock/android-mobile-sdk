@@ -9,9 +9,10 @@ import com.paydock.telemetry.TelemetryIntent.FlushSource
  * input state is never mutated (R_01). Its only other input is the session's [RecordSequence], the source of every
  * record ID, `"<sessionId>-<sequence>"`.
  *
- * The disk is the queue: the reducer keeps counts, windows and notice IDs only. Level filtering, the hourly cap and
- * the dropped notices (R_09, R_10), the flush rules and the export stop (R_11, R_17, R_18). `now` is UTC epoch ms,
- * `elapsed` monotonic ms. Every limit comes from [TelemetryLimits].
+ * The disk is the queue: the reducer keeps counts, windows, notice IDs and the opened widgets' names only. Level
+ * filtering, the hourly cap and the dropped notices (R_09, R_10), the flush rules and the export stop (R_11, R_17,
+ * R_18), and one widget-opened record per widget per session (R_07). `now` is UTC epoch ms, `elapsed` monotonic ms.
+ * Every limit comes from [TelemetryLimits].
  */
 internal object TelemetryReducer {
 
@@ -63,6 +64,7 @@ internal object TelemetryReducer {
             !state.enabled -> DropReason.DISABLED
             state.level == TelemetryLevel.OFF -> DropReason.LEVEL_OFF
             state.level == TelemetryLevel.ERRORS && !isError(event) -> DropReason.LEVEL_FILTERED
+            event is TelemetryEvent.WidgetOpened && event.widget in state.openedWidgets -> DropReason.ALREADY_OPENED
             else -> null
         }
         if (dropReason != null) {
@@ -76,7 +78,15 @@ internal object TelemetryReducer {
         }
         val id = newId(rolled, sequence)
         effects += TelemetryEffect.Persist(PendingRecord(id, rolled.sessionId, event, now))
-        val created = rolled.copy(pending = rolled.pending + 1, createdInWindow = rolled.createdInWindow + 1)
+        val created = rolled.copy(
+            pending = rolled.pending + 1,
+            createdInWindow = rolled.createdInWindow + 1,
+            openedWidgets = if (event is TelemetryEvent.WidgetOpened) {
+                rolled.openedWidgets + event.widget
+            } else {
+                rolled.openedWidgets
+            }
+        )
         val exported = if (created.pending >= TelemetryLimits.FLUSH_THRESHOLD) export(created, now, effects) else created
         return schedule(exported, effects)
     }

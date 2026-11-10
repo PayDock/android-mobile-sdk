@@ -18,6 +18,7 @@ import com.paydock.core.BaseViewModelKoinTest
 import com.paydock.core.extensions.waitUntilTimeout
 import com.paydock.feature.address.injection.addressDetailsModule
 import com.paydock.feature.address.presentation.viewmodels.AddressSearchViewModel
+import com.paydock.telemetry.NoOpTelemetry
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.every
@@ -79,7 +80,7 @@ internal class AddressSearchInputTest : BaseViewModelKoinTest<AddressSearchViewM
     }
 
     override fun initialiseViewModel(): AddressSearchViewModel =
-        AddressSearchViewModel(geocoder, dispatchersProvider)
+        AddressSearchViewModel(geocoder, dispatchersProvider, NoOpTelemetry)
 
     @Test
     fun testAddressSearchInitialStateInput() {

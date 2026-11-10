@@ -19,6 +19,7 @@ import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
 import com.paydock.feature.card.domain.usecase.CreateGiftCardPaymentTokenUseCase
 import com.paydock.feature.card.injection.cardDetailsModule
 import com.paydock.feature.card.presentation.viewmodels.GiftCardViewModel
+import com.paydock.telemetry.NoOpTelemetry
 import io.mockk.mockk
 import org.junit.After
 import org.junit.Before
@@ -78,7 +79,8 @@ internal class GiftCardAccessibilityTest : BaseViewModelKoinTest<GiftCardViewMod
                 storePin = true
             ),
             createCardPaymentTokenUseCase = createGiftCardPaymentTokenUseCase,
-            dispatchers = dispatchersProvider
+            dispatchers = dispatchersProvider,
+            telemetry = NoOpTelemetry
         )
     }
 

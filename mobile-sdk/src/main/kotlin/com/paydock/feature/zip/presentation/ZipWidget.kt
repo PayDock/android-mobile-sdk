@@ -39,6 +39,8 @@ import com.paydock.core.domain.model.EventAction
 import com.paydock.core.presentation.ui.previews.SdkLightDarkPreviews
 import com.paydock.core.presentation.util.WidgetEventDelegate
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.core.telemetry.ReportWidgetOpened
+import com.paydock.core.telemetry.SdkWidget
 import com.paydock.designsystems.components.button.ButtonAppearanceDefaults
 import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
@@ -87,6 +89,7 @@ fun ZipWidget(
     eventDelegate: WidgetEventDelegate? = null,
     completion: (Result<ZipResult>) -> Unit
 ) {
+    ReportWidgetOpened(SdkWidget.ZIP)
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val viewModel: ZipViewModel = koinViewModel(parameters = { parametersOf(config) })

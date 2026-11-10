@@ -18,6 +18,9 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.isCurrentlyConnected
 import com.paydock.core.domain.error.exceptions.Standalone3DSException
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.core.telemetry.ReportSdkErrorOnce
+import com.paydock.core.telemetry.ReportWidgetOpened
+import com.paydock.core.telemetry.SdkWidget
 import com.paydock.designsystems.components.loader.SdkOverlayLoader
 import com.paydock.designsystems.components.web.config.WidgetConfig
 import com.paydock.designsystems.components.web.utils.HtmlWidgetBuilder
@@ -67,27 +70,24 @@ fun Standalone3DSWidget(
     onProgress: ((Standalone3DSProgress) -> Unit)? = null,
     completion: (Result<Standalone3DSResult>) -> Unit,
 ) {
+    ReportWidgetOpened(SdkWidget.STANDALONE_3DS)
     val parsedToken = ThreeDSTokenUtils.extractToken(config.token)
 
     if (parsedToken == null) {
         // Handle the case where the token is invalid
-        completion(
-            Result.failure(
-                Standalone3DSException.InvalidTokenException(
-                    displayableMessage = MobileSDKConstants.Standalone3DSConfig.Errors.INVALID_TOKEN_ERROR
-                )
-            )
+        val failure = Standalone3DSException.InvalidTokenException(
+            displayableMessage = MobileSDKConstants.Standalone3DSConfig.Errors.INVALID_TOKEN_ERROR
         )
+        ReportSdkErrorOnce(failure, SdkWidget.STANDALONE_3DS)
+        completion(Result.failure(failure))
         return
     } else if (parsedToken.format != TokenFormat.STANDALONE_3DS) {
         // Handle the case where the token is invalid format
-        completion(
-            Result.failure(
-                Standalone3DSException.InvalidTokenException(
-                    displayableMessage = MobileSDKConstants.Standalone3DSConfig.Errors.INVALID_TOKEN_FORMAT_ERROR
-                )
-            )
+        val failure = Standalone3DSException.InvalidTokenException(
+            displayableMessage = MobileSDKConstants.Standalone3DSConfig.Errors.INVALID_TOKEN_FORMAT_ERROR
         )
+        ReportSdkErrorOnce(failure, SdkWidget.STANDALONE_3DS)
+        completion(Result.failure(failure))
         return
     }
 
@@ -126,9 +126,10 @@ fun Standalone3DSWidget(
     val widgetConfig = WidgetConfig.ThreeDSConfigBase.Standalone3DSConfig(token = config.token)
     val htmlString = HtmlWidgetBuilder.createHtml(config = widgetConfig)
     val jsBridge = remember {
-        Standalone3DSJSBridge { eventResult ->
-            viewModel.handleEventResult(eventResult)
-        }
+        Standalone3DSJSBridge(
+            eventCallback = { eventResult -> viewModel.handleEventResult(eventResult) },
+            onUnknownEvent = { unknownEvent -> viewModel.reportWidgetError(unknownEvent) },
+        )
     }
 
     Box(
@@ -143,31 +144,27 @@ fun Standalone3DSWidget(
             criticalResourceUrls = setOf(widgetConfig.jsLibraryUrl),
             onRendererGone = { didCrash ->
                 updateLoading(false)
-                currentCompletion(
-                    Result.failure(
-                        Standalone3DSException.RenderProcessGoneException(
-                            didCrash = didCrash,
-                            displayableMessage = MobileSDKConstants.Standalone3DSConfig.Errors.RENDER_PROCESS_GONE_ERROR,
-                            charge3dsId = charge3dsId,
-                            inBackground = isAppInBackground(),
-                        )
-                    )
+                val failure = Standalone3DSException.RenderProcessGoneException(
+                    didCrash = didCrash,
+                    displayableMessage = MobileSDKConstants.Standalone3DSConfig.Errors.RENDER_PROCESS_GONE_ERROR,
+                    charge3dsId = charge3dsId,
+                    inBackground = isAppInBackground(),
                 )
+                viewModel.reportWidgetError(failure)
+                currentCompletion(Result.failure(failure))
             },
         ) { status, message, host ->
             updateLoading(false)
-            currentCompletion(
-                Result.failure(
-                    Standalone3DSException.WebViewException(
-                        code = status,
-                        displayableMessage = message,
-                        host = host,
-                        charge3dsId = charge3dsId,
-                        inBackground = isAppInBackground(),
-                        networkAvailable = context.isNetworkAvailable(),
-                    )
-                )
+            val failure = Standalone3DSException.WebViewException(
+                code = status,
+                displayableMessage = message,
+                host = host,
+                charge3dsId = charge3dsId,
+                inBackground = isAppInBackground(),
+                networkAvailable = context.isNetworkAvailable(),
             )
+            viewModel.reportWidgetError(failure)
+            currentCompletion(Result.failure(failure))
         }
         if (loadingController.isLoading && loadingDelegate == null) {
             SdkOverlayLoader(

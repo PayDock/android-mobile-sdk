@@ -1,6 +1,7 @@
 package com.paydock.feature.paypal.checkout.presentation.viewmodels
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import app.cash.turbine.test
 import com.paydock.core.BaseKoinUnitTest
 import com.paydock.core.MobileSDKTestConstants
@@ -10,6 +11,9 @@ import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
 import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.network.extensions.convertToDataClass
+import com.paydock.core.telemetry.RecordingTelemetry
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.WidgetSourceScan
 import com.paydock.core.utils.MainDispatcherRule
 import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
@@ -31,7 +35,12 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
+import junit.framework.TestCase.assertNull
+import junit.framework.TestCase.assertSame
+import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
@@ -57,6 +66,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
     private lateinit var getWalletCallbackUseCase: GetWalletCallbackUseCase
     private lateinit var getPayPalClientIdUseCase: GetPayPalClientIdUseCase
     private lateinit var widgetConfig: PayPalWidgetConfig
+    private lateinit var telemetry: RecordingTelemetry
 
     @Before
     fun setup() {
@@ -65,6 +75,7 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
         declineWalletChargeUseCase = mockk()
         getWalletCallbackUseCase = mockk()
         getPayPalClientIdUseCase = mockk()
+        telemetry = RecordingTelemetry()
         widgetConfig = PayPalWidgetConfig(
             accessToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN,
             gatewayId = "GATEWAY_ID_TEST",
@@ -77,7 +88,8 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
             declineWalletChargeUseCase,
             getWalletCallbackUseCase,
             dispatchersProvider,
-            getPayPalClientIdUseCase
+            getPayPalClientIdUseCase,
+            telemetry
         )
         val mockToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN
         viewModel.setWalletToken(mockToken)
@@ -364,7 +376,8 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
             declineWalletChargeUseCase,
             getWalletCallbackUseCase,
             dispatchersProvider,
-            getPayPalClientIdUseCase
+            getPayPalClientIdUseCase,
+            telemetry
         )
 
         // When
@@ -389,7 +402,8 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
             declineWalletChargeUseCase,
             getWalletCallbackUseCase,
             dispatchersProvider,
-            getPayPalClientIdUseCase
+            getPayPalClientIdUseCase,
+            telemetry
         )
 
         // When
@@ -414,7 +428,8 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
             declineWalletChargeUseCase,
             getWalletCallbackUseCase,
             dispatchersProvider,
-            getPayPalClientIdUseCase
+            getPayPalClientIdUseCase,
+            telemetry
         )
 
         // When
@@ -423,4 +438,203 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
         // Then
         assertEquals(result, PayPalWebCheckoutFundingSource.PAYPAL_CREDIT)
     }
+
+    // region Telemetry: one SdkError per failure path (PP1-PP8), merchant-visible results unchanged
+
+    private fun walletCallbackWithOrderId(orderId: String?) = WalletCallback(
+        callbackId = "cb_123",
+        status = "CREATED",
+        callbackUrl = MobileSDKTestConstants.PayPal.MOCK_CALLBACK_URL,
+        refToken = null,
+        id = orderId
+    )
+
+    private fun apiFailure(status: HttpStatusCode, code: String) = ApiException(
+        error = ApiErrorResponse(
+            status = status.value,
+            summary = ErrorSummary(code = code, message = MobileSDKTestConstants.Errors.MOCK_GENERAL_ERROR)
+        )
+    )
+
+    @Test
+    fun `missing order id reports one SdkError and still sets ConfigurationException (PP1)`() = runTest {
+        coEvery { getWalletCallbackUseCase(any(), any()) } returns Result.success(walletCallbackWithOrderId(null))
+
+        viewModel.getWalletCallback(walletToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN, requestShipping = true)
+        val state = viewModel.uiState.first { it is PayPalCheckoutUIState.Error }
+
+        assertIs<PayPalCheckoutUIState.Error>(state)
+        assertIs<PayPalException.ConfigurationException>(state.exception)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.PAYPAL, reported.widget)
+        assertEquals("ConfigurationException", reported.errorCode)
+        assertNull(reported.error.cause)
+    }
+
+    @Test
+    fun `wallet callback failure reports one SdkError with the API cause and still sets FetchingUrlException (PP2)`() =
+        runTest {
+            coEvery { getWalletCallbackUseCase(any(), any()) } returns
+                Result.failure(apiFailure(HttpStatusCode.BadRequest, "unexpected_error"))
+
+            viewModel.getWalletCallback(walletToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN, requestShipping = true)
+            val state = viewModel.uiState.first { it is PayPalCheckoutUIState.Error }
+
+            assertIs<PayPalCheckoutUIState.Error>(state)
+            assertIs<PayPalException.FetchingUrlException>(state.exception)
+            val reported = telemetry.sdkErrors.single()
+            assertEquals(SdkWidget.PAYPAL, reported.widget)
+            assertEquals("FetchingUrlException", reported.errorCode)
+            assertEquals(ApiException::class.java.name, reported.error.cause?.type)
+            assertEquals(HttpStatusCode.BadRequest.value, reported.apiError?.status)
+            assertEquals("unexpected_error", reported.apiError?.summaryCode)
+        }
+
+    @Test
+    fun `wallet callback failure in a cancelled scope reports nothing and still sets FetchingUrlException (PP2)`() =
+        runTest {
+            coEvery { getWalletCallbackUseCase(any(), any()) } coAnswers {
+                viewModel.viewModelScope.cancel()
+                Result.failure(apiFailure(HttpStatusCode.BadRequest, "unexpected_error"))
+            }
+
+            viewModel.getWalletCallback(walletToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN, requestShipping = true)
+            val state = viewModel.uiState.first { it is PayPalCheckoutUIState.Error }
+
+            assertIs<PayPalCheckoutUIState.Error>(state)
+            assertIs<PayPalException.FetchingUrlException>(state.exception)
+            assertTrue(telemetry.sdkErrors.isEmpty())
+        }
+
+    @Test
+    fun `capture failure reports one SdkError with the API cause and still sets CapturingChargeException (PP3)`() =
+        runTest {
+            coEvery { captureWalletChargeUseCase(any(), any()) } returns
+                Result.failure(apiFailure(HttpStatusCode.InternalServerError, "capture_error"))
+
+            viewModel.captureWalletTransaction(
+                MobileSDKTestConstants.PayPal.MOCK_PAYMENT_METHOD_ID,
+                MobileSDKTestConstants.PayPal.MOCK_PAYER_ID
+            )
+            val state = viewModel.uiState.first { it is PayPalCheckoutUIState.Error }
+
+            assertIs<PayPalCheckoutUIState.Error>(state)
+            assertIs<PayPalException.CapturingChargeException>(state.exception)
+            val reported = telemetry.sdkErrors.single()
+            assertEquals(SdkWidget.PAYPAL, reported.widget)
+            assertEquals("CapturingChargeException", reported.errorCode)
+            assertEquals(ApiException::class.java.name, reported.error.cause?.type)
+            assertEquals(HttpStatusCode.InternalServerError.value, reported.apiError?.status)
+            assertEquals("capture_error", reported.apiError?.summaryCode)
+        }
+
+    @Test
+    fun `client id API failure reports the mapped exception with the raw cause and still sets it (PP4)`() = runTest {
+        coEvery { getWalletCallbackUseCase(any(), any()) } returns
+            Result.success(walletCallbackWithOrderId(MobileSDKTestConstants.PayPal.MOCK_ORDER_ID))
+        coEvery { getPayPalClientIdUseCase(widgetConfig.accessToken, widgetConfig.gatewayId) } returns
+            Result.failure(apiFailure(HttpStatusCode.InternalServerError, "gateway_client_id"))
+
+        viewModel.getWalletCallback(walletToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN, requestShipping = true)
+        val state = viewModel.uiState.first { it is PayPalCheckoutUIState.Error }
+
+        assertIs<PayPalCheckoutUIState.Error>(state)
+        assertIs<PayPalException.GetPayPalClientIdException>(state.exception)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.PAYPAL, reported.widget)
+        assertEquals("GetPayPalClientIdException", reported.errorCode)
+        assertEquals(ApiException::class.java.name, reported.error.cause?.type)
+        assertEquals("gateway_client_id", reported.apiError?.summaryCode)
+    }
+
+    @Test
+    fun `client id SdkException failure reports the same exception with no cause and still sets it (PP4)`() = runTest {
+        val sdkFailure = PayPalException.GetPayPalClientIdException(
+            error = ApiErrorResponse(
+                status = HttpStatusCode.InternalServerError.value,
+                summary = ErrorSummary(
+                    code = "gateway_client_id",
+                    message = MobileSDKTestConstants.Errors.MOCK_CLIENT_ID_ERROR
+                )
+            )
+        )
+        coEvery { getWalletCallbackUseCase(any(), any()) } returns
+            Result.success(walletCallbackWithOrderId(MobileSDKTestConstants.PayPal.MOCK_ORDER_ID))
+        coEvery { getPayPalClientIdUseCase(widgetConfig.accessToken, widgetConfig.gatewayId) } returns
+            Result.failure(sdkFailure)
+
+        viewModel.getWalletCallback(walletToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN, requestShipping = true)
+        val state = viewModel.uiState.first { it is PayPalCheckoutUIState.Error }
+
+        assertIs<PayPalCheckoutUIState.Error>(state)
+        assertSame(sdkFailure, state.exception)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.PAYPAL, reported.widget)
+        assertEquals("GetPayPalClientIdException", reported.errorCode)
+        assertNull(reported.error.cause)
+        assertEquals("gateway_client_id", reported.apiError?.summaryCode)
+    }
+
+    @Test
+    fun `lost wallet token reports one SdkError and still sets InitialisationWalletTokenException (PP5)`() = runTest {
+        viewModel.resetResultState()
+
+        viewModel.captureWalletTransaction(
+            MobileSDKTestConstants.PayPal.MOCK_PAYMENT_METHOD_ID,
+            MobileSDKTestConstants.PayPal.MOCK_PAYER_ID
+        )
+
+        val state = viewModel.uiState.value
+        assertIs<PayPalCheckoutUIState.Error>(state)
+        assertIs<PayPalException.InitialisationWalletTokenException>(state.exception)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.PAYPAL, reported.widget)
+        assertEquals("InitialisationWalletTokenException", reported.errorCode)
+        assertNull(reported.error.cause)
+    }
+
+    @Test
+    fun `merchant token failure reports no SdkError and still sets the error (PP6)`() =
+        runTest {
+            viewModel.handlePayPalButtonClick(
+                config = widgetConfig,
+                tokenRequest = { callback -> callback(Result.failure(IllegalStateException())) }
+            )
+
+            val state = viewModel.uiState.value
+            assertIs<PayPalCheckoutUIState.Error>(state)
+            assertIs<PayPalException.InitialisationWalletTokenException>(state.exception)
+            assertTrue(telemetry.sdkErrors.isEmpty())
+        }
+
+    @Test
+    fun `reportWidgetError reports one PayPal SdkError and changes no state (PP7)`() = runTest {
+        val before = viewModel.uiState.value
+
+        viewModel.reportWidgetError(PayPalException.PayPalSDKException(code = -1, description = "synthetic"))
+
+        assertSame(before, viewModel.uiState.value)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals(SdkWidget.PAYPAL, reported.widget)
+        assertEquals("PayPalSDKException", reported.errorCode)
+        assertNull(reported.error.cause)
+    }
+
+    @Test
+    fun `the web result handler reports the web checkout error it hands on once, and never the cancellation (PP7, PP8)`() {
+        val source = WidgetSourceScan.read("feature/paypal/checkout/presentation/PayPalWidget.kt")
+        val handler = WidgetSourceScan.function(source, "handlePayPalResult")
+        val cancellation = WidgetSourceScan.between(handler, "CancellationStatus.USER_INITIATED", "else ->")
+        val webCheckout = WidgetSourceScan.between(handler, "else ->", "viewModel.resetResultState()")
+
+        assertEquals(1, WidgetSourceScan.count(source, "viewModel.reportWidgetError("))
+        assertEquals(1, WidgetSourceScan.count(cancellation, "PayPalException.CancellationException("))
+        assertEquals(0, WidgetSourceScan.count(cancellation, "reportWidgetError("))
+        assertEquals(1, WidgetSourceScan.count(cancellation, "completion("))
+        assertEquals(1, WidgetSourceScan.count(webCheckout, "PayPalException.PayPalSDKException("))
+        assertEquals(1, WidgetSourceScan.count(webCheckout, "viewModel.reportWidgetError(failure)"))
+        assertEquals(1, WidgetSourceScan.count(webCheckout, "completion(Result.failure(failure))"))
+    }
+
+    // endregion
 }

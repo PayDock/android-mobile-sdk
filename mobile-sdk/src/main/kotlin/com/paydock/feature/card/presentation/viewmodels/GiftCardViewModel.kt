@@ -4,11 +4,14 @@ import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.reportSdkErrorWhileActive
 import com.paydock.feature.card.data.dto.CreateCardPaymentTokenRequest
 import com.paydock.feature.card.domain.model.integration.GiftCardWidgetConfig
 import com.paydock.feature.card.domain.usecase.CreateGiftCardPaymentTokenUseCase
 import com.paydock.feature.card.presentation.state.GiftCardInputState
 import com.paydock.feature.card.presentation.state.GiftCardUIState
+import com.paydock.telemetry.Telemetry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,11 +27,13 @@ import kotlinx.coroutines.flow.update
  * @property config
  * @property createCardPaymentTokenUseCase Use case for creating a gift card payment token.
  * @param dispatchers Provider for coroutine dispatchers to handle threading concerns.
+ * @param telemetry The telemetry facade the view model reports its handled errors to.
  */
 internal class GiftCardViewModel(
     private val config: GiftCardWidgetConfig,
     private val createCardPaymentTokenUseCase: CreateGiftCardPaymentTokenUseCase,
     dispatchers: DispatchersProvider,
+    private val telemetry: Telemetry,
 ) : BaseViewModel(dispatchers) {
 
     // Private mutable state flow to manage the gift card input state
@@ -163,6 +168,7 @@ internal class GiftCardViewModel(
                     updateState(GiftCardUIState.Success(details.token!!))
                 }
                 .onFailure { error ->
+                    telemetry.reportSdkErrorWhileActive(error, SdkWidget.GIFT_CARD)
                     error.safeCastAs<SdkException>()
                         ?.let { updateState(GiftCardUIState.Error(it)) }
                 }

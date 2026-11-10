@@ -14,6 +14,9 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.GooglePayException
 import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.reportSdkError
+import com.paydock.core.telemetry.reportSdkErrorWhileActive
 import com.paydock.feature.googlepay.data.dto.CreateGooglePayTokenRequest
 import com.paydock.feature.googlepay.data.dto.GooglePayPayloadData
 import com.paydock.feature.googlepay.domain.model.integration.GooglePayBillingAddress
@@ -24,6 +27,7 @@ import com.paydock.feature.googlepay.domain.model.integration.GooglePayWidgetCon
 import com.paydock.feature.googlepay.domain.usecase.CreateGooglePayTokenUseCase
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.util.PaymentsUtil
+import com.paydock.telemetry.Telemetry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +35,7 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.json.Json
 import org.json.JSONException
 import org.json.JSONObject
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * ViewModel to manage the Google Pay payment flow and UI state.
@@ -43,12 +48,14 @@ import org.json.JSONObject
  * @param config The [GooglePayWidgetConfig] containing configuration details for the Google Pay widget.
  * @param createGooglePayTokenUseCase Use case for creating Google Pay payment tokens.
  * @param dispatchers The dispatchers for coroutine context switching.
+ * @param telemetry The telemetry facade the view model reports its handled errors to.
  */
 internal class GooglePayViewModel(
     private val paymentsClient: PaymentsClient,
     private val config: GooglePayWidgetConfig,
     private val createGooglePayTokenUseCase: CreateGooglePayTokenUseCase,
-    dispatchers: DispatchersProvider
+    dispatchers: DispatchersProvider,
+    private val telemetry: Telemetry,
 ) : BaseViewModel(dispatchers) {
 
     //region Private Properties
@@ -62,6 +69,12 @@ internal class GooglePayViewModel(
      */
     private val _uiState: MutableStateFlow<GooglePayUIState> =
         MutableStateFlow(GooglePayUIState.Idle)
+
+    /**
+     * Whether the allowed payment methods failure was reported: [extractAllowedPaymentMethods] runs on every
+     * composition, so its failure is reported once per view model.
+     */
+    private val allowedPaymentMethodsFailureReported = AtomicBoolean(false)
     //endregion
 
     /**
@@ -117,7 +130,8 @@ internal class GooglePayViewModel(
             } catch (exception: ApiException) {
                 handleIsReadyToPayError(
                     exception.message
-                        ?: MobileSDKConstants.GooglePayConfig.Errors.IS_READY_TO_PAY_ERROR
+                        ?: MobileSDKConstants.GooglePayConfig.Errors.IS_READY_TO_PAY_ERROR,
+                    cause = exception
                 )
             }
         }
@@ -127,26 +141,38 @@ internal class GooglePayViewModel(
      * Handles errors during Google Pay "Is Ready to Pay" check.
      *
      * @param errorMessage The error message to be displayed.
+     * @param cause The gms exception the error was built from (GP2); reported, never handed on. Without one, Google
+     *    Pay is simply not available on the device (GP1), an expected outcome that is not reported.
      */
-    private fun handleIsReadyToPayError(errorMessage: String) {
-        updateUiState(
-            GooglePayUIState.Error(
-                GooglePayException.IsReadyToPayException(errorMessage)
-            )
-        )
+    private suspend fun handleIsReadyToPayError(errorMessage: String, cause: Throwable? = null) {
+        val failure = GooglePayException.IsReadyToPayException(errorMessage)
+        if (cause != null) telemetry.reportSdkErrorWhileActive(failure, SdkWidget.GOOGLE_PAY, cause = cause)
+        updateUiState(GooglePayUIState.Error(failure))
     }
 
     /**
      * Updates the UI state with an error message.
      *
      * @param errorMessage The error message to be displayed.
+     * @param cause The original throwable the error was built from; reported, never handed on.
      */
-    private fun handleErrorResult(errorMessage: String) {
-        updateUiState(
-            GooglePayUIState.Error(
-                GooglePayException.ResultException(errorMessage)
-            )
-        )
+    private fun handleErrorResult(errorMessage: String, cause: Throwable) {
+        val failure = GooglePayException.ResultException(errorMessage)
+        telemetry.reportSdkError(failure, SdkWidget.GOOGLE_PAY, cause = cause)
+        updateUiState(GooglePayUIState.Error(failure))
+    }
+
+    /**
+     * [handleErrorResult] for a failure inside a coroutine (GP6): the report is skipped once the coroutine is no
+     * longer active, and the state is set as before.
+     *
+     * @param errorMessage The error message to be displayed.
+     * @param cause The original throwable the error was built from; reported, never handed on.
+     */
+    private suspend fun handleErrorResultWhileActive(errorMessage: String, cause: Throwable) {
+        val failure = GooglePayException.ResultException(errorMessage)
+        telemetry.reportSdkErrorWhileActive(failure, SdkWidget.GOOGLE_PAY, cause = cause)
+        updateUiState(GooglePayUIState.Error(failure))
     }
     //endregion
 
@@ -196,11 +222,11 @@ internal class GooglePayViewModel(
             require(json.isNotBlank() && json != "[]") { "Allowed payment methods missing" }
             json
         }.getOrElse {
-            updateUiState(
-                GooglePayUIState.Error(
-                    GooglePayException.InitialisationException()
-                )
-            )
+            val failure = GooglePayException.InitialisationException()
+            if (allowedPaymentMethodsFailureReported.compareAndSet(false, true)) {
+                telemetry.reportSdkError(failure, SdkWidget.GOOGLE_PAY, cause = it)
+            }
+            updateUiState(GooglePayUIState.Error(failure))
             null
         }
     }
@@ -322,7 +348,8 @@ internal class GooglePayViewModel(
             createPaymentToken(tokenRequest, email, billing, shipping)
         }.onFailure { exception ->
             handleErrorResult(
-                exception.message ?: MobileSDKConstants.GooglePayConfig.Errors.TOKEN_ERROR
+                exception.message ?: MobileSDKConstants.GooglePayConfig.Errors.TOKEN_ERROR,
+                cause = exception
             )
         }
     }
@@ -354,9 +381,10 @@ internal class GooglePayViewModel(
                     )
                 }
                 .onFailure { exception ->
-                    handleErrorResult(
+                    handleErrorResultWhileActive(
                         exception.message
-                            ?: MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_ERROR
+                            ?: MobileSDKConstants.GooglePayConfig.Errors.GOOGLE_PAY_ERROR,
+                        cause = exception
                     )
                 }
         }
@@ -404,6 +432,12 @@ internal class GooglePayViewModel(
                 )
             }
         }
+        // A cancelled sheet and a required sign-in are the shopper's outcomes, not SDK failures: not reported.
+        if (exception !is GooglePayException.SDKException.CancelledBySdk &&
+            exception !is GooglePayException.SDKException.PlayServicesError
+        ) {
+            telemetry.reportSdkError(exception, SdkWidget.GOOGLE_PAY)
+        }
         updateUiState(GooglePayUIState.Error(exception))
     }
 
@@ -415,6 +449,16 @@ internal class GooglePayViewModel(
     fun handleWalletResultErrors(status: Status?) {
         val statusCode = status?.statusCode ?: CommonStatusCodes.INTERNAL_ERROR
         handleGooglePayResultErrors(statusCode)
+    }
+
+    /**
+     * Reports a failure the widget builds and hands to the merchant itself, outside this view model's state (GP8).
+     *
+     * @param error The error the merchant gets.
+     * @param cause The original throwable [error] was built from, if any.
+     */
+    fun reportWidgetError(error: Throwable, cause: Throwable? = null) {
+        telemetry.reportSdkError(error, SdkWidget.GOOGLE_PAY, cause = cause)
     }
 
     /**

@@ -7,6 +7,9 @@ import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.domain.error.extensions.mapApiException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
+import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.reportSdkError
+import com.paydock.core.telemetry.reportSdkErrorWhileActive
 import com.paydock.feature.paypal.core.data.dto.CreateSetupTokenRequest
 import com.paydock.feature.paypal.core.data.dto.PayPalVaultTokenRequest
 import com.paydock.feature.paypal.core.domain.usecase.CreatePayPalVaultPaymentTokenUseCase
@@ -14,6 +17,7 @@ import com.paydock.feature.paypal.core.domain.usecase.CreateSetupTokenUseCase
 import com.paydock.feature.paypal.core.domain.usecase.GetPayPalClientIdUseCase
 import com.paydock.feature.paypal.vault.domain.model.integration.PayPalVaultConfig
 import com.paydock.feature.paypal.vault.presentation.state.PayPalVaultUIState
+import com.paydock.telemetry.Telemetry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,6 +31,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * @param getPayPalClientIdUseCase Use case to retrieve the PayPal client ID.
  * @param createPayPalVaultPaymentTokenUseCase Use case to create a payment token for the PayPal vault.
  * @param dispatchers Provides dispatcher context for coroutine operations.
+ * @param telemetry The telemetry facade the view model reports its handled errors to.
  */
 internal class PayPalVaultViewModel(
     private val config: PayPalVaultConfig,
@@ -35,6 +40,7 @@ internal class PayPalVaultViewModel(
     private val getPayPalClientIdUseCase: GetPayPalClientIdUseCase,
     private val createPayPalVaultPaymentTokenUseCase: CreatePayPalVaultPaymentTokenUseCase,
     dispatchers: DispatchersProvider,
+    private val telemetry: Telemetry,
 ) : BaseViewModel(dispatchers) {
 
     // Internal mutable state flow to track UI state.
@@ -84,6 +90,7 @@ internal class PayPalVaultViewModel(
                     getPayPalClientId(retrievedSetupToken)
                 }
                 .onFailure { error ->
+                    telemetry.reportSdkErrorWhileActive(error, SdkWidget.PAYPAL_SAVE_PAYMENT_SOURCE)
                     error.safeCastAs<SdkException>()
                         ?.let { updateState(PayPalVaultUIState.Error(it)) }
                 }
@@ -111,6 +118,11 @@ internal class PayPalVaultViewModel(
                 .onFailure { error ->
                     val mapped = error.safeCastAs<SdkException>()
                         ?: error.mapApiException(PayPalVaultException.GetPayPalClientIdException::class)
+                    telemetry.reportSdkErrorWhileActive(
+                        mapped,
+                        SdkWidget.PAYPAL_SAVE_PAYMENT_SOURCE,
+                        cause = error.takeIf { it !== mapped }
+                    )
                     updateState(PayPalVaultUIState.Error(mapped))
                 }
         }
@@ -134,11 +146,22 @@ internal class PayPalVaultViewModel(
                         updateState(PayPalVaultUIState.Success(tokenDetails))
                     }
                     .onFailure { error ->
+                        telemetry.reportSdkErrorWhileActive(error, SdkWidget.PAYPAL_SAVE_PAYMENT_SOURCE)
                         error.safeCastAs<SdkException>()
                             ?.let { updateState(PayPalVaultUIState.Error(it)) }
                     }
             }
         }
+    }
+
+    /**
+     * Reports a failure the widget builds and hands to the merchant itself, outside this view model's state (PV4).
+     *
+     * @param error The error the merchant gets.
+     * @param cause The original throwable [error] was built from, if any.
+     */
+    fun reportWidgetError(error: Throwable, cause: Throwable? = null) {
+        telemetry.reportSdkError(error, SdkWidget.PAYPAL_SAVE_PAYMENT_SOURCE, cause = cause)
     }
 
     private companion object {

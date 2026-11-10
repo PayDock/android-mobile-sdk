@@ -23,6 +23,7 @@ import com.paydock.feature.card.domain.usecase.CreateCardPaymentTokenUseCase
 import com.paydock.feature.card.domain.usecase.GetCardSchemasUseCase
 import com.paydock.feature.card.injection.cardDetailsModule
 import com.paydock.feature.card.presentation.viewmodels.CardDetailsViewModel
+import com.paydock.telemetry.NoOpTelemetry
 import io.mockk.coEvery
 import io.mockk.mockk
 import org.junit.After
@@ -100,7 +101,8 @@ internal class CardDetailsAccessibilityTest : BaseViewModelKoinTest<CardDetailsV
             getCardSchemasUseCase = getCardSchemasUseCase,
             createCardPaymentTokenUseCase = createCardPaymentTokenUseCase,
             dispatchers = dispatchersProvider,
-            savedStateHandle = SavedStateHandle()
+            savedStateHandle = SavedStateHandle(),
+            telemetry = NoOpTelemetry
         )
     }
 

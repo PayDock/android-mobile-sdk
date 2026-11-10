@@ -47,7 +47,8 @@ internal val googlePayModule = module {
             get(),
             config,
             get(),
-            get()
+            get(),
+            telemetry = get()
         )
     }
 }
