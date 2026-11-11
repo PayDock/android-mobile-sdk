@@ -75,8 +75,11 @@ internal object SdkErrorFacts {
         else -> null
     }
 
-    /** Codes only: the body's message fields are never read. */
-    private fun toApiError(response: ApiErrorResponse): TelemetryEvent.ApiError = TelemetryEvent.ApiError(
+    /**
+     * Codes only: the body's message fields are never read. Shared with [NetworkFailureFacts], so an API error reads
+     * the same in an SDK error and in a network failure.
+     */
+    internal fun toApiError(response: ApiErrorResponse): TelemetryEvent.ApiError = TelemetryEvent.ApiError(
         status = response.status,
         code = response.error?.code.nonBlank(),
         summaryCode = response.summary.code.nonBlank(),

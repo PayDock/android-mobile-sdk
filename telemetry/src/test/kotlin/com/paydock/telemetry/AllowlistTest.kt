@@ -266,6 +266,66 @@ internal class AllowlistTest {
         assertBodyIsClean(filtered)
     }
 
+    /** R_05, R_06: a template that is not made of literal words, versions and placeholders is dropped with its key. */
+    @Test
+    fun filter_dropsATemplateWithAnIdNumberQueryOrFragment_withTheGroupKey() {
+        listOf(
+            "/v1/charges/wallet/0000aaaa1111bbbb2222cccc/decline",
+            "/v1/gateways/12345/wallet-config",
+            "/v1/charges/wallet/callback?mobile=true",
+            "/v1/payment_sources/tokens#section",
+            "/v1/Payment_Sources/tokens",
+            "v1/payment_sources/tokens",
+            "/v1//tokens",
+            "",
+        ).forEach { template ->
+            val filtered = filtered(networkFailure(template))
+
+            assertEquals(template, null, filtered.value("url.template"))
+            assertEquals(template, null, filtered.value("paydock.group.key"))
+            assertEquals(template, "paydock.network.failure · http_4xx 400", filtered.body)
+            assertBodyIsClean(filtered)
+        }
+    }
+
+    @Test
+    fun filter_keepsATemplateOfLiteralsVersionsAndPlaceholders_withTheGroupKey() {
+        listOf(
+            "/",
+            "/v1/payment_sources/tokens",
+            "/v1/payment_sources/setup-tokens/{id}/tokens",
+            "/v1/gateways/{id}/wallet-config",
+            "/v2/{id}/{id}",
+        ).forEach { template ->
+            val filtered = filtered(networkFailure(template))
+
+            assertEquals(template, Str(template), filtered.value("url.template"))
+            assertEquals(template, Str("http POST $template 400"), filtered.value("paydock.group.key"))
+            assertBodyIsClean(filtered)
+        }
+    }
+
+    @Test
+    fun filter_dropsAMalformedGroupKey_andKeepsAValidOne() {
+        val record = filtered(networkFailure("/v1/payment_sources/tokens"))
+        val malformed = listOf(
+            "http POST /v1/payment_sources/0000aaaa1111bbbb2222cccc 400",
+            "http POST /v1/payment_sources/tokens?x=1 400",
+            "http post /v1/payment_sources/tokens 400",
+            "http POST /v1/payment_sources/tokens 4000",
+            "http POST /v1/payment_sources/tokens",
+            "POST /v1/payment_sources/tokens 400",
+        )
+        malformed.forEach { key ->
+            val withKey = record.copy(
+                attributes = record.attributes.filterNot { it.key == "paydock.group.key" } +
+                    Attribute("paydock.group.key", Str(key))
+            )
+            assertEquals(key, null, Allowlist.filter(withKey).value("paydock.group.key"))
+        }
+        assertEquals(Str("http POST /v1/payment_sources/tokens 400"), record.value("paydock.group.key"))
+    }
+
     @Test
     fun filter_rebuildsTheBody_withoutASensitiveWidgetName() {
         val filtered = filtered(TelemetryEvent.WidgetOpened("Widget $cardNumber"))
@@ -340,6 +400,13 @@ internal class AllowlistTest {
 
     private fun encode(record: TelemetryRecord, resource: ResourceAttributes = this.resource): String =
         OtlpLogEncoder.encode(resource, listOf(record)).toString(Charsets.UTF_8)
+
+    private fun networkFailure(template: String) = TelemetryEvent.NetworkFailure(
+        method = TelemetryEvent.HttpMethod.POST,
+        urlTemplate = template,
+        serverAddress = "api-sandbox.paydock.com",
+        failure = TelemetryEvent.NetworkError.HttpStatus(400)
+    )
 
     /** Appends an attribute as is, unfiltered and unordered, so injected violations reach the encoder. */
     private fun TelemetryRecord.plus(key: String, value: AttributeValue) =

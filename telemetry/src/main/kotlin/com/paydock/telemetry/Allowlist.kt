@@ -81,10 +81,19 @@ internal object Allowlist {
     private val AUTHORIZATION = Regex("""(bearer|basic)\s+[A-Za-z0-9+/=._-]{8,}""", RegexOption.IGNORE_CASE)
     private val SECRET_RUN = Regex("""[A-Za-z0-9+/=]{40,}""")
 
+    private const val URL_TEMPLATE = "url.template"
+    private const val GROUP_KEY = "paydock.group.key"
+
+    /** A template segment: a literal word, a version name or a placeholder, never a real ID (R_05, R_06). */
+    private const val SEGMENT = """(?:[a-z_-]+|v[0-9]+|\{[a-z_]+\})"""
+    private val TEMPLATE_SHAPE = Regex("""/|(?:/$SEGMENT)+""")
+    private val GROUP_KEY_SHAPE = Regex("""http [A-Z]+ (?:/|(?:/$SEGMENT)+) [0-9]{3}""")
+
     /**
      * Keeps the attributes whose key is listed, whose value has the key's type and, for a string, passes its
-     * check: a UUID `session.id`, a `log.record.uid` of that session and a positive sequence, and no sensitive value
-     * for every other key. A repeated key keeps its first value. The body is then rebuilt by [RecordBody.of] from
+     * check: a UUID `session.id`, a `log.record.uid` of that session and a positive sequence, a `url.template` and a
+     * `paydock.group.key` made only of literal words, version names and placeholders, and no sensitive value for
+     * every other key. A repeated key keeps its first value. The body is then rebuilt by [RecordBody.of] from
      * the kept attributes alone, so a dropped value never survives in it. Never throws: on a failure it keeps no
      * attribute and a blank body, so the record is then rejected for its missing `session.id`.
      */
@@ -115,6 +124,8 @@ internal object Allowlist {
             text == null -> true
             attribute.key == SESSION_ID -> UUID.matches(text)
             attribute.key == RECORD_UID -> RECORD_UID_FORMAT.matchEntire(text)?.groupValues?.get(1) == sessionId
+            attribute.key == URL_TEMPLATE -> TEMPLATE_SHAPE.matches(text)
+            attribute.key == GROUP_KEY -> GROUP_KEY_SHAPE.matches(text)
             else -> !isSensitive(text)
         }
     }

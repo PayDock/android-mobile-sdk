@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.paydock.sample.R
+import com.paydock.sample.debug.DebugScreenRegistry
 import com.paydock.sample.designsystems.theme.AppTheme
 import com.paydock.sample.feature.account.ui.AccountScreen
 import com.paydock.sample.feature.checkout.domain.model.CheckoutStep
@@ -153,8 +154,17 @@ fun NavigationGraph(
                 },
                 onWidgetsConfigSelected = {
                     navController.navigate("config_widgets_list")
+                },
+                onDebugScreenSelected = { screen ->
+                    navController.navigate(screen.route)
                 }
             )
+        }
+        // Debug-only screens (empty in a release build)
+        DebugScreenRegistry.screens.forEach { screen ->
+            composable(screen.route) {
+                screen.content()
+            }
         }
         composable("global_config") {
             GlobalConfigScreen(configViewModel = configViewModel)
@@ -400,7 +410,7 @@ fun NavBackStackEntry.getRouteTitle(context: Context): String {
             } ?: ""
         }
 
-        else -> ""
+        else -> DebugScreenRegistry.screens.firstOrNull { it.route == destination.route }?.title ?: ""
     }
 }
 

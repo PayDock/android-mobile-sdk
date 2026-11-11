@@ -3,6 +3,8 @@ package com.paydock.core.data.injection.modules
 import com.paydock.BuildConfig
 import com.paydock.MobileSDK
 import com.paydock.core.network.NetworkClientBuilder
+import com.paydock.core.telemetry.withNetworkFailureReporting
+import com.paydock.telemetry.Telemetry
 import io.ktor.client.HttpClient
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -24,6 +26,7 @@ internal val networkModule = module {
             .setBaseUrl(MobileSDK.getInstance().baseUrl)
             .setDebug(BuildConfig.DEBUG)
             .build()
+            .let { client -> get<Telemetry>().takeIf { it.isActive }?.let(client::withNetworkFailureReporting) ?: client }
     }
 
     // BIN file client (CloudFront). Used for HEAD/GET at SDK init and on app foreground;

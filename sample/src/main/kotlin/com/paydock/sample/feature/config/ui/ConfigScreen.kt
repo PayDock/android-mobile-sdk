@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paydock.sample.BuildConfig
 import com.paydock.sample.R
+import com.paydock.sample.debug.DebugScreen
+import com.paydock.sample.debug.DebugScreenRegistry
 import com.paydock.sample.designsystems.components.list.DisplayableListItem
 import com.paydock.sample.designsystems.components.list.ListRowItem
 
@@ -47,7 +49,8 @@ object WidgetsConfigListItem : DisplayableListItem {
 fun ConfigScreen(
     onGlobalConfigSelected: () -> Unit = {},
     onCheckoutConfigSelected: () -> Unit = {},
-    onWidgetsConfigSelected: () -> Unit = {}
+    onWidgetsConfigSelected: () -> Unit = {},
+    onDebugScreenSelected: (DebugScreen) -> Unit = {}
 ) {
     LazyColumn(
         modifier = Modifier
@@ -124,6 +127,23 @@ fun ConfigScreen(
 
         item {
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+        }
+
+        // Debug-only screens (none in a release build)
+        DebugScreenRegistry.screens.forEach { screen ->
+            item(key = screen.route) {
+                ListRowItem(
+                    title = screen.title,
+                    modifier = Modifier.testTag("config_debug_${screen.route}_item"),
+                    description = "Debug builds only"
+                ) {
+                    onDebugScreenSelected(screen)
+                }
+            }
+
+            item {
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            }
         }
 
         // Spacer before version section

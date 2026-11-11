@@ -129,6 +129,71 @@ SERVICE_ID_PAYPAL=your_gateway_id_pay_pal
    *   `prodDebug`
 4.  **Run the App:** Click the "Run" button (green play icon) in Android Studio to build and run the sample app on an emulator or a connected device.
 
+## Telemetry (debug builds)
+
+The SDK can send telemetry (crashes, SDK errors, failed Paydock API calls and widget usage) from a **debug build only**,
+to a local OTLP endpoint such as the devdock Grafana stack. Release builds never read the keys below and never send
+anything.
+
+### Local keys
+
+Add these keys to the root `local.properties` (gitignored; never commit them or a real token). They feed the debug
+variants only (`mobile-sdk/build.gradle.kts`); a release variant is always disabled and never reads them.
+
+| Key | What it does |
+|---|---|
+| `paydock.telemetry.otlpEndpoint` | The OTLP/HTTP endpoint records are sent to. |
+| `paydock.telemetry.otlpAuth` | The endpoint's authorization value. |
+| `paydock.telemetry.level` | What is recorded: `off`, `errors` (crashes, SDK errors, network failures) or `all` (also widget usage; the default when absent). |
+| `paydock.telemetry.sendTestRecord` | `true` stores and sends one test record after start. |
+| `paydock.telemetry.testCrash` | `true` crashes the debug app 10 s after every start, to exercise the crash handler; leave it off otherwise. |
+
+### Running the sample with telemetry
+
+```bash
+./gradlew :sample:installSandboxDebug
+```
+
+Telemetry is active only in `sandboxDebug`: a debug build, the endpoint and auth keys set, the `SANDBOX` environment and a level
+other than `off`.
+
+### The trigger screen
+
+In a debug build, **Config > Telemetry triggers** has one button per record type. The screen shows each outcome as an
+exception type name only.
+
+| Button | Action | Record expected |
+|---|---|---|
+| Crash in SDK | Initialises the SDK a second time, uncaught on the main thread | `paydock.error` (`IllegalStateException`) now, `paydock.crash` (`exception`) on the next launch |
+| ANR | Blocks the main thread for 30 s; tap the screen while it blocks | `paydock.crash` (`anr`) on the next launch, API 30+ |
+| SDK error | Opens `Standalone3DSWidget` with an invalid token | `paydock.error` (`InvalidTokenException`, `Standalone3DSWidget`) and its `paydock.widget.opened` |
+| Widget open | Opens `CardDetailsWidget` with the sample's widget access token | `paydock.widget.opened` (`CardDetailsWidget`), once per session |
+| HTTP 4xx | Calls `PayPalDataCollectorUtil.initialise` with an invalid access token and the sample's PayPal gateway ID | `paydock.network.failure` `http_4xx` on `GET /v1/gateways/{id}/wallet-config`, plus `paydock.error` |
+| Timeout | The same call through a local stand-in proxy that never answers | `paydock.network.failure` `timeout`, after about 60 s |
+| No connection | The same call through a local stand-in proxy that refuses the connection | `paydock.network.failure` `connection` |
+
+- The crash and ANR records arrive on the **next launch**: reopen the app after it closes.
+- A **5xx** has no button: sandbox has no request that fails with a 5xx on demand. It takes the same path as the 4xx
+  except for the status check, and the unit tests prove it: `NetworkFailurePluginTest` (a `MockEngine` 503) and
+  `NetworkFailurePluginOkHttpTest` (a 500 over the real OkHttp chain), both in
+  `mobile-sdk/src/test/kotlin/com/paydock/core/telemetry/`.
+
+### Finding the records in devdock
+
+In Grafana **Explore**, on the devdock Loki data source:
+
+- The whole run, by installation or by session:
+  - `{service_name="paydock-mobile-sdk"} | app_installation_id="<id>"`
+  - `{service_name="paydock-mobile-sdk"} | session_id="<id>"`
+- Each record type: add `| event_name="paydock.crash"`, `| event_name="paydock.error"`,
+  `| event_name="paydock.network.failure"`, `| event_name="paydock.widget.opened"` or
+  `| event_name="paydock.telemetry.dropped"`.
+- The network failures by kind:
+  `{service_name="paydock-mobile-sdk"} | event_name="paydock.network.failure" | error_type="http_5xx"`.
+
+The attribute names follow Loki's OTLP mapping (dots become underscores, so `event.name` is `event_name`); they are to be
+confirmed at the first devdock run (ticket S2).
+
 ## Android notes: WebView-based flows and rotation
 
 For JS-driven webflows (Click to Pay, 3DS), the JS runtime inside the WebView will reinitialize if the hosting Activity is recreated (e.g., orientation change). To avoid losing in-page state:
