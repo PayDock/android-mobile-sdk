@@ -81,8 +81,9 @@ internal class RouteTemplatesTest {
     }
 
     @Test
-    fun aPlaceholder_matchesExactlyOneNonEmptySegment() {
-        assertEquals("/v1/charges/wallet/decline", RouteTemplates.template("/v1/charges/wallet//decline"))
+    fun aPlaceholder_matchesExactlyOneSegment_emptyIncluded() {
+        assertEquals("/v1/charges/wallet/{id}/decline", RouteTemplates.template("/v1/charges/wallet//decline"))
+        assertEquals("/v1/gateways/{id}/wallet-config", RouteTemplates.template("/v1/gateways//wallet-config"))
         assertEquals(
             "/v1/charges/wallet/{id}/{id}/decline",
             RouteTemplates.template("/v1/charges/wallet/$HEX_ID/$TOKEN_LIKE/decline")
@@ -95,6 +96,7 @@ internal class RouteTemplatesTest {
         assertEquals("/v1/{id}/{id}/tokens", RouteTemplates.template("/v1/customers/$HEX_ID/tokens"))
         assertEquals("/{id}/{id}", RouteTemplates.template("/someone@example.com/V1"))
         assertEquals("/v1/payment_sources/{id}", RouteTemplates.template("/v1/payment_sources/$TOKEN_LIKE"))
+        assertEquals("/v1/{id}/{id}/tokens", RouteTemplates.template("/v1/customers//tokens"))
         val unknown = RouteTemplates.template("/v1/customers/$HEX_ID/cards/$TOKEN_LIKE?email=x#y")
         assertFalse(unknown, unknown.contains(HEX_ID) || unknown.contains(TOKEN_LIKE) || unknown.contains("customers"))
     }

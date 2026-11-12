@@ -15,10 +15,14 @@ import com.paydock.core.domain.error.exceptions.PayPalDataCollectorException
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.domain.injection.domainModule
 import com.paydock.core.domain.model.Environment
+import com.paydock.core.network.dto.error.displayableMessage
+import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.telemetry.RecordingTelemetry
 import com.paydock.core.utils.MainDispatcherRule
 import com.paydock.feature.paypal.core.domain.usecase.GetPayPalClientIdUseCase
 import com.paydock.feature.paypal.fraud.domain.model.integration.PayPalDataCollectorConfig
+import com.paydock.feature.paypal.fraud.injection.dataCollectorApiErrorResponse
+import com.paydock.feature.paypal.fraud.injection.dataCollectorApiErrorTestModule
 import com.paydock.feature.paypal.fraud.injection.dataCollectorFailureTestModule
 import com.paydock.feature.paypal.fraud.injection.dataCollectorSuccessTestModule
 import com.paydock.initializeMobileSDK
@@ -40,6 +44,7 @@ import org.koin.core.context.stopKoin
 import org.koin.core.context.unloadKoinModules
 import org.koin.dsl.module
 import java.io.File
+import java.net.SocketTimeoutException
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -145,6 +150,53 @@ internal class PayPalDataCollectorUtilTest : BaseUnitTest() {
             assertEquals(thrown.error.status, reported.apiError?.status)
             assertEquals("gateway_client_id", reported.apiError?.summaryCode)
         }
+
+    @Test
+    fun `initialise client id API error throws InitialisationClientIdException built from that error`() = runTest {
+        unloadKoinModules(domainModule)
+        loadKoinModules(dataCollectorApiErrorTestModule)
+        val telemetry = RecordingTelemetry()
+        loadKoinModules(module { single<Telemetry> { telemetry } })
+
+        val thrown = assertFailsWith<PayPalDataCollectorException.InitialisationClientIdException> {
+            PayPalDataCollectorUtil.initialise(config = config)
+        }
+
+        assertEquals(dataCollectorApiErrorResponse, thrown.error)
+        assertEquals(dataCollectorApiErrorResponse.displayableMessage, thrown.message)
+        val reported = telemetry.sdkErrors.single()
+        assertNull(reported.widget)
+        assertEquals("InitialisationClientIdException", reported.errorCode)
+        assertEquals(listOf(ApiException::class.java.name), reported.error.causeTypes.take(1))
+        assertEquals(dataCollectorApiErrorResponse.status, reported.apiError?.status)
+        assertEquals("gateway_client_id", reported.apiError?.summaryCode)
+    }
+
+    @Test
+    fun `initialise client id timeout still throws UnknownException with the same message`() = runTest {
+        unloadKoinModules(domainModule)
+        val timeout = SocketTimeoutException("synthetic timeout")
+        loadKoinModules(
+            module {
+                single {
+                    mockk<GetPayPalClientIdUseCase>(relaxed = false) {
+                        coEvery { this@mockk(any(), any()) } returns Result.failure<String>(timeout)
+                    }
+                }
+            }
+        )
+        val telemetry = RecordingTelemetry()
+        loadKoinModules(module { single<Telemetry> { telemetry } })
+
+        val thrown = assertFailsWith<PayPalDataCollectorException.UnknownException> {
+            PayPalDataCollectorUtil.initialise(config = config)
+        }
+
+        assertEquals("synthetic timeout", thrown.message)
+        val reported = telemetry.sdkErrors.single()
+        assertEquals("UnknownException", reported.errorCode)
+        assertEquals(listOf(SocketTimeoutException::class.java.name), reported.error.causeTypes.take(1))
+    }
 
     @Test
     fun `initialise other failure reports one SdkError and still throws UnknownException (PD2)`() = runTest {

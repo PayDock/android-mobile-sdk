@@ -31,8 +31,16 @@ import com.paydock.sample.BuildConfig
 import com.paydock.sample.designsystems.components.button.AppButton
 import kotlinx.coroutines.launch
 
-private const val ANR_BLOCK_MS = 30_000L
-private const val INVALID_TOKEN = "invalid"
+private const val ANR_BLOCK_MS = 120_000L
+
+// Blank, not malformed: sandbox answers a blank access token with 403 but a malformed one ("invalid") with 500, so
+// the HTTP 4xx trigger needs it blank. A blank 3DS token is still an InvalidTokenException.
+private const val INVALID_TOKEN = ""
+
+/** A fixed, obviously fake gateway ID: the call fails on the invalid token, so no real gateway is needed. */
+private const val TEST_GATEWAY_ID = "telemetry-test-gateway"
+private const val CONNECTIONS_RESET = "connection reset"
+private const val CONNECTIONS_NOT_RESET = "couldn't reset connections — tap right after launching"
 private const val RUNNING = "running…"
 private const val SUCCESS = "success"
 private const val OPENED = "opened"
@@ -65,7 +73,10 @@ fun TelemetryTriggersScreen() {
             outcomes[trigger] = if (mode == null) {
                 walletConfigCall()
             } else {
-                StandInProxy().around(mode) { walletConfigCall() }
+                StandInProxy().around(mode) { connectionsReset ->
+                    val note = if (connectionsReset) CONNECTIONS_RESET else CONNECTIONS_NOT_RESET
+                    "${walletConfigCall()} ($note)"
+                }
             }
         }
     }
@@ -80,7 +91,12 @@ fun TelemetryTriggersScreen() {
     ) {
         Text(
             text = "Each button produces one telemetry record type. Crash and ANR records arrive on the next " +
-                "launch; tap the screen while the ANR blocks. Timeout takes about 60 s.",
+                "launch. Timeout takes about 60 s.",
+            style = MaterialTheme.typography.bodySmall
+        )
+        Text(
+            text = "ANR: tap the screen once more, wait for the 'isn't responding' dialog, then tap Close app. " +
+                "Waiting it out records nothing.",
             style = MaterialTheme.typography.bodySmall
         )
         Trigger.entries.forEach { trigger ->
@@ -137,10 +153,10 @@ fun TelemetryTriggersScreen() {
     }
 }
 
-/** GET /v1/gateways/{id}/wallet-config with an invalid access token and the sample's PayPal gateway ID. */
+/** GET /v1/gateways/{id}/wallet-config with a blank access token and a fake test gateway ID. */
 private suspend fun walletConfigCall(): String = try {
     PayPalDataCollectorUtil.initialise(
-        PayPalDataCollectorConfig(accessToken = INVALID_TOKEN, gatewayId = BuildConfig.SERVICE_ID_PAYPAL)
+        PayPalDataCollectorConfig(accessToken = INVALID_TOKEN, gatewayId = TEST_GATEWAY_ID)
     )
     SUCCESS
 } catch (e: PayPalDataCollectorException) {

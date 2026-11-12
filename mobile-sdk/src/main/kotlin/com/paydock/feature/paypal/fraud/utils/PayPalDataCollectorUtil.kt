@@ -6,6 +6,7 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.PayPalDataCollectorException
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.domain.mapper.mapToPayPalEnv
+import com.paydock.core.network.exceptions.ApiException
 import com.paydock.core.telemetry.reportSdkErrorWhileActive
 import com.paydock.core.telemetry.telemetryOrNull
 import com.paydock.feature.paypal.core.domain.usecase.GetPayPalClientIdUseCase
@@ -77,6 +78,10 @@ class PayPalDataCollectorUtil private constructor(
                 collector.initialiseCollector()
                 return collector
             } catch (e: PayPalVaultException.GetPayPalClientIdException) {
+                val failure = PayPalDataCollectorException.InitialisationClientIdException(e.error)
+                telemetryOrNull()?.reportSdkErrorWhileActive(failure, widget = null, cause = e)
+                throw failure
+            } catch (e: ApiException) {
                 val failure = PayPalDataCollectorException.InitialisationClientIdException(e.error)
                 telemetryOrNull()?.reportSdkErrorWhileActive(failure, widget = null, cause = e)
                 throw failure

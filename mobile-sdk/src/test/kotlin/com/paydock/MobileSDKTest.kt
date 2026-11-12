@@ -25,7 +25,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 internal class MobileSDKTest : BaseUnitTest() {
@@ -144,7 +143,7 @@ internal class MobileSDKTest : BaseUnitTest() {
     }
 
     @Test
-    fun `initialize twice reports one SdkError and still throws the same IllegalStateException (EP1)`() {
+    fun `initialize twice reports no SdkError and still throws the same IllegalStateException (EP1)`() {
         MobileSDK.initialize(context)
         val telemetry = RecordingTelemetry()
         loadKoinModules(module { single<Telemetry> { telemetry } })
@@ -153,12 +152,10 @@ internal class MobileSDKTest : BaseUnitTest() {
             MobileSDK.initialize(context)
         }
 
-        // The message `error(IllegalStateException(...))` built before: the inner exception's toString().
+        // The message `error(IllegalStateException(...))` builds: the inner exception's toString().
         assertEquals(IllegalStateException("MobileSDK is already initialized.").toString(), thrown.message)
-        val reported = telemetry.sdkErrors.single()
-        assertNull(reported.widget)
-        assertNull(reported.errorCode)
-        assertEquals(IllegalStateException::class.java.name, reported.error.type)
+        // An uncaught one is recorded once, by the crash handler; the entry point reports nothing.
+        assertTrue(telemetry.sdkErrors.isEmpty())
     }
 
     @Test

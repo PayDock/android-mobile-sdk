@@ -4,6 +4,7 @@ import com.paydock.core.MobileSDKTestConstants
 import com.paydock.core.domain.error.exceptions.PayPalVaultException
 import com.paydock.core.network.dto.error.ApiErrorResponse
 import com.paydock.core.network.dto.error.ErrorSummary
+import com.paydock.core.network.exceptions.ApiException
 import com.paydock.feature.paypal.core.domain.usecase.GetPayPalClientIdUseCase
 import com.paydock.feature.paypal.vault.presentation.viewmodels.PayPalVaultViewModelTest.Companion.MOCK_CLIENT_ID
 import io.ktor.http.HttpStatusCode
@@ -34,6 +35,24 @@ internal val dataCollectorFailureTestModule = module {
         )
         mockk<GetPayPalClientIdUseCase>(relaxed = false) {
             coEvery { this@mockk(any(), any()) } returns Result.failure<String>(mockError)
+        }
+    }
+}
+
+/** The client-ID call failing with a Paydock API error, as the networking library throws it for a non-2xx response. */
+internal val dataCollectorApiErrorResponse = ApiErrorResponse(
+    status = HttpStatusCode.Forbidden.value,
+    summary = ErrorSummary(
+        code = "gateway_client_id",
+        message = MobileSDKTestConstants.Errors.MOCK_CLIENT_ID_ERROR
+    )
+)
+
+internal val dataCollectorApiErrorTestModule = module {
+    single {
+        mockk<GetPayPalClientIdUseCase>(relaxed = false) {
+            coEvery { this@mockk(any(), any()) } returns
+                Result.failure<String>(ApiException(dataCollectorApiErrorResponse))
         }
     }
 }

@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
 import java.io.Closeable
 import java.io.IOException
 import java.net.InetAddress
@@ -27,6 +28,9 @@ import kotlin.concurrent.thread
  * selector as the JVM default at app start (debug builds only, before the SDK initialises). It hands every request to
  * the previous selector unless [around] is running, which routes the API host to the stand-in for that one call.
  * Other hosts always go to the previous selector.
+ *
+ * OkHttp asks the selector only when it builds a new route, and every Ktor engine client shares one connection pool,
+ * so [around] first closes the pool's idle connections: the call then builds its route through the stand-in.
  */
 class StandInProxy {
 
@@ -37,14 +41,19 @@ class StandInProxy {
         selector
     }
 
-    /** Runs [block] with the API host routed to the stand-in; one call at a time, the route cleared after. */
-    suspend fun <T> around(mode: Mode, block: suspend () -> T): T = callLock.withLock {
+    /**
+     * Runs [block] with the API host routed to the stand-in; one call at a time, the route cleared after. Before the
+     * block, the shared pool's idle connections are closed; [block] gets whether that worked (false: a pooled
+     * connection may bypass the stand-in, the call runs anyway).
+     */
+    suspend fun <T> around(mode: Mode, block: suspend (connectionsReset: Boolean) -> T): T = callLock.withLock {
         val passThrough = selector
         val server = if (mode == Mode.HANG) withContext(Dispatchers.IO) { HangingServer() } else null
         val port = server?.port ?: withContext(Dispatchers.IO) { closedPort() }
         passThrough.standIn = Proxy(Proxy.Type.HTTP, InetSocketAddress(InetAddress.getLoopbackAddress(), port))
         try {
-            block()
+            val connectionsReset = withContext(Dispatchers.IO) { evictIdleConnections() }
+            block(connectionsReset)
         } finally {
             passThrough.standIn = null
             server?.close()
@@ -97,6 +106,8 @@ class StandInProxy {
 
     private companion object {
         const val BACKLOG = 8
+        const val OKHTTP_ENGINE_CLASS = "io.ktor.client.engine.okhttp.OkHttpEngine"
+        const val OKHTTP_PROTOTYPE_FIELD = "okHttpClientPrototype\$delegate"
 
         /** The process-wide pass-through selector, set as the JVM default on first use. */
         val selector: PassThroughSelector by lazy {
@@ -107,6 +118,20 @@ class StandInProxy {
         }
 
         val callLock = Mutex()
+
+        /**
+         * Closes the idle connections of Ktor's process-wide OkHttp prototype (shared by every engine client), so the
+         * next request builds a new route through the selector. Reflection on Ktor 3.3.0
+         * OkHttpEngine.okHttpClientPrototype; returns false (and changes nothing) when it can't reach it.
+         */
+        fun evictIdleConnections(): Boolean = runCatching {
+            val field = Class.forName(OKHTTP_ENGINE_CLASS).getDeclaredField(OKHTTP_PROTOTYPE_FIELD)
+            field.isAccessible = true
+            val prototype = field.get(null) as Lazy<*>
+            // Not built yet: no client has connected, so there is nothing to close.
+            if (prototype.isInitialized()) (prototype.value as OkHttpClient).connectionPool.evictAll()
+            true
+        }.getOrDefault(false)
 
         /** A local port nothing listens on: bound, read, then released. */
         fun closedPort(): Int = ServerSocket(0, 1, InetAddress.getLoopbackAddress()).use { it.localPort }

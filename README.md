@@ -164,15 +164,18 @@ exception type name only.
 
 | Button | Action | Record expected |
 |---|---|---|
-| Crash in SDK | Initialises the SDK a second time, uncaught on the main thread | `paydock.error` (`IllegalStateException`) now, `paydock.crash` (`exception`) on the next launch |
-| ANR | Blocks the main thread for 30 s; tap the screen while it blocks | `paydock.crash` (`anr`) on the next launch, API 30+ |
+| Crash in SDK | Initialises the SDK a second time, uncaught on the main thread | Only `paydock.crash` (`exception`), on the next launch |
+| ANR | Blocks the main thread for 120 s: tap the screen once more, wait for the "isn't responding" dialog, then tap **Close app** (waiting it out records nothing) | `paydock.crash` (`anr`) on the next launch, API 30+ |
 | SDK error | Opens `Standalone3DSWidget` with an invalid token | `paydock.error` (`InvalidTokenException`, `Standalone3DSWidget`) and its `paydock.widget.opened` |
 | Widget open | Opens `CardDetailsWidget` with the sample's widget access token | `paydock.widget.opened` (`CardDetailsWidget`), once per session |
-| HTTP 4xx | Calls `PayPalDataCollectorUtil.initialise` with an invalid access token and the sample's PayPal gateway ID | `paydock.network.failure` `http_4xx` on `GET /v1/gateways/{id}/wallet-config`, plus `paydock.error` |
-| Timeout | The same call through a local stand-in proxy that never answers | `paydock.network.failure` `timeout`, after about 60 s |
-| No connection | The same call through a local stand-in proxy that refuses the connection | `paydock.network.failure` `connection` |
+| HTTP 4xx | Calls `PayPalDataCollectorUtil.initialise` with a blank access token and a test gateway ID | `paydock.network.failure` `http_4xx` on `GET /v1/gateways/{id}/wallet-config`, plus `paydock.error` |
+| Timeout | The same call through a local stand-in proxy that never answers; repeat taps work | `paydock.network.failure` `timeout`, after about 60 s |
+| No connection | The same call through a local stand-in proxy that refuses the connection; repeat taps work | `paydock.network.failure` `connection` |
 
 - The crash and ANR records arrive on the **next launch**: reopen the app after it closes.
+- Before Timeout and No connection, the screen closes the SDK's idle connections so the call goes through the stand-in
+  proxy, and shows "connection reset" beside the result. If it shows "couldn't reset connections", the call may reuse
+  a pooled connection and give the 4xx instead: tap right after launching.
 - A **5xx** has no button: sandbox has no request that fails with a 5xx on demand. It takes the same path as the 4xx
   except for the status check, and the unit tests prove it: `NetworkFailurePluginTest` (a `MockEngine` 503) and
   `NetworkFailurePluginOkHttpTest` (a 500 over the real OkHttp chain), both in

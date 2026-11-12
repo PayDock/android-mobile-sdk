@@ -9,8 +9,6 @@ import com.paydock.core.data.injection.MobileSDKKoinContext
 import com.paydock.core.domain.mapper.mapToBaseUrl
 import com.paydock.core.domain.model.Environment
 import com.paydock.core.telemetry.bindTelemetry
-import com.paydock.core.telemetry.reportSdkError
-import com.paydock.core.telemetry.telemetryOrNull
 import com.paydock.feature.afterpay.presentation.AfterpayBaseline
 import java.util.Locale
 
@@ -124,13 +122,7 @@ class MobileSDK(
             afterpayLocale: Locale? = null,
         ): MobileSDK {
             if (instance != null) {
-                // The same exception `error(IllegalStateException(...))` builds: its message is the inner one's
-                // toString(). It is reported (no widget), then thrown exactly as before.
-                val failure = IllegalStateException(
-                    IllegalStateException("MobileSDK is already initialized.").toString()
-                )
-                telemetryOrNull()?.reportSdkError(failure, widget = null)
-                throw failure
+                error(IllegalStateException("MobileSDK is already initialized."))
             }
             return MobileSDK(context, environment, enableTestMode).also {
                 instance = it

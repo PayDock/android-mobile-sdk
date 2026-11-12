@@ -26,9 +26,10 @@ internal object RouteTemplates {
 
     /**
      * The template for an encoded request path: the query and fragment are dropped; a path matching a template
-     * (each {id} matching exactly one non-empty segment) gives that template; any other path keeps each segment that
-     * is a literal of some template or a version name (v1, v2, …) and replaces every other segment with {id}.
-     * "" and "/" give "/". Never returns a segment from the request that is not a known literal.
+     * (each {id} matching exactly one segment, empty included) gives that template; any other path keeps each
+     * segment that is a literal of some template or a version name (v1, v2, …) and replaces every other segment,
+     * empty included, with {id}. "" and "/" (or only slashes) give "/". Never returns a segment from the request that
+     * is not a known literal.
      */
     fun template(encodedPath: String): String {
         val segments = segmentsOf(encodedPath.substringBefore('?').substringBefore('#'))
@@ -43,6 +44,9 @@ internal object RouteTemplates {
         template.size == segments.size &&
             template.indices.all { index -> template[index] == PLACEHOLDER || template[index] == segments[index] }
 
-    /** The non-empty segments of a path, so a missing segment never matches a placeholder. */
-    private fun segmentsOf(path: String): List<String> = path.split('/').filter { it.isNotEmpty() }
+    /**
+     * The segments of a path between its first and last slash; an empty interior segment is kept, so it matches {id}.
+     */
+    private fun segmentsOf(path: String): List<String> =
+        path.trim('/').let { if (it.isEmpty()) emptyList() else it.split('/') }
 }

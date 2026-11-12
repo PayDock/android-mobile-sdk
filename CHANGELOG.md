@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+- `PayPalDataCollectorUtil.initialise` throws `PayPalDataCollectorException.InitialisationClientIdException`
+  (as documented) instead of `UnknownException` when fetching the PayPal client ID fails with an API error; the
+  message is unchanged.
+
 ## [5.7.2] - 2026-10-30
 
 ### Added
