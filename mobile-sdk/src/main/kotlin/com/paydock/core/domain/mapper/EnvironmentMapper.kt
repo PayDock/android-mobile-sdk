@@ -21,14 +21,17 @@ internal fun Environment.mapToBaseUrl(): String = when (this) {
 /**
  * Maps the current environment to the corresponding Client SDK library url.
  *
+ * Without a pin, every environment loads the stable alias of [ClientSDKConstants.SUPPORTED_LINE], so sandbox and
+ * staging run exactly what production runs. A pin wins in every environment.
+ *
  * @receiver Environment The environment for which the Client-SDK library url string is required.
+ * @param clientSdkVersion The merchant's exact-version pin (`vX.Y.Z` of the supported line, validated when the SDK
+ *   is built), or `null` to load the stable alias.
  * @return The Client SDK library url.
  */
-internal fun Environment.mapToClientSDKLibrary(): String = when (this) {
-    Environment.PRODUCTION -> ClientSDKConstants.Library.PROD
-    Environment.SANDBOX -> ClientSDKConstants.Library.SANDBOX
-    Environment.STAGING -> ClientSDKConstants.Library.STAGING
-}
+@Suppress("UnusedReceiverParameter") // Every environment loads the stable alias; the receiver keeps the call sites.
+internal fun Environment.mapToClientSDKLibrary(clientSdkVersion: String?): String =
+    ClientSDKConstants.libraryUrl(clientSdkVersion ?: ClientSDKConstants.STABLE_VERSION)
 
 /**
  * Maps the current environment to the corresponding Client SDK environment string.

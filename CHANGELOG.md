@@ -1,11 +1,35 @@
 # Changelog
 
-## [Unreleased]
+## [5.8.0] - Unreleased
+
+### Added
+- `MobileSDK.Builder.clientSdkVersion(String?)`: optionally pin the exact Client SDK release every web widget loads,
+  in every environment (e.g. `"v1.150.1"`). It must be a plain release (`vX.Y.Z`, no `-beta` or other suffix) of the
+  Client SDK line this Mobile SDK supports (`v1.150`); otherwise `build()` throws
+  `MobileSdkException.InvalidConfiguration`, whose message names the supported line, and the SDK is not initialised.
+  Read the pin back as `MobileSDK.clientSdkVersion`. Existing builder calls are unchanged.
+- `MobileSDK.loadedClientSdkVersion`: the Client SDK version the most recent widget page reported after loading (e.g.
+  `"v1.150.2"`), also logged at debug level. `null` until a page has reported one, e.g. with a Client SDK release
+  that does not report its version.
+- `MobileSdkException` (a new `SdkException` subclass). If you handle `SdkException` with an exhaustive `when`, add a
+  branch for it.
+
+### Changed
+- The Mobile SDK no longer compiles an exact Client SDK version in. It supports the Client SDK line `v1.150` and,
+  without a pin, loads that line's **stable** alias in every environment, so patch releases of the line reach your app
+  without a Mobile SDK update, and sandbox runs exactly what production runs.
+- Click to Pay, MPGS 3DS and standalone 3DS end with their load error (`WebViewException`) when the Client SDK script
+  fails to load or loads without providing the Client SDK (e.g. the address answers with a page that is not a
+  script), instead of waiting.
 
 ### Fixed
 - `PayPalDataCollectorUtil.initialise` throws `PayPalDataCollectorException.InitialisationClientIdException`
   (as documented) instead of `UnknownException` when fetching the PayPal client ID fails with an API error; the
   message is unchanged.
+
+### Release
+- A release requires the supported line's aliases: the release pipeline's `check_client_sdk_aliases` job refuses it
+  until a `v1.150` release has been promoted to the stable alias.
 
 ## [5.7.2] - 2026-10-30
 

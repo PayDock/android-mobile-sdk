@@ -50,6 +50,42 @@ details.
    to [initialize](https://github.com/PayDock/mobile-sdk-doc/blob/main/setup/initialise.md#initialize-the-android-sdk)
    your SDK.
 
+## Client SDK version
+
+The web-based widgets (Click to Pay, MPGS 3DS, standalone 3DS) run Paydock's Client SDK inside a WebView. This
+release supports the Client SDK line `v1.150` and, by default, loads:
+
+| Environment | Client SDK address |
+|---|---|
+| `PRODUCTION`, `SANDBOX`, `STAGING` | the line's **stable** alias, `https://widget.paydock.com/sdk/v1.150.stable/widget.umd.min.js` |
+
+Paydock promotes patch releases of the line to the stable alias, so they reach your app without a Mobile SDK update.
+Sandbox and staging load the same alias as production, so what you test in sandbox is what runs in production.
+
+If your own controls require a fixed script, pin an exact release of the supported line. The pin applies in every
+environment:
+
+```kotlin
+MobileSDK.Builder()
+    .environment(Environment.PRODUCTION)
+    .clientSdkVersion("v1.150.1") // optional; a plain vX.Y.Z release of the supported line
+    .build(context)
+```
+
+A pin outside the supported line, or with a suffix such as `-beta`, fails at `build()` with
+`MobileSdkException.InvalidConfiguration`, e.g. `clientSdkVersion v1.151.0 is outside supported line v1.150`.
+
+After a widget page loads, `MobileSDK.getInstance().loadedClientSdkVersion` returns the Client SDK version that page
+reported (e.g. `v1.150.2`), and the SDK logs it at debug level. It is `null` until a page has reported one.
+
+If the Client SDK script fails to load, or loads without providing the Client SDK, the widget ends with its load
+error (`WebViewException`).
+
+**Release order.** A Mobile SDK release that supports a new line ships only after that line's stable alias existss: promote a
+release of the line to the stable alias in the client SDK pipeline. The release pipeline's `check_client_sdk_aliases`
+job (`scripts/check-client-sdk-aliases.sh`) refuses the release until the stable alias serves a script and a version
+record of the line.
+
 # Getting Started (Sample App)
 
 This repository includes a sample application (`sample/`) that demonstrates how to integrate and use the Paydock Android Mobile SDK. 

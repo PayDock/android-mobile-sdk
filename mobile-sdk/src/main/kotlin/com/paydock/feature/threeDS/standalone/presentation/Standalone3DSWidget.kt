@@ -23,6 +23,7 @@ import com.paydock.core.telemetry.ReportWidgetOpened
 import com.paydock.core.telemetry.SdkWidget
 import com.paydock.designsystems.components.loader.SdkOverlayLoader
 import com.paydock.designsystems.components.web.config.WidgetConfig
+import com.paydock.designsystems.components.web.utils.ClientSdkVersionReader
 import com.paydock.designsystems.components.web.utils.HtmlWidgetBuilder
 import com.paydock.feature.threeDS.common.domain.integration.ThreeDSConfig
 import com.paydock.feature.threeDS.common.domain.model.ui.enums.TokenFormat
@@ -142,6 +143,10 @@ fun Standalone3DSWidget(
             jsBridge = jsBridge,
             // The page can't progress without the Client SDK script, so a network or HTTP error on it ends the flow.
             criticalResourceUrls = setOf(widgetConfig.jsLibraryUrl),
+            // So does a missing Client SDK (the page's clientSdkLoadFailed report), e.g. an HTML page served instead.
+            clientSdkScriptUrl = widgetConfig.jsLibraryUrl,
+            // Keep the Client SDK version the page loaded
+            onPageFinished = ClientSdkVersionReader::read,
             onRendererGone = { didCrash ->
                 updateLoading(false)
                 val failure = Standalone3DSException.RenderProcessGoneException(

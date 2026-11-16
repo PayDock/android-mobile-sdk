@@ -1,5 +1,6 @@
 package com.paydock.feature.threeDS.standalone.presentation.ui
 
+import android.webkit.WebView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -19,6 +20,7 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.extensions.openBrowser
 import com.paydock.designsystems.components.web.extensions.setup
+import com.paydock.designsystems.components.web.utils.ClientSdkLoadGuardBridge
 import com.paydock.designsystems.components.web.utils.SdkJSBridge
 import com.paydock.designsystems.components.web.utils.SdkWebChromeClient
 import com.paydock.designsystems.components.web.utils.SdkWebViewClient
@@ -62,6 +64,10 @@ private val OPEN_IN_SAME_WINDOW_SCRIPT = """
  * @param onRendererGone Called once if the WebView's renderer process stops (Android 8+), with `true` if it
  *        crashed and `false` if Android reclaimed it for memory. The host app survives; the session can't continue.
  *        The dead WebView is removed from the screen and destroyed straight away.
+ * @param clientSdkScriptUrl The Client SDK script the page loads. When the page reports `clientSdkLoadFailed` over
+ *        [jsBridge], the session ends through [onWebViewError] with `ERROR_FILE_NOT_FOUND` and the script's host, at
+ *        most once per page.
+ * @param onPageFinished Called when the page (not a child window) finishes loading.
  * @param onWebViewError Callback to handle WebView errors, with the error code, message and failing host.
  */
 @Suppress("LongMethod")
@@ -74,6 +80,8 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
     openTargetBlankInSameWebView: Boolean = false,
     criticalResourceUrls: Set<String> = emptySet(),
     onRendererGone: (didCrash: Boolean) -> Unit = {},
+    clientSdkScriptUrl: String? = null,
+    onPageFinished: ((WebView) -> Unit)? = null,
     onWebViewError: (code: Int, message: String, host: String?) -> Unit,
 ) {
     // Get the current context
@@ -86,6 +94,7 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
     // Once the renderer is gone the WebView can't be used again: it's removed from the screen and destroyed
     var rendererGone by remember { mutableStateOf(false) }
     val currentOnRendererGone by rememberUpdatedState(onRendererGone)
+    val currentOnPageFinished by rememberUpdatedState(onPageFinished)
 
     // Load the initial URL (or HTML data) using LaunchedEffect.
     // This ensures the URL is loaded only when `webUrl` or `data` changes,
@@ -107,6 +116,45 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
         }
     }
 
+    val client = remember(openTargetBlankInSameWebView, criticalResourceUrls) {
+        SdkWebViewClient(
+            onPageFinished = { webView ->
+                // When enabled, make target="_blank" / window.open load in the same WebView (SDK-wide)
+                if (openTargetBlankInSameWebView) {
+                    webView.evaluateJavascript(OPEN_IN_SAME_WINDOW_SCRIPT, null)
+                }
+                // Inject a small shim to map window.close() into a custom scheme that we intercept
+                webView.evaluateJavascript(
+                    """
+                    (function(){
+                      try {
+                        var __origClose = window.close;
+                        window.close = function(){
+                          location.href = "${MobileSDKConstants.WEB_CLOSE_DEEPLINK}";
+                        };
+                      } catch(e) {}
+                    })();
+                    """.trimIndent(),
+                    null
+                )
+                currentOnPageFinished?.invoke(webView)
+            },
+            onWebViewError = onWebViewError,
+            onCloseRequested = onCloseRequested,
+            // The Client SDK owns its requests (e.g. the 3DS result polls, which fail whenever the network
+            // drops while the shopper approves in their banking app): it retries them and reports failures.
+            isSubResourceNetworkErrorFatal = { false },
+            criticalResourceUrls = criticalResourceUrls,
+            onRendererGone = { didCrash ->
+                rendererGone = true
+                currentOnRendererGone(didCrash)
+            },
+        )
+    }
+    // The bridge is registered once, when the WebView is created: it reports to the current client and script.
+    val currentClient by rememberUpdatedState(client)
+    val currentClientSdkScriptUrl by rememberUpdatedState(clientSdkScriptUrl)
+
     // Display a WebView in a Box composable
     Box(
         contentAlignment = Alignment.Center,
@@ -116,40 +164,7 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
             state = state,
             modifier = Modifier.fillMaxSize(),
             navigator = navigator,
-            client = remember(openTargetBlankInSameWebView, criticalResourceUrls) {
-                SdkWebViewClient(
-                    onPageFinished = { webView ->
-                        // When enabled, make target="_blank" / window.open load in the same WebView (SDK-wide)
-                        if (openTargetBlankInSameWebView) {
-                            webView.evaluateJavascript(OPEN_IN_SAME_WINDOW_SCRIPT, null)
-                        }
-                        // Inject a small shim to map window.close() into a custom scheme that we intercept
-                        webView.evaluateJavascript(
-                            """
-                            (function(){
-                              try {
-                                var __origClose = window.close;
-                                window.close = function(){
-                                  location.href = "${MobileSDKConstants.WEB_CLOSE_DEEPLINK}";
-                                };
-                              } catch(e) {}
-                            })();
-                            """.trimIndent(),
-                            null
-                        )
-                    },
-                    onWebViewError = onWebViewError,
-                    onCloseRequested = onCloseRequested,
-                    // The Client SDK owns its requests (e.g. the 3DS result polls, which fail whenever the network
-                    // drops while the shopper approves in their banking app): it retries them and reports failures.
-                    isSubResourceNetworkErrorFatal = { false },
-                    criticalResourceUrls = criticalResourceUrls,
-                    onRendererGone = { didCrash ->
-                        rendererGone = true
-                        currentOnRendererGone(didCrash)
-                    },
-                )
-            },
+            client = client,
             chromeClient = remember(openTargetBlankInSameWebView) {
                 SdkWebChromeClient(
                     context = context,
@@ -191,7 +206,10 @@ internal fun <T : Any?> StandaloneThreeDSWebView(
                 jsBridge?.let { jsInterface ->
                     jsInterface.safeCastAs<SdkJSBridge<*>>()?.setWebViewReference(webView)
                     webView.addJavascriptInterface(
-                        jsInterface,
+                        // The page's clientSdkLoadFailed report ends the session; the widget's events reach jsBridge.
+                        ClientSdkLoadGuardBridge(jsInterface) {
+                            webView.post { currentClient.reportClientSdkLoadFailed(currentClientSdkScriptUrl) }
+                        },
                         MobileSDKConstants.JS_BRIDGE_NAME
                     )
                 }

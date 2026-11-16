@@ -53,7 +53,7 @@ internal sealed class WidgetConfig {
      *
      * @property title Title for the Click to Pay widget. Default is "Click to Pay".
      * @property jsLibraryUrl URL of the JavaScript library for Click to Pay widget.
-     *                        Default is [ClientSDKConstants.CLIENT_SDK_JS_LIBRARY].
+     *                        Default is resolved from the SDK's environment and pin, see [clientSdkLibraryUrl].
      * @property environment Environment for the Click to Pay widget. Default is the environment
      *                        mapped from [MobileSDK.getInstance().environment].
      * @property events List of events supported by the Click to Pay widget.
@@ -64,7 +64,7 @@ internal sealed class WidgetConfig {
      */
     data class ClickToPayConfig(
         override val title: String = "Click to Pay",
-        override val jsLibraryUrl: String = MobileSDK.getInstance().environment.mapToClientSDKLibrary(),
+        override val jsLibraryUrl: String = clientSdkLibraryUrl(),
         override val environment: String = MobileSDK.getInstance().environment.mapToClientSDKEnv(),
         override val events: List<String> = listOf(
             "iframeLoaded",
@@ -114,7 +114,7 @@ internal sealed class WidgetConfig {
      *
      * @property title Title for the Cart widget. Default is "Cart".
      * @property jsLibraryUrl URL of the JavaScript library for Cart widget.
-     *                        Default is [ClientSDKConstants.CLIENT_SDK_JS_LIBRARY].
+     *                        Default is resolved from the SDK's environment and pin, see [clientSdkLibraryUrl].
      * @property environment Environment for the Cart widget. Default is the environment
      *                        mapped from [MobileSDK.getInstance().environment].
      * @property events List of events supported by the Cart widget.
@@ -123,7 +123,7 @@ internal sealed class WidgetConfig {
      */
     data class CartConfig(
         override val title: String = "Cart",
-        override val jsLibraryUrl: String = MobileSDK.getInstance().environment.mapToClientSDKLibrary(),
+        override val jsLibraryUrl: String = clientSdkLibraryUrl(),
         override val environment: String = MobileSDK.getInstance().environment.mapToClientSDKEnv(),
         override val events: List<String> = emptyList(),
         val amount: String,
@@ -180,7 +180,7 @@ internal sealed class WidgetConfig {
          */
         data class MPGS3dsConfig(
             override val title: String = "3D Secure Authentication",
-            override val jsLibraryUrl: String = MobileSDK.getInstance().environment.mapToClientSDKLibrary(),
+            override val jsLibraryUrl: String = clientSdkLibraryUrl(),
             override val environment: String = MobileSDK.getInstance().environment.mapToClientSDKEnv(),
             override val events: List<String> = listOf(
                 "chargeAuthSuccess",
@@ -226,7 +226,7 @@ internal sealed class WidgetConfig {
          */
         data class Standalone3DSConfig(
             override val title: String = "3D Secure Authentication",
-            override val jsLibraryUrl: String = MobileSDK.getInstance().environment.mapToClientSDKLibrary(),
+            override val jsLibraryUrl: String = clientSdkLibraryUrl(),
             override val environment: String = MobileSDK.getInstance().environment.mapToClientSDKEnv(),
             override val events: List<String> = listOf(
                 "chargeAuthSuccess",
@@ -264,6 +264,14 @@ internal sealed class WidgetConfig {
         }
     }
 }
+
+/**
+ * The Client SDK script address every widget configuration loads by default, resolved in one place from the
+ * initialised SDK's optional exact-version pin: without one, every environment loads the supported line's stable
+ * alias.
+ */
+private fun clientSdkLibraryUrl(): String =
+    MobileSDK.getInstance().let { sdk -> sdk.environment.mapToClientSDKLibrary(sdk.clientSdkVersion) }
 
 /**
  * JavaScript payload builder for standalone 3DS events. See [WidgetConfig.ThreeDSConfigBase.Standalone3DSConfig.eventDataTransform].

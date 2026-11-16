@@ -252,7 +252,7 @@ internal class SdkWebViewClientTest {
 
         client.onReceivedHttpError(
             webView,
-            request("widget.paydock.com", mainFrame = false, path = "/sdk/v1.0.0/widget.umd.min.js"),
+            request("widget.paydock.com", mainFrame = false, path = "/sdk/v1.150.1/widget.umd.min.js"),
             httpError(404),
         )
 
@@ -268,6 +268,40 @@ internal class SdkWebViewClientTest {
         client.onReceivedHttpError(webView, libraryRequest(), httpError(503))
 
         assertEquals(listOf(WebViewClient.ERROR_HOST_LOOKUP), errors)
+    }
+
+    @Test
+    fun `a client sdk load failure ends the session with file not found and the script host`() {
+        val errors = mutableListOf<Int>()
+        val hosts = mutableListOf<String?>()
+        val client = client(onError = { errors += it }, onErrorHost = { hosts += it })
+
+        client.reportClientSdkLoadFailed(SCRIPT_URL)
+        client.reportClientSdkLoadFailed(SCRIPT_URL)
+
+        assertEquals(listOf(WebViewClient.ERROR_FILE_NOT_FOUND), errors)
+        assertEquals(listOf<String?>("widget.paydock.com"), hosts)
+    }
+
+    @Test
+    fun `a client sdk load failure after the script network error is not reported again`() {
+        val errors = mutableListOf<Int>()
+        val client = standalone3DSClient(onError = { errors += it })
+
+        client.onReceivedError(webView, libraryRequest(), error(WebViewClient.ERROR_HOST_LOOKUP))
+        client.reportClientSdkLoadFailed(SCRIPT_URL)
+
+        assertEquals(listOf(WebViewClient.ERROR_HOST_LOOKUP), errors)
+    }
+
+    @Test
+    fun `a client sdk load failure without a known script reports no host`() {
+        val hosts = mutableListOf<String?>()
+        val client = client(onError = {}, onErrorHost = { hosts += it })
+
+        client.reportClientSdkLoadFailed(null)
+
+        assertEquals(listOf<String?>(null), hosts)
     }
 
     @Test
@@ -390,7 +424,7 @@ internal class SdkWebViewClientTest {
     }
 
     private companion object {
-        // Any Client SDK version: callers pass the exact URL their page loads.
-        const val SCRIPT_URL = "https://widget.paydock.com/sdk/v9.99.0/widget.umd.min.js"
+        // The production default (the supported line's stable alias): callers pass the exact URL their page loads.
+        const val SCRIPT_URL = "https://widget.paydock.com/sdk/v1.150.stable/widget.umd.min.js"
     }
 }

@@ -10,6 +10,7 @@ import com.paydock.core.telemetry.ReportWidgetOpened
 import com.paydock.core.telemetry.SdkWidget
 import com.paydock.designsystems.components.web.SdkWebView
 import com.paydock.designsystems.components.web.config.WidgetConfig
+import com.paydock.designsystems.components.web.utils.ClientSdkVersionReader
 import com.paydock.designsystems.components.web.utils.HtmlWidgetBuilder
 import com.paydock.feature.threeDS.common.domain.integration.ThreeDSConfig
 import com.paydock.feature.threeDS.common.domain.model.ui.enums.TokenFormat
@@ -69,11 +70,10 @@ fun MPGS3dsWidget(
 
     // Apply the SdkTheme for consistent styling
     // Display the 3DS WebView within the bottom sheet
-    val htmlString = HtmlWidgetBuilder.createHtml(
-        config = WidgetConfig.ThreeDSConfigBase.MPGS3dsConfig(
-            token = config.token
-        )
+    val widgetConfig = WidgetConfig.ThreeDSConfigBase.MPGS3dsConfig(
+        token = config.token
     )
+    val htmlString = HtmlWidgetBuilder.createHtml(config = widgetConfig)
     val jsBridge = remember {
         MPGS3dsJSBridge { eventResult ->
             viewModel.handleEventResult(eventResult)
@@ -84,7 +84,11 @@ fun MPGS3dsWidget(
         webUrl = MobileSDKConstants.DEFAULT_WEB_URL,
         data = htmlString,
         jsBridge = jsBridge,
-        loaderAppearance = appearance.loader
+        loaderAppearance = appearance.loader,
+        // A missing Client SDK (the page's clientSdkLoadFailed report) ends the flow with the WebView error below.
+        clientSdkScriptUrl = widgetConfig.jsLibraryUrl,
+        // Keep the Client SDK version the page loaded
+        onPageFinished = ClientSdkVersionReader::read,
     ) { status, message ->
         // Invoke the onWebViewError callback with the WebView MPGS3dsException exception
         val failure = MPGS3dsException.WebViewException(status, message)

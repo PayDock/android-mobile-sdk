@@ -5,7 +5,9 @@ import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.paydock.binprocessor.data.refresh.BinDataRefreshCoordinator
+import com.paydock.core.ClientSDKConstants
 import com.paydock.core.data.injection.MobileSDKKoinContext
+import com.paydock.core.domain.error.exceptions.MobileSdkException
 import com.paydock.core.domain.mapper.mapToBaseUrl
 import com.paydock.core.domain.model.Environment
 import com.paydock.core.telemetry.bindTelemetry
@@ -20,16 +22,29 @@ import java.util.Locale
  * @param context The Android application context used for initializing the Mobile SDK and its dependencies.
  * @param environment The environment for the Mobile SDK, which determines the API endpoint to use (e.g., production, sandbox, staging).
  * @param enableTestMode Flag to enable test mode. This is only allowed in non-production environments.
+ * @param clientSdkVersion The exact Client SDK release (`vX.Y.Z` of the supported line) every widget loads, in every
+ *   environment, or `null` (default) to load the supported line's stable alias in every environment.
+ *   [Builder.clientSdkVersion] validates it.
  */
-class MobileSDK(
+class MobileSDK @JvmOverloads constructor(
     context: Context,
     val environment: Environment,
-    internal val enableTestMode: Boolean
+    internal val enableTestMode: Boolean,
+    val clientSdkVersion: String? = null,
 ) {
 
     internal var koinContext: MobileSDKKoinContext? = null
 
     internal val baseUrl: String
+
+    /**
+     * The Client SDK version the most recent widget page reported after loading (e.g. `"v1.150.2"`). Widgets load
+     * an alias of the supported line unless pinned, so this names the release that actually ran. `null` until a
+     * widget page has reported a version, e.g. when the loaded release does not report one.
+     */
+    @Volatile
+    var loadedClientSdkVersion: String? = null
+        internal set
 
     init {
         // Map environment to corresponding base URL (needed before Koin resolves HttpClient)
@@ -54,6 +69,7 @@ class MobileSDK(
         private var environment: Environment = Environment.PRODUCTION
         private var enableTestMode: Boolean = false
         private var afterpayLocale: Locale? = null
+        private var clientSdkVersion: String? = null
 
         /**
          * Sets the environment for the SDK.
@@ -73,6 +89,15 @@ class MobileSDK(
         fun afterpayLocale(locale: Locale?) = apply { this.afterpayLocale = locale }
 
         /**
+         * Pins the exact Client SDK release every widget loads, in every environment, instead of the supported line's
+         * stable alias. It must be a plain release (`vX.Y.Z`, no `-beta` or other suffix) of the line this Mobile SDK
+         * supports; [build] refuses anything else. When `null` (default), widgets load the stable alias.
+         *
+         * @param version The exact Client SDK release, e.g. `"v1.150.1"`, or `null` for the stable alias.
+         */
+        fun clientSdkVersion(version: String?) = apply { this.clientSdkVersion = version }
+
+        /**
          * Enables or disables test mode. This is only allowed for non-production environments.
          *
          * @param enable True to enable test mode, false to disable.
@@ -88,9 +113,30 @@ class MobileSDK(
          *
          * @param context The application context.
          * @return The initialized MobileSDK instance.
+         * @throws MobileSdkException.InvalidConfiguration if the [clientSdkVersion] pin is not a plain release
+         *   (`vX.Y.Z`) of the supported Client SDK line; the message names the line. The SDK is not initialised.
          */
         fun build(context: Context): MobileSDK {
-            return initialize(context, environment, enableTestMode, afterpayLocale)
+            clientSdkVersion?.let(::requireSupportedClientSdkVersion)
+            return initialize(context, environment, enableTestMode, afterpayLocale, clientSdkVersion)
+        }
+
+        /**
+         * Refuses [version] unless it matches [ClientSDKConstants.VERSION_PATTERN] and belongs to
+         * [ClientSDKConstants.SUPPORTED_LINE], in that order.
+         */
+        private fun requireSupportedClientSdkVersion(version: String) {
+            val line = ClientSDKConstants.SUPPORTED_LINE
+            val match = ClientSDKConstants.VERSION_PATTERN.matchEntire(version)
+                ?: throw MobileSdkException.InvalidConfiguration(
+                    "clientSdkVersion $version is not a release (vX.Y.Z) of supported line $line"
+                )
+            val (major, minor) = match.destructured
+            if ("v$major.$minor" != line) {
+                throw MobileSdkException.InvalidConfiguration(
+                    "clientSdkVersion $version is outside supported line $line"
+                )
+            }
         }
     }
 
@@ -111,6 +157,8 @@ class MobileSDK(
          * @param enableTestMode Flag to enable test mode. This is only allowed in non-production environments.
          * @param afterpayLocale Locale used to resolve the Afterpay payment button's branding at
          *   initialisation. When `null` (default), the device locale is used.
+         * @param clientSdkVersion The exact Client SDK release widgets load, already validated by [Builder.build],
+         *   or `null` (default) for the environment's alias of the supported line.
          * @throws IllegalStateException if MobileSDK is already initialized.
          */
         @JvmStatic
@@ -120,11 +168,12 @@ class MobileSDK(
             environment: Environment = Environment.PRODUCTION,
             enableTestMode: Boolean = false,
             afterpayLocale: Locale? = null,
+            clientSdkVersion: String? = null,
         ): MobileSDK {
             if (instance != null) {
                 error(IllegalStateException("MobileSDK is already initialized."))
             }
-            return MobileSDK(context, environment, enableTestMode).also {
+            return MobileSDK(context, environment, enableTestMode, clientSdkVersion).also {
                 instance = it
                 // Apply the Afterpay baseline configuration at SDK initialisation — before any UI
                 // builds an Afterpay appearance (e.g. an app pre-building defaults at startup).

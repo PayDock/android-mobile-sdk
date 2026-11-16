@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +28,7 @@ import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.loader.SdkLoader
 import com.paydock.designsystems.components.loader.SdkProgressLoader
 import com.paydock.designsystems.components.web.extensions.setup
+import com.paydock.designsystems.components.web.utils.ClientSdkLoadGuardBridge
 import com.paydock.designsystems.components.web.utils.SdkJSBridge
 import com.paydock.designsystems.components.web.utils.SdkWebChromeClient
 import com.paydock.designsystems.components.web.utils.SdkWebViewClient
@@ -66,6 +68,9 @@ private val OPEN_IN_SAME_WINDOW_SCRIPT = """
  * @param openTargetBlankInSameWebView When true, links with target="_blank" (e.g. "Forgot password", "Apply now")
  *        load in the current WebView instead of opening a new window. The SDK injects JS (window.open override
  *        and click interception) so navigation works like a single-tab browser. Default is false.
+ * @param clientSdkScriptUrl The Client SDK script the page loads (pages built by `HtmlWidgetBuilder`). When the page
+ *        reports `clientSdkLoadFailed` over [jsBridge], the session ends through [onWebViewError] with
+ *        `ERROR_FILE_NOT_FOUND`, at most once per page, and the script's host is logged.
  * @param onWebViewError Callback to handle WebView errors.
  */
 @Composable
@@ -79,6 +84,7 @@ internal fun <T : Any?> SdkWebView(
     onShouldOverrideUrlLoading: ((request: WebResourceRequest?) -> Boolean)? = null,
     onPageFinished: ((WebView) -> Unit)? = null,
     openTargetBlankInSameWebView: Boolean = false,
+    clientSdkScriptUrl: String? = null,
     onWebViewError: (Int, String) -> Unit,
 ) {
     // Get the current context
@@ -115,6 +121,40 @@ internal fun <T : Any?> SdkWebView(
 
     val isLoading = state.isLoading || showWindowLoader
 
+    val client = remember(openTargetBlankInSameWebView) {
+        SdkWebViewClient(
+            onShouldOverrideUrlLoading = onShouldOverrideUrlLoading,
+            onPageFinished = { webView ->
+                // When enabled, make target="_blank" / window.open load in the same WebView (SDK-wide)
+                if (openTargetBlankInSameWebView) {
+                    webView.evaluateJavascript(OPEN_IN_SAME_WINDOW_SCRIPT, null)
+                }
+                // Inject a small shim to map window.close() into a custom scheme that we intercept
+                webView.evaluateJavascript(
+                    """
+                    (function(){
+                      try {
+                        var __origClose = window.close;
+                        window.close = function(){
+                          location.href = "${MobileSDKConstants.WEB_CLOSE_DEEPLINK}";
+                        };
+                      } catch(e) {}
+                    })();
+                    """.trimIndent(),
+                    null
+                )
+                onPageFinished?.let { callback ->
+                    callback(webView)
+                }
+            },
+            onWebViewError = { code, message, _ -> onWebViewError(code, message) },
+            onCloseRequested = onCloseRequested,
+        )
+    }
+    // The bridge is registered once, when the WebView is created: it reports to the current client and script.
+    val currentClient by rememberUpdatedState(client)
+    val currentClientSdkScriptUrl by rememberUpdatedState(clientSdkScriptUrl)
+
     // Display a WebView in a Box composable
     Box(
         contentAlignment = Alignment.Center,
@@ -123,36 +163,7 @@ internal fun <T : Any?> SdkWebView(
             state = state,
             modifier = Modifier.fillMaxSize(),
             navigator = navigator,
-            client = remember(openTargetBlankInSameWebView) {
-                SdkWebViewClient(
-                    onShouldOverrideUrlLoading = onShouldOverrideUrlLoading,
-                    onPageFinished = { webView ->
-                        // When enabled, make target="_blank" / window.open load in the same WebView (SDK-wide)
-                        if (openTargetBlankInSameWebView) {
-                            webView.evaluateJavascript(OPEN_IN_SAME_WINDOW_SCRIPT, null)
-                        }
-                        // Inject a small shim to map window.close() into a custom scheme that we intercept
-                        webView.evaluateJavascript(
-                            """
-                            (function(){
-                              try {
-                                var __origClose = window.close;
-                                window.close = function(){
-                                  location.href = "${MobileSDKConstants.WEB_CLOSE_DEEPLINK}";
-                                };
-                              } catch(e) {}
-                            })();
-                            """.trimIndent(),
-                            null
-                        )
-                        onPageFinished?.let { callback ->
-                            callback(webView)
-                        }
-                    },
-                    onWebViewError = { code, message, _ -> onWebViewError(code, message) },
-                    onCloseRequested = onCloseRequested,
-                )
-            },
+            client = client,
             chromeClient = remember(openTargetBlankInSameWebView) {
                 SdkWebChromeClient(
                     context = context,
@@ -196,7 +207,10 @@ internal fun <T : Any?> SdkWebView(
                 jsBridge?.let { jsInterface ->
                     jsInterface.safeCastAs<SdkJSBridge<*>>()?.setWebViewReference(webView)
                     webView.addJavascriptInterface(
-                        jsInterface,
+                        // The page's clientSdkLoadFailed report ends the session; the widget's events reach jsBridge.
+                        ClientSdkLoadGuardBridge(jsInterface) {
+                            webView.post { currentClient.reportClientSdkLoadFailed(currentClientSdkScriptUrl) }
+                        },
                         MobileSDKConstants.JS_BRIDGE_NAME
                     )
                 }

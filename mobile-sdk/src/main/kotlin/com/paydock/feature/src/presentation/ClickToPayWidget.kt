@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +22,7 @@ import com.paydock.designsystems.components.loader.LoaderAppearance
 import com.paydock.designsystems.components.loader.LoaderAppearanceDefaults
 import com.paydock.designsystems.components.web.SdkWebView
 import com.paydock.designsystems.components.web.config.WidgetConfig
+import com.paydock.designsystems.components.web.utils.ClientSdkVersionReader
 import com.paydock.designsystems.components.web.utils.HtmlWidgetBuilder
 import com.paydock.designsystems.core.WidgetDefaults
 import com.paydock.feature.src.domain.model.integration.ClickToPayWidgetConfig
@@ -74,18 +76,17 @@ fun ClickToPayWidget(
             verticalArrangement = Arrangement.spacedBy(WidgetDefaults.Spacing, Alignment.Top),
             horizontalAlignment = Alignment.Start
         ) {
+            val widgetConfig = remember(config.accessToken, config.serviceId, config.meta) {
+                WidgetConfig.ClickToPayConfig(
+                    accessToken = config.accessToken,
+                    serviceId = config.serviceId,
+                    meta = config.meta
+                )
+            }
             val htmlString by rememberSaveable(
                 inputs = arrayOf(config.accessToken, config.serviceId, config.meta)
             ) {
-                mutableStateOf(
-                    HtmlWidgetBuilder.createHtml(
-                        config = WidgetConfig.ClickToPayConfig(
-                            accessToken = config.accessToken,
-                            serviceId = config.serviceId,
-                            meta = config.meta
-                        )
-                    )
-                )
+                mutableStateOf(HtmlWidgetBuilder.createHtml(config = widgetConfig))
             }
             // Render WebView for Click to Pay
             SdkWebView(
@@ -95,7 +96,11 @@ fun ClickToPayWidget(
                     viewModel.updateSRCEvent(it)
                 },
                 shouldShowCustomLoader = true,
-                loaderAppearance = appearance.loader
+                loaderAppearance = appearance.loader,
+                // A missing Client SDK (the page's clientSdkLoadFailed report) ends the flow with the WebView error below.
+                clientSdkScriptUrl = widgetConfig.jsLibraryUrl,
+                // Keep the Client SDK version the page loaded
+                onPageFinished = ClientSdkVersionReader::read,
             ) { status, message ->
                 // Invoke the completion callback with the Click to Pay exception upon WebView error
                 val failure = ClickToPayException.WebViewException(

@@ -26,7 +26,20 @@ import kotlinx.html.unsafe
 internal object HtmlWidgetBuilder {
 
     /**
+     * Event the page posts over the [MobileSDKConstants.JS_BRIDGE_NAME] bridge when the Client SDK script fails to
+     * load, or loads without providing the Client SDK global.
+     */
+    const val CLIENT_SDK_LOAD_FAILED_EVENT = "clientSdkLoadFailed"
+
+    /** Name of the page function that reports [CLIENT_SDK_LOAD_FAILED_EVENT]. */
+    private const val LOAD_FAILED_FUNCTION = "onClientSdkLoadFailed"
+
+    /**
      * Creates HTML content for embedding a widget in a WebView.
+     *
+     * The page is guarded against a missing Client SDK, in this order: the guard function, the Client SDK script
+     * tag whose `onerror` calls it, then the widget's inline script, which runs only when the Client SDK global
+     * exists and calls the guard otherwise.
      *
      * @param config The configuration object for the widget.
      * @return The generated HTML content as a string.
@@ -37,8 +50,9 @@ internal object HtmlWidgetBuilder {
             head { includeInlineHead(config.title) }
             body {
                 div { id = ClientSDKConstants.WIDGET_CONTAINER_ID }
-                script(src = config.jsLibraryUrl) {}
-                script { includeInlineScript(config) }
+                script { includeLoadGuard() }
+                script(src = config.jsLibraryUrl) { attributes["onerror"] = "$LOAD_FAILED_FUNCTION()" }
+                script { includeGuardedInlineScript(config) }
             }
         }
     }
@@ -84,25 +98,66 @@ internal object HtmlWidgetBuilder {
     }
 
     /**
-     * Includes inline JavaScript code in the SCRIPT block for initializing the widget.
-     *
-     * @param config The configuration object for the widget.
+     * Includes the guard function that reports [CLIENT_SDK_LOAD_FAILED_EVENT] to the native bridge, at most once per
+     * page. It never throws, so a failing bridge can't break the page.
      */
-    private fun SCRIPT.includeInlineScript(config: WidgetConfig) {
+    private fun SCRIPT.includeLoadGuard() {
+        val bridge = MobileSDKConstants.JS_BRIDGE_NAME
         unsafe {
             raw(
-                """ 
-                var widget = ${config.createWidget()}
-                widget.setEnv("${config.environment}");
-
-                ${createWatchEventScript(config)}
-                ${config.events.joinToString("\n") { "watchEvent(\"$it\");" }}
-
-                widget.load();
+                """
+                var clientSdkLoadFailedReported = false;
+                function $LOAD_FAILED_FUNCTION() {
+                    if (clientSdkLoadFailedReported) {
+                        return;
+                    }
+                    clientSdkLoadFailedReported = true;
+                    try {
+                        if (typeof $bridge !== "undefined") {
+                            $bridge.postMessage(JSON.stringify({ event: "$CLIENT_SDK_LOAD_FAILED_EVENT" }));
+                        }
+                    } catch (e) {
+                        console.error("Failed to report the Client SDK load failure", e);
+                    }
+                }
                 """.trimIndent()
             )
         }
     }
+
+    /**
+     * Includes the widget's inline script inside the Client SDK global check: without the global, the page calls
+     * the load guard instead of running the widget's script.
+     *
+     * @param config The configuration object for the widget.
+     */
+    private fun SCRIPT.includeGuardedInlineScript(config: WidgetConfig) {
+        unsafe {
+            raw(
+                "if (typeof window.${ClientSDKConstants.WIDGET_ID} === \"undefined\") {\n" +
+                    "    $LOAD_FAILED_FUNCTION();\n" +
+                    "} else {\n" +
+                    createInlineScript(config) + "\n" +
+                    "}"
+            )
+        }
+    }
+
+    /**
+     * Creates the inline JavaScript code for initializing the widget.
+     *
+     * @param config The configuration object for the widget.
+     * @return The widget's inline script.
+     */
+    private fun createInlineScript(config: WidgetConfig): String = """
+        var widget = ${config.createWidget()}
+        widget.setEnv("${config.environment}");
+
+        ${createWatchEventScript(config)}
+        ${config.events.joinToString("\n") { "watchEvent(\"$it\");" }}
+
+        widget.load();
+    """.trimIndent()
 
     /**
      * Creates the `watchEvent` JavaScript function that forwards widget events to the native bridge.

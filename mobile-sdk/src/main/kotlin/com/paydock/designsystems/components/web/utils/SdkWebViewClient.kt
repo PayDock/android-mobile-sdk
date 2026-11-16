@@ -220,7 +220,7 @@ internal class SdkWebViewClient(
                 (isCriticalNetworkError(errorCode) && isSubResourceNetworkErrorFatal(request?.url?.host))
 
             if (isErrorFatalForSession) {
-                reportCriticalError(errorCode, errorMessage, error.description, isMainFrame, request?.url)
+                reportCriticalError(errorCode, errorMessage, error.description, isMainFrame, request?.url?.host)
             } else if (isCriticalNetworkError(errorCode)) {
                 // A third-party resource (e.g. an issuer page's script or image) failed: keep the flow going but record it.
                 logIgnoredNetworkError("sub-resource", errorCode, error, request?.url)
@@ -255,7 +255,27 @@ internal class SdkWebViewClient(
             errorMessage = criticalResourceHttpErrorMessage(statusCode),
             errorName = "HTTP $statusCode",
             isMainFrame = request?.isForMainFrame == true,
-            uri = request?.url,
+            host = request?.url?.host,
+        )
+    }
+
+    /**
+     * Handles the page's `clientSdkLoadFailed` report: the Client SDK script failed to load, or loaded without
+     * providing the Client SDK global (e.g. the CDN answered with an HTML page). Ends the session like a network
+     * failure on the script, through [onWebViewError] with [ERROR_FILE_NOT_FOUND] and the script's host, at most
+     * once per page: a critical error already reported for the page (e.g. the script's own network error) wins.
+     *
+     * Call it on the main thread, like the WebView's own callbacks.
+     *
+     * @param scriptUrl The Client SDK script address the page loads, or `null` if unknown.
+     */
+    fun reportClientSdkLoadFailed(scriptUrl: String?) {
+        reportCriticalError(
+            errorCode = ERROR_FILE_NOT_FOUND,
+            errorMessage = getWebViewErrorMessage(ERROR_FILE_NOT_FOUND),
+            errorName = "clientSdkLoadFailed",
+            isMainFrame = false,
+            host = scriptUrl?.let(::describeUrl)?.takeIf { it != "unknown" },
         )
     }
 
@@ -289,21 +309,22 @@ internal class SdkWebViewClient(
         errorMessage: String,
         errorName: CharSequence?,
         isMainFrame: Boolean,
-        uri: Uri?,
+        host: String?,
     ) {
+        val describedHost = host?.takeIf { it.isNotBlank() } ?: "unknown"
         if (!criticalErrorOccurredInSession) {
             criticalErrorOccurredInSession = true
             Log.e(
                 MobileSDKConstants.MOBILE_SDK_TAG,
                 "First critical error in session (code $errorCode, error: $errorName, " +
-                    "mainFrame: $isMainFrame, host: ${describeFailedRequest(uri)}): $errorMessage"
+                    "mainFrame: $isMainFrame, host: $describedHost): $errorMessage"
             )
-            onWebViewError(errorCode, errorMessage, uri?.host)
+            onWebViewError(errorCode, errorMessage, host)
         } else {
             Log.d(
                 MobileSDKConstants.MOBILE_SDK_TAG,
                 "Subsequent critical error in session ignored (code $errorCode, " +
-                    "host: ${describeFailedRequest(uri)}): $errorMessage"
+                    "host: $describedHost): $errorMessage"
             )
         }
     }

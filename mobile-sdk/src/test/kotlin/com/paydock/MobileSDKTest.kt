@@ -7,6 +7,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.paydock.core.BaseUnitTest
+import com.paydock.core.domain.error.exceptions.MobileSdkException
 import com.paydock.core.domain.model.Environment
 import com.paydock.core.telemetry.RecordingTelemetry
 import com.paydock.telemetry.Telemetry
@@ -25,6 +26,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 internal class MobileSDKTest : BaseUnitTest() {
@@ -188,6 +190,53 @@ internal class MobileSDKTest : BaseUnitTest() {
 
         assertNotNull(sdk)
         assertTrue(MobileSDK.isInitialised())
+    }
+
+    @Test
+    fun `MobileSDK Builder without a client sdk pin keeps the environment alias and no loaded version`() {
+        val sdk = MobileSDK.Builder()
+            .environment(Environment.SANDBOX)
+            .build(context)
+
+        assertNull(sdk.clientSdkVersion)
+        assertNull(sdk.loadedClientSdkVersion)
+    }
+
+    @Test
+    fun `MobileSDK Builder with a client sdk pin of the supported line keeps the pin`() {
+        val sdk = MobileSDK.Builder()
+            .environment(Environment.PRODUCTION)
+            .clientSdkVersion("v1.150.1")
+            .build(context)
+
+        assertEquals("v1.150.1", sdk.clientSdkVersion)
+        assertEquals("v1.150.1", MobileSDK.getInstance().clientSdkVersion)
+    }
+
+    @Test
+    fun `MobileSDK Builder refuses a client sdk pin outside the supported line before initialising`() {
+        val error = assertFailsWith<MobileSdkException.InvalidConfiguration> {
+            MobileSDK.Builder()
+                .environment(Environment.PRODUCTION)
+                .clientSdkVersion("v1.151.0")
+                .build(context)
+        }
+
+        assertEquals("clientSdkVersion v1.151.0 is outside supported line v1.150", error.message)
+        assertFalse(MobileSDK.isInitialised())
+        // The refused configuration left nothing behind: a valid configuration still initialises.
+        assertNotNull(MobileSDK.Builder().build(context))
+    }
+
+    @Test
+    fun `MobileSDK Builder refuses a pre-release client sdk pin before initialising`() {
+        assertFailsWith<MobileSdkException.InvalidConfiguration> {
+            MobileSDK.Builder()
+                .clientSdkVersion("v1.150.1-beta")
+                .build(context)
+        }
+
+        assertFalse(MobileSDK.isInitialised())
     }
 
 }

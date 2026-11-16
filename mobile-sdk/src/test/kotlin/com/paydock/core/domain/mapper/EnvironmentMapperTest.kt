@@ -37,27 +37,36 @@ class EnvironmentMapperTest : BaseUnitTest() {
     }
 
     @Test
-    fun mapToClientSDKLibrary_production_returnsProductionLibrary() {
+    fun mapToClientSDKLibrary_production_returnsStableAlias() {
         val environment = Environment.PRODUCTION
-        val expectedLibrary = ClientSDKConstants.Library.PROD
-        val actualLibrary = environment.mapToClientSDKLibrary()
+        val expectedLibrary = "https://widget.paydock.com/sdk/v1.150.stable/widget.umd.min.js"
+        val actualLibrary = environment.mapToClientSDKLibrary(null)
         assertEquals(expectedLibrary, actualLibrary)
     }
 
     @Test
-    fun mapToClientSDKLibrary_sandbox_returnsSandboxLibrary() {
+    fun mapToClientSDKLibrary_sandbox_returnsStableAlias() {
         val environment = Environment.SANDBOX
-        val expectedLibrary = ClientSDKConstants.Library.SANDBOX
-        val actualLibrary = environment.mapToClientSDKLibrary()
+        val expectedLibrary = "https://widget.paydock.com/sdk/v1.150.stable/widget.umd.min.js"
+        val actualLibrary = environment.mapToClientSDKLibrary(null)
         assertEquals(expectedLibrary, actualLibrary)
     }
 
     @Test
-    fun mapToClientSDKLibrary_staging_returnsStagingLibrary() {
+    fun mapToClientSDKLibrary_staging_returnsStableAlias() {
         val environment = Environment.STAGING
-        val expectedLibrary = ClientSDKConstants.Library.STAGING
-        val actualLibrary = environment.mapToClientSDKLibrary()
+        val expectedLibrary = "https://widget.paydock.com/sdk/v1.150.stable/widget.umd.min.js"
+        val actualLibrary = environment.mapToClientSDKLibrary(null)
         assertEquals(expectedLibrary, actualLibrary)
+    }
+
+    @Test
+    fun mapToClientSDKLibrary_pin_returnsPinnedVersionInEveryEnvironment() {
+        Environment.entries.forEach { environment ->
+            val expectedLibrary = ClientSDKConstants.libraryUrl("v1.150.1")
+            val actualLibrary = environment.mapToClientSDKLibrary("v1.150.1")
+            assertEquals(expectedLibrary, actualLibrary, "environment $environment")
+        }
     }
 
     @Test
