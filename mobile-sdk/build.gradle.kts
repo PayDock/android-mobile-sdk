@@ -19,10 +19,8 @@ plugins {
 
 android {
     namespace = "com.paydock"
-    // Held at 36 (not the latest 37) pending mobile-lib-networking-android validating AGP 9.x —
-    // it's currently still pinned to AGP 8.13.0. Bumping this raises `minCompileSdk` in the
-    // published AAR's metadata, forcing every integrator to also have that compileSdk available
-    // just to keep compiling — not something to move ahead of schedule without a driving need.
+    // compileSdk 37 is required by Compose 1.12 (BOM 2026.08.00), whose AAR metadata already
+    // imposes `minCompileSdk=37` and AGP 9.1.0 on integrators.
     compileSdk = libs.versions.sdk.compileSdk.get().toInt()
 
     defaultConfig {
@@ -218,9 +216,10 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext)
     androidTestImplementation(libs.androidx.runner)
     androidTestImplementation(libs.androidx.test.espresso.accessibility)
-    // Compose - BOM 2025.06.01 (Compose 1.8.3)
+    // Compose - BOM 2026.08.00 (Compose 1.12.0)
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
+    implementation(libs.compose.material.icons.core) // Icons.Filled.*; Material 3 1.4.0 no longer brings it
     implementation(libs.bundles.composeDebug)
     androidTestImplementation(libs.androidx.ui.test.junit4.android)
     androidTestRuntimeOnly(libs.androidx.ui.test.manifest)

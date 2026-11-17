@@ -21,6 +21,11 @@
 - Click to Pay, MPGS 3DS and standalone 3DS end with their load error (`WebViewException`) when the Client SDK script
   fails to load or loads without providing the Client SDK (e.g. the address answers with a page that is not a
   script), instead of waiting.
+- Built with Jetpack Compose BOM 2026.08.00 (Compose 1.12.0, Material 3 1.4.0, lifecycle 2.9.4). Apps get Compose
+  1.12 and Material 3 1.4 transitively, so they must compile against API 37 with Android Gradle Plugin 9.2.0 or
+  newer.
+- Material 3 1.4 no longer brings `androidx.compose.material:material-icons-core`: apps that use `Icons.*` must
+  declare it themselves.
 
 ### Fixed
 - `PayPalDataCollectorUtil.initialise` throws `PayPalDataCollectorException.InitialisationClientIdException`

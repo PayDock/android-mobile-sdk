@@ -6,13 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-The Paydock Android **MobileSDK** — a Jetpack Compose UI kit of pre-built, customisable payment widgets (cards, gift cards, Google Pay, PayPal, Afterpay, Coles Pay, Click to Pay, Zip, address capture, 3DS, tokenisation). Published to Maven Central as **`com.paydock:mobile-sdk`** (current `versionName` 5.7.1, in `gradle.properties`). Kotlin **2.2.20**, `minSdk` **24** (Android 7.0). The SDK modules (`:mobile-sdk`, `:bin-processor`, `:telemetry`) share `compileSdk` **36** (`sdk-compileSdk` in `gradle/libs.versions.toml`); the `:sample` app uses `compileSdk`/`targetSdk` **37**.
+The Paydock Android **MobileSDK** — a Jetpack Compose UI kit of pre-built, customisable payment widgets (cards, gift cards, Google Pay, PayPal, Afterpay, Coles Pay, Click to Pay, Zip, address capture, 3DS, tokenisation). Published to Maven Central as **`com.paydock:mobile-sdk`** (current `versionName` 5.7.1, in `gradle.properties`). Kotlin **2.2.20**, `minSdk` **24** (Android 7.0). The SDK modules (`:mobile-sdk`, `:bin-processor`, `:telemetry`) share `compileSdk` **37** (`sdk-compileSdk` in `gradle/libs.versions.toml`); the `:sample` app uses `compileSdk`/`targetSdk` **37**.
 
 ## Toolchain & setup
 
 - **JDK 17** (`.java-version` → `17`, managed via jenv). Both `:mobile-sdk` and `:sample` compile/target Java 17 (JVM target 17).
 - **Gradle 9.4.1** via the wrapper (`./gradlew`); **AGP 9.2.0**. Note AGP 9 ships built-in Kotlin support; `gradle.properties` sets `android.disallowKotlinSourceSets=false` as a bridge flag so KSP-generated sources still register.
-- Versions are centralised in `gradle/libs.versions.toml` (typesafe accessors + `libs.bundles.*`; typesafe project accessors are also enabled). Several versions are deliberately pinned — the Compose BOM (`2025.06.01`), `lifecycle` (2.8.7), and `koin` (4.1.0) carry "do not bump" comments tying them to Compose 1.8.3. Respect those.
+- Versions are centralised in `gradle/libs.versions.toml` (typesafe accessors + `libs.bundles.*`; typesafe project accessors are also enabled). Several versions are deliberately pinned — the Compose BOM (`2026.08.00`, Compose 1.12.0) and `lifecycle` (2.9.4) are held by Compose 1.12 (lifecycle 2.9.4 is its floor), and `koin` (4.1.0) is unchanged (not required by the BOM); their comments say what holds each. The core Material icons (`material-icons-core`) are declared explicitly in `:mobile-sdk`, versioned by the BOM, since Material 3 1.4.0 no longer brings them. Respect those.
 - **`convention-plugins/`** is a separate Gradle build wired in via `includeBuild("convention-plugins")` in `settings.gradle.kts`. It publishes precompiled script plugins (applied by id, e.g. `detekt-convention`, `github-publish-convention`, `maven-central-publish-convention`, `test-coverage-convention`, `dependency-analysis-convention`) that `mobile-sdk/build.gradle.kts` applies. Shared build logic lives here, not duplicated per module.
 - Git hooks are auto-installed: `:mobile-sdk:preBuild` depends on `:installGitHooks`, which copies `scripts/pre-commit` into `.git/hooks/`.
 
