@@ -3,10 +3,14 @@ package com.paydock.telemetry
 import com.paydock.telemetry.TelemetryTestFakes.FakeTransport
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import java.util.zip.GZIPInputStream
 
-/** Unit tests for [OtlpExporter]: the gzipped body, the three headers and the status mapping (spec § 8). */
+/**
+ * Unit tests for [OtlpExporter]: the gzipped body, the headers (`Authorization` only with a credential) and the status
+ * mapping (spec § 8).
+ */
 internal class OtlpExporterTest {
 
     private val batch = ExportBatch(
@@ -36,6 +40,23 @@ internal class OtlpExporterTest {
             ),
             request.headers
         )
+    }
+
+    @Test
+    fun export_blankAuthorization_sendsTheTwoHeaders_andNoAuthorization() {
+        listOf("", "   ").forEach { blank ->
+            val transport = FakeTransport()
+
+            OtlpExporter(transport, TelemetryCredentials("https://otlp.invalid/v1/logs", blank)).export(batch)
+
+            val request = transport.sent.single()
+            assertArrayEquals(
+                OtlpLogEncoder.encode(batch.resource, batch.records),
+                GZIPInputStream(request.payload.inputStream()).use { it.readBytes() }
+            )
+            assertEquals(mapOf("Content-Encoding" to "gzip", "Content-Type" to "application/json"), request.headers)
+            assertFalse(request.headers.containsKey("Authorization"))
+        }
     }
 
     @Test

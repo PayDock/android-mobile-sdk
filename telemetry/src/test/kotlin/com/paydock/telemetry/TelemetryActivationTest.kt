@@ -1,13 +1,13 @@
 package com.paydock.telemetry
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for [TelemetryActivation.isActive] (RS-1): the full 16-row truth table of its four conditions.
- * Telemetry is active only when the build enables it, credentials exist, the environment is sandbox and the level
- * is not OFF.
+ * Unit tests for [TelemetryActivation.isActive] (D22, R_02): the two-input rule. Telemetry is active only with
+ * credentials that carry a non-blank endpoint and a level of ERRORS or ALL; an empty authorization is active.
  */
 internal class TelemetryActivationTest {
 
@@ -16,62 +16,50 @@ internal class TelemetryActivationTest {
         authorization = "synthetic-not-a-credential"
     )
 
-    /** One combination of the four activation conditions. */
-    private data class Row(
-        val buildEnabled: Boolean,
-        val hasCredentials: Boolean,
-        val isSandbox: Boolean,
-        val levelOn: Boolean,
-    )
+    private val noAuthorization = TelemetryCredentials(endpoint = "https://otlp.invalid/v1/logs", authorization = "")
 
-    private val booleans = listOf(false, true)
-
-    /** Every combination of the four conditions. */
-    private val truthTable: List<Row> = booleans.flatMap { build ->
-        booleans.flatMap { creds ->
-            booleans.flatMap { sandbox -> booleans.map { levelOn -> Row(build, creds, sandbox, levelOn) } }
+    @Test
+    fun isActive_withAnEndpointAndALevelOtherThanOff_isTrue() {
+        listOf(TelemetryLevel.ERRORS, TelemetryLevel.ALL).forEach { level ->
+            assertTrue("level=$level", TelemetryActivation.isActive(credentials, level))
         }
     }
 
     @Test
-    fun isActive_isTrueOnlyWhenAllFourConditionsHold() {
-        assertEquals(TRUTH_TABLE_ROWS, truthTable.distinct().size)
-        truthTable.forEach { row ->
-            val buildEnabled = row.buildEnabled
-            val hasCredentials = row.hasCredentials
-            val isSandbox = row.isSandbox
-            val levelOn = row.levelOn
-            val level = if (levelOn) TelemetryLevel.ALL else TelemetryLevel.OFF
-            val expected = buildEnabled && hasCredentials && isSandbox && levelOn
+    fun isActive_levelOff_isFalse() {
+        assertFalse(TelemetryActivation.isActive(credentials, TelemetryLevel.OFF))
+        assertFalse(TelemetryActivation.isActive(noAuthorization, TelemetryLevel.OFF))
+    }
 
-            val actual = TelemetryActivation.isActive(
-                buildEnabled = buildEnabled,
-                credentials = if (hasCredentials) credentials else null,
-                isSandbox = isSandbox,
-                level = level
-            )
-
-            assertEquals(
-                "buildEnabled=$buildEnabled, credentials=$hasCredentials, sandbox=$isSandbox, level=$level",
-                expected,
-                actual
-            )
+    @Test
+    fun isActive_noCredentials_isFalseAtEveryLevel() {
+        TelemetryLevel.entries.forEach { level ->
+            assertFalse("level=$level", TelemetryActivation.isActive(null, level))
         }
     }
 
     @Test
-    fun isActive_isTrueAtErrorsLevel() {
-        assertTrue(
-            TelemetryActivation.isActive(
-                buildEnabled = true,
-                credentials = credentials,
-                isSandbox = true,
-                level = TelemetryLevel.ERRORS
-            )
-        )
+    fun isActive_blankEndpoint_isFalseAtEveryLevel() {
+        listOf("", "   ").forEach { endpoint ->
+            val blank = TelemetryCredentials(endpoint = endpoint, authorization = "synthetic-not-a-credential")
+            TelemetryLevel.entries.forEach { level ->
+                assertFalse("endpoint='$endpoint', level=$level", TelemetryActivation.isActive(blank, level))
+            }
+        }
     }
 
-    private companion object {
-        const val TRUTH_TABLE_ROWS = 16
+    @Test
+    fun isActive_emptyAuthorization_isActive() {
+        assertTrue(TelemetryActivation.isActive(noAuthorization, TelemetryLevel.ALL))
+        assertTrue(TelemetryActivation.isActive(noAuthorization, TelemetryLevel.ERRORS))
+    }
+
+    @Test
+    fun isActive_isTrueOnlyWhenBothInputsHold() {
+        val rows = listOf(null, credentials).flatMap { c -> TelemetryLevel.entries.map { c to it } }
+        rows.forEach { (c, level) ->
+            val expected = c != null && level != TelemetryLevel.OFF
+            assertEquals("credentials=${c != null}, level=$level", expected, TelemetryActivation.isActive(c, level))
+        }
     }
 }

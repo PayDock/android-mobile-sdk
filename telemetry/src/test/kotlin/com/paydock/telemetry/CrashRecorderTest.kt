@@ -4,6 +4,7 @@ import com.paydock.telemetry.AttributeValue.Bool
 import com.paydock.telemetry.AttributeValue.Str
 import com.paydock.telemetry.TelemetryTestFakes.FakeClock
 import com.paydock.telemetry.TelemetryTestFakes.FakeDeviceContextProvider
+import com.paydock.telemetry.TelemetryTestFakes.HeldFileStore
 import com.paydock.telemetry.TelemetryTestFakes.InMemoryStore
 import com.paydock.telemetry.TelemetryTestFakes.SESSION_ID
 import com.paydock.telemetry.TelemetryTestFakes.T0
@@ -14,6 +15,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 /**
  * Unit tests for [CrashRecorder], the crash handler's direct store write (D17, R_01, R_02): a fake store, a fake
@@ -123,6 +125,63 @@ internal class CrashRecorderTest {
         assertEquals(1, store.threads.size) // the one save
     }
 
+    /** R_07: the recorder saves through the timed save, waiting at most CRASH_STORE_WAIT_MILLIS. */
+    @Test
+    fun record_savesThroughTheTimedSave_withTheCrashWait() {
+        val waits = mutableListOf<Long>()
+        val timed = object : DurableStore by store {
+            override fun save(record: TelemetryRecord) = error("the crash path never blocks on save")
+
+            override fun trySave(record: TelemetryRecord, timeoutMillis: Long): Boolean {
+                waits += timeoutMillis
+                return store.trySave(record, timeoutMillis)
+            }
+        }
+
+        recorder(store = timed).record(crashingThread, failure(MERCHANT_FRAME))
+
+        assertEquals(listOf(TelemetryLimits.CRASH_STORE_WAIT_MILLIS), waits)
+        assertEquals(500L, TelemetryLimits.CRASH_STORE_WAIT_MILLIS)
+        assertEquals(1, store.saved.size)
+    }
+
+    /** R_07: a store that cannot save in time drops the record silently; the recorder neither throws nor retries. */
+    @Test
+    fun record_whenTheTimedSaveReturnsFalse_dropsTheRecordSilently() {
+        var attempts = 0
+        val busy = object : DurableStore by store {
+            override fun trySave(record: TelemetryRecord, timeoutMillis: Long): Boolean {
+                attempts++
+                return false
+            }
+        }
+
+        recorder(store = busy).record(crashingThread, failure(MERCHANT_FRAME))
+
+        assertEquals(1, attempts)
+        assertTrue(store.saved.isEmpty())
+    }
+
+    /** R_07: with the worker holding the file store, the crash record is dropped after about 0.5 s. */
+    @Test
+    fun record_withTheFileStoreHeld_dropsTheRecordAfterTheCrashWait() {
+        val directory = File(folder.root, FileDurableStore.DIRECTORY_NAME)
+        val held = HeldFileStore(directory)
+        try {
+            val started = System.nanoTime()
+
+            recorder(store = held.store).record(crashingThread, failure(MERCHANT_FRAME))
+
+            val waitedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started)
+            assertTrue("waited $waitedMillis ms", waitedMillis >= TelemetryLimits.CRASH_STORE_WAIT_MILLIS)
+            assertTrue("waited $waitedMillis ms", waitedMillis < TelemetryLimits.CRASH_STORE_WAIT_MILLIS + SLACK_MILLIS)
+        } finally {
+            held.release()
+        }
+        assertEquals(0, held.store.count())
+        assertTrue(directory.listFiles().orEmpty().none { it.name.endsWith(".json") })
+    }
+
     /** Review fix (R6): the build and the save run inside the disk-write permit, never outside it. */
     @Test
     fun record_writesInsideTheDiskWritePermit() {
@@ -164,6 +223,7 @@ internal class CrashRecorderTest {
 
     private companion object {
         const val MESSAGE_SENTINEL = "secret-message-text"
+        const val SLACK_MILLIS = 2_000L
         val SDK_FRAME = StackTraceElement(
             "com.paydock.feature.card.presentation.CardDetailsViewModel",
             "submit",

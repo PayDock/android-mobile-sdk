@@ -5,6 +5,9 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import java.io.File
 import java.io.IOException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 /**
  * The disk queue (R_07, R_08): one `<id>.json` file per record in [directory], holding
@@ -16,8 +19,9 @@ import java.io.IOException
  * launch. A file that does not parse is deleted and skipped, when the index is built and when [oldest] reads it.
  *
  * The directory is resolved on first use, on the worker, and created only by the first [save]: a read of a missing
- * directory returns empty and creates nothing. Every method is synchronized, because a crash handler will write
- * from the crashing thread. Limits come from [TelemetryLimits].
+ * directory returns empty and creates nothing. Every method holds the store's lock, because a crash handler writes
+ * from the crashing thread; the crash path ([trySave]) waits for it at most [TelemetryLimits.CRASH_STORE_WAIT_MILLIS].
+ * Limits come from [TelemetryLimits].
  */
 internal class FileDurableStore(
     directory: () -> File, // resolved on first use, on the worker
@@ -27,10 +31,32 @@ internal class FileDurableStore(
 
     private val directory: File by lazy(directory)
 
+    private val lock = ReentrantLock()
+
     private var entries: MutableMap<String, Entry>? = null
 
-    @Synchronized
     override fun save(record: TelemetryRecord) {
+        lock.withLock { saveLocked(record) }
+    }
+
+    /** Waits at most [timeoutMillis] for the lock; false, and nothing written, when it is not acquired in time. */
+    override fun trySave(record: TelemetryRecord, timeoutMillis: Long): Boolean {
+        val acquired = try {
+            lock.tryLock(timeoutMillis, TimeUnit.MILLISECONDS)
+        } catch (interrupted: InterruptedException) {
+            Thread.currentThread().interrupt()
+            false
+        }
+        if (!acquired) return false
+        try {
+            saveLocked(record)
+        } finally {
+            lock.unlock()
+        }
+        return true
+    }
+
+    private fun saveLocked(record: TelemetryRecord) {
         require(isSafeId(record.id)) { "unusable record id" }
         val index = index()
         val dir = directory
@@ -46,8 +72,7 @@ internal class FileDurableStore(
         index[record.id] = Entry(record.timeUnixMillis, bytes.size.toLong(), record.isDroppedNotice)
     }
 
-    @Synchronized
-    override fun oldest(max: Int): List<TelemetryRecord> {
+    override fun oldest(max: Int): List<TelemetryRecord> = lock.withLock {
         val index = index()
         val result = mutableListOf<TelemetryRecord>()
         for (id in orderedIds(index)) {
@@ -60,15 +85,16 @@ internal class FileDurableStore(
                 result += record
             }
         }
-        return result
+        result
     }
 
-    @Synchronized
     override fun remove(ids: Collection<String>) {
-        val index = index()
-        ids.forEach { id ->
-            if (isSafeId(id)) fileOf(id).delete()
-            index.remove(id)
+        lock.withLock {
+            val index = index()
+            ids.forEach { id ->
+                if (isSafeId(id)) fileOf(id).delete()
+                index.remove(id)
+            }
         }
     }
 
@@ -77,8 +103,7 @@ internal class FileDurableStore(
      * store is still over [TelemetryLimits.STORE_MAX_RECORDS] or [TelemetryLimits.STORE_MAX_BYTES], it merges its
      * duplicates on disk, then removes the oldest record, notices last, until it is within both caps or empty.
      */
-    @Synchronized
-    override fun prune(now: Long): PruneResult {
+    override fun prune(now: Long): PruneResult = lock.withLock {
         val index = index()
         directory.listFiles()?.filter { it.name.endsWith(TEMPORARY_SUFFIX) }?.forEach { it.delete() }
 
@@ -93,11 +118,10 @@ internal class FileDurableStore(
             if (index[victim]?.isNotice == false) storeFull++
             remove(listOf(victim))
         }
-        return PruneResult(tooOld = tooOld.values.count { !it.isNotice }, storeFull = storeFull)
+        PruneResult(tooOld = tooOld.values.count { !it.isNotice }, storeFull = storeFull)
     }
 
-    @Synchronized
-    override fun count(): Int = index().size
+    override fun count(): Int = lock.withLock { index().size }
 
     /** Saves each merged record under its kept id first, then removes its other sources. */
     private fun mergeDuplicates() {

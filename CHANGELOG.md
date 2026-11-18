@@ -13,6 +13,10 @@
   that does not report its version.
 - `MobileSdkException` (a new `SdkException` subclass). If you handle `SdkException` with an exhaustive `when`, add a
   branch for it.
+- The SDK sends diagnostics to Paydock in `SANDBOX` and `STAGING`: crashes in your app, SDK errors, failed
+  Paydock API calls and which SDK widgets are opened. Records carry no card data, message text, request bodies
+  or headers. `PRODUCTION` follows in a later release. No setup and no API change. Declare the data in Google
+  Play's data safety form (see the README's Telemetry section).
 
 ### Changed
 - The Mobile SDK no longer compiles an exact Client SDK version in. It supports the Client SDK line `v1.150` and,
@@ -26,6 +30,8 @@
   newer.
 - Material 3 1.4 no longer brings `androidx.compose.material:material-icons-core`: apps that use `Icons.*` must
   declare it themselves.
+- The SDK's crash handler waits at most 0.5 s to record a crash, then hands the crash to your app's handler as
+  before.
 
 ### Fixed
 - `PayPalDataCollectorUtil.initialise` throws `PayPalDataCollectorException.InitialisationClientIdException`

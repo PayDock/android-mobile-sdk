@@ -16,5 +16,6 @@ internal object TelemetryLimits {
     const val HOURLY_CAP = 400 // records created per hour, notices excluded
     const val HOUR_MILLIS = 3_600_000L
     const val ORDERING_WINDOW_MILLIS = 1_800_000L // D20: 30 min
+    const val CRASH_STORE_WAIT_MILLIS = 500L // the crash handler's longest wait for the store (as iOS)
     const val TRACE_MAX_BYTES = 2_097_152 // at most 2 MB of an exit report's trace is read
 }

@@ -25,18 +25,41 @@ import org.koin.dsl.module
 /** single<Telemetry> { NoOpTelemetry }, part of the SDK's own Koin modules; bind() overrides it (allowOverride). */
 internal val defaultTelemetryModule: Module = module { single<Telemetry> { NoOpTelemetry } }
 
-/** Reads the debug-only build values; release values are empty, so release has none (D14). */
-internal object BuildValuesCredentialsProvider : TelemetryCredentialsProvider {
-    override fun credentials(): TelemetryCredentials? {
-        val endpoint = TelemetryBuildValues.OTLP_ENDPOINT.trim()
-        val authorization = TelemetryBuildValues.OTLP_AUTH.trim()
-        return if (endpoint.isEmpty() || authorization.isEmpty()) {
-            null
-        } else {
-            TelemetryCredentials(endpoint = endpoint, authorization = authorization)
-        }
+/** The generated build values; release: override off and empty (D14, R_06). */
+internal class LocalTelemetryValues(
+    val overrideAllowed: Boolean, // TelemetryBuildValues.ENABLED: true only in the debug build type
+    val endpoint: String,
+    val auth: String,
+    val level: String,
+) {
+    companion object {
+        fun fromBuild() = LocalTelemetryValues(
+            TelemetryBuildValues.ENABLED,
+            TelemetryBuildValues.OTLP_ENDPOINT,
+            TelemetryBuildValues.OTLP_AUTH,
+            TelemetryBuildValues.LEVEL,
+        )
     }
 }
+
+/** Debug override first, then the environment's collector with no credential (D5, D22). */
+internal class SdkTelemetryCredentialsProvider(
+    private val environment: Environment,
+    private val values: LocalTelemetryValues,
+) : TelemetryCredentialsProvider {
+    override fun credentials(): TelemetryCredentials? {
+        val localEndpoint = values.endpoint.trim()
+        if (values.overrideAllowed && localEndpoint.isNotEmpty()) {
+            return TelemetryCredentials(endpoint = localEndpoint, authorization = values.auth.trim())
+        }
+        val url = TelemetryCollector.logsUrl(environment)
+        return if (url.isEmpty()) null else TelemetryCredentials(endpoint = url, authorization = "")
+    }
+}
+
+/** ALL in a release build (D23); the local level in a debug build, ALL when absent. */
+internal fun telemetryLevel(values: LocalTelemetryValues): TelemetryLevel =
+    if (values.overrideAllowed) TelemetryLevel.parse(values.level) else TelemetryLevel.ALL
 
 /** What the binding chose. SDK code only ever receives [telemetry]; [runtime] stays in this file. */
 internal class TelemetrySelection(val telemetry: Telemetry, val runtime: TelemetryRuntime)
@@ -46,19 +69,12 @@ internal class TelemetrySelection(val telemetry: Telemetry, val runtime: Telemet
  * only when the decision passes, so an inactive SDK never builds the worker or touches storage.
  */
 internal fun selectTelemetry(
-    buildEnabled: Boolean,
     credentialsProvider: TelemetryCredentialsProvider,
-    environment: Environment,
     level: TelemetryLevel,
     createActive: (TelemetryCredentials, TelemetryLevel) -> ActiveTelemetry,
 ): TelemetrySelection {
     val credentials = runCatching { credentialsProvider.credentials() }.getOrNull()
-    val isActive = TelemetryActivation.isActive(
-        buildEnabled = buildEnabled,
-        credentials = credentials,
-        isSandbox = environment == Environment.SANDBOX,
-        level = level
-    )
+    val isActive = TelemetryActivation.isActive(credentials = credentials, level = level)
     return if (isActive && credentials != null) {
         val active = createActive(credentials, level)
         TelemetrySelection(telemetry = active, runtime = active)
@@ -91,15 +107,20 @@ internal fun bind(
 }
 
 /**
- * The one binding at SDK start (RS-4): reads TelemetryBuildValues, selects, binds. Never throws. When active, the
- * telemetry is built with the app context, the SDK version and the environment name (R_08, R_10).
+ * The one binding at SDK start (RS-4): reads TelemetryBuildValues, selects, binds. Never throws. Credentials come from
+ * [SdkTelemetryCredentialsProvider]: the debug override first, in any environment, then the environment's collector
+ * (D22); the level is ALL in a release build (D23). When active, the telemetry is built with the app context, the SDK
+ * version and the environment name (R_08, R_10). [values] is injectable for tests; the SDK passes the build's.
  */
-internal fun bindTelemetry(koin: Koin, environment: Environment, context: Context): Telemetry = runCatching {
+internal fun bindTelemetry(
+    koin: Koin,
+    environment: Environment,
+    context: Context,
+    values: LocalTelemetryValues = LocalTelemetryValues.fromBuild(),
+): Telemetry = runCatching {
     val selection = selectTelemetry(
-        buildEnabled = TelemetryBuildValues.ENABLED,
-        credentialsProvider = BuildValuesCredentialsProvider,
-        environment = environment,
-        level = TelemetryLevel.parse(TelemetryBuildValues.LEVEL),
+        credentialsProvider = SdkTelemetryCredentialsProvider(environment, values),
+        level = telemetryLevel(values),
         createActive = { c, l ->
             ActiveTelemetry.create(context, c, l, BuildConfig.SDK_VERSION, environment.name.lowercase())
         }

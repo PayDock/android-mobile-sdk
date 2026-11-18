@@ -5,6 +5,9 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
 
 /** Hand-written fakes shared by the core tests. No mocking library. */
@@ -148,6 +151,39 @@ internal object TelemetryTestFakes {
         override fun count(): Int {
             threads += Thread.currentThread().name
             return records.size
+        }
+    }
+
+    /**
+     * A [FileDurableStore] on [directory] whose lock a background thread holds until [release], as the worker would
+     * mid-flush: the holder blocks inside the store's first use, while it resolves the directory.
+     */
+    class HeldFileStore(directory: File) {
+        private val entered = CountDownLatch(1)
+        private val released = CountDownLatch(1)
+
+        val store = FileDurableStore {
+            entered.countDown()
+            released.await()
+            directory
+        }
+
+        private val holder = Thread({ store.count() }, "store-holder").apply {
+            isDaemon = true
+            start()
+        }
+
+        init {
+            check(entered.await(HOLD_WAIT_SECONDS, TimeUnit.SECONDS)) { "the holder never took the lock" }
+        }
+
+        fun release() {
+            released.countDown()
+            holder.join(TimeUnit.SECONDS.toMillis(HOLD_WAIT_SECONDS))
+        }
+
+        private companion object {
+            const val HOLD_WAIT_SECONDS = 5L
         }
     }
 

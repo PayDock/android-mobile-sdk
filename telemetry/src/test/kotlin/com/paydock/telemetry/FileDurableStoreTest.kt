@@ -5,6 +5,7 @@ import com.paydock.telemetry.AttributeValue.Str
 import com.paydock.telemetry.TelemetryLimits.RECORD_MAX_AGE_MILLIS
 import com.paydock.telemetry.TelemetryLimits.STORE_MAX_BYTES
 import com.paydock.telemetry.TelemetryLimits.STORE_MAX_RECORDS
+import com.paydock.telemetry.TelemetryTestFakes.HeldFileStore
 import com.paydock.telemetry.TelemetryTestFakes.SESSION_ID
 import com.paydock.telemetry.TelemetryTestFakes.T0
 import kotlinx.serialization.json.Json
@@ -16,6 +17,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /** Unit tests for [FileDurableStore], the disk queue (R_07, R_08), on a temporary folder. */
 internal class FileDurableStoreTest {
@@ -46,6 +49,73 @@ internal class FileDurableStoreTest {
 
     private fun jsonFiles(): List<String> =
         directory.listFiles().orEmpty().map { it.name }.filter { it.endsWith(".json") }.sorted()
+
+    @Test
+    fun trySave_withTheLockFree_savesAndReturnsTrue() {
+        val store = store()
+
+        assertTrue(store.trySave(record(1), TelemetryLimits.CRASH_STORE_WAIT_MILLIS))
+
+        assertEquals(listOf("$SESSION_ID-1.json"), jsonFiles())
+        assertEquals(1, store.count())
+    }
+
+    /** R_07: a held lock makes the timed save give up after its timeout, writing nothing. */
+    @Test
+    fun trySave_withTheLockHeld_returnsFalseAfterTheTimeout_andWritesNothing() {
+        val held = HeldFileStore(directory)
+        try {
+            val started = System.nanoTime()
+
+            val saved = held.store.trySave(record(1), SHORT_WAIT_MILLIS)
+
+            val waitedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started)
+            assertFalse(saved)
+            assertTrue("waited $waitedMillis ms", waitedMillis >= SHORT_WAIT_MILLIS)
+            assertTrue("waited $waitedMillis ms", waitedMillis < SHORT_WAIT_MILLIS + SLACK_MILLIS)
+        } finally {
+            held.release()
+        }
+        assertEquals(emptyList<String>(), jsonFiles())
+        assertEquals(0, held.store.count())
+        assertTrue(held.store.trySave(record(2), SHORT_WAIT_MILLIS)) // the lock is free again
+        assertEquals(listOf("$SESSION_ID-2.json"), jsonFiles())
+    }
+
+    @Test
+    fun trySave_onAnInterruptedThread_returnsFalse_andKeepsTheInterrupt() {
+        val held = HeldFileStore(directory)
+        try {
+            Thread.currentThread().interrupt()
+
+            assertFalse(held.store.trySave(record(1), SHORT_WAIT_MILLIS))
+            assertTrue(Thread.interrupted()) // clears the flag for the next test
+        } finally {
+            held.release()
+        }
+        assertEquals(emptyList<String>(), jsonFiles())
+    }
+
+    /** Every caller but the crash path keeps blocking: a save waits for the lock however long it is held. */
+    @Test
+    fun save_withTheLockHeld_waitsForIt_thenSaves() {
+        val held = HeldFileStore(directory)
+        val done = CountDownLatch(1)
+        val saver = Thread {
+            held.store.save(record(1))
+            done.countDown()
+        }.apply {
+            isDaemon = true
+            start()
+        }
+
+        assertFalse(done.await(SHORT_WAIT_MILLIS + SLACK_MILLIS, TimeUnit.MILLISECONDS))
+        held.release()
+
+        assertTrue(done.await(SLACK_MILLIS, TimeUnit.MILLISECONDS))
+        saver.join()
+        assertEquals(listOf("$SESSION_ID-1.json"), jsonFiles())
+    }
 
     @Test
     fun save_writesOneFilePerRecord_andUpsertsById() {
@@ -277,5 +347,10 @@ internal class FileDurableStoreTest {
         store.count()
 
         assertEquals(1, resolved)
+    }
+
+    private companion object {
+        const val SHORT_WAIT_MILLIS = 100L
+        const val SLACK_MILLIS = 2_000L
     }
 }

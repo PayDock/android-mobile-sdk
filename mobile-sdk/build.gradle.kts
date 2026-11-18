@@ -170,10 +170,20 @@ abstract class GenerateTelemetryBuildValues : DefaultTask() {
     }
 }
 
-// Debug values come from the engineer's uncommitted local.properties (spec § 8); never commit them.
-// Every other build type is always disabled and empty (D14): local.properties is not read for it.
-// No release-variant unit test guards this on purpose: AGP 9 creates no release unit-test task, and the release
-// inputs below are fixed literals, so no local value can reach a release build. Revisit with the turn-on ticket.
+/** Passes the release variant's generated TelemetryBuildValues.kt to the unit tests (TelemetryReleaseValuesTest). */
+class ReleaseTelemetryValuesArgument(
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    val file: Provider<RegularFile>,
+) : CommandLineArgumentProvider {
+    override fun asArguments(): List<String> =
+        listOf("-Dpaydock.telemetry.releaseValuesFile=${file.get().asFile.absolutePath}")
+}
+
+// Debug values come from the engineer's uncommitted local.properties (spec § 8) and override the collector
+// (D22); never commit them. Every other build type is generated disabled and empty, without reading
+// local.properties, so a release build sends only to the SDK's built-in collector URL, with no credential, at
+// level all (D23). TelemetryReleaseValuesTest reads the generated release values and fails if any is set.
 androidComponents {
     onVariants { variant ->
         val isDebug = variant.buildType == "debug"
@@ -197,6 +207,15 @@ androidComponents {
             )
         }
         variant.sources.kotlin?.addGeneratedSourceDirectory(task, GenerateTelemetryBuildValues::outputDir)
+        if (variant.buildType == "release") {
+            val releaseValuesFile = task.flatMap {
+                it.outputDir.file("com/paydock/core/telemetry/TelemetryBuildValues.kt")
+            }
+            tasks.withType<Test>().configureEach {
+                dependsOn(task)
+                jvmArgumentProviders.add(ReleaseTelemetryValuesArgument(releaseValuesFile))
+            }
+        }
     }
 }
 

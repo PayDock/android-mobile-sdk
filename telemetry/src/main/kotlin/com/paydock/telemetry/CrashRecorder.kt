@@ -4,9 +4,11 @@ package com.paydock.telemetry
  * Writes one crash record straight to the store, on the calling (crashing) thread (D17, R_02): kind EXCEPTION, source
  * UNCAUGHT_HANDLER, the thread's name, ErrorInfo.from(throwable), createdAt = clock.now(), id "<sessionId>-<next>".
  * Built by RecordFactory, filtered by Allowlist; saved only when it keeps session.id and log.record.uid. The connection
- * type is read once, UNKNOWN on failure. The build and the save run inside [diskWrites], so a debug app's StrictMode
- * disk policy cannot stop the write (review fix). Never posts to the worker, never sends; may throw (the handler
- * catches).
+ * type is read once, UNKNOWN on failure. The save waits at most [TelemetryLimits.CRASH_STORE_WAIT_MILLIS] for the store
+ * ([DurableStore.trySave], R_07): when the worker holds it longer, the record is dropped silently, as there is nothing
+ * to report it with while the app dies, and the handler goes on to the previous handler. The build and the save run
+ * inside [diskWrites], so a debug app's StrictMode disk policy cannot stop the write (review fix). Never posts to the
+ * worker, never sends; may throw (the handler catches).
  *
  * Building one only stores references, so the active runtime can build it on any thread without I/O. The ID comes from
  * the session's shared [RecordSequence], so a crash record never collides with one the worker creates.
@@ -39,7 +41,9 @@ internal class CrashRecorder(
         val connection = runCatching { deviceContext.networkConnectionType() }
             .getOrDefault(NetworkConnectionType.UNKNOWN)
         val record = Allowlist.filter(RecordFactory.create(pending, connection))
-        if (record.sessionId != null && record.value(RECORD_UID) is AttributeValue.Str) store.save(record)
+        if (record.sessionId != null && record.value(RECORD_UID) is AttributeValue.Str) {
+            store.trySave(record, TelemetryLimits.CRASH_STORE_WAIT_MILLIS) // false: not saved in time, dropped
+        }
     }
 
     private companion object {

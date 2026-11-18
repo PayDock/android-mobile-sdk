@@ -2,8 +2,9 @@ package com.paydock.telemetry
 
 /**
  * One OTLP/HTTP attempt per batch (spec § 8): encodes the batch with [OtlpLogEncoder], gzips it and sends it with
- * three headers, `Content-Encoding: gzip`, `Content-Type: application/json` and `Authorization: Basic …`, then maps
- * the transport's result. Never throws.
+ * two headers, `Content-Encoding: gzip` and `Content-Type: application/json`, plus `Authorization: Basic …` when
+ * there is a credential (the debug override); the SDK's collector gets none (D22). Then maps the transport's result.
+ * Never throws.
  */
 internal class OtlpExporter(
     private val transport: TelemetryTransport,
@@ -18,11 +19,9 @@ internal class OtlpExporter(
         ExportResult.Retry(null)
     }
 
-    private fun headers(): Map<String, String> = linkedMapOf(
-        CONTENT_ENCODING to GZIP,
-        CONTENT_TYPE to JSON,
-        AUTHORIZATION to authorization()
-    )
+    private fun headers(): Map<String, String> = linkedMapOf(CONTENT_ENCODING to GZIP, CONTENT_TYPE to JSON).apply {
+        if (credentials.authorization.isNotBlank()) put(AUTHORIZATION, authorization())
+    }
 
     /** `Basic <authorization>`, or the value as is when it already starts with `Basic `. */
     private fun authorization(): String {
