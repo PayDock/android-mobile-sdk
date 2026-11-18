@@ -371,6 +371,37 @@ internal class ActiveTelemetryTest {
         assertTrue(telemetry.currentState().flushScheduled)
     }
 
+    /**
+     * MD-47 R_01, end to end: a store filled while offline loses a record on every save, while the threshold export
+     * sends the reason's notice; the drop counted in that run starts a new notice, so no notice id is sent twice.
+     */
+    @Test
+    fun aStoreFilledOffline_thenASuccessfulExporter_sendsEachNoticeOnce() {
+        val dispatcher = ImmediateDispatcher()
+        val store = FileDurableStore { File(folder.root, FileDurableStore.DIRECTORY_NAME) }
+        (1L..TelemetryLimits.STORE_MAX_RECORDS).forEach { store.save(storedRecord(it)) }
+        val transport = FakeTransport()
+        val telemetry = telemetry(dispatcher = dispatcher, transport = transport, store = store)
+
+        var reported = 0
+        while (transport.sent.isEmpty() && reported < TelemetryLimits.FLUSH_THRESHOLD) {
+            telemetry.report(TelemetryTestFakes.sdkError("test.Error${reported++}"))
+        }
+        dispatcher.runDelayed()
+        dispatcher.runDelayed()
+
+        val noticeIds = transport.sent.flatMap { request ->
+            request.recordIds().zip(request.recordValues("event.name"))
+                .filter { (_, eventName) -> eventName == "paydock.telemetry.dropped" }
+                .map { (id, _) -> id }
+        }
+        assertTrue("the threshold export ran", transport.sent.isNotEmpty())
+        assertEquals("a notice before and one after the export: $noticeIds", 2, noticeIds.size)
+        assertEquals("a sent notice was sent again: $noticeIds", noticeIds.toSet().size, noticeIds.size)
+        assertEquals(0, store.count())
+        assertTrue(telemetry.currentState().notices.isEmpty())
+    }
+
     /** The store creates nothing until the first record: an active, started but idle telemetry writes no file. */
     @Test
     fun activeButIdle_createsNoTelemetryDirectory() {

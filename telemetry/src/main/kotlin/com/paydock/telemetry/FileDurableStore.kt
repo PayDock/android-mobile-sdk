@@ -16,7 +16,9 @@ import kotlin.concurrent.withLock
  * An in-memory index (id → time, file size, notice or not) is built once from the directory on first use, then kept
  * up to date by every save and remove: [count], the [oldest] order and the cap and age checks of [prune] read it, so
  * a save never re-reads every file. The disk stays the only queue; the index is a view of it, rebuilt on each
- * launch. A file that does not parse is deleted and skipped, when the index is built and when [oldest] reads it.
+ * launch. A file that reads but does not parse, or whose id differs from its name, is deleted and skipped, when the
+ * index is built and when [oldest] reads it. A file that cannot be read (an I/O error) is kept and skipped: it is
+ * not indexed when the index is built, and keeps its index entry at [oldest], so it is tried again and ages out.
  *
  * The directory is resolved on first use, on the worker, and created only by the first [save]: a read of a missing
  * directory returns empty and creates nothing. Every method holds the store's lock, because a crash handler writes
@@ -24,7 +26,8 @@ import kotlin.concurrent.withLock
  * Limits come from [TelemetryLimits].
  */
 internal class FileDurableStore(
-    directory: () -> File, // resolved on first use, on the worker
+    private val readText: (File) -> String = { it.readText(Charsets.UTF_8) }, // a seam for the I/O-error tests
+    directory: () -> File, // resolved on first use, on the worker; last, so callers keep the trailing lambda
 ) : DurableStore {
 
     private class Entry(val time: Long, val size: Long, val isNotice: Boolean)
@@ -77,15 +80,22 @@ internal class FileDurableStore(
         val result = mutableListOf<TelemetryRecord>()
         for (id in orderedIds(index)) {
             if (result.size >= max) break
-            val record = read(fileOf(id))
-            if (record == null || record.id != id) {
-                fileOf(id).delete()
-                index.remove(id)
-            } else {
-                result += record
+            when (val read = read(fileOf(id))) {
+                Read.Unreadable -> Unit // kept, and still indexed: tried again on the next read
+                is Read.Record -> if (read.record.id == id) {
+                    result += read.record
+                } else {
+                    discard(id, index)
+                }
+                Read.Invalid -> discard(id, index)
             }
         }
         result
+    }
+
+    private fun discard(id: String, index: MutableMap<String, Entry>) {
+        fileOf(id).delete()
+        index.remove(id)
     }
 
     override fun remove(ids: Collection<String>) {
@@ -147,21 +157,39 @@ internal class FileDurableStore(
         val index = mutableMapOf<String, Entry>()
         directory.listFiles()?.filter { it.isFile && it.name.endsWith(SUFFIX) }?.forEach { file ->
             val id = file.name.removeSuffix(SUFFIX)
-            val record = read(file)
-            if (record == null || record.id != id) {
-                file.delete()
-            } else {
-                index[id] = Entry(record.timeUnixMillis, file.length(), record.isDroppedNotice)
+            when (val read = read(file)) {
+                Read.Unreadable -> Unit // kept, not indexed: tried again on the next launch
+                is Read.Record -> if (read.record.id == id) {
+                    index[id] = Entry(read.record.timeUnixMillis, file.length(), read.record.isDroppedNotice)
+                } else {
+                    file.delete()
+                }
+                Read.Invalid -> file.delete()
             }
         }
         return index
     }
 
-    @Suppress("SwallowedException") // an unreadable file is skipped and deleted; nothing of it is kept
-    private fun read(file: File): TelemetryRecord? = try {
-        (Json.parseToJsonElement(file.readText(Charsets.UTF_8)) as? JsonObject)?.let(OtlpLogEncoder::parseRecord)
-    } catch (ignored: Exception) {
-        null
+    /** What reading one file gave: a record, a file that cannot be read now, or one that never will parse. */
+    private sealed interface Read {
+        class Record(val record: TelemetryRecord) : Read
+        data object Unreadable : Read
+        data object Invalid : Read
+    }
+
+    @Suppress("SwallowedException") // an unreadable file is kept and tried again; one that does not parse is deleted
+    private fun read(file: File): Read {
+        val text = try {
+            readText(file)
+        } catch (ignored: IOException) {
+            return Read.Unreadable
+        }
+        return try {
+            val record = (Json.parseToJsonElement(text) as? JsonObject)?.let(OtlpLogEncoder::parseRecord)
+            if (record == null) Read.Invalid else Read.Record(record)
+        } catch (ignored: Exception) {
+            Read.Invalid
+        }
     }
 
     private fun fileOf(id: String): File = File(directory, id + SUFFIX)

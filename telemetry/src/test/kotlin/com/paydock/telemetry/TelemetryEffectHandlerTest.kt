@@ -107,8 +107,21 @@ internal class TelemetryEffectHandlerTest {
         assertFalse("a rejected record is a drop, not a failure", followUps.failed)
     }
 
+    /** MD-47 R_05: a dropped notice that lost its `session.id` is not saved and counts nothing, so it never loops. */
     @Test
-    fun export_returnsExportStoppedFirst_thenPendingCounted_thenNoticesExported_thenTheDropCounts() {
+    fun persist_ofADroppedNoticeThatLostItsSessionId_savesNothing_andReturnsNothing() {
+        val store = InMemoryStore()
+        val notice = PendingRecord("not-a-uuid-1", "not-a-uuid", TelemetryEvent.Dropped(DroppedReason.REJECTED, 1), T0)
+
+        val followUps = handler(store).run(listOf(TelemetryEffect.Persist(notice)))
+
+        assertTrue(store.saved.isEmpty())
+        assertTrue(followUps.intents.isEmpty())
+        assertFalse(followUps.failed)
+    }
+
+    @Test
+    fun export_returnsNoticesExportedFirst_thenExportStopped_thenPendingCounted_thenTheDropCounts() {
         val store = InMemoryStore()
         val notice = PendingRecord("$SESSION_ID-1", SESSION_ID, TelemetryEvent.Dropped(DroppedReason.RATE_LIMIT, 2), T0)
         store.save(Allowlist.filter(RecordFactory.create(notice, NetworkConnectionType.WIFI)))
@@ -127,9 +140,9 @@ internal class TelemetryEffectHandlerTest {
 
         assertEquals(
             listOf(
+                TelemetryIntent.NoticesExported(setOf(notice.id)),
                 TelemetryIntent.ExportStopped,
                 TelemetryIntent.PendingCounted(2),
-                TelemetryIntent.NoticesExported(setOf(notice.id)),
                 RecordsDropped(DroppedReason.TOO_OLD, 1),
                 RecordsDropped(DroppedReason.STORE_FULL, 2),
                 RecordsDropped(DroppedReason.REJECTED, 1)
@@ -137,6 +150,31 @@ internal class TelemetryEffectHandlerTest {
             followUps.intents
         )
         assertEquals(3, transport.sent.size)
+    }
+
+    /**
+     * MD-47 R_01: a notice the export just sent follows first, before the drop an earlier effect of the same run
+     * counted, so the reducer clears it before the drop and the drop starts a new notice instead of updating it.
+     */
+    @Test
+    fun sentNotices_followFirst_beforeTheDropsOfAnEarlierEffectInTheSameRun() {
+        val store = InMemoryStore()
+        val notice = PendingRecord("$SESSION_ID-2", SESSION_ID, TelemetryEvent.Dropped(DroppedReason.STORE_FULL, 1), T0)
+        store.save(Allowlist.filter(RecordFactory.create(notice, NetworkConnectionType.WIFI)))
+        store.extraPrune = PruneResult(storeFull = 1)
+
+        val followUps = handler(store).run(listOf(TelemetryEffect.Persist(pending(1)), TelemetryEffect.Export(50)))
+
+        assertEquals(
+            listOf(
+                TelemetryIntent.NoticesExported(setOf(notice.id)),
+                RecordsDropped(DroppedReason.STORE_FULL, 1),
+                TelemetryIntent.PendingCounted(0),
+                RecordsDropped(DroppedReason.STORE_FULL, 1)
+            ),
+            followUps.intents
+        )
+        assertFalse(followUps.failed)
     }
 
     @Test

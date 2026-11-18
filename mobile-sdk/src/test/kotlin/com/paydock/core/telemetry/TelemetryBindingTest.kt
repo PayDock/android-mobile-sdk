@@ -33,6 +33,7 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import io.mockk.verify
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -188,7 +189,13 @@ internal class TelemetryBindingTest {
 
     @Before
     fun setUp() {
+        resetBoundTelemetry()
         koin = koinApplication { }.koin
+    }
+
+    @After
+    fun tearDown() {
+        resetBoundTelemetry()
     }
 
     @Test
@@ -460,6 +467,62 @@ internal class TelemetryBindingTest {
         assertSame(NoOpTelemetry, koin.get<Telemetry>())
     }
 
+    /**
+     * MD-47 R_04: while an active facade is bound, a second active selection returns the first, registers it in the
+     * new Koin and never starts the second runtime, nor sends its test record or test crash.
+     */
+    @Test
+    fun bind_activeWhileActiveIsBound_returnsTheFirst_registersItInTheNewKoin_andNeverStartsTheSecond() {
+        val firstRuntime = CountingRuntime()
+        val first = activeTelemetry()
+        bind(koin, TelemetrySelection(telemetry = first, runtime = firstRuntime))
+        val secondRuntime = CountingRuntime()
+        val newKoin = koinApplication { modules(defaultTelemetryModule) }.koin
+
+        val bound = bind(
+            newKoin,
+            TelemetrySelection(telemetry = activeTelemetry(), runtime = secondRuntime),
+            sendTestRecord = true,
+            testCrash = true
+        )
+
+        assertSame(first, bound)
+        assertSame(first, newKoin.get<Telemetry>())
+        assertEquals(emptyList<String>(), secondRuntime.calls)
+        assertEquals(listOf("start"), firstRuntime.calls)
+    }
+
+    /** MD-47 R_04: an inactive selection replaces the bound active facade with the no-op, and then binds afresh. */
+    @Test
+    fun bind_inactiveAfterActive_bindsTheNoOp_andANewActiveSelectionThenStarts() {
+        bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = CountingRuntime()))
+
+        val noOp = bind(koin, TelemetrySelection(telemetry = NoOpTelemetry, runtime = NoOpTelemetry))
+
+        assertSame(NoOpTelemetry, noOp)
+        assertSame(NoOpTelemetry, koin.get<Telemetry>())
+
+        val runtime = CountingRuntime()
+        val next = activeTelemetry()
+        assertSame(next, bind(koin, TelemetrySelection(telemetry = next, runtime = runtime)))
+        assertEquals(1, runtime.starts)
+    }
+
+    /** MD-47 R_04: a failed start leaves no dead active facade bound: the next active selection starts. */
+    @Test
+    fun bind_afterAFailedStart_aNewActiveSelectionStarts() {
+        val failing = CountingRuntime(failure = IllegalStateException("synthetic start failure"))
+        assertSame(NoOpTelemetry, bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = failing)))
+
+        val runtime = CountingRuntime()
+        val next = activeTelemetry()
+        val bound = bind(koin, TelemetrySelection(telemetry = next, runtime = runtime))
+
+        assertSame(next, bound)
+        assertSame(next, koin.get<Telemetry>())
+        assertEquals(1, runtime.starts)
+    }
+
     @Test
     fun bind_sendTestRecordTrue_sendsOneTestRecordAfterStart() {
         val runtime = CountingRuntime()
@@ -474,6 +537,7 @@ internal class TelemetryBindingTest {
         val runtime = CountingRuntime()
 
         bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = runtime), sendTestRecord = false)
+        resetBoundTelemetry()
         bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = runtime))
 
         assertEquals(2, runtime.starts)
@@ -522,6 +586,7 @@ internal class TelemetryBindingTest {
         val runtime = CountingRuntime()
 
         bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = runtime), testCrash = false)
+        resetBoundTelemetry()
         bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = runtime))
 
         assertEquals(2, runtime.starts)

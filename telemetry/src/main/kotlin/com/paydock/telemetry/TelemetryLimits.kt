@@ -13,6 +13,7 @@ internal object TelemetryLimits {
     const val RETRY_MAX_ATTEMPTS = 5
     const val RETRY_BASE_DELAY_MILLIS = 5_000L
     const val RETRY_MAX_DELAY_MILLIS = 60_000L
+    const val RETRY_AFTER_MAX_MILLIS = 3_600_000L // the longest Retry-After honoured
     const val HOURLY_CAP = 400 // records created per hour, notices excluded
     const val HOUR_MILLIS = 3_600_000L
     const val ORDERING_WINDOW_MILLIS = 1_800_000L // D20: 30 min

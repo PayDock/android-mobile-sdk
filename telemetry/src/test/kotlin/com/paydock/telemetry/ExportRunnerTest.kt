@@ -5,6 +5,7 @@ import com.paydock.telemetry.TelemetryLimits.BATCH_MAX_BYTES
 import com.paydock.telemetry.TelemetryLimits.BATCH_MAX_RECORDS
 import com.paydock.telemetry.TelemetryLimits.ORDERING_WINDOW_MILLIS
 import com.paydock.telemetry.TelemetryLimits.RECORD_MAX_AGE_MILLIS
+import com.paydock.telemetry.TelemetryLimits.RETRY_AFTER_MAX_MILLIS
 import com.paydock.telemetry.TelemetryLimits.RETRY_MAX_ATTEMPTS
 import com.paydock.telemetry.TelemetryTestFakes.FakeClock
 import com.paydock.telemetry.TelemetryTestFakes.FakeDeviceContextProvider
@@ -108,6 +109,47 @@ internal class ExportRunnerTest {
     @Test
     fun a5xx_isRetriedLater() {
         assertRetried(TransportResult.HttpError(503, null), 2_500L..5_000L)
+    }
+
+    /**
+     * MD-47 R_03: a huge `Retry-After` neither overflows the next attempt time nor stops sending: the retry waits an
+     * hour on the monotonic clock, and the flush after it sends.
+     */
+    @Test
+    fun aHugeRetryAfter_waitsAnHour_thenSends() {
+        listOf(Long.MAX_VALUE, OtlpHttpTransport.retryAfterMillis("9223372036854775")).forEach { retryAfter ->
+            store.records.clear()
+            retries.clear()
+            saveRecords(1L..2L)
+            val transport = FakeTransport(TransportResult.HttpError(429, retryAfter))
+            val runner = runner(transport)
+
+            assertEquals(FlushReport(pending = 2), runner.flush(now, BATCH_MAX_RECORDS))
+            assertEquals(listOf(RETRY_AFTER_MAX_MILLIS), retries)
+
+            monotonic.elapsedMillis += RETRY_AFTER_MAX_MILLIS - 1
+            assertEquals(FlushReport(pending = 2), runner.flush(now, BATCH_MAX_RECORDS))
+            assertEquals("Retry-After $retryAfter: nothing sent before the hour", 1, transport.sent.size)
+
+            monotonic.elapsedMillis += 1
+            assertEquals(FlushReport(pending = 0), runner.flush(now, BATCH_MAX_RECORDS))
+            assertEquals("Retry-After $retryAfter: sent after the hour", 2, transport.sent.size)
+        }
+    }
+
+    /** MD-47 R_03: near the end of the monotonic range the next attempt time saturates, never wrapping negative. */
+    @Test
+    fun theNextAttemptTime_saturates_insteadOfWrappingNegative() {
+        saveRecords(1L..2L)
+        monotonic.elapsedMillis = Long.MAX_VALUE - 1_000
+        val transport = FakeTransport(TransportResult.HttpError(429, RETRY_AFTER_MAX_MILLIS))
+        val runner = runner(transport)
+
+        assertEquals(FlushReport(pending = 2), runner.flush(now, BATCH_MAX_RECORDS))
+        monotonic.elapsedMillis += 1
+        assertEquals(FlushReport(pending = 2), runner.flush(now, BATCH_MAX_RECORDS))
+
+        assertEquals("a wrapped next attempt time would send at once", 1, transport.sent.size)
     }
 
     @Test
@@ -217,6 +259,53 @@ internal class ExportRunnerTest {
 
         val rejected = runner(FakeTransport(TransportResult.HttpError(400, null))).flush(now, BATCH_MAX_RECORDS)
         assertEquals(setOf(notice.id), rejected.exportedNoticeIds)
+    }
+
+    private fun notice(
+        sequence: Long,
+        reason: TelemetryEvent.DroppedReason = TelemetryEvent.DroppedReason.STORE_FULL,
+    ) = TelemetryTestFakes.record(sequence, event = TelemetryEvent.Dropped(reason, 1))
+
+    /** MD-47 R_05: a rejected batch of notices only counts nothing rejected, and reports their ids exported. */
+    @Test
+    fun aRejectedBatchOfNoticesOnly_countsNoneRejected_andReportsThemExported() {
+        val notices = listOf(
+            notice(1, TelemetryEvent.DroppedReason.STORE_FULL),
+            notice(2, TelemetryEvent.DroppedReason.RATE_LIMIT)
+        ).onEach(store::save)
+
+        val report = runner(FakeTransport(TransportResult.HttpError(400, null))).flush(now, BATCH_MAX_RECORDS)
+
+        assertEquals(0, report.rejected)
+        assertEquals(notices.map { it.id }.toSet(), report.exportedNoticeIds)
+        assertEquals(0, store.count())
+    }
+
+    /** MD-47 R_05: a notice refused alone as too large is removed and reported exported, never counted rejected. */
+    @Test
+    fun aSingleNoticeTooLarge_countsNoneRejected() {
+        val notice = notice(1).also(store::save)
+
+        val report = runner(FakeTransport(TransportResult.HttpError(413, null))).flush(now, BATCH_MAX_RECORDS)
+
+        assertEquals(0, report.rejected)
+        assertEquals(setOf(notice.id), report.exportedNoticeIds)
+        assertEquals(0, store.count())
+    }
+
+    /** MD-47 R_05: a partial success counts at most the batch's real records, its notice excluded. */
+    @Test
+    fun aPartialSuccessOf5_onTwoRecordsAndANotice_counts2Rejected() {
+        saveRecords(1L..2L)
+        val notice = notice(3).also(store::save)
+
+        val transport = FakeTransport(TransportResult.Success(200, rejectedRecords = 5))
+
+        val report = runner(transport).flush(now, BATCH_MAX_RECORDS)
+
+        assertEquals(2, report.rejected)
+        assertEquals(setOf(notice.id), report.exportedNoticeIds)
+        assertEquals(0, store.count())
     }
 
     @Test

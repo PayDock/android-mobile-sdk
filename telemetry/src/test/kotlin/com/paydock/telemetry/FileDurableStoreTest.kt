@@ -17,6 +17,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -28,7 +29,12 @@ internal class FileDurableStoreTest {
 
     private val directory: File by lazy { File(folder.root, FileDurableStore.DIRECTORY_NAME) }
 
-    private fun store() = FileDurableStore { directory }
+    /** File names whose read fails with an I/O error, as a device error would; permissions can't do it under root. */
+    private val unreadableNames = mutableSetOf<String>()
+
+    private fun store() = FileDurableStore(directory = { directory }, readText = { file ->
+        if (file.name in unreadableNames) throw IOException("unreadable in this test") else file.readText(Charsets.UTF_8)
+    })
 
     /** Each sequence its own error type, so the duplicate gate never merges two of them. */
     private fun record(sequence: Long, createdAt: Long = T0 + sequence) = TelemetryTestFakes.record(
@@ -296,14 +302,14 @@ internal class FileDurableStoreTest {
         assertEquals(3, store.count())
         assertTrue(file.exists())
 
-        // oldest reads the files: the unreadable one is skipped and deleted.
+        // oldest reads the files: the malformed one is skipped and deleted.
         assertEquals(listOf("$SESSION_ID-1", "$SESSION_ID-3"), store.oldest(10).map { it.id })
         assertFalse(file.exists())
         assertEquals(2, store.count())
     }
 
     @Test
-    fun anUnreadableFile_isSkippedAndDeleted_whenTheIndexIsBuilt() {
+    fun aMalformedOrMisnamedFile_isSkippedAndDeleted_whenTheIndexIsBuilt() {
         store().save(record(1))
         val garbage = File(directory, "$SESSION_ID-2.json").apply { writeText("{\"timeUnixNano\":") }
         val misnamed = File(directory, "$SESSION_ID-3.json").apply {
@@ -316,6 +322,55 @@ internal class FileDurableStoreTest {
         assertEquals(listOf("$SESSION_ID-1"), restarted.oldest(10).map { it.id })
         assertFalse(garbage.exists())
         assertFalse(misnamed.exists())
+    }
+
+    /** Makes every read of [file] fail with an I/O error, until [makeReadable]. */
+    private fun makeUnreadable(file: File) {
+        unreadableNames += file.name
+    }
+
+    private fun makeReadable(file: File) {
+        unreadableNames -= file.name
+    }
+
+    /** MD-47 R_02: a file that cannot be read is kept and skipped at index build, then indexed once it reads. */
+    @Test
+    fun anUnreadableFile_isKeptAndNotIndexed_whenTheIndexIsBuilt_thenReadOnceReadable() {
+        store().save(record(1))
+        store().save(record(2))
+        val unreadable = File(directory, "$SESSION_ID-2.json")
+        makeUnreadable(unreadable)
+        val malformed = File(directory, "$SESSION_ID-3.json").apply { writeText("{\"timeUnixNano\":") }
+
+        val restarted = store()
+
+        assertEquals(1, restarted.count())
+        assertEquals(listOf("$SESSION_ID-1"), restarted.oldest(10).map { it.id })
+        assertTrue("an unreadable file is kept", unreadable.exists())
+        assertFalse("a malformed file is still deleted", malformed.exists())
+
+        makeReadable(unreadable)
+        assertEquals(listOf("$SESSION_ID-1", "$SESSION_ID-2"), store().oldest(10).map { it.id })
+    }
+
+    /** MD-47 R_02: at `oldest`, a file that cannot be read is skipped, kept and stays indexed; a malformed one goes. */
+    @Test
+    fun anUnreadableFile_isSkippedButKeptAndIndexed_byOldest_whileAMalformedOneIsDeleted() {
+        val store = store()
+        (1L..3L).forEach { store.save(record(it)) }
+        assertEquals(3, store.count())
+        val unreadable = File(directory, "$SESSION_ID-2.json")
+        makeUnreadable(unreadable)
+        val malformed = File(directory, "$SESSION_ID-3.json").apply { writeText("not json") }
+
+        assertEquals(listOf("$SESSION_ID-1"), store.oldest(10).map { it.id })
+
+        assertTrue("an unreadable file is kept", unreadable.exists())
+        assertFalse("a malformed file is still deleted", malformed.exists())
+        assertEquals("the unreadable file stays indexed", 2, store.count())
+
+        makeReadable(unreadable)
+        assertEquals(listOf("$SESSION_ID-1", "$SESSION_ID-2"), store.oldest(10).map { it.id })
     }
 
     @Test

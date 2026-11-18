@@ -6,7 +6,8 @@ import kotlinx.serialization.json.JsonElement
 /**
  * One flush of the disk queue at a time, on the worker (R_12, R_13, R_18). It prunes the store, merges duplicates,
  * cuts the records into batches of at most `maxRecords` records and [TelemetryLimits.BATCH_MAX_BYTES], oldest first,
- * and exports each in turn. Files are removed only after a success, a rejection or a single-record 413.
+ * and exports each in turn. Files are removed only after a success, a rejection or a single-record 413. Only the
+ * sources of real records count as rejected: a dropped notice is removed and reported exported, never counted.
  *
  * Every record of a flush goes out stamped by [SendStamp] with the flush's time and the [clockOffset] read once (D20),
  * before it is sized and batched; the store keeps the record as it was.
@@ -70,13 +71,16 @@ internal class ExportRunner(
         val merged = DuplicateGate.merge(store.oldest(TelemetryLimits.STORE_MAX_RECORDS))
             .map { it.copy(record = SendStamp.stamp(it.record, now, offset)) }
         val (sendable, unusable) = merged.partition { isSendable(it.record) }
-        unusable.forEach { remove(listOf(Sized(it, 0)), tally, rejected = it.sourceIds.size.toLong()) }
+        unusable.forEach { unsendable ->
+            val sized = listOf(Sized(unsendable, 0))
+            remove(sized, tally, rejected = recordSources(sized))
+        }
 
         val envelope = OtlpLogEncoder.encode(resource, emptyList()).size
         val queue = ArrayDeque(batches(sendable.map { Sized(it, encodedSize(it.record)) }, maxRecords, envelope))
         while (queue.isNotEmpty()) {
             val batch = queue.removeFirst()
-            val sources = batch.sumOf { it.merged.sourceIds.size }.toLong()
+            val sources = recordSources(batch)
             when (val result = exporter.export(ExportBatch(resource, batch.map { it.merged.record }))) {
                 is ExportResult.Success -> {
                     failedAttempts = 0
@@ -96,7 +100,11 @@ internal class ExportRunner(
         }
     }
 
-    /** Removes the batch's sources and counts [rejected]; its notices count as exported. */
+    /** The sources of the batch's records, dropped notices excluded: what a refusal counts as rejected. */
+    private fun recordSources(batch: List<Sized>): Long =
+        batch.filterNot { it.merged.record.isDroppedNotice }.sumOf { it.merged.sourceIds.size }.toLong()
+
+    /** Removes every source of the batch and counts [rejected]; its notices count as exported. */
     private fun remove(batch: List<Sized>, tally: Tally, rejected: Long) {
         store.remove(batch.flatMap { it.merged.sourceIds })
         tally.rejected += rejected.toInt()
@@ -107,7 +115,8 @@ internal class ExportRunner(
         failedAttempts++
         if (failedAttempts >= TelemetryLimits.RETRY_MAX_ATTEMPTS) return stop(tally)
         val delay = retryPolicy.delayMillis(failedAttempts, retryAfterMillis)
-        nextAttemptAt = monotonic.elapsed() + delay
+        val now = monotonic.elapsed()
+        nextAttemptAt = if (delay > Long.MAX_VALUE - now) Long.MAX_VALUE else now + delay // saturates, never negative
         runCatching { scheduleRetry(delay) }
     }
 

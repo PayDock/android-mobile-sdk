@@ -5,12 +5,14 @@ import com.paydock.telemetry.TelemetryIntent.RecordsDropped
 
 /**
  * The only place with I/O, on the telemetry worker only. Runs each effect in turn and returns the follow-up intents
- * they produced, in order; a failing effect produces none and never stops the next (R_02). The failure is never
- * thrown, but it is reported: [Outcome.failed] tells the caller that at least one effect threw.
+ * they produced, in order, the sent notices first (see [run]); a failing effect produces none and never stops the
+ * next (R_02). The failure is never thrown, but it is reported: [Outcome.failed] tells the caller that at least one
+ * effect threw.
  *
  * A persisted record is built by [RecordFactory] and filtered by [Allowlist] before it is stored; a record that lost
- * its `session.id` or `log.record.uid` is never stored. Every export carries the device context, so each batch holds
- * `app.installation.id` and each record its `session.id` (R_12).
+ * its `session.id` or `log.record.uid` is never stored, and counts as one rejected record, except a dropped notice,
+ * which returns nothing, so a lost notice never starts a notice of its own. Every export carries the device context,
+ * so each batch holds `app.installation.id` and each record its `session.id` (R_12).
  */
 internal class TelemetryEffectHandler(
     private val store: DurableStore,
@@ -23,7 +25,12 @@ internal class TelemetryEffectHandler(
     /** What one [run] produced: the follow-up intents, in order, and whether any effect threw. */
     data class Outcome(val intents: List<TelemetryIntent>, val failed: Boolean)
 
-    /** The follow-up intents, in order, and whether one failed; each effect wrapped, a failure never stops the next. */
+    /**
+     * The follow-up intents, in order, and whether one failed; each effect wrapped, a failure never stops the next.
+     * Every [TelemetryIntent.NoticesExported] goes first, the others keep their order: a notice the export just sent
+     * leaves the state before any drop counted in the same run, so that drop starts a new notice instead of updating,
+     * and re-sending, the sent one (R_09). It arms no timer, so `ExportStopped` still precedes anything that can.
+     */
     @Suppress("TooGenericExceptionCaught", "SwallowedException") // a failure is reported, never thrown
     fun run(effects: List<TelemetryEffect>): Outcome {
         var failed = false
@@ -35,7 +42,8 @@ internal class TelemetryEffectHandler(
                 emptyList() // A failing effect never stops the following ones.
             }
         }
-        return Outcome(intents, failed)
+        val (sent, rest) = intents.partition { it is TelemetryIntent.NoticesExported }
+        return Outcome(sent + rest, failed)
     }
 
     private fun runEffect(effect: TelemetryEffect): List<TelemetryIntent> = when (effect) {
@@ -51,7 +59,11 @@ internal class TelemetryEffectHandler(
     private fun persist(pending: PendingRecord): List<TelemetryIntent> {
         val record = Allowlist.filter(RecordFactory.create(pending, deviceContext.networkConnectionType()))
         if (record.sessionId == null || record.value(RECORD_UID) !is AttributeValue.Str) {
-            return listOf(RecordsDropped(DroppedReason.REJECTED, 1))
+            return if (pending.event is TelemetryEvent.Dropped) {
+                emptyList()
+            } else {
+                listOf(RecordsDropped(DroppedReason.REJECTED, 1))
+            }
         }
         store.save(record)
         val pruned = store.prune(clock.now())

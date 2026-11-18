@@ -1,5 +1,6 @@
 package com.paydock.telemetry
 
+import com.paydock.telemetry.TelemetryLimits.RETRY_AFTER_MAX_MILLIS
 import com.paydock.telemetry.TelemetryLimits.RETRY_BASE_DELAY_MILLIS
 import com.paydock.telemetry.TelemetryLimits.RETRY_MAX_DELAY_MILLIS
 import org.junit.Assert.assertEquals
@@ -33,6 +34,20 @@ internal class RetryPolicyTest {
         assertEquals(7_000L, policy.delayMillis(1, 7_000L))
         assertEquals(120_000L, policy.delayMillis(5, 120_000L))
         assertTrue(policy.delayMillis(4, 0L) >= 20_000L)
+    }
+
+    /** MD-47 R_03: a `Retry-After` beyond an hour waits an hour; a negative one gives the jittered back-off. */
+    @Test
+    fun retryAfter_isCappedAtAnHour_andANegativeOneGivesTheJitter() {
+        val hour = RETRY_AFTER_MAX_MILLIS
+
+        assertEquals(3_600_000L, hour)
+        assertEquals(hour, RetryPolicy(Random(7)).delayMillis(1, hour))
+        assertEquals(hour, RetryPolicy(Random(7)).delayMillis(1, 2 * hour))
+        assertEquals(hour, RetryPolicy(Random(7)).delayMillis(1, Long.MAX_VALUE))
+        assertEquals(RetryPolicy(Random(7)).delayMillis(1, null), RetryPolicy(Random(7)).delayMillis(1, -1L))
+        val jitter = RETRY_BASE_DELAY_MILLIS / 2..RETRY_BASE_DELAY_MILLIS
+        assertTrue(RetryPolicy(Random(7)).delayMillis(1, Long.MIN_VALUE) in jitter)
     }
 
     @Test

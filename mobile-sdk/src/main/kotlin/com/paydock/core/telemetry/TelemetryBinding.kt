@@ -1,6 +1,7 @@
 package com.paydock.core.telemetry
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import com.paydock.BuildConfig
 import com.paydock.core.domain.model.Environment
 import com.paydock.telemetry.ActiveTelemetry
@@ -83,10 +84,21 @@ internal fun selectTelemetry(
     }
 }
 
+/** Guards [boundTelemetry]. */
+private val bindLock = Any()
+
+/** The facade bound in this process, across SDK initialisations; the no-op until an active one is bound. */
+@Volatile
+private var boundTelemetry: Telemetry = NoOpTelemetry
+
 /**
  * Registers selection.telemetry as the Koin `single<Telemetry>`, then starts the runtime once if it is active. After a
  * successful start, [sendTestRecord] (debug-only, R_16) asks the runtime to store and send one test record, and
  * [testCrash] (debug-only, R_12) asks it to crash the app with a test crash.
+ *
+ * One active runtime per process: while an active facade is bound, another active selection is ignored, its runtime
+ * never started, and the bound facade is registered in [koin] and returned, so a second SDK initialisation never
+ * starts a second runtime sending the same store's files. An inactive selection replaces the bound facade.
  */
 internal fun bind(
     koin: Koin,
@@ -94,6 +106,18 @@ internal fun bind(
     sendTestRecord: Boolean = false,
     testCrash: Boolean = false,
 ): Telemetry {
+    val kept = synchronized(bindLock) {
+        if (selection.telemetry.isActive && boundTelemetry.isActive) {
+            boundTelemetry
+        } else {
+            boundTelemetry = selection.telemetry
+            null
+        }
+    }
+    if (kept != null) {
+        koin.loadModules(listOf(module { single<Telemetry> { kept } }), allowOverride = true)
+        return kept // never starts selection.runtime
+    }
     koin.loadModules(listOf(module { single<Telemetry> { selection.telemetry } }), allowOverride = true)
     if (!selection.telemetry.isActive) return selection.telemetry
     return runCatching { selection.runtime.start() }.fold(
@@ -135,8 +159,15 @@ internal fun bindTelemetry(
     runCatching { bindNoOp(koin) }.getOrDefault(NoOpTelemetry)
 }
 
-/** Registers [NoOpTelemetry] as the Koin `single<Telemetry>` and returns it. */
+/** Registers [NoOpTelemetry] as the Koin `single<Telemetry>`, binds it for the process and returns it. */
 private fun bindNoOp(koin: Koin): Telemetry {
+    synchronized(bindLock) { boundTelemetry = NoOpTelemetry }
     koin.loadModules(listOf(module { single<Telemetry> { NoOpTelemetry } }), allowOverride = true)
     return NoOpTelemetry
+}
+
+/** Test-only: forgets the process's bound facade. */
+@VisibleForTesting
+internal fun resetBoundTelemetry() {
+    synchronized(bindLock) { boundTelemetry = NoOpTelemetry }
 }
