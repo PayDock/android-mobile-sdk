@@ -11,6 +11,10 @@ import com.paydock.core.telemetry.reportSdkError
 import com.paydock.core.telemetry.startPayment
 import com.paydock.feature.threeDS.standalone.domain.mapper.asEntity
 import com.paydock.feature.threeDS.standalone.domain.mapper.asProgress
+import com.paydock.feature.threeDS.standalone.domain.mapper.withAuthenticationFlow
+import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
+import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.Standalone3DSAuthenticationFlow
+import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.StandaloneEventType
 import com.paydock.feature.threeDS.standalone.domain.model.ui.Standalone3DSEvent
 import com.paydock.feature.threeDS.standalone.domain.model.ui.enums.StandaloneEvent
 import com.paydock.feature.threeDS.standalone.presentation.state.Standalone3DSUIState
@@ -87,6 +91,9 @@ internal class Standalone3DSViewModel(
     @Volatile
     private var paymentId: String? = null
 
+    /** The flow seen so far per charge ID, until its final result. Guarded by itself. */
+    private val authenticationFlows = HashMap<String?, Standalone3DSAuthenticationFlow>()
+
     /**
      * Starts this view model's payment attempt (§ 5.9), at most once: the widget calls it from its launch effect.
      */
@@ -140,8 +147,28 @@ internal class Standalone3DSViewModel(
     private fun updateThreeDSEvent(event: Standalone3DSEvent) {
         event.loadingChange()?.let { updateState(Standalone3DSUIState.Loading(it)) }
         event.asProgress()?.let { updateState(Standalone3DSUIState.Progress(it)) }
-        event.asEntity()?.let { updateState(Standalone3DSUIState.Success(it)) }
+        event.asEntity()?.let { updateState(Standalone3DSUIState.Success(it.withTrackedFlow())) }
         finishPaymentOn(event)
+    }
+
+    /**
+     * Tracks the authentication flow per charge ID and sets it on a final result: a challenge or decoupled result
+     * records its flow (the latest wins), a success or reject takes the recorded flow (see [withAuthenticationFlow])
+     * and ends the tracking for its ID, as a charge error does. A null charge ID is tracked under the null key.
+     */
+    private fun Standalone3DSResult.withTrackedFlow(): Standalone3DSResult = synchronized(authenticationFlows) {
+        when (event) {
+            StandaloneEventType.CHARGE_AUTH_CHALLENGE ->
+                authenticationFlows[charge3dsId] = Standalone3DSAuthenticationFlow.CHALLENGE
+            StandaloneEventType.CHARGE_AUTH_DECOUPLED ->
+                authenticationFlows[charge3dsId] = Standalone3DSAuthenticationFlow.DECOUPLED
+            StandaloneEventType.CHARGE_ERROR -> authenticationFlows.remove(charge3dsId)
+            StandaloneEventType.CHARGE_AUTH_SUCCESS,
+            StandaloneEventType.CHARGE_AUTH_REJECT ->
+                return@synchronized withAuthenticationFlow(authenticationFlows.remove(charge3dsId))
+            StandaloneEventType.CHARGE_AUTH_INFO -> Unit
+        }
+        this
     }
 
     /**
