@@ -44,6 +44,7 @@ internal fun Standalone3DSDetailsCard(
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
             val rows = buildList {
                 add("Status" to (outcome.status ?: "—"))
+                outcome.authenticationFlow?.let { add("Authentication" to it) }
                 outcome.description?.let { add("Description" to it) }
                 add("Scenario" to outcome.scenario.label)
                 add("Flow" to outcome.flowType.label)

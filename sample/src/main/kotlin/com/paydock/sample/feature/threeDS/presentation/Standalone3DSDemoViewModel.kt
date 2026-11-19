@@ -167,7 +167,8 @@ class Standalone3DSDemoViewModel @Inject constructor(
                 outcome = outcome(
                     charge3dsId = result.charge3dsId,
                     status = result.status,
-                    description = result.resultDescription
+                    description = result.resultDescription,
+                    authenticationFlow = result.authenticationFlow?.name
                 )
             )
         }
@@ -187,7 +188,8 @@ class Standalone3DSDemoViewModel @Inject constructor(
         charge3dsId: String? = null,
         status: String? = null,
         description: String? = null,
-        errorMessage: String? = null
+        errorMessage: String? = null,
+        authenticationFlow: String? = null
     ) = Standalone3DSDemoOutcome(
         charge3dsId = charge3dsId,
         status = status,
@@ -196,7 +198,8 @@ class Standalone3DSDemoViewModel @Inject constructor(
         flowType = flowType,
         amount = widgetConfigRepository.widgetConfig.value.cartAmount,
         currency = globalConfigRepository.globalConfig.value.currencyCode,
-        errorMessage = errorMessage
+        errorMessage = errorMessage,
+        authenticationFlow = authenticationFlow
     )
 
     private fun Standalone3DSPhase.isTerminal() =

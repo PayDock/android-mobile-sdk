@@ -19,6 +19,8 @@ enum class Standalone3DSFlowType(val label: String) {
  * @property charge3dsId The 3DS charge id reported by the widget.
  * @property status The verbatim status reported by the SDK ([com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult.status]).
  * @property description The outcome description reported by the SDK, if any.
+ * @property authenticationFlow The name of the authentication flow reported by the SDK
+ *   ([com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult.authenticationFlow]), if any.
  * @property scenario The TestLabs scenario that was run.
  * @property flowType Frictionless, challenge or decoupled.
  * @property amount The authenticated amount.
@@ -33,7 +35,8 @@ data class Standalone3DSDemoOutcome(
     val flowType: Standalone3DSFlowType,
     val amount: BigDecimal,
     val currency: String,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val authenticationFlow: String? = null
 )
 
 /**
