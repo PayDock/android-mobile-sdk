@@ -52,6 +52,18 @@ internal sealed interface TelemetryEvent {
     /** A widget was shown (D19). */
     data class WidgetOpened(val widget: String) : TelemetryEvent
 
+    /** A payment attempt started (D24, § 5.9). */
+    data class PaymentStarted(val widget: String, val paymentId: String) : TelemetryEvent
+
+    /** A payment attempt ended. durationMs is set by the reducer only; the SDK always passes null. */
+    data class PaymentFinished(
+        val widget: String,
+        val paymentId: String,
+        val outcome: PaymentOutcome,
+        val errorCode: String? = null, // kept only when outcome == ERROR
+        val durationMs: Long? = null,
+    ) : TelemetryEvent
+
     /** How many records were dropped for one reason (spec § 5.8). Only the reducer creates it; never reported. */
     data class Dropped(val reason: DroppedReason, val count: Int) : TelemetryEvent
 
@@ -139,6 +151,14 @@ internal sealed interface TelemetryEvent {
         CONNECTION("connection"),
         TLS("tls"),
         UNKNOWN("unknown"),
+    }
+
+    /** How a payment attempt ended (paydock.payment.outcome, § 5.9). */
+    enum class PaymentOutcome(val value: String) {
+        SUCCESS("success"),
+        DECLINED("declined"),
+        ERROR("error"),
+        CANCELLED("cancelled"),
     }
 
     enum class HttpMethod { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS }

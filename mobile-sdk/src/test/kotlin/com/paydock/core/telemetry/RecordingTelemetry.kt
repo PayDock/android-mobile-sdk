@@ -21,6 +21,14 @@ internal class RecordingTelemetry(override val isActive: Boolean = true) : Telem
     val widgetsOpened: List<TelemetryEvent.WidgetOpened>
         get() = synchronized(events) { events.filterIsInstance<TelemetryEvent.WidgetOpened>() }
 
+    /** The [TelemetryEvent.PaymentStarted]s reported so far, in order. */
+    val paymentsStarted: List<TelemetryEvent.PaymentStarted>
+        get() = synchronized(events) { events.filterIsInstance<TelemetryEvent.PaymentStarted>() }
+
+    /** The [TelemetryEvent.PaymentFinished]es reported so far, in order. */
+    val paymentsFinished: List<TelemetryEvent.PaymentFinished>
+        get() = synchronized(events) { events.filterIsInstance<TelemetryEvent.PaymentFinished>() }
+
     override fun report(event: TelemetryEvent) {
         events += event
     }

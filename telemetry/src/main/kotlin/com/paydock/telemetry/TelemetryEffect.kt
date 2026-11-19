@@ -7,5 +7,11 @@ internal sealed interface TelemetryEffect {
     data class Export(val maxRecords: Int) : TelemetryEffect // flush everything pending, batches of maxRecords
     data class Drop(val reason: DropReason) : TelemetryEffect
 
-    enum class DropReason { DISABLED, RATE_LIMIT, NOT_REPORTABLE, ALREADY_OPENED }
+    enum class DropReason {
+        DISABLED,
+        RATE_LIMIT,
+        NOT_REPORTABLE,
+        ALREADY_OPENED,
+        NOT_STARTED, // a payment finish whose id is not open
+    }
 }

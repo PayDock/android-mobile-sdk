@@ -1,0 +1,167 @@
+{
+  "resourceLogs": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "paydock-mobile-sdk"
+            }
+          },
+          {
+            "key": "service.namespace",
+            "value": {
+              "stringValue": "paydock"
+            }
+          },
+          {
+            "key": "service.version",
+            "value": {
+              "stringValue": "5.7.2"
+            }
+          },
+          {
+            "key": "paydock.sdk.platform",
+            "value": {
+              "stringValue": "android"
+            }
+          },
+          {
+            "key": "paydock.telemetry.spec_version",
+            "value": {
+              "intValue": "1"
+            }
+          },
+          {
+            "key": "deployment.environment.name",
+            "value": {
+              "stringValue": "sandbox"
+            }
+          },
+          {
+            "key": "os.name",
+            "value": {
+              "stringValue": "Android"
+            }
+          },
+          {
+            "key": "os.version",
+            "value": {
+              "stringValue": "14"
+            }
+          },
+          {
+            "key": "device.manufacturer",
+            "value": {
+              "stringValue": "Google"
+            }
+          },
+          {
+            "key": "device.model.identifier",
+            "value": {
+              "stringValue": "Pixel 8"
+            }
+          },
+          {
+            "key": "app.installation.id",
+            "value": {
+              "stringValue": "3f9c6b1e-7a42-4d0b-9e15-2c8a5d71b3e4"
+            }
+          },
+          {
+            "key": "paydock.app.id",
+            "value": {
+              "stringValue": "com.merchant.shop"
+            }
+          },
+          {
+            "key": "paydock.app.version",
+            "value": {
+              "stringValue": "3.2.0"
+            }
+          },
+          {
+            "key": "paydock.app.debuggable",
+            "value": {
+              "boolValue": true
+            }
+          }
+        ]
+      },
+      "scopeLogs": [
+        {
+          "scope": {
+            "name": "paydock.telemetry"
+          },
+          "logRecords": [
+            {
+              "timeUnixNano": "1794969104120000000",
+              "severityNumber": 9,
+              "severityText": "INFO",
+              "body": {
+                "stringValue": "paydock.payment.finished · CardDetailsWidget · error · TokenisingCardException"
+              },
+              "attributes": [
+                {
+                  "key": "event.name",
+                  "value": {
+                    "stringValue": "paydock.payment.finished"
+                  }
+                },
+                {
+                  "key": "session.id",
+                  "value": {
+                    "stringValue": "5d0c3b8e-2f71-4a96-8e04-6b1a9c7d2e53"
+                  }
+                },
+                {
+                  "key": "log.record.uid",
+                  "value": {
+                    "stringValue": "5d0c3b8e-2f71-4a96-8e04-6b1a9c7d2e53-5"
+                  }
+                },
+                {
+                  "key": "network.connection.type",
+                  "value": {
+                    "stringValue": "wifi"
+                  }
+                },
+                {
+                  "key": "paydock.widget",
+                  "value": {
+                    "stringValue": "CardDetailsWidget"
+                  }
+                },
+                {
+                  "key": "paydock.error.code",
+                  "value": {
+                    "stringValue": "TokenisingCardException"
+                  }
+                },
+                {
+                  "key": "paydock.payment.id",
+                  "value": {
+                    "stringValue": "e4a1c8b7-3f29-4d06-b5e8-7c2d9f1a0b34"
+                  }
+                },
+                {
+                  "key": "paydock.payment.outcome",
+                  "value": {
+                    "stringValue": "error"
+                  }
+                },
+                {
+                  "key": "paydock.payment.duration_ms",
+                  "value": {
+                    "intValue": "2215"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

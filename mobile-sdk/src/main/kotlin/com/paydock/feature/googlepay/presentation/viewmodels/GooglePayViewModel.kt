@@ -1,6 +1,7 @@
 package com.paydock.feature.googlepay.presentation.viewmodels
 
 import android.util.Base64
+import androidx.lifecycle.viewModelScope
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.common.api.Status
@@ -15,8 +16,11 @@ import com.paydock.core.data.util.DispatchersProvider
 import com.paydock.core.domain.error.exceptions.GooglePayException
 import com.paydock.core.presentation.viewmodels.BaseViewModel
 import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.failPaymentWhileActive
+import com.paydock.core.telemetry.finishPaymentWhileActive
 import com.paydock.core.telemetry.reportSdkError
 import com.paydock.core.telemetry.reportSdkErrorWhileActive
+import com.paydock.core.telemetry.startPayment
 import com.paydock.feature.googlepay.data.dto.CreateGooglePayTokenRequest
 import com.paydock.feature.googlepay.data.dto.GooglePayPayloadData
 import com.paydock.feature.googlepay.domain.model.integration.GooglePayBillingAddress
@@ -28,9 +32,12 @@ import com.paydock.feature.googlepay.domain.usecase.CreateGooglePayTokenUseCase
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.util.PaymentsUtil
 import com.paydock.telemetry.Telemetry
+import com.paydock.telemetry.TelemetryEvent
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.json.Json
 import org.json.JSONException
@@ -75,6 +82,9 @@ internal class GooglePayViewModel(
      * composition, so its failure is reported once per view model.
      */
     private val allowedPaymentMethodsFailureReported = AtomicBoolean(false)
+
+    /** The open payment attempt's ID (§ 5.9), or null when none is open or telemetry is inactive. */
+    private var paymentId: String? = null
     //endregion
 
     /**
@@ -99,6 +109,43 @@ internal class GooglePayViewModel(
      */
     private fun updateUiState(newState: GooglePayUIState) {
         _uiState.value = newState
+        finishPaymentOn(newState)
+    }
+
+    /**
+     * Ends the open payment attempt when [state] ends it: every Success, and every Error while one is open (a
+     * cancelled sheet as cancelled, any other error with the code the merchant receives). An error set before any
+     * attempt (readiness, initialisation) finds no open attempt and sends nothing.
+     */
+    private fun finishPaymentOn(state: GooglePayUIState) {
+        if (paymentId == null) return
+        when (state) {
+            is GooglePayUIState.Success -> finishAttempt(TelemetryEvent.PaymentOutcome.SUCCESS)
+            is GooglePayUIState.Error -> when (state.exception) {
+                is GooglePayException.CancellationException,
+                is GooglePayException.SDKException.CancelledBySdk -> finishAttempt(TelemetryEvent.PaymentOutcome.CANCELLED)
+                else -> finishAttempt(TelemetryEvent.PaymentOutcome.ERROR, state.exception)
+            }
+            else -> Unit
+        }
+    }
+
+    /**
+     * Ends the open payment attempt with [outcome]; an error carries the code of [error], the exception the merchant
+     * receives. Then no attempt is open. The finish runs undispatched in viewModelScope, so it is sent at once while
+     * the view model lives, and not at all once it is cleared (the token coroutine cancelled): the attempt then stays
+     * abandoned.
+     */
+    private fun finishAttempt(outcome: TelemetryEvent.PaymentOutcome, error: Throwable? = null) {
+        val id = paymentId ?: return
+        paymentId = null
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            if (outcome == TelemetryEvent.PaymentOutcome.ERROR) {
+                telemetry.failPaymentWhileActive(SdkWidget.GOOGLE_PAY, id, error)
+            } else {
+                telemetry.finishPaymentWhileActive(SdkWidget.GOOGLE_PAY, id, outcome)
+            }
+        }
     }
     //endregion
 
@@ -185,6 +232,7 @@ internal class GooglePayViewModel(
      */
     fun startGooglePayPaymentFlow() {
         updateUiState(GooglePayUIState.Loading)
+        paymentId = telemetry.startPayment(SdkWidget.GOOGLE_PAY)
         // Build the loadPaymentData task and trigger the launch on the MAIN thread. Google Play
         // Services' PaymentsClient.loadPaymentData and the resulting Activity launch are
         // main-thread bound; creating the task on a background (IO) thread races with the
@@ -459,6 +507,18 @@ internal class GooglePayViewModel(
      */
     fun reportWidgetError(error: Throwable, cause: Throwable? = null) {
         telemetry.reportSdkError(error, SdkWidget.GOOGLE_PAY, cause = cause)
+    }
+
+    /**
+     * Ends the open payment attempt as an error with the ResultException code when Google Pay returns no payment data
+     * (§ 5.9): the widget's no-data branches hand the merchant nothing, so no state changes here.
+     */
+    fun handleMissingPaymentData() {
+        if (paymentId == null) return
+        finishAttempt(
+            TelemetryEvent.PaymentOutcome.ERROR,
+            GooglePayException.ResultException(MobileSDKConstants.GooglePayConfig.Errors.TOKEN_ERROR)
+        )
     }
 
     /**

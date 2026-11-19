@@ -1,0 +1,16 @@
+{
+  "time": "2026-11-18T02:31:44.120Z",
+  "builtTime": "2026-11-18T02:31:44.120Z",
+  "sentTime": "2026-11-18T02:31:50.120Z",
+  "sessionId": "5d0c3b8e-2f71-4a96-8e04-6b1a9c7d2e53",
+  "connection": "wifi",
+  "sequence": 5,
+  "event": {
+    "type": "PaymentFinished",
+    "widget": "CardDetailsWidget",
+    "paymentId": "e4a1c8b7-3f29-4d06-b5e8-7c2d9f1a0b34",
+    "outcome": "error",
+    "durationMs": 2215,
+    "code": "TokenisingCardException"
+  }
+}

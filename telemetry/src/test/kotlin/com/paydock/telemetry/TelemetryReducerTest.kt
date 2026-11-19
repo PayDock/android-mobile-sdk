@@ -6,12 +6,14 @@ import com.paydock.telemetry.TelemetryEffect.Export
 import com.paydock.telemetry.TelemetryEffect.Persist
 import com.paydock.telemetry.TelemetryEffect.ScheduleFlush
 import com.paydock.telemetry.TelemetryEvent.DroppedReason
+import com.paydock.telemetry.TelemetryEvent.PaymentOutcome
 import com.paydock.telemetry.TelemetryIntent.FlushSource
 import com.paydock.telemetry.TelemetryLimits.BATCH_MAX_RECORDS
 import com.paydock.telemetry.TelemetryLimits.FLUSH_INTERVAL_MILLIS
 import com.paydock.telemetry.TelemetryLimits.FLUSH_THRESHOLD
 import com.paydock.telemetry.TelemetryLimits.HOURLY_CAP
 import com.paydock.telemetry.TelemetryLimits.HOUR_MILLIS
+import com.paydock.telemetry.TelemetryLimits.MAX_OPEN_PAYMENTS
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -34,6 +36,13 @@ internal class TelemetryReducerTest {
     private val widgetOpened = TelemetryEvent.WidgetOpened(widget = "CardDetailsWidget")
 
     private var sequence = RecordSequence()
+
+    private fun paymentId(n: Int) = "00000000-0000-4000-8000-%012d".format(n)
+
+    private fun started(n: Int) = TelemetryEvent.PaymentStarted(widget = "CardDetailsWidget", paymentId = paymentId(n))
+
+    private fun finished(n: Int, outcome: PaymentOutcome = PaymentOutcome.SUCCESS) =
+        TelemetryEvent.PaymentFinished(widget = "CardDetailsWidget", paymentId = paymentId(n), outcome = outcome)
 
     private fun state(enabled: Boolean = true) = TelemetryState(enabled = enabled, sessionId = sessionId)
 
@@ -378,6 +387,109 @@ internal class TelemetryReducerTest {
         assertEquals(listOf(Drop(DropReason.ALREADY_OPENED)), effects)
     }
 
+    // ---- payment attempts (§ 5.9, R_02 to R_04) ----
+
+    @Test
+    fun paymentStarted_opensTheAttempt_andItsFinishCarriesTheDurationFromElapsed() {
+        val (opened, startEffects) = report(state(), started(1), elapsed = e0)
+        assertEquals(listOf(Persist(pending(1, started(1)))), startEffects.filterIsInstance<Persist>())
+        assertEquals(mapOf(paymentId(1) to e0), opened.openPayments)
+
+        val (closed, finishEffects) = report(opened, finished(1), now = t0 + 99_999, elapsed = e0 + 41_873)
+
+        val expected = finished(1).copy(durationMs = 41_873)
+        assertEquals(listOf(Persist(pending(2, expected, t0 + 99_999))), finishEffects.filterIsInstance<Persist>())
+        assertTrue(closed.openPayments.isEmpty())
+        assertEquals(2, closed.createdInWindow)
+    }
+
+    @Test
+    fun paymentFinished_withADurationFromTheSdk_isReplacedByTheReducers_andNeverNegative() {
+        val (opened, _) = report(state(), started(1), elapsed = e0)
+
+        val (_, effects) = report(opened, finished(1).copy(durationMs = 7), elapsed = e0 - 10)
+
+        assertEquals(0L, (persisted(effects).single().event as TelemetryEvent.PaymentFinished).durationMs)
+    }
+
+    @Test
+    fun paymentFinished_withoutAStart_isDroppedAsNotStarted_withNoNoticeAndNoStateChange() {
+        val start = state()
+
+        val (next, effects) = report(start, finished(1))
+
+        assertEquals(start, next)
+        assertEquals(listOf(Drop(DropReason.NOT_STARTED)), effects)
+        assertEquals(1L, sequence.next())
+    }
+
+    @Test
+    fun aSecondFinish_ofTheSameAttempt_isDroppedAsNotStarted() {
+        val (opened, _) = report(state(), started(1))
+        val (closed, _) = report(opened, finished(1, PaymentOutcome.ERROR))
+
+        val (next, effects) = report(closed, finished(1, PaymentOutcome.ERROR))
+
+        assertEquals(closed, next)
+        assertEquals(listOf(Drop(DropReason.NOT_STARTED)), effects)
+    }
+
+    @Test
+    fun the21stOpenAttempt_evictsTheOldest_whoseFinishIsThenNotSent() {
+        val full = (1..MAX_OPEN_PAYMENTS).fold(state()) { current, n ->
+            report(current, started(n), elapsed = e0 + n).first
+        }
+        assertEquals(MAX_OPEN_PAYMENTS, full.openPayments.size)
+
+        val (over, _) = report(full, started(MAX_OPEN_PAYMENTS + 1), elapsed = e0 + 100)
+
+        assertEquals(MAX_OPEN_PAYMENTS, over.openPayments.size)
+        assertFalse(paymentId(1) in over.openPayments)
+        assertEquals((2..MAX_OPEN_PAYMENTS + 1).map(::paymentId), over.openPayments.keys.toList())
+        assertEquals(listOf(Drop(DropReason.NOT_STARTED)), report(over, finished(1)).second)
+        assertEquals(1, persisted(report(over, finished(2)).second).size)
+    }
+
+    @Test
+    fun aStartDroppedByTheCap_isNotOpened_andItsFinishIsNotSent() {
+        val capped = reportMany(state(), HOURLY_CAP)
+
+        val (afterCap, capEffects) = report(capped, started(1))
+        assertEquals(Drop(DropReason.RATE_LIMIT), capEffects.first())
+        assertTrue(afterCap.openPayments.isEmpty())
+
+        val (next, effects) = report(afterCap, finished(1))
+        assertEquals(afterCap, next)
+        assertEquals(listOf(Drop(DropReason.NOT_STARTED)), effects)
+    }
+
+    @Test
+    fun aFinishAtTheCap_ofARecordedStart_isSent_andStillCountsAsCreated() {
+        val (opened, _) = report(state(), started(1), elapsed = e0)
+        val atCap = reportMany(opened, HOURLY_CAP - 1, elapsed = e0)
+        assertEquals(HOURLY_CAP, atCap.createdInWindow)
+
+        val (next, effects) = report(atCap, finished(1), elapsed = e0 + 5)
+
+        assertTrue(effects.none { it is Drop })
+        assertEquals(finished(1).copy(durationMs = 5), persisted(effects).single().event)
+        assertEquals(HOURLY_CAP + 1, next.createdInWindow)
+        assertTrue(next.notices.isEmpty())
+        assertTrue(next.openPayments.isEmpty())
+    }
+
+    @Test
+    fun payments_whenDisabled_dropAsDisabled_andOpenNothing() {
+        val start = state(enabled = false)
+
+        val (afterStart, startEffects) = report(start, started(1))
+        val (afterFinish, finishEffects) = report(afterStart, finished(1))
+
+        assertEquals(start, afterFinish)
+        assertEquals(listOf(Drop(DropReason.DISABLED)), startEffects)
+        assertEquals(listOf(Drop(DropReason.DISABLED)), finishEffects)
+    }
+
     @Test
     fun reduce_isDeterministic_withTwoFreshSequences_andTheInputIsNotMutated() {
         val notice = DroppedNotice("$sessionId-1", 2, t0 - 5)
@@ -385,12 +497,15 @@ internal class TelemetryReducerTest {
             pending = 19,
             windowStart = e0 - 10,
             createdInWindow = 7,
-            notices = mapOf(DroppedReason.REJECTED to notice)
+            notices = mapOf(DroppedReason.REJECTED to notice),
+            openPayments = mapOf(paymentId(1) to e0 - 3)
         )
-        val snapshot = start.copy(notices = HashMap(start.notices))
+        val snapshot = start.copy(notices = HashMap(start.notices), openPayments = HashMap(start.openPayments))
         val intents = listOf(
             TelemetryIntent.Reported(error),
             TelemetryIntent.Reported(crash),
+            TelemetryIntent.Reported(started(2)),
+            TelemetryIntent.Reported(finished(1)),
             TelemetryIntent.Flush(FlushSource.TIMER),
             TelemetryIntent.Flush(FlushSource.START),
             TelemetryIntent.AppBackgrounded,

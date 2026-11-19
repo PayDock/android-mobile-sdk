@@ -3,7 +3,7 @@ package com.paydock.telemetry
 import kotlin.reflect.KClass
 
 /**
- * The only keys a batch may carry (spec § 5.1 to § 5.8, principle 11), and the run-time half of their
+ * The only keys a batch may carry (spec § 5.1 to § 5.9, principle 11), and the run-time half of their
  * enforcement: [filter] drops an unlisted key, a value of the wrong type and a sensitive-looking value from every
  * record before it is stored. `AllowlistTest` is the build-time half.
  */
@@ -62,11 +62,16 @@ internal object Allowlist {
         "paydock.http.attempt" to AttributeValue.Num::class,
         // Dropped
         "paydock.dropped.reason" to AttributeValue.Str::class,
-        "paydock.dropped.count" to AttributeValue.Num::class
+        "paydock.dropped.count" to AttributeValue.Num::class,
+        // Payment (§ 5.9)
+        "paydock.payment.id" to AttributeValue.Str::class,
+        "paydock.payment.outcome" to AttributeValue.Str::class,
+        "paydock.payment.duration_ms" to AttributeValue.Num::class
     )
 
     private const val SESSION_ID = "session.id"
     private const val RECORD_UID = "log.record.uid"
+    private const val PAYMENT_ID = "paydock.payment.id"
     private const val UUID_PATTERN = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
     private const val CARD_MIN_DIGITS = 13
     private const val CARD_MAX_DIGITS = 19
@@ -91,11 +96,11 @@ internal object Allowlist {
 
     /**
      * Keeps the attributes whose key is listed, whose value has the key's type and, for a string, passes its
-     * check: a UUID `session.id`, a `log.record.uid` of that session and a positive sequence, a `url.template` and a
-     * `paydock.group.key` made only of literal words, version names and placeholders, and no sensitive value for
-     * every other key. A repeated key keeps its first value. The body is then rebuilt by [RecordBody.of] from
-     * the kept attributes alone, so a dropped value never survives in it. Never throws: on a failure it keeps no
-     * attribute and a blank body, so the record is then rejected for its missing `session.id`.
+     * check: a UUID `session.id` and `paydock.payment.id`, a `log.record.uid` of that session and a positive sequence,
+     * a `url.template` and a `paydock.group.key` made only of literal words, version names and placeholders, and no
+     * sensitive value for every other key. A repeated key keeps its first value. The body is then rebuilt by
+     * [RecordBody.of] from the kept attributes alone, so a dropped value never survives in it. Never throws: on a
+     * failure it keeps no attribute and a blank body, so the record is then rejected for its missing `session.id`.
      */
     fun filter(record: TelemetryRecord): TelemetryRecord = try {
         val kept = record.attributes.distinctBy { it.key }.filter { isAllowed(it, record.sessionId) }
@@ -124,6 +129,7 @@ internal object Allowlist {
             text == null -> true
             attribute.key == SESSION_ID -> UUID.matches(text)
             attribute.key == RECORD_UID -> RECORD_UID_FORMAT.matchEntire(text)?.groupValues?.get(1) == sessionId
+            attribute.key == PAYMENT_ID -> UUID.matches(text)
             attribute.key == URL_TEMPLATE -> TEMPLATE_SHAPE.matches(text)
             attribute.key == GROUP_KEY -> GROUP_KEY_SHAPE.matches(text)
             else -> !isSensitive(text)

@@ -167,8 +167,8 @@ SERVICE_ID_PAYPAL=your_gateway_id_pay_pal
 
 ## Telemetry
 
-The SDK sends diagnostics to Paydock in every environment: crashes in your app, SDK errors, failed Paydock API calls
-and which SDK widgets are opened. Each environment has its own Paydock collector, and the app holds no credential (no
+The SDK sends diagnostics to Paydock in every environment: crashes in your app, SDK errors, failed Paydock API calls,
+which SDK widgets are opened and how payment attempts end. Each environment has its own Paydock collector, and the app holds no credential (no
 `Authorization` header is sent):
 
 | Environment | Collector |
@@ -177,6 +177,24 @@ and which SDK widgets are opened. Each environment has its own Paydock collector
 | `SANDBOX`, `STAGING` | `https://mobile-telemetry-dev.shared.apac.paydock.com/v1/logs` |
 
 Records carry no card data, message text, request bodies or headers. There is nothing to set up and no API to call.
+
+### Payment attempts
+
+Five widgets record each payment attempt: `CardDetailsWidget`, `GooglePayWidget`, `PayPalWidget`,
+`Standalone3DSWidget` and `MPGS3dsWidget`. An attempt starts when the shopper pays (the card submit, the Google Pay or
+PayPal tap, the 3DS widget's launch) and ends at every path that ends it:
+
+| Record | Attributes |
+|---|---|
+| `paydock.payment.started` | `paydock.widget`, `paydock.payment.id` (a random UUID per attempt) |
+| `paydock.payment.finished` | the same, plus `paydock.payment.outcome`, `paydock.payment.duration_ms` and, only for `error`, `paydock.error.code` |
+
+Both are `INFO`. The outcome is one of `success`, `declined` (a 3DS reject), `error` or `cancelled` (the shopper
+cancelled the Google Pay sheet or the PayPal checkout). An error's code is the exception type the merchant receives
+(`CHARGE_ERROR` for a 3DS charge error); a path that ends silently, handing the merchant nothing, has none. The duration
+is measured inside the telemetry module, from the start on the monotonic clock. A finish is sent only for an attempt
+started in the same session; at most 20 attempts are kept open, the oldest dropped first. An attempt with a start and
+no finish was abandoned. Your results, callbacks and errors are unchanged.
 
 ### Data safety (Google Play)
 
@@ -237,6 +255,14 @@ devdock Loki data source:
 - Each record type: add `| event_name="paydock.crash"`, `| event_name="paydock.error"`,
   `| event_name="paydock.network.failure"`, `| event_name="paydock.widget.opened"` or
   `| event_name="paydock.telemetry.dropped"`.
+- Payment attempts: `{service_name="paydock-mobile-sdk"} | event_name=~"paydock.payment.*"`, and by widget and
+  outcome:
+  - Started per widget:
+    `sum by (paydock_widget) (count_over_time({service_name="paydock-mobile-sdk"} | event_name="paydock.payment.started" [1h]))`
+  - Finished per widget and outcome:
+    `sum by (paydock_widget, paydock_payment_outcome) (count_over_time({service_name="paydock-mobile-sdk"} | event_name="paydock.payment.finished" [1h]))`
+  - Error codes: `{service_name="paydock-mobile-sdk"} | event_name="paydock.payment.finished" | paydock_payment_outcome="error"`,
+    grouped by `paydock_error_code`.
 - The network failures by kind:
   `{service_name="paydock-mobile-sdk"} | event_name="paydock.network.failure" | error_type="http_5xx"`.
 

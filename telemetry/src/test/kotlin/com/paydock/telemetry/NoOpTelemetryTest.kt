@@ -55,6 +55,14 @@ internal class NoOpTelemetryTest {
             failure = TelemetryEvent.NetworkError.Decode(statusCode = 200, error = failure)
         ),
         TelemetryEvent.WidgetOpened(widget = "CardDetailsWidget"),
+        TelemetryEvent.PaymentStarted(widget = "CardDetailsWidget", paymentId = PAYMENT_ID),
+        TelemetryEvent.PaymentFinished(
+            widget = "CardDetailsWidget",
+            paymentId = PAYMENT_ID,
+            outcome = TelemetryEvent.PaymentOutcome.ERROR,
+            errorCode = "TokenisingCardException",
+            durationMs = 2_215L
+        ),
         TelemetryEvent.Dropped(reason = TelemetryEvent.DroppedReason.RATE_LIMIT, count = 3)
     )
 
@@ -86,5 +94,9 @@ internal class NoOpTelemetryTest {
         NoOpTelemetry.start()
 
         assertFalse(NoOpTelemetry.isActive)
+    }
+
+    private companion object {
+        const val PAYMENT_ID = "e4a1c8b7-3f29-4d06-b5e8-7c2d9f1a0b34"
     }
 }

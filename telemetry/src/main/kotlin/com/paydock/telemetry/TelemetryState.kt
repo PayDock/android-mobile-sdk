@@ -2,7 +2,8 @@ package com.paydock.telemetry
 
 /**
  * The active path's immutable state. Changed only by [TelemetryReducer] (R_01). It keeps counts, windows, notice
- * IDs and the names of the widgets opened this session only: the records themselves live on disk.
+ * IDs, the names of the widgets opened this session and the open payment attempts only: the records themselves live
+ * on disk.
  */
 internal data class TelemetryState(
     val enabled: Boolean,
@@ -15,4 +16,5 @@ internal data class TelemetryState(
     val createdInWindow: Int = 0, // records created this hour, notices excluded
     val notices: Map<TelemetryEvent.DroppedReason, DroppedNotice> = emptyMap(),
     val openedWidgets: Set<String> = emptySet(), // widgets recorded this session (D19, R_07)
+    val openPayments: Map<String, Long> = emptyMap(), // paymentId → start elapsed (monotonic ms), insertion order
 )

@@ -9,9 +9,11 @@ import com.paydock.telemetry.TelemetryIntent.FlushSource
  * input state is never mutated (R_01). Its only other input is the session's [RecordSequence], the source of every
  * record ID, `"<sessionId>-<sequence>"`.
  *
- * The disk is the queue: the reducer keeps counts, windows, notice IDs and the opened widgets' names only. The
- * hourly cap and the dropped notices (R_09, R_10), the flush rules and the export stop (R_11, R_17,
- * R_18), and one widget-opened record per widget per session (R_07). `now` is UTC epoch ms, `elapsed` monotonic ms.
+ * The disk is the queue: the reducer keeps counts, windows, notice IDs, the opened widgets' names and the open
+ * payment attempts only. The hourly cap and the dropped notices (R_09, R_10), the flush rules and the export stop
+ * (R_11, R_17, R_18), one widget-opened record per widget per session (R_07), and the open payment attempts: a finish
+ * is sent only for an open start, with its duration from `elapsed`, and skips the cap (§ 5.9). `now` is UTC epoch ms,
+ * `elapsed` monotonic ms.
  * Every limit comes from [TelemetryLimits].
  */
 internal object TelemetryReducer {
@@ -48,23 +50,25 @@ internal object TelemetryReducer {
         sequence: RecordSequence,
         effects: MutableList<TelemetryEffect>,
     ): TelemetryState {
-        val dropReason = when {
-            event is TelemetryEvent.Dropped -> DropReason.NOT_REPORTABLE
-            !state.enabled -> DropReason.DISABLED
-            event is TelemetryEvent.WidgetOpened && event.widget in state.openedWidgets -> DropReason.ALREADY_OPENED
-            else -> null
-        }
+        val dropReason = dropReason(state, event)
         if (dropReason != null) {
             effects += TelemetryEffect.Drop(dropReason)
             return state
         }
         val rolled = roll(state, elapsed)
-        if (rolled.createdInWindow >= TelemetryLimits.HOURLY_CAP) {
+        // A finish whose start was recorded skips the cap, so a started attempt always ends (R_04).
+        val startedAt = (event as? TelemetryEvent.PaymentFinished)?.let { state.openPayments[it.paymentId] }
+        if (startedAt == null && rolled.createdInWindow >= TelemetryLimits.HOURLY_CAP) {
             effects += TelemetryEffect.Drop(DropReason.RATE_LIMIT)
             return schedule(notice(rolled, DroppedReason.RATE_LIMIT, 1, now, sequence, effects), effects)
         }
+        val recorded = if (event is TelemetryEvent.PaymentFinished && startedAt != null) {
+            event.copy(durationMs = maxOf(0L, elapsed - startedAt)) // R_02: the module's monotonic clock alone
+        } else {
+            event
+        }
         val id = newId(rolled, sequence)
-        effects += TelemetryEffect.Persist(PendingRecord(id, rolled.sessionId, event, now))
+        effects += TelemetryEffect.Persist(PendingRecord(id, rolled.sessionId, recorded, now))
         val created = rolled.copy(
             pending = rolled.pending + 1,
             createdInWindow = rolled.createdInWindow + 1,
@@ -72,10 +76,20 @@ internal object TelemetryReducer {
                 rolled.openedWidgets + event.widget
             } else {
                 rolled.openedWidgets
-            }
+            },
+            openPayments = openPayments(rolled.openPayments, event, elapsed)
         )
         val exported = if (created.pending >= TelemetryLimits.FLUSH_THRESHOLD) export(created, now, effects) else created
         return schedule(exported, effects)
+    }
+
+    /** Why [event] is dropped before the cap is even checked, or null when it goes on. */
+    private fun dropReason(state: TelemetryState, event: TelemetryEvent): DropReason? = when {
+        event is TelemetryEvent.Dropped -> DropReason.NOT_REPORTABLE
+        !state.enabled -> DropReason.DISABLED
+        event is TelemetryEvent.WidgetOpened && event.widget in state.openedWidgets -> DropReason.ALREADY_OPENED
+        event is TelemetryEvent.PaymentFinished && event.paymentId !in state.openPayments -> DropReason.NOT_STARTED
+        else -> null
     }
 
     private fun recordsDropped(
@@ -90,6 +104,28 @@ internal object TelemetryReducer {
         val noticed = notice(roll(state, elapsed), intent.reason, intent.count, now, sequence, effects)
         return schedule(noticed, effects)
     }
+
+    /**
+     * The open payment attempts after a persisted [event]: a start opens its id at [elapsed], dropping the oldest
+     * beyond [TelemetryLimits.MAX_OPEN_PAYMENTS]; a finish closes its id. Insertion order is start order.
+     */
+    private fun openPayments(open: Map<String, Long>, event: TelemetryEvent, elapsed: Long): Map<String, Long> =
+        when (event) {
+            is TelemetryEvent.PaymentStarted -> {
+                val opened = LinkedHashMap(open).apply {
+                    remove(event.paymentId)
+                    put(event.paymentId, elapsed)
+                }
+                if (opened.size > TelemetryLimits.MAX_OPEN_PAYMENTS) {
+                    opened.entries.drop(opened.size - TelemetryLimits.MAX_OPEN_PAYMENTS)
+                        .associateTo(LinkedHashMap()) { it.key to it.value }
+                } else {
+                    opened
+                }
+            }
+            is TelemetryEvent.PaymentFinished -> open - event.paymentId
+            else -> open
+        }
 
     /** Roll: a new hour when none has started or the current one is over, by the monotonic clock alone. */
     private fun roll(state: TelemetryState, elapsed: Long): TelemetryState {

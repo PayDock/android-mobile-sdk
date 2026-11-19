@@ -21,6 +21,11 @@
   queried with `{service_name="paydock-mobile-sdk"}`; a debug build's records carry `paydock_app_debuggable="true"`.
   No setup and no API change. Declare the data in Google Play's data safety form (see the README's Telemetry
   section).
+- Payment attempt telemetry for `CardDetailsWidget`, `GooglePayWidget`, `PayPalWidget`, `Standalone3DSWidget` and
+  `MPGS3dsWidget`: one `paydock.payment.started` record when an attempt starts and one `paydock.payment.finished`
+  record at every path that ends it, with the outcome (`success`, `declined`, `error`, `cancelled`), the duration in
+  ms and, for an error, the code of the exception you receive. Each attempt carries a random UUID; no card data. Your
+  results, callbacks and errors are unchanged, and there is no API change (see the README's Telemetry section).
 
 ### Changed
 - The Mobile SDK no longer compiles an exact Client SDK version in. It supports the Client SDK line `v1.150` and,

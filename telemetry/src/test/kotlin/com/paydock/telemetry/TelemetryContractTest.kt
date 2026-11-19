@@ -20,6 +20,8 @@ internal class TelemetryContractTest {
         TelemetryEvent.SdkError::class.java,
         TelemetryEvent.NetworkFailure::class.java,
         TelemetryEvent.WidgetOpened::class.java,
+        TelemetryEvent.PaymentStarted::class.java,
+        TelemetryEvent.PaymentFinished::class.java,
         TelemetryEvent.Dropped::class.java
     )
 
@@ -30,6 +32,8 @@ internal class TelemetryContractTest {
         TelemetryEvent.SdkError::class.java,
         TelemetryEvent.NetworkFailure::class.java,
         TelemetryEvent.WidgetOpened::class.java,
+        TelemetryEvent.PaymentStarted::class.java,
+        TelemetryEvent.PaymentFinished::class.java,
         TelemetryEvent.Dropped::class.java,
         TelemetryEvent.ErrorInfo::class.java,
         TelemetryEvent.ErrorInfo.Companion::class.java,
@@ -42,6 +46,7 @@ internal class TelemetryContractTest {
         TelemetryEvent.CrashKind::class.java,
         TelemetryEvent.DroppedReason::class.java,
         TelemetryEvent.TransportKind::class.java,
+        TelemetryEvent.PaymentOutcome::class.java,
         TelemetryEvent.HttpMethod::class.java
     )
 

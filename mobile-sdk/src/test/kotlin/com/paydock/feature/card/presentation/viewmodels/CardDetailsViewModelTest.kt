@@ -19,6 +19,7 @@ import com.paydock.feature.card.domain.model.ui.TokenDetails
 import com.paydock.feature.card.domain.usecase.CreateCardPaymentTokenUseCase
 import com.paydock.feature.card.domain.usecase.GetCardSchemasUseCase
 import com.paydock.feature.card.presentation.state.CardDetailsUIState
+import com.paydock.telemetry.TelemetryEvent
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -512,7 +513,99 @@ internal class CardDetailsViewModelTest : BaseKoinUnitTest() {
             assertIs<CardDetailsUIState.Error>(state)
             assertSame(failure, state.exception)
             assertTrue(telemetry.sdkErrors.isEmpty())
+            // The view model is cleared mid-tokenise: the attempt is started and abandoned, never finished.
+            assertEquals(1, telemetry.paymentsStarted.size)
+            assertTrue(telemetry.paymentsFinished.isEmpty())
         }
+
+    // endregion
+
+    // region Telemetry: one payment attempt per tokeniseCard (§ 5.9, R_06 to R_08)
+
+    @Test
+    fun `tokeniseCard success starts one attempt and finishes it as success with the same id`() = runTest {
+        setupCreateCardPaymentUseCaseSuccess()
+
+        viewModel.tokeniseCard()
+        viewModel.stateFlow.first { it is CardDetailsUIState.Success }
+
+        val started = telemetry.paymentsStarted.single()
+        val finished = telemetry.paymentsFinished.single()
+        assertEquals(SdkWidget.CARD_DETAILS, started.widget)
+        assertEquals(started.paymentId, finished.paymentId)
+        assertEquals(SdkWidget.CARD_DETAILS, finished.widget)
+        assertEquals(TelemetryEvent.PaymentOutcome.SUCCESS, finished.outcome)
+        assertNull(finished.errorCode)
+        assertNull(finished.durationMs)
+    }
+
+    @Test
+    fun `tokeniseCard SdkException failure finishes as error with its code`() = runTest {
+        setupCreateCardPaymentUseCasFailure()
+
+        viewModel.tokeniseCard()
+        viewModel.stateFlow.first { it is CardDetailsUIState.Error }
+
+        val finished = telemetry.paymentsFinished.single()
+        assertEquals(telemetry.paymentsStarted.single().paymentId, finished.paymentId)
+        assertEquals(TelemetryEvent.PaymentOutcome.ERROR, finished.outcome)
+        assertEquals("TokenisingCardException", finished.errorCode)
+    }
+
+    @Test
+    fun `tokeniseCard silent failure finishes as error without a code and still stays Loading`() = runTest {
+        coEvery {
+            createCardPaymentUseCase(MobileSDKTestConstants.General.MOCK_ACCESS_TOKEN, any())
+        } returns Result.failure(IllegalStateException())
+
+        viewModel.tokeniseCard()
+        advanceUntilIdle()
+
+        assertIs<CardDetailsUIState.Loading>(viewModel.stateFlow.value)
+        val finished = telemetry.paymentsFinished.single()
+        assertEquals(telemetry.paymentsStarted.single().paymentId, finished.paymentId)
+        assertEquals(TelemetryEvent.PaymentOutcome.ERROR, finished.outcome)
+        assertNull(finished.errorCode)
+    }
+
+    @Test
+    fun `a retry after an error is a second attempt with a new id`() = runTest {
+        setupCreateCardPaymentUseCasFailure()
+        viewModel.tokeniseCard()
+        viewModel.stateFlow.first { it is CardDetailsUIState.Error }
+
+        setupCreateCardPaymentUseCaseSuccess()
+        viewModel.tokeniseCard()
+        viewModel.stateFlow.first { it is CardDetailsUIState.Success }
+
+        val ids = telemetry.paymentsStarted.map { it.paymentId }
+        assertEquals(2, ids.toSet().size)
+        assertEquals(ids, telemetry.paymentsFinished.map { it.paymentId })
+        assertEquals(
+            listOf(TelemetryEvent.PaymentOutcome.ERROR, TelemetryEvent.PaymentOutcome.SUCCESS),
+            telemetry.paymentsFinished.map { it.outcome }
+        )
+    }
+
+    @Test
+    fun `with inactive telemetry tokeniseCard gives the same states and reports nothing`() = runTest {
+        val inactive = RecordingTelemetry(isActive = false)
+        val quiet = makeViewModel(SavedStateHandle(), inactive)
+        setupCreateCardPaymentUseCasFailure()
+
+        quiet.tokeniseCard()
+        assertIs<CardDetailsUIState.Loading>(quiet.stateFlow.value)
+        val error = quiet.stateFlow.first { it is CardDetailsUIState.Error }
+        assertIs<CardDetailsUIState.Error>(error)
+        assertIs<CardDetailsException.TokenisingCardException>(error.exception)
+
+        setupCreateCardPaymentUseCaseSuccess()
+        quiet.tokeniseCard()
+        val success = quiet.stateFlow.first { it is CardDetailsUIState.Success }
+        assertIs<CardDetailsUIState.Success>(success)
+        assertEquals(MobileSDKTestConstants.Card.MOCK_CARD_TOKEN, success.token)
+        assertTrue(inactive.events.isEmpty())
+    }
 
     // endregion
 }

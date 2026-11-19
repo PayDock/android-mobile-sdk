@@ -9,8 +9,11 @@ import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.domain.error.extensions.mapApiException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.failPaymentWhileActive
+import com.paydock.core.telemetry.finishPaymentWhileActive
 import com.paydock.core.telemetry.reportSdkError
 import com.paydock.core.telemetry.reportSdkErrorWhileActive
+import com.paydock.core.telemetry.startPayment
 import com.paydock.feature.paypal.checkout.domain.mapper.integration.mapToPayPalFundingSource
 import com.paydock.feature.paypal.checkout.domain.model.integration.PayPalWidgetConfig
 import com.paydock.feature.paypal.checkout.presentation.state.PayPalCheckoutUIState
@@ -28,6 +31,7 @@ import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
 import com.paydock.feature.wallet.presentation.viewmodels.WalletViewModel
 import com.paydock.telemetry.Telemetry
+import com.paydock.telemetry.TelemetryEvent
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFundingSource
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
@@ -73,6 +77,13 @@ internal class PayPalViewModel(
      * Access via getWalletToken() / setWalletToken() methods to avoid signature clash.
      */
     private fun getWalletToken(): String? = savedStateHandle[KEY_WALLET_TOKEN]
+
+    /**
+     * The open payment attempt's ID (§ 5.9), or null when none is open or telemetry is inactive. Set on the main
+     * thread and read on the threads the merchant's token callback and the use cases end on.
+     */
+    @Volatile
+    private var paymentId: String? = null
     //endregion
 
     //region Overridden Methods
@@ -127,6 +138,7 @@ internal class PayPalViewModel(
                     val failure = PayPalException.ConfigurationException("Missing PayPal ORDER_ID")
                     reportWhileActive(failure)
                     updateUiState(PayPalCheckoutUIState.Error(failure))
+                    failAttempt(failure)
                     return
                 }
                 getPayPalClientId(orderId)
@@ -135,6 +147,7 @@ internal class PayPalViewModel(
                 val failure = throwable.mapApiException(PayPalException.FetchingUrlException::class)
                 reportWhileActive(failure, cause = throwable)
                 updateUiState(PayPalCheckoutUIState.Error(failure))
+                failAttempt(failure)
             }
         )
     }
@@ -148,11 +161,13 @@ internal class PayPalViewModel(
         result.fold(
             onSuccess = { chargeData ->
                 updateUiState(PayPalCheckoutUIState.Success(chargeData))
+                finishAttempt(TelemetryEvent.PaymentOutcome.SUCCESS)
             },
             onFailure = { throwable ->
                 val failure = throwable.mapApiException(PayPalException.CapturingChargeException::class)
                 reportWhileActive(failure, cause = throwable)
                 updateUiState(PayPalCheckoutUIState.Error(failure))
+                failAttempt(failure)
             }
         )
     }
@@ -200,6 +215,7 @@ internal class PayPalViewModel(
                         ?: error.mapApiException(PayPalException.GetPayPalClientIdException::class)
                     telemetry.reportSdkErrorWhileActive(mapped, SdkWidget.PAYPAL, cause = error.takeIf { it !== mapped })
                     updateUiState(PayPalCheckoutUIState.Error(mapped))
+                    failAttempt(mapped)
                 }
         }
     }
@@ -232,6 +248,7 @@ internal class PayPalViewModel(
             )
             telemetry.reportSdkError(failure, SdkWidget.PAYPAL)
             updateUiState(PayPalCheckoutUIState.Error(failure))
+            failAttempt(failure)
         }
     }
 
@@ -249,6 +266,7 @@ internal class PayPalViewModel(
         tokenRequest: (tokenResult: (Result<WalletTokenResult>) -> Unit) -> Unit
     ) {
         setLoadingState()
+        paymentId = telemetry.startPayment(SdkWidget.PAYPAL)
         // Use the callback to obtain the token asynchronously
         tokenRequest.invoke { tokenResult ->
             tokenResult.onSuccess { result ->
@@ -265,6 +283,10 @@ internal class PayPalViewModel(
                         )
                     )
                 )
+                finishAttempt(
+                    TelemetryEvent.PaymentOutcome.ERROR,
+                    errorCode = PayPalException.InitialisationWalletTokenException::class.simpleName
+                )
             }
         }
     }
@@ -277,6 +299,26 @@ internal class PayPalViewModel(
      */
     fun reportWidgetError(error: Throwable, cause: Throwable? = null) {
         telemetry.reportSdkError(error, SdkWidget.PAYPAL, cause = cause)
+    }
+
+    /**
+     * Ends the open payment attempt as cancelled: the shopper cancelled the PayPal web checkout (from the widget's
+     * result handler).
+     */
+    fun cancelAttempt() {
+        if (paymentId == null) return
+        finishAttempt(TelemetryEvent.PaymentOutcome.CANCELLED)
+    }
+
+    /**
+     * Ends the open payment attempt as an error with the code of [error], the exception the merchant receives; with
+     * no [error] (the web result's silent ends, which hand the merchant nothing), an error without a code.
+     *
+     * @param error The error the merchant gets, or null when it gets nothing.
+     */
+    fun failAttempt(error: Throwable? = null) {
+        if (paymentId == null) return
+        finishAttempt(TelemetryEvent.PaymentOutcome.ERROR, error = error)
     }
     //endregion
 
@@ -292,6 +334,28 @@ internal class PayPalViewModel(
     private fun reportWhileActive(error: Throwable, cause: Throwable? = null) {
         viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             telemetry.reportSdkErrorWhileActive(error, SdkWidget.PAYPAL, cause = cause)
+        }
+    }
+
+    /**
+     * Ends the open payment attempt with [outcome]: an error with [error] carries the code of that exception, else
+     * [errorCode]. Then no attempt is open. Like [reportWhileActive], the finish runs undispatched in viewModelScope:
+     * sent at once while the view model lives, never once it is cleared (the use case's coroutine cancelled), when
+     * the attempt stays abandoned.
+     */
+    private fun finishAttempt(
+        outcome: TelemetryEvent.PaymentOutcome,
+        error: Throwable? = null,
+        errorCode: String? = null,
+    ) {
+        val id = paymentId ?: return
+        paymentId = null
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            if (error != null) {
+                telemetry.failPaymentWhileActive(SdkWidget.PAYPAL, id, error)
+            } else {
+                telemetry.finishPaymentWhileActive(SdkWidget.PAYPAL, id, outcome, errorCode)
+            }
         }
     }
 

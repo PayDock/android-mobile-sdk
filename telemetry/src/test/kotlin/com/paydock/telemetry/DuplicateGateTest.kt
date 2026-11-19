@@ -111,6 +111,32 @@ internal class DuplicateGateTest {
         assertNull(DuplicateGate.signature(first))
     }
 
+    /** R_04: a payment record is one attempt's start or end, so two equal ones are two records. */
+    @Test
+    fun paymentRecords_neverMerge_evenWhenIdentical() {
+        val finish = TelemetryEvent.PaymentFinished(
+            widget = "CardDetailsWidget",
+            paymentId = TelemetryTestFakes.uuid(301),
+            outcome = TelemetryEvent.PaymentOutcome.ERROR,
+            errorCode = "TokenisingCardException",
+            durationMs = 2_215
+        )
+        val start = TelemetryEvent.PaymentStarted("CardDetailsWidget", TelemetryTestFakes.uuid(301))
+        val records = listOf(
+            record(1, event = finish, createdAt = T0),
+            record(2, event = finish, createdAt = T0),
+            record(3, event = start, createdAt = T0),
+            record(4, event = start, createdAt = T0)
+        )
+
+        val merged = DuplicateGate.merge(records)
+
+        assertEquals(records, merged.map { it.record })
+        assertEquals(records.map { listOf(it.id) }, merged.map { it.sourceIds })
+        records.forEach { assertNull(DuplicateGate.signature(it)) }
+        merged.forEach { assertNull(it.record.value("paydock.occurrences")) }
+    }
+
     @Test
     fun aRecordWithoutSessionId_isNeverMerged() {
         val bare = record(1).let { it.copy(attributes = it.attributes.filterNot { a -> a.key == "session.id" }) }

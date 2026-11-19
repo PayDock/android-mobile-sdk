@@ -4,6 +4,7 @@ import com.paydock.telemetry.AttributeValue.Bool
 import com.paydock.telemetry.AttributeValue.Num
 import com.paydock.telemetry.AttributeValue.Str
 import com.paydock.telemetry.TelemetryEvent.ErrorInfo
+import com.paydock.telemetry.TelemetryEvent.PaymentOutcome
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -13,6 +14,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.UUID
 
 /**
  * The build-failing allowlist guard (R_02, R_03, principle 11). It encodes every golden fixture and a record of
@@ -218,6 +220,37 @@ internal class AllowlistTest {
         assertEquals(Str("CardDetailsWidget"), Allowlist.filter(repeated).value("paydock.widget"))
     }
 
+    /** R_09: `paydock.payment.id` must be a UUID; anything else is dropped, the rest of the record kept. */
+    @Test
+    fun filter_keepsAUuidPaymentId_andDropsAnyOther() {
+        val uuid = UUID.randomUUID().toString()
+        val kept = filtered(TelemetryEvent.PaymentStarted("CardDetailsWidget", uuid))
+        assertEquals(Str(uuid), kept.value("paydock.payment.id"))
+        assertBodyIsClean(kept)
+
+        val (luhnPassing, _) = luhnPassingIds()
+        val luhnKept = filtered(TelemetryEvent.PaymentStarted("CardDetailsWidget", luhnPassing))
+        assertEquals(Str(luhnPassing), luhnKept.value("paydock.payment.id"))
+
+        listOf("attempt-1", "", "$uuid-1", uuid.replace("-", ""), cardNumber, EMAIL, " $uuid").forEach { id ->
+            val dropped = filtered(
+                TelemetryEvent.PaymentFinished("CardDetailsWidget", id, PaymentOutcome.SUCCESS, durationMs = 9)
+            )
+            assertEquals(id, null, dropped.value("paydock.payment.id"))
+            assertEquals(id, Str("success"), dropped.value("paydock.payment.outcome"))
+            assertEquals(id, Num(9), dropped.value("paydock.payment.duration_ms"))
+            assertBodyIsClean(dropped)
+        }
+    }
+
+    @Test
+    fun scan_reportsAMalformedPaymentId() {
+        assertReported(
+            "malformed paydock.payment.id",
+            encode(validRecord().plus("paydock.payment.id", Str("attempt-1")))
+        )
+    }
+
     // ---- the runtime filter: the body carries only what the filter keeps ----
 
     @Test
@@ -352,8 +385,20 @@ internal class AllowlistTest {
     @Test
     fun keys_matchTheSpecLists() {
         assertEquals(RESOURCE_TYPES.keys.toList(), Allowlist.RESOURCE_KEYS)
-        assertEquals(30, Allowlist.RECORD_KEYS.size)
+        assertEquals(33, Allowlist.RECORD_KEYS.size)
         assertEquals(Num::class, Allowlist.RECORD_KEYS["paydock.dropped.count"])
+        assertEquals(
+            listOf(
+                "paydock.dropped.count",
+                "paydock.payment.id",
+                "paydock.payment.outcome",
+                "paydock.payment.duration_ms"
+            ),
+            Allowlist.RECORD_KEYS.keys.toList().takeLast(4)
+        )
+        assertEquals(Str::class, Allowlist.RECORD_KEYS["paydock.payment.id"])
+        assertEquals(Str::class, Allowlist.RECORD_KEYS["paydock.payment.outcome"])
+        assertEquals(Num::class, Allowlist.RECORD_KEYS["paydock.payment.duration_ms"])
         assertEquals(Bool::class, Allowlist.RECORD_KEYS["paydock.exception.in_sdk"])
         assertEquals(Str::class, Allowlist.RECORD_KEYS[SendStamp.OCCURRED_AT])
         val order = Allowlist.RECORD_KEYS.keys.toList()
@@ -464,8 +509,11 @@ internal class AllowlistTest {
             TelemetryEvent.UncaughtException(error, threadName = "DefaultDispatcher-worker-1", widget = "PayPalWidget"),
             TelemetryEvent.SdkError(error, errorCode = "TokenisingCardException", widget = "CardDetailsWidget"),
             TelemetryEvent.SdkError(ErrorInfo(type = null, frames = emptyList())),
-            TelemetryEvent.WidgetOpened("CardDetailsWidget")
-        ) + TelemetryEvent.DroppedReason.entries.map { TelemetryEvent.Dropped(it, 3) }
+            TelemetryEvent.WidgetOpened("CardDetailsWidget"),
+            TelemetryEvent.PaymentStarted("CardDetailsWidget", PAYMENT_ID)
+        ) + PaymentOutcome.entries.map {
+            TelemetryEvent.PaymentFinished("CardDetailsWidget", PAYMENT_ID, it, "TokenisingCardException", 2_215)
+        } + TelemetryEvent.DroppedReason.entries.map { TelemetryEvent.Dropped(it, 3) }
     }
 
     /**
@@ -538,6 +586,11 @@ internal class AllowlistTest {
                 uid == null -> found += "record without log.record.uid"
                 recordUid.matchEntire(uid)?.groupValues?.get(1) != sessionId -> found += "malformed log.record.uid"
             }
+            scanPaymentId(values["paydock.payment.id"]?.second, found)
+        }
+
+        private fun scanPaymentId(paymentId: String?, found: MutableList<String>) {
+            if (paymentId != null && !uuid.matches(paymentId)) found += "malformed paydock.payment.id"
         }
 
         private fun key(attribute: JsonObject) = (attribute.getValue("key") as JsonPrimitive).content
@@ -571,8 +624,9 @@ internal class AllowlistTest {
         const val EMAIL = "someone@example.com"
         const val SERVICE_INSTANCE_ID = "service.instance.id"
         const val SECRET_TEXT = "secret-message-text"
+        const val PAYMENT_ID = "e4a1c8b7-3f29-4d06-b5e8-7c2d9f1a0b34"
 
-        val FORMAT_CHECKED = setOf("session.id", "log.record.uid")
+        val FORMAT_CHECKED = setOf("session.id", "log.record.uid", "paydock.payment.id")
 
         val RESOURCE_TYPES: Map<String, String> = linkedMapOf(
             "service.name" to "stringValue",

@@ -295,6 +295,8 @@ private fun handlePayPalResult(
                 // On success, data should be present; call into VM to proceed
                 if (paymentMethodId != null && payerId != null) {
                     viewModel.captureWalletTransaction(paymentMethodId, payerId)
+                } else {
+                    viewModel.failAttempt()
                 }
             }
 
@@ -302,6 +304,7 @@ private fun handlePayPalResult(
             AppCompatActivity.RESULT_CANCELED -> {
                 when (data.getCancellationStatusExtra()) {
                     CancellationStatus.USER_INITIATED -> {
+                        viewModel.cancelAttempt()
                         completion(
                             Result.failure(
                                 PayPalException.CancellationException(
@@ -321,15 +324,16 @@ private fun handlePayPalResult(
                             description = message
                         )
                         viewModel.reportWidgetError(failure)
+                        viewModel.failAttempt(failure)
                         completion(Result.failure(failure))
                         viewModel.resetResultState()
                     }
                 }
             }
 
-            else -> Unit
+            else -> viewModel.failAttempt()
         }
-    }
+    } ?: viewModel.failAttempt()
 }
 
 /**

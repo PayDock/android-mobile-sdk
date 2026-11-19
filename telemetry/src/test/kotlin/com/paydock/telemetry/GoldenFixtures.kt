@@ -130,6 +130,17 @@ internal object GoldenFixtures {
             widget = json.string("widget")
         )
         "WidgetOpened" -> TelemetryEvent.WidgetOpened(widget = json.string("widget")!!)
+        "PaymentStarted" -> TelemetryEvent.PaymentStarted(
+            widget = json.string("widget")!!,
+            paymentId = json.string("paymentId")!!
+        )
+        "PaymentFinished" -> TelemetryEvent.PaymentFinished(
+            widget = json.string("widget")!!,
+            paymentId = json.string("paymentId")!!,
+            outcome = TelemetryEvent.PaymentOutcome.entries.single { it.value == json.string("outcome") },
+            errorCode = json.string("code"),
+            durationMs = json["durationMs"]?.takeUnless { it is JsonNull }?.jsonPrimitive?.long
+        )
         "Dropped" -> TelemetryEvent.Dropped(
             reason = TelemetryEvent.DroppedReason.entries.single { it.value == json.string("reason") },
             count = json.getValue("count").jsonPrimitive.int

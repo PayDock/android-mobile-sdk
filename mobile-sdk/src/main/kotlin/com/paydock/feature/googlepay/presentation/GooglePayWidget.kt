@@ -271,8 +271,8 @@ private fun handleResolvableResult(
             result.data?.let { intent ->
                 PaymentData.getFromIntent(intent)?.let { paymentData ->
                     viewModel.processGooglePayPaymentResult(paymentData)
-                }
-            }
+                } ?: viewModel.handleMissingPaymentData()
+            } ?: viewModel.handleMissingPaymentData()
         }
 
         WalletConstants.RESULT_ERROR -> {
@@ -306,7 +306,7 @@ private fun handleGooglePayResult(
         CommonStatusCodes.SUCCESS -> {
             taskResult.result?.let { paymentData ->
                 viewModel.processGooglePayPaymentResult(paymentData)
-            }
+            } ?: viewModel.handleMissingPaymentData()
         }
 
         else -> {

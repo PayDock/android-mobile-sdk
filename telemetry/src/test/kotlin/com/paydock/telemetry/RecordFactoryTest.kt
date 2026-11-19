@@ -8,6 +8,7 @@ import com.paydock.telemetry.TelemetryEvent.CrashSource
 import com.paydock.telemetry.TelemetryEvent.ErrorInfo
 import com.paydock.telemetry.TelemetryEvent.HttpMethod
 import com.paydock.telemetry.TelemetryEvent.NetworkError
+import com.paydock.telemetry.TelemetryEvent.PaymentOutcome
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -221,6 +222,78 @@ internal class RecordFactoryTest {
         assertEquals(true, record.isDroppedNotice)
     }
 
+    // ---- payments (§ 5.9, R_01) ----
+
+    @Test
+    fun paymentStarted_isInfo_withTheWidgetAndTheId() {
+        val record = create(TelemetryEvent.PaymentStarted("PayPalWidget", PAYMENT_ID))
+
+        assertEquals(Severity.INFO, record.severity)
+        assertEquals(
+            listOf(
+                "event.name" to Str("paydock.payment.started"),
+                "session.id" to Str(SESSION_ID),
+                "log.record.uid" to Str("$SESSION_ID-4"),
+                "network.connection.type" to Str("cell"),
+                "paydock.widget" to Str("PayPalWidget"),
+                "paydock.payment.id" to Str(PAYMENT_ID)
+            ),
+            record.attributes.map { it.key to it.value }
+        )
+        assertEquals("paydock.payment.started · PayPalWidget", record.body)
+    }
+
+    @Test
+    fun paymentFinished_isInfo_withTheOutcomeAndTheDurationAsANumber() {
+        PaymentOutcome.entries.filterNot { it == PaymentOutcome.ERROR }.forEach {
+            val record = create(TelemetryEvent.PaymentFinished("PayPalWidget", PAYMENT_ID, it, "Unused", 41_873))
+
+            assertEquals(Severity.INFO, record.severity)
+            assertEquals(
+                listOf(
+                    "event.name",
+                    "session.id",
+                    "log.record.uid",
+                    "network.connection.type",
+                    "paydock.widget",
+                    "paydock.payment.id",
+                    "paydock.payment.outcome",
+                    "paydock.payment.duration_ms"
+                ),
+                record.attributes.map { a -> a.key }
+            )
+            assertEquals(Str(it.value), record.value("paydock.payment.outcome"))
+            assertEquals(Num(41_873), record.value("paydock.payment.duration_ms"))
+            assertNull(record.value("paydock.error.code"))
+            assertEquals("paydock.payment.finished · PayPalWidget · ${it.value}", record.body)
+        }
+    }
+
+    @Test
+    fun paymentFinished_error_carriesItsCode_beforeThePaymentKeys_andWithoutACode_none() {
+        val withCode = create(
+            TelemetryEvent.PaymentFinished(
+                "CardDetailsWidget",
+                PAYMENT_ID,
+                PaymentOutcome.ERROR,
+                errorCode = "TokenisingCardException",
+                durationMs = 2_215
+            )
+        )
+        val keys = withCode.attributes.map { it.key }
+        assertEquals(keys.indexOf("paydock.widget") + 1, keys.indexOf("paydock.error.code"))
+        assertEquals(keys.indexOf("paydock.error.code") + 1, keys.indexOf("paydock.payment.id"))
+        assertEquals(Str("TokenisingCardException"), withCode.value("paydock.error.code"))
+        assertEquals("paydock.payment.finished · CardDetailsWidget · error · TokenisingCardException", withCode.body)
+
+        val silent = create(
+            TelemetryEvent.PaymentFinished("CardDetailsWidget", PAYMENT_ID, PaymentOutcome.ERROR)
+        )
+        assertNull(silent.value("paydock.error.code"))
+        assertNull(silent.value("paydock.payment.duration_ms"))
+        assertEquals("paydock.payment.finished · CardDetailsWidget · error", silent.body)
+    }
+
     @Test
     fun attributes_followTheAllowlistOrder_eachKeyOnce() {
         val error = ErrorInfo("Outer", listOf(sdkFrame), cause = ErrorInfo("Inner", emptyList()))
@@ -245,5 +318,6 @@ internal class RecordFactoryTest {
         const val SESSION_ID = "b2f6c0a4-1d3e-4e8f-9a71-5c2d8e0f4b13"
         const val CREATED_AT = 1_793_852_047_512L
         const val OCCURRED_AT = 1_793_851_121_000L
+        const val PAYMENT_ID = "9b2e4f61-7c3a-4d58-a1e9-3f0d6b8c2a17"
     }
 }

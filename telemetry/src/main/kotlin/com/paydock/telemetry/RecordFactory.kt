@@ -41,6 +41,12 @@ internal object RecordFactory {
                 values["paydock.widget"] = Str(event.widget)
                 Shape("paydock.widget.opened", Severity.INFO)
             }
+            is TelemetryEvent.PaymentStarted -> {
+                values["paydock.widget"] = Str(event.widget)
+                values["paydock.payment.id"] = Str(event.paymentId)
+                Shape("paydock.payment.started", Severity.INFO)
+            }
+            is TelemetryEvent.PaymentFinished -> paymentFinishedShape(event, values)
             is TelemetryEvent.Dropped -> {
                 values["paydock.dropped.reason"] = Str(event.reason.value)
                 values["paydock.dropped.count"] = Num(event.count.toLong())
@@ -82,6 +88,21 @@ internal object RecordFactory {
         widget.nonEmpty()?.let { values["paydock.widget"] = Str(it) }
         threadName.nonEmpty()?.let { values["thread.name"] = Str(it) }
         return Shape("paydock.error", Severity.ERROR)
+    }
+
+    /** `paydock.error.code` only for an `error` outcome; the duration as an integer, set by the reducer. */
+    private fun paymentFinishedShape(
+        event: TelemetryEvent.PaymentFinished,
+        values: MutableMap<String, AttributeValue>,
+    ): Shape {
+        values["paydock.widget"] = Str(event.widget)
+        if (event.outcome == TelemetryEvent.PaymentOutcome.ERROR) {
+            event.errorCode.nonEmpty()?.let { values["paydock.error.code"] = Str(it) }
+        }
+        values["paydock.payment.id"] = Str(event.paymentId)
+        values["paydock.payment.outcome"] = Str(event.outcome.value)
+        event.durationMs?.let { values["paydock.payment.duration_ms"] = Num(it) }
+        return Shape("paydock.payment.finished", Severity.INFO)
     }
 
     private fun networkShape(event: TelemetryEvent.NetworkFailure, values: MutableMap<String, AttributeValue>): Shape {

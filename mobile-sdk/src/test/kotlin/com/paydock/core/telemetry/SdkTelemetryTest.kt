@@ -17,8 +17,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.UUID
 
 /**
  * Unit tests for the SDK's telemetry calls (R_01 to R_03, R_06, R_08): the event each call reports, the inactive
@@ -120,6 +124,119 @@ internal class SdkTelemetryTest {
     }
 
     @Test
+    fun startPayment_reportsOneStart_andReturnsItsNewRandomUuid() {
+        val telemetry = RecordingTelemetry()
+
+        val first = telemetry.startPayment(SdkWidget.CARD_DETAILS)
+        val second = telemetry.startPayment(SdkWidget.CARD_DETAILS)
+
+        assertNotNull(first)
+        assertNotEquals(first, second)
+        assertEquals(first, UUID.fromString(first).toString())
+        assertEquals(
+            listOf(
+                TelemetryEvent.PaymentStarted("CardDetailsWidget", first!!),
+                TelemetryEvent.PaymentStarted("CardDetailsWidget", second!!)
+            ),
+            telemetry.paymentsStarted
+        )
+    }
+
+    @Test
+    fun finishPayment_reportsOneFinish_withoutADuration() {
+        val telemetry = RecordingTelemetry()
+        val paymentId = telemetry.startPayment(SdkWidget.PAYPAL)
+
+        telemetry.finishPayment(SdkWidget.PAYPAL, paymentId, TelemetryEvent.PaymentOutcome.CANCELLED)
+
+        assertEquals(
+            TelemetryEvent.PaymentFinished("PayPalWidget", paymentId!!, TelemetryEvent.PaymentOutcome.CANCELLED),
+            telemetry.paymentsFinished.single()
+        )
+        assertNull(telemetry.paymentsFinished.single().durationMs)
+    }
+
+    @Test
+    fun failPayment_reportsAnErrorFinish_withTheMerchantsExceptionCode_orNone() {
+        val telemetry = RecordingTelemetry()
+        val paymentId = telemetry.startPayment(SdkWidget.CARD_DETAILS)!!
+
+        telemetry.failPayment(SdkWidget.CARD_DETAILS, paymentId, CardDetailsException.TokenisingCardException(body("x")))
+        telemetry.failPayment(SdkWidget.CARD_DETAILS, paymentId, IllegalStateException("synthetic"))
+        telemetry.failPayment(SdkWidget.CARD_DETAILS, paymentId, error = null)
+
+        assertEquals(
+            listOf("TokenisingCardException", null, null),
+            telemetry.paymentsFinished.map { it.errorCode }
+        )
+        assertTrue(telemetry.paymentsFinished.all { it.outcome == TelemetryEvent.PaymentOutcome.ERROR })
+    }
+
+    @Test
+    fun finishAndFail_withANullId_reportNothing() {
+        val telemetry = RecordingTelemetry()
+
+        telemetry.finishPayment(SdkWidget.GOOGLE_PAY, null, TelemetryEvent.PaymentOutcome.SUCCESS)
+        telemetry.failPayment(SdkWidget.GOOGLE_PAY, null, GooglePayException.ResultException("synthetic"))
+
+        assertTrue(telemetry.events.isEmpty())
+    }
+
+    @Test
+    fun finishAndFailWhileActive_fromAnActiveCoroutine_reportTheFinish() = runBlocking<Unit> {
+        val telemetry = RecordingTelemetry()
+
+        telemetry.finishPaymentWhileActive(SdkWidget.PAYPAL, PAYMENT_ID, TelemetryEvent.PaymentOutcome.SUCCESS)
+        telemetry.failPaymentWhileActive(SdkWidget.PAYPAL, PAYMENT_ID, PayPalException.UnknownException("synthetic"))
+
+        assertEquals(
+            listOf(
+                TelemetryEvent.PaymentFinished("PayPalWidget", PAYMENT_ID, TelemetryEvent.PaymentOutcome.SUCCESS),
+                TelemetryEvent.PaymentFinished(
+                    "PayPalWidget",
+                    PAYMENT_ID,
+                    TelemetryEvent.PaymentOutcome.ERROR,
+                    "UnknownException"
+                )
+            ),
+            telemetry.paymentsFinished
+        )
+    }
+
+    @Test
+    fun finishAndFailWhileActive_fromACancelledCoroutine_reportNothing() = runBlocking<Unit> {
+        val telemetry = RecordingTelemetry()
+
+        launch {
+            cancel()
+            telemetry.finishPaymentWhileActive(SdkWidget.PAYPAL, PAYMENT_ID, TelemetryEvent.PaymentOutcome.SUCCESS)
+            telemetry.failPaymentWhileActive(SdkWidget.PAYPAL, PAYMENT_ID, IllegalStateException())
+        }.join()
+
+        assertTrue(telemetry.events.isEmpty())
+    }
+
+    @Test
+    fun payments_withTheInactiveFacade_returnNullAndReportNothing() {
+        val telemetry = RecordingTelemetry(isActive = false)
+
+        assertNull(telemetry.startPayment(SdkWidget.CARD_DETAILS))
+        telemetry.finishPayment(SdkWidget.CARD_DETAILS, PAYMENT_ID, TelemetryEvent.PaymentOutcome.SUCCESS)
+        telemetry.failPayment(SdkWidget.CARD_DETAILS, PAYMENT_ID, IllegalStateException())
+
+        assertTrue(telemetry.events.isEmpty())
+    }
+
+    @Test
+    fun payments_withAFailingFacade_neverThrow_andStartReturnsNull() {
+        failingFacades().forEach { telemetry ->
+            assertNull(telemetry.startPayment(SdkWidget.PAYPAL))
+            telemetry.finishPayment(SdkWidget.PAYPAL, PAYMENT_ID, TelemetryEvent.PaymentOutcome.SUCCESS)
+            telemetry.failPayment(SdkWidget.PAYPAL, PAYMENT_ID, IllegalStateException())
+        }
+    }
+
+    @Test
     fun theInactiveFacade_isNeverCalled() {
         val telemetry = RecordingTelemetry(isActive = false)
 
@@ -205,8 +322,8 @@ internal class SdkTelemetryTest {
         assertEquals(PayPalException.CancellationException::class.java.name, event.error.type)
     }
 
-    @Test
-    fun aFailingFacade_neverThrowsToTheCaller() {
+    /** A facade whose report throws, and one whose isActive throws. */
+    private fun failingFacades(): List<Telemetry> {
         val throwingReport = object : Telemetry {
             override val isActive: Boolean = true
             override fun report(event: TelemetryEvent) = error("synthetic facade failure")
@@ -216,8 +333,12 @@ internal class SdkTelemetryTest {
                 get() = error("synthetic facade failure")
             override fun report(event: TelemetryEvent) = Unit
         }
+        return listOf(throwingReport, throwingIsActive)
+    }
 
-        listOf(throwingReport, throwingIsActive).forEach { telemetry ->
+    @Test
+    fun aFailingFacade_neverThrowsToTheCaller() {
+        failingFacades().forEach { telemetry ->
             telemetry.reportSdkError(IllegalStateException(), SdkWidget.ZIP, cause = IllegalArgumentException())
             telemetry.reportWidgetOpened(SdkWidget.ZIP)
         }
@@ -260,5 +381,9 @@ internal class SdkTelemetryTest {
             if (index % 2 == 0) (digit * 2).let { if (it > 9) it - 9 else it } else digit
         }.sum()
         return payload + (10 - sum % 10) % 10
+    }
+
+    private companion object {
+        const val PAYMENT_ID = "e4a1c8b7-3f29-4d06-b5e8-7c2d9f1a0b34"
     }
 }

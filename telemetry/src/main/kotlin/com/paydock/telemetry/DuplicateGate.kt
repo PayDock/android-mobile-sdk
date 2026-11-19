@@ -2,8 +2,8 @@ package com.paydock.telemetry
 
 /**
  * Merges exact duplicates within one session (R_06, MD-27). Pure. Two records merge only when their [signature]s are
- * equal: the same session, event name and every signature field. A notice, or a record without `session.id`, is never
- * merged.
+ * equal: the same session, event name and every signature field. A notice, a payment record, or a record without
+ * `session.id`, is never merged.
  *
  * The kept record is the group's earliest, by time then the id's sequence as a number, and keeps its own id.
  * `paydock.occurrences` becomes the sum of the members' occurrences (absent counts as 1), set only above 1, and
@@ -14,6 +14,9 @@ internal object DuplicateGate {
     private const val SEPARATOR = "\u0000"
     private const val OCCURRENCES = "paydock.occurrences"
     private const val HTTP_ATTEMPT = "paydock.http.attempt"
+
+    /** Each payment record is one attempt's start or end, so two equal ones are still two (R_04). */
+    private val NEVER_MERGED = setOf("paydock.payment.started", "paydock.payment.finished")
 
     private val COMMON_KEYS = listOf("exception.type", "exception.stacktrace", "paydock.widget")
 
@@ -48,7 +51,7 @@ internal object DuplicateGate {
     /** `"<session.id>\u0000<event.name>"`, then `"\u0000<key>=<value>"` per signature key present; null: never merged. */
     fun signature(record: TelemetryRecord): String? {
         val sessionId = record.sessionId
-        if (sessionId == null || record.isDroppedNotice) return null
+        if (sessionId == null || record.isDroppedNotice || record.eventName in NEVER_MERGED) return null
         val eventName = record.eventName.orEmpty()
         val keys = COMMON_KEYS + EVENT_KEYS[eventName].orEmpty()
         return buildString {

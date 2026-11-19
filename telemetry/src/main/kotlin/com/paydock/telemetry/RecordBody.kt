@@ -17,6 +17,12 @@ internal object RecordBody {
             "paydock.error" -> errorDetails(values)
             "paydock.network.failure" -> networkDetails(values)
             "paydock.widget.opened" -> listOfNotNull(values.text("paydock.widget"))
+            "paydock.payment.started" -> listOfNotNull(values.text("paydock.widget"))
+            "paydock.payment.finished" -> listOfNotNull(
+                values.text("paydock.widget"),
+                values.text("paydock.payment.outcome"),
+                values.text("paydock.error.code")
+            )
             "paydock.telemetry.dropped" -> listOfNotNull(
                 values.text("paydock.dropped.reason"),
                 values.number("paydock.dropped.count")?.let { "$it records" }

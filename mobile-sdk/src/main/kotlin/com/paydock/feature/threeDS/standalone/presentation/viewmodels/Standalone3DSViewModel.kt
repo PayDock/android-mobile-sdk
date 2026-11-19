@@ -5,16 +5,22 @@ import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
 import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.failPayment
+import com.paydock.core.telemetry.finishPayment
 import com.paydock.core.telemetry.reportSdkError
+import com.paydock.core.telemetry.startPayment
 import com.paydock.feature.threeDS.standalone.domain.mapper.asEntity
 import com.paydock.feature.threeDS.standalone.domain.mapper.asProgress
 import com.paydock.feature.threeDS.standalone.domain.model.ui.Standalone3DSEvent
+import com.paydock.feature.threeDS.standalone.domain.model.ui.enums.StandaloneEvent
 import com.paydock.feature.threeDS.standalone.presentation.state.Standalone3DSUIState
 import com.paydock.telemetry.Telemetry
+import com.paydock.telemetry.TelemetryEvent
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * ViewModel for managing the UI state and logic related to Standalone 3DS (3-D Secure) authentication.
@@ -71,6 +77,35 @@ internal class Standalone3DSViewModel(
      */
     val eventFlow: SharedFlow<Standalone3DSUIState> = _eventFlow.asSharedFlow()
 
+    /** Whether this view model's one payment attempt was started (§ 5.9): [startAttempt] runs once. */
+    private val paymentStarted = AtomicBoolean(false)
+
+    /**
+     * The open payment attempt's ID, or null when none is open or telemetry is inactive. Set on the main thread and
+     * read on the JS bridge's thread.
+     */
+    @Volatile
+    private var paymentId: String? = null
+
+    /**
+     * Starts this view model's payment attempt (§ 5.9), at most once: the widget calls it from its launch effect.
+     */
+    fun startAttempt() {
+        if (!paymentStarted.compareAndSet(false, true)) return
+        paymentId = telemetry.startPayment(SdkWidget.STANDALONE_3DS)
+    }
+
+    /**
+     * Ends the open payment attempt as an error with the code of [error], the failure the widget hands the merchant
+     * itself (render process gone, web view error).
+     *
+     * @param error The error the merchant gets.
+     */
+    fun failAttempt(error: Throwable) {
+        if (paymentId == null) return
+        finishAttempt(TelemetryEvent.PaymentOutcome.ERROR, error = error)
+    }
+
     /**
      * Resets the current state to idle.
      *
@@ -106,6 +141,39 @@ internal class Standalone3DSViewModel(
         event.loadingChange()?.let { updateState(Standalone3DSUIState.Loading(it)) }
         event.asProgress()?.let { updateState(Standalone3DSUIState.Progress(it)) }
         event.asEntity()?.let { updateState(Standalone3DSUIState.Success(it)) }
+        finishPaymentOn(event)
+    }
+
+    /**
+     * Ends the open payment attempt on a final event: success, a reject as declined, a charge error as an error
+     * with the `CHARGE_ERROR` code. Challenge, decoupled, info and the challenge loaded/completed events end nothing.
+     */
+    private fun finishPaymentOn(event: Standalone3DSEvent) {
+        if (paymentId == null) return
+        when (event) {
+            is Standalone3DSEvent.ChargeAuthSuccessEvent -> finishAttempt(TelemetryEvent.PaymentOutcome.SUCCESS)
+            is Standalone3DSEvent.ChargeAuthRejectEvent -> finishAttempt(TelemetryEvent.PaymentOutcome.DECLINED)
+            is Standalone3DSEvent.ChargeErrorEvent ->
+                finishAttempt(TelemetryEvent.PaymentOutcome.ERROR, errorCode = StandaloneEvent.CHARGE_ERROR.name)
+            else -> Unit
+        }
+    }
+
+    /**
+     * Ends the open payment attempt with [outcome]: an error with [error] carries the code of the exception the
+     * merchant receives (none when it is not an SdkException), else [errorCode]. Then no attempt is open.
+     */
+    private fun finishAttempt(
+        outcome: TelemetryEvent.PaymentOutcome,
+        error: Throwable? = null,
+        errorCode: String? = null,
+    ) {
+        if (error != null) {
+            telemetry.failPayment(SdkWidget.STANDALONE_3DS, paymentId, error)
+        } else {
+            telemetry.finishPayment(SdkWidget.STANDALONE_3DS, paymentId, outcome, errorCode)
+        }
+        paymentId = null
     }
 
     /**
@@ -164,6 +232,7 @@ internal class Standalone3DSViewModel(
                         updateState(Standalone3DSUIState.Loading(false))
                         updateState(Standalone3DSUIState.Error(it))
                     }
+                failAttempt(throwable)
             }
         )
     }

@@ -26,6 +26,7 @@ import com.paydock.feature.threeDS.standalone.domain.utils.UnknownStandalone3DSE
 import com.paydock.feature.threeDS.standalone.presentation.state.Standalone3DSUIState
 import com.paydock.feature.threeDS.standalone.presentation.utils.Standalone3DSJSBridge
 import com.paydock.feature.threeDS.standalone.presentation.utils.Standalone3DSLoadingController
+import com.paydock.telemetry.TelemetryEvent
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
@@ -378,6 +379,7 @@ internal class Standalone3DSViewModelTest : BaseKoinUnitTest() {
         listOf(invalidToken, invalidFormat).forEach { branch ->
             assertEquals(1, WidgetSourceScan.count(branch, "Standalone3DSException.InvalidTokenException("))
             assertEquals(1, WidgetSourceScan.count(branch, "ReportSdkErrorOnce(failure, SdkWidget.STANDALONE_3DS)"))
+            assertEquals(1, WidgetSourceScan.count(branch, "ReportPaymentFailedOnce(SdkWidget.STANDALONE_3DS, failure)"))
             assertEquals(1, WidgetSourceScan.count(branch, "completion(Result.failure(failure))"))
             assertTrue(
                 branch.indexOf("ReportSdkErrorOnce(failure, SdkWidget.STANDALONE_3DS)") < branch.indexOf("return"),
@@ -399,10 +401,132 @@ internal class Standalone3DSViewModelTest : BaseKoinUnitTest() {
         assertEquals(3, WidgetSourceScan.count(source, "viewModel.reportWidgetError("))
         assertEquals(1, WidgetSourceScan.count(rendererGone, "Standalone3DSException.RenderProcessGoneException("))
         assertEquals(1, WidgetSourceScan.count(rendererGone, "viewModel.reportWidgetError(failure)"))
+        assertEquals(1, WidgetSourceScan.count(rendererGone, "viewModel.failAttempt(failure)"))
         assertEquals(1, WidgetSourceScan.count(rendererGone, "currentCompletion(Result.failure(failure))"))
         assertEquals(1, WidgetSourceScan.count(webView, "Standalone3DSException.WebViewException("))
         assertEquals(1, WidgetSourceScan.count(webView, "viewModel.reportWidgetError(failure)"))
+        assertEquals(1, WidgetSourceScan.count(webView, "viewModel.failAttempt(failure)"))
         assertEquals(1, WidgetSourceScan.count(webView, "currentCompletion(Result.failure(failure))"))
+    }
+
+    // endregion
+
+    // region Telemetry: one payment attempt per view model (§ 5.9, R_06 to R_08)
+
+    private fun finishOf(vararg events: Standalone3DSEvent, reporting: RecordingTelemetry = telemetry) =
+        Standalone3DSViewModel(dispatchersProvider, reporting).run {
+            startAttempt()
+            events.forEach { handleEventResult(Result.success(it)) }
+            reporting.paymentsFinished
+        }
+
+    @Test
+    fun `startAttempt twice starts one attempt`() {
+        viewModel.startAttempt()
+        viewModel.startAttempt()
+
+        assertEquals(SdkWidget.STANDALONE_3DS, telemetry.paymentsStarted.single().widget)
+    }
+
+    @Test
+    fun `each terminal event finishes the attempt once with its outcome`() {
+        val expected = listOf(
+            successEvent to TelemetryEvent.PaymentOutcome.SUCCESS,
+            rejectEvent to TelemetryEvent.PaymentOutcome.DECLINED,
+            errorEvent to TelemetryEvent.PaymentOutcome.ERROR,
+        )
+        expected.forEach { (event, outcome) ->
+            val reporting = RecordingTelemetry()
+
+            val finished = finishOf(event, successEvent, reporting = reporting).single()
+
+            assertEquals(reporting.paymentsStarted.single().paymentId, finished.paymentId)
+            assertEquals(SdkWidget.STANDALONE_3DS, finished.widget)
+            assertEquals(outcome, finished.outcome)
+            assertEquals(if (event == errorEvent) "CHARGE_ERROR" else null, finished.errorCode)
+        }
+    }
+
+    @Test
+    fun `challenge, decoupled, info and challenge loaded or completed send no finish`() {
+        val finished =
+            finishOf(challengeEvent, challengeLoadedEvent, challengeCompletedEvent, decoupledEvent, infoEvent)
+
+        assertTrue(finished.isEmpty())
+        assertEquals(1, telemetry.paymentsStarted.size)
+    }
+
+    @Test
+    fun `a mapping failure finishes as error with its code, or none when it is no SdkException`() {
+        viewModel.startAttempt()
+        viewModel.handleEventResult(Result.failure(Standalone3DSException.EventMappingException("synthetic")))
+        val other = RecordingTelemetry()
+        Standalone3DSViewModel(dispatchersProvider, other).run {
+            startAttempt()
+            handleEventResult(Result.failure(IllegalStateException()))
+        }
+
+        assertEquals("EventMappingException", telemetry.paymentsFinished.single().errorCode)
+        assertEquals(TelemetryEvent.PaymentOutcome.ERROR, other.paymentsFinished.single().outcome)
+        assertNull(other.paymentsFinished.single().errorCode)
+    }
+
+    @Test
+    fun `render process gone and web view errors finish as error with their codes`() = runTest {
+        viewModel.eventFlow.test {
+            viewModel.startAttempt()
+            viewModel.failAttempt(
+                Standalone3DSException.RenderProcessGoneException(didCrash = true, displayableMessage = "gone")
+            )
+            viewModel.failAttempt(Standalone3DSException.WebViewException(code = -1, displayableMessage = "web view"))
+
+            expectNoEvents()
+        }
+        val other = RecordingTelemetry()
+        Standalone3DSViewModel(dispatchersProvider, other).run {
+            startAttempt()
+            failAttempt(Standalone3DSException.WebViewException(code = -1, displayableMessage = "web view"))
+        }
+
+        assertEquals("RenderProcessGoneException", telemetry.paymentsFinished.single().errorCode)
+        assertEquals("WebViewException", other.paymentsFinished.single().errorCode)
+    }
+
+    @Test
+    fun `with inactive telemetry the same states are emitted and nothing is reported`() = runTest {
+        val inactive = RecordingTelemetry(isActive = false)
+        val quiet = Standalone3DSViewModel(dispatchersProvider, inactive)
+        val states = mutableListOf<Standalone3DSUIState>()
+        quiet.eventFlow.test {
+            quiet.startAttempt()
+            listOf(challengeEvent, successEvent, errorEvent).forEach { quiet.handleEventResult(Result.success(it)) }
+            quiet.handleEventResult(Result.failure(Standalone3DSException.EventMappingException("synthetic")))
+            quiet.failAttempt(Standalone3DSException.WebViewException(code = -1, displayableMessage = "web view"))
+            states += cancelAndConsumeRemainingEvents()
+                .filterIsInstance<app.cash.turbine.Event.Item<Standalone3DSUIState>>()
+                .map { it.value }
+        }
+
+        val expected = collectStates(challengeEvent, successEvent, errorEvent) +
+            listOf(Standalone3DSUIState.Loading(false), states.last())
+        assertEquals(expected, states)
+        assertIs<Standalone3DSUIState.Error>(states.last())
+        assertTrue(inactive.events.isEmpty())
+    }
+
+    @Test
+    fun `the widget starts its attempt from its launch effect and the invalid token helper starts and fails one`() {
+        val source = WidgetSourceScan.read("feature/threeDS/standalone/presentation/Standalone3DSWidget.kt")
+        val launch = WidgetSourceScan.between(source, "LaunchedEffect(Unit) {", "viewModel.eventFlow.collect")
+        val helper = WidgetSourceScan.function(
+            WidgetSourceScan.read("core/telemetry/ReportWidgetOpened.kt"),
+            "ReportPaymentFailedOnce"
+        )
+
+        assertEquals(1, WidgetSourceScan.count(source, "viewModel.startAttempt()"))
+        assertEquals(1, WidgetSourceScan.count(launch, "viewModel.startAttempt()"))
+        assertEquals(1, WidgetSourceScan.count(helper, "LaunchedEffect(error::class)"))
+        assertEquals(1, WidgetSourceScan.count(helper, "it.failPayment(widget, it.startPayment(widget), error)"))
     }
 
     // endregion

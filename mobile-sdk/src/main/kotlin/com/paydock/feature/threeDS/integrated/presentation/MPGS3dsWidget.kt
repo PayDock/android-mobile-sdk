@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.MPGS3dsException
+import com.paydock.core.telemetry.ReportPaymentFailedOnce
 import com.paydock.core.telemetry.ReportSdkErrorOnce
 import com.paydock.core.telemetry.ReportWidgetOpened
 import com.paydock.core.telemetry.SdkWidget
@@ -47,6 +48,7 @@ fun MPGS3dsWidget(
             displayableMessage = MobileSDKConstants.MPGS3dsConfig.Errors.INVALID_TOKEN_ERROR
         )
         ReportSdkErrorOnce(failure, SdkWidget.MPGS_3DS)
+        ReportPaymentFailedOnce(SdkWidget.MPGS_3DS, failure)
         completion(Result.failure(failure))
         return
     } else if (parsedToken.format == TokenFormat.STANDALONE_3DS) {
@@ -55,6 +57,7 @@ fun MPGS3dsWidget(
             displayableMessage = MobileSDKConstants.MPGS3dsConfig.Errors.INVALID_TOKEN_FORMAT_ERROR
         )
         ReportSdkErrorOnce(failure, SdkWidget.MPGS_3DS)
+        ReportPaymentFailedOnce(SdkWidget.MPGS_3DS, failure)
         completion(Result.failure(failure))
         return
     }
@@ -63,6 +66,7 @@ fun MPGS3dsWidget(
     val viewModel: MPGS3dsViewModel = koinViewModel()
 
     LaunchedEffect(Unit) {
+        viewModel.startAttempt()
         viewModel.eventFlow.collect { state ->
             handleUIState(state, viewModel, completion)
         }
@@ -93,6 +97,7 @@ fun MPGS3dsWidget(
         // Invoke the onWebViewError callback with the WebView MPGS3dsException exception
         val failure = MPGS3dsException.WebViewException(status, message)
         viewModel.reportWidgetError(failure)
+        viewModel.failAttempt(failure)
         completion(Result.failure(failure))
     }
 }

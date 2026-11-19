@@ -28,6 +28,7 @@ import com.paydock.feature.wallet.domain.model.ui.WalletCallback
 import com.paydock.feature.wallet.domain.usecase.CaptureWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.DeclineWalletChargeUseCase
 import com.paydock.feature.wallet.domain.usecase.GetWalletCallbackUseCase
+import com.paydock.telemetry.TelemetryEvent
 import com.paypal.android.paypalwebpayments.PayPalWebCheckoutFundingSource
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
@@ -51,6 +52,7 @@ import org.mockito.junit.MockitoJUnitRunner
 import kotlin.test.assertIs
 
 @ExperimentalCoroutinesApi
+@Suppress("LargeClass")
 @RunWith(MockitoJUnitRunner::class)
 internal class PayPalViewModelTest : BaseKoinUnitTest() {
 
@@ -633,7 +635,184 @@ internal class PayPalViewModelTest : BaseKoinUnitTest() {
         assertEquals(1, WidgetSourceScan.count(cancellation, "completion("))
         assertEquals(1, WidgetSourceScan.count(webCheckout, "PayPalException.PayPalSDKException("))
         assertEquals(1, WidgetSourceScan.count(webCheckout, "viewModel.reportWidgetError(failure)"))
+        assertEquals(1, WidgetSourceScan.count(webCheckout, "viewModel.failAttempt(failure)"))
+        assertEquals(1, WidgetSourceScan.count(cancellation, "viewModel.cancelAttempt()"))
         assertEquals(1, WidgetSourceScan.count(webCheckout, "completion(Result.failure(failure))"))
+    }
+
+    // endregion
+
+    // region Telemetry: one payment attempt per PayPal tap (§ 5.9, R_06 to R_08)
+
+    /** Taps the button with a merchant token request that has not answered yet: the attempt is open. */
+    private fun tap(vm: PayPalViewModel = viewModel) = vm.handlePayPalButtonClick(config = widgetConfig) { }
+
+    private fun finished() = telemetry.paymentsFinished.single().also {
+        assertEquals(telemetry.paymentsStarted.single().paymentId, it.paymentId)
+        assertEquals(SdkWidget.PAYPAL, it.widget)
+    }
+
+    @Test
+    fun `a captured charge finishes the attempt as success`() = runTest {
+        val response =
+            readResourceFile("wallet/success_capture_wallet_response.json").convertToDataClass<CaptureChargeResponse>()
+        coEvery { captureWalletChargeUseCase(any(), any()) } returns Result.success(response.asEntity())
+
+        tap()
+        viewModel.captureWalletTransaction(
+            MobileSDKTestConstants.PayPal.MOCK_PAYMENT_METHOD_ID,
+            MobileSDKTestConstants.PayPal.MOCK_PAYER_ID
+        )
+        viewModel.uiState.first { it is PayPalCheckoutUIState.Success }
+
+        assertEquals(TelemetryEvent.PaymentOutcome.SUCCESS, finished().outcome)
+        assertNull(finished().errorCode)
+    }
+
+    @Test
+    fun `a shopper cancellation finishes the attempt as cancelled`() {
+        tap()
+        viewModel.cancelAttempt()
+        viewModel.cancelAttempt()
+
+        assertEquals(TelemetryEvent.PaymentOutcome.CANCELLED, finished().outcome)
+    }
+
+    @Test
+    fun `a capture failure finishes the attempt as error with its code`() = runTest {
+        coEvery { captureWalletChargeUseCase(any(), any()) } returns
+            Result.failure(apiFailure(HttpStatusCode.InternalServerError, "capture_error"))
+
+        tap()
+        viewModel.captureWalletTransaction(
+            MobileSDKTestConstants.PayPal.MOCK_PAYMENT_METHOD_ID,
+            MobileSDKTestConstants.PayPal.MOCK_PAYER_ID
+        )
+        viewModel.uiState.first { it is PayPalCheckoutUIState.Error }
+
+        assertEquals(TelemetryEvent.PaymentOutcome.ERROR, finished().outcome)
+        assertEquals("CapturingChargeException", finished().errorCode)
+    }
+
+    @Test
+    fun `the other failure paths finish the attempt as error with the merchant's exception code`() = runTest {
+        // Missing order id.
+        coEvery { getWalletCallbackUseCase(any(), any()) } returns Result.success(walletCallbackWithOrderId(null))
+        tap()
+        viewModel.getWalletCallback(walletToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN, requestShipping = true)
+        viewModel.uiState.first { it is PayPalCheckoutUIState.Error }
+        // Client id failure.
+        coEvery { getWalletCallbackUseCase(any(), any()) } returns
+            Result.success(walletCallbackWithOrderId(MobileSDKTestConstants.PayPal.MOCK_ORDER_ID))
+        coEvery { getPayPalClientIdUseCase(any(), any()) } returns
+            Result.failure(apiFailure(HttpStatusCode.InternalServerError, "gateway_client_id"))
+        viewModel.resetResultState()
+        tap()
+        viewModel.getWalletCallback(walletToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN, requestShipping = true)
+        viewModel.uiState.first { it is PayPalCheckoutUIState.Error }
+        // Wallet callback failure.
+        coEvery { getWalletCallbackUseCase(any(), any()) } returns
+            Result.failure(apiFailure(HttpStatusCode.InternalServerError, "callback_error"))
+        viewModel.resetResultState()
+        tap()
+        viewModel.getWalletCallback(walletToken = MobileSDKTestConstants.Wallet.MOCK_WALLET_TOKEN, requestShipping = true)
+        viewModel.uiState.first { it is PayPalCheckoutUIState.Error }
+        // Lost wallet token.
+        viewModel.resetResultState()
+        tap()
+        viewModel.captureWalletTransaction(
+            MobileSDKTestConstants.PayPal.MOCK_PAYMENT_METHOD_ID,
+            MobileSDKTestConstants.PayPal.MOCK_PAYER_ID
+        )
+
+        assertEquals(4, telemetry.paymentsStarted.size)
+        assertEquals(telemetry.paymentsStarted.map { it.paymentId }, telemetry.paymentsFinished.map { it.paymentId })
+        assertTrue(telemetry.paymentsFinished.all { it.outcome == TelemetryEvent.PaymentOutcome.ERROR })
+        assertEquals(
+            listOf(
+                "ConfigurationException",
+                "GetPayPalClientIdException",
+                "FetchingUrlException",
+                "InitialisationWalletTokenException"
+            ),
+            telemetry.paymentsFinished.map { it.errorCode }
+        )
+    }
+
+    @Test
+    fun `a merchant token failure finishes the attempt as error with the InitialisationWalletTokenException code`() {
+        viewModel.handlePayPalButtonClick(
+            config = widgetConfig,
+            tokenRequest = { callback -> callback(Result.failure(IllegalStateException())) }
+        )
+
+        assertEquals(TelemetryEvent.PaymentOutcome.ERROR, finished().outcome)
+        assertEquals("InitialisationWalletTokenException", finished().errorCode)
+    }
+
+    @Test
+    fun `each silent end and the web checkout error finish the attempt as error, the silent ones with no code`() {
+        tap()
+        viewModel.failAttempt()
+        viewModel.failAttempt()
+        tap()
+        viewModel.failAttempt(PayPalException.PayPalSDKException(code = -1, description = "synthetic"))
+
+        assertEquals(listOf(null, "PayPalSDKException"), telemetry.paymentsFinished.map { it.errorCode })
+        assertTrue(telemetry.paymentsFinished.all { it.outcome == TelemetryEvent.PaymentOutcome.ERROR })
+    }
+
+    @Test
+    fun `an error before the tap sends no payment record`() {
+        viewModel.resetResultState()
+        viewModel.captureWalletTransaction(
+            MobileSDKTestConstants.PayPal.MOCK_PAYMENT_METHOD_ID,
+            MobileSDKTestConstants.PayPal.MOCK_PAYER_ID
+        )
+        viewModel.cancelAttempt()
+        viewModel.failAttempt()
+
+        assertTrue(telemetry.paymentsStarted.isEmpty())
+        assertTrue(telemetry.paymentsFinished.isEmpty())
+    }
+
+    @Test
+    fun `with inactive telemetry the same states are set and nothing is reported`() {
+        val inactive = RecordingTelemetry(isActive = false)
+        val quiet = PayPalViewModel(
+            widgetConfig,
+            SavedStateHandle(),
+            captureWalletChargeUseCase,
+            declineWalletChargeUseCase,
+            getWalletCallbackUseCase,
+            dispatchersProvider,
+            getPayPalClientIdUseCase,
+            inactive
+        )
+
+        tap(quiet)
+        assertIs<PayPalCheckoutUIState.Loading>(quiet.uiState.value)
+        quiet.cancelAttempt()
+        quiet.failAttempt()
+        assertIs<PayPalCheckoutUIState.Loading>(quiet.uiState.value)
+        quiet.captureWalletTransaction(
+            MobileSDKTestConstants.PayPal.MOCK_PAYMENT_METHOD_ID,
+            MobileSDKTestConstants.PayPal.MOCK_PAYER_ID
+        )
+        val state = quiet.uiState.value
+        assertIs<PayPalCheckoutUIState.Error>(state)
+        assertIs<PayPalException.InitialisationWalletTokenException>(state.exception)
+        assertTrue(inactive.events.isEmpty())
+    }
+
+    @Test
+    fun `the web result handler ends the attempt on every silent end`() {
+        val source = WidgetSourceScan.read("feature/paypal/checkout/presentation/PayPalWidget.kt")
+        val handler = WidgetSourceScan.function(source, "handlePayPalResult")
+
+        assertEquals(1, WidgetSourceScan.count(handler, "} ?: viewModel.failAttempt()"))
+        assertEquals(1, WidgetSourceScan.count(handler, "else -> viewModel.failAttempt()"))
+        assertEquals(3, WidgetSourceScan.count(handler, "viewModel.failAttempt()"))
     }
 
     // endregion

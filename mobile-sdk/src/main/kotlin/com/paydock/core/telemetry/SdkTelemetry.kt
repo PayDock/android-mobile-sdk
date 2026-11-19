@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions") // the facade calls of the SDK, kept in one file
+
 package com.paydock.core.telemetry
 
 import com.paydock.core.domain.error.exceptions.SdkException
@@ -8,11 +10,13 @@ import kotlinx.coroutines.isActive
 import org.koin.core.context.GlobalContext
 import java.util.Collections
 import java.util.IdentityHashMap
+import java.util.UUID
 import java.util.concurrent.CancellationException
 
 /*
  * The SDK's calls on the telemetry facade: one for a handled SDK error (and its variant for a report made inside a
- * coroutine), one for a widget opening, and the one lookup of the facade outside a view model. The calls return at once
+ * coroutine), one for a widget opening, three for a payment attempt's start and end, and the one lookup of the facade
+ * outside a view model. The calls return at once
  * when telemetry is inactive (NoOpTelemetry, bound after a failed or blank collector URL lookup), never throw and never
  * change the caller's control flow: a failing report is swallowed here.
  */
@@ -52,6 +56,82 @@ internal fun Telemetry.reportWidgetOpened(widget: String) {
         if (!isActive) return
         report(TelemetryEvent.WidgetOpened(widget))
     }
+}
+
+/**
+ * A new payment attempt (R_05, § 5.9): report(TelemetryEvent.PaymentStarted(widget, uuid)) and return the uuid, a
+ * random java.util.UUID; null when inactive or on failure. Never throws.
+ *
+ * @param widget The [SdkWidget] name of the widget the attempt belongs to.
+ * @return The attempt's payment ID, to pass to [finishPayment] or [failPayment]; null when nothing was reported.
+ */
+internal fun Telemetry.startPayment(widget: String): String? = runCatching {
+    if (isActive) {
+        UUID.randomUUID().toString().also { report(TelemetryEvent.PaymentStarted(widget, it)) }
+    } else {
+        null
+    }
+}.getOrNull()
+
+/**
+ * Ends [paymentId] (R_05): report(TelemetryEvent.PaymentFinished(widget, paymentId, outcome, errorCode)); a no-op
+ * when [paymentId] is null or telemetry is inactive. The duration is set by the telemetry module, never here. Never
+ * throws.
+ *
+ * @param widget The [SdkWidget] name of the widget the attempt belongs to.
+ * @param paymentId The ID [startPayment] returned, or null when no attempt is open.
+ * @param outcome How the attempt ended.
+ * @param errorCode The code the merchant receives, kept only for [TelemetryEvent.PaymentOutcome.ERROR].
+ */
+internal fun Telemetry.finishPayment(
+    widget: String,
+    paymentId: String?,
+    outcome: TelemetryEvent.PaymentOutcome,
+    errorCode: String? = null,
+) {
+    runCatching {
+        if (paymentId == null || !isActive) return
+        report(TelemetryEvent.PaymentFinished(widget, paymentId, outcome, errorCode))
+    }
+}
+
+/**
+ * An error finish of [paymentId] with the code the merchant receives (R_07): errorCode = SdkErrorFacts.code(error),
+ * none when [error] is null or not an SdkException. Never throws.
+ *
+ * @param widget The [SdkWidget] name of the widget the attempt belongs to.
+ * @param paymentId The ID [startPayment] returned, or null when no attempt is open.
+ * @param error The exception the merchant gets, or null when the path hands the merchant nothing.
+ */
+internal fun Telemetry.failPayment(widget: String, paymentId: String?, error: Throwable?) {
+    runCatching {
+        if (paymentId == null || !isActive) return
+        finishPayment(widget, paymentId, TelemetryEvent.PaymentOutcome.ERROR, error?.let(SdkErrorFacts::code))
+    }
+}
+
+/**
+ * The same as [finishPayment], for a finish made inside a coroutine: returns at once when the calling coroutine is no
+ * longer active (currentCoroutineContext().isActive is false), so the attempt is left open and counts as abandoned
+ * (the merchant receives nothing from a cancelled coroutine). Never throws.
+ */
+internal suspend fun Telemetry.finishPaymentWhileActive(
+    widget: String,
+    paymentId: String?,
+    outcome: TelemetryEvent.PaymentOutcome,
+    errorCode: String? = null,
+) {
+    if (!currentCoroutineContext().isActive) return
+    finishPayment(widget, paymentId, outcome, errorCode)
+}
+
+/**
+ * The same as [failPayment], for a failure inside a coroutine: returns at once when the calling coroutine is no
+ * longer active, leaving the attempt abandoned (R_07: the merchant receives no code). Never throws.
+ */
+internal suspend fun Telemetry.failPaymentWhileActive(widget: String, paymentId: String?, error: Throwable?) {
+    if (!currentCoroutineContext().isActive) return
+    failPayment(widget, paymentId, error)
 }
 
 /**

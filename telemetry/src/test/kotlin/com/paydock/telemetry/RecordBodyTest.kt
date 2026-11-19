@@ -148,6 +148,41 @@ internal class RecordBodyTest {
     }
 
     @Test
+    fun paymentStarted_isTheWidget() {
+        assertEquals(
+            "paydock.payment.started · PayPalWidget",
+            body("event.name" to Str("paydock.payment.started"), "paydock.widget" to Str("PayPalWidget"))
+        )
+        assertEquals("paydock.payment.started", body("event.name" to Str("paydock.payment.started")))
+    }
+
+    @Test
+    fun paymentFinished_isTheWidgetThenTheOutcome_thenTheErrorCodeWhenPresent() {
+        assertEquals(
+            "paydock.payment.finished · Standalone3DSWidget · declined",
+            body(
+                "event.name" to Str("paydock.payment.finished"),
+                "paydock.widget" to Str("Standalone3DSWidget"),
+                "paydock.payment.outcome" to Str("declined"),
+                "paydock.payment.duration_ms" to Num(18_342)
+            )
+        )
+        assertEquals(
+            "paydock.payment.finished · Standalone3DSWidget · error · CHARGE_ERROR",
+            body(
+                "event.name" to Str("paydock.payment.finished"),
+                "paydock.widget" to Str("Standalone3DSWidget"),
+                "paydock.error.code" to Str("CHARGE_ERROR"),
+                "paydock.payment.outcome" to Str("error")
+            )
+        )
+        assertEquals(
+            "paydock.payment.finished · error",
+            body("event.name" to Str("paydock.payment.finished"), "paydock.payment.outcome" to Str("error"))
+        )
+    }
+
+    @Test
     fun droppedNotice_isTheReasonThenTheCount() {
         assertEquals(
             "paydock.telemetry.dropped · too_old · 12 records",

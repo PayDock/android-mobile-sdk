@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.common.api.Status
+import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wallet.PaymentData
 import com.google.android.gms.wallet.PaymentsClient
@@ -19,10 +20,12 @@ import com.paydock.core.telemetry.RecordingTelemetry
 import com.paydock.core.telemetry.SdkWidget
 import com.paydock.core.telemetry.WidgetSourceScan
 import com.paydock.core.utils.MainDispatcherRule
+import com.paydock.feature.card.domain.model.ui.TokenDetails
 import com.paydock.feature.googlepay.domain.model.integration.GooglePayWidgetConfig
 import com.paydock.feature.googlepay.domain.usecase.CreateGooglePayTokenUseCase
 import com.paydock.feature.googlepay.presentation.state.GooglePayUIState
 import com.paydock.feature.googlepay.util.PaymentsUtil
+import com.paydock.telemetry.TelemetryEvent
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.every
@@ -80,6 +83,8 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
 
         // This is to ensure we are able to mock the init function
         coEvery { paymentsClient.isReadyToPay(any()) } returns Tasks.forResult(true)
+        // The Pay tap builds the sheet's task; the payment attempt tests never complete it.
+        every { paymentsClient.loadPaymentData(any()) } returns mockk<Task<PaymentData>>()
 
         viewModel = GooglePayViewModel(
             paymentsClient,
@@ -571,6 +576,156 @@ internal class GooglePayViewModelTest : BaseKoinUnitTest() {
         assertEquals(1, WidgetSourceScan.count(source, "viewModel.reportWidgetError("))
         assertEquals(1, WidgetSourceScan.count(onError, "viewModel.reportWidgetError(failure, cause = it)"))
         assertEquals(1, WidgetSourceScan.count(onError, "completion(Result.failure(failure))"))
+    }
+
+    // endregion
+
+    // region Telemetry: one payment attempt per Pay tap (§ 5.9, R_06 to R_08)
+
+    private fun mockTokenisablePaymentData(): PaymentData {
+        val paymentData = mockk<PaymentData>()
+        every { paymentData.toJson() } returns
+            """{"paymentMethodData":{"tokenizationData":{"token":"unit_test_token"},"info":{"cardNetwork":"VISA"}}}"""
+        every { android.util.Base64.encodeToString(any(), any()) } answers {
+            java.util.Base64.getEncoder().encodeToString(firstArg<ByteArray>())
+        }
+        return paymentData
+    }
+
+    @Test
+    fun `a token after the Pay tap finishes the attempt as success with the same id`() = runTest {
+        coEvery { createGooglePayTokenUseCase(any(), any()) } returns
+            Result.success(TokenDetails(token = MobileSDKTestConstants.Card.MOCK_CARD_TOKEN, type = "token"))
+
+        viewModel.startGooglePayPaymentFlow()
+        viewModel.processGooglePayPaymentResult(mockTokenisablePaymentData())
+        viewModel.uiState.first { it is GooglePayUIState.Success }
+
+        val started = telemetry.paymentsStarted.single()
+        val finished = telemetry.paymentsFinished.single()
+        assertEquals(SdkWidget.GOOGLE_PAY, started.widget)
+        assertEquals(started.paymentId, finished.paymentId)
+        assertEquals(TelemetryEvent.PaymentOutcome.SUCCESS, finished.outcome)
+        assertNull(finished.errorCode)
+    }
+
+    @Test
+    fun `a cancelled sheet finishes the attempt as cancelled`() = runTest {
+        viewModel.startGooglePayPaymentFlow()
+        viewModel.handleGooglePayResultErrors(CommonStatusCodes.CANCELED)
+
+        val finished = telemetry.paymentsFinished.single()
+        assertEquals(telemetry.paymentsStarted.single().paymentId, finished.paymentId)
+        assertEquals(TelemetryEvent.PaymentOutcome.CANCELLED, finished.outcome)
+        assertNull(finished.errorCode)
+    }
+
+    @Test
+    fun `a user cancellation finishes the attempt as cancelled`() = runTest {
+        viewModel.startGooglePayPaymentFlow()
+        viewModel.handleCancellationResult()
+
+        assertIs<GooglePayException.CancellationException>((viewModel.uiState.value as GooglePayUIState.Error).exception)
+        assertEquals(TelemetryEvent.PaymentOutcome.CANCELLED, telemetry.paymentsFinished.single().outcome)
+    }
+
+    @Test
+    fun `a token failure finishes the attempt as error with the ResultException code`() = runTest {
+        val mapped = GooglePayException.TokenisingGooglePayException(
+            error = ApiErrorResponse(
+                status = HttpStatusCode.BadRequest.value,
+                summary = ErrorSummary(code = "invalid_token", message = MobileSDKTestConstants.Errors.MOCK_TOKENIZATION_ERROR)
+            )
+        )
+        coEvery { createGooglePayTokenUseCase(any(), any()) } returns Result.failure(mapped)
+
+        viewModel.startGooglePayPaymentFlow()
+        viewModel.processGooglePayPaymentResult(mockTokenisablePaymentData())
+        viewModel.uiState.first { it is GooglePayUIState.Error }
+
+        val finished = telemetry.paymentsFinished.single()
+        assertEquals(TelemetryEvent.PaymentOutcome.ERROR, finished.outcome)
+        assertEquals("ResultException", finished.errorCode)
+    }
+
+    @Test
+    fun `a failing Google Pay status finishes the attempt as error with its code`() = runTest {
+        viewModel.startGooglePayPaymentFlow()
+        viewModel.handleWalletResultErrors(Status(CommonStatusCodes.TIMEOUT))
+
+        val finished = telemetry.paymentsFinished.single()
+        assertEquals(TelemetryEvent.PaymentOutcome.ERROR, finished.outcome)
+        assertEquals("Timeout", finished.errorCode)
+    }
+
+    @Test
+    fun `no payment data finishes the attempt as error with the ResultException code and changes no state`() =
+        runTest {
+            viewModel.startGooglePayPaymentFlow()
+            val before = viewModel.uiState.value
+
+            viewModel.handleMissingPaymentData()
+            viewModel.handleMissingPaymentData()
+
+            assertSame(before, viewModel.uiState.value)
+            val finished = telemetry.paymentsFinished.single()
+            assertEquals(telemetry.paymentsStarted.single().paymentId, finished.paymentId)
+            assertEquals(TelemetryEvent.PaymentOutcome.ERROR, finished.outcome)
+            assertEquals("ResultException", finished.errorCode)
+        }
+
+    @Test
+    fun `a readiness error before any start sends no payment record`() = runTest {
+        coEvery { paymentsClient.isReadyToPay(any()) } returns
+            Tasks.forException(ApiException(Status(CommonStatusCodes.NETWORK_ERROR)))
+        val reporting = RecordingTelemetry()
+
+        val failing = makeViewModel(reporting)
+        failing.uiState.first { it is GooglePayUIState.Error }
+        failing.handleMissingPaymentData()
+
+        assertTrue(reporting.paymentsStarted.isEmpty())
+        assertTrue(reporting.paymentsFinished.isEmpty())
+    }
+
+    @Test
+    fun `a second attempt after a cancellation has a new id`() = runTest {
+        viewModel.startGooglePayPaymentFlow()
+        viewModel.handleCancellationResult()
+        viewModel.resetResultState()
+        viewModel.startGooglePayPaymentFlow()
+        viewModel.handleWalletResultErrors(Status(CommonStatusCodes.TIMEOUT))
+
+        val ids = telemetry.paymentsStarted.map { it.paymentId }
+        assertEquals(2, ids.toSet().size)
+        assertEquals(ids, telemetry.paymentsFinished.map { it.paymentId })
+    }
+
+    @Test
+    fun `with inactive telemetry the same states are set and nothing is reported`() = runTest {
+        val inactive = RecordingTelemetry(isActive = false)
+        val quiet = makeViewModel(inactive)
+
+        quiet.startGooglePayPaymentFlow()
+        assertIs<GooglePayUIState.Loading>(quiet.uiState.value)
+        quiet.handleMissingPaymentData()
+        assertIs<GooglePayUIState.Loading>(quiet.uiState.value)
+        quiet.handleGooglePayResultErrors(CommonStatusCodes.CANCELED)
+        assertIs<GooglePayException.SDKException.CancelledBySdk>((quiet.uiState.value as GooglePayUIState.Error).exception)
+        quiet.handleWalletResultErrors(Status(CommonStatusCodes.TIMEOUT))
+        assertIs<GooglePayException.SDKException.Timeout>((quiet.uiState.value as GooglePayUIState.Error).exception)
+
+        assertTrue(inactive.events.isEmpty())
+    }
+
+    @Test
+    fun `the widget's no-data branches each end the attempt through the view model`() {
+        val source = WidgetSourceScan.read("feature/googlepay/presentation/GooglePayWidget.kt")
+
+        val resolvable = WidgetSourceScan.function(source, "handleResolvableResult")
+        val taskResult = WidgetSourceScan.function(source, "handleGooglePayResult")
+        assertEquals(2, WidgetSourceScan.count(resolvable, "?: viewModel.handleMissingPaymentData()"))
+        assertEquals(1, WidgetSourceScan.count(taskResult, "?: viewModel.handleMissingPaymentData()"))
     }
 
     // endregion

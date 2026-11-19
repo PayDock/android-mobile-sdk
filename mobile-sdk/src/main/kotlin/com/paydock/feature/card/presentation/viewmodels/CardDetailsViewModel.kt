@@ -6,7 +6,10 @@ import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
 import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.failPaymentWhileActive
+import com.paydock.core.telemetry.finishPaymentWhileActive
 import com.paydock.core.telemetry.reportSdkErrorWhileActive
+import com.paydock.core.telemetry.startPayment
 import com.paydock.feature.card.data.dto.CreateCardPaymentTokenRequest
 import com.paydock.feature.card.domain.model.integration.SupportedSchemeConfig
 import com.paydock.feature.card.domain.usecase.CreateCardPaymentTokenUseCase
@@ -14,6 +17,7 @@ import com.paydock.feature.card.domain.usecase.GetCardSchemasUseCase
 import com.paydock.feature.card.presentation.state.CardDetailsInputState
 import com.paydock.feature.card.presentation.state.CardDetailsUIState
 import com.paydock.telemetry.Telemetry
+import com.paydock.telemetry.TelemetryEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -54,6 +58,9 @@ internal class CardDetailsViewModel(
     private val _stateFlow: MutableStateFlow<CardDetailsUIState> =
         MutableStateFlow(CardDetailsUIState.Idle)
     val stateFlow: StateFlow<CardDetailsUIState> = _stateFlow.asStateFlow()
+
+    /** The open payment attempt's ID (§ 5.9), or null when none is open or telemetry is inactive. */
+    private var paymentId: String? = null
 
     init {
         updateSchemeConfigState(schemeConfig)
@@ -274,6 +281,7 @@ internal class CardDetailsViewModel(
         // (for both the internal button and the external `state.submit()` trigger) actually durable.
         if (_stateFlow.value is CardDetailsUIState.Loading) return
         updateState(CardDetailsUIState.Loading)
+        paymentId = telemetry.startPayment(SdkWidget.CARD_DETAILS)
 
         launchOnIO {
             val state = _inputStateFlow.value
@@ -290,13 +298,30 @@ internal class CardDetailsViewModel(
             createCardPaymentTokenUseCase(accessToken, request)
                 .onSuccess { details ->
                     updateState(CardDetailsUIState.Success(details.token!!))
+                    finishAttempt(TelemetryEvent.PaymentOutcome.SUCCESS)
                 }
                 .onFailure { error ->
                     telemetry.reportSdkErrorWhileActive(error, SdkWidget.CARD_DETAILS)
                     error.safeCastAs<SdkException>()
                         ?.let { updateState(CardDetailsUIState.Error(it)) }
+                    finishAttempt(TelemetryEvent.PaymentOutcome.ERROR, error)
                 }
         }
+    }
+
+    /**
+     * Ends the open payment attempt: an error carries the code the merchant receives, none for a silent failure that
+     * is not an SdkException. Then no attempt is open. Runs inside the tokenising coroutine: once that coroutine is no
+     * longer active (the view model cleared), nothing is sent and the attempt stays abandoned.
+     */
+    private suspend fun finishAttempt(outcome: TelemetryEvent.PaymentOutcome, error: Throwable? = null) {
+        if (paymentId == null) return
+        if (outcome == TelemetryEvent.PaymentOutcome.ERROR) {
+            telemetry.failPaymentWhileActive(SdkWidget.CARD_DETAILS, paymentId, error)
+        } else {
+            telemetry.finishPaymentWhileActive(SdkWidget.CARD_DETAILS, paymentId, outcome)
+        }
+        paymentId = null
     }
 
     private companion object {

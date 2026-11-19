@@ -31,3 +31,18 @@ internal fun ReportSdkErrorOnce(error: Throwable, widget: String) {
     val telemetry: Telemetry? = remember { telemetryOrNull() }
     LaunchedEffect(error::class) { telemetry?.reportSdkError(error, widget) }
 }
+
+/**
+ * The payment attempt of a composition-time failure before the widget has its view model (the 3DS invalid-token
+ * returns, § 5.9): looks the facade up with telemetryOrNull(), remembered, then once per widget instance
+ * LaunchedEffect(error::class) { start an attempt and fail it at once with the code of [error] }. Sits next to
+ * [ReportSdkErrorOnce].
+ *
+ * @param widget The [SdkWidget] name of the calling widget.
+ * @param error The error the merchant gets.
+ */
+@Composable
+internal fun ReportPaymentFailedOnce(widget: String, error: Throwable) {
+    val telemetry: Telemetry? = remember { telemetryOrNull() }
+    LaunchedEffect(error::class) { telemetry?.let { it.failPayment(widget, it.startPayment(widget), error) } }
+}

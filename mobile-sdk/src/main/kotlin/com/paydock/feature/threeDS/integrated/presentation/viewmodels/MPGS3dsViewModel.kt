@@ -5,11 +5,15 @@ import com.paydock.core.domain.error.exceptions.SdkException
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.core.presentation.viewmodels.BaseViewModel
 import com.paydock.core.telemetry.SdkWidget
+import com.paydock.core.telemetry.failPayment
+import com.paydock.core.telemetry.finishPayment
 import com.paydock.core.telemetry.reportSdkError
+import com.paydock.core.telemetry.startPayment
 import com.paydock.feature.threeDS.integrated.domain.mapper.asEntity
 import com.paydock.feature.threeDS.integrated.domain.model.ui.MPGS3dsEvent
 import com.paydock.feature.threeDS.integrated.presentation.state.MPGS3dsUIState
 import com.paydock.telemetry.Telemetry
+import com.paydock.telemetry.TelemetryEvent
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -69,6 +73,16 @@ internal class MPGS3dsViewModel(
      */
     val eventFlow: SharedFlow<MPGS3dsUIState> = _eventFlow.asSharedFlow()
 
+    /** Whether this view model's one payment attempt was started (§ 5.9): [startAttempt] runs once. */
+    private val paymentStarted = AtomicBoolean(false)
+
+    /**
+     * The open payment attempt's ID, or null when none is open or telemetry is inactive. Set on the main thread and
+     * read on the JS bridge's thread.
+     */
+    @Volatile
+    private var paymentId: String? = null
+
     init {
         updateState(MPGS3dsUIState.Idle)
     }
@@ -81,6 +95,25 @@ internal class MPGS3dsViewModel(
      */
     fun resetResultState() {
         updateState(MPGS3dsUIState.Idle)
+    }
+
+    /**
+     * Starts this view model's payment attempt (§ 5.9), at most once: the widget calls it from its launch effect.
+     */
+    fun startAttempt() {
+        if (!paymentStarted.compareAndSet(false, true)) return
+        paymentId = telemetry.startPayment(SdkWidget.MPGS_3DS)
+    }
+
+    /**
+     * Ends the open payment attempt as an error with the code of [error], the web view failure the widget hands the
+     * merchant itself.
+     *
+     * @param error The error the merchant gets.
+     */
+    fun failAttempt(error: Throwable) {
+        if (paymentId == null) return
+        finishAttempt(TelemetryEvent.PaymentOutcome.ERROR, error)
     }
 
     /**
@@ -106,6 +139,36 @@ internal class MPGS3dsViewModel(
     private fun updateThreeDSEvent(event: MPGS3dsEvent) {
         val result = event.asEntity()
         updateState(MPGS3dsUIState.Success(result))
+        finishPaymentOn(event)
+    }
+
+    /**
+     * Ends the open payment attempt on a final event: success, a reject or an additional data reject as declined, a
+     * cancellation as cancelled. The charge auth and additional data success events end nothing.
+     */
+    private fun finishPaymentOn(event: MPGS3dsEvent) {
+        if (paymentId == null) return
+        when (event) {
+            is MPGS3dsEvent.ChargeAuthSuccessEvent -> finishAttempt(TelemetryEvent.PaymentOutcome.SUCCESS)
+            is MPGS3dsEvent.ChargeAuthRejectEvent,
+            is MPGS3dsEvent.AdditionalDataCollectRejectEvent -> finishAttempt(TelemetryEvent.PaymentOutcome.DECLINED)
+            is MPGS3dsEvent.ChargeAuthCancelledEvent -> finishAttempt(TelemetryEvent.PaymentOutcome.CANCELLED)
+            is MPGS3dsEvent.ChargeAuthEvent,
+            is MPGS3dsEvent.AdditionalDataCollectSuccessEvent -> Unit
+        }
+    }
+
+    /**
+     * Ends the open payment attempt with [outcome]: an error carries the code of [error], the exception the merchant
+     * receives (none when it is not an SdkException). Then no attempt is open.
+     */
+    private fun finishAttempt(outcome: TelemetryEvent.PaymentOutcome, error: Throwable? = null) {
+        if (outcome == TelemetryEvent.PaymentOutcome.ERROR) {
+            telemetry.failPayment(SdkWidget.MPGS_3DS, paymentId, error)
+        } else {
+            telemetry.finishPayment(SdkWidget.MPGS_3DS, paymentId, outcome)
+        }
+        paymentId = null
     }
 
     /**
@@ -138,6 +201,7 @@ internal class MPGS3dsViewModel(
                 telemetry.reportSdkError(throwable, SdkWidget.MPGS_3DS)
                 throwable.safeCastAs<SdkException>()
                     ?.let { updateState(MPGS3dsUIState.Error(it)) }
+                failAttempt(throwable)
             }
         )
     }

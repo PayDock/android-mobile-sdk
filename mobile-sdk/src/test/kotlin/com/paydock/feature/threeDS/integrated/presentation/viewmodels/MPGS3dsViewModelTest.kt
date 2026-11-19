@@ -15,6 +15,7 @@ import com.paydock.feature.threeDS.integrated.domain.model.ui.MPGS3dsEvent
 import com.paydock.feature.threeDS.integrated.domain.model.ui.enums.IntegratedEvent
 import com.paydock.feature.threeDS.integrated.domain.model.ui.enums.MPGS3dsStatus
 import com.paydock.feature.threeDS.integrated.presentation.state.MPGS3dsUIState
+import com.paydock.telemetry.TelemetryEvent
 import junit.framework.TestCase.assertNull
 import junit.framework.TestCase.assertSame
 import kotlinx.coroutines.test.runTest
@@ -283,6 +284,7 @@ internal class MPGS3dsViewModelTest : BaseKoinUnitTest() {
         listOf(invalidToken, invalidFormat).forEach { branch ->
             assertEquals(1, WidgetSourceScan.count(branch, "MPGS3dsException.InvalidTokenException("))
             assertEquals(1, WidgetSourceScan.count(branch, "ReportSdkErrorOnce(failure, SdkWidget.MPGS_3DS)"))
+            assertEquals(1, WidgetSourceScan.count(branch, "ReportPaymentFailedOnce(SdkWidget.MPGS_3DS, failure)"))
             assertEquals(1, WidgetSourceScan.count(branch, "completion(Result.failure(failure))"))
             assertTrue(
                 branch.indexOf("ReportSdkErrorOnce(failure, SdkWidget.MPGS_3DS)") < branch.indexOf("return"),
@@ -302,6 +304,127 @@ internal class MPGS3dsViewModelTest : BaseKoinUnitTest() {
         assertEquals(1, WidgetSourceScan.count(source, "viewModel.reportWidgetError("))
         assertEquals(1, WidgetSourceScan.count(onError, "MPGS3dsException.WebViewException("))
         assertEquals(1, WidgetSourceScan.count(onError, "viewModel.reportWidgetError(failure)"))
+        assertEquals(1, WidgetSourceScan.count(onError, "viewModel.failAttempt(failure)"))
+    }
+
+    // endregion
+
+    // region Telemetry: one payment attempt per view model (§ 5.9, R_06 to R_08)
+
+    private fun event(type: IntegratedEvent): MPGS3dsEvent {
+        val data = MPGS3dsChargeEventData(
+            event = type,
+            charge3dsId = MobileSDKTestConstants.ThreeDS.MOCK_CHARGE_ID,
+            status = MPGS3dsStatus.AUTHENTICATED
+        )
+        return when (type) {
+            IntegratedEvent.CHARGE_AUTH_SUCCESS -> MPGS3dsEvent.ChargeAuthSuccessEvent(data = data)
+            IntegratedEvent.CHARGE_AUTH_REJECT -> MPGS3dsEvent.ChargeAuthRejectEvent(data = data)
+            IntegratedEvent.CHARGE_AUTH_CANCELLED -> MPGS3dsEvent.ChargeAuthCancelledEvent(data = data)
+            IntegratedEvent.ADDITIONAL_DATA_COLLECT_SUCCESS -> MPGS3dsEvent.AdditionalDataCollectSuccessEvent(data = data)
+            IntegratedEvent.ADDITIONAL_DATA_COLLECT_REJECT -> MPGS3dsEvent.AdditionalDataCollectRejectEvent(data = data)
+            IntegratedEvent.CHARGE_AUTH -> MPGS3dsEvent.ChargeAuthEvent(data = data)
+        }
+    }
+
+    @Test
+    fun `startAttempt twice starts one attempt`() {
+        viewModel.startAttempt()
+        viewModel.startAttempt()
+
+        assertEquals(SdkWidget.MPGS_3DS, telemetry.paymentsStarted.single().widget)
+    }
+
+    @Test
+    fun `each terminal event finishes the attempt once with its outcome, and the others finish nothing`() {
+        val expected = mapOf(
+            IntegratedEvent.CHARGE_AUTH_SUCCESS to TelemetryEvent.PaymentOutcome.SUCCESS,
+            IntegratedEvent.CHARGE_AUTH_REJECT to TelemetryEvent.PaymentOutcome.DECLINED,
+            IntegratedEvent.ADDITIONAL_DATA_COLLECT_REJECT to TelemetryEvent.PaymentOutcome.DECLINED,
+            IntegratedEvent.CHARGE_AUTH_CANCELLED to TelemetryEvent.PaymentOutcome.CANCELLED,
+            IntegratedEvent.CHARGE_AUTH to null,
+            IntegratedEvent.ADDITIONAL_DATA_COLLECT_SUCCESS to null,
+        )
+        assertEquals(IntegratedEvent.entries.toSet(), expected.keys)
+        expected.forEach { (type, outcome) ->
+            val reporting = RecordingTelemetry()
+            MPGS3dsViewModel(dispatchersProvider, reporting).run {
+                startAttempt()
+                handleEventResult(Result.success(event(type)))
+                handleEventResult(Result.success(event(IntegratedEvent.CHARGE_AUTH_SUCCESS)))
+            }
+
+            val first = reporting.paymentsFinished.first()
+            assertEquals(reporting.paymentsStarted.single().paymentId, first.paymentId)
+            assertEquals(outcome ?: TelemetryEvent.PaymentOutcome.SUCCESS, first.outcome, type.name)
+            assertEquals(1, reporting.paymentsFinished.size, type.name)
+            assertNull(first.errorCode)
+        }
+    }
+
+    @Test
+    fun `a mapping failure finishes as error with its code, or none when it is no SdkException`() {
+        viewModel.startAttempt()
+        viewModel.handleEventResult(Result.failure(MPGS3dsException.EventMappingException("synthetic")))
+        val other = RecordingTelemetry()
+        MPGS3dsViewModel(dispatchersProvider, other).run {
+            startAttempt()
+            handleEventResult(Result.failure(IllegalStateException()))
+        }
+
+        val finished = telemetry.paymentsFinished.single()
+        assertEquals(TelemetryEvent.PaymentOutcome.ERROR, finished.outcome)
+        assertEquals("EventMappingException", finished.errorCode)
+        assertEquals(TelemetryEvent.PaymentOutcome.ERROR, other.paymentsFinished.single().outcome)
+        assertNull(other.paymentsFinished.single().errorCode)
+    }
+
+    @Test
+    fun `a web view error finishes as error with the WebViewException code and emits no state`() = runTest {
+        viewModel.eventFlow.test {
+            viewModel.startAttempt()
+            viewModel.failAttempt(MPGS3dsException.WebViewException(-1, "web view"))
+            viewModel.failAttempt(MPGS3dsException.WebViewException(-2, "web view"))
+
+            expectNoEvents()
+        }
+        val finished = telemetry.paymentsFinished.single()
+        assertEquals(TelemetryEvent.PaymentOutcome.ERROR, finished.outcome)
+        assertEquals("WebViewException", finished.errorCode)
+    }
+
+    @Test
+    fun `with inactive telemetry the same states are emitted and nothing is reported`() = runTest {
+        val inactive = RecordingTelemetry(isActive = false)
+        val quiet = MPGS3dsViewModel(dispatchersProvider, inactive)
+        val failure = MPGS3dsException.EventMappingException("synthetic")
+
+        quiet.eventFlow.test {
+            quiet.startAttempt()
+            quiet.handleEventResult(Result.success(event(IntegratedEvent.CHARGE_AUTH_SUCCESS)))
+            // The view model's own initial Idle may still be on its way.
+            awaitItem().let { if (it is MPGS3dsUIState.Idle) awaitItem() else it }.let { state ->
+                assertIs<MPGS3dsUIState.Success>(state)
+                assertEquals(MPGS3dsEventType.CHARGE_AUTH_SUCCESS, state.result.event)
+            }
+            quiet.handleEventResult(Result.failure(failure))
+            awaitItem().let { state ->
+                assertIs<MPGS3dsUIState.Error>(state)
+                assertSame(failure, state.exception)
+            }
+            quiet.failAttempt(MPGS3dsException.WebViewException(-1, "web view"))
+            expectNoEvents()
+        }
+        assertTrue(inactive.events.isEmpty())
+    }
+
+    @Test
+    fun `the widget starts its attempt from its launch effect`() {
+        val source = WidgetSourceScan.read("feature/threeDS/integrated/presentation/MPGS3dsWidget.kt")
+        val launch = WidgetSourceScan.between(source, "LaunchedEffect(Unit) {", "viewModel.eventFlow.collect")
+
+        assertEquals(1, WidgetSourceScan.count(source, "viewModel.startAttempt()"))
+        assertEquals(1, WidgetSourceScan.count(launch, "viewModel.startAttempt()"))
     }
 
     // endregion

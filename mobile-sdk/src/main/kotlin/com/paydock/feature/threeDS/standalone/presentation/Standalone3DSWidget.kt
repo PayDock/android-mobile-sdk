@@ -18,6 +18,7 @@ import com.paydock.core.MobileSDKConstants
 import com.paydock.core.data.util.isCurrentlyConnected
 import com.paydock.core.domain.error.exceptions.Standalone3DSException
 import com.paydock.core.presentation.util.WidgetLoadingDelegate
+import com.paydock.core.telemetry.ReportPaymentFailedOnce
 import com.paydock.core.telemetry.ReportSdkErrorOnce
 import com.paydock.core.telemetry.ReportWidgetOpened
 import com.paydock.core.telemetry.SdkWidget
@@ -62,6 +63,7 @@ import org.koin.androidx.compose.koinViewModel
  *    result, which is always delivered to [completion].
  * @param completion A callback invoked with the result of the 3DS process, either success or failure.
  */
+@Suppress("LongMethod")
 @Composable
 fun Standalone3DSWidget(
     modifier: Modifier = Modifier,
@@ -80,6 +82,7 @@ fun Standalone3DSWidget(
             displayableMessage = MobileSDKConstants.Standalone3DSConfig.Errors.INVALID_TOKEN_ERROR
         )
         ReportSdkErrorOnce(failure, SdkWidget.STANDALONE_3DS)
+        ReportPaymentFailedOnce(SdkWidget.STANDALONE_3DS, failure)
         completion(Result.failure(failure))
         return
     } else if (parsedToken.format != TokenFormat.STANDALONE_3DS) {
@@ -88,6 +91,7 @@ fun Standalone3DSWidget(
             displayableMessage = MobileSDKConstants.Standalone3DSConfig.Errors.INVALID_TOKEN_FORMAT_ERROR
         )
         ReportSdkErrorOnce(failure, SdkWidget.STANDALONE_3DS)
+        ReportPaymentFailedOnce(SdkWidget.STANDALONE_3DS, failure)
         completion(Result.failure(failure))
         return
     }
@@ -111,6 +115,7 @@ fun Standalone3DSWidget(
 
     LaunchedEffect(Unit) {
         loadingController.start(currentLoadingDelegate)
+        viewModel.startAttempt()
         viewModel.eventFlow.collect { state ->
             handleUIState(
                 state,
@@ -156,6 +161,7 @@ fun Standalone3DSWidget(
                     inBackground = isAppInBackground(),
                 )
                 viewModel.reportWidgetError(failure)
+                viewModel.failAttempt(failure)
                 currentCompletion(Result.failure(failure))
             },
         ) { status, message, host ->
@@ -169,6 +175,7 @@ fun Standalone3DSWidget(
                 networkAvailable = context.isNetworkAvailable(),
             )
             viewModel.reportWidgetError(failure)
+            viewModel.failAttempt(failure)
             currentCompletion(Result.failure(failure))
         }
         if (loadingController.isLoading && loadingDelegate == null) {

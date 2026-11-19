@@ -1,0 +1,13 @@
+{
+  "time": "2026-11-18T02:31:44.120Z",
+  "builtTime": "2026-11-18T02:31:44.120Z",
+  "sentTime": "2026-11-18T02:31:50.120Z",
+  "sessionId": "5d0c3b8e-2f71-4a96-8e04-6b1a9c7d2e53",
+  "connection": "wifi",
+  "sequence": 2,
+  "event": {
+    "type": "PaymentStarted",
+    "widget": "PayPalWidget",
+    "paymentId": "9b2e4f61-7c3a-4d58-a1e9-3f0d6b8c2a17"
+  }
+}
