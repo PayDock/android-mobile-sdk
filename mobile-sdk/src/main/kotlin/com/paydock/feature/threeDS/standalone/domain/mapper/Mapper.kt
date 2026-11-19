@@ -3,6 +3,7 @@ package com.paydock.feature.threeDS.standalone.domain.mapper
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSProgress
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
+import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.Standalone3DSAuthenticationFlow
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.ChallengeCompletedSource
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.ChallengeLoadedReason
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.StandaloneEventType
@@ -54,6 +55,30 @@ internal fun Standalone3DSEvent.asEntity(): Standalone3DSResult? {
         status = chargeData?.rawStatus?.takeIf { it.isNotBlank() },
         resultDescription = chargeData?.result?.description?.takeIf { it.isNotBlank() }
     )
+}
+
+/**
+ * Sets [Standalone3DSResult.authenticationFlow] on a final result.
+ *
+ * A [StandaloneEventType.CHARGE_AUTH_SUCCESS] or [StandaloneEventType.CHARGE_AUTH_REJECT] result gets [earlier], the
+ * flow of the latest challenge or decoupled result for the same charge ID, or
+ * [Standalone3DSAuthenticationFlow.FRICTIONLESS] when there was none. Every other result is returned as it is, with a
+ * null flow.
+ *
+ * @receiver The result mapped by [asEntity].
+ * @param earlier The flow seen earlier for this result's charge ID, or `null` when none was seen.
+ * @return The result with its authentication flow.
+ */
+internal fun Standalone3DSResult.withAuthenticationFlow(
+    earlier: Standalone3DSAuthenticationFlow?,
+): Standalone3DSResult = when (event) {
+    StandaloneEventType.CHARGE_AUTH_SUCCESS,
+    StandaloneEventType.CHARGE_AUTH_REJECT ->
+        copy(authenticationFlow = earlier ?: Standalone3DSAuthenticationFlow.FRICTIONLESS)
+    StandaloneEventType.CHARGE_AUTH_CHALLENGE,
+    StandaloneEventType.CHARGE_AUTH_DECOUPLED,
+    StandaloneEventType.CHARGE_AUTH_INFO,
+    StandaloneEventType.CHARGE_ERROR -> this
 }
 
 /**

@@ -5,6 +5,7 @@ import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalon
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.ChallengeCompletedSource
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.ChallengeLoadedReason
+import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.Standalone3DSAuthenticationFlow
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.StandaloneEventType
 import com.paydock.feature.threeDS.standalone.domain.model.ui.ChargeError
 import com.paydock.feature.threeDS.standalone.domain.model.ui.ChargeErrorEventData
@@ -360,4 +361,45 @@ class Standalone3DSEventMapperTest {
         assertNull(actualResult?.status)
         assertNull(actualResult?.resultDescription)
     }
+
+    @Test
+    fun `withAuthenticationFlow sets the flow on success and reject, frictionless when nothing came earlier`() {
+        listOf(StandaloneEventType.CHARGE_AUTH_SUCCESS, StandaloneEventType.CHARGE_AUTH_REJECT).forEach { type ->
+            val result = resultOf(type)
+            val expected = mapOf(
+                null to Standalone3DSAuthenticationFlow.FRICTIONLESS,
+                Standalone3DSAuthenticationFlow.CHALLENGE to Standalone3DSAuthenticationFlow.CHALLENGE,
+                Standalone3DSAuthenticationFlow.DECOUPLED to Standalone3DSAuthenticationFlow.DECOUPLED
+            )
+            expected.forEach { (earlier, flow) ->
+                assertEquals(result.copy(authenticationFlow = flow), result.withAuthenticationFlow(earlier))
+            }
+        }
+    }
+
+    @Test
+    fun `withAuthenticationFlow leaves challenge, decoupled, info and charge error results with a null flow`() {
+        listOf(
+            StandaloneEventType.CHARGE_AUTH_CHALLENGE,
+            StandaloneEventType.CHARGE_AUTH_DECOUPLED,
+            StandaloneEventType.CHARGE_AUTH_INFO,
+            StandaloneEventType.CHARGE_ERROR
+        ).forEach { type ->
+            val result = resultOf(type)
+            listOf(null, Standalone3DSAuthenticationFlow.CHALLENGE, Standalone3DSAuthenticationFlow.DECOUPLED)
+                .forEach { earlier ->
+                    val actual = result.withAuthenticationFlow(earlier)
+
+                    assertEquals(result, actual)
+                    assertNull(actual.authenticationFlow)
+                }
+        }
+    }
+
+    private fun resultOf(type: StandaloneEventType) = Standalone3DSResult(
+        event = type,
+        charge3dsId = MobileSDKTestConstants.ThreeDS.MOCK_CHARGE_ID,
+        status = "status",
+        resultDescription = "description"
+    )
 }
