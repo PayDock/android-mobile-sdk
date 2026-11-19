@@ -26,6 +26,11 @@
   record at every path that ends it, with the outcome (`success`, `declined`, `error`, `cancelled`), the duration in
   ms and, for an error, the code of the exception you receive. Each attempt carries a random UUID; no card data. Your
   results, callbacks and errors are unchanged, and there is no API change (see the README's Telemetry section).
+- `Standalone3DSResult.authenticationFlow` and the new enum `Standalone3DSAuthenticationFlow` (`FRICTIONLESS`,
+  `CHALLENGE`, `DECOUPLED`): how a standalone 3DS authentication was reached. Set only on `CHARGE_AUTH_SUCCESS` and
+  `CHARGE_AUTH_REJECT` results, worked out from the earlier events of the same `charge3dsId`; `null` on every other
+  result. The change is additive: existing Kotlin and Java code, including apps built against 5.7.x, keeps compiling
+  and running unchanged (see the README's "Standalone 3DS result" section).
 
 ### Changed
 - The Mobile SDK no longer compiles an exact Client SDK version in. It supports the Client SDK line `v1.150` and,

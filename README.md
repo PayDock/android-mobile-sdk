@@ -269,6 +269,36 @@ devdock Loki data source:
 The attribute names follow Loki's OTLP mapping (dots become underscores, so `event.name` is `event_name`); they are to be
 confirmed at the first devdock run (ticket S2).
 
+## Standalone 3DS result
+
+`Standalone3DSWidget` hands each result to its `completion` as a `Standalone3DSResult`:
+
+| Field | Type | What it is |
+|---|---|---|
+| `event` | `StandaloneEventType` | The event: `CHARGE_AUTH_SUCCESS`, `CHARGE_AUTH_REJECT`, `CHARGE_AUTH_CHALLENGE`, `CHARGE_AUTH_DECOUPLED`, `CHARGE_AUTH_INFO` or `CHARGE_ERROR`. Drive your flow from it. |
+| `charge3dsId` | `String?` | The 3DS charge ID, to look the charge up in Paydock; `null` when the event has none. |
+| `status` | `String?` | The status the web SDK reported, verbatim (e.g. `success`, `pending`); informational. |
+| `resultDescription` | `String?` | The provider's description of the outcome, when it supplies one (e.g. `frictionless`). |
+| `authenticationFlow` | `Standalone3DSAuthenticationFlow?` | How the authentication was reached: `FRICTIONLESS`, `CHALLENGE` or `DECOUPLED`. |
+
+`authenticationFlow` is set only on `CHARGE_AUTH_SUCCESS` and `CHARGE_AUTH_REJECT`, and is `null` on every other
+event. It is worked out per `charge3dsId` from the earlier events of the same widget: `CHALLENGE` or `DECOUPLED` when
+the latest challenge or decoupled event for that ID was a challenge or a decoupled authentication, `FRICTIONLESS` when
+there was none.
+
+```kotlin
+Standalone3DSWidget(config = ThreeDSConfig(token = token)) { result ->
+    result.onSuccess { threeDSResult ->
+        when (threeDSResult.authenticationFlow) {
+            Standalone3DSAuthenticationFlow.FRICTIONLESS -> { /* no shopper step */ }
+            Standalone3DSAuthenticationFlow.CHALLENGE -> { /* the shopper completed a challenge */ }
+            Standalone3DSAuthenticationFlow.DECOUPLED -> { /* the shopper approved outside the widget */ }
+            null -> { /* not a final result */ }
+        }
+    }
+}
+```
+
 ## Android notes: WebView-based flows and rotation
 
 For JS-driven webflows (Click to Pay, 3DS), the JS runtime inside the WebView will reinitialize if the hosting Activity is recreated (e.g., orientation change). To avoid losing in-page state:
