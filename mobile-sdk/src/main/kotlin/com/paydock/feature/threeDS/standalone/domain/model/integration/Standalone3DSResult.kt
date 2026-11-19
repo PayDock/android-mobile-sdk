@@ -1,5 +1,6 @@
 package com.paydock.feature.threeDS.standalone.domain.model.integration
 
+import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.Standalone3DSAuthenticationFlow
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.StandaloneEventType
 
 /**
@@ -23,12 +24,19 @@ import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.Sta
  * @param resultDescription A human-readable description of the outcome (the web SDK's `result.description`),
  *                          when the 3DS provider supplies one — typically only on frictionless or first-step
  *                          outcomes, e.g. `frictionless`. `null` otherwise, including on challenge results.
+ * @param authenticationFlow How the authentication reached this result: set only on
+ *                           [StandaloneEventType.CHARGE_AUTH_SUCCESS] and [StandaloneEventType.CHARGE_AUTH_REJECT],
+ *                           `null` otherwise. It is worked out from the earlier events of the same [charge3dsId]:
+ *                           [Standalone3DSAuthenticationFlow.CHALLENGE] or [Standalone3DSAuthenticationFlow.DECOUPLED]
+ *                           after the latest challenge or decoupled event for that ID, else
+ *                           [Standalone3DSAuthenticationFlow.FRICTIONLESS].
  */
 data class Standalone3DSResult(
     val event: StandaloneEventType,
     val charge3dsId: String?,
     val status: String? = null,
-    val resultDescription: String? = null
+    val resultDescription: String? = null,
+    val authenticationFlow: Standalone3DSAuthenticationFlow? = null,
 ) {
 
     /**
@@ -37,7 +45,7 @@ data class Standalone3DSResult(
      * constructor.
      */
     @Deprecated("Binary compatibility only", level = DeprecationLevel.HIDDEN)
-    constructor(event: StandaloneEventType, charge3dsId: String?) : this(event, charge3dsId, null, null)
+    constructor(event: StandaloneEventType, charge3dsId: String?) : this(event, charge3dsId, null, null, null)
 
     /**
      * Binary-compatibility bridge for code compiled against SDK versions before [status] and
@@ -45,5 +53,31 @@ data class Standalone3DSResult(
      */
     @Deprecated("Binary compatibility only", level = DeprecationLevel.HIDDEN)
     fun copy(event: StandaloneEventType = this.event, charge3dsId: String? = this.charge3dsId): Standalone3DSResult =
-        Standalone3DSResult(event, charge3dsId, status, resultDescription)
+        Standalone3DSResult(event, charge3dsId, status, resultDescription, authenticationFlow)
+
+    /**
+     * Binary-compatibility bridge for code compiled against SDK 5.7.x, before [authenticationFlow] was added.
+     * Hidden from Kotlin sources, which resolve to the primary constructor. The default values are kept on purpose:
+     * they make the compiler emit the same default-argument constructor 5.7.x callers link against.
+     */
+    @Deprecated("Binary compatibility only", level = DeprecationLevel.HIDDEN)
+    constructor(
+        event: StandaloneEventType,
+        charge3dsId: String?,
+        status: String? = null,
+        resultDescription: String? = null,
+    ) : this(event, charge3dsId, status, resultDescription, null)
+
+    /**
+     * Binary-compatibility bridge for code compiled against SDK 5.7.x, before [authenticationFlow] was added. Hidden
+     * from Kotlin sources, which resolve to the generated `copy`; it keeps [authenticationFlow] unchanged. The default
+     * values are kept on purpose: they make the compiler emit the same `copy$default` 5.7.x callers link against.
+     */
+    @Deprecated("Binary compatibility only", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        event: StandaloneEventType = this.event,
+        charge3dsId: String? = this.charge3dsId,
+        status: String? = this.status,
+        resultDescription: String? = this.resultDescription,
+    ): Standalone3DSResult = Standalone3DSResult(event, charge3dsId, status, resultDescription, authenticationFlow)
 }
