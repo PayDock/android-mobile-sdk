@@ -3,9 +3,9 @@ package com.paydock.feature.threeDS.standalone.domain.mapper
 import com.paydock.core.extensions.safeCastAs
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSProgress
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
-import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.Standalone3DSAuthenticationFlow
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.ChallengeCompletedSource
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.ChallengeLoadedReason
+import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.Standalone3DSAuthenticationFlow
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.StandaloneEventType
 import com.paydock.feature.threeDS.standalone.domain.model.ui.Standalone3DSEvent
 import com.paydock.feature.threeDS.standalone.domain.model.ui.StandaloneChargeEventData
