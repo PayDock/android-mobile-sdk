@@ -57,7 +57,7 @@ private enum class Trigger(val label: String) {
 }
 
 /**
- * Debug-only: one button per telemetry record type, for a manual devdock run (README "Telemetry (debug builds)").
+ * Debug-only: one button per telemetry record type, for a manual devdock run (README "Telemetry", "The trigger screen").
  * Shows each outcome as the exception's simple name, never a message, a token or an ID.
  */
 @Composable

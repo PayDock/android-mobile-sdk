@@ -29,10 +29,7 @@ internal object TelemetryTestFakes {
         appDebuggable = true
     )
 
-    val credentials = TelemetryCredentials(
-        endpoint = "https://otlp.invalid/v1/logs",
-        authorization = "synthetic-not-a-credential"
-    )
+    const val ENDPOINT = "https://otlp.invalid/v1/logs"
 
     fun sdkError(type: String = "java.lang.IllegalStateException", frames: List<String> = emptyList()) =
         TelemetryEvent.SdkError(error = TelemetryEvent.ErrorInfo(type = type, frames = frames))

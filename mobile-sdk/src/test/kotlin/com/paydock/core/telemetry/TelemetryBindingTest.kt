@@ -22,10 +22,7 @@ import com.paydock.telemetry.PruneResult
 import com.paydock.telemetry.ResourceAttributes
 import com.paydock.telemetry.SerialTelemetryDispatcher
 import com.paydock.telemetry.Telemetry
-import com.paydock.telemetry.TelemetryCredentials
-import com.paydock.telemetry.TelemetryCredentialsProvider
 import com.paydock.telemetry.TelemetryDispatcher
-import com.paydock.telemetry.TelemetryLevel
 import com.paydock.telemetry.TelemetryRecord
 import com.paydock.telemetry.TelemetryRuntime
 import io.mockk.every
@@ -48,14 +45,13 @@ import org.koin.dsl.koinApplication
 import java.io.File
 
 /**
- * Debug tests for the telemetry activation binding (RS-4, R_01–R_04, D22, D23).
+ * Tests for the telemetry activation binding (RS-4, R_01–R_04, D22).
  *
- * Every input is injected: fake credentials providers, a counting factory that builds [ActiveTelemetry] with an
- * immediate dispatcher, a fake device context and in-memory ports, and a counting fake runtime — never the generated
- * build values, so the result does not depend on the engineer's `local.properties`. Each test binds into its own
- * fresh Koin instance. The credentials provider and level are tested with injected [LocalTelemetryValues]. An
- * [ActiveTelemetry] built here installs its crash handler into a fake slot and posts its test crash to a list, never
- * to the JVM's default handler or the main looper.
+ * Every input is injected: the endpoint, a counting factory that builds [ActiveTelemetry] with an immediate
+ * dispatcher, a fake device context and in-memory ports, and a counting fake runtime. The collector table is the only
+ * input of [bindTelemetry]; a failed or blank lookup is simulated by mocking [TelemetryCollector]. Each test binds into
+ * its own fresh Koin instance. An [ActiveTelemetry] built here installs its crash handler into a fake slot, never into
+ * the JVM's default handler.
  */
 internal class TelemetryBindingTest {
 
@@ -64,39 +60,16 @@ internal class TelemetryBindingTest {
 
     private lateinit var koin: Koin
 
-    private val credentials = TelemetryCredentials(
-        endpoint = "https://otlp.invalid/v1/logs",
-        authorization = "synthetic-not-a-credential"
-    )
+    private val endpoint = "https://otlp.invalid/v1/logs"
 
-    private val configured = TelemetryCredentialsProvider { credentials }
-    private val unconfigured = TelemetryCredentialsProvider { null }
-    private val failing = TelemetryCredentialsProvider { error("synthetic provider failure") }
-
-    /** A runtime that counts its starts and test records, in order, and can be told to fail. */
+    /** A runtime that counts its starts and can be told to fail. */
     private class CountingRuntime(private val failure: Throwable? = null) : TelemetryRuntime {
-        val calls = mutableListOf<String>()
-
-        val starts: Int
-            get() = calls.count { it == "start" }
-
-        val testRecords: Int
-            get() = calls.count { it == "sendTestRecord" }
-
-        val testCrashes: Int
-            get() = calls.count { it == "throwTestCrash" }
+        var starts = 0
+            private set
 
         override fun start() {
-            calls += "start"
+            starts++
             failure?.let { throw it }
-        }
-
-        override fun sendTestRecord() {
-            calls += "sendTestRecord"
-        }
-
-        override fun throwTestCrash() {
-            calls += "throwTestCrash"
         }
     }
 
@@ -114,9 +87,6 @@ internal class TelemetryBindingTest {
     }
 
     private val handlerSlot = FakeSlot()
-
-    /** Every task an [ActiveTelemetry] of these tests posted to the main thread, with its delay. */
-    private val mainPosts = mutableListOf<Long>()
 
     /** Keeps records in memory: these tests never touch the disk through an active telemetry. */
     private class MemoryStore : DurableStore {
@@ -169,22 +139,21 @@ internal class TelemetryBindingTest {
         override fun postDelayed(delayMillis: Long, task: () -> Unit): Boolean = true
     }
 
-    private fun activeTelemetry(level: TelemetryLevel = TelemetryLevel.ALL) = ActiveTelemetry(
-        credentials = credentials,
-        level = level,
+    private fun activeTelemetry(url: String = endpoint) = ActiveTelemetry(
+        endpoint = url,
         deviceContextProvider = deviceContext,
         ports = ActiveTelemetry.Ports(store = MemoryStore(), exporter = acceptingExporter, lifecycle = {}),
         dispatcher = immediate,
-        crashHandlers = CrashHandlerInstaller(handlerSlot),
-        postToMain = { delay, _ -> mainPosts += delay }
+        crashHandlers = CrashHandlerInstaller(handlerSlot)
     )
 
-    /** The `createActive` factory, counting its calls. */
+    /** The `createActive` factory, counting its calls and the URLs it was given. */
     private var factoryCalls = 0
-    private val countingFactory: (TelemetryCredentials, TelemetryLevel) -> ActiveTelemetry = { c, l ->
+    private val factoryUrls = mutableListOf<String>()
+    private val countingFactory: (String) -> ActiveTelemetry = { url ->
         factoryCalls++
-        assertSame(credentials, c)
-        activeTelemetry(l)
+        factoryUrls += url
+        activeTelemetry(url)
     }
 
     @Before
@@ -216,20 +185,7 @@ internal class TelemetryBindingTest {
         assertSame(telemetry, koin.get<Telemetry>())
     }
 
-    private fun select(
-        provider: TelemetryCredentialsProvider = configured,
-        level: TelemetryLevel = TelemetryLevel.ALL,
-    ): TelemetrySelection = selectTelemetry(provider, level, countingFactory)
-
-    /** Release build values: no override, empty, so only the collector table decides. */
-    private val releaseValues = LocalTelemetryValues(overrideAllowed = false, endpoint = "", auth = "", level = "")
-
-    /** Debug build values with a local endpoint and auth (synthetic, never a real key). */
-    private fun debugValues(
-        endpoint: String = "https://local.invalid/v1/logs",
-        auth: String = "synthetic-not-a-credential",
-        level: String = "",
-    ) = LocalTelemetryValues(overrideAllowed = true, endpoint = endpoint, auth = auth, level = level)
+    private fun select(url: String? = endpoint): TelemetrySelection = selectTelemetry(url, countingFactory)
 
     /** A no-op selection, and the factory never called: nothing is built and nothing is written to storage. */
     private fun assertNoOp(selection: TelemetrySelection) {
@@ -242,168 +198,114 @@ internal class TelemetryBindingTest {
         .filter { it.isAlive && it.name == SerialTelemetryDispatcher.THREAD_NAME }
         .toSet()
 
+    /** Runs [block] with [TelemetryCollector.logsUrl] answering [answer] for every environment. */
+    private fun withCollectorLookup(answer: (Environment) -> String, block: () -> Unit) {
+        mockkObject(TelemetryCollector)
+        try {
+            every { TelemetryCollector.logsUrl(any()) } answers { answer(firstArg()) }
+            block()
+        } finally {
+            unmockkObject(TelemetryCollector)
+        }
+    }
+
     @Test
     fun select_blankEndpoint_isNoOp() {
-        assertNoOp(select(provider = { TelemetryCredentials(endpoint = " ", authorization = "") }))
+        listOf("", " ", "\t", "\n").forEach { blank -> assertNoOp(select(blank)) }
     }
 
+    /** A failed URL lookup reaches the selection as null. */
     @Test
-    fun select_providerReturnsNull_isNoOp() {
-        assertNoOp(select(provider = unconfigured))
-    }
-
-    @Test
-    fun select_providerThrows_isNoOp() {
-        assertNoOp(select(provider = failing))
-    }
-
-    @Test
-    fun select_production_releaseValues_isNoOp() {
-        assertNoOp(select(provider = SdkTelemetryCredentialsProvider(Environment.PRODUCTION, releaseValues)))
-    }
-
-    @Test
-    fun select_sandboxAndStaging_releaseValues_isActiveWithTheCollectorAndNoCredential() {
-        var calls = 0
-        listOf(Environment.SANDBOX, Environment.STAGING).forEach { environment ->
-            val selection = selectTelemetry(
-                SdkTelemetryCredentialsProvider(environment, releaseValues),
-                telemetryLevel(releaseValues)
-            ) { c, l ->
-                calls++
-                assertEquals(TelemetryCollector.DEV_LOGS_URL, c.endpoint)
-                assertEquals("", c.authorization)
-                assertSame(TelemetryLevel.ALL, l)
-                activeTelemetry(l)
-            }
-
-            assertTrue(selection.telemetry is ActiveTelemetry)
-        }
-        assertEquals(2, calls)
-    }
-
-    @Test
-    fun select_emptyAuthorization_isActive() {
-        var calls = 0
-        val noCredential = TelemetryCredentialsProvider { TelemetryCredentials("https://otlp.invalid", "") }
-        val selection = selectTelemetry(noCredential, TelemetryLevel.ALL) { _, l ->
-            calls++
-            activeTelemetry(l)
-        }
-
-        assertTrue(selection.telemetry is ActiveTelemetry)
-        assertEquals(1, calls)
-    }
-
-    @Test
-    fun collector_sandboxAndStagingHaveTheDevUrl_productionHasNone() {
-        assertEquals(TelemetryCollector.DEV_LOGS_URL, TelemetryCollector.logsUrl(Environment.SANDBOX))
-        assertEquals(TelemetryCollector.DEV_LOGS_URL, TelemetryCollector.logsUrl(Environment.STAGING))
-        assertEquals("", TelemetryCollector.logsUrl(Environment.PRODUCTION))
-        assertEquals(
-            "https://mobile-telemetry-dev.shared.apac.paydock.com/v1/logs",
-            TelemetryCollector.DEV_LOGS_URL
-        )
-    }
-
-    @Test
-    fun provider_debugOverride_winsInEveryEnvironment() {
-        Environment.entries.forEach { environment ->
-            val c = SdkTelemetryCredentialsProvider(
-                environment,
-                debugValues(endpoint = " https://local.invalid/v1/logs ", auth = " synthetic-not-a-credential ")
-            ).credentials()
-
-            assertEquals("environment=$environment", "https://local.invalid/v1/logs", c?.endpoint)
-            assertEquals("environment=$environment", "synthetic-not-a-credential", c?.authorization)
-        }
-    }
-
-    @Test
-    fun provider_debugOverrideWithoutAuth_sendsNoCredential() {
-        val c = SdkTelemetryCredentialsProvider(Environment.PRODUCTION, debugValues(auth = "")).credentials()
-
-        assertEquals("https://local.invalid/v1/logs", c?.endpoint)
-        assertEquals("", c?.authorization)
-    }
-
-    @Test
-    fun provider_debugWithoutEndpoint_fallsBackToTheCollector() {
-        val values = debugValues(endpoint = "  ", auth = "synthetic-not-a-credential")
-
-        val sandbox = SdkTelemetryCredentialsProvider(Environment.SANDBOX, values).credentials()
-
-        assertEquals(TelemetryCollector.DEV_LOGS_URL, sandbox?.endpoint)
-        assertEquals("", sandbox?.authorization)
-        assertNull(SdkTelemetryCredentialsProvider(Environment.PRODUCTION, values).credentials())
-    }
-
-    @Test
-    fun provider_overrideNotAllowed_ignoresTheLocalValues() {
-        val values = LocalTelemetryValues(
-            overrideAllowed = false,
-            endpoint = "https://local.invalid/v1/logs",
-            auth = "synthetic-not-a-credential",
-            level = "off"
-        )
-
-        val staging = SdkTelemetryCredentialsProvider(Environment.STAGING, values).credentials()
-
-        assertEquals(TelemetryCollector.DEV_LOGS_URL, staging?.endpoint)
-        assertEquals("", staging?.authorization)
-        assertNull(SdkTelemetryCredentialsProvider(Environment.PRODUCTION, values).credentials())
-        assertSame(TelemetryLevel.ALL, telemetryLevel(values))
-    }
-
-    @Test
-    fun level_releaseIsAll_debugIsTheLocalLevel_allWhenAbsent() {
-        assertSame(TelemetryLevel.ALL, telemetryLevel(releaseValues))
-        assertSame(TelemetryLevel.ALL, telemetryLevel(debugValues(level = "")))
-        assertSame(TelemetryLevel.ERRORS, telemetryLevel(debugValues(level = "errors")))
-        assertSame(TelemetryLevel.OFF, telemetryLevel(debugValues(level = "off")))
-    }
-
-    @Test
-    fun select_levelOff_isNoOp() {
-        assertNoOp(select(level = TelemetryLevel.OFF))
+    fun select_nullEndpoint_isNoOp() {
+        assertNoOp(select(null))
     }
 
     @Test
     fun select_inactive_neverCallsTheFactory() {
-        select(provider = unconfigured)
-        select(provider = failing)
-        select(provider = { TelemetryCredentials(endpoint = "", authorization = "") })
-        select(provider = SdkTelemetryCredentialsProvider(Environment.PRODUCTION, releaseValues))
-        select(level = TelemetryLevel.OFF)
+        select(null)
+        select("")
+        select("  ")
 
         assertEquals(0, factoryCalls)
     }
 
     @Test
-    fun select_allConditions_isActiveTelemetryAsBothFacadeAndRuntime() {
-        listOf(TelemetryLevel.ERRORS, TelemetryLevel.ALL).forEachIndexed { index, level ->
-            val selection = select(level = level)
+    fun select_anEndpoint_isActiveTelemetryAsBothFacadeAndRuntime_withThatEndpoint() {
+        val selection = select()
 
-            val active = selection.telemetry as ActiveTelemetry
-            assertSame(active, selection.runtime)
-            assertTrue(active.isActive)
-            assertSame(credentials, active.credentials)
-            assertSame(level, active.level)
-            assertEquals(index + 1, factoryCalls)
+        val active = selection.telemetry as ActiveTelemetry
+        assertSame(active, selection.runtime)
+        assertTrue(active.isActive)
+        assertEquals(endpoint, active.endpoint)
+        assertEquals(listOf(endpoint), factoryUrls)
+    }
+
+    @Test
+    fun collector_everyEnvironmentHasACollector_devForSandboxAndStaging_prodForProduction() {
+        assertEquals(TelemetryCollector.DEV_LOGS_URL, TelemetryCollector.logsUrl(Environment.SANDBOX))
+        assertEquals(TelemetryCollector.DEV_LOGS_URL, TelemetryCollector.logsUrl(Environment.STAGING))
+        assertEquals(TelemetryCollector.PROD_LOGS_URL, TelemetryCollector.logsUrl(Environment.PRODUCTION))
+        assertEquals(
+            "https://mobile-telemetry-dev.shared.apac.paydock.com/v1/logs",
+            TelemetryCollector.DEV_LOGS_URL
+        )
+        assertEquals("https://mobile-telemetry.shared.apac.paydock.com/v1/logs", TelemetryCollector.PROD_LOGS_URL)
+        Environment.entries.forEach { environment ->
+            assertTrue("environment=$environment", TelemetryCollector.logsUrl(environment).isNotBlank())
         }
     }
 
     @Test
-    fun bindTelemetry_inactive_startsNoTelemetryThread() {
+    fun select_everyEnvironment_isActiveWithItsCollectorUrl() {
+        Environment.entries.forEach { environment ->
+            val selection = select(TelemetryCollector.logsUrl(environment))
+
+            assertTrue("environment=$environment", selection.telemetry is ActiveTelemetry)
+        }
+        assertEquals(Environment.entries.map { TelemetryCollector.logsUrl(it) }, factoryUrls)
+    }
+
+    @Test
+    fun production_bindsTheActiveRuntime_withTheProdCollectorUrl() {
+        val selection = select(TelemetryCollector.logsUrl(Environment.PRODUCTION))
+
+        val bound = bind(koin, selection)
+
+        val active = bound as ActiveTelemetry
+        assertSame(active, koin.get<Telemetry>())
+        assertEquals("https://mobile-telemetry.shared.apac.paydock.com/v1/logs", active.endpoint)
+        assertEquals(deviceContext.current(), active.resourceAttributes)
+        assertEquals(1, handlerSlot.sets)
+    }
+
+    @Test
+    fun bindTelemetry_aFailedUrlLookup_bindsTheNoOp_andStartsNoTelemetryThread() {
         val before = liveTelemetryThreads()
 
-        // Production has no collector URL, and release values carry no override; the context is never touched.
-        val bound = bindTelemetry(koin, Environment.PRODUCTION, ContextWrapper(null), releaseValues)
+        withCollectorLookup({ error("synthetic lookup failure") }) {
+            Environment.entries.forEach { environment ->
+                // The context is never touched: an inactive SDK builds nothing.
+                val bound = bindTelemetry(koin, environment, ContextWrapper(null))
 
-        assertSame(NoOpTelemetry, bound)
-        assertSame(NoOpTelemetry, koin.get<Telemetry>())
+                assertSame("environment=$environment", NoOpTelemetry, bound)
+                assertSame(NoOpTelemetry, koin.get<Telemetry>())
+            }
+        }
+
         // Compared with the threads alive before, so a worker another test class left in this JVM cannot interfere.
         assertEquals(emptySet<Thread>(), liveTelemetryThreads() - before)
+    }
+
+    @Test
+    fun bindTelemetry_aBlankUrl_bindsTheNoOp() {
+        withCollectorLookup({ " " }) {
+            Environment.entries.forEach { environment ->
+                val bound = bindTelemetry(koin, environment, ContextWrapper(null))
+
+                assertSame("environment=$environment", NoOpTelemetry, bound)
+                assertSame(NoOpTelemetry, koin.get<Telemetry>())
+            }
+        }
     }
 
     @Test
@@ -419,7 +321,7 @@ internal class TelemetryBindingTest {
 
     @Test
     fun bind_noOp_registersTheNoOpFacade() {
-        val bound = bind(koin, select(provider = unconfigured))
+        val bound = bind(koin, select(null))
 
         assertSame(NoOpTelemetry, bound)
         assertSame(NoOpTelemetry, koin.get<Telemetry>())
@@ -469,7 +371,7 @@ internal class TelemetryBindingTest {
 
     /**
      * MD-47 R_04: while an active facade is bound, a second active selection returns the first, registers it in the
-     * new Koin and never starts the second runtime, nor sends its test record or test crash.
+     * new Koin and never starts the second runtime.
      */
     @Test
     fun bind_activeWhileActiveIsBound_returnsTheFirst_registersItInTheNewKoin_andNeverStartsTheSecond() {
@@ -479,17 +381,12 @@ internal class TelemetryBindingTest {
         val secondRuntime = CountingRuntime()
         val newKoin = koinApplication { modules(defaultTelemetryModule) }.koin
 
-        val bound = bind(
-            newKoin,
-            TelemetrySelection(telemetry = activeTelemetry(), runtime = secondRuntime),
-            sendTestRecord = true,
-            testCrash = true
-        )
+        val bound = bind(newKoin, TelemetrySelection(telemetry = activeTelemetry(), runtime = secondRuntime))
 
         assertSame(first, bound)
         assertSame(first, newKoin.get<Telemetry>())
-        assertEquals(emptyList<String>(), secondRuntime.calls)
-        assertEquals(listOf("start"), firstRuntime.calls)
+        assertEquals(0, secondRuntime.starts)
+        assertEquals(1, firstRuntime.starts)
     }
 
     /** MD-47 R_04: an inactive selection replaces the bound active facade with the no-op, and then binds afresh. */
@@ -523,108 +420,16 @@ internal class TelemetryBindingTest {
         assertEquals(1, runtime.starts)
     }
 
+    /** R_01: an active binding installs the crash handler at start. */
     @Test
-    fun bind_sendTestRecordTrue_sendsOneTestRecordAfterStart() {
-        val runtime = CountingRuntime()
-
-        bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = runtime), sendTestRecord = true)
-
-        assertEquals(listOf("start", "sendTestRecord"), runtime.calls)
-    }
-
-    @Test
-    fun bind_sendTestRecordFalse_neverSendsATestRecord() {
-        val runtime = CountingRuntime()
-
-        bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = runtime), sendTestRecord = false)
-        resetBoundTelemetry()
-        bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = runtime))
-
-        assertEquals(2, runtime.starts)
-        assertEquals(0, runtime.testRecords)
-    }
-
-    @Test
-    fun bind_sendTestRecord_isNeverAskedOfANoOpOrAFailedStart() {
-        val noOp = CountingRuntime()
-        val failing = CountingRuntime(failure = IllegalStateException("synthetic start failure"))
-
-        bind(koin, TelemetrySelection(telemetry = NoOpTelemetry, runtime = noOp), sendTestRecord = true)
-        val bound =
-            bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = failing), sendTestRecord = true)
-
-        assertEquals(0, noOp.testRecords)
-        assertEquals(0, failing.testRecords)
-        assertSame(NoOpTelemetry, bound)
-    }
-
-    @Test
-    fun bind_testCrashTrue_asksForTheTestCrashAfterStart() {
-        val runtime = CountingRuntime()
-
-        bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = runtime), testCrash = true)
-
-        assertEquals(listOf("start", "throwTestCrash"), runtime.calls)
-    }
-
-    @Test
-    fun bind_bothDebugFlags_sendTheTestRecordThenAskForTheTestCrash() {
-        val runtime = CountingRuntime()
-
-        bind(
-            koin,
-            TelemetrySelection(telemetry = activeTelemetry(), runtime = runtime),
-            sendTestRecord = true,
-            testCrash = true
-        )
-
-        assertEquals(listOf("start", "sendTestRecord", "throwTestCrash"), runtime.calls)
-    }
-
-    @Test
-    fun bind_testCrashFalse_neverAsksForATestCrash() {
-        val runtime = CountingRuntime()
-
-        bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = runtime), testCrash = false)
-        resetBoundTelemetry()
-        bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = runtime))
-
-        assertEquals(2, runtime.starts)
-        assertEquals(0, runtime.testCrashes)
-    }
-
-    @Test
-    fun bind_testCrash_isNeverAskedOfANoOpOrAFailedStart() {
-        val noOp = CountingRuntime()
-        val failing = CountingRuntime(failure = IllegalStateException("synthetic start failure"))
-
-        bind(koin, TelemetrySelection(telemetry = NoOpTelemetry, runtime = noOp), testCrash = true)
-        val bound = bind(koin, TelemetrySelection(telemetry = activeTelemetry(), runtime = failing), testCrash = true)
-
-        assertEquals(0, noOp.testCrashes)
-        assertEquals(0, failing.testCrashes)
-        assertSame(NoOpTelemetry, bound)
-    }
-
-    /** R_01, R_12: an active binding installs the crash handler at start and posts the test crash 10 s later. */
-    @Test
-    fun bind_active_installsTheCrashHandler_andWithTestCrashPostsIt() {
+    fun bind_active_installsTheCrashHandler() {
         val selection = select()
         assertEquals(0, handlerSlot.sets)
 
-        bind(koin, selection, testCrash = true)
+        bind(koin, selection)
 
         assertEquals(1, handlerSlot.sets)
         assertTrue(handlerSlot.current is ChainedCrashHandler)
-        assertEquals(listOf(ActiveTelemetry.TEST_CRASH_DELAY_MILLIS), mainPosts)
-    }
-
-    @Test
-    fun bind_active_withoutTestCrash_postsNothingToTheMainThread() {
-        bind(koin, select())
-
-        assertEquals(1, handlerSlot.sets)
-        assertTrue(mainPosts.isEmpty())
     }
 
     /** RS-2: inactive, nothing is built: no factory call, no worker thread, no lifecycle observer, no file. */
@@ -643,21 +448,20 @@ internal class TelemetryBindingTest {
             val before = liveTelemetryThreads()
             val handlerBefore = Thread.getDefaultUncaughtExceptionHandler()
             var factoryCalls = 0
-            val factory: (TelemetryCredentials, TelemetryLevel) -> ActiveTelemetry = { c, l ->
+            val factory: (String) -> ActiveTelemetry = { url ->
                 factoryCalls++
-                ActiveTelemetry.create(context, c, l, "0.0.0-test", "sandbox")
+                ActiveTelemetry.create(context, url, "0.0.0-test", "sandbox")
             }
 
-            val production = SdkTelemetryCredentialsProvider(Environment.PRODUCTION, releaseValues)
-            listOf(
-                selectTelemetry(unconfigured, TelemetryLevel.ALL, factory),
-                selectTelemetry(failing, TelemetryLevel.ALL, factory),
-                selectTelemetry(production, TelemetryLevel.ALL, factory),
-                selectTelemetry(configured, TelemetryLevel.OFF, factory)
-            ).forEach { selection ->
-                assertSame(NoOpTelemetry, bind(koin, selection, sendTestRecord = true, testCrash = true))
+            listOf(null, "", " ").forEach { url ->
+                assertSame(NoOpTelemetry, bind(koin, selectTelemetry(url, factory)))
             }
-            assertSame(NoOpTelemetry, bindTelemetry(koin, Environment.PRODUCTION, context, releaseValues))
+            withCollectorLookup({ error("synthetic lookup failure") }) {
+                assertSame(NoOpTelemetry, bindTelemetry(koin, Environment.PRODUCTION, context))
+            }
+            withCollectorLookup({ "" }) {
+                assertSame(NoOpTelemetry, bindTelemetry(koin, Environment.SANDBOX, context))
+            }
 
             assertEquals(0, factoryCalls)
             assertEquals(emptySet<Thread>(), liveTelemetryThreads() - before)

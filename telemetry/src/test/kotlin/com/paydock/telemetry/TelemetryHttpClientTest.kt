@@ -6,6 +6,7 @@ import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -21,8 +22,7 @@ internal class TelemetryHttpClientTest {
     private val payload = Gzip.compress("""{"resourceLogs":[]}""".toByteArray(Charsets.UTF_8))
     private val headers = mapOf(
         "Content-Encoding" to "gzip",
-        "Content-Type" to "application/json",
-        "Authorization" to "Basic synthetic-not-a-credential"
+        "Content-Type" to "application/json"
     )
 
     @Before
@@ -91,7 +91,7 @@ internal class TelemetryHttpClientTest {
         assertArrayEquals(payload, request.body.readByteArray())
         assertEquals("gzip", request.getHeader("Content-Encoding"))
         assertEquals("application/json", request.getHeader("Content-Type"))
-        assertEquals("Basic synthetic-not-a-credential", request.getHeader("Authorization"))
+        assertNull("never an Authorization header", request.getHeader("Authorization"))
     }
 
     @Test

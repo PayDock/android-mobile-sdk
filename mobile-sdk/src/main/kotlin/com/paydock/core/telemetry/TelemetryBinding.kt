@@ -8,9 +8,6 @@ import com.paydock.telemetry.ActiveTelemetry
 import com.paydock.telemetry.NoOpTelemetry
 import com.paydock.telemetry.Telemetry
 import com.paydock.telemetry.TelemetryActivation
-import com.paydock.telemetry.TelemetryCredentials
-import com.paydock.telemetry.TelemetryCredentialsProvider
-import com.paydock.telemetry.TelemetryLevel
 import com.paydock.telemetry.TelemetryRuntime
 import org.koin.core.Koin
 import org.koin.core.module.Module
@@ -26,63 +23,21 @@ import org.koin.dsl.module
 /** single<Telemetry> { NoOpTelemetry }, part of the SDK's own Koin modules; bind() overrides it (allowOverride). */
 internal val defaultTelemetryModule: Module = module { single<Telemetry> { NoOpTelemetry } }
 
-/** The generated build values; release: override off and empty (D14, R_06). */
-internal class LocalTelemetryValues(
-    val overrideAllowed: Boolean, // TelemetryBuildValues.ENABLED: true only in the debug build type
-    val endpoint: String,
-    val auth: String,
-    val level: String,
-) {
-    companion object {
-        fun fromBuild() = LocalTelemetryValues(
-            TelemetryBuildValues.ENABLED,
-            TelemetryBuildValues.OTLP_ENDPOINT,
-            TelemetryBuildValues.OTLP_AUTH,
-            TelemetryBuildValues.LEVEL,
-        )
-    }
-}
-
-/** Debug override first, then the environment's collector with no credential (D5, D22). */
-internal class SdkTelemetryCredentialsProvider(
-    private val environment: Environment,
-    private val values: LocalTelemetryValues,
-) : TelemetryCredentialsProvider {
-    override fun credentials(): TelemetryCredentials? {
-        val localEndpoint = values.endpoint.trim()
-        if (values.overrideAllowed && localEndpoint.isNotEmpty()) {
-            return TelemetryCredentials(endpoint = localEndpoint, authorization = values.auth.trim())
-        }
-        val url = TelemetryCollector.logsUrl(environment)
-        return if (url.isEmpty()) null else TelemetryCredentials(endpoint = url, authorization = "")
-    }
-}
-
-/** ALL in a release build (D23); the local level in a debug build, ALL when absent. */
-internal fun telemetryLevel(values: LocalTelemetryValues): TelemetryLevel =
-    if (values.overrideAllowed) TelemetryLevel.parse(values.level) else TelemetryLevel.ALL
-
 /** What the binding chose. SDK code only ever receives [telemetry]; [runtime] stays in this file. */
 internal class TelemetrySelection(val telemetry: Telemetry, val runtime: TelemetryRuntime)
 
 /**
- * The decision with every input injectable. A provider that throws counts as no credentials. [createActive] is called
- * only when the decision passes, so an inactive SDK never builds the worker or touches storage.
+ * The decision with every input injectable: active only for an [endpoint] that is not null or blank (a failed URL
+ * lookup arrives as null). [createActive] is called only when the decision passes, so an inactive SDK never builds
+ * the worker or touches storage.
  */
-internal fun selectTelemetry(
-    credentialsProvider: TelemetryCredentialsProvider,
-    level: TelemetryLevel,
-    createActive: (TelemetryCredentials, TelemetryLevel) -> ActiveTelemetry,
-): TelemetrySelection {
-    val credentials = runCatching { credentialsProvider.credentials() }.getOrNull()
-    val isActive = TelemetryActivation.isActive(credentials = credentials, level = level)
-    return if (isActive && credentials != null) {
-        val active = createActive(credentials, level)
+internal fun selectTelemetry(endpoint: String?, createActive: (String) -> ActiveTelemetry): TelemetrySelection =
+    if (endpoint != null && TelemetryActivation.isActive(endpoint)) {
+        val active = createActive(endpoint)
         TelemetrySelection(telemetry = active, runtime = active)
     } else {
         TelemetrySelection(telemetry = NoOpTelemetry, runtime = NoOpTelemetry)
     }
-}
 
 /** Guards [boundTelemetry]. */
 private val bindLock = Any()
@@ -92,20 +47,14 @@ private val bindLock = Any()
 private var boundTelemetry: Telemetry = NoOpTelemetry
 
 /**
- * Registers selection.telemetry as the Koin `single<Telemetry>`, then starts the runtime once if it is active. After a
- * successful start, [sendTestRecord] (debug-only, R_16) asks the runtime to store and send one test record, and
- * [testCrash] (debug-only, R_12) asks it to crash the app with a test crash.
+ * Registers selection.telemetry as the Koin `single<Telemetry>`, then starts the runtime once if it is active; a start
+ * that throws binds the no-op instead.
  *
  * One active runtime per process: while an active facade is bound, another active selection is ignored, its runtime
  * never started, and the bound facade is registered in [koin] and returned, so a second SDK initialisation never
  * starts a second runtime sending the same store's files. An inactive selection replaces the bound facade.
  */
-internal fun bind(
-    koin: Koin,
-    selection: TelemetrySelection,
-    sendTestRecord: Boolean = false,
-    testCrash: Boolean = false,
-): Telemetry {
+internal fun bind(koin: Koin, selection: TelemetrySelection): Telemetry {
     val kept = synchronized(bindLock) {
         if (selection.telemetry.isActive && boundTelemetry.isActive) {
             boundTelemetry
@@ -121,40 +70,23 @@ internal fun bind(
     koin.loadModules(listOf(module { single<Telemetry> { selection.telemetry } }), allowOverride = true)
     if (!selection.telemetry.isActive) return selection.telemetry
     return runCatching { selection.runtime.start() }.fold(
-        onSuccess = {
-            if (sendTestRecord) runCatching { selection.runtime.sendTestRecord() }
-            if (testCrash) runCatching { selection.runtime.throwTestCrash() }
-            selection.telemetry
-        },
+        onSuccess = { selection.telemetry },
         onFailure = { bindNoOp(koin) }
     )
 }
 
 /**
- * The one binding at SDK start (RS-4): reads TelemetryBuildValues, selects, binds. Never throws. Credentials come from
- * [SdkTelemetryCredentialsProvider]: the debug override first, in any environment, then the environment's collector
- * (D22); the level is ALL in a release build (D23). When active, the telemetry is built with the app context, the SDK
- * version and the environment name (R_08, R_10). [values] is injectable for tests; the SDK passes the build's.
+ * The one binding at SDK start (RS-4): looks up the environment's collector URL in [TelemetryCollector] (D22), selects,
+ * binds. Never throws. The table is the only input: no build value or local setting is read, in any build type. A
+ * lookup that fails or returns a blank URL binds the no-op. When active, the telemetry is built with the app context,
+ * the collector URL, the SDK version and the environment name (R_08, R_10).
  */
-internal fun bindTelemetry(
-    koin: Koin,
-    environment: Environment,
-    context: Context,
-    values: LocalTelemetryValues = LocalTelemetryValues.fromBuild(),
-): Telemetry = runCatching {
-    val selection = selectTelemetry(
-        credentialsProvider = SdkTelemetryCredentialsProvider(environment, values),
-        level = telemetryLevel(values),
-        createActive = { c, l ->
-            ActiveTelemetry.create(context, c, l, BuildConfig.SDK_VERSION, environment.name.lowercase())
-        }
-    )
-    bind(
-        koin,
-        selection,
-        sendTestRecord = TelemetryBuildValues.SEND_TEST_RECORD,
-        testCrash = TelemetryBuildValues.TEST_CRASH
-    )
+internal fun bindTelemetry(koin: Koin, environment: Environment, context: Context): Telemetry = runCatching {
+    val endpoint = runCatching { TelemetryCollector.logsUrl(environment) }.getOrNull()
+    val selection = selectTelemetry(endpoint) { url ->
+        ActiveTelemetry.create(context, url, BuildConfig.SDK_VERSION, environment.name.lowercase())
+    }
+    bind(koin, selection)
 }.getOrElse {
     runCatching { bindNoOp(koin) }.getOrDefault(NoOpTelemetry)
 }

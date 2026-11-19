@@ -28,7 +28,7 @@ internal class ClockOffsetWiringTest {
     private val store = InMemoryStore()
     private val sent = mutableListOf<SentRequest>()
 
-    private val transport = OtlpHttpTransport(TelemetryTestFakes.credentials.endpoint, clockOffset) {
+    private val transport = OtlpHttpTransport(TelemetryTestFakes.ENDPOINT, clockOffset) {
         val engine = MockEngine { request ->
             sent += SentRequest((request.body as ByteArrayContent).bytes(), emptyMap(), Thread.currentThread().name)
             respond("", HttpStatusCode.OK, headersOf("Date", SERVER_DATE))
@@ -38,7 +38,7 @@ internal class ClockOffsetWiringTest {
 
     private val runner = ExportRunner(
         store = store,
-        exporter = OtlpExporter(transport, TelemetryTestFakes.credentials),
+        exporter = OtlpExporter(transport),
         deviceContext = FakeDeviceContextProvider(),
         clockOffset = clockOffset,
         monotonic = FakeMonotonic(),

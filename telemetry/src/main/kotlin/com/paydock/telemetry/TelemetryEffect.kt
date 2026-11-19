@@ -7,5 +7,5 @@ internal sealed interface TelemetryEffect {
     data class Export(val maxRecords: Int) : TelemetryEffect // flush everything pending, batches of maxRecords
     data class Drop(val reason: DropReason) : TelemetryEffect
 
-    enum class DropReason { DISABLED, LEVEL_OFF, LEVEL_FILTERED, RATE_LIMIT, NOT_REPORTABLE, ALREADY_OPENED }
+    enum class DropReason { DISABLED, RATE_LIMIT, NOT_REPORTABLE, ALREADY_OPENED }
 }

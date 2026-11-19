@@ -9,8 +9,8 @@ import com.paydock.telemetry.TelemetryIntent.FlushSource
  * input state is never mutated (R_01). Its only other input is the session's [RecordSequence], the source of every
  * record ID, `"<sessionId>-<sequence>"`.
  *
- * The disk is the queue: the reducer keeps counts, windows, notice IDs and the opened widgets' names only. Level
- * filtering, the hourly cap and the dropped notices (R_09, R_10), the flush rules and the export stop (R_11, R_17,
+ * The disk is the queue: the reducer keeps counts, windows, notice IDs and the opened widgets' names only. The
+ * hourly cap and the dropped notices (R_09, R_10), the flush rules and the export stop (R_11, R_17,
  * R_18), and one widget-opened record per widget per session (R_07). `now` is UTC epoch ms, `elapsed` monotonic ms.
  * Every limit comes from [TelemetryLimits].
  */
@@ -31,7 +31,6 @@ internal object TelemetryReducer {
                 export(ticked, now, effects)
             }
             TelemetryIntent.AppBackgrounded -> export(state, now, effects)
-            is TelemetryIntent.LevelChanged -> state.copy(level = intent.level)
             is TelemetryIntent.RecordsDropped -> recordsDropped(state, intent, now, elapsed, sequence, effects)
             is TelemetryIntent.PendingCounted -> schedule(state.copy(pending = intent.count), effects)
             is TelemetryIntent.NoticesExported ->
@@ -39,16 +38,6 @@ internal object TelemetryReducer {
             TelemetryIntent.ExportStopped -> state.copy(exportStopped = true)
         }
         return next to effects
-    }
-
-    /** True for crashes, errors and network failures; false for WidgetOpened and Dropped. */
-    fun isError(event: TelemetryEvent): Boolean = when (event) {
-        is TelemetryEvent.Crash,
-        is TelemetryEvent.UncaughtException,
-        is TelemetryEvent.SdkError,
-        is TelemetryEvent.NetworkFailure -> true
-        is TelemetryEvent.WidgetOpened,
-        is TelemetryEvent.Dropped -> false
     }
 
     private fun reported(
@@ -62,8 +51,6 @@ internal object TelemetryReducer {
         val dropReason = when {
             event is TelemetryEvent.Dropped -> DropReason.NOT_REPORTABLE
             !state.enabled -> DropReason.DISABLED
-            state.level == TelemetryLevel.OFF -> DropReason.LEVEL_OFF
-            state.level == TelemetryLevel.ERRORS && !isError(event) -> DropReason.LEVEL_FILTERED
             event is TelemetryEvent.WidgetOpened && event.widget in state.openedWidgets -> DropReason.ALREADY_OPENED
             else -> null
         }
@@ -99,7 +86,7 @@ internal object TelemetryReducer {
         sequence: RecordSequence,
         effects: MutableList<TelemetryEffect>,
     ): TelemetryState {
-        if (intent.count <= 0 || !state.enabled || state.level == TelemetryLevel.OFF) return state
+        if (intent.count <= 0 || !state.enabled) return state
         val noticed = notice(roll(state, elapsed), intent.reason, intent.count, now, sequence, effects)
         return schedule(noticed, effects)
     }

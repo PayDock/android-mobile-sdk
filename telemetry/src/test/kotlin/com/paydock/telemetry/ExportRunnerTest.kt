@@ -41,7 +41,7 @@ internal class ExportRunnerTest {
         deviceContext: DeviceContextProvider = FakeDeviceContextProvider(),
     ) = ExportRunner(
         store = store,
-        exporter = OtlpExporter(transport, TelemetryTestFakes.credentials),
+        exporter = OtlpExporter(transport),
         deviceContext = deviceContext,
         clockOffset = clockOffset,
         monotonic = monotonic,
@@ -109,6 +109,26 @@ internal class ExportRunnerTest {
     @Test
     fun a5xx_isRetriedLater() {
         assertRetried(TransportResult.HttpError(503, null), 2_500L..5_000L)
+    }
+
+    @Test
+    fun a429WithoutRetryAfter_isRetriedLater() {
+        assertRetried(TransportResult.HttpError(429, null), 2_500L..5_000L)
+    }
+
+    @Test
+    fun a502_isRetriedLater() {
+        assertRetried(TransportResult.HttpError(502, null), 2_500L..5_000L)
+    }
+
+    @Test
+    fun a503_isRetriedAfterItsRetryAfter() {
+        assertRetried(TransportResult.HttpError(503, 10_000), 10_000L..10_000L)
+    }
+
+    @Test
+    fun a504_isRetriedLater() {
+        assertRetried(TransportResult.HttpError(504, null), 2_500L..5_000L)
     }
 
     /**
@@ -211,6 +231,8 @@ internal class ExportRunnerTest {
         val report = runner(transport).flush(now, BATCH_MAX_RECORDS)
 
         assertEquals(FlushReport(rejected = 3, pending = 0), report)
+        assertEquals(0, store.count())
+        assertEquals(1, transport.sent.size)
         assertTrue(retries.isEmpty())
     }
 
@@ -579,7 +601,7 @@ internal class ExportRunnerTest {
         }
         val runner = ExportRunner(
             throwing,
-            OtlpExporter(FakeTransport(), TelemetryTestFakes.credentials),
+            OtlpExporter(FakeTransport()),
             FakeDeviceContextProvider(),
             clockOffset,
             monotonic,

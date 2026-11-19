@@ -35,8 +35,7 @@ internal class TelemetryReducerTest {
 
     private var sequence = RecordSequence()
 
-    private fun state(level: TelemetryLevel = TelemetryLevel.ALL, enabled: Boolean = true) =
-        TelemetryState(level = level, enabled = enabled, sessionId = sessionId)
+    private fun state(enabled: Boolean = true) = TelemetryState(enabled = enabled, sessionId = sessionId)
 
     private fun reduce(state: TelemetryState, intent: TelemetryIntent, now: Long = t0, elapsed: Long = e0) =
         TelemetryReducer.reduce(state, intent, now, elapsed, sequence)
@@ -89,7 +88,7 @@ internal class TelemetryReducerTest {
     fun onlyATimerFlush_clearsFlushScheduled() {
         val armed = state().copy(pending = 3, flushScheduled = true)
 
-        listOf(FlushSource.START, FlushSource.RETRY, FlushSource.DEBUG_SEND).forEach { source ->
+        listOf(FlushSource.START, FlushSource.RETRY).forEach { source ->
             val (flushed, effects) = reduce(armed, TelemetryIntent.Flush(source))
             assertEquals(listOf(Export(BATCH_MAX_RECORDS)), effects)
             assertTrue(flushed.flushScheduled)
@@ -176,7 +175,6 @@ internal class TelemetryReducerTest {
         val intents = listOf(
             TelemetryIntent.Flush(FlushSource.START),
             TelemetryIntent.Flush(FlushSource.RETRY),
-            TelemetryIntent.Flush(FlushSource.DEBUG_SEND),
             TelemetryIntent.AppBackgrounded,
             TelemetryIntent.PendingCounted(30),
             TelemetryIntent.RecordsDropped(DroppedReason.REJECTED, 2)
@@ -270,12 +268,11 @@ internal class TelemetryReducerTest {
     }
 
     @Test
-    fun recordsDropped_isIgnoredForNoRecords_whenDisabled_andAtOff() {
+    fun recordsDropped_isIgnoredForNoRecords_andWhenDisabled() {
         listOf(
             state() to TelemetryIntent.RecordsDropped(DroppedReason.REJECTED, 0),
             state() to TelemetryIntent.RecordsDropped(DroppedReason.REJECTED, -1),
-            state(enabled = false) to TelemetryIntent.RecordsDropped(DroppedReason.REJECTED, 2),
-            state(level = TelemetryLevel.OFF) to TelemetryIntent.RecordsDropped(DroppedReason.REJECTED, 2)
+            state(enabled = false) to TelemetryIntent.RecordsDropped(DroppedReason.REJECTED, 2)
         ).forEach { (start, intent) ->
             val (next, effects) = reduce(start, intent)
             assertEquals(start, next)
@@ -330,34 +327,6 @@ internal class TelemetryReducerTest {
     }
 
     @Test
-    fun reported_levelOff_dropsEveryEvent() {
-        val start = state(level = TelemetryLevel.OFF)
-
-        listOf(crash, error, widgetOpened).forEach { event ->
-            val (next, effects) = report(start, event)
-
-            assertEquals(start, next)
-            assertEquals(listOf(Drop(DropReason.LEVEL_OFF)), effects)
-        }
-    }
-
-    @Test
-    fun reported_levelErrors_keepsErrorsAndCrashes_andDropsWidgetOpened() {
-        val start = state(level = TelemetryLevel.ERRORS)
-
-        listOf(crash, error, TelemetryEvent.UncaughtException(error = error.error)).forEach { event ->
-            assertTrue(TelemetryReducer.isError(event))
-            assertEquals(1, persisted(report(start, event).second).size)
-        }
-
-        val (next, effects) = report(start, widgetOpened)
-        assertFalse(TelemetryReducer.isError(widgetOpened))
-        assertFalse(TelemetryReducer.isError(TelemetryEvent.Dropped(DroppedReason.RATE_LIMIT, 1)))
-        assertEquals(start, next)
-        assertEquals(listOf(Drop(DropReason.LEVEL_FILTERED)), effects)
-    }
-
-    @Test
     fun widgetOpened_isRecordedOncePerWidget_andASecondOpeningDropsAsAlreadyOpened() {
         val (first, firstEffects) = report(state(), widgetOpened)
         assertEquals(TelemetryEvent.WidgetOpened("CardDetailsWidget"), persisted(firstEffects).single().event)
@@ -389,17 +358,7 @@ internal class TelemetryReducerTest {
     }
 
     @Test
-    fun widgetOpened_droppedByTheLevelOrTheCap_isNotRemembered() {
-        val filtered = state(level = TelemetryLevel.ERRORS)
-        val (afterFilter, filterEffects) = report(filtered, widgetOpened)
-        assertEquals(listOf(Drop(DropReason.LEVEL_FILTERED)), filterEffects)
-        assertTrue(afterFilter.openedWidgets.isEmpty())
-        val (restored, _) = reduce(afterFilter, TelemetryIntent.LevelChanged(TelemetryLevel.ALL))
-        assertEquals(widgetOpened, persisted(report(restored, widgetOpened).second).single().event)
-
-        val off = state(level = TelemetryLevel.OFF)
-        assertTrue(report(off, widgetOpened).first.openedWidgets.isEmpty())
-
+    fun widgetOpened_droppedByTheCap_isNotRemembered() {
         val capped = reportMany(state(), HOURLY_CAP)
         val (afterCap, capEffects) = report(capped, widgetOpened)
         assertEquals(Drop(DropReason.RATE_LIMIT), capEffects.first())
@@ -410,30 +369,13 @@ internal class TelemetryReducerTest {
     }
 
     @Test
-    fun widgetOpened_alreadyOpened_isCheckedAfterTheLevel_andBeforeTheCap() {
+    fun widgetOpened_alreadyOpened_isCheckedBeforeTheCap() {
         val (opened, _) = report(state(), widgetOpened)
-
-        val (_, offEffects) = report(opened.copy(level = TelemetryLevel.OFF), widgetOpened)
-        assertEquals(listOf(Drop(DropReason.LEVEL_OFF)), offEffects)
-        val (_, filteredEffects) = report(opened.copy(level = TelemetryLevel.ERRORS), widgetOpened)
-        assertEquals(listOf(Drop(DropReason.LEVEL_FILTERED)), filteredEffects)
 
         val full = opened.copy(createdInWindow = HOURLY_CAP)
         val (next, effects) = report(full, widgetOpened)
         assertEquals(full, next)
         assertEquals(listOf(Drop(DropReason.ALREADY_OPENED)), effects)
-    }
-
-    @Test
-    fun levelChanged_setsTheLevel_withNoEffect_andAppliesToTheEventsThatFollow() {
-        val (changed, effects) = reduce(state(), TelemetryIntent.LevelChanged(TelemetryLevel.OFF))
-
-        assertEquals(state().copy(level = TelemetryLevel.OFF), changed)
-        assertTrue(effects.isEmpty())
-        assertEquals(listOf(Drop(DropReason.LEVEL_OFF)), report(changed, error).second)
-
-        val (restored, _) = reduce(changed, TelemetryIntent.LevelChanged(TelemetryLevel.ALL))
-        assertEquals(1, persisted(report(restored, error).second).size)
     }
 
     @Test
@@ -452,7 +394,6 @@ internal class TelemetryReducerTest {
             TelemetryIntent.Flush(FlushSource.TIMER),
             TelemetryIntent.Flush(FlushSource.START),
             TelemetryIntent.AppBackgrounded,
-            TelemetryIntent.LevelChanged(TelemetryLevel.ERRORS),
             TelemetryIntent.RecordsDropped(DroppedReason.REJECTED, 1),
             TelemetryIntent.RecordsDropped(DroppedReason.STORE_FULL, 1),
             TelemetryIntent.PendingCounted(3),

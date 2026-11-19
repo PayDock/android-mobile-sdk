@@ -15,7 +15,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
-import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -26,11 +25,10 @@ import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 /**
- * Unit tests for [ActiveTelemetry], the facade and lifecycle on the worker (R_03, R_04, R_11, R_12, R_14, R_16):
+ * Unit tests for [ActiveTelemetry], the facade and lifecycle on the worker (R_03, R_04, R_11, R_14):
  * recording fakes for the store, the transport and the lifecycle; the immediate dispatcher, or the real
  * [SerialTelemetryDispatcher] where the thread or the order matters. Nothing sleeps: a test waits on a latch. The
- * crash handler goes into a fake slot and the test crash into a recording main-thread poster, so no test touches the
- * JVM's default handler or the main looper.
+ * crash handler goes into a fake slot, so no test touches the JVM's default handler.
  */
 internal class ActiveTelemetryTest {
 
@@ -38,13 +36,11 @@ internal class ActiveTelemetryTest {
     val folder = TemporaryFolder()
 
     private val waitSeconds = 5L
-    private val credentials = TelemetryTestFakes.credentials
     private val deviceContext = FakeDeviceContextProvider()
     private val store = InMemoryStore()
     private val lifecycle = FakeLifecycle()
     private val error = TelemetryTestFakes.sdkError()
     private val handlerSlot = FakeHandlerSlot()
-    private val mainPosts = mutableListOf<Pair<Long, () -> Unit>>()
 
     private fun telemetry(
         dispatcher: TelemetryDispatcher = ImmediateDispatcher(),
@@ -54,15 +50,13 @@ internal class ActiveTelemetryTest {
         store: DurableStore = this.store,
         clockOffset: ClockOffset = ClockOffset(FakeClock()),
         crashHandlers: CrashHandlerInstaller = CrashHandlerInstaller(handlerSlot),
-        postToMain: (Long, () -> Unit) -> Unit = { delay, task -> mainPosts += delay to task },
         exitReports: ExitReportReader = ExitReportReader.NONE,
     ) = ActiveTelemetry(
-        credentials = credentials,
-        level = TelemetryLevel.ALL,
+        endpoint = TelemetryTestFakes.ENDPOINT,
         deviceContextProvider = deviceContext,
         ports = ActiveTelemetry.Ports(
             store = store,
-            exporter = OtlpExporter(transport, credentials),
+            exporter = OtlpExporter(transport),
             lifecycle = lifecycle,
             retryPolicy = RetryPolicy(Random(5)),
             clockOffset = clockOffset,
@@ -72,8 +66,7 @@ internal class ActiveTelemetryTest {
         monotonic = FakeMonotonic(),
         idGenerator = idGenerator,
         dispatcher = dispatcher,
-        crashHandlers = crashHandlers,
-        postToMain = postToMain
+        crashHandlers = crashHandlers
     )
 
     /** Waits until every task posted so far, delayed by 0 at most, has run on the worker. */
@@ -92,22 +85,18 @@ internal class ActiveTelemetryTest {
     )
 
     @Test
-    fun isActive_isTrue_andKeepsItsCredentialsAndLevel() {
+    fun isActive_isTrue_andKeepsItsEndpoint() {
         val telemetry = telemetry()
 
         assertTrue(telemetry.isActive)
-        assertSame(credentials, telemetry.credentials)
-        assertSame(TelemetryLevel.ALL, telemetry.level)
+        assertEquals(TelemetryTestFakes.ENDPOINT, telemetry.endpoint)
     }
 
     @Test
-    fun initialState_isEnabledAtItsLevelWithItsSessionId() {
+    fun initialState_isEnabledWithItsSessionId() {
         val telemetry = telemetry()
 
-        assertEquals(
-            TelemetryState(level = TelemetryLevel.ALL, enabled = true, sessionId = telemetry.sessionId),
-            telemetry.currentState()
-        )
+        assertEquals(TelemetryState(enabled = true, sessionId = telemetry.sessionId), telemetry.currentState())
     }
 
     /** MD-25 acceptance: a blocked worker never blocks or fails the caller. */
@@ -141,12 +130,11 @@ internal class ActiveTelemetryTest {
     }
 
     @Test
-    fun report_start_andSendTestRecord_surviveADispatcherThatThrows() {
+    fun report_andStart_surviveADispatcherThatThrows() {
         val telemetry = telemetry(dispatcher = ThrowingDispatcher)
 
         telemetry.report(error)
         telemetry.start()
-        telemetry.sendTestRecord()
 
         assertTrue(telemetry.isActive)
         assertNull(telemetry.resourceAttributes)
@@ -213,7 +201,6 @@ internal class ActiveTelemetryTest {
         telemetry.start()
         telemetry.report(error)
         repeat(TelemetryLimits.FLUSH_THRESHOLD) { telemetry.report(TelemetryTestFakes.sdkError("test.Error$it")) }
-        telemetry.sendTestRecord()
         dispatcher.awaitIdle()
         dispatcher.awaitIdle()
 
@@ -282,26 +269,6 @@ internal class ActiveTelemetryTest {
     }
 
     @Test
-    fun sendTestRecord_storesAndSendsARecordWithTheTestCode() {
-        val dispatcher = ImmediateDispatcher()
-        val transport = FakeTransport()
-        val telemetry = telemetry(dispatcher = dispatcher, transport = transport)
-        telemetry.start()
-
-        telemetry.sendTestRecord()
-        val saved = store.saved.single()
-        assertEquals(AttributeValue.Str(ActiveTelemetry.TEST_RECORD_CODE), saved.value("paydock.error.code"))
-        assertEquals(AttributeValue.Str(ActiveTelemetry.TEST_RECORD_TYPE), saved.value("exception.type"))
-        assertTrue(transport.sent.isEmpty())
-        dispatcher.runDelayed(0)
-
-        val request = transport.sent.single()
-        assertEquals(listOf("TelemetryTestRecord"), request.recordValues("paydock.error.code"))
-        assertEquals(listOf("com.paydock.telemetry.TelemetryTestRecord"), request.recordValues("exception.type"))
-        assertEquals(0, store.count())
-    }
-
-    @Test
     fun everySentBatch_carriesTheInstallationId_andEveryRecordItsSessionId() {
         val dispatcher = ImmediateDispatcher()
         val transport = FakeTransport()
@@ -335,8 +302,7 @@ internal class ActiveTelemetryTest {
         assertTrue(telemetry.currentState().exportStopped)
         assertTrue(dispatcher.delayed.isEmpty())
 
-        repeat(TelemetryLimits.FLUSH_THRESHOLD + 5) { telemetry.report(TelemetryTestFakes.sdkError("test.Error$it")) }
-        telemetry.sendTestRecord()
+        repeat(TelemetryLimits.FLUSH_THRESHOLD + 6) { telemetry.report(TelemetryTestFakes.sdkError("test.Error$it")) }
         lifecycle.onBackground!!.invoke()
         dispatcher.runDelayed()
         dispatcher.runDelayed()
@@ -483,32 +449,6 @@ internal class ActiveTelemetryTest {
         assertEquals(AttributeValue.Str("uncaught_handler"), record.value("paydock.crash.source"))
         assertEquals(AttributeValue.Str("checkout-worker"), record.value("thread.name"))
         assertEquals(listOf<Pair<Thread, Throwable>>(thread to crash), previous.calls)
-    }
-
-    /** R_12: the test crash is posted to the main thread 10 s later and throws a message-less [TelemetryTestCrash]. */
-    @Test
-    fun throwTestCrash_postsATaskThatThrowsTheTestCrash_tenSecondsLater() {
-        val dispatcher = ImmediateDispatcher()
-        val telemetry = telemetry(dispatcher = dispatcher)
-        telemetry.start()
-
-        telemetry.throwTestCrash()
-
-        val (delay, task) = mainPosts.single()
-        assertEquals(ActiveTelemetry.TEST_CRASH_DELAY_MILLIS, delay)
-        assertEquals(10_000L, delay)
-        val thrown = assertThrows(TelemetryTestCrash::class.java) { task() }
-        assertNull(thrown.message)
-        assertTrue(dispatcher.delayed.isEmpty())
-    }
-
-    @Test
-    fun throwTestCrash_whenPostingFails_neverThrows() {
-        val telemetry = telemetry(postToMain = { _, _ -> error("synthetic looper failure") })
-
-        telemetry.throwTestCrash()
-
-        assertTrue(telemetry.isActive)
     }
 
     /** A store that logs each save and count into [log], in the order the worker makes them. */

@@ -22,8 +22,8 @@ import org.koin.dsl.module
 
 /**
  * The guarded install (R_07, RS-8): the network module's API client carries the network failure plugin only when the
- * bound facade is active; with NoOpTelemetry (the default module, and always in a release build) it has none, and the
- * BIN client never has it. Each test resolves the clients from its own Koin instance.
+ * bound facade is active; with NoOpTelemetry (the default module, or a failed collector URL lookup) it has none, and
+ * the BIN client never has it. Each test resolves the clients from its own Koin instance.
  */
 internal class NetworkModuleTelemetryTest {
 

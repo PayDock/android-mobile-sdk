@@ -12,9 +12,9 @@ import java.util.concurrent.CancellationException
 
 /*
  * The SDK's calls on the telemetry facade: one for a handled SDK error (and its variant for a report made inside a
- * coroutine), one for a widget opening, and the one lookup of the facade outside a view model. The calls return at once when telemetry is
- * inactive (a release build binds NoOpTelemetry), never throw and never change the caller's control flow: a failing
- * report is swallowed here.
+ * coroutine), one for a widget opening, and the one lookup of the facade outside a view model. The calls return at once
+ * when telemetry is inactive (NoOpTelemetry, bound after a failed or blank collector URL lookup), never throw and never
+ * change the caller's control flow: a failing report is swallowed here.
  */
 
 /**

@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.library)
@@ -118,104 +117,6 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
-    }
-}
-
-/** Writes the internal `com.paydock.core.telemetry.TelemetryBuildValues` object of one variant. */
-abstract class GenerateTelemetryBuildValues : DefaultTask() {
-    @get:Input
-    abstract val buildEnabled: Property<Boolean>
-
-    @get:Input
-    abstract val endpoint: Property<String>
-
-    @get:Input
-    abstract val auth: Property<String>
-
-    @get:Input
-    abstract val level: Property<String>
-
-    @get:Input
-    abstract val sendTestRecord: Property<Boolean>
-
-    @get:Input
-    abstract val testCrash: Property<Boolean>
-
-    @get:OutputDirectory
-    abstract val outputDir: DirectoryProperty
-
-    @TaskAction
-    fun generate() {
-        fun literal(value: String): String =
-            "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"").replace("$", "\\$") + "\""
-        val file = outputDir.file("com/paydock/core/telemetry/TelemetryBuildValues.kt").get().asFile
-        file.parentFile.mkdirs()
-        file.writeText(
-            listOf(
-                "package com.paydock.core.telemetry",
-                "",
-                "/** Generated per variant by the build. Debug: from local.properties. " +
-                    "Release: always disabled and empty (D14). */",
-                "internal object TelemetryBuildValues {",
-                "    const val ENABLED: Boolean = ${buildEnabled.get()}",
-                "    const val OTLP_ENDPOINT: String = ${literal(endpoint.get())}",
-                "    const val OTLP_AUTH: String = ${literal(auth.get())}",
-                "    const val LEVEL: String = ${literal(level.get())}",
-                "    const val SEND_TEST_RECORD: Boolean = ${sendTestRecord.get()}",
-                "    const val TEST_CRASH: Boolean = ${testCrash.get()}",
-                "}",
-                ""
-            ).joinToString("\n")
-        )
-    }
-}
-
-/** Passes the release variant's generated TelemetryBuildValues.kt to the unit tests (TelemetryReleaseValuesTest). */
-class ReleaseTelemetryValuesArgument(
-    @get:InputFile
-    @get:PathSensitive(PathSensitivity.NONE)
-    val file: Provider<RegularFile>,
-) : CommandLineArgumentProvider {
-    override fun asArguments(): List<String> =
-        listOf("-Dpaydock.telemetry.releaseValuesFile=${file.get().asFile.absolutePath}")
-}
-
-// Debug values come from the engineer's uncommitted local.properties (spec § 8) and override the collector
-// (D22); never commit them. Every other build type is generated disabled and empty, without reading
-// local.properties, so a release build sends only to the SDK's built-in collector URL, with no credential, at
-// level all (D23). TelemetryReleaseValuesTest reads the generated release values and fails if any is set.
-androidComponents {
-    onVariants { variant ->
-        val isDebug = variant.buildType == "debug"
-        val localProperties = Properties()
-        if (isDebug) {
-            val localFile = rootProject.file("local.properties")
-            if (localFile.isFile) localFile.inputStream().use { localProperties.load(it) }
-        }
-        fun localValue(key: String): String = localProperties.getProperty(key)?.trim().orEmpty()
-        val variantName = variant.name.replaceFirstChar { it.uppercase() }
-        val task = tasks.register<GenerateTelemetryBuildValues>("generate${variantName}TelemetryBuildValues") {
-            buildEnabled.set(isDebug)
-            endpoint.set(if (isDebug) localValue("paydock.telemetry.otlpEndpoint") else "")
-            auth.set(if (isDebug) localValue("paydock.telemetry.otlpAuth") else "")
-            level.set(if (isDebug) localValue("paydock.telemetry.level") else "")
-            sendTestRecord.set(
-                if (isDebug) localValue("paydock.telemetry.sendTestRecord").equals("true", ignoreCase = true) else false
-            )
-            testCrash.set(
-                if (isDebug) localValue("paydock.telemetry.testCrash").equals("true", ignoreCase = true) else false
-            )
-        }
-        variant.sources.kotlin?.addGeneratedSourceDirectory(task, GenerateTelemetryBuildValues::outputDir)
-        if (variant.buildType == "release") {
-            val releaseValuesFile = task.flatMap {
-                it.outputDir.file("com/paydock/core/telemetry/TelemetryBuildValues.kt")
-            }
-            tasks.withType<Test>().configureEach {
-                dependsOn(task)
-                jvmArgumentProviders.add(ReleaseTelemetryValuesArgument(releaseValuesFile))
-            }
-        }
     }
 }
 

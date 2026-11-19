@@ -167,11 +167,16 @@ SERVICE_ID_PAYPAL=your_gateway_id_pay_pal
 
 ## Telemetry
 
-The SDK sends diagnostics to Paydock: crashes in your app, SDK errors, failed Paydock API calls and which SDK widgets
-are opened. In `SANDBOX` and `STAGING` it sends them to Paydock's collector
-(`https://mobile-telemetry-dev.shared.apac.paydock.com/v1/logs`), with no credential in the app; `PRODUCTION` sends
-nothing yet and follows in a later release. Records carry no card data, message text, request bodies or headers.
-There is nothing to set up and no API to call.
+The SDK sends diagnostics to Paydock in every environment: crashes in your app, SDK errors, failed Paydock API calls
+and which SDK widgets are opened. Each environment has its own Paydock collector, and the app holds no credential (no
+`Authorization` header is sent):
+
+| Environment | Collector |
+|---|---|
+| `PRODUCTION` | `https://mobile-telemetry.shared.apac.paydock.com/v1/logs` |
+| `SANDBOX`, `STAGING` | `https://mobile-telemetry-dev.shared.apac.paydock.com/v1/logs` |
+
+Records carry no card data, message text, request bodies or headers. There is nothing to set up and no API to call.
 
 ### Data safety (Google Play)
 
@@ -185,31 +190,15 @@ Google Play asks you to declare the data the SDKs in your app collect. In your a
 
 No personal or financial data is sent.
 
-### Local keys
-
-For engineers working on the SDK. Add these keys to the root `local.properties` (gitignored; never commit them or a
-real token). They feed the debug variants only (`mobile-sdk/build.gradle.kts`); a release variant never reads them
-and sends only to the collector above.
-
-In a debug build, a local endpoint overrides the collector in **any** environment, `PRODUCTION` included. Without
-one, a debug build sends to the collector like a release build, at the local level.
-
-| Key | What it does |
-|---|---|
-| `paydock.telemetry.otlpEndpoint` | The OTLP/HTTP endpoint records are sent to instead of the collector. |
-| `paydock.telemetry.otlpAuth` | The endpoint's authorization value; when empty, no `Authorization` header is sent. |
-| `paydock.telemetry.level` | What is recorded: `off`, `errors` (crashes, SDK errors, network failures) or `all` (also widget usage; the default when absent). |
-| `paydock.telemetry.sendTestRecord` | `true` stores and sends one test record after start. |
-| `paydock.telemetry.testCrash` | `true` crashes the debug app 10 s after every start, to exercise the crash handler; leave it off otherwise. |
-
 ### Running the sample with telemetry
 
 ```bash
 ./gradlew :sample:installSandboxDebug
 ```
 
-Telemetry is active when there is an endpoint and the level is not `off`: the local endpoint in any debug variant, or
-else the collector in the `SANDBOX` and `STAGING` variants (`sandboxDebug`, `stagingDebug` and their release builds).
+Telemetry is active in every environment and every build type: the app sends to the collector above of the
+environment the SDK is initialised with, `PRODUCTION` included. There is no local setting: the SDK no longer reads
+any `paydock.telemetry.*` key from `local.properties`, so remove any you still have.
 
 ### The trigger screen
 
@@ -239,6 +228,8 @@ exception type name only.
 
 Records sent to the dev collector (`SANDBOX` and `STAGING`) also land in devdock. In Grafana **Explore**, on the
 devdock Loki data source:
+
+- Debug records only (from a debuggable app, like the sample's debug builds): add `| paydock_app_debuggable="true"`.
 
 - The whole run, by installation or by session:
   - `{service_name="paydock-mobile-sdk"} | app_installation_id="<id>"`

@@ -33,8 +33,7 @@ internal class OtlpHttpTransportTest {
     private val payload = Gzip.compress(json)
     private val headers = mapOf(
         "Content-Encoding" to "gzip",
-        "Content-Type" to "application/json",
-        "Authorization" to "Basic synthetic-not-a-credential"
+        "Content-Type" to "application/json"
     )
 
     private val requests = mutableListOf<HttpRequestData>()
@@ -83,7 +82,7 @@ internal class OtlpHttpTransportTest {
         assertEquals(ENDPOINT, request.url.toString())
         assertArrayEquals("the transport must never compress", payload, (request.body as ByteArrayContent).bytes())
         assertEquals("gzip", request.headers["Content-Encoding"])
-        assertEquals("Basic synthetic-not-a-credential", request.headers["Authorization"])
+        assertNull(request.headers["Authorization"])
         // Ktor hands an engine the Content-Type on the body, not in the headers; the wire test checks the header.
         assertEquals(ContentType.Application.Json, request.body.contentType)
     }
@@ -96,6 +95,13 @@ internal class OtlpHttpTransportTest {
     @Test
     fun send_200WithoutPartialSuccess_isSuccessWithNoRejection() {
         assertEquals(TransportResult.Success(200, 0), respondingWith(HttpStatusCode.OK, "{}").send(payload, headers))
+    }
+
+    @Test
+    fun send_200WithAnEmptyPartialSuccess_isSuccessWithNoRejection() {
+        val body = """{"partialSuccess":{}}"""
+
+        assertEquals(TransportResult.Success(200, 0), respondingWith(HttpStatusCode.OK, body).send(payload, headers))
     }
 
     @Test

@@ -5,7 +5,6 @@ package com.paydock.telemetry
  * IDs and the names of the widgets opened this session only: the records themselves live on disk.
  */
 internal data class TelemetryState(
-    val level: TelemetryLevel,
     val enabled: Boolean,
     val sessionId: String,
     val pending: Int = 0, // records on disk not yet exported, as last counted

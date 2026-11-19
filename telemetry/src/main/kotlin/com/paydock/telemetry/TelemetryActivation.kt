@@ -1,7 +1,6 @@
 package com.paydock.telemetry
 
-/** The one activation decision (D22): an endpoint and a level other than OFF. Pure. */
+/** The one activation decision (D22): a collector endpoint that is not blank. Pure. */
 internal object TelemetryActivation {
-    fun isActive(credentials: TelemetryCredentials?, level: TelemetryLevel): Boolean =
-        credentials != null && credentials.endpoint.isNotBlank() && level != TelemetryLevel.OFF
+    fun isActive(endpoint: String?): Boolean = !endpoint.isNullOrBlank()
 }

@@ -37,7 +37,7 @@ internal class TelemetryEffectHandlerTest {
     ): TelemetryEffectHandler {
         val runner = ExportRunner(
             store = store,
-            exporter = OtlpExporter(transport, TelemetryTestFakes.credentials),
+            exporter = OtlpExporter(transport),
             deviceContext = deviceContext,
             clockOffset = ClockOffset(clock),
             monotonic = FakeMonotonic(),

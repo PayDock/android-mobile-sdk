@@ -13,10 +13,14 @@
   that does not report its version.
 - `MobileSdkException` (a new `SdkException` subclass). If you handle `SdkException` with an exhaustive `when`, add a
   branch for it.
-- The SDK sends diagnostics to Paydock in `SANDBOX` and `STAGING`: crashes in your app, SDK errors, failed
-  Paydock API calls and which SDK widgets are opened. Records carry no card data, message text, request bodies
-  or headers. `PRODUCTION` follows in a later release. No setup and no API change. Declare the data in Google
-  Play's data safety form (see the README's Telemetry section).
+- The SDK sends diagnostics to Paydock in every environment, `PRODUCTION` included: crashes in your app, SDK
+  errors, failed Paydock API calls and which SDK widgets are opened. Records carry no card data, message text,
+  request bodies or headers, and no credential is sent. Collectors:
+  `https://mobile-telemetry.shared.apac.paydock.com/v1/logs` (`PRODUCTION`) and
+  `https://mobile-telemetry-dev.shared.apac.paydock.com/v1/logs` (`SANDBOX`, `STAGING`). In Grafana, records are
+  queried with `{service_name="paydock-mobile-sdk"}`; a debug build's records carry `paydock_app_debuggable="true"`.
+  No setup and no API change. Declare the data in Google Play's data safety form (see the README's Telemetry
+  section).
 
 ### Changed
 - The Mobile SDK no longer compiles an exact Client SDK version in. It supports the Client SDK line `v1.150` and,
@@ -32,6 +36,11 @@
   declare it themselves.
 - The SDK's crash handler waits at most 0.5 s to record a crash, then hands the crash to your app's handler as
   before.
+
+### Removed
+- SDK development only: the debug telemetry keys in `local.properties` (`paydock.telemetry.otlpEndpoint`,
+  `paydock.telemetry.otlpAuth`, `paydock.telemetry.level`, `paydock.telemetry.sendTestRecord` and
+  `paydock.telemetry.testCrash`) are no longer read; every build sends to its environment's collector.
 
 ### Fixed
 - `PayPalDataCollectorUtil.initialise` throws `PayPalDataCollectorException.InitialisationClientIdException`

@@ -2,8 +2,6 @@ package com.paydock.telemetry
 
 import android.content.Context
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -17,14 +15,13 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * The follow-up intents an effect returns are applied in the same worker task, first in, first out, before any
  * queued intent, so none is dropped or overtaken by a report. Reports use the bounded `post`; every module signal
- * (the timer, the retry, the background callback, the debug send) uses `postDelayed`, so it is never dropped.
+ * (the timer, the retry, the background callback) uses `postDelayed`, so it is never dropped.
  *
  * [start] also installs the process's crash handler through [crashHandlers] (R_01), on the calling thread and never
  * at construction, so only an active, started runtime ever touches the default handler.
  */
 internal class ActiveTelemetry(
-    val credentials: TelemetryCredentials,
-    val level: TelemetryLevel,
+    val endpoint: String,
     private val deviceContextProvider: DeviceContextProvider,
     private val ports: Ports,
     private val clock: Clock = Clock.SYSTEM,
@@ -32,7 +29,6 @@ internal class ActiveTelemetry(
     idGenerator: IdGenerator = IdGenerator.RANDOM,
     private val dispatcher: TelemetryDispatcher = SerialTelemetryDispatcher(),
     private val crashHandlers: CrashHandlerInstaller = CrashHandlerInstaller.PROCESS,
-    private val postToMain: (delayMillis: Long, task: () -> Unit) -> Unit = ::postToMainLooper,
 ) : Telemetry, TelemetryRuntime {
 
     /**
@@ -62,7 +58,7 @@ internal class ActiveTelemetry(
 
     /** Written only on the worker; volatile so [currentState] can read it from any thread. */
     @Volatile
-    private var state: TelemetryState = TelemetryState(level = level, enabled = true, sessionId = sessionId)
+    private var state: TelemetryState = TelemetryState(enabled = true, sessionId = sessionId)
 
     private val started = AtomicBoolean(false)
 
@@ -117,18 +113,6 @@ internal class ActiveTelemetry(
         }
     }
 
-    /** Debug only (R_16): reports a test error like any report, then flushes like a module signal. */
-    override fun sendTestRecord() {
-        val error = TelemetryEvent.ErrorInfo(type = TEST_RECORD_TYPE, frames = emptyList())
-        report(TelemetryEvent.SdkError(error = error, errorCode = TEST_RECORD_CODE))
-        signal(0, TelemetryIntent.Flush(TelemetryIntent.FlushSource.DEBUG_SEND))
-    }
-
-    /** Debug only (R_12): crashes the app [TEST_CRASH_DELAY_MILLIS] later on the main thread, with no message. */
-    override fun throwTestCrash() {
-        runCatching { postToMain(TEST_CRASH_DELAY_MILLIS) { throw TelemetryTestCrash() } }
-    }
-
     /** For tests. */
     internal fun currentState(): TelemetryState = state
 
@@ -157,10 +141,6 @@ internal class ActiveTelemetry(
     }
 
     companion object {
-        const val TEST_RECORD_CODE = "TelemetryTestRecord"
-        const val TEST_RECORD_TYPE = "com.paydock.telemetry.TelemetryTestRecord"
-        const val TEST_CRASH_DELAY_MILLIS = 10_000L
-
         /**
          * Production wiring: Android platform, private storage, the real worker, the file store in the app's
          * no-backup directory, the OTLP exporter on its own client, the process lifecycle and the OS's exit reports
@@ -169,16 +149,14 @@ internal class ActiveTelemetry(
          */
         fun create(
             context: Context,
-            credentials: TelemetryCredentials,
-            level: TelemetryLevel,
+            endpoint: String,
             sdkVersion: String,
             environmentName: String,
         ): ActiveTelemetry {
             val appContext = context.applicationContext
             val clockOffset = ClockOffset(Clock.SYSTEM)
             return ActiveTelemetry(
-                credentials = credentials,
-                level = level,
+                endpoint = endpoint,
                 deviceContextProvider = DefaultDeviceContextProvider(
                     platform = AndroidPlatformInfo(appContext),
                     installationIds = InstallationIdStore(
@@ -191,10 +169,7 @@ internal class ActiveTelemetry(
                 ports = Ports(
                     store = FileDurableStore { File(appContext.noBackupFilesDir, FileDurableStore.DIRECTORY_NAME) },
                     exporter = OtlpExporter(
-                        OtlpHttpTransport(credentials.endpoint, clockOffset) {
-                            TelemetryHttpClient.create(credentials.endpoint)
-                        },
-                        credentials
+                        OtlpHttpTransport(endpoint, clockOffset) { TelemetryHttpClient.create(endpoint) }
                     ),
                     lifecycle = ProcessAppLifecycle,
                     clockOffset = clockOffset,
@@ -217,9 +192,4 @@ private fun exitMarkerKey(): String = if (Build.VERSION.SDK_INT >= Build.VERSION
     ExitReportReader.markerKeyFor(AndroidExitInfoSource.processName())
 } else {
     ExitReportReader.MARKER_KEY
-}
-
-/** The one use of the main looper here: runs [task] on the main thread after [delayMillis]. */
-private fun postToMainLooper(delayMillis: Long, task: () -> Unit) {
-    Handler(Looper.getMainLooper()).postDelayed({ task() }, delayMillis)
 }

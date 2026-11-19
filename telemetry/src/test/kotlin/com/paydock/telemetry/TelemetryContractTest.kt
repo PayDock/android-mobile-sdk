@@ -49,7 +49,6 @@ internal class TelemetryContractTest {
         TelemetryIntent.Reported::class.java,
         TelemetryIntent.Flush::class.java,
         TelemetryIntent.AppBackgrounded::class.java,
-        TelemetryIntent.LevelChanged::class.java,
         TelemetryIntent.RecordsDropped::class.java,
         TelemetryIntent.PendingCounted::class.java,
         TelemetryIntent.NoticesExported::class.java,
@@ -92,11 +91,6 @@ internal class TelemetryContractTest {
 
         assertSame(event, intent.event)
         assertEquals(TelemetryEvent::class.java, TelemetryIntent.Reported::class.java.getDeclaredField("event").type)
-    }
-
-    @Test
-    fun levelChangedIntent_carriesTheLevel() {
-        assertEquals(TelemetryLevel.ERRORS, TelemetryIntent.LevelChanged(TelemetryLevel.ERRORS).level)
     }
 
     @Test

@@ -5,6 +5,4 @@ internal object NoOpTelemetry : Telemetry, TelemetryRuntime {
     override val isActive: Boolean = false
     override fun report(event: TelemetryEvent) = Unit
     override fun start() = Unit
-    override fun sendTestRecord() = Unit
-    override fun throwTestCrash() = Unit
 }
