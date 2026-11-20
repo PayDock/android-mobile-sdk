@@ -423,8 +423,9 @@ internal class MPGS3dsViewModelTest : BaseKoinUnitTest() {
         val source = WidgetSourceScan.read("feature/threeDS/integrated/presentation/MPGS3dsWidget.kt")
         val launch = WidgetSourceScan.between(source, "LaunchedEffect(Unit) {", "viewModel.eventFlow.collect")
 
-        assertEquals(1, WidgetSourceScan.count(source, "viewModel.startAttempt()"))
-        assertEquals(1, WidgetSourceScan.count(launch, "viewModel.startAttempt()"))
+        val start = "viewModel.startAttempt(ThreeDSTokenUtils.extractCharge3dsId(config.token))"
+        assertEquals(1, WidgetSourceScan.count(source, start))
+        assertEquals(1, WidgetSourceScan.count(launch, start))
     }
 
     // endregion

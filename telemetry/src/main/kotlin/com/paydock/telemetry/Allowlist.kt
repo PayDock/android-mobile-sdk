@@ -66,7 +66,10 @@ internal object Allowlist {
         // Payment (§ 5.9)
         "paydock.payment.id" to AttributeValue.Str::class,
         "paydock.payment.outcome" to AttributeValue.Str::class,
-        "paydock.payment.duration_ms" to AttributeValue.Num::class
+        "paydock.payment.duration_ms" to AttributeValue.Num::class,
+        // 3DS (D25)
+        "paydock.3ds.charge_id" to AttributeValue.Str::class,
+        "paydock.3ds.flow" to AttributeValue.Str::class
     )
 
     private const val SESSION_ID = "session.id"

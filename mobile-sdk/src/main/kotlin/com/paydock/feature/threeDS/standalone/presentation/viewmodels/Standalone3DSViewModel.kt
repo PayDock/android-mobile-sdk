@@ -11,6 +11,7 @@ import com.paydock.core.telemetry.reportSdkError
 import com.paydock.core.telemetry.startPayment
 import com.paydock.feature.threeDS.standalone.domain.mapper.asEntity
 import com.paydock.feature.threeDS.standalone.domain.mapper.asProgress
+import com.paydock.feature.threeDS.standalone.domain.mapper.chargeIdProvider
 import com.paydock.feature.threeDS.standalone.domain.mapper.withAuthenticationFlow
 import com.paydock.feature.threeDS.standalone.domain.model.integration.Standalone3DSResult
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.Standalone3DSAuthenticationFlow
@@ -91,15 +92,27 @@ internal class Standalone3DSViewModel(
     @Volatile
     private var paymentId: String? = null
 
+    /** The attempt's 3DS charge ID once known (D25): the token's at start, else the first event's; never replaced. */
+    @Volatile
+    private var chargeId: String? = null
+
     /** The flow seen so far per charge ID, until its final result. Guarded by itself. */
     private val authenticationFlows = HashMap<String?, Standalone3DSAuthenticationFlow>()
 
     /**
      * Starts this view model's payment attempt (§ 5.9), at most once: the widget calls it from its launch effect.
+     *
+     * @param charge3dsId The 3DS charge ID decoded from the widget's token, or null when it has none (D25).
      */
-    fun startAttempt() {
+    fun startAttempt(charge3dsId: String? = null) {
         if (!paymentStarted.compareAndSet(false, true)) return
-        paymentId = telemetry.startPayment(SdkWidget.STANDALONE_3DS)
+        rememberChargeId(charge3dsId)
+        paymentId = telemetry.startPayment(SdkWidget.STANDALONE_3DS, chargeId)
+    }
+
+    /** Keeps [id] as the attempt's charge ID when none is known yet and [id] is not empty. */
+    private fun rememberChargeId(id: String?) {
+        if (chargeId == null && !id.isNullOrEmpty()) chargeId = id
     }
 
     /**
@@ -145,10 +158,12 @@ internal class Standalone3DSViewModel(
      * @param event The Standalone 3DS event to be processed.
      */
     private fun updateThreeDSEvent(event: Standalone3DSEvent) {
+        rememberChargeId(event.chargeIdProvider()?.charge3dsId)
         event.loadingChange()?.let { updateState(Standalone3DSUIState.Loading(it)) }
         event.asProgress()?.let { updateState(Standalone3DSUIState.Progress(it)) }
-        event.asEntity()?.let { updateState(Standalone3DSUIState.Success(it.withTrackedFlow())) }
-        finishPaymentOn(event)
+        val result = event.asEntity()?.withTrackedFlow()
+        result?.let { updateState(Standalone3DSUIState.Success(it)) }
+        finishPaymentOn(event, result?.authenticationFlow)
     }
 
     /**
@@ -174,12 +189,15 @@ internal class Standalone3DSViewModel(
     /**
      * Ends the open payment attempt on a final event: success, a reject as declined, a charge error as an error
      * with the `CHARGE_ERROR` code. Challenge, decoupled, info and the challenge loaded/completed events end nothing.
+     * A success or reject carries [flow], the authentication flow of the merchant's result for that event.
      */
-    private fun finishPaymentOn(event: Standalone3DSEvent) {
+    private fun finishPaymentOn(event: Standalone3DSEvent, flow: Standalone3DSAuthenticationFlow?) {
         if (paymentId == null) return
         when (event) {
-            is Standalone3DSEvent.ChargeAuthSuccessEvent -> finishAttempt(TelemetryEvent.PaymentOutcome.SUCCESS)
-            is Standalone3DSEvent.ChargeAuthRejectEvent -> finishAttempt(TelemetryEvent.PaymentOutcome.DECLINED)
+            is Standalone3DSEvent.ChargeAuthSuccessEvent ->
+                finishAttempt(TelemetryEvent.PaymentOutcome.SUCCESS, flow = flow)
+            is Standalone3DSEvent.ChargeAuthRejectEvent ->
+                finishAttempt(TelemetryEvent.PaymentOutcome.DECLINED, flow = flow)
             is Standalone3DSEvent.ChargeErrorEvent ->
                 finishAttempt(TelemetryEvent.PaymentOutcome.ERROR, errorCode = StandaloneEvent.CHARGE_ERROR.name)
             else -> Unit
@@ -188,19 +206,35 @@ internal class Standalone3DSViewModel(
 
     /**
      * Ends the open payment attempt with [outcome]: an error with [error] carries the code of the exception the
-     * merchant receives (none when it is not an SdkException), else [errorCode]. Then no attempt is open.
+     * merchant receives (none when it is not an SdkException), else [errorCode]. Every finish carries the attempt's
+     * charge ID when known, and [flow] as the telemetry flow. Then no attempt is open.
      */
     private fun finishAttempt(
         outcome: TelemetryEvent.PaymentOutcome,
         error: Throwable? = null,
         errorCode: String? = null,
+        flow: Standalone3DSAuthenticationFlow? = null,
     ) {
         if (error != null) {
-            telemetry.failPayment(SdkWidget.STANDALONE_3DS, paymentId, error)
+            telemetry.failPayment(SdkWidget.STANDALONE_3DS, paymentId, error, charge3dsId = chargeId)
         } else {
-            telemetry.finishPayment(SdkWidget.STANDALONE_3DS, paymentId, outcome, errorCode)
+            telemetry.finishPayment(
+                SdkWidget.STANDALONE_3DS,
+                paymentId,
+                outcome,
+                errorCode,
+                charge3dsId = chargeId,
+                flow = flow?.asTelemetryFlow(),
+            )
         }
         paymentId = null
+    }
+
+    /** The telemetry flow of an authentication flow (paydock.3ds.flow, D25). */
+    private fun Standalone3DSAuthenticationFlow.asTelemetryFlow(): TelemetryEvent.ThreeDSFlow = when (this) {
+        Standalone3DSAuthenticationFlow.FRICTIONLESS -> TelemetryEvent.ThreeDSFlow.FRICTIONLESS
+        Standalone3DSAuthenticationFlow.CHALLENGE -> TelemetryEvent.ThreeDSFlow.CHALLENGE
+        Standalone3DSAuthenticationFlow.DECOUPLED -> TelemetryEvent.ThreeDSFlow.DECOUPLED
     }
 
     /**

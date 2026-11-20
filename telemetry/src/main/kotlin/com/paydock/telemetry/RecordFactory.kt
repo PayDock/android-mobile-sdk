@@ -44,6 +44,7 @@ internal object RecordFactory {
             is TelemetryEvent.PaymentStarted -> {
                 values["paydock.widget"] = Str(event.widget)
                 values["paydock.payment.id"] = Str(event.paymentId)
+                event.charge3dsId.nonEmpty()?.let { values["paydock.3ds.charge_id"] = Str(it) }
                 Shape("paydock.payment.started", Severity.INFO)
             }
             is TelemetryEvent.PaymentFinished -> paymentFinishedShape(event, values)
@@ -90,7 +91,10 @@ internal object RecordFactory {
         return Shape("paydock.error", Severity.ERROR)
     }
 
-    /** `paydock.error.code` only for an `error` outcome; the duration as an integer, set by the reducer. */
+    /**
+     * `paydock.error.code` only for an `error` outcome; the duration as an integer, set by the reducer; the 3DS charge
+     * ID when known, and the 3DS flow only for a `success` or `declined` outcome.
+     */
     private fun paymentFinishedShape(
         event: TelemetryEvent.PaymentFinished,
         values: MutableMap<String, AttributeValue>,
@@ -102,6 +106,12 @@ internal object RecordFactory {
         values["paydock.payment.id"] = Str(event.paymentId)
         values["paydock.payment.outcome"] = Str(event.outcome.value)
         event.durationMs?.let { values["paydock.payment.duration_ms"] = Num(it) }
+        event.charge3dsId.nonEmpty()?.let { values["paydock.3ds.charge_id"] = Str(it) }
+        if (event.outcome == TelemetryEvent.PaymentOutcome.SUCCESS ||
+            event.outcome == TelemetryEvent.PaymentOutcome.DECLINED
+        ) {
+            event.flow?.let { values["paydock.3ds.flow"] = Str(it.value) }
+        }
         return Shape("paydock.payment.finished", Severity.INFO)
     }
 

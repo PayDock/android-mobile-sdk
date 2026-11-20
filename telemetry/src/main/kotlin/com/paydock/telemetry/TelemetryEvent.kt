@@ -52,8 +52,12 @@ internal sealed interface TelemetryEvent {
     /** A widget was shown (D19). */
     data class WidgetOpened(val widget: String) : TelemetryEvent
 
-    /** A payment attempt started (D24, § 5.9). */
-    data class PaymentStarted(val widget: String, val paymentId: String) : TelemetryEvent
+    /** A payment attempt started (D24, § 5.9); charge3dsId only for a 3DS widget, when known (D25). */
+    data class PaymentStarted(
+        val widget: String,
+        val paymentId: String,
+        val charge3dsId: String? = null,
+    ) : TelemetryEvent
 
     /** A payment attempt ended. durationMs is set by the reducer only; the SDK always passes null. */
     data class PaymentFinished(
@@ -62,6 +66,8 @@ internal sealed interface TelemetryEvent {
         val outcome: PaymentOutcome,
         val errorCode: String? = null, // kept only when outcome == ERROR
         val durationMs: Long? = null,
+        val charge3dsId: String? = null, // 3DS widgets only, when known (D25)
+        val flow: ThreeDSFlow? = null, // Standalone 3DS only; kept only when outcome is SUCCESS or DECLINED
     ) : TelemetryEvent
 
     /** How many records were dropped for one reason (spec § 5.8). Only the reducer creates it; never reported. */
@@ -159,6 +165,13 @@ internal sealed interface TelemetryEvent {
         DECLINED("declined"),
         ERROR("error"),
         CANCELLED("cancelled"),
+    }
+
+    /** How a standalone 3DS authentication was reached (paydock.3ds.flow, D25). */
+    enum class ThreeDSFlow(val value: String) {
+        FRICTIONLESS("frictionless"),
+        CHALLENGE("challenge"),
+        DECOUPLED("decoupled"),
     }
 
     enum class HttpMethod { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS }

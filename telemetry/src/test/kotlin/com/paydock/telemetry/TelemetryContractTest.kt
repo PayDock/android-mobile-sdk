@@ -47,6 +47,7 @@ internal class TelemetryContractTest {
         TelemetryEvent.DroppedReason::class.java,
         TelemetryEvent.TransportKind::class.java,
         TelemetryEvent.PaymentOutcome::class.java,
+        TelemetryEvent.ThreeDSFlow::class.java,
         TelemetryEvent.HttpMethod::class.java
     )
 

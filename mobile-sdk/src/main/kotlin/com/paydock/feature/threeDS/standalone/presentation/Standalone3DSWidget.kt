@@ -115,7 +115,7 @@ fun Standalone3DSWidget(
 
     LaunchedEffect(Unit) {
         loadingController.start(currentLoadingDelegate)
-        viewModel.startAttempt()
+        viewModel.startAttempt(charge3dsId)
         viewModel.eventFlow.collect { state ->
             handleUIState(
                 state,

@@ -186,8 +186,8 @@ PayPal tap, the 3DS widget's launch) and ends at every path that ends it:
 
 | Record | Attributes |
 |---|---|
-| `paydock.payment.started` | `paydock.widget`, `paydock.payment.id` (a random UUID per attempt) |
-| `paydock.payment.finished` | the same, plus `paydock.payment.outcome`, `paydock.payment.duration_ms` and, only for `error`, `paydock.error.code` |
+| `paydock.payment.started` | `paydock.widget`, `paydock.payment.id` (a random UUID per attempt), `paydock.3ds.charge_id` (3DS widgets, when known) |
+| `paydock.payment.finished` | the same, plus `paydock.payment.outcome`, `paydock.payment.duration_ms`, only for `error`, `paydock.error.code`, and `paydock.3ds.flow` (`Standalone3DSWidget`, `success` and `declined` only) |
 
 Both are `INFO`. The outcome is one of `success`, `declined` (a 3DS reject), `error` or `cancelled` (the shopper
 cancelled the Google Pay sheet or the PayPal checkout). An error's code is the exception type the merchant receives
@@ -263,6 +263,7 @@ devdock Loki data source:
     `sum by (paydock_widget, paydock_payment_outcome) (count_over_time({service_name="paydock-mobile-sdk"} | event_name="paydock.payment.finished" [1h]))`
   - Error codes: `{service_name="paydock-mobile-sdk"} | event_name="paydock.payment.finished" | paydock_payment_outcome="error"`,
     grouped by `paydock_error_code`.
+  - One 3DS attempt by its charge ID: `{service_name="paydock-mobile-sdk"} | paydock_3ds_charge_id="<id>"`
 - The network failures by kind:
   `{service_name="paydock-mobile-sdk"} | event_name="paydock.network.failure" | error_type="http_5xx"`.
 

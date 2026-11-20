@@ -66,7 +66,7 @@ fun MPGS3dsWidget(
     val viewModel: MPGS3dsViewModel = koinViewModel()
 
     LaunchedEffect(Unit) {
-        viewModel.startAttempt()
+        viewModel.startAttempt(ThreeDSTokenUtils.extractCharge3dsId(config.token))
         viewModel.eventFlow.collect { state ->
             handleUIState(state, viewModel, completion)
         }

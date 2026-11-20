@@ -7,6 +7,7 @@ import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.Cha
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.ChallengeLoadedReason
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.Standalone3DSAuthenticationFlow
 import com.paydock.feature.threeDS.standalone.domain.model.integration.enums.StandaloneEventType
+import com.paydock.feature.threeDS.standalone.domain.model.ui.ChargeIdProvider
 import com.paydock.feature.threeDS.standalone.domain.model.ui.Standalone3DSEvent
 import com.paydock.feature.threeDS.standalone.domain.model.ui.StandaloneChargeEventData
 import com.paydock.feature.threeDS.standalone.domain.model.ui.asChargeIdProvider
@@ -34,10 +35,7 @@ import com.paydock.feature.threeDS.standalone.domain.model.ui.asChargeIdProvider
  * @see StandaloneChargeEventData
  */
 internal fun Standalone3DSEvent.asEntity(): Standalone3DSResult? {
-    val chargeIdProvider = when (this) {
-        is Standalone3DSEvent.ChargeErrorEvent -> this.data.asChargeIdProvider()
-        else -> this.data.safeCastAs<StandaloneChargeEventData>()?.asChargeIdProvider()
-    }
+    val chargeIdProvider = chargeIdProvider()
     val eventType = when (this) {
         is Standalone3DSEvent.ChargeAuthSuccessEvent -> StandaloneEventType.CHARGE_AUTH_SUCCESS
         is Standalone3DSEvent.ChargeAuthRejectEvent -> StandaloneEventType.CHARGE_AUTH_REJECT
@@ -55,6 +53,18 @@ internal fun Standalone3DSEvent.asEntity(): Standalone3DSResult? {
         status = chargeData?.rawStatus?.takeIf { it.isNotBlank() },
         resultDescription = chargeData?.result?.description?.takeIf { it.isNotBlank() }
     )
+}
+
+/**
+ * The charge ID provider of a [Standalone3DSEvent]: the error data of a [Standalone3DSEvent.ChargeErrorEvent], else
+ * the event's [StandaloneChargeEventData], or `null` when the data is neither.
+ *
+ * @receiver The [Standalone3DSEvent] whose charge ID is wanted.
+ * @return The provider of the event's charge ID, or `null` when the event data carries none.
+ */
+internal fun Standalone3DSEvent.chargeIdProvider(): ChargeIdProvider? = when (this) {
+    is Standalone3DSEvent.ChargeErrorEvent -> this.data.asChargeIdProvider()
+    else -> this.data.safeCastAs<StandaloneChargeEventData>()?.asChargeIdProvider()
 }
 
 /**

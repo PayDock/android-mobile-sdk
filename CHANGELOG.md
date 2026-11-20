@@ -26,6 +26,9 @@
   record at every path that ends it, with the outcome (`success`, `declined`, `error`, `cancelled`), the duration in
   ms and, for an error, the code of the exception you receive. Each attempt carries a random UUID; no card data. Your
   results, callbacks and errors are unchanged, and there is no API change (see the README's Telemetry section).
+  The 3DS widgets' records also carry `paydock.3ds.charge_id`, the Paydock-issued 3DS charge ID, when known, and a
+  `Standalone3DSWidget` success or decline finish carries `paydock.3ds.flow` (`frictionless`, `challenge` or
+  `decoupled`).
 - `Standalone3DSResult.authenticationFlow` and the new enum `Standalone3DSAuthenticationFlow` (`FRICTIONLESS`,
   `CHALLENGE`, `DECOUPLED`): how a standalone 3DS authentication was reached. Set only on `CHARGE_AUTH_SUCCESS` and
   `CHARGE_AUTH_REJECT` results, worked out from the earlier events of the same `charge3dsId`; `null` on every other

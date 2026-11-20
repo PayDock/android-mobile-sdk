@@ -29,14 +29,14 @@ internal class PaymentJourneyScanTest {
     @Test
     fun eachPayingViewModel_startsAnAttemptAtExactlyOneSite_forItsOwnWidget() {
         mapOf(
-            cardVm to "SdkWidget.CARD_DETAILS",
-            googlePayVm to "SdkWidget.GOOGLE_PAY",
-            standaloneVm to "SdkWidget.STANDALONE_3DS",
-            mpgsVm to "SdkWidget.MPGS_3DS",
-            payPalVm to "SdkWidget.PAYPAL",
-        ).forEach { (path, widget) ->
+            cardVm to "SdkWidget.CARD_DETAILS)",
+            googlePayVm to "SdkWidget.GOOGLE_PAY)",
+            standaloneVm to "SdkWidget.STANDALONE_3DS, chargeId)",
+            mpgsVm to "SdkWidget.MPGS_3DS, chargeId)",
+            payPalVm to "SdkWidget.PAYPAL)",
+        ).forEach { (path, arguments) ->
             assertEquals(path, 1, count(path, "startPayment("))
-            assertEquals(path, 1, count(path, "telemetry.startPayment($widget)"))
+            assertEquals(path, 1, count(path, "telemetry.startPayment($arguments"))
         }
     }
 
@@ -53,11 +53,16 @@ internal class PaymentJourneyScanTest {
 
     @Test
     fun the3dsInvalidTokenReturns_eachStartAndFailOneAttempt() {
-        mapOf(standaloneWidget to "SdkWidget.STANDALONE_3DS", mpgsWidget to "SdkWidget.MPGS_3DS")
-            .forEach { (path, widget) ->
-                assertEquals(path, 2, count(path, "ReportPaymentFailedOnce($widget, failure)"))
-                assertEquals(path, 1, count(path, "viewModel.startAttempt()"))
-            }
+        val mpgsStart = "viewModel.startAttempt(ThreeDSTokenUtils.extractCharge3dsId(config.token))"
+        mapOf(
+            standaloneWidget to ("SdkWidget.STANDALONE_3DS" to "viewModel.startAttempt(charge3dsId)"),
+            mpgsWidget to ("SdkWidget.MPGS_3DS" to mpgsStart),
+        ).forEach { (path, expected) ->
+            val (widget, start) = expected
+            assertEquals(path, 2, count(path, "ReportPaymentFailedOnce($widget, failure)"))
+            assertEquals(path, 1, count(path, "viewModel.startAttempt("))
+            assertEquals(path, 1, count(path, start))
+        }
     }
 
     @Test
@@ -93,7 +98,7 @@ internal class PaymentJourneyScanTest {
         listOf("ChargeAuthSuccessEvent ->", "ChargeAuthRejectEvent ->", "ChargeErrorEvent ->").forEach {
             assertEquals(it, 1, WidgetSourceScan.count(events, it))
         }
-        assertEquals(1, WidgetSourceScan.count(vm, "finishPaymentOn(event)"))
+        assertEquals(1, WidgetSourceScan.count(vm, "finishPaymentOn(event, result?.authenticationFlow)"))
         val onFailure = WidgetSourceScan.between(vm, "onFailure = {", "fun reportWidgetError(")
         assertEquals(1, WidgetSourceScan.count(onFailure, "failAttempt(throwable)"))
         assertEquals(2, count(standaloneWidget, "viewModel.failAttempt(failure)"))

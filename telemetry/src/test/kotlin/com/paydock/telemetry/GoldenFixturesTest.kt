@@ -15,7 +15,7 @@ import org.junit.Test
 internal class GoldenFixturesTest {
 
     @Test
-    fun fixtures_areTheFourteenSharedAndAndroidInputs() {
+    fun fixtures_areTheSixteenSharedAndAndroidInputs() {
         val inputs = GoldenFixtures.inputs()
 
         assertEquals(inputs.joinToString { it.path }, EXPECTED_INPUTS, inputs.size)
@@ -38,6 +38,6 @@ internal class GoldenFixturesTest {
     }
 
     private companion object {
-        const val EXPECTED_INPUTS = 14
+        const val EXPECTED_INPUTS = 16
     }
 }

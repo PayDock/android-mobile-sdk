@@ -173,6 +173,60 @@ internal class SdkTelemetryTest {
     }
 
     @Test
+    fun startAndFinishPayment_passTheChargeIdAndFlow_intoTheEvents() {
+        val telemetry = RecordingTelemetry()
+
+        val paymentId = telemetry.startPayment(SdkWidget.STANDALONE_3DS, CHARGE_ID)!!
+        telemetry.finishPayment(
+            SdkWidget.STANDALONE_3DS,
+            paymentId,
+            TelemetryEvent.PaymentOutcome.SUCCESS,
+            charge3dsId = CHARGE_ID,
+            flow = TelemetryEvent.ThreeDSFlow.CHALLENGE
+        )
+
+        assertEquals(
+            TelemetryEvent.PaymentStarted("Standalone3DSWidget", paymentId, CHARGE_ID),
+            telemetry.paymentsStarted.single()
+        )
+        assertEquals(
+            TelemetryEvent.PaymentFinished(
+                "Standalone3DSWidget",
+                paymentId,
+                TelemetryEvent.PaymentOutcome.SUCCESS,
+                charge3dsId = CHARGE_ID,
+                flow = TelemetryEvent.ThreeDSFlow.CHALLENGE
+            ),
+            telemetry.paymentsFinished.single()
+        )
+    }
+
+    @Test
+    fun failPayment_passesTheChargeId_andNoFlow() {
+        val telemetry = RecordingTelemetry()
+
+        telemetry.failPayment(SdkWidget.MPGS_3DS, PAYMENT_ID, IllegalStateException("synthetic"), CHARGE_ID)
+
+        val finish = telemetry.paymentsFinished.single()
+        assertEquals(TelemetryEvent.PaymentOutcome.ERROR, finish.outcome)
+        assertEquals(CHARGE_ID, finish.charge3dsId)
+        assertNull(finish.flow)
+    }
+
+    @Test
+    fun thePaymentDefaults_leaveTheChargeIdAndFlowNull() {
+        val telemetry = RecordingTelemetry()
+
+        val paymentId = telemetry.startPayment(SdkWidget.CARD_DETAILS)
+        telemetry.finishPayment(SdkWidget.CARD_DETAILS, paymentId, TelemetryEvent.PaymentOutcome.SUCCESS)
+        telemetry.failPayment(SdkWidget.CARD_DETAILS, paymentId, IllegalStateException("synthetic"))
+
+        assertNull(telemetry.paymentsStarted.single().charge3dsId)
+        assertTrue(telemetry.paymentsFinished.all { it.charge3dsId == null && it.flow == null })
+        assertEquals(2, telemetry.paymentsFinished.size)
+    }
+
+    @Test
     fun finishAndFail_withANullId_reportNothing() {
         val telemetry = RecordingTelemetry()
 
@@ -223,6 +277,15 @@ internal class SdkTelemetryTest {
         assertNull(telemetry.startPayment(SdkWidget.CARD_DETAILS))
         telemetry.finishPayment(SdkWidget.CARD_DETAILS, PAYMENT_ID, TelemetryEvent.PaymentOutcome.SUCCESS)
         telemetry.failPayment(SdkWidget.CARD_DETAILS, PAYMENT_ID, IllegalStateException())
+        assertNull(telemetry.startPayment(SdkWidget.STANDALONE_3DS, CHARGE_ID))
+        telemetry.finishPayment(
+            SdkWidget.STANDALONE_3DS,
+            PAYMENT_ID,
+            TelemetryEvent.PaymentOutcome.SUCCESS,
+            charge3dsId = CHARGE_ID,
+            flow = TelemetryEvent.ThreeDSFlow.FRICTIONLESS
+        )
+        telemetry.failPayment(SdkWidget.MPGS_3DS, PAYMENT_ID, IllegalStateException(), CHARGE_ID)
 
         assertTrue(telemetry.events.isEmpty())
     }
@@ -385,5 +448,6 @@ internal class SdkTelemetryTest {
 
     private companion object {
         const val PAYMENT_ID = "e4a1c8b7-3f29-4d06-b5e8-7c2d9f1a0b34"
+        const val CHARGE_ID = "6741b9c2e4a17f0d3c5b8a9e"
     }
 }

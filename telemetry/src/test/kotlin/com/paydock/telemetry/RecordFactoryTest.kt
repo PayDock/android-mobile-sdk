@@ -294,6 +294,76 @@ internal class RecordFactoryTest {
         assertEquals("paydock.payment.finished · CardDetailsWidget · error", silent.body)
     }
 
+    // ---- 3DS charge ID and flow (D25) ----
+
+    @Test
+    fun paymentStarted_carriesTheChargeId_lastAndOnlyWhenKnown() {
+        val with = create(TelemetryEvent.PaymentStarted("Standalone3DSWidget", PAYMENT_ID, CHARGE_ID))
+        val without = create(TelemetryEvent.PaymentStarted("Standalone3DSWidget", PAYMENT_ID))
+        val empty = create(TelemetryEvent.PaymentStarted("Standalone3DSWidget", PAYMENT_ID, ""))
+
+        assertEquals("paydock.3ds.charge_id" to Str(CHARGE_ID), with.attributes.last().let { it.key to it.value })
+        assertEquals("paydock.payment.started · Standalone3DSWidget", with.body)
+        assertNull(without.value("paydock.3ds.charge_id"))
+        assertNull(empty.value("paydock.3ds.charge_id"))
+        assertEquals(without, empty)
+    }
+
+    @Test
+    fun paymentFinished_carriesTheChargeIdAfterTheDuration_andWithoutOne_none() {
+        val with = create(
+            TelemetryEvent.PaymentFinished(
+                "MPGS3dsWidget",
+                PAYMENT_ID,
+                PaymentOutcome.DECLINED,
+                durationMs = 9_120,
+                charge3dsId = CHARGE_ID
+            )
+        )
+        val keys = with.attributes.map { it.key }
+        assertEquals(keys.indexOf("paydock.payment.duration_ms") + 1, keys.indexOf("paydock.3ds.charge_id"))
+        assertEquals(Str(CHARGE_ID), with.value("paydock.3ds.charge_id"))
+        assertNull(with.value("paydock.3ds.flow"))
+        assertEquals("paydock.payment.finished · MPGS3dsWidget · declined", with.body)
+
+        val without = create(TelemetryEvent.PaymentFinished("MPGS3dsWidget", PAYMENT_ID, PaymentOutcome.DECLINED))
+        val empty = create(
+            TelemetryEvent.PaymentFinished("MPGS3dsWidget", PAYMENT_ID, PaymentOutcome.DECLINED, charge3dsId = "")
+        )
+        assertNull(without.value("paydock.3ds.charge_id"))
+        assertNull(empty.value("paydock.3ds.charge_id"))
+    }
+
+    @Test
+    fun paymentFinished_keepsTheFlowForSuccessAndDeclined_andDropsItForErrorAndCancelled() {
+        fun finish(outcome: PaymentOutcome, flow: TelemetryEvent.ThreeDSFlow) = create(
+            TelemetryEvent.PaymentFinished(
+                "Standalone3DSWidget",
+                PAYMENT_ID,
+                outcome,
+                errorCode = "ChargeErrorException",
+                charge3dsId = CHARGE_ID,
+                flow = flow
+            )
+        )
+
+        TelemetryEvent.ThreeDSFlow.entries.forEach { flow ->
+            listOf(PaymentOutcome.SUCCESS, PaymentOutcome.DECLINED).forEach { outcome ->
+                val record = finish(outcome, flow)
+                assertEquals("paydock.3ds.flow" to Str(flow.value), record.attributes.last().let { it.key to it.value })
+                assertEquals(Str(CHARGE_ID), record.value("paydock.3ds.charge_id"))
+            }
+            listOf(PaymentOutcome.ERROR, PaymentOutcome.CANCELLED).forEach { outcome ->
+                val record = finish(outcome, flow)
+                assertNull(record.value("paydock.3ds.flow"))
+                assertEquals(Str(CHARGE_ID), record.value("paydock.3ds.charge_id"))
+            }
+        }
+        assertEquals("frictionless", TelemetryEvent.ThreeDSFlow.FRICTIONLESS.value)
+        assertEquals("challenge", TelemetryEvent.ThreeDSFlow.CHALLENGE.value)
+        assertEquals("decoupled", TelemetryEvent.ThreeDSFlow.DECOUPLED.value)
+    }
+
     @Test
     fun attributes_followTheAllowlistOrder_eachKeyOnce() {
         val error = ErrorInfo("Outer", listOf(sdkFrame), cause = ErrorInfo("Inner", emptyList()))
@@ -319,5 +389,6 @@ internal class RecordFactoryTest {
         const val CREATED_AT = 1_793_852_047_512L
         const val OCCURRED_AT = 1_793_851_121_000L
         const val PAYMENT_ID = "9b2e4f61-7c3a-4d58-a1e9-3f0d6b8c2a17"
+        const val CHARGE_ID = "6741b9c2e4a17f0d3c5b8a9e"
     }
 }

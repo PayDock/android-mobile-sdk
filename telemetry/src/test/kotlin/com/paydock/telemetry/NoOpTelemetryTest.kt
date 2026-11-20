@@ -56,12 +56,25 @@ internal class NoOpTelemetryTest {
         ),
         TelemetryEvent.WidgetOpened(widget = "CardDetailsWidget"),
         TelemetryEvent.PaymentStarted(widget = "CardDetailsWidget", paymentId = PAYMENT_ID),
+        TelemetryEvent.PaymentStarted(
+            widget = "Standalone3DSWidget",
+            paymentId = PAYMENT_ID,
+            charge3dsId = "6741b9c2e4a17f0d3c5b8a9e"
+        ),
         TelemetryEvent.PaymentFinished(
             widget = "CardDetailsWidget",
             paymentId = PAYMENT_ID,
             outcome = TelemetryEvent.PaymentOutcome.ERROR,
             errorCode = "TokenisingCardException",
             durationMs = 2_215L
+        ),
+        TelemetryEvent.PaymentFinished(
+            widget = "Standalone3DSWidget",
+            paymentId = PAYMENT_ID,
+            outcome = TelemetryEvent.PaymentOutcome.SUCCESS,
+            durationMs = 2_215L,
+            charge3dsId = "6741b9c2e4a17f0d3c5b8a9e",
+            flow = TelemetryEvent.ThreeDSFlow.CHALLENGE
         ),
         TelemetryEvent.Dropped(reason = TelemetryEvent.DroppedReason.RATE_LIMIT, count = 3)
     )

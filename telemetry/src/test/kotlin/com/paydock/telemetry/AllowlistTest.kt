@@ -243,6 +243,30 @@ internal class AllowlistTest {
         }
     }
 
+    /** D25: a Paydock 3DS charge ID is kept; a sensitive value under `paydock.3ds.charge_id` is dropped. */
+    @Test
+    fun filter_keepsAChargeId_andDropsASensitiveOne() {
+        val kept = filtered(TelemetryEvent.PaymentStarted("Standalone3DSWidget", PAYMENT_ID, CHARGE_ID))
+        assertEquals(Str(CHARGE_ID), kept.value("paydock.3ds.charge_id"))
+        assertBodyIsClean(kept)
+
+        listOf(cardNumber, "eyJhbGciOi.eyJzdWIiOi.c2lnbmF0dXJl").forEach { value ->
+            val dropped = filtered(
+                TelemetryEvent.PaymentFinished(
+                    "Standalone3DSWidget",
+                    PAYMENT_ID,
+                    PaymentOutcome.SUCCESS,
+                    charge3dsId = value,
+                    flow = TelemetryEvent.ThreeDSFlow.CHALLENGE
+                )
+            )
+            assertEquals(null, dropped.value("paydock.3ds.charge_id"))
+            assertEquals(Str("challenge"), dropped.value("paydock.3ds.flow"))
+            assertEquals(Str(PAYMENT_ID), dropped.value("paydock.payment.id"))
+            assertBodyIsClean(dropped)
+        }
+    }
+
     @Test
     fun scan_reportsAMalformedPaymentId() {
         assertReported(
@@ -385,17 +409,21 @@ internal class AllowlistTest {
     @Test
     fun keys_matchTheSpecLists() {
         assertEquals(RESOURCE_TYPES.keys.toList(), Allowlist.RESOURCE_KEYS)
-        assertEquals(33, Allowlist.RECORD_KEYS.size)
+        assertEquals(35, Allowlist.RECORD_KEYS.size)
         assertEquals(Num::class, Allowlist.RECORD_KEYS["paydock.dropped.count"])
         assertEquals(
             listOf(
                 "paydock.dropped.count",
                 "paydock.payment.id",
                 "paydock.payment.outcome",
-                "paydock.payment.duration_ms"
+                "paydock.payment.duration_ms",
+                "paydock.3ds.charge_id",
+                "paydock.3ds.flow"
             ),
-            Allowlist.RECORD_KEYS.keys.toList().takeLast(4)
+            Allowlist.RECORD_KEYS.keys.toList().takeLast(6)
         )
+        assertEquals(Str::class, Allowlist.RECORD_KEYS["paydock.3ds.charge_id"])
+        assertEquals(Str::class, Allowlist.RECORD_KEYS["paydock.3ds.flow"])
         assertEquals(Str::class, Allowlist.RECORD_KEYS["paydock.payment.id"])
         assertEquals(Str::class, Allowlist.RECORD_KEYS["paydock.payment.outcome"])
         assertEquals(Num::class, Allowlist.RECORD_KEYS["paydock.payment.duration_ms"])
@@ -510,9 +538,21 @@ internal class AllowlistTest {
             TelemetryEvent.SdkError(error, errorCode = "TokenisingCardException", widget = "CardDetailsWidget"),
             TelemetryEvent.SdkError(ErrorInfo(type = null, frames = emptyList())),
             TelemetryEvent.WidgetOpened("CardDetailsWidget"),
-            TelemetryEvent.PaymentStarted("CardDetailsWidget", PAYMENT_ID)
-        ) + PaymentOutcome.entries.map {
-            TelemetryEvent.PaymentFinished("CardDetailsWidget", PAYMENT_ID, it, "TokenisingCardException", 2_215)
+            TelemetryEvent.PaymentStarted("CardDetailsWidget", PAYMENT_ID),
+            TelemetryEvent.PaymentStarted("Standalone3DSWidget", PAYMENT_ID, CHARGE_ID)
+        ) + PaymentOutcome.entries.flatMap {
+            listOf(
+                TelemetryEvent.PaymentFinished("CardDetailsWidget", PAYMENT_ID, it, "TokenisingCardException", 2_215),
+                TelemetryEvent.PaymentFinished(
+                    "Standalone3DSWidget",
+                    PAYMENT_ID,
+                    it,
+                    "ChargeErrorException",
+                    2_215,
+                    charge3dsId = CHARGE_ID,
+                    flow = TelemetryEvent.ThreeDSFlow.DECOUPLED
+                )
+            )
         } + TelemetryEvent.DroppedReason.entries.map { TelemetryEvent.Dropped(it, 3) }
     }
 
@@ -625,6 +665,7 @@ internal class AllowlistTest {
         const val SERVICE_INSTANCE_ID = "service.instance.id"
         const val SECRET_TEXT = "secret-message-text"
         const val PAYMENT_ID = "e4a1c8b7-3f29-4d06-b5e8-7c2d9f1a0b34"
+        const val CHARGE_ID = "6741b9c2e4a17f0d3c5b8a9e"
 
         val FORMAT_CHECKED = setOf("session.id", "log.record.uid", "paydock.payment.id")
 

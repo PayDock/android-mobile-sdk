@@ -83,6 +83,10 @@ internal class MPGS3dsViewModel(
     @Volatile
     private var paymentId: String? = null
 
+    /** The attempt's 3DS charge ID once known (D25): the token's at start, else the first event's; never replaced. */
+    @Volatile
+    private var chargeId: String? = null
+
     init {
         updateState(MPGS3dsUIState.Idle)
     }
@@ -99,10 +103,18 @@ internal class MPGS3dsViewModel(
 
     /**
      * Starts this view model's payment attempt (§ 5.9), at most once: the widget calls it from its launch effect.
+     *
+     * @param charge3dsId The 3DS charge ID decoded from the widget's token, or null when it has none (D25).
      */
-    fun startAttempt() {
+    fun startAttempt(charge3dsId: String? = null) {
         if (!paymentStarted.compareAndSet(false, true)) return
-        paymentId = telemetry.startPayment(SdkWidget.MPGS_3DS)
+        rememberChargeId(charge3dsId)
+        paymentId = telemetry.startPayment(SdkWidget.MPGS_3DS, chargeId)
+    }
+
+    /** Keeps [id] as the attempt's charge ID when none is known yet and [id] is not empty. */
+    private fun rememberChargeId(id: String?) {
+        if (chargeId == null && !id.isNullOrEmpty()) chargeId = id
     }
 
     /**
@@ -137,6 +149,7 @@ internal class MPGS3dsViewModel(
      * @param event The MPGS 3DS event to be processed.
      */
     private fun updateThreeDSEvent(event: MPGS3dsEvent) {
+        rememberChargeId(event.data.charge3dsId)
         val result = event.asEntity()
         updateState(MPGS3dsUIState.Success(result))
         finishPaymentOn(event)
@@ -160,13 +173,14 @@ internal class MPGS3dsViewModel(
 
     /**
      * Ends the open payment attempt with [outcome]: an error carries the code of [error], the exception the merchant
-     * receives (none when it is not an SdkException). Then no attempt is open.
+     * receives (none when it is not an SdkException). Every finish carries the attempt's charge ID when known, and
+     * never a flow. Then no attempt is open.
      */
     private fun finishAttempt(outcome: TelemetryEvent.PaymentOutcome, error: Throwable? = null) {
         if (outcome == TelemetryEvent.PaymentOutcome.ERROR) {
-            telemetry.failPayment(SdkWidget.MPGS_3DS, paymentId, error)
+            telemetry.failPayment(SdkWidget.MPGS_3DS, paymentId, error, charge3dsId = chargeId)
         } else {
-            telemetry.finishPayment(SdkWidget.MPGS_3DS, paymentId, outcome)
+            telemetry.finishPayment(SdkWidget.MPGS_3DS, paymentId, outcome, charge3dsId = chargeId)
         }
         paymentId = null
     }

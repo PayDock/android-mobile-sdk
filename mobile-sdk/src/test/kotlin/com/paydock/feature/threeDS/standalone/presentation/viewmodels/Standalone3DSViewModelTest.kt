@@ -539,8 +539,8 @@ internal class Standalone3DSViewModelTest : BaseKoinUnitTest() {
             "ReportPaymentFailedOnce"
         )
 
-        assertEquals(1, WidgetSourceScan.count(source, "viewModel.startAttempt()"))
-        assertEquals(1, WidgetSourceScan.count(launch, "viewModel.startAttempt()"))
+        assertEquals(1, WidgetSourceScan.count(source, "viewModel.startAttempt(charge3dsId)"))
+        assertEquals(1, WidgetSourceScan.count(launch, "viewModel.startAttempt(charge3dsId)"))
         assertEquals(1, WidgetSourceScan.count(helper, "LaunchedEffect(error::class)"))
         assertEquals(1, WidgetSourceScan.count(helper, "it.failPayment(widget, it.startPayment(widget), error)"))
     }

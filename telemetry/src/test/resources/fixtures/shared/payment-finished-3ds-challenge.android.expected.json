@@ -1,0 +1,173 @@
+{
+  "resourceLogs": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "paydock-mobile-sdk"
+            }
+          },
+          {
+            "key": "service.namespace",
+            "value": {
+              "stringValue": "paydock"
+            }
+          },
+          {
+            "key": "service.version",
+            "value": {
+              "stringValue": "5.7.2"
+            }
+          },
+          {
+            "key": "paydock.sdk.platform",
+            "value": {
+              "stringValue": "android"
+            }
+          },
+          {
+            "key": "paydock.telemetry.spec_version",
+            "value": {
+              "intValue": "1"
+            }
+          },
+          {
+            "key": "deployment.environment.name",
+            "value": {
+              "stringValue": "sandbox"
+            }
+          },
+          {
+            "key": "os.name",
+            "value": {
+              "stringValue": "Android"
+            }
+          },
+          {
+            "key": "os.version",
+            "value": {
+              "stringValue": "14"
+            }
+          },
+          {
+            "key": "device.manufacturer",
+            "value": {
+              "stringValue": "Google"
+            }
+          },
+          {
+            "key": "device.model.identifier",
+            "value": {
+              "stringValue": "Pixel 8"
+            }
+          },
+          {
+            "key": "app.installation.id",
+            "value": {
+              "stringValue": "3f9c6b1e-7a42-4d0b-9e15-2c8a5d71b3e4"
+            }
+          },
+          {
+            "key": "paydock.app.id",
+            "value": {
+              "stringValue": "com.merchant.shop"
+            }
+          },
+          {
+            "key": "paydock.app.version",
+            "value": {
+              "stringValue": "3.2.0"
+            }
+          },
+          {
+            "key": "paydock.app.debuggable",
+            "value": {
+              "boolValue": true
+            }
+          }
+        ]
+      },
+      "scopeLogs": [
+        {
+          "scope": {
+            "name": "paydock.telemetry"
+          },
+          "logRecords": [
+            {
+              "timeUnixNano": "1795144351880000000",
+              "severityNumber": 9,
+              "severityText": "INFO",
+              "body": {
+                "stringValue": "paydock.payment.finished · Standalone3DSWidget · success"
+              },
+              "attributes": [
+                {
+                  "key": "event.name",
+                  "value": {
+                    "stringValue": "paydock.payment.finished"
+                  }
+                },
+                {
+                  "key": "session.id",
+                  "value": {
+                    "stringValue": "8e41c2d7-3b9f-4a65-9c18-5f2a7d0e6b34"
+                  }
+                },
+                {
+                  "key": "log.record.uid",
+                  "value": {
+                    "stringValue": "8e41c2d7-3b9f-4a65-9c18-5f2a7d0e6b34-7"
+                  }
+                },
+                {
+                  "key": "network.connection.type",
+                  "value": {
+                    "stringValue": "cell"
+                  }
+                },
+                {
+                  "key": "paydock.widget",
+                  "value": {
+                    "stringValue": "Standalone3DSWidget"
+                  }
+                },
+                {
+                  "key": "paydock.payment.id",
+                  "value": {
+                    "stringValue": "e7a3c915-4d2b-4f80-b6c1-0a9d5e72f348"
+                  }
+                },
+                {
+                  "key": "paydock.payment.outcome",
+                  "value": {
+                    "stringValue": "success"
+                  }
+                },
+                {
+                  "key": "paydock.payment.duration_ms",
+                  "value": {
+                    "intValue": "26470"
+                  }
+                },
+                {
+                  "key": "paydock.3ds.charge_id",
+                  "value": {
+                    "stringValue": "6741b9c2e4a17f0d3c5b8a9e"
+                  }
+                },
+                {
+                  "key": "paydock.3ds.flow",
+                  "value": {
+                    "stringValue": "challenge"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

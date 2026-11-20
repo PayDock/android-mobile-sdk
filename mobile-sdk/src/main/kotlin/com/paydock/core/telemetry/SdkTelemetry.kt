@@ -59,39 +59,54 @@ internal fun Telemetry.reportWidgetOpened(widget: String) {
 }
 
 /**
- * A new payment attempt (R_05, § 5.9): report(TelemetryEvent.PaymentStarted(widget, uuid)) and return the uuid, a
- * random java.util.UUID; null when inactive or on failure. Never throws.
+ * A new payment attempt (R_05, § 5.9): report(TelemetryEvent.PaymentStarted(widget, uuid, charge3dsId)) and return
+ * the uuid, a random java.util.UUID; null when inactive or on failure. Never throws.
  *
  * @param widget The [SdkWidget] name of the widget the attempt belongs to.
+ * @param charge3dsId The attempt's Paydock 3DS charge ID, from a 3DS widget only and when known (D25); null otherwise.
  * @return The attempt's payment ID, to pass to [finishPayment] or [failPayment]; null when nothing was reported.
  */
-internal fun Telemetry.startPayment(widget: String): String? = runCatching {
+internal fun Telemetry.startPayment(widget: String, charge3dsId: String? = null): String? = runCatching {
     if (isActive) {
-        UUID.randomUUID().toString().also { report(TelemetryEvent.PaymentStarted(widget, it)) }
+        UUID.randomUUID().toString().also { report(TelemetryEvent.PaymentStarted(widget, it, charge3dsId)) }
     } else {
         null
     }
 }.getOrNull()
 
 /**
- * Ends [paymentId] (R_05): report(TelemetryEvent.PaymentFinished(widget, paymentId, outcome, errorCode)); a no-op
- * when [paymentId] is null or telemetry is inactive. The duration is set by the telemetry module, never here. Never
- * throws.
+ * Ends [paymentId] (R_05): report(TelemetryEvent.PaymentFinished(widget, paymentId, outcome, errorCode,
+ * charge3dsId = charge3dsId, flow = flow)); a no-op when [paymentId] is null or telemetry is inactive. The duration is
+ * set by the telemetry module, never here. Never throws.
  *
  * @param widget The [SdkWidget] name of the widget the attempt belongs to.
  * @param paymentId The ID [startPayment] returned, or null when no attempt is open.
  * @param outcome How the attempt ended.
  * @param errorCode The code the merchant receives, kept only for [TelemetryEvent.PaymentOutcome.ERROR].
+ * @param charge3dsId The attempt's Paydock 3DS charge ID, from a 3DS widget only and when known (D25); null otherwise.
+ * @param flow How a standalone 3DS authentication was reached, from Standalone3DSWidget only; kept only for
+ *   [TelemetryEvent.PaymentOutcome.SUCCESS] and [TelemetryEvent.PaymentOutcome.DECLINED] (D25).
  */
 internal fun Telemetry.finishPayment(
     widget: String,
     paymentId: String?,
     outcome: TelemetryEvent.PaymentOutcome,
     errorCode: String? = null,
+    charge3dsId: String? = null,
+    flow: TelemetryEvent.ThreeDSFlow? = null,
 ) {
     runCatching {
         if (paymentId == null || !isActive) return
-        report(TelemetryEvent.PaymentFinished(widget, paymentId, outcome, errorCode))
+        report(
+            TelemetryEvent.PaymentFinished(
+                widget,
+                paymentId,
+                outcome,
+                errorCode,
+                charge3dsId = charge3dsId,
+                flow = flow,
+            )
+        )
     }
 }
 
@@ -102,11 +117,18 @@ internal fun Telemetry.finishPayment(
  * @param widget The [SdkWidget] name of the widget the attempt belongs to.
  * @param paymentId The ID [startPayment] returned, or null when no attempt is open.
  * @param error The exception the merchant gets, or null when the path hands the merchant nothing.
+ * @param charge3dsId The attempt's Paydock 3DS charge ID, from a 3DS widget only and when known (D25); null otherwise.
  */
-internal fun Telemetry.failPayment(widget: String, paymentId: String?, error: Throwable?) {
+internal fun Telemetry.failPayment(widget: String, paymentId: String?, error: Throwable?, charge3dsId: String? = null) {
     runCatching {
         if (paymentId == null || !isActive) return
-        finishPayment(widget, paymentId, TelemetryEvent.PaymentOutcome.ERROR, error?.let(SdkErrorFacts::code))
+        finishPayment(
+            widget,
+            paymentId,
+            TelemetryEvent.PaymentOutcome.ERROR,
+            error?.let(SdkErrorFacts::code),
+            charge3dsId = charge3dsId,
+        )
     }
 }
 
