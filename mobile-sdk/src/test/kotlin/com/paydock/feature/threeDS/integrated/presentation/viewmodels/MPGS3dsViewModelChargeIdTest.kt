@@ -70,7 +70,7 @@ internal class MPGS3dsViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `the token's charge ID is on the start and the finish`() {
-        viewModel.startAttempt(TOKEN_ID)
+        viewModel.startAttempt(TOKEN, TOKEN_ID)
         feed(chargeAuth(TOKEN_ID), success(TOKEN_ID))
 
         assertEquals(TOKEN_ID, started.charge3dsId)
@@ -79,7 +79,7 @@ internal class MPGS3dsViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `without a token ID the start has none and the finish has the first event's`() {
-        viewModel.startAttempt(null)
+        viewModel.startAttempt(TOKEN, null)
         feed(chargeAuth(EVENT_ID), success(EVENT_ID))
 
         assertNull(started.charge3dsId)
@@ -88,7 +88,7 @@ internal class MPGS3dsViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `a later event's different ID does not replace the first one`() {
-        viewModel.startAttempt("")
+        viewModel.startAttempt(TOKEN, "")
         feed(chargeAuth(null), chargeAuth(EVENT_ID), success(OTHER_ID))
 
         assertEquals(EVENT_ID, finished.charge3dsId)
@@ -96,7 +96,7 @@ internal class MPGS3dsViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `the token's ID wins over an event's`() {
-        viewModel.startAttempt(TOKEN_ID)
+        viewModel.startAttempt(TOKEN, TOKEN_ID)
         feed(chargeAuth(EVENT_ID), reject(EVENT_ID))
 
         assertEquals(TOKEN_ID, started.charge3dsId)
@@ -105,7 +105,7 @@ internal class MPGS3dsViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `with neither a token nor an event ID there is no charge ID on either`() {
-        viewModel.startAttempt()
+        viewModel.startAttempt(TOKEN)
         feed(chargeAuth(null), success(null))
 
         assertNull(started.charge3dsId)
@@ -126,7 +126,7 @@ internal class MPGS3dsViewModelChargeIdTest : BaseKoinUnitTest() {
         ).forEach { (event, outcome) ->
             val reporting = RecordingTelemetry()
             MPGS3dsViewModel(dispatchersProvider, reporting).run {
-                startAttempt()
+                startAttempt(TOKEN)
                 handleEventResult(Result.success(event))
             }
 
@@ -139,7 +139,7 @@ internal class MPGS3dsViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `a widget failure finish carries the charge ID and no flow`() {
-        viewModel.startAttempt(TOKEN_ID)
+        viewModel.startAttempt(TOKEN, TOKEN_ID)
         viewModel.failAttempt(MPGS3dsException.WebViewException(-1, "web view"))
 
         assertEquals(TelemetryEvent.PaymentOutcome.ERROR, finished.outcome)
@@ -149,7 +149,7 @@ internal class MPGS3dsViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `a mapping failure finish carries the charge ID and no flow`() {
-        viewModel.startAttempt()
+        viewModel.startAttempt(TOKEN)
         feed(chargeAuth())
         viewModel.handleEventResult(Result.failure(MPGS3dsException.EventMappingException("synthetic")))
 
@@ -162,7 +162,7 @@ internal class MPGS3dsViewModelChargeIdTest : BaseKoinUnitTest() {
     fun `with telemetry inactive nothing is reported`() {
         val inactive = RecordingTelemetry(isActive = false)
         MPGS3dsViewModel(dispatchersProvider, inactive).run {
-            startAttempt(TOKEN_ID)
+            startAttempt(TOKEN, TOKEN_ID)
             handleEventResult(Result.success(chargeAuth()))
             handleEventResult(Result.success(success()))
         }
@@ -172,7 +172,46 @@ internal class MPGS3dsViewModelChargeIdTest : BaseKoinUnitTest() {
 
     // endregion
 
+    // region retry with a new token
+
+    @Test
+    fun `a new token starts a new attempt with its own charge ID`() {
+        viewModel.startAttempt(TOKEN, TOKEN_ID)
+        feed(reject(TOKEN_ID))
+        viewModel.startAttempt(OTHER_TOKEN, OTHER_ID)
+        feed(success(OTHER_ID))
+
+        assertEquals(listOf(TOKEN_ID, OTHER_ID), telemetry.paymentsStarted.map { it.charge3dsId })
+        assertEquals(listOf(TOKEN_ID, OTHER_ID), telemetry.paymentsFinished.map { it.charge3dsId })
+        assertEquals(telemetry.paymentsStarted.map { it.paymentId }, telemetry.paymentsFinished.map { it.paymentId })
+    }
+
+    @Test
+    fun `an attempt still open when a new token starts gets no finish`() {
+        viewModel.startAttempt(TOKEN, TOKEN_ID)
+        feed(chargeAuth(TOKEN_ID))
+        viewModel.startAttempt(OTHER_TOKEN, OTHER_ID)
+        feed(success(OTHER_ID))
+
+        assertEquals(2, telemetry.paymentsStarted.size)
+        assertEquals(telemetry.paymentsStarted.last().paymentId, finished.paymentId)
+        assertEquals(OTHER_ID, finished.charge3dsId)
+    }
+
+    @Test
+    fun `a new token without a charge ID does not keep the previous one`() {
+        viewModel.startAttempt(TOKEN, TOKEN_ID)
+        feed(reject(TOKEN_ID))
+        viewModel.startAttempt(OTHER_TOKEN, null)
+
+        assertNull(telemetry.paymentsStarted.last().charge3dsId)
+    }
+
+    // endregion
+
     private companion object {
+        const val TOKEN = "3ds-token-1"
+        const val OTHER_TOKEN = "3ds-token-2"
         const val TOKEN_ID = "6741b9c2e4a17f0d3c5b8a9e"
         const val EVENT_ID = "5f2a7d0e6b348e41c2d73b9f"
         const val OTHER_ID = "0a9d5e72f348e7a3c9154d2b"

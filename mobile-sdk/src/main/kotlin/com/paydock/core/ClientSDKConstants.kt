@@ -13,14 +13,17 @@ internal object ClientSDKConstants {
 
     /**
      * The Client SDK version line (`vX.Y`) this Mobile SDK release supports. Without a pin, widgets load this line's
-     * stable alias in every environment, so sandbox runs exactly what production runs; a merchant may pin one exact
-     * release of the line with `MobileSDK.Builder.clientSdkVersion`. The release alias check
+     * stable alias in production and sandbox, so sandbox runs exactly what production runs, and its candidate alias in
+     * staging; a merchant may pin one exact release of the line with `MobileSDK.Builder.clientSdkVersion`. The release alias check
      * (`scripts/check-client-sdk-aliases.sh`) reads the line from this declaration.
      */
     internal const val SUPPORTED_LINE = "v1.150"
 
-    /** The supported line's stable alias: the default in every environment. */
+    /** The supported line's stable alias: the production and sandbox default. */
     internal const val STABLE_VERSION = "$SUPPORTED_LINE.stable"
+
+    /** The supported line's candidate alias: the staging default. */
+    internal const val CANDIDATE_VERSION = "$SUPPORTED_LINE.candidate"
 
     /**
      * An exact Client SDK release (`vX.Y.Z`): plain releases only, so `-beta` and any other suffix never match.
@@ -31,7 +34,7 @@ internal object ClientSDKConstants {
     /**
      * Address of the Client SDK JavaScript library on the CDN.
      *
-     * @param version An exact release (`vX.Y.Z`) or the stable alias of a line (`vX.Y.stable`).
+     * @param version An exact release (`vX.Y.Z`) or an alias of a line (`vX.Y.stable`, `vX.Y.candidate`).
      * @return The script address, `https://widget.paydock.com/sdk/<version>/widget.umd.min.js`.
      */
     internal fun libraryUrl(version: String): String = "https://widget.paydock.com/sdk/$version/widget.umd.min.js"

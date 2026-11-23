@@ -25,7 +25,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * ViewModel for managing the UI state and logic related to Standalone 3DS (3-D Secure) authentication.
@@ -82,8 +81,8 @@ internal class Standalone3DSViewModel(
      */
     val eventFlow: SharedFlow<Standalone3DSUIState> = _eventFlow.asSharedFlow()
 
-    /** Whether this view model's one payment attempt was started (§ 5.9): [startAttempt] runs once. */
-    private val paymentStarted = AtomicBoolean(false)
+    /** The token of the last attempt started, so the same token starts nothing. Main thread only. */
+    private var attemptToken: String? = null
 
     /**
      * The open payment attempt's ID, or null when none is open or telemetry is inactive. Set on the main thread and
@@ -92,7 +91,7 @@ internal class Standalone3DSViewModel(
     @Volatile
     private var paymentId: String? = null
 
-    /** The attempt's 3DS charge ID once known (D25): the token's at start, else the first event's; never replaced. */
+    /** The attempt's 3DS charge ID once known (D25): the token's at start, else the first event's; reset per attempt. */
     @Volatile
     private var chargeId: String? = null
 
@@ -100,12 +99,17 @@ internal class Standalone3DSViewModel(
     private val authenticationFlows = HashMap<String?, Standalone3DSAuthenticationFlow>()
 
     /**
-     * Starts this view model's payment attempt (§ 5.9), at most once: the widget calls it from its launch effect.
+     * Starts a payment attempt (§ 5.9) for each new 3DS token: the widget calls it from its launch effect. The same
+     * token starts nothing, so a rotation or recomposition sends no second start. A new token, such as a retry on the
+     * same screen where Koin hands back this view model, starts a new attempt; one still open counts as abandoned.
      *
+     * @param token The widget's 3DS token; the backend issues a new one for every 3DS charge.
      * @param charge3dsId The 3DS charge ID decoded from the widget's token, or null when it has none (D25).
      */
-    fun startAttempt(charge3dsId: String? = null) {
-        if (!paymentStarted.compareAndSet(false, true)) return
+    fun startAttempt(token: String, charge3dsId: String? = null) {
+        if (token == attemptToken) return
+        attemptToken = token
+        chargeId = null
         rememberChargeId(charge3dsId)
         paymentId = telemetry.startPayment(SdkWidget.STANDALONE_3DS, chargeId)
     }

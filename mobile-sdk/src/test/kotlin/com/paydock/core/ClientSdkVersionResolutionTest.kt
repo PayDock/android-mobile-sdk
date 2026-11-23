@@ -29,6 +29,7 @@ internal class ClientSdkVersionResolutionTest : BaseUnitTest() {
     fun `the supported line and its aliases`() {
         assertEquals("v1.150", ClientSDKConstants.SUPPORTED_LINE)
         assertEquals("v1.150.stable", ClientSDKConstants.STABLE_VERSION)
+        assertEquals("v1.150.candidate", ClientSDKConstants.CANDIDATE_VERSION)
     }
 
     @Test
@@ -42,8 +43,8 @@ internal class ClientSdkVersionResolutionTest : BaseUnitTest() {
     }
 
     @Test
-    fun `staging without a pin loads the stable alias, like production`() {
-        assertEquals(STABLE_URL, Environment.STAGING.mapToClientSDKLibrary(null))
+    fun `staging without a pin loads the candidate alias`() {
+        assertEquals(CANDIDATE_URL, Environment.STAGING.mapToClientSDKLibrary(null))
     }
 
     @Test
@@ -135,6 +136,7 @@ internal class ClientSdkVersionResolutionTest : BaseUnitTest() {
     private companion object {
         const val VALID_PIN = "v1.150.1"
         const val STABLE_URL = "https://widget.paydock.com/sdk/v1.150.stable/widget.umd.min.js"
+        const val CANDIDATE_URL = "https://widget.paydock.com/sdk/v1.150.candidate/widget.umd.min.js"
         const val PINNED_URL = "https://widget.paydock.com/sdk/v1.150.1/widget.umd.min.js"
     }
 }

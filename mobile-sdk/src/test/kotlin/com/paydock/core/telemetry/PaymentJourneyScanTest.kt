@@ -53,9 +53,9 @@ internal class PaymentJourneyScanTest {
 
     @Test
     fun the3dsInvalidTokenReturns_eachStartAndFailOneAttempt() {
-        val mpgsStart = "viewModel.startAttempt(ThreeDSTokenUtils.extractCharge3dsId(config.token))"
+        val mpgsStart = "viewModel.startAttempt(config.token, ThreeDSTokenUtils.extractCharge3dsId(config.token))"
         mapOf(
-            standaloneWidget to ("SdkWidget.STANDALONE_3DS" to "viewModel.startAttempt(charge3dsId)"),
+            standaloneWidget to ("SdkWidget.STANDALONE_3DS" to "viewModel.startAttempt(config.token, charge3dsId)"),
             mpgsWidget to ("SdkWidget.MPGS_3DS" to mpgsStart),
         ).forEach { (path, expected) ->
             val (widget, start) = expected

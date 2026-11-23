@@ -37,8 +37,9 @@
 
 ### Changed
 - The Mobile SDK no longer compiles an exact Client SDK version in. It supports the Client SDK line `v1.150` and,
-  without a pin, loads that line's **stable** alias in every environment, so patch releases of the line reach your app
-  without a Mobile SDK update, and sandbox runs exactly what production runs.
+  without a pin, loads that line's **stable** alias in production and sandbox and its **candidate** alias in staging,
+  so patch releases of the line reach your app without a Mobile SDK update, and sandbox runs exactly what production
+  runs.
 - Click to Pay, MPGS 3DS and standalone 3DS end with their load error (`WebViewException`) when the Client SDK script
   fails to load or loads without providing the Client SDK (e.g. the address answers with a page that is not a
   script), instead of waiting.
@@ -54,11 +55,19 @@
 - SDK development only: the debug telemetry keys in `local.properties` (`paydock.telemetry.otlpEndpoint`,
   `paydock.telemetry.otlpAuth`, `paydock.telemetry.level`, `paydock.telemetry.sendTestRecord` and
   `paydock.telemetry.testCrash`) are no longer read; every build sends to its environment's collector.
+- The public `MobileSDK` constructor. Create the SDK with `MobileSDK.Builder`, which also checks a
+  `clientSdkVersion` pin; the constructor let an invalid pin through.
 
 ### Fixed
 - `PayPalDataCollectorUtil.initialise` throws `PayPalDataCollectorException.InitialisationClientIdException`
   (as documented) instead of `UnknownException` when fetching the PayPal client ID fails with an API error; the
   message is unchanged.
+- `Standalone3DSWidget` and `MPGS3dsWidget` start a new 3DS attempt when their `config.token` changes: the page,
+  the JS bridge and the result handling restart for the new token. Before, a widget already on screen kept the
+  first token's page and the retry never ran. Showing a new widget for each token works as before.
+- A 3DS retry on the same screen records its own payment attempt with its own `paydock.3ds.charge_id`. Before,
+  the screen's shared view model sent no records for any attempt after the first. `MPGS3dsWidget` also reports
+  each attempt's first web view failure, not only the screen's first.
 
 ### Release
 - A release requires the supported line's aliases: the release pipeline's `check_client_sdk_aliases` job refuses it

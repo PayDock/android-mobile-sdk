@@ -57,10 +57,12 @@ release supports the Client SDK line `v1.150` and, by default, loads:
 
 | Environment | Client SDK address |
 |---|---|
-| `PRODUCTION`, `SANDBOX`, `STAGING` | the line's **stable** alias, `https://widget.paydock.com/sdk/v1.150.stable/widget.umd.min.js` |
+| `PRODUCTION`, `SANDBOX` | the line's **stable** alias, `https://widget.paydock.com/sdk/v1.150.stable/widget.umd.min.js` |
+| `STAGING` | the line's **candidate** alias, `https://widget.paydock.com/sdk/v1.150.candidate/widget.umd.min.js` |
 
-Paydock promotes patch releases of the line to the stable alias, so they reach your app without a Mobile SDK update.
-Sandbox and staging load the same alias as production, so what you test in sandbox is what runs in production.
+Paydock promotes patch releases of the line to the candidate alias first and to the stable alias afterwards, so they
+reach your app without a Mobile SDK update. Sandbox loads the same alias as production, so what you test in sandbox is
+what runs in production; staging, Paydock's internal pre-production environment, sees a release before it is promoted.
 
 If your own controls require a fixed script, pin an exact release of the supported line. The pin applies in every
 environment:
@@ -298,6 +300,18 @@ Standalone3DSWidget(config = ThreeDSConfig(token = token)) { result ->
         }
     }
 }
+```
+
+### Retrying 3DS
+
+Each 3DS token is one attempt. For a retry, create a new 3DS charge on your server and pass its token: either show a
+new widget with it, or set it as `config.token` on the widget already on screen, which restarts the page for the new
+token.
+
+```kotlin
+var token by remember { mutableStateOf(firstToken) }
+
+Standalone3DSWidget(config = ThreeDSConfig(token = token), completion = ::handleResult)
 ```
 
 ## Android notes: WebView-based flows and rotation

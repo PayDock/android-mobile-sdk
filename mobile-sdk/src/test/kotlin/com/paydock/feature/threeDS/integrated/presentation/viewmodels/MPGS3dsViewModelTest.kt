@@ -260,7 +260,7 @@ internal class MPGS3dsViewModelTest : BaseKoinUnitTest() {
     }
 
     @Test
-    fun `reportWidgetError reports only the first web view failure per view model (MP3)`() = runTest {
+    fun `reportWidgetError reports only the first web view failure per attempt (MP3)`() = runTest {
         viewModel.eventFlow.test {
             // Child windows can fire one error per failed resource.
             viewModel.reportWidgetError(MPGS3dsException.WebViewException(-1, "web view"))
@@ -274,9 +274,19 @@ internal class MPGS3dsViewModelTest : BaseKoinUnitTest() {
     }
 
     @Test
+    fun `a new token reports its own first web view failure`() {
+        viewModel.startAttempt(TOKEN)
+        viewModel.reportWidgetError(MPGS3dsException.WebViewException(-1, "web view"))
+        viewModel.startAttempt(OTHER_TOKEN)
+        viewModel.reportWidgetError(MPGS3dsException.WebViewException(-1, "web view"))
+
+        assertEquals(2, telemetry.sdkErrors.size)
+    }
+
+    @Test
     fun `the invalid token returns report from an effect before the early return, once per failure type (MP2)`() {
         val source = WidgetSourceScan.read("feature/threeDS/integrated/presentation/MPGS3dsWidget.kt")
-        val widget = WidgetSourceScan.function(source, "MPGS3dsWidget")
+        val widget = WidgetSourceScan.function(source, "MPGS3dsContent")
         val invalidToken = WidgetSourceScan.between(widget, "if (parsedToken == null) {", "} else if")
         val invalidFormat = WidgetSourceScan.between(widget, "} else if", "koinViewModel()")
         val reporter = WidgetSourceScan.function(WidgetSourceScan.read("core/telemetry/ReportWidgetOpened.kt"), "ReportSdkErrorOnce")
@@ -328,9 +338,9 @@ internal class MPGS3dsViewModelTest : BaseKoinUnitTest() {
     }
 
     @Test
-    fun `startAttempt twice starts one attempt`() {
-        viewModel.startAttempt()
-        viewModel.startAttempt()
+    fun `startAttempt twice with the same token starts one attempt`() {
+        viewModel.startAttempt(TOKEN)
+        viewModel.startAttempt(TOKEN)
 
         assertEquals(SdkWidget.MPGS_3DS, telemetry.paymentsStarted.single().widget)
     }
@@ -349,7 +359,7 @@ internal class MPGS3dsViewModelTest : BaseKoinUnitTest() {
         expected.forEach { (type, outcome) ->
             val reporting = RecordingTelemetry()
             MPGS3dsViewModel(dispatchersProvider, reporting).run {
-                startAttempt()
+                startAttempt(TOKEN)
                 handleEventResult(Result.success(event(type)))
                 handleEventResult(Result.success(event(IntegratedEvent.CHARGE_AUTH_SUCCESS)))
             }
@@ -364,11 +374,11 @@ internal class MPGS3dsViewModelTest : BaseKoinUnitTest() {
 
     @Test
     fun `a mapping failure finishes as error with its code, or none when it is no SdkException`() {
-        viewModel.startAttempt()
+        viewModel.startAttempt(TOKEN)
         viewModel.handleEventResult(Result.failure(MPGS3dsException.EventMappingException("synthetic")))
         val other = RecordingTelemetry()
         MPGS3dsViewModel(dispatchersProvider, other).run {
-            startAttempt()
+            startAttempt(TOKEN)
             handleEventResult(Result.failure(IllegalStateException()))
         }
 
@@ -382,7 +392,7 @@ internal class MPGS3dsViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `a web view error finishes as error with the WebViewException code and emits no state`() = runTest {
         viewModel.eventFlow.test {
-            viewModel.startAttempt()
+            viewModel.startAttempt(TOKEN)
             viewModel.failAttempt(MPGS3dsException.WebViewException(-1, "web view"))
             viewModel.failAttempt(MPGS3dsException.WebViewException(-2, "web view"))
 
@@ -400,7 +410,7 @@ internal class MPGS3dsViewModelTest : BaseKoinUnitTest() {
         val failure = MPGS3dsException.EventMappingException("synthetic")
 
         quiet.eventFlow.test {
-            quiet.startAttempt()
+            quiet.startAttempt(TOKEN)
             quiet.handleEventResult(Result.success(event(IntegratedEvent.CHARGE_AUTH_SUCCESS)))
             // The view model's own initial Idle may still be on its way.
             awaitItem().let { if (it is MPGS3dsUIState.Idle) awaitItem() else it }.let { state ->
@@ -419,14 +429,21 @@ internal class MPGS3dsViewModelTest : BaseKoinUnitTest() {
     }
 
     @Test
-    fun `the widget starts its attempt from its launch effect`() {
+    fun `the widget rebuilds per token and starts its attempt from its launch effect`() {
         val source = WidgetSourceScan.read("feature/threeDS/integrated/presentation/MPGS3dsWidget.kt")
         val launch = WidgetSourceScan.between(source, "LaunchedEffect(Unit) {", "viewModel.eventFlow.collect")
 
-        val start = "viewModel.startAttempt(ThreeDSTokenUtils.extractCharge3dsId(config.token))"
+        val widget = WidgetSourceScan.function(source, "MPGS3dsWidget")
+        val start = "viewModel.startAttempt(config.token, ThreeDSTokenUtils.extractCharge3dsId(config.token))"
+
+        assertEquals(1, WidgetSourceScan.count(widget, "key(config.token) {"))
+        assertEquals(1, WidgetSourceScan.count(widget, "MPGS3dsContent("))
         assertEquals(1, WidgetSourceScan.count(source, start))
         assertEquals(1, WidgetSourceScan.count(launch, start))
     }
 
     // endregion
 }
+
+private const val TOKEN = "3ds-token-1"
+private const val OTHER_TOKEN = "3ds-token-2"

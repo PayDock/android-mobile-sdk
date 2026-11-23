@@ -178,7 +178,8 @@ release_preflight:
 
 # check_client_sdk_aliases:
 # Release gate (seconds, no build). Without a pin, widgets load the supported Client SDK line's stable alias in
-# every environment (ClientSDKConstants.SUPPORTED_LINE). Fails unless that alias serves a JavaScript script and a version
+# production and sandbox (ClientSDKConstants.SUPPORTED_LINE); staging's candidate alias is internal and not gated.
+# Fails unless the stable alias serves a JavaScript script and a version
 # record naming a release of the line, so a release never ships before the client SDK pipeline has promoted the
 # line to stable. The self-test (stubbed curl,
 # no network) runs first. Runs on every MR into `release` or from a deploy/ or hotfix/ branch, and on `release` and

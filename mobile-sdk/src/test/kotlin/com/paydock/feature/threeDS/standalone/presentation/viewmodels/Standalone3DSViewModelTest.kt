@@ -387,7 +387,7 @@ internal class Standalone3DSViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `the invalid token returns report from an effect before the early return, once per failure type (SD3)`() {
         val source = WidgetSourceScan.read("feature/threeDS/standalone/presentation/Standalone3DSWidget.kt")
-        val widget = WidgetSourceScan.function(source, "Standalone3DSWidget")
+        val widget = WidgetSourceScan.function(source, "Standalone3DSContent")
         val invalidToken = WidgetSourceScan.between(widget, "if (parsedToken == null) {", "} else if")
         val invalidFormat = WidgetSourceScan.between(widget, "} else if", "koinViewModel()")
         val reporter = WidgetSourceScan.function(WidgetSourceScan.read("core/telemetry/ReportWidgetOpened.kt"), "ReportSdkErrorOnce")
@@ -427,19 +427,19 @@ internal class Standalone3DSViewModelTest : BaseKoinUnitTest() {
 
     // endregion
 
-    // region Telemetry: one payment attempt per view model (§ 5.9, R_06 to R_08)
+    // region Telemetry: one payment attempt per token (§ 5.9, R_06 to R_08)
 
     private fun finishOf(vararg events: Standalone3DSEvent, reporting: RecordingTelemetry = telemetry) =
         Standalone3DSViewModel(dispatchersProvider, reporting).run {
-            startAttempt()
+            startAttempt(TOKEN)
             events.forEach { handleEventResult(Result.success(it)) }
             reporting.paymentsFinished
         }
 
     @Test
-    fun `startAttempt twice starts one attempt`() {
-        viewModel.startAttempt()
-        viewModel.startAttempt()
+    fun `startAttempt twice with the same token starts one attempt`() {
+        viewModel.startAttempt(TOKEN)
+        viewModel.startAttempt(TOKEN)
 
         assertEquals(SdkWidget.STANDALONE_3DS, telemetry.paymentsStarted.single().widget)
     }
@@ -474,11 +474,11 @@ internal class Standalone3DSViewModelTest : BaseKoinUnitTest() {
 
     @Test
     fun `a mapping failure finishes as error with its code, or none when it is no SdkException`() {
-        viewModel.startAttempt()
+        viewModel.startAttempt(TOKEN)
         viewModel.handleEventResult(Result.failure(Standalone3DSException.EventMappingException("synthetic")))
         val other = RecordingTelemetry()
         Standalone3DSViewModel(dispatchersProvider, other).run {
-            startAttempt()
+            startAttempt(TOKEN)
             handleEventResult(Result.failure(IllegalStateException()))
         }
 
@@ -490,7 +490,7 @@ internal class Standalone3DSViewModelTest : BaseKoinUnitTest() {
     @Test
     fun `render process gone and web view errors finish as error with their codes`() = runTest {
         viewModel.eventFlow.test {
-            viewModel.startAttempt()
+            viewModel.startAttempt(TOKEN)
             viewModel.failAttempt(
                 Standalone3DSException.RenderProcessGoneException(didCrash = true, displayableMessage = "gone")
             )
@@ -500,7 +500,7 @@ internal class Standalone3DSViewModelTest : BaseKoinUnitTest() {
         }
         val other = RecordingTelemetry()
         Standalone3DSViewModel(dispatchersProvider, other).run {
-            startAttempt()
+            startAttempt(TOKEN)
             failAttempt(Standalone3DSException.WebViewException(code = -1, displayableMessage = "web view"))
         }
 
@@ -514,7 +514,7 @@ internal class Standalone3DSViewModelTest : BaseKoinUnitTest() {
         val quiet = Standalone3DSViewModel(dispatchersProvider, inactive)
         val states = mutableListOf<Standalone3DSUIState>()
         quiet.eventFlow.test {
-            quiet.startAttempt()
+            quiet.startAttempt(TOKEN)
             listOf(challengeEvent, successEvent, errorEvent).forEach { quiet.handleEventResult(Result.success(it)) }
             quiet.handleEventResult(Result.failure(Standalone3DSException.EventMappingException("synthetic")))
             quiet.failAttempt(Standalone3DSException.WebViewException(code = -1, displayableMessage = "web view"))
@@ -531,7 +531,7 @@ internal class Standalone3DSViewModelTest : BaseKoinUnitTest() {
     }
 
     @Test
-    fun `the widget starts its attempt from its launch effect and the invalid token helper starts and fails one`() {
+    fun `the widget rebuilds per token, starts its attempt from its launch effect, and the invalid token helper starts and fails one`() {
         val source = WidgetSourceScan.read("feature/threeDS/standalone/presentation/Standalone3DSWidget.kt")
         val launch = WidgetSourceScan.between(source, "LaunchedEffect(Unit) {", "viewModel.eventFlow.collect")
         val helper = WidgetSourceScan.function(
@@ -539,8 +539,12 @@ internal class Standalone3DSViewModelTest : BaseKoinUnitTest() {
             "ReportPaymentFailedOnce"
         )
 
-        assertEquals(1, WidgetSourceScan.count(source, "viewModel.startAttempt(charge3dsId)"))
-        assertEquals(1, WidgetSourceScan.count(launch, "viewModel.startAttempt(charge3dsId)"))
+        val widget = WidgetSourceScan.function(source, "Standalone3DSWidget")
+
+        assertEquals(1, WidgetSourceScan.count(widget, "key(config.token) {"))
+        assertEquals(1, WidgetSourceScan.count(widget, "Standalone3DSContent("))
+        assertEquals(1, WidgetSourceScan.count(source, "viewModel.startAttempt(config.token, charge3dsId)"))
+        assertEquals(1, WidgetSourceScan.count(launch, "viewModel.startAttempt(config.token, charge3dsId)"))
         assertEquals(1, WidgetSourceScan.count(helper, "LaunchedEffect(error::class)"))
         assertEquals(1, WidgetSourceScan.count(helper, "it.failPayment(widget, it.startPayment(widget), error)"))
     }
@@ -585,6 +589,7 @@ internal class Standalone3DSViewModelTest : BaseKoinUnitTest() {
     }
 
     private companion object {
+        const val TOKEN = "3ds-token-1"
         const val START = "start"
         const val FINISH = "finish"
     }

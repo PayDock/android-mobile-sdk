@@ -2,6 +2,7 @@ package com.paydock.feature.threeDS.integrated.presentation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import com.paydock.core.MobileSDKConstants
 import com.paydock.core.domain.error.exceptions.MPGS3dsException
@@ -40,6 +41,20 @@ fun MPGS3dsWidget(
     completion: (Result<MPGS3dsResult>) -> Unit,
 ) {
     ReportWidgetOpened(SdkWidget.MPGS_3DS)
+    key(config.token) {
+        MPGS3dsContent(config, appearance, completion)
+    }
+}
+
+/**
+ * The widget for one 3DS token: a new token rebuilds it, so its web view and launch effect start over.
+ */
+@Composable
+private fun MPGS3dsContent(
+    config: ThreeDSConfig,
+    appearance: MPGSThreeDSWidgetAppearance,
+    completion: (Result<MPGS3dsResult>) -> Unit,
+) {
     val parsedToken = ThreeDSTokenUtils.extractToken(config.token)
 
     if (parsedToken == null) {
@@ -66,7 +81,7 @@ fun MPGS3dsWidget(
     val viewModel: MPGS3dsViewModel = koinViewModel()
 
     LaunchedEffect(Unit) {
-        viewModel.startAttempt(ThreeDSTokenUtils.extractCharge3dsId(config.token))
+        viewModel.startAttempt(config.token, ThreeDSTokenUtils.extractCharge3dsId(config.token))
         viewModel.eventFlow.collect { state ->
             handleUIState(state, viewModel, completion)
         }

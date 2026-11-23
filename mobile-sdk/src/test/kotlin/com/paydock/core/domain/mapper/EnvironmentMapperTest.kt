@@ -53,9 +53,9 @@ class EnvironmentMapperTest : BaseUnitTest() {
     }
 
     @Test
-    fun mapToClientSDKLibrary_staging_returnsStableAlias() {
+    fun mapToClientSDKLibrary_staging_returnsCandidateAlias() {
         val environment = Environment.STAGING
-        val expectedLibrary = "https://widget.paydock.com/sdk/v1.150.stable/widget.umd.min.js"
+        val expectedLibrary = "https://widget.paydock.com/sdk/v1.150.candidate/widget.umd.min.js"
         val actualLibrary = environment.mapToClientSDKLibrary(null)
         assertEquals(expectedLibrary, actualLibrary)
     }

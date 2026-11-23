@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
@@ -63,7 +64,6 @@ import org.koin.androidx.compose.koinViewModel
  *    result, which is always delivered to [completion].
  * @param completion A callback invoked with the result of the 3DS process, either success or failure.
  */
-@Suppress("LongMethod")
 @Composable
 fun Standalone3DSWidget(
     modifier: Modifier = Modifier,
@@ -74,6 +74,24 @@ fun Standalone3DSWidget(
     completion: (Result<Standalone3DSResult>) -> Unit,
 ) {
     ReportWidgetOpened(SdkWidget.STANDALONE_3DS)
+    key(config.token) {
+        Standalone3DSContent(modifier, config, appearance, loadingDelegate, onProgress, completion)
+    }
+}
+
+/**
+ * The widget for one 3DS token: a new token rebuilds it, so its web view, JS bridge and launch effect start over.
+ */
+@Suppress("LongMethod")
+@Composable
+private fun Standalone3DSContent(
+    modifier: Modifier,
+    config: ThreeDSConfig,
+    appearance: StandaloneThreeDSWidgetAppearance,
+    loadingDelegate: WidgetLoadingDelegate?,
+    onProgress: ((Standalone3DSProgress) -> Unit)?,
+    completion: (Result<Standalone3DSResult>) -> Unit,
+) {
     val parsedToken = ThreeDSTokenUtils.extractToken(config.token)
 
     if (parsedToken == null) {
@@ -115,7 +133,7 @@ fun Standalone3DSWidget(
 
     LaunchedEffect(Unit) {
         loadingController.start(currentLoadingDelegate)
-        viewModel.startAttempt(charge3dsId)
+        viewModel.startAttempt(config.token, charge3dsId)
         viewModel.eventFlow.collect { state ->
             handleUIState(
                 state,

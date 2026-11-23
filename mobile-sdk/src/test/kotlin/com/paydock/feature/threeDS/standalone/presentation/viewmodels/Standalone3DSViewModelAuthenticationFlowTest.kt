@@ -313,12 +313,13 @@ internal class Standalone3DSViewModelAuthenticationFlowTest : BaseKoinUnitTest()
     /** Runs the events through a new view model with a started attempt and returns its finished payments. */
     private fun finishOf(vararg events: Standalone3DSEvent, reporting: RecordingTelemetry) =
         Standalone3DSViewModel(dispatchersProvider, reporting).run {
-            startAttempt()
+            startAttempt(TOKEN)
             events.forEach { handleEventResult(Result.success(it)) }
             reporting.paymentsFinished
         }
 
     private companion object {
+        const val TOKEN = "3ds-token-1"
         const val CHARGE_A = "charge-a"
         const val CHARGE_B = "charge-b"
     }

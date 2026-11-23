@@ -50,7 +50,7 @@ internal class MPGS3dsViewModel(
 
     /**
      * Whether a web view failure was reported: the web view's child windows can fire one error per failed resource,
-     * so only the first failure is reported per view model (MP3).
+     * so only the first failure is reported per attempt (MP3).
      */
     private val widgetFailureReported = AtomicBoolean(false)
 
@@ -73,8 +73,8 @@ internal class MPGS3dsViewModel(
      */
     val eventFlow: SharedFlow<MPGS3dsUIState> = _eventFlow.asSharedFlow()
 
-    /** Whether this view model's one payment attempt was started (§ 5.9): [startAttempt] runs once. */
-    private val paymentStarted = AtomicBoolean(false)
+    /** The token of the last attempt started, so the same token starts nothing. Main thread only. */
+    private var attemptToken: String? = null
 
     /**
      * The open payment attempt's ID, or null when none is open or telemetry is inactive. Set on the main thread and
@@ -83,7 +83,7 @@ internal class MPGS3dsViewModel(
     @Volatile
     private var paymentId: String? = null
 
-    /** The attempt's 3DS charge ID once known (D25): the token's at start, else the first event's; never replaced. */
+    /** The attempt's 3DS charge ID once known (D25): the token's at start, else the first event's; reset per attempt. */
     @Volatile
     private var chargeId: String? = null
 
@@ -102,12 +102,18 @@ internal class MPGS3dsViewModel(
     }
 
     /**
-     * Starts this view model's payment attempt (§ 5.9), at most once: the widget calls it from its launch effect.
+     * Starts a payment attempt (§ 5.9) for each new 3DS token: the widget calls it from its launch effect. The same
+     * token starts nothing, so a rotation or recomposition sends no second start. A new token, such as a retry on the
+     * same screen where Koin hands back this view model, starts a new attempt; one still open counts as abandoned.
      *
+     * @param token The widget's 3DS token; the backend issues a new one for every 3DS charge.
      * @param charge3dsId The 3DS charge ID decoded from the widget's token, or null when it has none (D25).
      */
-    fun startAttempt(charge3dsId: String? = null) {
-        if (!paymentStarted.compareAndSet(false, true)) return
+    fun startAttempt(token: String, charge3dsId: String? = null) {
+        if (token == attemptToken) return
+        attemptToken = token
+        chargeId = null
+        widgetFailureReported.set(false)
         rememberChargeId(charge3dsId)
         paymentId = telemetry.startPayment(SdkWidget.MPGS_3DS, chargeId)
     }

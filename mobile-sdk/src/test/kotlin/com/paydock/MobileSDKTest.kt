@@ -239,4 +239,9 @@ internal class MobileSDKTest : BaseUnitTest() {
         assertFalse(MobileSDK.isInitialised())
     }
 
+    @Test
+    fun `MobileSDK has no public constructor`() {
+        assertTrue(MobileSDK::class.java.constructors.none { !it.isSynthetic })
+    }
+
 }

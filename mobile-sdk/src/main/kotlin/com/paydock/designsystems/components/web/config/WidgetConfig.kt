@@ -267,8 +267,8 @@ internal sealed class WidgetConfig {
 
 /**
  * The Client SDK script address every widget configuration loads by default, resolved in one place from the
- * initialised SDK's optional exact-version pin: without one, every environment loads the supported line's stable
- * alias.
+ * initialised SDK's optional exact-version pin: without one, production and sandbox load the supported line's stable
+ * alias and staging its candidate alias.
  */
 private fun clientSdkLibraryUrl(): String =
     MobileSDK.getInstance().let { sdk -> sdk.environment.mapToClientSDKLibrary(sdk.clientSdkVersion) }

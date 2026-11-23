@@ -18,19 +18,21 @@ import java.util.Locale
  * The main entry point for the Mobile SDK.
  *
  * This class represents the Mobile SDK and serves as the central access point for interacting with the SDK's features.
+ * Create it with [Builder].
  *
  * @param context The Android application context used for initializing the Mobile SDK and its dependencies.
  * @param environment The environment for the Mobile SDK, which determines the API endpoint to use (e.g., production, sandbox, staging).
  * @param enableTestMode Flag to enable test mode. This is only allowed in non-production environments.
  * @param clientSdkVersion The exact Client SDK release (`vX.Y.Z` of the supported line) every widget loads, in every
- *   environment, or `null` (default) to load the supported line's stable alias in every environment.
+ *   environment, or `null` to load the supported line's stable alias in production and sandbox and its candidate
+ *   alias in staging.
  *   [Builder.clientSdkVersion] validates it.
  */
-class MobileSDK @JvmOverloads constructor(
+class MobileSDK private constructor(
     context: Context,
     val environment: Environment,
     internal val enableTestMode: Boolean,
-    val clientSdkVersion: String? = null,
+    val clientSdkVersion: String?,
 ) {
 
     internal var koinContext: MobileSDKKoinContext? = null
@@ -90,10 +92,11 @@ class MobileSDK @JvmOverloads constructor(
 
         /**
          * Pins the exact Client SDK release every widget loads, in every environment, instead of the supported line's
-         * stable alias. It must be a plain release (`vX.Y.Z`, no `-beta` or other suffix) of the line this Mobile SDK
-         * supports; [build] refuses anything else. When `null` (default), widgets load the stable alias.
+         * alias (stable in production and sandbox, candidate in staging). It must be a plain release (`vX.Y.Z`, no
+         * `-beta` or other suffix) of the line this Mobile SDK supports; [build] refuses anything else. When `null`
+         * (default), widgets load the environment's alias.
          *
-         * @param version The exact Client SDK release, e.g. `"v1.150.1"`, or `null` for the stable alias.
+         * @param version The exact Client SDK release, e.g. `"v1.150.1"`, or `null` for the environment's alias.
          */
         fun clientSdkVersion(version: String?) = apply { this.clientSdkVersion = version }
 

@@ -2,9 +2,10 @@
 
 # Client SDK alias check (release gate).
 #
-# Without a pin, the Mobile SDK's widgets load the supported Client SDK line's stable alias in every environment
-# (ClientSDKConstants.SUPPORTED_LINE). A release must not be published while that alias is missing, so this script
-# checks, for the stable alias of the line:
+# Without a pin, the Mobile SDK's widgets load the supported Client SDK line's stable alias in production and sandbox
+# and its candidate alias in staging (ClientSDKConstants.SUPPORTED_LINE). A release must not be published while the
+# stable alias is missing, so this script checks, for the stable alias of the line (staging is internal, so the
+# candidate alias does not gate a release):
 #
 #   script  <alias>/widget.umd.min.js  status 200 and a JavaScript content type
 #   record  <alias>/version.txt        status 200, content type text/plain and one line naming a release of the line

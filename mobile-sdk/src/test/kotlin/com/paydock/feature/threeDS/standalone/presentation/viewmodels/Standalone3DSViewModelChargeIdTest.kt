@@ -79,7 +79,7 @@ internal class Standalone3DSViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `the token's charge ID is on the start and the finish`() {
-        viewModel.startAttempt(TOKEN_ID)
+        viewModel.startAttempt(TOKEN, TOKEN_ID)
         feed(challenge(TOKEN_ID), success(TOKEN_ID))
 
         assertEquals(TOKEN_ID, started.charge3dsId)
@@ -88,7 +88,7 @@ internal class Standalone3DSViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `without a token ID the start has none and the finish has the first event's`() {
-        viewModel.startAttempt(null)
+        viewModel.startAttempt(TOKEN, null)
         feed(challenge(EVENT_ID), success(EVENT_ID))
 
         assertNull(started.charge3dsId)
@@ -97,7 +97,7 @@ internal class Standalone3DSViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `an empty token ID counts as none`() {
-        viewModel.startAttempt("")
+        viewModel.startAttempt(TOKEN, "")
         feed(success(EVENT_ID))
 
         assertNull(started.charge3dsId)
@@ -106,7 +106,7 @@ internal class Standalone3DSViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `a later event's different ID does not replace the first one`() {
-        viewModel.startAttempt()
+        viewModel.startAttempt(TOKEN)
         feed(challenge(null), challenge(EVENT_ID), success(OTHER_ID))
 
         assertEquals(EVENT_ID, finished.charge3dsId)
@@ -114,7 +114,7 @@ internal class Standalone3DSViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `the token's ID wins over an event's`() {
-        viewModel.startAttempt(TOKEN_ID)
+        viewModel.startAttempt(TOKEN, TOKEN_ID)
         feed(challenge(EVENT_ID), reject(EVENT_ID))
 
         assertEquals(TOKEN_ID, started.charge3dsId)
@@ -123,7 +123,7 @@ internal class Standalone3DSViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `with neither a token nor an event ID there is no charge ID on either`() {
-        viewModel.startAttempt()
+        viewModel.startAttempt(TOKEN)
         feed(challenge(null), success(null))
 
         assertNull(started.charge3dsId)
@@ -160,7 +160,7 @@ internal class Standalone3DSViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `a charge error finish carries the charge ID and no flow`() {
-        viewModel.startAttempt(TOKEN_ID)
+        viewModel.startAttempt(TOKEN, TOKEN_ID)
         feed(challenge(), chargeError())
 
         assertEquals(TelemetryEvent.PaymentOutcome.ERROR, finished.outcome)
@@ -171,7 +171,7 @@ internal class Standalone3DSViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `a charge error's own ID is kept when nothing came before`() {
-        viewModel.startAttempt()
+        viewModel.startAttempt(TOKEN)
         feed(chargeError(EVENT_ID))
 
         assertEquals(EVENT_ID, finished.charge3dsId)
@@ -180,7 +180,7 @@ internal class Standalone3DSViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `a mapping failure finish carries the charge ID and no flow`() {
-        viewModel.startAttempt()
+        viewModel.startAttempt(TOKEN)
         feed(challenge())
         viewModel.handleEventResult(Result.failure(Standalone3DSException.EventMappingException("synthetic")))
 
@@ -192,7 +192,7 @@ internal class Standalone3DSViewModelChargeIdTest : BaseKoinUnitTest() {
 
     @Test
     fun `a widget failure finish carries the charge ID and no flow`() {
-        viewModel.startAttempt(TOKEN_ID)
+        viewModel.startAttempt(TOKEN, TOKEN_ID)
         viewModel.failAttempt(Standalone3DSException.WebViewException(code = -1, displayableMessage = "web view"))
 
         assertEquals(TelemetryEvent.PaymentOutcome.ERROR, finished.outcome)
@@ -204,7 +204,7 @@ internal class Standalone3DSViewModelChargeIdTest : BaseKoinUnitTest() {
     fun `with telemetry inactive nothing is reported`() {
         val inactive = RecordingTelemetry(isActive = false)
         Standalone3DSViewModel(dispatchersProvider, inactive).run {
-            startAttempt(TOKEN_ID)
+            startAttempt(TOKEN, TOKEN_ID)
             handleEventResult(Result.success(challenge()))
             handleEventResult(Result.success(success()))
         }
@@ -223,7 +223,7 @@ internal class Standalone3DSViewModelChargeIdTest : BaseKoinUnitTest() {
         telemetryFlow: TelemetryEvent.ThreeDSFlow,
         vararg events: Standalone3DSEvent,
     ) {
-        viewModel.startAttempt()
+        viewModel.startAttempt(TOKEN)
         val results = mutableListOf<Standalone3DSResult>()
         viewModel.eventFlow.test {
             feed(*events)
@@ -240,7 +240,46 @@ internal class Standalone3DSViewModelChargeIdTest : BaseKoinUnitTest() {
         assertEquals(EVENT_ID, finished.charge3dsId)
     }
 
+    // region retry with a new token
+
+    @Test
+    fun `a new token starts a new attempt with its own charge ID`() {
+        viewModel.startAttempt(TOKEN, TOKEN_ID)
+        feed(reject(TOKEN_ID))
+        viewModel.startAttempt(OTHER_TOKEN, OTHER_ID)
+        feed(success(OTHER_ID))
+
+        assertEquals(listOf(TOKEN_ID, OTHER_ID), telemetry.paymentsStarted.map { it.charge3dsId })
+        assertEquals(listOf(TOKEN_ID, OTHER_ID), telemetry.paymentsFinished.map { it.charge3dsId })
+        assertEquals(telemetry.paymentsStarted.map { it.paymentId }, telemetry.paymentsFinished.map { it.paymentId })
+    }
+
+    @Test
+    fun `an attempt still open when a new token starts gets no finish`() {
+        viewModel.startAttempt(TOKEN, TOKEN_ID)
+        feed(challenge(TOKEN_ID))
+        viewModel.startAttempt(OTHER_TOKEN, OTHER_ID)
+        feed(success(OTHER_ID))
+
+        assertEquals(2, telemetry.paymentsStarted.size)
+        assertEquals(telemetry.paymentsStarted.last().paymentId, finished.paymentId)
+        assertEquals(OTHER_ID, finished.charge3dsId)
+    }
+
+    @Test
+    fun `a new token without a charge ID does not keep the previous one`() {
+        viewModel.startAttempt(TOKEN, TOKEN_ID)
+        feed(reject(TOKEN_ID))
+        viewModel.startAttempt(OTHER_TOKEN, null)
+
+        assertNull(telemetry.paymentsStarted.last().charge3dsId)
+    }
+
+    // endregion
+
     private companion object {
+        const val TOKEN = "3ds-token-1"
+        const val OTHER_TOKEN = "3ds-token-2"
         const val TOKEN_ID = "6741b9c2e4a17f0d3c5b8a9e"
         const val EVENT_ID = "5f2a7d0e6b348e41c2d73b9f"
         const val OTHER_ID = "0a9d5e72f348e7a3c9154d2b"
