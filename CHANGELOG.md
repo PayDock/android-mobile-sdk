@@ -1,6 +1,6 @@
 # Changelog
 
-## [5.8.0] - Unreleased
+## [5.8.0] - 2026-11-24
 
 ### Added
 - `MobileSDK.Builder.clientSdkVersion(String?)`: optionally pin the exact Client SDK release every web widget loads,
